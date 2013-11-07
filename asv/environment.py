@@ -52,7 +52,8 @@ def configuration_to_string(python, configuration):
 class Environment(object):
     def __init__(self, executable, python, requirements):
         self.executable = executable
-        self.virtualenv_path = virtualenv.__file__
+        self.virtualenv_path = os.path.join(
+            os.path.dirname(__file__), 'virtualenv.py')
         self.python = python
         self.requirements = requirements
 

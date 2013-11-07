@@ -16,8 +16,7 @@ setup(
     install_requires=[
         'six>=1.4',
         'numpy>=1.5',
-        'psutil',
-        'virtualenv'
+        'psutil'
     ],
 
     package_data={
@@ -35,7 +34,7 @@ setup(
 
     author="Michael Droettboom",
     author_email="mdroe@stsci.edu",
-    description="Airspeed Velocity: A simple git-based Python benchmarking tool",
+    description="Airspeed Velocity: A simple Python history benchmarking tool",
     license="BSD",
     url = "http://github.com/spacetelescope/asv",   # project home page, if any
 )
