@@ -1,0 +1,41 @@
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
+from setuptools import setup, find_packages
+
+setup(
+    name="asv",
+    version="0.1",
+    packages=find_packages(),
+    entry_points={
+        'console_scripts': [
+            'asv = asv.main:main'
+        ]
+    },
+
+    install_requires=[
+        'six>=1.4',
+        'numpy>=1.5',
+        'psutil',
+        'virtualenv'
+    ],
+
+    package_data={
+        str('asv'): [
+            'www/*.html',
+            'www/*.js',
+            'www/*.css',
+            'www/*.png',
+            'www/jquery/*.js',
+            'www/flot/*.js',
+            'www/bootstrap/*.js',
+            'www/bootstrap/*.css'
+        ]
+    },
+
+    author="Michael Droettboom",
+    author_email="mdroe@stsci.edu",
+    description="Airspeed Velocity: A simple git-based Python benchmarking tool",
+    license="BSD",
+    url = "http://github.com/spacetelescope/asv",   # project home page, if any
+)

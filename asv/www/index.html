@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>airspeed velocity</title>
+    <script language="javascript" type="text/javascript" src="jquery/jquery.min.js"></script>
+    <script language="javascript" type="text/javascript" src="flot/jquery.flot.min.js"></script>
+    <script language="javascript" type="text/javascript" src="flot/jquery.flot.time.min.js"></script>
+    <script language="javascript" type="text/javascript" src="flot/jquery.flot.selection.min.js"></script>
+    <script language="javascript" type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.0.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="bootstrap/bootstrap.min.css" type="text/css">
+    <script language="javascript" type="text/javascript" src="asv.js"></script>
+    <link href="asv.css" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <p class="navbar-text" style="margin: 6px;">
+        <img src="swallow.png" width="32" height="32" alt="swallow"/>
+        airspeed velocity of an unladen <a id="project-name" href="#">project</a>
+      </p>
+    </nav>
+    <div class="row" style="height: 100%; width: 100%">
+      <div id="navigation" class="col-md-2" style="height: 100%; overflow: auto">
+      </div>
+      <div class="col-md-10">
+        <h3 id="title"></h3>
+        <div>
+          <div id="main-graph" class="demo-placeholder" style="height:65%"></div>
+        </div>
+        <div>
+          <div id="overview" class="demo-placeholder" style="height:25%;"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

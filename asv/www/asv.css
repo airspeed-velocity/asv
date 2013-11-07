@@ -1,0 +1,26 @@
+body {
+    padding-top: 55px;
+}
+
+.panel-body {
+    padding: 0;
+}
+
+.panel-heading {
+    padding: 6;
+}
+
+.panel {
+    margin: 0;
+}
+
+#tooltip {
+    position: "absolute",
+    display: "none",
+    top: y + 5,
+    left: x + 5,
+    border: "1px solid #fdd",
+    padding: "2px",
+    "background-color": "#eee",
+    opacity: 0.80
+}
