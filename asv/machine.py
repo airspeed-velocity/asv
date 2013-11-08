@@ -53,8 +53,12 @@ class Machine(object):
         arch = util.get_answer_default("ARCH", platform.machine())
 
         print("4. CPU: A human-readable description of the CPU.")
-        info = cpuinfo.cpuinfo().info
-        cpu = "{0} ({1} cores)".format(info[0]['model name'], len(info))
+        if sys.platform.startswith('linux'):
+            info = cpuinfo.cpuinfo().info
+            cpu = "{0} ({1} cores)".format(info[0]['model name'], len(info))
+        else:
+            # TODO: Get this on a Mac
+            cpu = ''
         cpu = util.get_answer_default("CPU", cpu)
 
         print("4. RAM: The amount of physical RAM in the system.")

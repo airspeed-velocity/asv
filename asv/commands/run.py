@@ -41,20 +41,21 @@ class Run(object):
 
     @classmethod
     def run(cls, args):
-        environments = Setup.run(args)
-
-        conf = Config.from_file(args.config)
-
         params = {}
         machine_params = Machine()
         params.update(machine_params.__dict__)
         machine_params.copy_machine_file(conf.results_dir)
 
+        environments = Setup.run(args)
+
+        conf = Config.from_file(args.config)
+
         repo = Repo(conf.repo, conf.package)
         githashes = repo.get_hashes_from_range(args.range)
         if args.steps > 0:
             subhashes = []
-            for i in range(0, len(githashes), int(len(githashes) / args.steps)):
+            for i in range(0, len(githashes),
+                           int(len(githashes) / args.steps)):
                 subhashes.append(githashes[i])
             githashes = subhashes
 
