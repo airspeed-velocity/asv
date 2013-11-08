@@ -48,7 +48,7 @@ class Repo(object):
 
     def get_date(self, hash):
         return int(self._run_git(
-            ['show', hash, '--quiet', '--format=format:%at']).strip())
+            ['show', hash, '--quiet', '--format=format:%ct']).strip())
 
     def get_hashes_from_range(self, range):
         return self._run_git(
