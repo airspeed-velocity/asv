@@ -7,11 +7,11 @@ body {
 }
 
 .panel-heading {
-    padding: 6;
+    padding: 2px;
 }
 
 .panel {
-    margin: 0;
+    margin-bottom: 6px;
 }
 
 #tooltip {
@@ -23,4 +23,18 @@ body {
     padding: "2px",
     "background-color": "#eee",
     opacity: 0.80
+}
+
+.btn-default:active, .btn-default.active, .open .dropdown-toggle.btn-default {
+    background-image: none;
+}
+
+.btn-default:focus, .btn-default:active, .btn-default.active, .open .dropdown-toggle.btn-default {
+    color: #fff;
+    background-color: #1990d5;
+    border-color: #1684c2;
+}
+
+.navbar-default .navbar-text {
+    color: #fff;
 }

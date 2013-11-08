@@ -68,7 +68,7 @@ $(function() {
 
         var nav = $("#navigation");
 
-        var panel = $('<div class="panel panel-info"/>');
+        var panel = $('<div class="panel panel-default"/>');
         nav.append(panel);
         var panel_header = $('<div class="panel-heading">machine</div>');
         panel.append(panel_header);
@@ -112,7 +112,7 @@ $(function() {
             state[param] = values;
 
             if (values.length > 1 && param !== 'machine') {
-                var panel = $('<div class="panel panel-info"/>');
+                var panel = $('<div class="panel  panel-default"/>');
                 nav.append(panel);
                 var panel_header = $('<div class="panel-heading">' + param + '</div>');
                 panel.append(panel_header);
@@ -138,7 +138,7 @@ $(function() {
             }
         });
 
-        var panel = $('<div class="panel panel-info"/>');
+        var panel = $('<div class="panel  panel-default"/>');
         nav.append(panel);
         var panel_header = $('<div class="panel-heading">test</div>');
         panel.append(panel_header);
@@ -307,7 +307,10 @@ $(function() {
 	    },
 	    selection: {
 	        mode: "x"
-	    }
+	    },
+            legend: {
+                position: "nw"
+            }
         };
 
 
@@ -375,7 +378,10 @@ $(function() {
 	    },
 	    selection: {
 		mode: "x"
-	    }
+	    },
+            legend: {
+                show: false
+            }
 	});
 
 	$("#main-graph").bind("plotselected", function (event, ranges) {
