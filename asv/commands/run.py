@@ -41,14 +41,14 @@ class Run(object):
 
     @classmethod
     def run(cls, args):
+        conf = Config.from_file(args.config)
+
         params = {}
         machine_params = Machine()
         params.update(machine_params.__dict__)
         machine_params.copy_machine_file(conf.results_dir)
 
         environments = Setup.run(args)
-
-        conf = Config.from_file(args.config)
 
         repo = Repo(conf.repo, conf.package)
         githashes = repo.get_hashes_from_range(args.range)
