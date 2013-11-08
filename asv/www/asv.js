@@ -68,11 +68,51 @@ $(function() {
 
         var nav = $("#navigation");
 
+        var panel = $('<div class="panel panel-info"/>');
+        nav.append(panel);
+        var panel_header = $('<div class="panel-heading">machine</div>');
+        panel.append(panel_header);
+        var panel_body = $('<div class="panel-body"/>');
+        panel.append(panel_body);
+        var buttons = $('<div class="btn-group-vertical" style="width: 100%" data-toggle="buttons"/>');
+        panel_body.append(buttons);
+        $.each(index.params.machine, function(i, machine) {
+            var label = $('<label class="btn btn-default btn-xs"/>')
+            buttons.append(label);
+            var input = $('<input type="radio" name="options" id="option' + i + '">' + machine + '</input>');
+            label.append(input);
+            if (index.params.machine.length > 1) {
+                label.on('change', function(evt) {
+                    if (!evt.target.classList.contains("active")) {
+                        state['machine'].push(value);
+                    } else {
+                        state['machine'] = arr_remove_from(state[param], value);
+                    }
+                    replace_graphs();
+                });
+            }
+
+            if (i == 0) {
+                label.button('toggle');
+            }
+
+            var details = [];
+            $.each(index.machines[machine], function(key, val) {
+                details.push(key + ': ' + val);
+            });
+            details = details.join('<br/>');
+
+            label.tooltip({'title': details,
+                           'html': true,
+                           'placement': 'right',
+                           'container': 'body'});
+        });
+
         $.each(index.params, function(param, values) {
             state[param] = values;
 
-            if (values.length > 1) {
-                var panel = $('<div class="panel panel-default"/>');
+            if (values.length > 1 && param !== 'machine') {
+                var panel = $('<div class="panel panel-info"/>');
                 nav.append(panel);
                 var panel_header = $('<div class="panel-heading">' + param + '</div>');
                 panel.append(panel_header);
@@ -81,36 +121,34 @@ $(function() {
                 var buttons = $('<div class="btn-group btn-group-justified" data-toggle="buttons"/>');
                 panel_body.append(buttons);
                 $.each(values, function(i, value) {
-                    var button = $('<a class="btn btn-default btn-primary active" role="button">' + value + '</a>');
+                    var button = $('<a class="btn btn-default btn-xs active" role="button">' + value + '</a>');
                     buttons.append(button);
-                    button.on('click', function(evt) {
-                        console.log("click");
-                        if (!evt.target.classList.contains("active")) {
-                            console.log("adding");
-                            state[param].push(value);
-                        } else {
-                            console.log("removing");
-                            state[param] = arr_remove_from(state[param], value);
-                        }
-                        console.log(state[param]);
-                        replace_graphs();
-                    });
+
+                    if (values.length > 1) {
+                        button.on('click', function(evt) {
+                            if (!evt.target.classList.contains("active")) {
+                                state[param].push(value);
+                            } else {
+                                state[param] = arr_remove_from(state[param], value);
+                            }
+                            replace_graphs();
+                        });
+                    }
                 });
             }
         });
 
-        var panel = $('<div class="panel panel-default"/>');
+        var panel = $('<div class="panel panel-info"/>');
         nav.append(panel);
-        var panel_header = $('<div class="panel-heading">Test</div>');
+        var panel_header = $('<div class="panel-heading">test</div>');
         panel.append(panel_header);
         var panel_body = $('<div class="panel-body"/>');
         panel.append(panel_body);
         var buttons = $('<div class="btn-group-vertical" style="width: 100%" data-toggle="buttons"/>');
         panel_body.append(buttons);
         $.each(index.test_names, function(i, test_name) {
-            var label = $('<label class="btn btn-primary"/>')
+            var label = $('<label class="btn btn-default btn-xs"/>')
             buttons.append(label);
-            /* TODO: Only include end of test name */
             var short_name = test_name.split(".");
             short_name = short_name[short_name.length - 1];
             var input = $('<input type="radio" name="options" id="option' + i + '">' + short_name + '</input>');
