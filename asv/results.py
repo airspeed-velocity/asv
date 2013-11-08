@@ -4,45 +4,49 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import io
-import json
 import os
 
 from . import environment
+from . import util
 
 
 class Results(object):
     def __init__(self, params, python, configuration, githash, date):
         self.params = params
         self.python = python
-        self.configuration = configuration
         self.githash = githash
         self.date = date
 
-        self.filename = "{0}-{1}.json".format(
-            self.githash,
-            environment.configuration_to_string(self.python, self.configuration))
+        self.filename = os.path.join(
+            params['machine'],
+            "{0}-{1}.json".format(
+                self.githash[:8],
+                environment.configuration_to_string(
+                    self.python, configuration)))
 
     def add_times(self, times):
         self.results = times
 
     def save(self, result_dir):
-        if not os.path.exists(result_dir):
-            os.makedirs(result_dir)
+        path = os.path.join(result_dir, self.filename)
 
-        with io.open(os.path.join(result_dir, self.filename), 'wb') as fd:
-            json.dump({
-                'results': self.results,
-                'params': self.params,
-                'githash': self.githash,
-                'date': self.date
-                }, fd)
+        util.write_json(path, {
+            'results': self.results,
+            'params': self.params,
+            'githash': self.githash,
+            'date': self.date,
+            'python': self.python
+        })
 
     @classmethod
     def load(cls, path):
-        with io.open(path, 'rb') as fd:
-            d = json.load(fd)
+        d = util.load_json(path)
 
-        obj = cls(d['params'], d['params']['python'], {}, d['githash'], d['date'])
+        obj = cls(
+            d['params'],
+            d['python'],
+            {},
+            d['githash'],
+            d['date'])
         obj.add_times(d['results'])
         return obj

@@ -61,15 +61,18 @@ class Machine(object):
         ram = util.human_file_size(psutil.phymem_usage().total)
         ram = util.get_answer_default("RAM", ram)
 
-        with io.open(path, "wb") as fd:
-            json.dump({
-                "name": name,
-                "os": operating_system,
-                "arch": arch,
-                "cpu": cpu,
-                "ram": ram
-                }, fd)
+        util.write_json(path, {
+            "machine": name,
+            "os": operating_system,
+            "arch": arch,
+            "cpu": cpu,
+            "ram": ram
+        })
 
     def load_machine_file(self, path):
-        with io.open(path, "rb") as fd:
-            self.__dict__.update(json.load(fd))
+        d = util.load_json(path)
+        self.__dict__.update(d)
+
+    def copy_machine_file(self, results_dir):
+        path = os.path.join(results_dir, self.name, 'machine.json')
+        util.write_json(path, self.__dict__)

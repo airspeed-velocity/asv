@@ -4,6 +4,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import io
+import json
 import math
 import os
 import subprocess
@@ -131,3 +133,16 @@ def check_output(args, error=True):
             console.error("Running {0}".format(" ".join(args), stdout))
             raise subprocess.CalledProcessError(retcode, args)
     return stdout
+
+
+def write_json(path, data):
+    if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))
+
+    with io.open(path, 'wb') as fd:
+        json.dump(data, fd, indent=4, sort_keys=True)
+
+
+def load_json(path):
+    with io.open(path, 'rb') as fd:
+        return json.load(fd)

@@ -48,6 +48,7 @@ class Run(object):
         params = {}
         machine_params = Machine()
         params.update(machine_params.__dict__)
+        machine_params.copy_machine_file(conf.results_dir)
 
         repo = Repo(conf.repo, conf.package)
         githashes = repo.get_hashes_from_range(args.range)

@@ -25,6 +25,7 @@ setup(
             'www/*.js',
             'www/*.css',
             'www/*.png',
+            'www/*.ico',
             'www/jquery/*.js',
             'www/flot/*.js',
             'www/bootstrap/*.js',

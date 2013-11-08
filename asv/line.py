@@ -4,11 +4,11 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import io
-import json
 import os
 
 import six
+
+from . import util
 
 
 class Line(object):
@@ -37,11 +37,7 @@ class Line(object):
     def save(self, publish_dir):
         filename = os.path.join(publish_dir, self.path + ".json")
 
-        if not os.path.exists(os.path.dirname(filename)):
-            os.makedirs(os.path.dirname(filename))
-
         val = list(six.iteritems(self.data_points))
         val.sort()
 
-        with io.open(filename, 'wb') as fd:
-            json.dump(val, fd)
+        util.write_json(filename, val)

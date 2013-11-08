@@ -4,8 +4,6 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import io
-import json
 import os
 import shutil
 
@@ -15,7 +13,7 @@ from ..config import Config
 from ..console import console
 from ..line import Line
 from ..results import Results
-
+from .. import util
 
 class Publish(object):
     @classmethod
@@ -31,6 +29,7 @@ class Publish(object):
         params = {}
         lines = {}
         date_to_hash = {}
+        machines = {}
         test_names = set()
 
         if os.path.exists(conf.publish_dir):
@@ -40,12 +39,23 @@ class Publish(object):
             os.path.dirname(__file__), '..', 'www')
         shutil.copytree(template_dir, conf.publish_dir)
 
-        dir_contents = os.listdir(conf.results_dir)
+        dir_contents = []
+        for root, dirs, files in os.walk(conf.results_dir):
+            for filename in files:
+                base, ext = os.path.splitext(filename)
+                if ext == '.json':
+                    dir_contents.append(os.path.join(root, filename))
+
         with console.group("Loading results", "green"):
             console.set_nitems(len(dir_contents))
-            for filename in dir_contents:
+            for path in dir_contents:
+                filename = os.path.basename(path)
+                if filename == 'machine.json':
+                    d = util.load_json(path)
+                    machines[d['name']] = d
+                    continue
+
                 console.step(filename)
-                path = os.path.join(conf.results_dir, filename)
                 if not os.path.isfile(path):
                     continue
 
@@ -79,13 +89,12 @@ class Publish(object):
                 val = list(val)
                 val.sort()
                 params[key] = val
-            with io.open(
-                    os.path.join(conf.publish_dir, "index.json"), "wb") as fd:
-                json.dump({
-                    'package': conf.package,
-                    'project_url': conf.project_url,
-                    'show_commit_url': conf.show_commit_url,
-                    'date_to_hash': date_to_hash,
-                    'params': params,
-                    'test_names': test_names
-                }, fd)
+            util.write_json(os.path.join(conf.publish_dir, "index.json"), {
+                'package': conf.package,
+                'project_url': conf.project_url,
+                'show_commit_url': conf.show_commit_url,
+                'date_to_hash': date_to_hash,
+                'params': params,
+                'test_names': test_names,
+                'machines': machines
+            })

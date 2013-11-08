@@ -4,10 +4,10 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import io
-import json
 import os
 import sys
+
+from . import util
 
 
 class Config(object):
@@ -31,10 +31,11 @@ class Config(object):
             raise RuntimeError("Config file {0} not found.".format(path))
 
         conf = Config()
-        with io.open(path, "rb") as fd:
-            conf.__dict__.update(json.load(fd))
 
-        if not hasattr(conf, "repo"):
+        d = util.load_json(path)
+        conf.__dict__.update(d)
+
+        if getattr(conf, "repo", None) is None:
             raise ValueError(
                 "No repo specified in {0} config file.".format(path))
 
