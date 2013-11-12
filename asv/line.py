@@ -12,13 +12,17 @@ from . import util
 
 
 class Line(object):
-    def __init__(self, test_name, params):
+    def __init__(self, test_name, params, all_params):
+        for key in six.iterkeys(all_params):
+            if key not in params:
+                params[key] = None
+
         self.test_name = test_name
         self.params = params
         self.data_points = {}
 
         # TODO: Make filename safe
-        parts = []
+        parts = ['graphs']
 
         l = list(six.iteritems(self.params))
         l.sort()

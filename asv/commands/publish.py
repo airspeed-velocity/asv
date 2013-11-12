@@ -47,16 +47,11 @@ class Publish(object):
                     dir_contents.append(os.path.join(root, filename))
 
         with console.group("Loading results", "green"):
-            console.set_nitems(len(dir_contents))
             for path in dir_contents:
                 filename = os.path.basename(path)
                 if filename == 'machine.json':
                     d = util.load_json(path)
-                    machines[d['name']] = d
-                    continue
-
-                console.step(filename)
-                if not os.path.isfile(path):
+                    machines[d['machine']] = d
                     continue
 
                 results = Results.load(path)
@@ -67,9 +62,24 @@ class Publish(object):
                     params.setdefault(key, set())
                     params[key].add(val)
 
+        with console.group("Loading graph data", "green"):
+            console.set_nitems(len(dir_contents))
+            for path in dir_contents:
+                filename = os.path.basename(path)
+                console.step(filename)
+
+                if filename == 'machine.json':
+                    continue
+
+                results = Results.load(path)
+
                 for key, val in six.iteritems(results.results):
+                    for param in six.iterkeys(params):
+                        if param not in results.params:
+                            params[param].add(None)
+
                     test_names.add(key)
-                    line = Line(key, results.params)
+                    line = Line(key, results.params, params)
                     if line.path in lines:
                         line = lines[line.path]
                     else:
@@ -77,9 +87,7 @@ class Publish(object):
                     line.add_data_point(results.date, val)
 
         with console.group("Generating graphs", "green"):
-            console.set_nitems(len(lines))
             for line in six.itervalues(lines):
-                console.step(line.test_name)
                 line.save(conf.publish_dir)
 
         with console.group("Writing index", "green"):

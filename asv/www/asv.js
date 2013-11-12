@@ -117,7 +117,13 @@ $(function() {
                 var buttons = $('<div class="btn-group btn-group-justified" data-toggle="buttons"/>');
                 panel_body.append(buttons);
                 $.each(values, function(i, value) {
-                    var button = $('<a class="btn btn-default btn-xs active" role="button">' + value + '</a>');
+                    var value_display;
+                    if (!value)
+                        value_display = '[none]';
+                    else
+                        value_display = value;
+
+                    var button = $('<a class="btn btn-default btn-xs active" role="button">' + value_display + '</a>');
                     buttons.append(button);
 
                     if (values.length > 1) {
@@ -187,6 +193,7 @@ $(function() {
                 }
             });
             parts.sort();
+            parts.splice(0, 0, "graphs");
             parts.push(test_name);
             return parts.join('/') + ".json";
         }
@@ -269,6 +276,7 @@ $(function() {
         to_load = collect_graphs();
 
         $.each(to_load, function(i, item) {
+            console.log(item[0]);
             $.ajax({
                 url: item[0],
             }).done(function(data) { add_graph(data, item[1]) });
