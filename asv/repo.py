@@ -47,8 +47,9 @@ class Repo(object):
             start, end = spec.split('..')
 
     def get_date(self, hash):
+        # TODO: This works on Linux, but should be extended for other platforms
         return int(self._run_git(
-            ['show', hash, '--quiet', '--format=format:%ct']).strip())
+            ['show', hash, '--quiet', '--format=format:%ct']).strip()) * 1000
 
     def get_hashes_from_range(self, range):
         return self._run_git(

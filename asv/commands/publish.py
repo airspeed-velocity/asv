@@ -56,7 +56,7 @@ class Publish(object):
 
                 results = Results.load(path)
 
-                date_to_hash[results.date * 1000] = results.githash
+                date_to_hash[results.date] = results.githash
 
                 for key, val in six.iteritems(results.params):
                     params.setdefault(key, set())

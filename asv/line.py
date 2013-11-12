@@ -36,7 +36,7 @@ class Line(object):
         self.path = os.path.join(*parts)
 
     def add_data_point(self, date, runtime):
-        self.data_points[date * 1000] = runtime
+        self.data_points[date] = runtime
 
     def save(self, publish_dir):
         filename = os.path.join(publish_dir, self.path + ".json")
