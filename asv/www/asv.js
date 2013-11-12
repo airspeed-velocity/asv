@@ -68,6 +68,7 @@ $(function() {
 
         var nav = $("#navigation");
 
+        state['machine'] = index.params.machine;
         var panel = $('<div class="panel panel-default"/>');
         nav.append(panel);
         var panel_header = $('<div class="panel-heading">machine</div>');
@@ -77,23 +78,18 @@ $(function() {
         var buttons = $('<div class="btn-group-vertical" style="width: 100%" data-toggle="buttons"/>');
         panel_body.append(buttons);
         $.each(index.params.machine, function(i, machine) {
-            var label = $('<label class="btn btn-default btn-xs"/>')
-            buttons.append(label);
-            var input = $('<input type="radio" name="options" id="option' + i + '">' + machine + '</input>');
-            label.append(input);
+            var button = $('<a class="btn btn-default btn-xs active" role="button">' + machine + '</a>');
+            buttons.append(button);
+
             if (index.params.machine.length > 1) {
-                label.on('change', function(evt) {
+                button.on('click', function(evt) {
                     if (!evt.target.classList.contains("active")) {
-                        state['machine'].push(value);
+                        state['machine'].push(machine);
                     } else {
-                        state['machine'] = arr_remove_from(state[param], value);
+                        state['machine'] = arr_remove_from(state['machine'], machine);
                     }
                     replace_graphs();
                 });
-            }
-
-            if (i == 0) {
-                label.button('toggle');
             }
 
             var details = [];
@@ -102,10 +98,10 @@ $(function() {
             });
             details = details.join('<br/>');
 
-            label.tooltip({'title': details,
-                           'html': true,
-                           'placement': 'right',
-                           'container': 'body'});
+            button.tooltip({'title': details,
+                            'html': true,
+                            'placement': 'right',
+                            'container': 'body'});
         });
 
         $.each(index.params, function(param, values) {
@@ -198,7 +194,8 @@ $(function() {
         function graph_label(state, differences) {
             var parts = [];
             $.each(state, function(key, value) {
-                if (differences.hasOwnProperty(key)) {
+                if (!(key === 'os' || key === 'cpu' || key === 'arch' || key === 'mem') &&
+                    differences.hasOwnProperty(key)) {
                     if (value) {
                         parts.push(key + "-" + value);
                     } else {
