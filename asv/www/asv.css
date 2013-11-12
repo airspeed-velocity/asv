@@ -7,6 +7,12 @@
     margin-bottom: 6px;
 }
 
+.panel-heading {
+    font-size: 12px;
+    padding: 2px;
+    text-align: center;
+}
+
 #tooltip {
     position: "absolute",
     display: "none",

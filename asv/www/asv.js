@@ -57,6 +57,7 @@ $(function() {
     var graphs = [];
     var date_to_hash = {};
     var show_commit_url = null;
+    var log_scale = false;
 
     function setup(index) {
         var project_name = $("#project-name")[0];
@@ -169,6 +170,11 @@ $(function() {
         show_commit_url = index.show_commit_url;
 
         current_test = index.test_names[0];
+
+        $('#log-scale').on('click', function(evt) {
+            log_scale = !evt.target.classList.contains("active");
+            update_graphs();
+        });
     }
 
     $.ajax({
@@ -293,6 +299,60 @@ $(function() {
         update_graphs();
     }
 
+    function handle_log_scale(options) {
+        if (log_scale && graphs.length) {
+            var min = Infinity;
+            var max = -Infinity;
+            $.each(graphs, function(i, graph) {
+                var data = graph.data;
+                for (var j = 0; j < data.length; ++j) {
+                    if (data[j][1] < min) {
+                        min = data[j][1];
+                    }
+                    if (data[j][1] > max) {
+                        max = data[j][1];
+                    }
+                }
+            });
+
+            for (var x = -12; x < 12; ++x) {
+                if (Math.pow(10, x) > min) {
+                    min = x - 1;
+                    break;
+                }
+            }
+
+            for (var x = -12; x < 12; ++x) {
+                if (Math.pow(10, x) > max) {
+                    max = x;
+                    break;
+                }
+            }
+
+            if (min == max) {
+                --min;
+            }
+
+            var ticks = []
+            for (var x = min; x <= max; ++x) {
+                ticks.push(Math.pow(10, x));
+            }
+
+            options.yaxis = {
+                ticks: ticks,
+                transform:  function(v) {
+                    return Math.log(v);
+                },
+                tickDecimals: 3,
+                tickFormatter: function (v, axis) {
+                    return "10" + (Math.round(Math.log(v)/Math.LN10)).toString().sup();
+                },
+                min: Math.pow(10, min),
+                max: Math.pow(10, max)
+            };
+        }
+    }
+
     function update_graphs() {
         var options = {
 	    series: {
@@ -321,6 +381,7 @@ $(function() {
             }
         };
 
+        handle_log_scale(options);
 
         var plot = $.plot("#main-graph", graphs, options);
 
