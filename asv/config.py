@@ -11,19 +11,28 @@ from . import util
 
 
 class Config(object):
+    """
+    Manages the configuration for a benchmark project.
+    """
+
     def __init__(self):
-        self.package = "package"
+        self.project = "project"
+        self.project_url = "#"
+        self.repo = None
         self.pythons = ["{0.major}.{0.minor}".format(sys.version_info)]
         self.matrix = {}
-        self.repo = None
+        self.env_dir = "env"
         self.benchmark_dir = "benchmarks"
         self.results_dir = "results"
-        self.publish_dir = "html"
-        self.project_url = "#"
+        self.html_dir = "html"
         self.show_commit_url = "#"
 
     @staticmethod
-    def from_file(path):
+    def from_file(path=None):
+        """
+        Load a configuration from a file.  If no file is provided,
+        defaults to `asv.conf.json`.
+        """
         if not path:
             path = "asv.conf.json"
 
@@ -35,7 +44,7 @@ class Config(object):
         d = util.load_json(path)
         conf.__dict__.update(d)
 
-        if getattr(conf, "repo", None) is None:
+        if not getattr(conf, "repo", None):
             raise ValueError(
                 "No repo specified in {0} config file.".format(path))
 

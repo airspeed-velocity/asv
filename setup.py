@@ -29,7 +29,8 @@ setup(
             'www/jquery/*.js',
             'www/flot/*.js',
             'www/bootstrap/*.js',
-            'www/bootstrap/*.css'
+            'www/bootstrap/*.css',
+            'template/asv.conf.json'
         ]
     },
 

@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+"""
+Various low-level utilities.
+"""
+
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
@@ -8,17 +12,10 @@ import io
 import json
 import math
 import os
+import re
 import subprocess
 
 from .console import console
-
-
-def get_answer_default(prompt, default):
-    print("{0} [{1}]:".format(prompt, default), end='')
-    x = raw_input()
-    if x.strip() == '':
-        return default
-    return x
 
 
 def human_file_size(size):
@@ -110,20 +107,35 @@ def human_time(seconds):
 
 
 def which(filename):
+    """
+    Emulates the UNIX `which` command in Python.
+
+    Raises a RuntimeError if no result is found.
+    """
     locations = os.environ.get("PATH").split(os.pathsep)
     candidates = []
     for location in locations:
         candidate = os.path.join(location, filename)
         if os.path.isfile(candidate):
             candidates.append(candidate)
-    return candidates
+    if len(candidates) == 0:
+        raise RuntimeError("Could not find '{0}' in PATH.".format(filename))
+    return candidates[0]
 
 
 def check_call(args, error=True):
+    """
+    Runs the given command in a subprocess, raising
+    subprocess.CalledProcessError if it fails.
+    """
     check_output(args, error=error)
 
 
 def check_output(args, error=True):
+    """
+    Runs the given command in a subprocess, returning the stdout
+    content.  Raises subprocess.CalledProcessError if it fails.
+    """
     p = subprocess.Popen(
         args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdout, stderr = p.communicate()
@@ -136,6 +148,9 @@ def check_output(args, error=True):
 
 
 def write_json(path, data):
+    """
+    Writes JSON to the given path, including indentation and sorting.
+    """
     if not os.path.exists(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
 
@@ -144,5 +159,11 @@ def write_json(path, data):
 
 
 def load_json(path):
+    """
+    Loads JSON to the given path, ignoring any C-style comments.
+    """
     with io.open(path, 'rb') as fd:
-        return json.load(fd)
+        content = fd.read()
+
+    content = re.sub(r'// .*', '', content, re.MULTILINE)
+    return json.loads(content)

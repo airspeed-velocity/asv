@@ -7,7 +7,6 @@ from __future__ import (absolute_import, division, print_function,
 from ..config import Config
 from ..console import console
 from .. import environment
-from .. import util
 
 
 class Setup(object):
@@ -22,27 +21,15 @@ class Setup(object):
     def run(cls, args):
         conf = Config.from_file(args.config)
 
-        configurations = list(
-            environment.get_configurations(conf.pythons, conf.matrix))
-
-        environments = []
+        environments = list(
+            environment.get_environments(
+                conf.env_dir, conf.pythons, conf.matrix))
 
         with console.group("Creating virtualenvs...", color="green"):
-            console.set_nitems(len(configurations))
-            for python, configuration in configurations:
-                config_name = environment.configuration_to_string(
-                    python, configuration)
-
-                executables = util.which("python{0}".format(python))
-                if len(executables) == [0]:
-                    console.warning(
-                        "Skipping {0}: no executable found".format(config_name))
-                    continue
-                executable = executables[0]
-
-                console.step(config_name)
+            console.set_nitems(len(environments))
+            for env in environments:
+                console.step(env.name)
                 with console.indent():
-                    environments.append(
-                        environment.Environment(executable, python, configuration))
+                    env.setup()
 
         return environments

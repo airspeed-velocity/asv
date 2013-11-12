@@ -11,15 +11,19 @@ import subprocess
 from .console import console
 from . import util
 
-# TODO: Make this discovery based on names, not unittest instances
-
 
 class Benchmarks(object):
+    """
+    Manages and runs the set of benchmarks in the project.
+    """
     def __init__(self, benchmark_dir):
-        self.benchmark_dir = benchmark_dir
+        """
+        Discover benchmarks in the given `benchmark_dir`.
+        """
+        self._benchmark_dir = benchmark_dir
 
-        self.benchmarks = unittest.defaultTestLoader.discover(
-            self.benchmark_dir)
+        benchmarks = unittest.defaultTestLoader.discover(
+            self._benchmark_dir)
 
         flat = []
 
@@ -30,26 +34,42 @@ class Benchmarks(object):
             elif isinstance(item, unittest.TestCase):
                 flat.append(item.id())
 
-        recurse(self.benchmarks)
-        self.flat = flat
+        recurse(benchmarks)
+        self._benchmarks = flat
 
     def __len__(self):
-        return len(self.flat)
+        return len(self._benchmarks)
 
     def run_benchmarks(self, env):
+        """
+        Run all of the benchmarks in the given `Environment`.
+        """
         run_script = os.path.join(
             os.path.dirname(__file__), "do_benchmark.py")
 
         times = {}
-        for test_id in self.flat:
-            console.step(test_id + ": ")
+        for benchmark_id in self._benchmarks:
+            console.step(benchmark_id + ": ")
             try:
-                output = env.run([run_script, self.benchmark_dir, test_id])
+                output = env.run(
+                    [run_script, self._benchmark_dir, benchmark_id])
             except subprocess.CalledProcessError:
                 console.add("failed", "red")
-                times[test_id] = None
+                times[benchmark_id] = None
             else:
                 console.add(util.human_time(output))
-                times[test_id] = float(output)
+                times[benchmark_id] = float(output)
+
+        return times
+
+    def skip_benchmarks(self):
+        """
+        Mark all of the benchmarks as skipped.
+        """
+        times = {}
+        for benchmark_id in self._benchmarks:
+            console.step(benchmark_id + ": ")
+            console.add("skipped", "yellow")
+            times[benchmark_id] = None
 
         return times

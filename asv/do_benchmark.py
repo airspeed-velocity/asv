@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+"""
+Run a single benchmark and report it's run time to stdout.
+"""
+
 # This file, unlike all others, must be compatible with as many
 # versions of Python as possible and have no external dependencies.
 # This is the only bit of code from asv that is actually loaded into
@@ -14,10 +18,11 @@ import unittest
 
 if __name__ == '__main__':
     benchmark_dir = sys.argv[-2]
-    test_id = sys.argv[-1]
+    benchmark_id = sys.argv[-1]
     sys.path.insert(0, benchmark_dir)
 
-    test = list(unittest.defaultTestLoader.loadTestsFromName(test_id))[0]
+    benchmark = list(
+        unittest.defaultTestLoader.loadTestsFromName(benchmark_id))[0]
 
     timefunc = timeit.default_timer
     number = 0
@@ -25,7 +30,7 @@ if __name__ == '__main__':
     timefunc = time.time
 
     timer = timeit.Timer(
-        stmt=test.run, setup=test.setUp, timer=timefunc)
+        stmt=benchmark.run, setup=benchmark.setUp, timer=timefunc)
 
     if number == 0:
         # determine number so that 0.2 <= total time < 2.0
@@ -34,6 +39,7 @@ if __name__ == '__main__':
             if timer.timeit(number) >= 0.2:
                 break
             number *= 10
+
     all_runs = timer.repeat(repeat, number)
     best = min(all_runs) / number
-    print(best)
+    sys.stdout.write(str(best) + '\n')

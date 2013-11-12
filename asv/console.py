@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+"""
+A set of utilities for writing output to the console.
+"""
+
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
@@ -195,7 +199,15 @@ def color_print(*args, **kwargs):
         write(end)
 
 
-class Console(object):
+def get_answer_default(prompt, default):
+    print("{0} [{1}]:".format(prompt, default), end='')
+    x = raw_input()
+    if x.strip() == '':
+        return default
+    return x
+
+
+class _Console(object):
     def __init__(self, stream=None):
         if stream is None:
             stream = sys.stdout
@@ -211,11 +223,17 @@ class Console(object):
 
     @contextlib.contextmanager
     def indent(self):
+        """
+        A context manager to increase the indentation level.
+        """
         self._indent += 1
         yield
         self._indent -= 1
 
     def message(self, message, color='default'):
+        """
+        Write a message to the console.
+        """
         self._newline()
         self._stream.write(' ' * self._indent)
         color_print(message, color, file=self._stream)
@@ -223,11 +241,18 @@ class Console(object):
         self._needs_newline = True
 
     def add(self, message, color='default'):
+        """
+        Add content to the end of the message.
+        """
         color_print(message, color, file=self._stream)
         self._stream.flush()
 
     @contextlib.contextmanager
     def group(self, message, color='default'):
+        """
+        Context manager for a new console grouping -- messages within
+        the context will be indented.
+        """
         self._newline()
         self._stream.write(' ' * self._indent)
         color_print(message, color, file=self._stream)
@@ -237,10 +262,18 @@ class Console(object):
             yield
 
     def set_nitems(self, n):
+        """
+        Set the number of items in a lengthy process.  Each of these
+        steps should be incremented through using `step`.
+        """
         self._n_items = n
         self._step = 0
 
     def step(self, message, color='default'):
+        """
+        Write that a step has been completed.  A percentage is
+        displayed along with it.
+        """
         self._newline()
         self._stream.write(' ' * self._indent)
         self._step += 1
@@ -250,10 +283,16 @@ class Console(object):
         self._stream.flush()
         self._needs_newline = True
 
-    def fake_steps(self, n):
+    def fake_step(self, n):
+        """
+        Increase the step count without displaying a message.
+        """
         self._step += n
 
     def error(self, message, content=''):
+        """
+        Display an error to the console.
+        """
         self._newline()
         color_print("ERROR: ", "red", file=self._stream)
         self._stream.write(message)
@@ -262,6 +301,9 @@ class Console(object):
         self._needs_newline = False
 
     def warning(self, message, content=''):
+        """
+        Display a warning to the console.
+        """
         self._newline()
         color_print("WARNING: ", "yellow", file=self._stream)
         self._stream.write(message)
@@ -269,4 +311,4 @@ class Console(object):
         self._stream.write(content)
         self._needs_newline = False
 
-console = Console()
+console = _Console()

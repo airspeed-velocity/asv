@@ -6,47 +6,109 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 
-from . import environment
+from .environment import Environment
 from . import util
 
 
 class Results(object):
-    def __init__(self, params, python, configuration, githash, date):
-        self.params = params
-        self.python = python
-        self.githash = githash
-        self.date = date
+    """
+    Manage a set of benchmark results for a single machine and commit
+    hash.
+    """
+    def __init__(self, params, env, commit_hash, date):
+        """
+        Parameters
+        ----------
+        params : dict
+            Parameters describing the environment in which the
+            benchmarks were run.
 
-        self.filename = os.path.join(
+        env : Environment object
+            Environment in which the benchmarks were run.
+
+        commit_hash : str
+            The commit hash for the benchmark run.
+
+        date : int
+            Javascript timestamp for when the commit was merged into
+            the repository.
+        """
+        self._params = params
+        self._env = env
+        self._commit_hash = commit_hash
+        self._date = date
+        self._results = {}
+        self._python = env.python
+
+        self._filename = os.path.join(
             params['machine'],
             "{0}-{1}.json".format(
-                self.githash[:8],
-                environment.configuration_to_string(
-                    self.python, configuration)))
+                self._commit_hash[:8],
+                env.name))
+
+    @property
+    def commit_hash(self):
+        return self._commit_hash
+
+    @property
+    def date(self):
+        return self._date
+
+    @property
+    def params(self):
+        return self._params
+
+    @property
+    def results(self):
+        return self._results
 
     def add_times(self, times):
-        self.results = times
+        """
+        Add benchmark times.
+
+        Parameters
+        ----------
+        times : dict
+            Dictionary mapping benchmark name to runtime (in seconds).
+        """
+        self._results.update(times)
 
     def save(self, result_dir):
-        path = os.path.join(result_dir, self.filename)
+        """
+        Save the results to disk.
+
+        Parameters
+        ----------
+        result_dir : str
+            Path to root of results tree.
+        """
+        path = os.path.join(result_dir, self._filename)
 
         util.write_json(path, {
-            'results': self.results,
-            'params': self.params,
-            'githash': self.githash,
-            'date': self.date,
-            'python': self.python
+            'results': self._results,
+            'params': self._params,
+            'requirements': self._env.requirements,
+            'commit_hash': self._commit_hash,
+            'date': self._date,
+            'python': self._python
         })
 
     @classmethod
     def load(cls, path):
+        """
+        Load results from disk.
+
+        Parameters
+        ----------
+        path : str
+            Path to results file.
+        """
         d = util.load_json(path)
 
         obj = cls(
             d['params'],
-            d['python'],
-            {},
-            d['githash'],
+            Environment('', d['python'], d['requirements']),
+            d['commit_hash'],
             d['date'])
         obj.add_times(d['results'])
         return obj

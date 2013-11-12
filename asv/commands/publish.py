@@ -11,7 +11,7 @@ import six
 
 from ..config import Config
 from ..console import console
-from ..line import Line
+from ..graph import Graph
 from ..results import Results
 from .. import util
 
@@ -27,17 +27,17 @@ class Publish(object):
         conf = Config.from_file(args.config)
 
         params = {}
-        lines = {}
+        graphs = {}
         date_to_hash = {}
         machines = {}
-        test_names = set()
+        benchmark_names = set()
 
-        if os.path.exists(conf.publish_dir):
-            shutil.rmtree(conf.publish_dir)
+        if os.path.exists(conf.html_dir):
+            shutil.rmtree(conf.html_dir)
 
         template_dir = os.path.join(
             os.path.dirname(__file__), '..', 'www')
-        shutil.copytree(template_dir, conf.publish_dir)
+        shutil.copytree(template_dir, conf.html_dir)
 
         dir_contents = []
         for root, dirs, files in os.walk(conf.results_dir):
@@ -56,7 +56,7 @@ class Publish(object):
 
                 results = Results.load(path)
 
-                date_to_hash[results.date] = results.githash
+                date_to_hash[results.date] = results.commit_hash
 
                 for key, val in six.iteritems(results.params):
                     params.setdefault(key, set())
@@ -78,31 +78,31 @@ class Publish(object):
                         if param not in results.params:
                             params[param].add(None)
 
-                    test_names.add(key)
-                    line = Line(key, results.params, params)
-                    if line.path in lines:
-                        line = lines[line.path]
+                    benchmark_names.add(key)
+                    graph = Graph(key, results.params, params)
+                    if graph.path in graphs:
+                        graph = graphs[graph.path]
                     else:
-                        lines[line.path] = line
-                    line.add_data_point(results.date, val)
+                        graphs[graph.path] = graph
+                    graph.add_data_point(results.date, val)
 
         with console.group("Generating graphs", "green"):
-            for line in six.itervalues(lines):
-                line.save(conf.publish_dir)
+            for graph in six.itervalues(graphs):
+                graph.save(conf.html_dir)
 
         with console.group("Writing index", "green"):
-            test_names = list(test_names)
-            test_names.sort()
+            benchmark_names = list(benchmark_names)
+            benchmark_names.sort()
             for key, val in six.iteritems(params):
                 val = list(val)
                 val.sort()
                 params[key] = val
-            util.write_json(os.path.join(conf.publish_dir, "index.json"), {
-                'package': conf.package,
+            util.write_json(os.path.join(conf.html_dir, "index.json"), {
+                'project': conf.project,
                 'project_url': conf.project_url,
                 'show_commit_url': conf.show_commit_url,
                 'date_to_hash': date_to_hash,
                 'params': params,
-                'test_names': test_names,
+                'benchmark_names': benchmark_names,
                 'machines': machines
             })

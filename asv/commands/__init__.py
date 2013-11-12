@@ -6,5 +6,6 @@ from __future__ import (absolute_import, division, print_function,
 
 from .preview import Preview
 from .publish import Publish
+from .quickstart import Quickstart
 from .run import Run
 from .setup import Setup

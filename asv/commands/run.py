@@ -11,7 +11,7 @@ from ..benchmarks import Benchmarks
 from ..config import Config
 from ..console import console
 from ..machine import Machine
-from ..repo import Repo
+from ..repo import get_repo
 from ..results import Results
 
 from .setup import Setup
@@ -25,17 +25,14 @@ class Run(object):
         # TODO: Range of branches
         parser.add_argument(
             "--range", "-r", default="master^!",
-            help="Range of commits to test.  This is passed as the first "
+            help="Range of commits to benchmark.  This is passed as the first "
             "argument to `git log`.  See 'specifying ranges' section "
             "of the gitrevisions manpage for more info.  Default: master only")
         parser.add_argument(
             "--steps", "-s", type=int, default=0,
-            help="Maximum number of steps to test.  This is used to subsample "
-            "the commits determined by --range to a reasonable number.")
-        parser.add_argument(
-            "--redo", action="store_true",
-            help="Redo all benchmarks, even if they've already been "
-            "done for a particular configuration.")
+            help="Maximum number of steps to benchmark.  This is used to "
+            "subsample the commits determined by --range to a reasonable "
+            "number.")
 
         parser.set_defaults(func=cls.run)
 
@@ -46,22 +43,22 @@ class Run(object):
         params = {}
         machine_params = Machine()
         params.update(machine_params.__dict__)
-        machine_params.copy_machine_file(conf.results_dir)
+        machine_params.save_machine_file(conf.results_dir)
 
         environments = Setup.run(args)
 
-        repo = Repo(conf.repo, conf.package)
-        githashes = repo.get_hashes_from_range(args.range)
+        repo = get_repo(conf.repo, conf.project)
+        commit_hashes = repo.get_hashes_from_range(args.range)
         if args.steps > 0:
             subhashes = []
-            for i in range(0, len(githashes),
-                           int(len(githashes) / args.steps)):
-                subhashes.append(githashes[i])
-            githashes = subhashes
+            for i in range(0, len(commit_hashes),
+                           int(len(commit_hashes) / args.steps)):
+                subhashes.append(commit_hashes[i])
+            commit_hashes = subhashes
 
         benchmarks = Benchmarks(conf.benchmark_dir)
 
-        steps = len(githashes) * len(benchmarks) * len(environments)
+        steps = len(commit_hashes) * len(benchmarks) * len(environments)
 
         console.set_nitems(steps)
 
@@ -71,34 +68,28 @@ class Run(object):
             params.update(env.requirements)
 
             with console.group("Benchmarking " + config_name, "green"):
-                for githash in githashes:
+                for commit_hash in commit_hashes:
                     with console.group(
-                            "{0} githash {1}:".format(
-                                conf.package, githash[:8]), 'green'):
+                            "{0} commit hash {1}:".format(
+                                conf.project, commit_hash[:8]), 'green'):
                         result = Results(
                             params,
-                            env.python,
-                            env.requirements,
-                            githash,
-                            repo.get_date(githash))
-                        if not args.redo and os.path.exists(
-                                os.path.join(conf.results_dir, result.filename)):
-                            console.add(" already done.  skipping", "yellow")
-                            console.fake_steps(len(benchmarks))
-                            continue
+                            env,
+                            commit_hash,
+                            repo.get_date(commit_hash))
 
                         repo.clean()
-                        repo.checkout(githash)
-                        env.uninstall(conf.package)
+                        repo.checkout(commit_hash)
+                        env.uninstall(conf.project)
                         try:
-                            env.install(os.path.abspath(conf.package))
+                            env.install(os.path.abspath(conf.project))
                         except subprocess.CalledProcessError:
                             console.add(" can't install.  skipping", "yellow")
-                            console.fake_steps(len(benchmarks))
-                            continue
-
-                        with console.indent():
-                            times = benchmarks.run_benchmarks(env)
+                            with console.indent():
+                                times = benchmarks.fake_benchmarks()
+                        else:
+                            with console.indent():
+                                times = benchmarks.run_benchmarks(env)
 
                         result.add_times(times)
 

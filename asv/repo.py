@@ -5,33 +5,94 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 
-import datetime
 import os
+import re
 
 from .console import console
 from . import util
 
 
 class Repo(object):
+    """
+    Base class for repository handlers.
+    """
     def __init__(self, url, path):
-        self.git = util.which("git")[0]
+        """
+        Parameters
+        ----------
+        url : str
+            The URL to the repository to clone
 
-        self.path = path
-        if not os.path.exists(self.path):
+        path : str
+            The local path to clone into
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def url_match(cls, url):
+        """
+        Returns `True` if the url is of the right type for this kind
+        of repository.
+        """
+        raise NotImplementedError()
+
+    def checkout(self, branch):
+        """
+        Checkout a given branch or commit hash.
+        """
+        raise NotImplementedError()
+
+    def clean(self):
+        """
+        Clean the repository of any non-checked-in files.
+        """
+        raise NotImplementedError()
+
+    def get_date(self, hash):
+        """
+        Get a Javascript timestamp for a particular commit.
+        """
+        raise NotImplementedError()
+
+    def get_hashes_from_range(self, range):
+        """
+        Get a list of commit hashes given a range specifier.  The
+        syntax of the range specifier will depend on the DVCS used.
+        """
+        raise NotImplementedError()
+
+
+class Git(Repo):
+    def __init__(self, url, path):
+        self._git = util.which("git")
+
+        self._path = path
+        if not os.path.exists(self._path):
             console.message("Cloning project", "green")
-            self._run_git(['clone', url, self.path], chdir=False)
+            self._run_git(['clone', url, self._path], chdir=False)
 
         console.message("Fetching recent changes", "green")
         self._run_git(['fetch', 'origin'])
         self.checkout('origin/master')
 
+    @classmethod
+    def url_match(cls, url):
+        regexes = [
+            '^https?://.*?\.git$',
+            '^git@.*?\.git$']
+
+        for regex in regexes:
+            if re.match(regex, url):
+                return True
+        return False
+
     def _run_git(self, args, chdir=True):
         if chdir:
             orig_dir = os.getcwd()
-            os.chdir(self.path)
+            os.chdir(self._path)
         try:
             return util.check_output(
-                [self.git] + args)
+                [self._git] + args)
         finally:
             if chdir:
                 os.chdir(orig_dir)
@@ -55,3 +116,14 @@ class Repo(object):
         return self._run_git(
             ['log', '--quiet', '--format=format:%H', range]
         ).strip().split()
+
+
+def get_repo(url, path):
+    classes = [Git]
+
+    for cls in classes:
+        if cls.url_match(url):
+            return cls(url, path)
+
+    raise ValueError(
+        "Can not determine what kind of DVCS to use for URL '{0}'".format(url))

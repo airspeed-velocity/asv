@@ -4,16 +4,18 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import io
 import os
 import platform
-import json
 import sys
 
+from . import console
 from . import util
 
 
 class Machine(object):
+    """
+    Stores information about a particular machine.
+    """
     def __init__(self):
         path = self.get_machine_file_path()
         if not os.path.exists(path):
@@ -43,14 +45,14 @@ class Machine(object):
 
         print(
             "1. NAME: A unique name to identify this machine in the results.")
-        name = util.get_answer_default("NAME", node)
+        name = console.get_answer_default("NAME", node)
 
         print("2. OS: The OS type and version of this machine.")
-        operating_system = util.get_answer_default(
+        operating_system = console.get_answer_default(
             "OS", "{0} {1}".format(system, release))
 
         print("3. ARCH: The architecture of the machine, e.g. i386")
-        arch = util.get_answer_default("ARCH", platform.machine())
+        arch = console.get_answer_default("ARCH", platform.machine())
 
         print("4. CPU: A human-readable description of the CPU.")
         if sys.platform.startswith('linux'):
@@ -59,11 +61,11 @@ class Machine(object):
         else:
             # TODO: Get this on a Mac
             cpu = ''
-        cpu = util.get_answer_default("CPU", cpu)
+        cpu = console.get_answer_default("CPU", cpu)
 
         print("4. RAM: The amount of physical RAM in the system.")
         ram = util.human_file_size(psutil.phymem_usage().total)
-        ram = util.get_answer_default("RAM", ram)
+        ram = console.get_answer_default("RAM", ram)
 
         util.write_json(path, {
             "machine": name,
@@ -77,6 +79,6 @@ class Machine(object):
         d = util.load_json(path)
         self.__dict__.update(d)
 
-    def copy_machine_file(self, results_dir):
-        path = os.path.join(results_dir, self.name, 'machine.json')
+    def save_machine_file(self, results_dir):
+        path = os.path.join(results_dir, self.machine, 'machine.json')
         util.write_json(path, self.__dict__)

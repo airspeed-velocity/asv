@@ -27,12 +27,13 @@ class Preview(object):
     def run(cls, args):
         conf = Config.from_file(args.config)
 
-        os.chdir(conf.publish_dir)
+        os.chdir(conf.html_dir)
 
         port = args.port
 
         Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
 
+        # Create a server that allows address reuse
         class MyTCPServer(SocketServer.TCPServer):
             allow_reuse_address = True
 

@@ -6,22 +6,31 @@ from __future__ import (absolute_import, division, print_function,
 
 import argparse
 
+import six
+
 from . import commands
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        "Airspeed Velocity: Simple Github-based benchmark reporting tool for Python")
+    """
+    The top-level entry point for the asv script.
 
-    parser.add_argument("config", nargs="?",
-                        help="Benchmark configuration file",
-                        default='')
+    Most of the real work is handled by the subcommands in the
+    commands subpackage.
+    """
+    parser = argparse.ArgumentParser(
+        "Airspeed Velocity: Simple benchmark reporting tool for Python")
+
+    parser.add_argument(
+        "config", nargs="?",
+        help="Benchmark configuration file",
+        default='asv.conf.json')
 
     subparsers = parser.add_subparsers(
         title='subcommands',
         description='valid subcommands')
 
-    for key, val in commands.__dict__.items():
+    for key, val in six.iteritems(commands.__dict__):
         if hasattr(val, 'setup_arguments'):
             val.setup_arguments(subparsers)
 
