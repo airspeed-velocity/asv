@@ -47,6 +47,7 @@ class Benchmarks(object):
                 output = env.run([run_script, self.benchmark_dir, test_id])
             except subprocess.CalledProcessError:
                 console.add("failed", "red")
+                times[test_id] = None
             else:
                 console.add(util.human_time(output))
                 times[test_id] = float(output)
