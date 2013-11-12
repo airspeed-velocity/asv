@@ -168,13 +168,17 @@ $(function() {
         date_to_hash = index.date_to_hash;
         show_commit_url = index.show_commit_url;
 
-        set_current_test(index.test_names[0]);
+        current_test = index.test_names[0];
     }
 
     $.ajax({
         url: "index.json",
         cache: false
         }).done(setup);
+
+    $(window).resize(function() {
+        update_graphs();
+    });
 
     function set_current_test(test_name) {
         current_test = test_name;
@@ -271,7 +275,6 @@ $(function() {
 
     function replace_graphs() {
         graphs = [];
-        update_graphs();
 
         to_load = collect_graphs();
 
