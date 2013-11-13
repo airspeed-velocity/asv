@@ -206,41 +206,41 @@ $(function() {
         /* The tooltip on a point shows the exact timing and the
            commit hash */
         function showTooltip(x, y, contents) {
-	    $("<div id='tooltip'>" + contents + "</div>").css({
-		position: "absolute",
-		display: "none",
-		top: y + 5,
-		left: x + 20,
-		border: "1px solid #888",
-		padding: "2px",
-		"background-color": "#eee",
-		opacity: 0.80
-	    }).appendTo("body").fadeIn(200);
-	}
+            $("<div id='tooltip'>" + contents + "</div>").css({
+                position: "absolute",
+                display: "none",
+                top: y + 5,
+                left: x + 20,
+                border: "1px solid #888",
+                padding: "2px",
+                "background-color": "#eee",
+                opacity: 0.80
+            }).appendTo("body").fadeIn(200);
+        }
 
         function get_hash_from_datapoint(datapoint) {
-	    return master_json.date_to_hash[datapoint[0]];
+            return master_json.date_to_hash[datapoint[0]];
         }
 
         var previous_hover = null;
-	$("#main-graph").bind("plothover", function (event, pos, item) {
-	    if (item) {
-		if (previous_hover != item.datapoint) {
-		    previous_hover = item.datapoint;
-		    $("#tooltip").remove();
+        $("#main-graph").bind("plothover", function (event, pos, item) {
+            if (item) {
+                if (previous_hover != item.datapoint) {
+                    previous_hover = item.datapoint;
+                    $("#tooltip").remove();
                     var y = item.datapoint[1];
                     var commit_hash = get_hash_from_datapoint(item.datapoint);
                     if (commit_hash) {
-		        showTooltip(
+                        showTooltip(
                             item.pageX, item.pageY,
                             pretty_second(y) + " @ " + commit_hash.substring(0, 8));
                     }
-		}
-	    } else {
-		$("#tooltip").remove();
-		previous_point = null;
-	    }
-	});
+                }
+            } else {
+                $("#tooltip").remove();
+                previous_point = null;
+            }
+        });
 
         /* Clicking on a point should display the particular commit
            hash in another tab. */
@@ -257,7 +257,7 @@ $(function() {
                     }
                 }
             }
-	});
+        });
     });
 
     /* When the window resizes, redraw the graphs */
@@ -453,10 +453,10 @@ $(function() {
 
         var options = {
             colors: colors,
-	    series: {
-	        lines: {
-		    show: true,
-		    lineWidth: 1
+            series: {
+                lines: {
+                    show: true,
+                    lineWidth: 1
 	        },
                 points: {
                     show: true
