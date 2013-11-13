@@ -400,49 +400,48 @@ $(function() {
 
     /* Handle log scaling the plot */
     function handle_log_scale(options) {
-        if (log_scale && graphs.length) {
-            /* Find the minimum and maximum values */
-            var min = Infinity;
-            var max = -Infinity;
-            $.each(graphs, function(i, graph) {
-                var data = graph.data;
-                for (var j = 0; j < data.length; ++j) {
-                    if (data[j][1] < min) {
-                        min = data[j][1];
-                    }
-                    if (data[j][1] > max) {
-                        max = data[j][1];
-                    }
+        if (!log_scale || !graphs.length)
+            return;
+
+        /* Find the minimum and maximum values */
+        var min = Infinity;
+        var max = -Infinity;
+        $.each(graphs, function(i, graph) {
+            var data = graph.data;
+            for (var j = 0; j < data.length; ++j) {
+                if (data[j][1] < min) {
+                    min = data[j][1];
                 }
-            });
-
-            min = Math.floor(Math.log(min) / Math.LN10);
-            max = Math.ceil(Math.log(max) / Math.LN10);
-
-            if (min == max) {
-                --min;
+                if (data[j][1] > max) {
+                    max = data[j][1];
+                }
             }
+        });
 
-            var ticks = []
-            for (var x = min; x <= max; ++x) {
-                ticks.push(Math.pow(10, x));
-            }
+        min = Math.floor(Math.log(min) / Math.LN10);
+        max = Math.ceil(Math.log(max) / Math.LN10);
 
-            options.yaxis = {
-                ticks: ticks,
-                transform:  function(v) {
-                    return Math.log(v);
-                },
-                tickDecimals: 3,
-                tickFormatter: function (v, axis) {
-                    return "10" + (
-                        Math.round(
-                            Math.log(v) / Math.LN10)).toString().sup();
-                },
-                min: Math.pow(10, min),
-                max: Math.pow(10, max)
-            };
+        if (min == max) {
+            --min;
         }
+
+        var ticks = []
+        for (var x = min; x <= max; ++x) {
+            ticks.push(Math.pow(10, x));
+        }
+
+        options.yaxis.ticks = ticks;
+        options.yaxis.transform = function(v) {
+            return Math.log(v);
+        };
+        options.yaxis.tickDecimals = 3;
+        options.yaxis.tickFormatter = function (v, axis) {
+            return "10" + (
+                Math.round(
+                    Math.log(v) / Math.LN10)).toString().sup();
+        };
+        options.yaxis.min = Math.pow(10, min);
+        options.yaxis.max = Math.pow(10, max);
     }
 
     /* Once we have all of the graphs loaded, send them to flot for
@@ -465,8 +464,18 @@ $(function() {
 	    },
             xaxis: {
                 mode: "time",
-	        tickLength: 5
+	        tickLength: 5,
+                axisLabel: "commit date",
+                axisLabelUseCanvas: true,
+                axisLabelFontFamily: "sans-serif",
+                axisLabelFontSizePixels: 12
 	    },
+            yaxis: {
+                axisLabel: "seconds",
+                axisLabelUseCanvas: true,
+                axisLabelFontFamily: "sans-serif",
+                axisLabelFontSizePixels: 12
+            },
 	    selection: {
 	        mode: "x"
 	    },
