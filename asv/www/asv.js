@@ -30,27 +30,28 @@ $(function() {
             return prop;
     };
 
-    function pretty_second(x) {
-        units = [
-            ['ns', 0.000000001],
-            ['μs', 0.000001],
-            ['ms', 0.001],
-            ['s', 1],
-            ['m', 60],
-            ['h', 60 * 60],
-            ['d', 60 * 60 * 24],
-            ['w', 60 * 60 * 24 * 7],
-            ['y', 60 * 60 * 24 * 7 * 52]
-            ['C', 60 * 60 * 24 * 7 * 52 * 100]
-        ];
+    time_units = [
+        ['ps', 'picoseconds', 0.000000000001],
+        ['ns', 'nanoseconds', 0.000000001],
+        ['μs', 'microseconds', 0.000001],
+        ['ms', 'milliseconds', 0.001],
+        ['s', 'seconds', 1],
+        ['m', 'minutes', 60],
+        ['h', 'hours', 60 * 60],
+        ['d', 'days', 60 * 60 * 24],
+        ['w', 'weeks', 60 * 60 * 24 * 7],
+        ['y', 'years', 60 * 60 * 24 * 7 * 52]
+        ['C', 'centuries', 60 * 60 * 24 * 7 * 52 * 100]
+    ];
 
-        for (i = 0; i < units.length; ++i) {
-            if (x < units[i+1][1]) {
-                return (x / units[i][1]).toFixed(3) + units[i][0];
+    function pretty_second(x) {
+        for (i = 0; i < time_units.length - 1; ++i) {
+            if (x < time_units[i+1][2]) {
+                return (x / time_units[i][2]).toFixed(3) + time_units[i][0];
             }
         }
 
-        return 'int';
+        return 'inf';
     };
 
     /* GLOBAL STATE */
@@ -398,9 +399,12 @@ $(function() {
         });
     }
 
+    function get_min_range(graphs) {
+    }
+
     /* Handle log scaling the plot */
-    function handle_log_scale(options) {
-        if (!log_scale || !graphs.length)
+    function handle_y_scale(options) {
+        if (!graphs.length)
             return;
 
         /* Find the minimum and maximum values */
@@ -418,30 +422,49 @@ $(function() {
             }
         });
 
-        min = Math.floor(Math.log(min) / Math.LN10);
-        max = Math.ceil(Math.log(max) / Math.LN10);
+        if (log_scale) {
+            min = Math.floor(Math.log(min) / Math.LN10);
+            max = Math.ceil(Math.log(max) / Math.LN10);
 
-        if (min == max) {
-            --min;
+            if (min == max) {
+                --min;
+            }
+
+            var ticks = []
+            for (var x = min; x <= max; ++x) {
+                ticks.push(Math.pow(10, x));
+            }
+
+            options.yaxis.ticks = ticks;
+            options.yaxis.transform = function(v) {
+                return Math.log(v);
+            };
+            options.yaxis.tickDecimals = 3;
+            options.yaxis.tickFormatter = function (v, axis) {
+                return "10" + (
+                    Math.round(
+                        Math.log(v) / Math.LN10)).toString().sup();
+            };
+            options.yaxis.min = Math.pow(10, min);
+            options.yaxis.max = Math.pow(10, max);
+        } else {
+            var unit_name = null;
+            var multiplier = null;
+            for (var i = 0; i < time_units.length - 1; ++i) {
+                if (min < time_units[i+1][2]) {
+                    unit_name = time_units[i][1];
+                    multiplier = time_units[i][2];
+                    break;
+                }
+            }
+
+            if (unit_name) {
+                options.yaxis.axisLabel = unit_name;
+                options.yaxis.tickFormatter = function (v, axis) {
+                    return Math.floor(v / multiplier);
+                };
+            }
         }
-
-        var ticks = []
-        for (var x = min; x <= max; ++x) {
-            ticks.push(Math.pow(10, x));
-        }
-
-        options.yaxis.ticks = ticks;
-        options.yaxis.transform = function(v) {
-            return Math.log(v);
-        };
-        options.yaxis.tickDecimals = 3;
-        options.yaxis.tickFormatter = function (v, axis) {
-            return "10" + (
-                Math.round(
-                    Math.log(v) / Math.LN10)).toString().sup();
-        };
-        options.yaxis.min = Math.pow(10, min);
-        options.yaxis.max = Math.pow(10, max);
     }
 
     /* Once we have all of the graphs loaded, send them to flot for
@@ -489,7 +512,7 @@ $(function() {
             }
         };
 
-        handle_log_scale(options);
+        handle_y_scale(options);
 
         var plot = $.plot("#main-graph", graphs, options);
 
