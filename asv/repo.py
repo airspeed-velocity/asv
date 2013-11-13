@@ -86,13 +86,13 @@ class Git(Repo):
                 return True
         return False
 
-    def _run_git(self, args, chdir=True):
+    def _run_git(self, args, chdir=True, **kwargs):
         if chdir:
             orig_dir = os.getcwd()
             os.chdir(self._path)
         try:
             return util.check_output(
-                [self._git] + args)
+                [self._git] + args, **kwargs)
         finally:
             if chdir:
                 os.chdir(orig_dir)
@@ -103,18 +103,15 @@ class Git(Repo):
     def clean(self):
         self._run_git(['clean', '-fxd'])
 
-    def get_branches(self, spec, steps=None):
-        if '..' in spec:
-            start, end = spec.split('..')
-
     def get_date(self, hash):
         # TODO: This works on Linux, but should be extended for other platforms
         return int(self._run_git(
-            ['show', hash, '--quiet', '--format=format:%ct']).strip()) * 1000
+            ['show', hash, '--quiet', '--format=format:%ct'],
+            dots=False).strip()) * 1000
 
     def get_hashes_from_range(self, range):
         return self._run_git(
-            ['log', '--quiet', '--format=format:%H', range]
+            ['log', '--quiet', '--format=format:%H', range], dots=False
         ).strip().split()
 
 

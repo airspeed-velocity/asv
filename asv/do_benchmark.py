@@ -27,7 +27,7 @@ if __name__ == '__main__':
     timefunc = timeit.default_timer
     number = 0
     repeat = timeit.default_repeat
-    timefunc = time.time
+    timefunc = timeit.default_timer()
 
     timer = timeit.Timer(
         stmt=benchmark.run, setup=benchmark.setUp, timer=timefunc)

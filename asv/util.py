@@ -12,8 +12,14 @@ import io
 import json
 import math
 import os
+try:
+    import posix
+except ImportError:
+    posix = None
 import re
 import subprocess
+import threading
+import time
 
 from .console import console
 
@@ -123,27 +129,98 @@ def which(filename):
     return candidates[0]
 
 
-def check_call(args, error=True):
+class ProcessError(subprocess.CalledProcessError):
+    def __init__(self, args, retcode, stdout, stderr):
+        self.args = args
+        self.retcode = retcode
+        self.stdout = stdout
+        self.stderr = stderr
+
+    def __str__(self):
+        return "Command '{0}' returned non-zero exit status {1}".format(
+            ' '.join(self.args), self.retcode)
+
+
+def check_call(args, error=True, timeout=60, dots=True):
     """
-    Runs the given command in a subprocess, raising
-    subprocess.CalledProcessError if it fails.
+    Runs the given command in a subprocess, raising ProcessError if it
+    fails.
     """
     check_output(args, error=error)
 
 
-def check_output(args, error=True):
-    """
-    Runs the given command in a subprocess, returning the stdout
-    content.  Raises subprocess.CalledProcessError if it fails.
-    """
-    p = subprocess.Popen(
-        args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    stdout, stderr = p.communicate()
-    retcode = p.poll()
+def check_output(args, error=True, timeout=60, dots=True):
+    last_time = [time.time()]
+
+    def read_stream(stream, lines):
+        while True:
+            line = stream.readline()
+            if len(line) == 0:
+                break
+            lines.append(line)
+            if dots:
+                console.dot()
+            last_time[0] = time.time()
+
+    def wait():
+        while True:
+            if proc.poll():
+                break
+            time.sleep(0.01)
+
+    kwargs = {}
+    if posix:
+        kwargs = {'close_fds': True}
+    kwargs['stdout'] = subprocess.PIPE
+    kwargs['stderr'] = subprocess.PIPE
+    proc = subprocess.Popen(args, **kwargs)
+
+    stdout_lines = []
+    stderr_lines = []
+    # Setup all worker threads. By now the pipes have been created and
+    # proc.stdout/proc.stderr point to open pipe objects.
+    stdout_reader = threading.Thread(
+        target=read_stream, args=(proc.stdout, stdout_lines))
+    stderr_reader = threading.Thread(
+        target=read_stream, args=(proc.stderr, stderr_lines))
+
+    # Start all workers
+    stdout_reader.start()
+    stderr_reader.start()
+    try:
+        try:
+            while True:
+                if proc.poll() is not None:
+                    break
+                time.sleep(0.01)
+                if time.time() - last_time[0] > timeout:
+                    proc.terminate()
+                    break
+        except KeyboardInterrupt:
+            proc.terminate()
+            raise
+    finally:
+        proc.stdout.flush()
+        proc.stderr.flush()
+        stdout_reader.join()
+        stderr_reader.join()
+
+    stdout = b''.join(stdout_lines)
+    stderr = b''.join(stderr_lines)
+    stdout = stdout.decode('utf-8', 'replace')
+    stderr = stderr.decode('utf-8', 'replace')
+
+    retcode = proc.poll()
     if retcode:
         if error:
-            console.error("Running {0}".format(" ".join(args), stdout))
-            raise subprocess.CalledProcessError(retcode, args)
+            console.error("Running {0}".format(" ".join(args)))
+            console.add("STDOUT " + ("-" * 60) + '\n', 'red')
+            console.add(stdout)
+            console.add("STDERR " + ("-" * 60) + '\n', 'red')
+            console.add(stderr)
+            console.add(("-" * 67) + '\n', 'red')
+            raise ProcessError(args, retcode, stdout, stderr)
+
     return stdout
 
 

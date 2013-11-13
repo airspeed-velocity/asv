@@ -146,10 +146,9 @@ class Environment(object):
             else:
                 self.install(key)
 
-    def _run_executable(self, executable, args,
-                        error=True):
+    def _run_executable(self, executable, args, **kwargs):
         return util.check_output([
-            os.path.join(self._path, 'bin', executable)] + args, error=error)
+            os.path.join(self._path, 'bin', executable)] + args, **kwargs)
 
     def install(self, package):
         """
@@ -172,9 +171,9 @@ class Environment(object):
         console.message("Uninstalling {0}".format(package))
         self._run_executable('pip', ['uninstall', '-y', package], error=False)
 
-    def run(self, args):
+    def run(self, args, **kwargs):
         """
         Start up the environment's python executable with the given
         args.
         """
-        return self._run_executable('python', args)
+        return self._run_executable('python', args, **kwargs)

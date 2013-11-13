@@ -52,8 +52,10 @@ class Benchmarks(object):
             console.step(benchmark_id + ": ")
             try:
                 output = env.run(
-                    [run_script, self._benchmark_dir, benchmark_id])
-            except subprocess.CalledProcessError:
+                    [run_script, self._benchmark_dir, benchmark_id],
+                    # TODO: Get timeout from benchmark
+                    dots=False, timeout=60)
+            except util.ProcessError:
                 console.add("failed", "red")
                 times[benchmark_id] = None
             else:

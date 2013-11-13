@@ -230,6 +230,11 @@ class _Console(object):
         yield
         self._indent -= 1
 
+    def dot(self):
+        self._stream.write('.')
+        self._stream.flush()
+        self._needs_newline = True
+
     def message(self, message, color='default'):
         """
         Write a message to the console.

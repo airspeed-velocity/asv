@@ -5,7 +5,6 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
-import subprocess
 
 from ..benchmarks import Benchmarks
 from ..config import Config
@@ -13,6 +12,7 @@ from ..console import console
 from ..machine import Machine
 from ..repo import get_repo
 from ..results import Results
+from .. import util
 
 from .setup import Setup
 
@@ -83,10 +83,10 @@ class Run(object):
                         env.uninstall(conf.project)
                         try:
                             env.install(os.path.abspath(conf.project))
-                        except subprocess.CalledProcessError:
+                        except util.ProcessError:
                             console.add(" can't install.  skipping", "yellow")
                             with console.indent():
-                                times = benchmarks.fake_benchmarks()
+                                times = benchmarks.skip_benchmarks()
                         else:
                             with console.indent():
                                 times = benchmarks.run_benchmarks(env)
