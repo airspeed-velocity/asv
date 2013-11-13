@@ -38,5 +38,5 @@ setup(
     author_email="mdroe@stsci.edu",
     description="Airspeed Velocity: A simple Python history benchmarking tool",
     license="BSD",
-    url = "http://github.com/spacetelescope/asv",   # project home page, if any
+    url="http://github.com/spacetelescope/asv"
 )
