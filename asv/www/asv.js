@@ -202,6 +202,62 @@ $(function() {
             log_scale = !evt.target.classList.contains("active");
             update_graphs();
         });
+
+        /* The tooltip on a point shows the exact timing and the
+           commit hash */
+        function showTooltip(x, y, contents) {
+	    $("<div id='tooltip'>" + contents + "</div>").css({
+		position: "absolute",
+		display: "none",
+		top: y + 5,
+		left: x + 20,
+		border: "1px solid #888",
+		padding: "2px",
+		"background-color": "#eee",
+		opacity: 0.80
+	    }).appendTo("body").fadeIn(200);
+	}
+
+        function get_hash_from_datapoint(datapoint) {
+	    return master_json.date_to_hash[datapoint[0]];
+        }
+
+        var previous_hover = null;
+	$("#main-graph").bind("plothover", function (event, pos, item) {
+	    if (item) {
+		if (previous_hover != item.datapoint) {
+		    previous_hover = item.datapoint;
+		    $("#tooltip").remove();
+                    var y = item.datapoint[1];
+                    var commit_hash = get_hash_from_datapoint(item.datapoint);
+                    if (commit_hash) {
+		        showTooltip(
+                            item.pageX, item.pageY,
+                            pretty_second(y) + " @ " + commit_hash.substring(0, 8));
+                    }
+		}
+	    } else {
+		$("#tooltip").remove();
+		previous_point = null;
+	    }
+	});
+
+        /* Clicking on a point should display the particular commit
+           hash in another tab. */
+        var previous_click;
+        var previous_hash;
+        $("#main-graph").bind("plotclick", function (event, pos, item) {
+            if (item) {
+                if (previous_click != item.datapoint) {
+                    previous_click = item.datapoint;
+                    var commit_hash = get_hash_from_datapoint(item.datapoint);
+                    if (previous_hash !== commit_hash) {
+                        previous_hash = commit_hash;
+                        window.open(master_json.show_commit_url + previous_hash, '_blank');
+                    }
+                }
+            }
+	});
     });
 
     /* When the window resizes, redraw the graphs */
@@ -423,53 +479,6 @@ $(function() {
 
         var plot = $.plot("#main-graph", graphs, options);
 
-        /* The tooltip on a point shows the exact timing and the
-           commit hash */
-        function showTooltip(x, y, contents) {
-	    $("<div id='tooltip'>" + contents + "</div>").css({
-		position: "absolute",
-		display: "none",
-		top: y + 5,
-		left: x + 20,
-		border: "1px solid #888",
-		padding: "2px",
-		"background-color": "#eee",
-		opacity: 0.80
-	    }).appendTo("body").fadeIn(200);
-	}
-
-        var previous_point = null;
-        var previous_hash = null;
-	$("#main-graph").bind("plothover", function (event, pos, item) {
-	    if (item) {
-		if (previous_point != item.datapoint) {
-		    previous_point = item.datapoint;
-		    $("#tooltip").remove();
-		    var x = item.datapoint[0];
-                    var y = item.datapoint[1];
-                    var commit_hash = master_json.date_to_hash[x];
-                    if (commit_hash) {
-                        previous_hash = commit_hash;
-		        showTooltip(
-                            item.pageX, item.pageY,
-                            pretty_second(y) + " @ " + commit_hash.substring(0, 8));
-                    }
-		}
-	    } else {
-		$("#tooltip").remove();
-		previous_point = null;
-                previous_hash = null;
-	    }
-	});
-
-        /* Clicking on a point should display the particular commit
-           hash in another tab. */
-        $("#main-graph").bind("plotclick", function (event, pos, item) {
-            if (previous_hash) {
-                window.open(master_json.show_commit_url + previous_hash, '_blank');
-            }
-	});
-
         /* Set up the "overview" plot */
         var overview = $.plot("#overview", graphs, {
 	    series: {
@@ -496,6 +505,7 @@ $(function() {
             }
 	});
 
+        $("#main-graph").unbind("plotselected");
 	$("#main-graph").bind("plotselected", function (event, ranges) {
 	    // do the zooming
 
@@ -510,6 +520,7 @@ $(function() {
 	    overview.setSelection(ranges, true);
 	});
 
+        $("#overview").unbind("plotselected");
 	$("#overview").bind("plotselected", function (event, ranges) {
 	    plot.setSelection(ranges);
 	});
