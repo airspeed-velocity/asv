@@ -447,11 +447,16 @@ $(function() {
     /* Once we have all of the graphs loaded, send them to flot for
        drawing. */
     function update_graphs() {
+        var colors = [
+            '#73cf26', '#e89f0c', '#e0001a', '#2b16de', '#1fdeb0'
+        ];
+
         var options = {
+            colors: colors,
 	    series: {
 	        lines: {
 		    show: true,
-		    lineWidth: 1,
+		    lineWidth: 1
 	        },
                 points: {
                     show: true
@@ -490,6 +495,7 @@ $(function() {
 
         /* Set up the "overview" plot */
         var overview = $.plot("#overview", graphs, {
+            colors: colors,
 	    series: {
 		lines: {
 		    show: true,
