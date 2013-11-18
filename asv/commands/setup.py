@@ -18,9 +18,12 @@ class Setup(object):
         parser.set_defaults(func=cls.run)
 
     @classmethod
-    def run(cls, args):
+    def run_from_args(cls, args):
         conf = Config.from_file(args.config)
+        return cls.run(conf=conf)
 
+    @classmethod
+    def run(cls, conf):
         environments = list(
             environment.get_environments(
                 conf.env_dir, conf.pythons, conf.matrix))

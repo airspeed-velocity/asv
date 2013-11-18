@@ -34,25 +34,29 @@ class Run(object):
             "subsample the commits determined by --range to a reasonable "
             "number.")
 
-        parser.set_defaults(func=cls.run)
+        parser.set_defaults(func=cls.run_from_args)
 
     @classmethod
-    def run(cls, args):
+    def run_from_args(cls, args):
         conf = Config.from_file(args.config)
+        return cls.run(
+            conf=conf, range=args.range, steps=args.steps)
 
+    @classmethod
+    def run(cls, conf, range="master^!", steps=0):
         params = {}
         machine_params = Machine()
         params.update(machine_params.__dict__)
         machine_params.save_machine_file(conf.results_dir)
 
-        environments = Setup.run(args)
+        environments = Setup.run(conf=conf)
 
         repo = get_repo(conf.repo, conf.project)
-        commit_hashes = repo.get_hashes_from_range(args.range)
-        if args.steps > 0:
+        commit_hashes = repo.get_hashes_from_range(range)
+        if steps > 0:
             subhashes = []
             for i in range(0, len(commit_hashes),
-                           int(len(commit_hashes) / args.steps)):
+                           int(len(commit_hashes) / steps)):
                 subhashes.append(commit_hashes[i])
             commit_hashes = subhashes
 

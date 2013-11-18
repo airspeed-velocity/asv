@@ -22,12 +22,14 @@ class Quickstart(object):
             help="The destination directory for the new benchmarking "
             "project.")
 
-        parser.set_defaults(func=cls.run)
+        parser.set_defaults(func=cls.run_from_args)
 
     @classmethod
-    def run(cls, args):
-        dest = args.dest
+    def run_from_args(cls, args):
+        return cls.run(dest=args.dest)
 
+    @classmethod
+    def run(cls, dest="."):
         template_path = os.path.join(
             os.path.dirname(__file__), '..', 'template')
         for entry in os.listdir(template_path):

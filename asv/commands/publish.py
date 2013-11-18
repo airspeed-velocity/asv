@@ -15,17 +15,21 @@ from ..graph import Graph
 from ..results import Results
 from .. import util
 
+
 class Publish(object):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser("publish", help="Publish results")
 
-        parser.set_defaults(func=cls.run)
+        parser.set_defaults(func=cls.run_from_args)
 
     @classmethod
-    def run(cls, args):
+    def run_from_args(cls, args):
         conf = Config.from_file(args.config)
+        return cls.run(conf=conf)
 
+    @classmethod
+    def run(cls, conf):
         params = {}
         graphs = {}
         date_to_hash = {}

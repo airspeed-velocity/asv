@@ -21,15 +21,15 @@ class Preview(object):
         parser.add_argument("--port", "-p", type=int, default=8080,
                             help="Port to run webserver on")
 
-        parser.set_defaults(func=cls.run)
+        parser.set_defaults(func=cls.run_from_args)
 
     @classmethod
-    def run(cls, args):
-        conf = Config.from_file(args.config)
+    def run_from_args(cls, args):
+        return cls.run(conf=Config.from_file(args.config), port=args.port)
 
+    @classmethod
+    def run(cls, conf, port=8080):
         os.chdir(conf.html_dir)
-
-        port = args.port
 
         Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
 

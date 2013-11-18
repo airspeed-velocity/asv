@@ -13,11 +13,15 @@ class Machine(object):
         parser = subparsers.add_parser(
             "machine", help="Define information about this machine")
 
-        # TODO: Provided commandline arguments for everything
+        # TODO: Provide commandline arguments for everything
 
-        parser.set_defaults(func=cls.run)
+        parser.set_defaults(func=cls.run_from_args)
 
     @classmethod
-    def run(cls, args):
+    def run_from_args(cls, args):
+        return cls.run()
+
+    @classmethod
+    def run(cls):
         machine.Machine.generate_machine_file(
             machine.Machine.get_machine_file_path())
