@@ -16,7 +16,6 @@ try:
     import posix
 except ImportError:
     posix = None
-import re
 import subprocess
 import threading
 import time
