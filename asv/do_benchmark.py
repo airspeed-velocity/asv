@@ -27,10 +27,9 @@ if __name__ == '__main__':
     timefunc = timeit.default_timer
     number = 0
     repeat = timeit.default_repeat
-    timefunc = timeit.default_timer()
 
     timer = timeit.Timer(
-        stmt=benchmark.run, setup=benchmark.setUp, timer=timefunc)
+        stmt=benchmark.run, setup=benchmark.setUp)
 
     if number == 0:
         # determine number so that 0.2 <= total time < 2.0
