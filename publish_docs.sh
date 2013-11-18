@@ -21,5 +21,5 @@ git commit -m "Generated from sources"
 
 git push -f origin gh-pages
 
-git checkout -
+git checkout master
 git branch -D gh-pages
