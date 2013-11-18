@@ -22,6 +22,7 @@ import threading
 import time
 
 from .console import console
+from .extern import minify_json
 
 
 def human_file_size(size):
@@ -242,5 +243,5 @@ def load_json(path):
     with io.open(path, 'rb') as fd:
         content = fd.read()
 
-    content = re.sub(r'// .*', '', content, re.MULTILINE)
+    content = minify_json.json_minify(content)
     return json.loads(content)
