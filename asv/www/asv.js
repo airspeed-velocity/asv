@@ -399,9 +399,6 @@ $(function() {
         });
     }
 
-    function get_min_range(graphs) {
-    }
-
     /* Handle log scaling the plot */
     function handle_y_scale(options) {
         if (!graphs.length)
@@ -413,10 +410,11 @@ $(function() {
         $.each(graphs, function(i, graph) {
             var data = graph.data;
             for (var j = 0; j < data.length; ++j) {
-                if (data[j][1] < min) {
+                var p = data[j][1];
+                if (p !== null && data[j][1] < min) {
                     min = data[j][1];
                 }
-                if (data[j][1] > max) {
+                if (p > max) {
                     max = data[j][1];
                 }
             }
