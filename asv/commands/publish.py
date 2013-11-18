@@ -9,6 +9,7 @@ import shutil
 
 import six
 
+from ..benchmarks import Benchmarks
 from ..config import Config
 from ..console import console
 from ..graph import Graph
@@ -38,6 +39,8 @@ class Publish(object):
 
         if os.path.exists(conf.html_dir):
             shutil.rmtree(conf.html_dir)
+
+        benchmarks = Benchmarks(conf.benchmark_dir)
 
         template_dir = os.path.join(
             os.path.dirname(__file__), '..', 'www')
@@ -95,8 +98,9 @@ class Publish(object):
                 graph.save(conf.html_dir)
 
         with console.group("Writing index", "green"):
-            benchmark_names = list(benchmark_names)
-            benchmark_names.sort()
+            benchmark_map = {}
+            for name in benchmark_names:
+                benchmark_map[name] = benchmarks.get_code(name)
             for key, val in six.iteritems(params):
                 val = list(val)
                 val.sort()
@@ -107,6 +111,6 @@ class Publish(object):
                 'show_commit_url': conf.show_commit_url,
                 'date_to_hash': date_to_hash,
                 'params': params,
-                'benchmark_names': benchmark_names,
+                'benchmark_names': benchmark_map,
                 'machines': machines
             })

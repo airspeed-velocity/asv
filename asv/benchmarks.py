@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import inspect
 import unittest
 import os
 
@@ -24,17 +25,20 @@ class Benchmarks(object):
         benchmarks = unittest.defaultTestLoader.discover(
             self._benchmark_dir)
 
-        flat = []
+        flat = {}
 
         def recurse(item):
             if isinstance(item, unittest.TestSuite):
                 for benchmark in item:
                     recurse(benchmark)
             elif isinstance(item, unittest.TestCase):
-                flat.append(item.id())
+                flat[item.id()] = inspect.getsource(
+                    getattr(item, item._testMethodName)
+                )
 
         recurse(benchmarks)
-        self._benchmarks = flat
+        self._benchmarks = flat.keys()
+        self._code = flat
 
     def __len__(self):
         return len(self._benchmarks)
@@ -74,3 +78,6 @@ class Benchmarks(object):
             times[benchmark_id] = None
 
         return times
+
+    def get_code(self, benchmark):
+        return self._code[benchmark]

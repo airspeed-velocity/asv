@@ -176,7 +176,8 @@ $(function() {
             '<div class="btn-group-vertical" style="width: 100%" ' +
                 'data-toggle="buttons"/>');
         panel_body.append(buttons);
-        $.each(index.benchmark_names, function(i, benchmark_name) {
+        var i = 0;
+        $.each(index.benchmark_names, function(benchmark_name, code) {
             var label = $('<label class="btn btn-default btn-xs"/>')
             buttons.append(label);
             var short_name = benchmark_name.split(".");
@@ -188,16 +189,19 @@ $(function() {
             label.on('change', function(evt) {
                 if (!evt.target.classList.contains("active")) {
                     current_benchmark = benchmark_name;
-                    $("#title")[0].textContent = benchmark_name;
+                    $("#title").text(benchmark_name);
+                    $("#code").text(index.benchmark_names[benchmark_name]);
                     replace_graphs();
                 }
             });
+
             if (i == 0) {
                 label.button('toggle');
+                current_benchmark = benchmark_name;
             }
+            ++i;
         });
 
-        current_benchmark = index.benchmark_names[0];
 
         $('#log-scale').on('click', function(evt) {
             log_scale = !evt.target.classList.contains("active");
