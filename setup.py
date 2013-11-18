@@ -1,6 +1,9 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import ez_setup
+ez_setup.use_setuptools()
+
 from setuptools import setup, find_packages
 
 setup(
@@ -14,9 +17,7 @@ setup(
     },
 
     install_requires=[
-        'six>=1.4',
-        'numpy>=1.5',
-        'psutil'
+        'six>=1.4'
     ],
 
     package_data={
@@ -30,7 +31,8 @@ setup(
             'www/flot/*.js',
             'www/bootstrap/*.js',
             'www/bootstrap/*.css',
-            'template/asv.conf.json'
+            'template/asv.conf.json',
+            'template/benchmarks/benchmarks.py'
         ]
     },
 

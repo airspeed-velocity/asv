@@ -9,6 +9,7 @@ import argparse
 import six
 
 from . import commands
+from .console import console
 
 
 def main():
@@ -37,3 +38,5 @@ def main():
     args = parser.parse_args()
 
     args.func(args)
+
+    console._newline()

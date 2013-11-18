@@ -26,10 +26,8 @@ class Machine(object):
     def get_machine_file_path():
         return os.path.expanduser('~/.asv-machine')
 
-    def generate_machine_file(self, path):
-        from numpy.distutils import cpuinfo
-        import psutil
-
+    @staticmethod
+    def generate_machine_file(path):
         if not sys.stdout.isatty():
             raise RuntimeError(
                 "No ASV machine info file found at '{0}'.\n"
@@ -56,15 +54,25 @@ class Machine(object):
 
         print("4. CPU: A human-readable description of the CPU.")
         if sys.platform.startswith('linux'):
-            info = cpuinfo.cpuinfo().info
-            cpu = "{0} ({1} cores)".format(info[0]['model name'], len(info))
+            try:
+                from numpy.distutils import cpuinfo
+            except ImportError:
+                cpu = ''
+            else:
+                info = cpuinfo.cpuinfo().info
+                cpu = "{0} ({1} cores)".format(info[0]['model name'], len(info))
         else:
             # TODO: Get this on a Mac
             cpu = ''
         cpu = console.get_answer_default("CPU", cpu)
 
         print("4. RAM: The amount of physical RAM in the system.")
-        ram = util.human_file_size(psutil.phymem_usage().total)
+        try:
+            import psutil
+        except ImportError:
+            ram = ''
+        else:
+            ram = util.human_file_size(psutil.phymem_usage().total)
         ram = console.get_answer_default("RAM", ram)
 
         util.write_json(path, {

@@ -82,10 +82,10 @@ class Environment(object):
             identifier string.
         """
         executables = util.which("python{0}".format(python))
-        if len(executables) == [0]:
+        if len(executables) == 0:
             raise RuntimeError(
                 "No executable found for version {0}".format(python))
-        self._executable = executables[0]
+        self._executable = executables
         self._env_dir = env_dir
         self._python = python
         self._requirements = requirements
@@ -135,7 +135,8 @@ class Environment(object):
                     '--no-site-packages',
                     self._path])
         except:
-            shutil.rmtree(self._path)
+            if os.path.exists(self._path):
+                shutil.rmtree(self._path)
             raise
 
         self.upgrade('setuptools')
