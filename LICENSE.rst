@@ -1,4 +1,4 @@
-Copyright (c) 2011-2013, Astropy Developers
+Copyright (c) 2011-2013, Michael Droettboom, Space Telescope Science Institute
 
 All rights reserved.
 
