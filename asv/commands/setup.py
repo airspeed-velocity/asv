@@ -13,9 +13,16 @@ class Setup(object):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "setup", help="Setup virtual environments")
+            "setup", help="Setup virtual environments",
+            description="""Setup virtual environments for each
+            combination of Python version and third-party requirement.
+            This is called by the ``run`` command implicitly, and
+            isn't generally required to be run on its own."""
+        )
 
         parser.set_defaults(func=cls.run)
+
+        return parser
 
     @classmethod
     def run_from_args(cls, args):

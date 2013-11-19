@@ -14,15 +14,17 @@ class Quickstart(object):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "quickstart", help="Copies the files necessary for a new "
-            "benchmarking project into the current directory.")
+            "quickstart", help="Create a new benchmarking suite",
+            description="Creates a new bechmarking suite")
 
         parser.add_argument(
             "--dest", "-d", default=".",
             help="The destination directory for the new benchmarking "
-            "project.")
+            "suite")
 
         parser.set_defaults(func=cls.run_from_args)
+
+        return parser
 
     @classmethod
     def run_from_args(cls, args):

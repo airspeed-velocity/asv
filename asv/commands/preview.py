@@ -16,12 +16,16 @@ class Preview(object):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "preview", help="Preview the results in a simple web server")
+            "preview",
+            help="Preview the results using a local web server",
+            description="Preview the results using a local web server")
 
         parser.add_argument("--port", "-p", type=int, default=8080,
-                            help="Port to run webserver on")
+                            help="Port to run webserver on.  [8080]")
 
         parser.set_defaults(func=cls.run_from_args)
+
+        return parser
 
     @classmethod
     def run_from_args(cls, args):

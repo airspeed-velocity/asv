@@ -4,6 +4,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import six
+
 from .. import machine
 
 
@@ -11,17 +13,35 @@ class Machine(object):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "machine", help="Define information about this machine")
+            "machine", help="Define information about this machine",
+            description="""
+            Defines information about this machine.  If no arguments
+            are provided, an interactive console session will be used
+            to ask questions about the machine.
+            """)
 
-        # TODO: Provide commandline arguments for everything
+        defaults = machine.Machine.get_defaults()
+        for name, description in six.iteritems(machine.Machine.fields):
+            parser.add_argument(
+                '--' + name, default=defaults[name],
+                help=description)
 
         parser.set_defaults(func=cls.run_from_args)
 
-    @classmethod
-    def run_from_args(cls, args):
-        return cls.run()
+        return parser
 
     @classmethod
-    def run(cls):
-        machine.Machine.generate_machine_file(
-            machine.Machine.get_machine_file_path())
+    def run_from_args(cls, args):
+        return cls.run(**vars(args))
+
+    @classmethod
+    def run(cls, **kwargs):
+        different = {}
+        defaults = machine.Machine.get_defaults()
+        for key, val in six.iteritems(defaults):
+            if kwargs.get(key) != val:
+                different[key] = kwargs.get(key)
+
+        print(different)
+        machine.Machine.load_machine_file(
+            interactive=(len(different) == 0), **different)

@@ -29,7 +29,7 @@ if __name__ == '__main__':
     repeat = timeit.default_repeat
 
     timer = timeit.Timer(
-        stmt=benchmark.run, setup=benchmark.setUp)
+        stmt=getattr(benchmark, benchmark._testMethodName), setup=benchmark.setUp)
 
     if number == 0:
         # determine number so that 0.2 <= total time < 2.0

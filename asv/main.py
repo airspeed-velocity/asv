@@ -12,7 +12,7 @@ from . import commands
 from .console import console
 
 
-def main():
+def make_argparser():
     """
     The top-level entry point for the asv script.
 
@@ -20,10 +20,11 @@ def main():
     commands subpackage.
     """
     parser = argparse.ArgumentParser(
-        "Airspeed Velocity: Simple benchmark reporting tool for Python")
+        "asv",
+        description="Airspeed Velocity: Simple benchmarking tool for Python")
 
     parser.add_argument(
-        "config", nargs="?",
+        "--config",
         help="Benchmark configuration file",
         default='asv.conf.json')
 
@@ -31,12 +32,20 @@ def main():
         title='subcommands',
         description='valid subcommands')
 
-    for key, val in six.iteritems(commands.__dict__):
-        if hasattr(val, 'setup_arguments'):
-            val.setup_arguments(subparsers)
+    command_parsers = []
+    for name in commands.all_commands:
+        command = getattr(commands, name)
+        if hasattr(command, 'setup_arguments'):
+            command_parsers.append(
+                command.setup_arguments(subparsers))
+
+    return parser, command_parsers
+
+
+def main():
+    parser, command_parsers = make_argparser()
 
     args = parser.parse_args()
-
     args.func(args)
 
     console._newline()

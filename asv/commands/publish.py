@@ -20,9 +20,17 @@ from .. import util
 class Publish(object):
     @classmethod
     def setup_arguments(cls, subparsers):
-        parser = subparsers.add_parser("publish", help="Publish results")
+        parser = subparsers.add_parser(
+            "publish", help="Collate results into a website",
+            description=
+            """
+            Collate all results into a website.  This website will be
+            written to the ``html_dir`` given in the ``asv.conf.json``
+            file, and may be served using any static web server.""")
 
         parser.set_defaults(func=cls.run_from_args)
+
+        return parser
 
     @classmethod
     def run_from_args(cls, args):
@@ -70,11 +78,10 @@ class Publish(object):
                     params[key].add(val)
 
         with console.group("Loading graph data", "green"):
-            console.set_nitems(len(dir_contents))
             for path in dir_contents:
-                filename = os.path.basename(path)
-                console.step(filename)
+                console.dot()
 
+                filename = os.path.basename(path)
                 if filename == 'machine.json':
                     continue
 

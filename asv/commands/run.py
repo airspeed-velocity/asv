@@ -20,21 +20,26 @@ from .setup import Setup
 class Run(object):
     @classmethod
     def setup_arguments(cls, subparsers):
-        parser = subparsers.add_parser("run", help="Run a benchmark suite")
+        parser = subparsers.add_parser(
+            "run", help="Run a benchmark suite",
+            description="Run a benchmark suite.")
 
         # TODO: Range of branches
         parser.add_argument(
             "--range", "-r", default="master^!",
-            help="Range of commits to benchmark.  This is passed as the first "
-            "argument to `git log`.  See 'specifying ranges' section "
-            "of the gitrevisions manpage for more info.  Default: master only")
+            help="""Range of commits to benchmark.  This is passed as
+            the first argument to ``git log``.  See 'specifying
+            ranges' section of the `gitrevisions` manpage for more
+            info.  Default: master only""")
         parser.add_argument(
             "--steps", "-s", type=int, default=0,
-            help="Maximum number of steps to benchmark.  This is used to "
-            "subsample the commits determined by --range to a reasonable "
-            "number.")
+            help="""Maximum number of steps to benchmark.  This is
+            used to subsample the commits determined by --range to a
+            reasonable number.""")
 
         parser.set_defaults(func=cls.run_from_args)
+
+        return parser
 
     @classmethod
     def run_from_args(cls, args):
@@ -45,7 +50,7 @@ class Run(object):
     @classmethod
     def run(cls, conf, range="master^!", steps=0):
         params = {}
-        machine_params = Machine()
+        machine_params = Machine.load_machine_file()
         params.update(machine_params.__dict__)
         machine_params.save_machine_file(conf.results_dir)
 
