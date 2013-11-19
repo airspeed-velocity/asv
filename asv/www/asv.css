@@ -1,4 +1,3 @@
-
 .panel-body {
     padding: 0;
 }
@@ -11,6 +10,11 @@
     font-size: 12px;
     padding: 2px;
     text-align: center;
+}
+
+.popover {
+    max-width: 800px;
+    min-width: 400px;
 }
 
 #tooltip {
@@ -36,4 +40,9 @@
 
 .navbar-default .navbar-text {
     color: #fff;
+}
+
+.navbar-nav {
+    padding-left: 6px;
+    padding-right: 6px;
 }

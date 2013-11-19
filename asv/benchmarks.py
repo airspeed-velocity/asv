@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import inspect
 import unittest
+import textwrap
 import os
 
 from .console import console
@@ -32,9 +33,9 @@ class Benchmarks(object):
                 for benchmark in item:
                     recurse(benchmark)
             elif isinstance(item, unittest.TestCase):
-                flat[item.id()] = inspect.getsource(
-                    getattr(item, item._testMethodName)
-                )
+                code = inspect.getsource(getattr(item, item._testMethodName))
+                code = textwrap.dedent(code)
+                flat[item.id()] = code
 
         recurse(benchmarks)
         self._benchmarks = flat.keys()

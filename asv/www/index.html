@@ -14,13 +14,18 @@
     <link rel="shortcut icon" href="swallow.ico"/>
   </head>
   <body>
-    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
-      <ul class="nav navbar-nav navbar-left">
-        <li><a href="http://github.com/spacetelescope/asv/" target="_blank"><img src="swallow.png" width="22" height="22" alt="swallow"/>  airspeed velocity</a></li>
-        <li><p class="navbar-text">of an unladen</p></li>
-        <li><a id="project-name" href="#" target="_blank">project</a></li>
+    <nav id="nav" class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <ul class="nav navbar-nav">
+        <li>
+          <p class="navbar-text">
+            <a href="http://github.com/spacetelescope/asv/" class="navbar-link" target="_blank">
+              <img src="swallow.png" width="22" height="22" alt="swallow"/>airspeed velocity</a>
+            of an unladen
+            <a id="project-name" href="#" class="navbar-link" target="_blank">project</a>
+          </p>
+        </li>
+        <li><a class="navbar-brand" id="title">benchmark</a></li>
       </ul>
-      </p>
     </nav>
     <div id="navigation" style="position: absolute; left: 0; top: 55px; bottom: 0; width: 200px; overflow: scroll">
       <div class="panel panel-default">
@@ -34,11 +39,13 @@
         </div>
       </div>
     </div>
-    <div style="position: absolute; left: 220px; top: 55px; bottom: 0px; right: 0px; overflow: scroll">
-      <h3 id="title"></h3>
-      <pre id="code"></pre>
-      <div id="main-graph" style="width: 100%; height: 70%"></div>
-      <div id="overview" style="width: 100%; height: 30%"></div>
+    <div style="position: absolute; left: 220px; top: 60px; bottom: 10px; right: 20px;">
+      <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 160px;">
+        <div id="main-graph" style="width: 100%; height: 100%"></div>
+      </div>
+      <div style="position: absolute; height: 160px; left: 0; right: 0; bottom: 0; padding-top: 24px">
+        <div id="overview" style="width: 100%; height: 100%"></div>
+      </div>
     </div>
   </body>
 </html>

@@ -190,7 +190,13 @@ $(function() {
                 if (!evt.target.classList.contains("active")) {
                     current_benchmark = benchmark_name;
                     $("#title").text(benchmark_name);
-                    $("#code").text(index.benchmark_names[benchmark_name]);
+                    $("#title").popover('destroy');
+                    $("#title").popover({
+                        'html': true,
+                        'content': '<pre>' + index.benchmark_names[benchmark_name] + '</pre>',
+                        'placement': 'bottom',
+                        'container': '#nav'
+                    });
                     replace_graphs();
                 }
             });
