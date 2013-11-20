@@ -5,8 +5,9 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import inspect
-import unittest
+import re
 import textwrap
+import unittest
 import os
 
 from .console import console
@@ -17,11 +18,16 @@ class Benchmarks(object):
     """
     Manages and runs the set of benchmarks in the project.
     """
-    def __init__(self, benchmark_dir):
+    def __init__(self, benchmark_dir, bench=None):
         """
         Discover benchmarks in the given `benchmark_dir`.
+
+        `bench` is a list of regular expressions for the benchmarks to
+        run.  If none are provided, all benchmarks are run.
         """
         self._benchmark_dir = benchmark_dir
+        if not bench:
+            bench = []
 
         benchmarks = unittest.defaultTestLoader.discover(
             self._benchmark_dir)
@@ -33,9 +39,13 @@ class Benchmarks(object):
                 for benchmark in item:
                     recurse(benchmark)
             elif isinstance(item, unittest.TestCase):
-                code = inspect.getsource(getattr(item, item._testMethodName))
-                code = textwrap.dedent(code)
-                flat[item.id()] = code
+                for regex in bench:
+                    if not re.search(regex, item.id()):
+                        break
+                else:
+                    code = inspect.getsource(getattr(item, item._testMethodName))
+                    code = textwrap.dedent(code)
+                    flat[item.id()] = code
 
         recurse(benchmarks)
         self._benchmarks = flat.keys()

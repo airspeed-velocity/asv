@@ -6,6 +6,8 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 
+import six
+
 from ..benchmarks import Benchmarks
 from ..config import Config
 from ..console import console
@@ -36,6 +38,10 @@ class Run(object):
             help="""Maximum number of steps to benchmark.  This is
             used to subsample the commits determined by --range to a
             reasonable number.""")
+        parser.add_argument(
+            "--bench", "-b", type=str, nargs="*",
+            help="""Regular expression for benchmark to run.  When
+            none are provided, all benchmarks are run.""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -45,30 +51,42 @@ class Run(object):
     def run_from_args(cls, args):
         conf = Config.from_file(args.config)
         return cls.run(
-            conf=conf, range=args.range, steps=args.steps)
+            conf=conf, range=args.range, steps=args.steps, bench=args.bench)
 
     @classmethod
-    def run(cls, conf, range="master^!", steps=0):
+    def run(cls, conf, range="master^!", steps=0, bench=None):
         params = {}
         machine_params = Machine.load_machine_file()
         params.update(machine_params.__dict__)
         machine_params.save_machine_file(conf.results_dir)
 
-        environments = Setup.run(conf=conf)
+        benchmarks = Benchmarks(conf.benchmark_dir, bench=bench)
+        if len(benchmarks) == 0:
+            console.message("No benchmarks selected", "yellow")
+            return
 
         repo = get_repo(conf.repo, conf.project)
         commit_hashes = repo.get_hashes_from_range(range)
         if steps > 0:
             subhashes = []
-            for i in range(0, len(commit_hashes),
-                           int(len(commit_hashes) / steps)):
+            for i in six.moves.xrange(0, len(commit_hashes),
+                                      int(len(commit_hashes) / steps)):
                 subhashes.append(commit_hashes[i])
             commit_hashes = subhashes
+        if len(commit_hashes) == 0:
+            console.message("No commit hashes selected", "yellow")
+            return
 
-        benchmarks = Benchmarks(conf.benchmark_dir)
+        environments = Setup.run(conf=conf)
+        if len(environments) == 0:
+            console.message("No environments selected", "yellow")
+            return
 
         steps = len(commit_hashes) * len(benchmarks) * len(environments)
 
+        console.message(
+            "Running {0} total benchmarks ({1} commits * {2} benchmarks * {3} environments)".format(
+                steps, len(commit_hashes), len(benchmarks), len(environments)), "green")
         console.set_nitems(steps)
 
         for env in environments:
