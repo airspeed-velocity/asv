@@ -93,7 +93,8 @@ class Environment(object):
             self._env_dir, self.name)
 
         self._virtualenv_path = os.path.join(
-            os.path.dirname(__file__), 'extern', 'virtualenv.py')
+            os.path.dirname(os.path.abspath(__file__)),
+            'extern', 'virtualenv.py')
 
     @property
     def name(self):

@@ -20,6 +20,8 @@ import subprocess
 import threading
 import time
 
+import six
+
 from .console import console
 from .extern import minify_json
 
@@ -224,23 +226,79 @@ def check_output(args, error=True, timeout=60, dots=True):
     return stdout
 
 
-def write_json(path, data):
+def write_json(path, data, api_version=None):
     """
     Writes JSON to the given path, including indentation and sorting.
     """
+    path = os.path.abspath(path)
     if not os.path.exists(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
+
+    if api_version is not None:
+        data['version'] = api_version
 
     with io.open(path, 'wb') as fd:
         json.dump(data, fd, indent=4, sort_keys=True)
 
 
-def load_json(path):
+def load_json(path, api_version=None):
     """
     Loads JSON to the given path, ignoring any C-style comments.
     """
+    path = os.path.abspath(path)
+
     with io.open(path, 'rb') as fd:
         content = fd.read()
 
     content = minify_json.json_minify(content)
-    return json.loads(content)
+    d = json.loads(content)
+
+    if api_version is not None:
+        if 'version' in d:
+            if d['version'] < api_version:
+                raise RuntimeError(
+                    "{0} is stored in an old file format.  Run "
+                    "`asv update` to update it.".format(path))
+            elif d['version'] > api_version:
+                raise RuntimeError(
+                    "{0} is stored in a format that is newer than "
+                    "what this version of asv understands.  Update "
+                    "asv to use this file.".format(path))
+
+            del d['version']
+        else:
+            raise RuntimeError(
+                "No version specified in {0}.".format(path))
+
+    return d
+
+
+def update_json(cls, path, api_version):
+    """
+    Perform JSON file format updates.
+
+    Parameters
+    ----------
+    cls : object
+        Object containing methods update_to_X which updates
+        the given JSON tree from version X-1 to X.
+
+    path : str
+        Path to JSON file
+
+    api_version : int
+        The current API version
+    """
+    d = load_json(path)
+    if 'version' not in d:
+        raise RuntimeError(
+            "No version specified in {0}.".format(path))
+
+    if d['version'] < api_version:
+        for x in six.moves.xrange(d['version'] + 1, api_version):
+            d = getattr(cls, 'update_to_{0}'.format(x), lambda x: x)(d)
+        write_json(path, d, api_version)
+    elif d['version'] > api_version:
+        raise RuntimeError(
+            "version of {0} is newer than understood by this version of "
+            "asv. Upgrade asv in order to use or add to these results.")

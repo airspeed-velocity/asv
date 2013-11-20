@@ -49,16 +49,16 @@ class Run(object):
 
     @classmethod
     def run_from_args(cls, args):
-        conf = Config.from_file(args.config)
+        conf = Config.load(args.config)
         return cls.run(
             conf=conf, range=args.range, steps=args.steps, bench=args.bench)
 
     @classmethod
     def run(cls, conf, range="master^!", steps=0, bench=None):
         params = {}
-        machine_params = Machine.load_machine_file()
+        machine_params = Machine.load()
         params.update(machine_params.__dict__)
-        machine_params.save_machine_file(conf.results_dir)
+        machine_params.save(conf.results_dir)
 
         benchmarks = Benchmarks(conf.benchmark_dir, bench=bench)
         if len(benchmarks) == 0:

@@ -29,7 +29,7 @@ class Preview(object):
 
     @classmethod
     def run_from_args(cls, args):
-        return cls.run(conf=Config.from_file(args.config), port=args.port)
+        return cls.run(conf=Config.load(args.config), port=args.port)
 
     @classmethod
     def run(cls, conf, port=8080):

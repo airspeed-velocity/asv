@@ -59,7 +59,7 @@ class Benchmarks(object):
         Run all of the benchmarks in the given `Environment`.
         """
         run_script = os.path.join(
-            os.path.dirname(__file__), "do_benchmark.py")
+            os.path.dirname(os.path.abspath(__file__)), "do_benchmark.py")
 
         times = {}
         for benchmark_id in self._benchmarks:

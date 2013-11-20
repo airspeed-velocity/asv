@@ -33,7 +33,7 @@ class Quickstart(object):
     @classmethod
     def run(cls, dest="."):
         template_path = os.path.join(
-            os.path.dirname(__file__), '..', 'template')
+            os.path.dirname(os.path.abspath(__file__)), '..', 'template')
         for entry in os.listdir(template_path):
             path = os.path.join(template_path, entry)
             if os.path.isdir(path):

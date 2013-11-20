@@ -15,6 +15,8 @@ class Results(object):
     Manage a set of benchmark results for a single machine and commit
     hash.
     """
+    api_version = 1
+
     def __init__(self, params, env, commit_hash, date):
         """
         Parameters
@@ -91,7 +93,7 @@ class Results(object):
             'commit_hash': self._commit_hash,
             'date': self._date,
             'python': self._python
-        })
+        }, self.api_version)
 
     @classmethod
     def load(cls, path):
@@ -103,7 +105,7 @@ class Results(object):
         path : str
             Path to results file.
         """
-        d = util.load_json(path)
+        d = util.load_json(path, cls.api_version)
 
         obj = cls(
             d['params'],
@@ -112,3 +114,7 @@ class Results(object):
             d['date'])
         obj.add_times(d['results'])
         return obj
+
+    @classmethod
+    def update(cls, path):
+        util.update_json(cls, path, cls.api_version)

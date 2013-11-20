@@ -42,6 +42,5 @@ class Machine(object):
             if kwargs.get(key) != val:
                 different[key] = kwargs.get(key)
 
-        print(different)
-        machine.Machine.load_machine_file(
+        machine.Machine.load(
             interactive=(len(different) == 0), **different)

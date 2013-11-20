@@ -34,7 +34,7 @@ class Publish(object):
 
     @classmethod
     def run_from_args(cls, args):
-        conf = Config.from_file(args.config)
+        conf = Config.load(args.config)
         return cls.run(conf=conf)
 
     @classmethod
@@ -51,7 +51,7 @@ class Publish(object):
         benchmarks = Benchmarks(conf.benchmark_dir)
 
         template_dir = os.path.join(
-            os.path.dirname(__file__), '..', 'www')
+            os.path.dirname(os.path.abspath(__file__)), '..', 'www')
         shutil.copytree(template_dir, conf.html_dir)
 
         dir_contents = []

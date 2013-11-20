@@ -20,6 +20,8 @@ class Machine(object):
     """
     Stores information about a particular machine.
     """
+    api_version = 1
+
     def __init__(self):
         pass
 
@@ -109,8 +111,8 @@ class Machine(object):
 
         util.write_json(path, values)
 
-    @staticmethod
-    def load_machine_file(interactive=False, **kwargs):
+    @classmethod
+    def load(cls, interactive=False, **kwargs):
         self = Machine()
         path = self.get_machine_file_path()
         if not os.path.exists(path) or interactive:
@@ -119,9 +121,13 @@ class Machine(object):
         d = util.load_json(path)
         d.update(kwargs)
         self.__dict__.update(d)
-        util.write_json(path, self.__dict__)
+        util.write_json(path, self.__dict__, cls.api_version)
         return self
 
-    def save_machine_file(self, results_dir):
+    def save(self, results_dir):
         path = os.path.join(results_dir, self.machine, 'machine.json')
-        util.write_json(path, self.__dict__)
+        util.write_json(path, self.__dict__, self.api_version)
+
+    @classmethod
+    def update(cls, path):
+        util.update_json(cls, path, cls.api_version)

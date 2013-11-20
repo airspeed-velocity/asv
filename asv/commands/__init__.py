@@ -10,6 +10,7 @@ from .publish import Publish
 from .quickstart import Quickstart
 from .run import Run
 from .setup import Setup
+from .update import Update
 
 # This list is ordered in order of average workflow
 all_commands = [
@@ -18,4 +19,6 @@ all_commands = [
     'Setup',
     'Run',
     'Publish',
-    'Preview']
+    'Preview',
+    'Update'
+]

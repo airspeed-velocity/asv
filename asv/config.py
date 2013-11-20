@@ -14,6 +14,7 @@ class Config(object):
     """
     Manages the configuration for a benchmark project.
     """
+    api_version = 1
 
     def __init__(self):
         self.project = "project"
@@ -28,8 +29,8 @@ class Config(object):
         self.show_commit_url = "#"
         self.hash_length = 8
 
-    @staticmethod
-    def from_file(path=None):
+    @classmethod
+    def load(cls, path=None):
         """
         Load a configuration from a file.  If no file is provided,
         defaults to `asv.conf.json`.
@@ -42,7 +43,7 @@ class Config(object):
 
         conf = Config()
 
-        d = util.load_json(path)
+        d = util.load_json(path, cls.api_version)
         conf.__dict__.update(d)
 
         if not getattr(conf, "repo", None):
@@ -50,3 +51,13 @@ class Config(object):
                 "No repo specified in {0} config file.".format(path))
 
         return conf
+
+    @classmethod
+    def update(cls, path=None):
+        if not path:
+            path = "asv.conf.json"
+
+        if not os.path.exists(path):
+            raise RuntimeError("Config file {0} not found.".format(path))
+
+        util.update_json(cls, path, cls.api_version)

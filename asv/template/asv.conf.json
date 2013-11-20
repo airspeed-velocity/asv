@@ -1,4 +1,8 @@
 {
+    // The version of the config file format.  Do not change, unless
+    // you know what you are doing.
+    "version": 1,
+
     // The name of the project being benchmarked
     "project": "project",
 

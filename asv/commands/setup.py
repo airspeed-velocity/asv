@@ -26,7 +26,7 @@ class Setup(object):
 
     @classmethod
     def run_from_args(cls, args):
-        conf = Config.from_file(args.config)
+        conf = Config.load(args.config)
         return cls.run(conf=conf)
 
     @classmethod
