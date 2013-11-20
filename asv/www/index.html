@@ -24,7 +24,19 @@
             <a id="project-name" href="#" class="navbar-link" target="_blank">project</a>
           </p>
         </li>
-        <li><a class="navbar-brand" id="title">benchmark</a></li>
+        <li>
+          <a class="navbar-brand">
+            <span id="title">benchmark</span>
+            <span class="caret"></span>
+          </a>
+        </li>
+        <li>
+          <form class="navbar-form navbar-left" role="search">
+            <div class="form-group">
+              <input id="range" type="text" class="form-control" size="24" readonly/>
+            </div>
+          </form>
+        </li>
       </ul>
     </nav>
     <div id="navigation" style="position: absolute; left: 0; top: 55px; bottom: 0; width: 200px; overflow: scroll">
@@ -40,7 +52,7 @@
       </div>
     </div>
     <div style="position: absolute; left: 220px; top: 60px; bottom: 10px; right: 20px;">
-      <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 160px;">
+      <div style="position: absolute; top: 48px; left: 0; right: 0; bottom: 160px;">
         <div id="main-graph" style="width: 100%; height: 100%"></div>
       </div>
       <div style="position: absolute; height: 160px; left: 0; right: 0; bottom: 0; padding-top: 24px">

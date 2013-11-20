@@ -229,10 +229,6 @@ $(function() {
             }).appendTo("body").fadeIn(200);
         }
 
-        function get_hash_from_datapoint(datapoint) {
-            return master_json.date_to_hash[datapoint[0]];
-        }
-
         var previous_hover = null;
         $("#main-graph").bind("plothover", function (event, pos, item) {
             if (item) {
@@ -240,11 +236,11 @@ $(function() {
                     previous_hover = item.datapoint;
                     $("#tooltip").remove();
                     var y = item.datapoint[1];
-                    var commit_hash = get_hash_from_datapoint(item.datapoint);
+                    var commit_hash = master_json.date_to_hash[item.datapoint[0]];
                     if (commit_hash) {
                         showTooltip(
                             item.pageX, item.pageY,
-                            pretty_second(y) + " @ " + commit_hash.substring(0, 8));
+                            pretty_second(y) + " @ " + commit_hash);
                     }
                 }
             } else {
@@ -421,11 +417,11 @@ $(function() {
             var data = graph.data;
             for (var j = 0; j < data.length; ++j) {
                 var p = data[j][1];
-                if (p !== null && data[j][1] < min) {
-                    min = data[j][1];
+                if (p !== null && p < min) {
+                    min = p;
                 }
                 if (p > max) {
-                    max = data[j][1];
+                    max = p;
                 }
             }
         });
@@ -562,6 +558,8 @@ $(function() {
 		}
 	    }));
 
+            update_range();
+
 	    // don't fire event on the overview to prevent eternal loop
 	    overview.setSelection(ranges, true);
 	});
@@ -569,6 +567,54 @@ $(function() {
         $("#overview").unbind("plotselected");
 	$("#overview").bind("plotselected", function (event, ranges) {
 	    plot.setSelection(ranges);
+            update_range();
 	});
+
+        function update_range() {
+            /* Find the minimum and maximum values */
+            var min = Infinity;
+            var left = plot.getAxes().xaxis.min;
+            $.each(graphs, function(i, graph) {
+                var data = graph.data;
+                for (var j = 0; j < data.length; ++j) {
+                    var p = data[j][0];
+                    if (p !== null && p >= left) {
+                        if (p < min) {
+                            min = p;
+                        }
+                        break;
+                    }
+                }
+            });
+
+            var max = -Infinity;
+            var right = plot.getAxes().xaxis.max;
+            $.each(graphs, function(i, graph) {
+                var data = graph.data;
+                for (var j = data.length - 1; j >= 0; --j) {
+                    var p = data[j][0];
+                    if (p !== null && p <= right) {
+                        if (p > max) {
+                            max = p;
+                        }
+                        break;
+                    }
+                }
+            });
+
+            var result;
+            if (min === null || max === null || min > max) {
+                result = '';
+            } else if (min == max) {
+                result = master_json.date_to_hash[min] + '^!';
+            } else {
+                var first_commit = master_json.date_to_hash[min];
+                var last_commit = master_json.date_to_hash[max];
+                result = first_commit + ".." + last_commit;
+            }
+            $("#range")[0].value = result;
+        }
+
+        update_range();
     };
 });

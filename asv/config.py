@@ -26,6 +26,7 @@ class Config(object):
         self.results_dir = "results"
         self.html_dir = "html"
         self.show_commit_url = "#"
+        self.hash_length = 8
 
     @staticmethod
     def from_file(path=None):

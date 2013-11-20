@@ -110,3 +110,11 @@ are stored in.  If not provided, defaults to ``"results"``.
 ------------
 The directory, relative to the current directory, to save the website
 content in.  If not provided, defaults to ``"html"``.
+
+``hash_length``
+---------------
+The number of characters to retain in the commit hashes when displayed
+in the web interface.  The default value of 8 should be more than
+enough for most projects, but projects with extremely large history
+may need to increase this value.  This does not affect the storage of
+results, where the full commit hash is always retained.

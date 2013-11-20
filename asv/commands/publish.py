@@ -71,7 +71,8 @@ class Publish(object):
 
                 results = Results.load(path)
 
-                date_to_hash[results.date] = results.commit_hash
+                date_to_hash[results.date] = results.commit_hash[
+                    :conf.hash_length]
 
                 for key, val in six.iteritems(results.params):
                     params.setdefault(key, set())
