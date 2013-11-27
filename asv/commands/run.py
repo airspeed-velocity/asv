@@ -26,7 +26,6 @@ class Run(object):
             "run", help="Run a benchmark suite",
             description="Run a benchmark suite.")
 
-        # TODO: Range of branches
         parser.add_argument(
             "--range", "-r", default="master^!",
             help="""Range of commits to benchmark.  This is passed as
@@ -40,8 +39,8 @@ class Run(object):
             reasonable number.""")
         parser.add_argument(
             "--bench", "-b", type=str, nargs="*",
-            help="""Regular expression for benchmark to run.  When
-            none are provided, all benchmarks are run.""")
+            help="""Regular expression(s) for benchmark to run.  When
+            not provided, all benchmarks are run.""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -85,8 +84,8 @@ class Run(object):
         steps = len(commit_hashes) * len(benchmarks) * len(environments)
 
         console.message(
-            "Running {0} total benchmarks ({1} commits * {2} benchmarks * {3} environments)".format(
-                steps, len(commit_hashes), len(benchmarks), len(environments)), "green")
+            "Running {0} total benchmarks ({1} commits * {2} environments * {3} benchmarks)".format(
+                steps, len(commit_hashes), len(environments), len(benchmarks)), "green")
         console.set_nitems(steps)
 
         for env in environments:
