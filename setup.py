@@ -5,6 +5,22 @@ import ez_setup
 ez_setup.use_setuptools()
 
 from setuptools import setup, find_packages
+from setuptools.command.test import test as TestCommand
+import sys
+
+
+# A py.test test command
+class PyTest(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = ['test']
+        self.test_suite = True
+
+    def run_tests(self):
+        import pytest
+        errno = pytest.main(self.test_args)
+        sys.exit(errno)
+
 
 setup(
     name="asv",
@@ -35,6 +51,10 @@ setup(
             'template/benchmarks/benchmarks.py'
         ]
     },
+
+    # py.test testing
+    tests_require=['pytest'],
+    cmdclass={'test': PyTest},
 
     author="Michael Droettboom",
     author_email="mdroe@stsci.edu",

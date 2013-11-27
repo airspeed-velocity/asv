@@ -10,6 +10,8 @@ import textwrap
 import unittest
 import os
 
+import six
+
 from .console import console
 from . import util
 
@@ -28,6 +30,8 @@ class Benchmarks(object):
         self._benchmark_dir = benchmark_dir
         if not bench:
             bench = []
+        if isinstance(bench, six.string_types):
+            bench = [bench]
 
         benchmarks = unittest.defaultTestLoader.discover(
             self._benchmark_dir)
@@ -43,7 +47,8 @@ class Benchmarks(object):
                     if not re.search(regex, item.id()):
                         break
                 else:
-                    code = inspect.getsource(getattr(item, item._testMethodName))
+                    code = inspect.getsource(
+                        getattr(item, item._testMethodName))
                     code = textwrap.dedent(code)
                     flat[item.id()] = code
 

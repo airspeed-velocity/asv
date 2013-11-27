@@ -106,7 +106,8 @@ class Machine(object):
                 cpu = ''
             else:
                 info = cpuinfo.cpuinfo().info
-                cpu = "{0} ({1} cores)".format(info[0]['model name'], len(info))
+                cpu = "{0} ({1} cores)".format(
+                    info[0]['model name'], len(info))
         else:
             # TODO: Get this on a Mac
             cpu = ''
@@ -160,7 +161,7 @@ class Machine(object):
         except ValueError:
             d = {}
         d.update(kwargs)
-        if not len(d) or interactive:
+        if not len(d) and interactive:
             d.update(self.generate_machine_file())
 
         self.__dict__.update(d)

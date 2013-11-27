@@ -148,10 +148,14 @@ def check_call(args, error=True, timeout=60, dots=True):
     Runs the given command in a subprocess, raising ProcessError if it
     fails.
     """
-    check_output(args, error=error)
+    check_output(args, error=error, timeout=timeout, dots=dots)
 
 
 def check_output(args, error=True, timeout=60, dots=True):
+    """
+    Runs the given command in a subprocess, raising ProcessError if it
+    fails.  Returns stdout as a string on success.
+    """
     last_time = [time.time()]
 
     def read_stream(stream, lines):
