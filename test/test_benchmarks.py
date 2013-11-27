@@ -35,7 +35,7 @@ def test_find_benchmarks_regex():
 
 def test_run_benchmarks(tmpdir):
     envdir = six.text_type(tmpdir.join("env"))
-    version = "{0.major}.{0.minor}".format(sys.version_info)
+    version = "{0[0]}.{0[1]}".format(sys.version_info)
     env = environment.Environment(envdir, version, {})
     env.setup()
 

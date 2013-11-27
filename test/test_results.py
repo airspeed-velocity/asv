@@ -15,7 +15,7 @@ from asv import results
 
 def test_results(tmpdir):
     envdir = six.text_type(tmpdir.join("env"))
-    version = "{0.major}.{0.minor}".format(sys.version_info)
+    version = "{0[0]}.{0[1]}".format(sys.version_info)
     env = environment.Environment(envdir, version, {})
 
     resultsdir = six.text_type(tmpdir.join("results"))

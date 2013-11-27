@@ -21,6 +21,7 @@ import threading
 import time
 
 import six
+from six.moves import xrange
 
 from .console import console
 from .extern import minify_json
@@ -241,7 +242,7 @@ def write_json(path, data, api_version=None):
     if api_version is not None:
         data['version'] = api_version
 
-    with io.open(path, 'wb') as fd:
+    with open(path, 'w') as fd:
         json.dump(data, fd, indent=4, sort_keys=True)
 
 
@@ -251,7 +252,7 @@ def load_json(path, api_version=None):
     """
     path = os.path.abspath(path)
 
-    with io.open(path, 'rb') as fd:
+    with open(path, 'r') as fd:
         content = fd.read()
 
     content = minify_json.json_minify(content)
