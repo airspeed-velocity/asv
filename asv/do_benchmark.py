@@ -11,7 +11,6 @@ Run a single benchmark and report it's run time to stdout.
 # the benchmarking process.
 
 import sys
-import time
 import timeit
 import unittest
 
@@ -29,7 +28,8 @@ if __name__ == '__main__':
     repeat = timeit.default_repeat
 
     timer = timeit.Timer(
-        stmt=getattr(benchmark, benchmark._testMethodName), setup=benchmark.setUp)
+        stmt=getattr(benchmark, benchmark._testMethodName),
+        setup=benchmark.setUp)
 
     if number == 0:
         # determine number so that 0.2 <= total time < 2.0
