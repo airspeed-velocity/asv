@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function,
 import os
 
 from ..config import Config
-from ..machine import Machine
+from ..machine import Machine, MachineCollection
 from ..results import Results
 
 
@@ -30,8 +30,7 @@ class Update(object):
 
     @classmethod
     def run(cls, config_path):
-        if os.path.exists(Machine.get_machine_file_path()):
-            Machine.update(Machine.get_machine_file_path())
+        MachineCollection.update()
         Config.update(config_path)
 
         conf = Config.load(config_path)

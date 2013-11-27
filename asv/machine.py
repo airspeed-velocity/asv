@@ -16,14 +16,50 @@ from . import console
 from . import util
 
 
+class MachineCollection(object):
+    """
+    Stores information about 1 or more machines in the
+    ~/.asv-machine.json file.
+    """
+    api_version = 1
+
+    @staticmethod
+    def get_machine_file_path():
+        return os.path.expanduser('~/.asv-machine.json')
+
+    @classmethod
+    def load(cls, machine_name):
+        path = cls.get_machine_file_path()
+        if os.path.exists(path):
+            d = util.load_json(path, cls.api_version)
+            if machine_name in d:
+                return d[machine_name]
+
+        raise ValueError(
+            "No information stored about machine {0}".format(machine_name))
+
+    @classmethod
+    def save(cls, machine_name, machine_info):
+        path = cls.get_machine_file_path()
+        if os.path.exists(path):
+            d = util.load_json(path)
+        else:
+            d = {}
+        d[machine_name] = machine_info
+        util.write_json(path, d, cls.api_version)
+
+    @classmethod
+    def update(cls):
+        path = cls.get_machine_file_path()
+        if os.path.exists(path):
+            util.update_json(cls, path, cls.api_version)
+
+
 class Machine(object):
     """
     Stores information about a particular machine.
     """
     api_version = 1
-
-    def __init__(self):
-        pass
 
     fields = OrderedDict([
         ("machine",
@@ -53,6 +89,11 @@ class Machine(object):
          The amount of physical RAM on this machine.  For example,
          '4GB'.""")
     ])
+
+    @staticmethod
+    def get_unique_machine_name():
+        (system, node, release, version, machine, processor) = platform.uname()
+        return node
 
     @staticmethod
     def get_defaults():
@@ -86,11 +127,7 @@ class Machine(object):
             }
 
     @staticmethod
-    def get_machine_file_path():
-        return os.path.expanduser('~/.asv-machine')
-
-    @staticmethod
-    def generate_machine_file(path):
+    def generate_machine_file():
         if not sys.stdout.isatty():
             raise RuntimeError(
                 "Run asv at the console the first time to generate "
@@ -105,23 +142,29 @@ class Machine(object):
 
         for i, (name, description) in enumerate(six.iteritems(Machine.fields)):
             print(
-                textwrap.fill('{0}. {1}: {2}'.format(
-                    i+1, name, textwrap.dedent(description))))
+                textwrap.fill(
+                    '{0}. {1}: {2}'.format(
+                        i+1, name, textwrap.dedent(description)),
+                    subsequent_indent='   '))
             values[name] = console.get_answer_default(name, defaults[name])
 
-        util.write_json(path, values)
+        return values
 
     @classmethod
     def load(cls, interactive=False, **kwargs):
         self = Machine()
-        path = self.get_machine_file_path()
-        if not os.path.exists(path) or interactive:
-            self.generate_machine_file(path)
 
-        d = util.load_json(path)
+        unique_machine_name = cls.get_unique_machine_name()
+        try:
+            d = MachineCollection.load(unique_machine_name)
+        except ValueError:
+            d = {}
         d.update(kwargs)
+        if not len(d) or interactive:
+            d.update(self.generate_machine_file())
+
         self.__dict__.update(d)
-        util.write_json(path, self.__dict__, cls.api_version)
+        MachineCollection.save(unique_machine_name, self.__dict__)
         return self
 
     def save(self, results_dir):

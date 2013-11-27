@@ -100,8 +100,8 @@ If this is the first time using ``asv run`` on a given machine, you
 will be prompted for information about the machine, such as its
 platform, cpu and memory.  **airspeed velocity** will try to make
 reasonable guesses, so it's usually ok to just press Enter to accept
-each default value.  This information is stored in the `.asv-machine`
-file in your home directory::
+each default value.  This information is stored in the
+`.asv-machine.json` file in your home directory::
 
     No ASV machine info file found.
     I will now ask you some questions about this machine to identify
@@ -117,13 +117,6 @@ file in your home directory::
     CPU [Intel(R) Core(TM) i5-2520M CPU @ 2.50GHz (4 cores)]:
     4. RAM: The amount of physical RAM in the system.
     RAM [8.2G]:
-
-.. warning::
-
-    Since the ``.asv-machine`` file is stored in the home directory,
-    it won't properly reflect the current machine in environments with
-    a network-shared home directory.  This will be addressed in a
-    future version of asv.
 
 Environments
 ````````````

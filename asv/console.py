@@ -200,7 +200,7 @@ def color_print(*args, **kwargs):
 
 
 def get_answer_default(prompt, default):
-    print("{0} [{1}]:".format(prompt, default), end='')
+    print("{0} [{1}]: ".format(prompt, default), end='')
     x = raw_input()
     if x.strip() == '':
         return default
