@@ -2,26 +2,28 @@ Using airspeed velocity
 =======================
 
 **airspeed velocity** is designed to benchmark a single project over
-its lifetime using a given set of benchmarks.  Therefore, below, we
-use the phrase "project" to refer to the project being benchmarked,
-and "benchmark suite" to refer to the set of benchmarks -- i.e.,
-little snippets of code that are timed -- being run against the
-project.  The benchmark suite may live inside the project's repository,
-or it may reside in a separate repository -- the choice is up to you
-and is primarily a matter of style or policy.
+its lifetime using a given set of benchmarks.  Below, we use the
+phrase "project" to refer to the project being benchmarked, and
+"benchmark suite" to refer to the set of benchmarks -- i.e., little
+snippets of code that are timed -- being run against the project.  The
+benchmark suite may live inside the project's repository, or it may
+reside in a separate repository -- the choice is up to you and is
+primarily a matter of style or policy.  Importantly, the result data
+stored alongside the benchmark suite may grow quite large, which is a
+good reason to not include it in the main project repository.
 
 The user interacts with **airspeed velocity** through the ``asv``
 command.  Like ``git``, the ``asv`` command has a number of
-``subcommands`` for performing various actions on your benchmarking
+"subcommands" for performing various actions on your benchmarking
 project.
 
 Setting up a new benchmarking project
 -------------------------------------
 
-The first thing to do is to set up a benchmark suite for **airspeed
-velocity**.  It must contain, at a minimum, a single configuration
-file, ``asv.conf.json``, and a directory tree of Python files
-containing benchmarks.
+The first thing to do is to set up an **airspeed velocity** benchmark
+suite for your project.  It must contain, at a minimum, a single
+configuration file, ``asv.conf.json``, and a directory tree of Python
+files containing benchmarks.
 
 The `asv quickstart` command can be used to create a new benchmarking
 suite.  Change to the directory where you would like your new
@@ -30,10 +32,9 @@ benchmarking suite to be created and run::
     $ asv quickstart
     Edit asv.conf.json to get started.
 
-Now that you have the bare bones of a benchmarking suite, the first
-thing to do is to edit the configuration file, ``asv.conf.json``.
-Open it in your favorite editor.  Like most files that **airspeed
-velocity** uses and generates, it is a JSON file.
+Now that you have the bare bones of a benchmarking suite, let's edit
+the configuration file, ``asv.conf.json``.  Like most files that
+**airspeed velocity** uses and generates, it is a JSON file.
 
 There are comments in the file describing what each of the elements
 do, and there is also a :ref:`conf-reference` with more details.  The
@@ -49,14 +50,15 @@ suite are:
    - ``show_commit_url``: The base of URLs used to display commits for
      the project
 
-The rest of the values may be often be left to their defaults, unless
-testing in multiple versions of Python or against multiple versions of
-third-party dependencies is a requirement.
+The rest of the values can usually be left to their defaults, unless
+you want to benchmark against multiple versions of Python or multiple
+versions of third-party dependencies.
 
 Once you've set up the project's configuration, you'll need to write
 some benchmarks.  The benchmarks live in Python files in the
 ``benchmarks`` directory.  The ``quickstart`` command has created a
-single example benchmark already in ``benchmarks/benchmarks.py``::
+single example benchmark file already in
+``benchmarks/benchmarks.py``::
 
   class TestIteration(unittest.TestCase):
       """
@@ -86,7 +88,8 @@ single example benchmark already in ``benchmarks/benchmarks.py``::
           for key in xrange(500):
               x = d[key]
 
-See :ref:`writing-benchmarks` for more information.
+You'll want to replace these benchmarks with your own.  See
+:ref:`writing-benchmarks` for more information.
 
 Running benchmarks
 ------------------
@@ -99,8 +102,8 @@ Machine information
 If this is the first time using ``asv run`` on a given machine, you
 will be prompted for information about the machine, such as its
 platform, cpu and memory.  **airspeed velocity** will try to make
-reasonable guesses, so it's usually ok to just press Enter to accept
-each default value.  This information is stored in the
+reasonable guesses, so it's usually ok to just press ``Enter`` to
+accept each default value.  This information is stored in the
 `.asv-machine.json` file in your home directory::
 
     No ASV machine info file found.
@@ -137,7 +140,7 @@ Finally, the benchmarks are run::
     Benchmarking py2.7
      project commit hash 24ce4372:.
       Uninstalling project..
-      Installing /home/mdboom/Work/tmp/asv/project.......
+      Installing ...asv/project.......
        [25.00%] test_benchmarks.TestIteration.test_iterkeys: 73.81μs
        [50.00%] test_benchmarks.TestIteration.test_keys: 74.04μs
        [75.00%] test_benchmarks.TestIteration.test_range: 97.44μs
@@ -150,7 +153,7 @@ performance of your project over time.  By using the ``--range``
 argument, we can specify a range of commits that should be
 benchmarked.  The value of this argument is passed directly to ``git
 log`` to get the set of commits, so it actually has a very powerful
-syntax defined on the `gitrevisions mangpage
+syntax defined in the `gitrevisions manpage
 <https://www.kernel.org/pub/software/scm/git/docs/gitrevisions.html>`__.
 
 .. note::
@@ -171,11 +174,11 @@ range specified by ``--range``.
 
 The results are stored as a tree of files in the directory
 ``results/$MACHINE``, where ``$MACHINE`` is the unique machine name
-that was set up in your ``.asv-machine`` file.  In order to combine
-results from multiple machines, the normal workflow is to commit these
-results to a source code repository alongside the results from other
-machines.  These results are then collated and "published" altogether
-into a single interactive website for viewing.
+that was set up in your ``~/.asv-machine.json`` file.  In order to
+combine results from multiple machines, the normal workflow is to
+commit these results to a source code repository alongside the results
+from other machines.  These results are then collated and "published"
+altogether into a single interactive website for viewing.
 
 You can also continue to generate benchmark results for other commits,
 or for new benchmarks and continue to throw them in the ``results``
@@ -193,7 +196,7 @@ To collate a set of results into a viewable website, run::
 
 This will put a tree of files in the ``html`` directory.  This website
 can not be viewed directly from the local filesystem, since web
-browsers to not support AJAX requests to the local filesystem.
+browsers do not support AJAX requests to the local filesystem.
 Instead, **airspeed velocity** provides a simple static webserver that
 can be used to preview the website.  Just run::
 
