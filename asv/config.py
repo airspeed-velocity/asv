@@ -20,7 +20,7 @@ class Config(object):
         self.project = "project"
         self.project_url = "#"
         self.repo = None
-        self.pythons = ["{0.major}.{0.minor}".format(sys.version_info)]
+        self.pythons = ["{0[0]}.{0[1]}".format(sys.version_info)]
         self.matrix = {}
         self.env_dir = "env"
         self.benchmark_dir = "benchmarks"
