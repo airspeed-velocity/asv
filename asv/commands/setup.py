@@ -20,7 +20,7 @@ class Setup(object):
             isn't generally required to be run on its own."""
         )
 
-        parser.set_defaults(func=cls.run)
+        parser.set_defaults(func=cls.run_from_args)
 
         return parser
 
