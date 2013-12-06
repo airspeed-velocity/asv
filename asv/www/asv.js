@@ -478,6 +478,13 @@ $(function() {
             '#73cf26', '#e89f0c', '#e0001a', '#2b16de', '#1fdeb0'
         ];
 
+        var markings = [];
+        $.each(master_json.tags, function(tag, date) {
+            markings.push(
+                { color: "#ddd", lineWidth: 1, xaxis: { from: date, to: date } }
+            );
+        });
+
         var options = {
             colors: colors,
             series: {
@@ -492,7 +499,8 @@ $(function() {
 	    },
             grid: {
 	        hoverable: true,
-                clickable: true
+                clickable: true,
+                markings: markings
 	    },
             xaxis: {
                 mode: "time",
@@ -518,7 +526,25 @@ $(function() {
 
         handle_y_scale(options);
 
-        var plot = $.plot("#main-graph", graphs, options);
+        var placeholder = $('#main-graph');
+        var plot = $.plot(placeholder, graphs, options);
+
+        /* Add the tags as vertical grid lines */
+        var canvas = plot.getCanvas();
+        var xmin = plot.getAxes().xaxis.min;
+        var xmax = plot.getAxes().xaxis.max;
+        $.each(master_json.tags, function(tag, date) {
+            if (date >= xmin && date <= xmax) {
+                var p = plot.pointOffset({x: date, y: 0});
+                var o = plot.getPlotOffset();
+
+	        placeholder.append(
+                    "<div style='position:absolute;" +
+                        "left:" + p.left + "px;" +
+                        "bottom:" + (canvas.height - o.top) + "px;" +
+                        "color:#666;font-size:smaller'>" + tag + "</div>");
+            }
+        });
 
         /* Set up the "overview" plot */
         var overview = $.plot("#overview", graphs, {

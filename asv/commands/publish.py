@@ -13,6 +13,7 @@ from ..benchmarks import Benchmarks
 from ..config import Config
 from ..console import console
 from ..graph import Graph
+from ..repo import get_repo
 from ..results import Results
 from .. import util
 
@@ -105,6 +106,12 @@ class Publish(object):
             for graph in six.itervalues(graphs):
                 graph.save(conf.html_dir)
 
+        with console.group("Getting tags", "green"):
+            repo = get_repo(conf.repo, conf.project)
+            tags = {}
+            for tag in repo.get_tags():
+                tags[tag] = repo.get_date_from_tag(tag)
+
         with console.group("Writing index", "green"):
             benchmark_map = {}
             for name in benchmark_names:
@@ -120,5 +127,6 @@ class Publish(object):
                 'date_to_hash': date_to_hash,
                 'params': params,
                 'benchmark_names': benchmark_map,
-                'machines': machines
+                'machines': machines,
+                'tags': tags
             })

@@ -61,6 +61,20 @@ class Repo(object):
         """
         raise NotImplementedError()
 
+    def get_tags(self):
+        """
+        Get a list of all of the tags defined in the repo.
+        """
+        raise NotImplementedError()
+
+    def get_date_from_tag(self, tag):
+        """
+        Get a Javascript timestamp for a particular tag
+        """
+        raise NotImplementedError()
+
+
+
 
 class Git(Repo):
     def __init__(self, url, path):
@@ -113,6 +127,13 @@ class Git(Repo):
         return self._run_git(
             ['log', '--quiet', '--format=format:%H', range], dots=False
         ).strip().split()
+
+    def get_tags(self):
+        return self._run_git(
+            ['tag', '-l']).strip().split()
+
+    def get_date_from_tag(self, tag):
+        return self.get_date(tag + "^{commit}")
 
 
 def get_repo(url, path):
