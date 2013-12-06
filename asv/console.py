@@ -216,6 +216,13 @@ class _Console(object):
         self._needs_newline = False
         self._n_items = 0
         self._step = 0
+        self._enabled = False
+
+    def enable(self):
+        self._enabled = True
+
+    def disable(self):
+        self._enabled = False
 
     def _newline(self):
         if self._needs_newline:
@@ -231,8 +238,9 @@ class _Console(object):
         self._indent -= 1
 
     def dot(self):
-        self._stream.write('.')
-        self._stream.flush()
+        if self._enabled:
+            self._stream.write('.')
+            self._stream.flush()
         self._needs_newline = True
 
     def message(self, message, color='default'):
@@ -240,17 +248,19 @@ class _Console(object):
         Write a message to the console.
         """
         self._newline()
-        self._stream.write(' ' * self._indent)
-        color_print(message, color, file=self._stream)
-        self._stream.flush()
+        if self._enabled:
+            self._stream.write(' ' * self._indent)
+            color_print(message, color, file=self._stream)
+            self._stream.flush()
         self._needs_newline = True
 
     def add(self, message, color='default'):
         """
         Add content to the end of the message.
         """
-        color_print(message, color, file=self._stream)
-        self._stream.flush()
+        if self._enabled:
+            color_print(message, color, file=self._stream)
+            self._stream.flush()
 
     @contextlib.contextmanager
     def group(self, message, color='default'):
@@ -259,9 +269,10 @@ class _Console(object):
         the context will be indented.
         """
         self._newline()
-        self._stream.write(' ' * self._indent)
-        color_print(message, color, file=self._stream)
-        self._stream.flush()
+        if self._enabled:
+            self._stream.write(' ' * self._indent)
+            color_print(message, color, file=self._stream)
+            self._stream.flush()
         self._needs_newline = True
         with self.indent():
             yield
@@ -280,13 +291,15 @@ class _Console(object):
         displayed along with it.
         """
         self._newline()
-        self._stream.write(' ' * self._indent)
+        if self._enabled:
+            self._stream.write(' ' * self._indent)
         self._step += 1
-        if self._n_items != 0:
-            self._stream.write("[{0:.02f}%] ".format(
-                (float(self._step) / self._n_items) * 100.0))
-        color_print(message, color, file=self._stream)
-        self._stream.flush()
+        if self._enabled:
+            if self._n_items != 0:
+                self._stream.write("[{0:.02f}%] ".format(
+                    (float(self._step) / self._n_items) * 100.0))
+            color_print(message, color, file=self._stream)
+            self._stream.flush()
         self._needs_newline = True
 
     def fake_step(self, n):
@@ -300,76 +313,21 @@ class _Console(object):
         Display an error to the console.
         """
         self._newline()
-        color_print("ERROR: ", "red", file=self._stream)
-        self._stream.write(message)
-        self._stream.write("\n")
-        self._stream.write(content)
+        if self._enabled:
+            color_print("ERROR: ", "red", file=self._stream)
+            self._stream.write(message)
+            self._stream.write("\n")
+            self._stream.write(content)
 
     def warning(self, message, content=''):
         """
         Display a warning to the console.
         """
         self._newline()
-        color_print("WARNING: ", "yellow", file=self._stream)
-        self._stream.write(message)
-        self._stream.write("\n")
-        self._stream.write(content)
+        if self._enabled:
+            color_print("WARNING: ", "yellow", file=self._stream)
+            self._stream.write(message)
+            self._stream.write("\n")
+            self._stream.write(content)
 
-
-class _DummyConsole(object):
-    def __init__(self, stream=None):
-        pass
-
-    @contextlib.contextmanager
-    def indent(self):
-        """
-        A context manager to increase the indentation level.
-        """
-        yield
-
-    def dot(self):
-        pass
-
-    def message(self, message, color='default'):
-        pass
-
-    def add(self, message, color='default'):
-        pass
-
-    @contextlib.contextmanager
-    def group(self, message, color='default'):
-        yield
-
-    def set_nitems(self, n):
-        """
-        Set the number of items in a lengthy process.  Each of these
-        steps should be incremented through using `step`.
-        """
-        pass
-
-    def step(self, message, color='default'):
-        """
-        Write that a step has been completed.  A percentage is
-        displayed along with it.
-        """
-        pass
-
-    def fake_step(self, n):
-        """
-        Increase the step count without displaying a message.
-        """
-        pass
-
-    def error(self, message, content=''):
-        """
-        Display an error to the console.
-        """
-        pass
-
-    def warning(self, message, content=''):
-        """
-        Display a warning to the console.
-        """
-        pass
-
-console = _DummyConsole()
+console = _Console()

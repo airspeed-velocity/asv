@@ -9,11 +9,11 @@ import sys
 import six
 
 from . import commands
-from . import console
+from .console import console
 
 
 def main():
-    console.console = console._Console()
+    console.enable()
 
     parser, command_parsers = commands.make_argparser()
 
