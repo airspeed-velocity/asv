@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import argparse
 
+from .gh_pages import GithubPages
 from .machine import Machine
 from .preview import Preview
 from .publish import Publish
@@ -22,7 +23,8 @@ all_commands = [
     Run,
     Publish,
     Preview,
-    Update
+    Update,
+    GithubPages
 ]
 
 
