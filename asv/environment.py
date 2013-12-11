@@ -126,7 +126,7 @@ class Environment(object):
         installed into it using `pip install`.
         """
         if not os.path.exists(self._env_dir):
-            os.mkdir(self._env_dir)
+            os.makedirs(self._env_dir)
 
         try:
             if not os.path.exists(self._path):
@@ -140,6 +140,7 @@ class Environment(object):
                 shutil.rmtree(self._path)
             raise
 
+    def install_requirements(self):
         self.upgrade('setuptools')
 
         for key, val in six.iteritems(self._requirements):

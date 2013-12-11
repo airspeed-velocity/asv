@@ -307,3 +307,17 @@ def update_json(cls, path, api_version):
         raise RuntimeError(
             "version of {0} is newer than understood by this version of "
             "asv. Upgrade asv in order to use or add to these results.")
+
+
+def iter_chunks(s, n):
+    """
+    Iterator that returns elements from s in chunks of size n.
+    """
+    chunk = []
+    for x in s:
+        chunk.append(x)
+        if len(chunk) == n:
+            yield chunk
+            chunk = []
+    if len(chunk):
+        yield chunk

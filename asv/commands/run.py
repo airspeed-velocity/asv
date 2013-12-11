@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import multiprocessing
 import os
 
 import six
@@ -17,6 +18,29 @@ from ..results import Results
 from .. import util
 
 from .setup import Setup
+
+
+def _do_build_multiprocess(args):
+    """
+    multiprocessing callback to build the project in one particular
+    environment.
+    """
+    try:
+        return _do_build(args)
+    except:
+        import traceback
+        traceback.format_exc()
+        raise
+
+
+def _do_build(args):
+    env, conf = args
+    env.uninstall(conf.project)
+    try:
+        env.install(os.path.abspath(conf.project))
+    except util.ProcessError:
+        return False
+    return True
 
 
 class Run(object):
@@ -41,6 +65,11 @@ class Run(object):
             "--bench", "-b", type=str, nargs="*",
             help="""Regular expression(s) for benchmark to run.  When
             not provided, all benchmarks are run.""")
+        parser.add_argument(
+            "--parallel", "-j", nargs='?', type=int, default=1, const=-1,
+            help="""Build (but don't benchmark) in parallel.  The
+            value is the number of CPUs to use, or if no number
+            provided, use the number of cores on this machine.""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -50,10 +79,12 @@ class Run(object):
     def run_from_args(cls, args):
         conf = Config.load(args.config)
         return cls.run(
-            conf=conf, range=args.range, steps=args.steps, bench=args.bench)
+            conf=conf, range=args.range, steps=args.steps, bench=args.bench,
+            parallel=args.parallel
+        )
 
     @classmethod
-    def run(cls, conf, range="master^!", steps=0, bench=None):
+    def run(cls, conf, range="master^!", steps=0, bench=None, parallel=-1):
         params = {}
         machine_params = Machine.load()
         params.update(machine_params.__dict__)
@@ -76,7 +107,7 @@ class Run(object):
             console.message("No commit hashes selected", "yellow")
             return
 
-        environments = Setup.run(conf=conf)
+        environments = Setup.run(conf=conf, parallel=parallel)
         if len(environments) == 0:
             console.message("No environments selected", "yellow")
             return
@@ -84,41 +115,56 @@ class Run(object):
         steps = len(commit_hashes) * len(benchmarks) * len(environments)
 
         console.message(
-            "Running {0} total benchmarks ({1} commits * {2} environments * {3} benchmarks)".format(
-                steps, len(commit_hashes), len(environments), len(benchmarks)), "green")
+            "Running {0} total benchmarks "
+            "({1} commits * {2} environments * {3} benchmarks)".format(
+                steps, len(commit_hashes),
+                len(environments), len(benchmarks)), "green")
         console.set_nitems(steps)
 
-        for env in environments:
-            config_name = env.name
-            params['python'] = env.python
-            params.update(env.requirements)
+        if parallel <= 0:
+            parallel = multiprocessing.cpu_count()
 
-            with console.group("Benchmarking " + config_name, "green"):
-                for commit_hash in commit_hashes:
+        for commit_hash in commit_hashes:
+            with console.group(
+                    "{0} commit hash {1}:".format(
+                        conf.project, commit_hash[:8]), 'green'):
+                repo.checkout(commit_hash)
+
+                for subenv in util.iter_chunks(environments, parallel):
                     with console.group(
-                            "{0} commit hash {1}:".format(
-                                conf.project, commit_hash[:8]), 'green'):
-                        result = Results(
-                            params,
-                            env,
-                            commit_hash,
-                            repo.get_date(commit_hash))
-
-                        repo.clean()
-                        repo.checkout(commit_hash)
-                        env.uninstall(conf.project)
-                        try:
-                            env.install(os.path.abspath(conf.project))
-                        except util.ProcessError:
-                            console.add(" can't install.  skipping", "yellow")
-                            with console.indent():
-                                times = benchmarks.skip_benchmarks()
+                            "Building for {0}".format(
+                                ', '.join([x.name for x in subenv])), "green"):
+                        args = [(env, conf) for env in subenv]
+                        if parallel != 1:
+                            pool = multiprocessing.Pool(parallel)
+                            successes = pool.map(_do_build_multiprocess, args)
+                            pool.close()
                         else:
-                            with console.indent():
-                                times = benchmarks.run_benchmarks(env)
+                            successes = map(_do_build, args)
 
-                        result.add_times(times)
+                    for env, success in zip(subenv, successes):
+                        config_name = env.name
 
-                        result.save(conf.results_dir)
+                        with console.group("Benchmarking " + config_name, "green"):
+                            if success:
+                                params['python'] = env.python
+                                params.update(env.requirements)
+
+                                with console.indent():
+                                    times = benchmarks.run_benchmarks(env)
+                            else:
+                                console.add(" can't install.  skipping", "yellow")
+                                with console.indent():
+                                    times = benchmarks.skip_benchmarks()
+
+                            result = Results(
+                                params,
+                                env,
+                                commit_hash,
+                                repo.get_date(commit_hash))
+
+                            result.add_times(times)
+
+                            result.save(conf.results_dir)
 
         console.message('')
