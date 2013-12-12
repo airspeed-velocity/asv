@@ -535,23 +535,6 @@ $(function() {
 
         var plot = $.plot(graph_div, graphs, options);
 
-        /* Add the tags as vertical grid lines */
-        var canvas = plot.getCanvas();
-        var xmin = plot.getAxes().xaxis.min;
-        var xmax = plot.getAxes().xaxis.max;
-        $.each(master_json.tags, function(tag, date) {
-            if (date >= xmin && date <= xmax) {
-                var p = plot.pointOffset({x: date, y: 0});
-                var o = plot.getPlotOffset();
-
-                graph_div.append(
-                    "<div style='position:absolute;" +
-                        "left:" + p.left + "px;" +
-                        "bottom:" + (canvas.height - o.top) + "px;" +
-                        "color:#666;font-size:smaller'>" + tag + "</div>");
-            }
-        });
-
         /* Set up the "overview" plot */
         var overview = $.plot(overview_div, graphs, {
             colors: colors,
@@ -582,7 +565,6 @@ $(function() {
         graph_div.unbind("plotselected");
         graph_div.bind("plotselected", function (event, ranges) {
             // do the zooming
-
             plot = $.plot(graph_div, graphs, $.extend(true, {}, options, {
                 xaxis: {
                     min: ranges.xaxis.from,
@@ -590,6 +572,8 @@ $(function() {
                 }
             }));
 
+            // Update things that depend on the range
+            update_tags();
             update_range();
 
             // don't fire event on the overview to prevent eternal loop
@@ -599,6 +583,8 @@ $(function() {
         overview_div.unbind("plotselected");
         overview_div.bind("plotselected", function (event, ranges) {
             plot.setSelection(ranges);
+            // Update things that depend on the range
+            update_tags();
             update_range();
         });
 
@@ -647,6 +633,26 @@ $(function() {
             $("#range")[0].value = result;
         }
 
+        function update_tags() {
+            /* Add the tags as vertical grid lines */
+            var canvas = plot.getCanvas();
+            var xmin = plot.getAxes().xaxis.min;
+            var xmax = plot.getAxes().xaxis.max;
+            $.each(master_json.tags, function(tag, date) {
+                if (date >= xmin && date <= xmax) {
+                    var p = plot.pointOffset({x: date, y: 0});
+                    var o = plot.getPlotOffset();
+
+                    graph_div.append(
+                        "<div style='position:absolute;" +
+                            "left:" + p.left + "px;" +
+                            "bottom:" + (canvas.height - o.top) + "px;" +
+                            "color:#666;font-size:smaller'>" + tag + "</div>");
+                }
+            });
+        }
+
+        update_tags();
         update_range();
     };
 });
