@@ -146,7 +146,8 @@ class ProcessError(subprocess.CalledProcessError):
             ' '.join(self.args), self.retcode)
 
 
-def check_call(args, error=True, timeout=60, dots=True, display_error=True):
+def check_call(args, error=True, timeout=60, dots=True, display_error=True,
+               shell=False):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.
@@ -154,10 +155,12 @@ def check_call(args, error=True, timeout=60, dots=True, display_error=True):
     See `check_output` for parameters.
     """
     check_output(
-        args, error=error, timeout=timeout, dots=dots, display_error=display_error)
+        args, error=error, timeout=timeout, dots=dots,
+        display_error=display_error, shell=shell)
 
 
-def check_output(args, error=True, timeout=60, dots=True, display_error=True):
+def check_output(args, error=True, timeout=60, dots=True, display_error=True,
+                 shell=False):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.  Returns stdout as a string on success.
@@ -178,6 +181,10 @@ def check_output(args, error=True, timeout=60, dots=True, display_error=True):
     display_error : bool, optional
         If `True` (default) display the stdout and stderr of the
         subprocess when the subprocess returns an error code.
+
+    shell : bool, optional
+        If `True`, run the command through the shell.  Default is
+        `False`.
     """
     last_time = [time.time()]
 
@@ -202,6 +209,7 @@ def check_output(args, error=True, timeout=60, dots=True, display_error=True):
         kwargs = {'close_fds': True}
     kwargs['stdout'] = subprocess.PIPE
     kwargs['stderr'] = subprocess.PIPE
+    kwargs['shell'] = shell
     proc = subprocess.Popen(args, **kwargs)
 
     stdout_lines = []

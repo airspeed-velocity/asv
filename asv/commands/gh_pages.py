@@ -31,9 +31,27 @@ class GithubPages(object):
 
     @classmethod
     def run(cls, conf):
+        # TODO: For transactional integrity, we probably need to check
+        # out the repo in a temporary directory
+
         Publish.run(conf)
 
         os.environ['HTML_DIR'] = conf.html_dir
 
-        util.check_call([
-            os.path.join(os.path.dirname(__file__), 'gh_pages.sh')])
+        git = util.which('git')
+
+        # Create a new "orphaned" branch -- we don't need history for
+        # the built products
+        util.check_call([git, 'checkout', '--orphan', 'gh-pages'])
+
+        # We need to tell github this is not a Jekyll document
+        with open('.nojekyll', 'wb') as fd:
+            fd.write(b'\n')
+        util.check_call([git, 'add', '.nojekyll'])
+
+        util.check_call([git, 'add', '-f', 'html'])
+        util.check_call("git mv html/* .", shell=True)
+        util.check_call([git, 'commit', '-m', 'Generated from sources'])
+
+        util.check_call([git, 'push', '-f', 'origin', 'gh-pages'])
+        util.check_call([git, 'checkout', '-'])

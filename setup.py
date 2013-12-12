@@ -48,8 +48,7 @@ setup(
             'www/bootstrap/*.js',
             'www/bootstrap/*.css',
             'template/asv.conf.json',
-            'template/benchmarks/benchmarks.py',
-            'commands/gh_pages.sh'
+            'template/benchmarks/benchmarks.py'
         ]
     },
 
