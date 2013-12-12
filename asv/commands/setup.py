@@ -44,7 +44,9 @@ class Setup(object):
             "--parallel", "-j", nargs='?', type=int, default=1, const=-1,
             help="""Build (but don't benchmark) in parallel.  The
             value is the number of CPUs to use, or if no number
-            provided, use the number of cores on this machine.""")
+            provided, use the number of cores on this machine. NOTE:
+            parallel building is still considered experimental and may
+            not work in all cases.""")
 
         parser.set_defaults(func=cls.run_from_args)
 

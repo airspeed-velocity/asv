@@ -20,6 +20,16 @@ from .. import util
 from .setup import Setup
 
 
+def _do_build(args):
+    env, conf = args
+    env.uninstall(conf.project)
+    try:
+        env.install(os.path.abspath(conf.project))
+    except util.ProcessError:
+        return False
+    return True
+
+
 def _do_build_multiprocess(args):
     """
     multiprocessing callback to build the project in one particular
@@ -31,16 +41,6 @@ def _do_build_multiprocess(args):
         import traceback
         traceback.format_exc()
         raise
-
-
-def _do_build(args):
-    env, conf = args
-    env.uninstall(conf.project)
-    try:
-        env.install(os.path.abspath(conf.project))
-    except util.ProcessError:
-        return False
-    return True
 
 
 class Run(object):
@@ -69,7 +69,9 @@ class Run(object):
             "--parallel", "-j", nargs='?', type=int, default=1, const=-1,
             help="""Build (but don't benchmark) in parallel.  The
             value is the number of CPUs to use, or if no number
-            provided, use the number of cores on this machine.""")
+            provided, use the number of cores on this machine.  NOTE:
+            parallel building is still experimental and may not work
+            in all cases.""")
         parser.add_argument(
             "--show-exc", "-e", action="store_true",
             help="""When provided, display the exceptions from the
