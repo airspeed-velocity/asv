@@ -54,6 +54,13 @@ $(function() {
         return 'inf';
     };
 
+    function network_error(ajax, status, error) {
+        $("#error-message").text(
+            "Error fetching content. " +
+            "Perhaps web server has gone down.");
+        $("#error").modal('show');
+    }
+
     /* GLOBAL STATE */
     /* The state of the parameters in the sidebar.  Dictionary mapping
        strings to arrays containing the "enabled" configurations. */
@@ -401,7 +408,7 @@ $(function() {
                     data: data,
                     label: item[1]});
                 update_graphs();
-            });
+            }).fail(network_error);
         });
     }
 
