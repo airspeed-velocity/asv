@@ -1,7 +1,7 @@
 .. _conf-reference:
 
-`ast.conf.json` reference
-=========================
+``ast.conf.json`` reference
+===========================
 
 The ``ast.conf.json`` file contains information about a particular
 benchmarking project.  The following describes each of the keys in

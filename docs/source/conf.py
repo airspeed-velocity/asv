@@ -31,11 +31,16 @@ except ImportError:
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.0'
 
+intersphinx_mapping = {
+    'python': ('http://docs.python.org/', None)
+}
+
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.intersphinx',
     'sphinx.ext.todo'
 ]
 
@@ -80,7 +85,10 @@ exclude_patterns = []
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
-#default_role = None
+default_role = 'obj'
+
+# Warn about all references where the target cannot be found.
+nitpicky = True
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 #add_function_parentheses = True

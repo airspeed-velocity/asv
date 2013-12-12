@@ -25,9 +25,9 @@ suite for your project.  It must contain, at a minimum, a single
 configuration file, ``asv.conf.json``, and a directory tree of Python
 files containing benchmarks.
 
-The `asv quickstart` command can be used to create a new benchmarking
-suite.  Change to the directory where you would like your new
-benchmarking suite to be created and run::
+The ``asv quickstart`` command can be used to create a new
+benchmarking suite.  Change to the directory where you would like your
+new benchmarking suite to be created and run::
 
     $ asv quickstart
     Edit asv.conf.json to get started.
@@ -104,7 +104,7 @@ will be prompted for information about the machine, such as its
 platform, cpu and memory.  **airspeed velocity** will try to make
 reasonable guesses, so it's usually ok to just press ``Enter`` to
 accept each default value.  This information is stored in the
-`.asv-machine.json` file in your home directory::
+``.asv-machine.json`` file in your home directory::
 
     No ASV machine info file found.
     I will now ask you some questions about this machine to identify
