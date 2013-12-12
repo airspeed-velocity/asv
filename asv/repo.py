@@ -86,8 +86,7 @@ class Git(Repo):
             self._run_git(['clone', url, self._path], chdir=False)
 
         console.message("Fetching recent changes", "green")
-        self._run_git(['fetch', 'origin'])
-        self.checkout('origin/master')
+        self.pull()
 
     @classmethod
     def url_match(cls, url):
@@ -110,6 +109,11 @@ class Git(Repo):
         finally:
             if chdir:
                 os.chdir(orig_dir)
+
+    def pull(self):
+        self._run_git(['fetch', 'origin'])
+        self.checkout('master')
+        self._run_git(['pull'])
 
     def checkout(self, branch):
         self._run_git(['checkout', branch])

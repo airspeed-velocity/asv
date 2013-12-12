@@ -225,7 +225,7 @@ class _Console(object):
         self._enabled = False
 
     def _newline(self):
-        if self._needs_newline:
+        if self._needs_newline and self._enabled:
             self._stream.write("\n")
 
     @contextlib.contextmanager

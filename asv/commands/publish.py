@@ -115,7 +115,11 @@ class Publish(object):
         with console.group("Writing index", "green"):
             benchmark_map = {}
             for name in benchmark_names:
-                benchmark_map[name] = benchmarks.get_code(name)
+                benchmark_map[name] = {
+                    'code': benchmarks[name].code,
+                    'type': benchmarks[name].type,
+                    'unit': benchmarks[name].unit
+                }
             for key, val in six.iteritems(params):
                 val = list(val)
                 val.sort()
@@ -126,7 +130,7 @@ class Publish(object):
                 'show_commit_url': conf.show_commit_url,
                 'date_to_hash': date_to_hash,
                 'params': params,
-                'benchmark_names': benchmark_map,
+                'benchmarks': benchmark_map,
                 'machines': machines,
                 'tags': tags
             })

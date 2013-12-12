@@ -70,6 +70,10 @@ class Run(object):
             help="""Build (but don't benchmark) in parallel.  The
             value is the number of CPUs to use, or if no number
             provided, use the number of cores on this machine.""")
+        parser.add_argument(
+            "--show-exc", "-e", action="store_true",
+            help="""When provided, display the exceptions from the
+            benchmarks when they fail.""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -80,11 +84,12 @@ class Run(object):
         conf = Config.load(args.config)
         return cls.run(
             conf=conf, range=args.range, steps=args.steps, bench=args.bench,
-            parallel=args.parallel
+            parallel=args.parallel, show_exc=args.show_exc
         )
 
     @classmethod
-    def run(cls, conf, range="master^!", steps=0, bench=None, parallel=-1):
+    def run(cls, conf, range="master^!", steps=0, bench=None, parallel=-1,
+            show_exc=False):
         params = {}
         machine_params = Machine.load()
         params.update(machine_params.__dict__)
@@ -151,7 +156,8 @@ class Run(object):
                                 params.update(env.requirements)
 
                                 with console.indent():
-                                    times = benchmarks.run_benchmarks(env)
+                                    times = benchmarks.run_benchmarks(
+                                        env, show_exc=show_exc)
                             else:
                                 console.add(" can't install.  skipping", "yellow")
                                 with console.indent():

@@ -19,17 +19,17 @@ BENCHMARK_DIR = os.path.join(os.path.dirname(__file__), '.benchmark')
 
 def test_find_benchmarks():
     b = benchmarks.Benchmarks(BENCHMARK_DIR)
-    assert len(b) == 4
+    assert len(b) == 7
 
 
 def test_find_benchmarks_regex():
     b = benchmarks.Benchmarks(BENCHMARK_DIR, 'secondary')
-    assert len(b) == 2
+    assert len(b) == 3
 
     b = benchmarks.Benchmarks(BENCHMARK_DIR, 'example')
-    assert len(b) == 2
+    assert len(b) == 3
 
-    b = benchmarks.Benchmarks(BENCHMARK_DIR, 'test_example_benchmark_1')
+    b = benchmarks.Benchmarks(BENCHMARK_DIR, 'time_example_benchmark_1')
     assert len(b) == 1
 
 
@@ -42,7 +42,15 @@ def test_run_benchmarks(tmpdir):
     b = benchmarks.Benchmarks(BENCHMARK_DIR)
     times = b.run_benchmarks(env)
 
-    assert len(times) == 4
+    assert len(times) == 7
+    assert times[
+        'time_examples.TimeSuite.time_example_benchmark_1'] is not None
     # Benchmarks that raise exceptions should have a time of "None"
     assert times[
-        'test_secondary_benchmarks.TestSecondary.test_exception'] is None
+        'time_secondary.TimeSecondary.time_exception'] is None
+    assert times[
+        'subdir.time_subdir.time_foo'] is not None
+    assert times[
+        'mem_examples.mem_list'] == sys.getsizeof([0] * 255)
+    assert times[
+        'time_secondary.track_value'] == 42.0

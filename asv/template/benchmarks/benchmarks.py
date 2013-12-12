@@ -1,11 +1,8 @@
-# Write the benchmarking functions here.  Each benchmark
-# is in a class that inherits from unittest.TestCase.  It may
-# have a `setUp` method, that isn't included in the timings.
-
-import unittest
+# Write the benchmarking functions here.
+# See "Writing benchmarks" in the asv docs for more information.
 
 
-class TestIteration(unittest.TestCase):
+class TestSuite:
     """
     An example benchmark that times the performance of various kinds
     of iterating over dictionaries in Python.

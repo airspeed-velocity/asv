@@ -4,18 +4,20 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import unittest
-
 import sys
 if sys.version_info[0] == 3:
     xrange = range
 
 
-class TestSecondary(unittest.TestCase):
-    def test_factorial(self):
+class TimeSecondary:
+    def time_factorial(self):
         x = 1
         for i in xrange(100):
             x *= i
 
-    def test_exception(self):
+    def time_exception(self):
         raise RuntimeError()
+
+
+def track_value():
+    return 42.0

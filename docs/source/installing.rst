@@ -1,8 +1,12 @@
 Installing airspeed velocity
 ============================
 
-**airspeed velocity** is a standard Python package, based on
-``setuptools``, and can be installed using::
+**airspeed velocity** is known to work on Linux and Mac OS-X.  It's
+ highly unlikely that it works on Microsoft Windows.  It is known to
+ work with Python 2.6, 2.7, 3.2 and 3.3.
+
+**airspeed velocity** is a standard Python package, with its
+installation based on ``setuptools``, and can be installed using::
 
     python setup.py install
 

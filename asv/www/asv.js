@@ -177,7 +177,7 @@ $(function() {
                 'data-toggle="buttons"/>');
         panel_body.append(buttons);
         var i = 0;
-        $.each(index.benchmark_names, function(benchmark_name, code) {
+        $.each(index.benchmarks, function(benchmark_name, benchmark) {
             var label = $('<label class="btn btn-default btn-xs"/>')
             buttons.append(label);
             var short_name = benchmark_name.split(".");
@@ -193,7 +193,7 @@ $(function() {
                     $("#title").popover('destroy');
                     $("#title").popover({
                         'html': true,
-                        'content': '<pre>' + index.benchmark_names[benchmark_name] + '</pre>',
+                        'content': '<pre>' + index.benchmarks[benchmark_name].code + '</pre>',
                         'placement': 'bottom',
                         'container': '#nav'
                     });
@@ -257,7 +257,7 @@ $(function() {
             if (item) {
                 if (previous_click != item.datapoint) {
                     previous_click = item.datapoint;
-                    var commit_hash = get_hash_from_datapoint(item.datapoint);
+                    var commit_hash = master_json.date_to_hash[item.datapoint[0]];
                     if (previous_hash !== commit_hash) {
                         previous_hash = commit_hash;
                         window.open(master_json.show_commit_url + previous_hash, '_blank');
@@ -451,7 +451,7 @@ $(function() {
             };
             options.yaxis.min = Math.pow(10, min);
             options.yaxis.max = Math.pow(10, max);
-        } else {
+        } else if (master_json.benchmarks[current_benchmark].unit === 'seconds') {
             var unit_name = null;
             var multiplier = null;
             for (var i = 0; i < time_units.length - 1; ++i) {
@@ -511,7 +511,7 @@ $(function() {
                 axisLabelFontSizePixels: 12
 	    },
             yaxis: {
-                axisLabel: "seconds",
+                axisLabel: master_json.benchmarks[current_benchmark].unit,
                 axisLabelUseCanvas: true,
                 axisLabelFontFamily: "sans-serif",
                 axisLabelFontSizePixels: 12
@@ -526,8 +526,10 @@ $(function() {
 
         handle_y_scale(options);
 
-        var placeholder = $('#main-graph');
-        var plot = $.plot(placeholder, graphs, options);
+        var graph_div = $('#main-graph');
+        var overview_div = $('#overview');
+
+        var plot = $.plot(graph_div, graphs, options);
 
         /* Add the tags as vertical grid lines */
         var canvas = plot.getCanvas();
@@ -538,7 +540,7 @@ $(function() {
                 var p = plot.pointOffset({x: date, y: 0});
                 var o = plot.getPlotOffset();
 
-	        placeholder.append(
+	        graph_div.append(
                     "<div style='position:absolute;" +
                         "left:" + p.left + "px;" +
                         "bottom:" + (canvas.height - o.top) + "px;" +
@@ -547,7 +549,7 @@ $(function() {
         });
 
         /* Set up the "overview" plot */
-        var overview = $.plot("#overview", graphs, {
+        var overview = $.plot(overview_div, graphs, {
             colors: colors,
 	    series: {
 		lines: {
@@ -573,11 +575,11 @@ $(function() {
             }
 	});
 
-        $("#main-graph").unbind("plotselected");
-	$("#main-graph").bind("plotselected", function (event, ranges) {
+        graph_div.unbind("plotselected");
+        graph_div.bind("plotselected", function (event, ranges) {
 	    // do the zooming
 
-	    plot = $.plot("#main-graph", graphs, $.extend(true, {}, options, {
+	    plot = $.plot(graph_div, graphs, $.extend(true, {}, options, {
 		xaxis: {
 		    min: ranges.xaxis.from,
 		    max: ranges.xaxis.to
@@ -590,8 +592,8 @@ $(function() {
 	    overview.setSelection(ranges, true);
 	});
 
-        $("#overview").unbind("plotselected");
-	$("#overview").bind("plotselected", function (event, ranges) {
+        overview_div.unbind("plotselected");
+	overview_div.bind("plotselected", function (event, ranges) {
 	    plot.setSelection(ranges);
             update_range();
 	});

@@ -144,18 +144,38 @@ class ProcessError(subprocess.CalledProcessError):
             ' '.join(self.args), self.retcode)
 
 
-def check_call(args, error=True, timeout=60, dots=True):
+def check_call(args, error=True, timeout=60, dots=True, display_error=True):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.
+
+    See `check_output` for parameters.
     """
-    check_output(args, error=error, timeout=timeout, dots=dots)
+    check_output(
+        args, error=error, timeout=timeout, dots=dots, display_error=display_error)
 
 
-def check_output(args, error=True, timeout=60, dots=True):
+def check_output(args, error=True, timeout=60, dots=True, display_error=True):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.  Returns stdout as a string on success.
+
+    Parameters
+    ----------
+    error : bool, optional
+        When `True` (default) raise a ProcessError if the subprocess
+        returns an error code.
+
+    timeout : number, optional
+        Kill the process if it lasts longer than `timeout` seconds.
+
+    dots : bool, optional
+        If `True` (default) write a dot to the console to show
+        progress as the subprocess outputs lines.
+
+    display_error : bool, optional
+        If `True` (default) display the stdout and stderr of the
+        subprocess when the subprocess returns an error code.
     """
     last_time = [time.time()]
 
@@ -220,12 +240,13 @@ def check_output(args, error=True, timeout=60, dots=True):
     retcode = proc.poll()
     if retcode:
         if error:
-            console.error("Running {0}".format(" ".join(args)))
-            console.add("STDOUT " + ("-" * 60) + '\n', 'red')
-            console.add(stdout)
-            console.add("STDERR " + ("-" * 60) + '\n', 'red')
-            console.add(stderr)
-            console.add(("-" * 67) + '\n', 'red')
+            if display_error:
+                console.error("Running {0}".format(" ".join(args)))
+                console.add("STDOUT " + ("-" * 60) + '\n', 'red')
+                console.add(stdout)
+                console.add("STDERR " + ("-" * 60) + '\n', 'red')
+                console.add(stderr)
+                console.add(("-" * 67) + '\n', 'red')
             raise ProcessError(args, retcode, stdout, stderr)
 
     return stdout

@@ -3,24 +3,187 @@
 Writing benchmarks
 ==================
 
-Benchmarks are discovered and run with the help of the standard
-library's ``unittest`` module.
+Benchmarks are stored in a collection of `.py` files in the
+benchmarking projects benchmark directory (as defined by
+``benchmark_dir`` in the ``asv.conf.json`` file).  They may be
+arbitrarily nested in subdirectories, and all `.py` files will be
+used, regardless of their file name.
+
+Within each `.py` file, each benchmark in a function or method.  The
+name of the functon must have a special prefix, depending on the type
+of benchmark.  ``asv`` understands how to handle the prefix in either
+``CamelCase`` or lowercase with underscores.  For example, to create a
+timing benchmark, the following are equivalent::
+
+    def time_range():
+        for i in range(1000):
+            pass
+
+    def TimeRange():
+        for i in range(1000):
+            pass
+
+Benchmarks may be organized into methods of classes if desired::
+
+    class Suite:
+        def time_range(self):
+            for i in range(1000):
+                pass
+
+        def time_xrange(self):
+            for i in xrange(1000):
+                pass
+
+Setup and teardown functions
+----------------------------
+
+If setup needs to run that should not be included in the timing of the
+benchmark, include that code in a ``setup`` method on the class, or
+set a function as an attribute on a standalone function.  For
+example::
+
+    class Suite:
+        def setup(self):
+            # load data from a file
+            with open("/usr/share/words.txt", "r") as fd:
+                self.words = fd.readlines()
+
+        def time_upper(self):
+            for word in self.words:
+                word.upper()
+
+    # or equivalently...
+
+    words = []
+    def setup():
+        global words
+        with open("/usr/share/words.txt", "r") as fd:
+            words = fd.readlines()
+
+    def time_upper():
+        for word in words:
+            word.upper()
+    time_upper.setup = setup
+
+You can also include a module-level setup function, which will be run
+for every benchmark within the module, in addition to any setup that
+is assigned to each function.
+
+Similarly, benchmarks can also have a ``teardown`` function.
+
+Benchmark attributes
+--------------------
+
+Each benchmark can have a number of arbitrary attributes assigned to
+it.  The attributes that asv understands depends on the type of
+benchmark and are defined below.  For free functions, just assign the
+attribute to the function.  For methods, include the attribute at the
+class level.  For example, the following are equivalent::
+
+    def time_range():
+        for i in range(1000):
+            pass
+    time_range.timeout = 120.0
+
+    class Suite:
+        timeout = 120.0
+
+        def time_range(self):
+            for i in range(1000):
+                pass
+
+The following attributes are applicable to all benchmark types::
+
+    - ``timeout``: The amount of time, in seconds, to give the
+      benchmark to run before forcibly killing it.  Defaults to 60
+      seconds.
+
+Benchmark types
+---------------
+
+Timing
+``````
+
+Timing benchmarks have the prefix ``time``.
+
+The timing itself is based on the Python standard library's `timeit`
+module, with some extensions for automatic heuristics shamelessly
+stolen from IPython's ``%timeit`` magic function.  This means that
+in most cases the benchmark function itself will be run many times
+to achieve accurate timing.
+
+For best results, the benchmark function should contain as little as
+possible, with as much extraneous setup moved to a ``setup`` function::
+
+    class Suite:
+        def setup(self):
+            # load data from a file
+            with open("/usr/share/words.txt", "r") as fd:
+                self.words = fd.readlines()
+
+        def time_upper(self):
+            for word in self.words:
+                word.upper()
+
+**Attributes**:
+
+    - ``goal_time``: ``asv`` will automatically select the number of
+      iterations to run the benchmark so that it takes between
+      ``goal_time / 10`` and ``goal_time`` seconds each time.  If not
+      specified, ``goal_time`` defaults to 2 seconds.
+
+    - ``number``: Manually choose the number of iterations.  If
+      ``number`` is specified, ``goal_time`` is ignored.
+
+    - ``repeat``: The number of times to repeat the benchmark, each
+      with each repetition running the benchmark ``number`` of times.
+      The minimum time across each of these repetitions is used as the
+      final result.  When not provided, defaults to
+      `timeit.default_repeat` (3).
+
+    - ``timer``: The timing function to use, which can be any source
+      of monotonically increasing numbers, such as `time.clock` or
+      `time.time`.  If not provided, defaults to `timeit.default_timer`.
+
+      On Windows, `time.clock` has microsecond granularity, but
+      `time.time`‘s granularity is 1/60th of a second. On Unix,
+      `time.clock` has 1/100th of a second granularity, and
+      `time.time` is much more precise. On either platform,
+      `timeit.default_timer` measures wall clock time, not the CPU
+      time. This means that other processes running on the same
+      computer may interfere with the timing.
+
+Memory
+``````
 
 .. note::
 
-    As this approach has a lot of shortcomings (though it was
-    convenient to get up and running quickly), I'm not going to spend
-    a whole lot of time documenting it now.  It will likely be
-    completely overhauled and replaced.
+    This functionality is incomplete, and basically exists as a
+    proof-of-concept for custom benchmark types.  The metric used to
+    determine the size of Python objects is `sys.getsizeof` which is
+    next to useless for most things.
 
-Timing
-------
+Memory benchmarks track the size of Python objects.  To write a memory
+benchmark, write a function that returns the object you want to track::
 
-The number of iterations that a benchmark is run is determined
-automatically using a heuristic shamelessly stolen from IPython's
-``timeit`` magic function.
+    def mem_list():
+        return [0] * 256
 
-It adjusts the iterations so that a single "repetition" of the
-benchmark takes between 0.2 and 2.0 seconds.  If a single benchmark
-iteration takes more than 2.0 seconds, it will be run once per
-repetition.
+Tracking (Generic)
+``````````````````
+
+It is also possible to use ``asv`` to track any arbitrary numerical
+value.  "Tracking" benchmarks can be used for this purpose.  These
+simply need to return a numeric value.  For example, to track the
+number of objects known to the garbage collector at a given state::
+
+    import gc
+
+    def track_num_objects():
+        return len(gc.get_objects())
+    track_num_objects.unit = "objects"
+
+**Attributes**:
+
+    - ``unit``: The unit of the values returned by the benchmark.
+      Used for display in the web interface.b

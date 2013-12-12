@@ -4,21 +4,22 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import unittest
-
 import sys
 if sys.version_info[0] == 3:
     xrange = range
 
 
-class TestSuite1(unittest.TestCase):
-    def test_example_benchmark_1(self):
+class TimeSuite:
+    def setup(self):
+        self.n = 100
+
+    def time_example_benchmark_1(self):
         s = ''
-        for i in xrange(100):
+        for i in xrange(self.n):
             s = s + 'x'
 
-    def test_example_benchmark_2(self):
+    def time_example_benchmark_2(self):
         s = []
-        for i in xrange(100):
+        for i in xrange(self.n):
             s.append('x')
         ''.join(s)
