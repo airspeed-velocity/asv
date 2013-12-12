@@ -7,6 +7,7 @@ from __future__ import (absolute_import, division, print_function,
 import os
 import sys
 
+import pytest
 import six
 
 from asv import benchmarks
@@ -15,6 +16,8 @@ from asv import environment
 # The benchmark dir is named '.benchmark' so that py.test doesn't look
 # in there for unit tests.
 BENCHMARK_DIR = os.path.join(os.path.dirname(__file__), '.benchmark')
+
+INVALID_BENCHMARK_DIR = os.path.join(os.path.dirname(__file__), '.benchmark.invalid')
 
 
 def test_find_benchmarks():
@@ -54,3 +57,8 @@ def test_run_benchmarks(tmpdir):
         'mem_examples.mem_list'] == sys.getsizeof([0] * 255)
     assert times[
         'time_secondary.track_value'] == 42.0
+
+
+def test_invalid_benchmark_tree():
+    with pytest.raises(ValueError):
+        b = benchmarks.Benchmarks(INVALID_BENCHMARK_DIR)

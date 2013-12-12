@@ -66,9 +66,12 @@ def run_benchmark(benchmark, root, env, show_exc=False):
             console.add("invalid output", "red")
             return None
         if benchmark.unit == 'seconds':
-            console.add(util.human_time(output))
+            display = util.human_time(output)
+        elif benchmark.unit == 'bytes':
+            display = util.human_file_size(output)
         else:
-            console.add(str(output))
+            display = str(output)
+        console.add(display)
         return output
 
 
@@ -152,14 +155,14 @@ class Benchmarks(dict):
         """
         Discover all benchmarks in a given directory tree.
         """
-        cls.check_files(root)
+        cls.check_tree(root)
 
         for module in cls.disc_files(root):
             for benchmark in cls.disc_objects(module):
                 yield benchmark
 
     @classmethod
-    def check_files(cls, root):
+    def check_tree(cls, root):
         """
         Check the benchmark tree for files with the same name as
         directories.
@@ -188,7 +191,7 @@ class Benchmarks(dict):
                     raise ValueError(
                         "Found a directory and python file with same name in "
                         "benchmark tree: '{0}'".format(path))
-                cls.check_files(path)
+                cls.check_tree(path)
 
     def run_benchmarks(self, env, show_exc=False):
         """
