@@ -14,7 +14,7 @@ import locale
 import sys
 
 import six
-
+from six.moves import xrange
 
 def isatty(file):
     """
