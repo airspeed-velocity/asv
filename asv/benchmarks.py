@@ -46,12 +46,13 @@ def run_benchmark(benchmark, root, env, show_exc=False):
         runtime in seconds for a timing benchmark) or None if the
         benchmark failed.
     """
+    console.enable()
     console.step(benchmark.name + ": ")
     try:
         output = env.run(
             [BENCHMARK_RUN_SCRIPT, root, benchmark.name],
             dots=False, timeout=benchmark.timeout,
-            display_error=show_exc)
+            display_error=True)
     except util.ProcessError:
         console.add("failed", "red")
         return None

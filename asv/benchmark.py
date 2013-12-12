@@ -243,10 +243,9 @@ if __name__ == '__main__':
     benchmark_id = sys.argv[-1]
 
     benchmark = Benchmark.from_name(benchmark_dir, benchmark_id)
-    benchmark.do_module_setup()
-    benchmark.setup()
+    benchmark.do_setup()
     result = benchmark.run()
-    benchmark.teardown()
+    benchmark.do_teardown()
 
     # Write the numeric output value as the last line of the output.
     sys.stdout.write('\n')

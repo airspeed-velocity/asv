@@ -21,7 +21,7 @@ class Machine(object):
             """)
 
         defaults = machine.Machine.get_defaults()
-        for name, description in six.iteritems(machine.Machine.fields):
+        for name, description in machine.Machine.fields:
             parser.add_argument(
                 '--' + name, default=defaults[name],
                 help=description)

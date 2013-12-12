@@ -4,13 +4,10 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from collections import OrderedDict
 import os
 import platform
 import sys
 import textwrap
-
-import six
 
 from . import console
 from . import util
@@ -61,7 +58,7 @@ class Machine(object):
     """
     api_version = 1
 
-    fields = OrderedDict([
+    fields = [
         ("machine",
          """
          A unique name to identify this machine in the results.  May
@@ -88,7 +85,7 @@ class Machine(object):
          """
          The amount of physical RAM on this machine.  For example,
          '4GB'.""")
-    ])
+    ]
 
     @staticmethod
     def get_unique_machine_name():
@@ -141,7 +138,7 @@ class Machine(object):
         defaults = Machine.get_defaults()
         values = {}
 
-        for i, (name, description) in enumerate(six.iteritems(Machine.fields)):
+        for i, (name, description) in enumerate(Machine.fields):
             print(
                 textwrap.fill(
                     '{0}. {1}: {2}'.format(
