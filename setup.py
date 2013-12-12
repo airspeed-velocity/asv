@@ -53,6 +53,8 @@ setup(
         ]
     },
 
+    zip_safe=False,
+
     # py.test testing
     tests_require=['pytest'],
     cmdclass={'test': PyTest},
