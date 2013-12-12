@@ -441,8 +441,12 @@ $(function() {
 
             options.yaxis.ticks = ticks;
             options.yaxis.transform = function(v) {
-                return Math.log(v);
+                return Math.log(v) / Math.LN10;
             };
+            /* inverseTransform is required for plothover to work */
+            options.yaxis.inverseTransform = function (v) {
+                return Math.pow(10.0, v);
+            }
             options.yaxis.tickDecimals = 3;
             options.yaxis.tickFormatter = function (v, axis) {
                 return "10" + (
@@ -491,34 +495,34 @@ $(function() {
                 lines: {
                     show: true,
                     lineWidth: 1
-	        },
+                },
                 points: {
                     show: true
-	        },
-	        shadowSize: 0
-	    },
+                },
+                shadowSize: 0
+            },
             grid: {
-	        hoverable: true,
+                hoverable: true,
                 clickable: true,
                 markings: markings
-	    },
+            },
             xaxis: {
                 mode: "time",
-	        tickLength: 5,
+                tickLength: 5,
                 axisLabel: "commit date",
                 axisLabelUseCanvas: true,
                 axisLabelFontFamily: "sans-serif",
                 axisLabelFontSizePixels: 12
-	    },
+            },
             yaxis: {
                 axisLabel: master_json.benchmarks[current_benchmark].unit,
                 axisLabelUseCanvas: true,
                 axisLabelFontFamily: "sans-serif",
                 axisLabelFontSizePixels: 12
             },
-	    selection: {
-	        mode: "x"
-	    },
+            selection: {
+                mode: "x"
+            },
             legend: {
                 position: "nw"
             }
@@ -540,7 +544,7 @@ $(function() {
                 var p = plot.pointOffset({x: date, y: 0});
                 var o = plot.getPlotOffset();
 
-	        graph_div.append(
+                graph_div.append(
                     "<div style='position:absolute;" +
                         "left:" + p.left + "px;" +
                         "bottom:" + (canvas.height - o.top) + "px;" +
@@ -551,52 +555,52 @@ $(function() {
         /* Set up the "overview" plot */
         var overview = $.plot(overview_div, graphs, {
             colors: colors,
-	    series: {
-		lines: {
-		    show: true,
-		    lineWidth: 1
-		},
-		shadowSize: 0
-	    },
-	    xaxis: {
-		ticks: [],
-		mode: "time"
-	    },
-	    yaxis: {
-		ticks: [],
-		min: 0,
-		autoscaleMargin: 0.1
-	    },
-	    selection: {
-		mode: "x"
-	    },
+            series: {
+                lines: {
+                    show: true,
+                    lineWidth: 1
+                },
+                shadowSize: 0
+            },
+            xaxis: {
+                ticks: [],
+                mode: "time"
+            },
+            yaxis: {
+                ticks: [],
+                min: 0,
+                autoscaleMargin: 0.1
+            },
+            selection: {
+                mode: "x"
+            },
             legend: {
                 show: false
             }
-	});
+        });
 
         graph_div.unbind("plotselected");
         graph_div.bind("plotselected", function (event, ranges) {
-	    // do the zooming
+            // do the zooming
 
-	    plot = $.plot(graph_div, graphs, $.extend(true, {}, options, {
-		xaxis: {
-		    min: ranges.xaxis.from,
-		    max: ranges.xaxis.to
-		}
-	    }));
+            plot = $.plot(graph_div, graphs, $.extend(true, {}, options, {
+                xaxis: {
+                    min: ranges.xaxis.from,
+                    max: ranges.xaxis.to
+                }
+            }));
 
             update_range();
 
-	    // don't fire event on the overview to prevent eternal loop
-	    overview.setSelection(ranges, true);
-	});
+            // don't fire event on the overview to prevent eternal loop
+            overview.setSelection(ranges, true);
+        });
 
         overview_div.unbind("plotselected");
-	overview_div.bind("plotselected", function (event, ranges) {
-	    plot.setSelection(ranges);
+        overview_div.bind("plotselected", function (event, ranges) {
+            plot.setSelection(ranges);
             update_range();
-	});
+        });
 
         function update_range() {
             /* Find the minimum and maximum values */
