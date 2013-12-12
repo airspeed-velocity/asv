@@ -10,6 +10,28 @@ from .environment import Environment
 from . import util
 
 
+def find_latest_result_hash(machine, root):
+    """
+    Find the latest result for the given machine.
+    """
+    root = os.path.join(root, machine)
+
+    latest_date = 0
+    latest_hash = ''
+    for filename in os.listdir(root):
+        if filename.endswith('.json'):
+            path = os.path.join(root, filename)
+            try:
+                result = Results.load(path)
+            except:
+                continue
+            if result.date > latest_date:
+                latest_date = result.date
+                latest_hash = result.commit_hash
+
+    return latest_hash
+
+
 class Results(object):
     """
     Manage a set of benchmark results for a single machine and commit

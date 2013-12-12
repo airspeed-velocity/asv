@@ -14,7 +14,7 @@ from ..config import Config
 from ..console import console
 from ..machine import Machine
 from ..repo import get_repo
-from ..results import Results
+from ..results import Results, find_latest_result_hash
 from .. import util
 
 from .setup import Setup
@@ -57,10 +57,16 @@ class Run(object):
             ranges' section of the `gitrevisions` manpage for more
             info.  Default: master only""")
         parser.add_argument(
+            "--latest", "-l", action="store_true",
+            help="""Benchmark commits since the latest commit that has
+            already been benchmarked.  This is useful for `cron` jobs
+            that run on a regular basis.  If --latest is provided,
+            --range is ignored.""")
+        parser.add_argument(
             "--steps", "-s", type=int, default=0,
             help="""Maximum number of steps to benchmark.  This is
-            used to subsample the commits determined by --range to a
-            reasonable number.""")
+            used to subsample the commits determined by --range or
+            --latest to a reasonable number.""")
         parser.add_argument(
             "--bench", "-b", type=str, nargs="*",
             help="""Regular expression(s) for benchmark to run.  When
@@ -86,12 +92,12 @@ class Run(object):
         conf = Config.load(args.config)
         return cls.run(
             conf=conf, range=args.range, steps=args.steps, bench=args.bench,
-            parallel=args.parallel, show_exc=args.show_exc
+            parallel=args.parallel, show_exc=args.show_exc, latest=args.latest
         )
 
     @classmethod
     def run(cls, conf, range="master^!", steps=0, bench=None, parallel=-1,
-            show_exc=False):
+            show_exc=False, latest=False):
         params = {}
         machine_params = Machine.load()
         params.update(machine_params.__dict__)
@@ -103,16 +109,19 @@ class Run(object):
             return
 
         repo = get_repo(conf.repo, conf.project)
+        if latest:
+            latest_result = find_latest_result_hash(
+                machine_params.machine, conf.results_dir)
+            # TODO: This is shamelessly git-specific
+            range = '{0}..master'.format(latest_result)
         commit_hashes = repo.get_hashes_from_range(range)
-        if steps > 0:
-            subhashes = []
-            for i in six.moves.xrange(0, len(commit_hashes),
-                                      int(len(commit_hashes) / steps)):
-                subhashes.append(commit_hashes[i])
-            commit_hashes = subhashes
         if len(commit_hashes) == 0:
             console.message("No commit hashes selected", "yellow")
             return
+        if steps > 0:
+            spacing = int(len(commit_hashes) / steps) or 1
+            commit_hashes = [commit_hashes[i] for i in
+                             six.moves.xrange(0, len(commit_hashes), spacing)]
 
         environments = Setup.run(conf=conf, parallel=parallel)
         if len(environments) == 0:
