@@ -281,11 +281,15 @@ $(function() {
                     var commit_hash = master_json.date_to_hash[item.datapoint[0]];
                     if (previous_hash !== commit_hash) {
                         previous_hash = commit_hash;
-                        window.open(master_json.show_commit_url + previous_hash, '_blank');
+                        window.open(
+                            master_json.show_commit_url + previous_hash,
+                            '_blank');
                     }
                 }
             }
         });
+    }).fail(function () {
+        network_error();
     });
 
     /* When the window resizes, redraw the graphs */
