@@ -8,15 +8,17 @@ Various low-level utilities.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import io
 import json
 import math
 import os
-import posix
 import select
 import subprocess
-import threading
-import time
+
+try:
+    from select import PIPE_BUF
+except ImportError:
+    # PIPE_BUF is not available on Python 2.6
+    PIPE_BUF = os.pathconf('.', os.pathconf_names['PC_PIPE_BUF'])
 
 import six
 from six.moves import xrange
@@ -194,32 +196,31 @@ def check_output(args, error=True, timeout=60, dots=True, display_error=True,
     stdout_chunks = []
     stderr_chunks = []
     try:
-        try:
-            fds = {
-                proc.stdout.fileno(): stdout_chunks,
-                proc.stderr.fileno(): stderr_chunks
-                }
+        fds = {
+            proc.stdout.fileno(): stdout_chunks,
+            proc.stderr.fileno(): stderr_chunks
+            }
 
-            while proc.poll() is None:
-                rlist, wlist, xlist = select.select(
-                    list(fds.keys()), [], [], timeout)
-                for f in rlist:
-                    output = os.read(f, select.PIPE_BUF)
-                    fds[f].append(output)
-                if dots:
-                    console.dot()
-        except KeyboardInterrupt:
-            proc.terminate()
-            raise
-    finally:
-        # TODO: Is this still necessary?  Can't really hurt, I guess.
-        proc.stdout.flush()
-        proc.stderr.flush()
+        while proc.poll() is None:
+            rlist, wlist, xlist = select.select(
+                list(fds.keys()), [], [], timeout)
+            if len(rlist) == 0:
+                # We got a timeout
+                proc.terminate()
+                break
+            for f in rlist:
+                output = os.read(f, PIPE_BUF)
+                fds[f].append(output)
+            if dots:
+                console.dot()
+    except KeyboardInterrupt:
+        proc.terminate()
+        raise
 
     stdout = b''.join(stdout_chunks).decode('utf-8', 'replace')
     stderr = b''.join(stderr_chunks).decode('utf-8', 'replace')
 
-    retcode = proc.poll()
+    retcode = proc.wait()
     if retcode:
         if error:
             if display_error:
