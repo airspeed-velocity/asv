@@ -73,6 +73,8 @@ $(function() {
     var log_scale = false;
     /* The index.json content as returned from the server */
     var master_json = {};
+    /* A little div to handle tooltip placement on the graph */
+    var tooltip = null;
 
     /* Fetch the master index.json and then set up the page elements
        based on it. */
@@ -134,10 +136,12 @@ $(function() {
             });
             details = details.join('<br/>');
 
-            button.tooltip({'title': details,
-                            'html': true,
-                            'placement': 'right',
-                            'container': 'body'});
+            button.tooltip({
+                'title': details,
+                'html': true,
+                'placement': 'right',
+                'container': 'body'
+            });
         });
 
         /* Generic parameter selectors */
@@ -197,17 +201,15 @@ $(function() {
                 if (!evt.target.classList.contains("active")) {
                     current_benchmark = benchmark_name;
                     $("#title").text(benchmark_name);
-                    $("#title").popover('destroy');
-                    $("#title").popover({
-                        'html': true,
-                        'content': '<pre>' + index.benchmarks[benchmark_name].code + '</pre>',
-                        'placement': 'bottom',
-                        'container': '#nav'
-                    });
                     replace_graphs();
                 }
             });
-
+            label.tooltip({
+                title: benchmark.code,
+                html: true,
+                placement: 'right',
+                container: 'body'
+            });
             if (i == 0) {
                 label.button('toggle');
                 current_benchmark = benchmark_name;
@@ -221,19 +223,29 @@ $(function() {
             update_graphs();
         });
 
+        tooltip = $("<div></div>");
+        tooltip.appendTo("body");
+
         /* The tooltip on a point shows the exact timing and the
            commit hash */
         function showTooltip(x, y, contents) {
-            $("<div id='tooltip'>" + contents + "</div>").css({
-                position: "absolute",
-                display: "none",
-                top: y + 5,
-                left: x + 20,
-                border: "1px solid #888",
-                padding: "2px",
-                "background-color": "#eee",
-                opacity: 0.80
-            }).appendTo("body").fadeIn(200);
+            tooltip
+                .css({
+                    position: "absolute",
+                    display: "none",
+                    top: y - 4,
+                    left: x - 2,
+                    width: 4,
+                    height: 4
+                })
+                .fadeIn(0)
+                .tooltip({
+                    title: contents,
+                    html: true,
+                    placement: 'top',
+                    container: 'body'
+                })
+                .tooltip('show');
         }
 
         var previous_hover = null;
@@ -241,7 +253,6 @@ $(function() {
             if (item) {
                 if (previous_hover != item.datapoint) {
                     previous_hover = item.datapoint;
-                    $("#tooltip").remove();
                     var y = item.datapoint[1];
                     var commit_hash = master_json.date_to_hash[item.datapoint[0]];
                     if (commit_hash) {
@@ -251,7 +262,7 @@ $(function() {
                     }
                 }
             } else {
-                $("#tooltip").remove();
+                tooltip.tooltip("destroy");
                 previous_point = null;
             }
         });

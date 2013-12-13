@@ -1,3 +1,11 @@
+.navbar-default .navbar-text {
+    color: #000;
+}
+
+.navbar-default .navbar-link {
+    color: #2458D9;
+}
+
 .panel-body {
     padding: 0;
 }
@@ -8,13 +16,32 @@
 
 .panel-heading {
     font-size: 12px;
+    font-weight:bold;
     padding: 2px;
     text-align: center;
 }
 
-.popover {
-    max-width: 800px;
-    min-width: 400px;
+.btn-group>.btn, .btn-group-vertical>.btn,
+.btn-group-vertical>.btn:first-child:not(:last-child),
+.btn-group-vertical>.btn:last-child:not(:first-child),
+.panel {
+    border-radius: 0;
+}
+
+.panel, .navbar-default {
+    -webkit-box-shadow: 0 4px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 4px rgba(0,0,0,0.1);
+}
+
+.panel-default>.panel-heading, .navbar-default {
+    background: rgb(238,238,238); /* Old browsers */
+    background: -moz-linear-gradient(top,  rgba(238,238,238,1) 0%, rgba(204,204,204,1) 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(238,238,238,1)), color-stop(100%,rgba(204,204,204,1))); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top,  rgba(238,238,238,1) 0%,rgba(204,204,204,1) 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top,  rgba(238,238,238,1) 0%,rgba(204,204,204,1) 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top,  rgba(238,238,238,1) 0%,rgba(204,204,204,1) 100%); /* IE10+ */
+    background: linear-gradient(to bottom,  rgba(238,238,238,1) 0%,rgba(204,204,204,1) 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#eeeeee', endColorstr='#cccccc',GradientType=0 ); /* IE6-9 */
 }
 
 .btn-default:active, .btn-default.active, .open .dropdown-toggle.btn-default {
@@ -27,11 +54,23 @@
     border-color: #1684c2;
 }
 
-.navbar-default .navbar-text {
-    color: #fff;
-}
-
 .navbar-nav {
     padding-left: 6px;
     padding-right: 6px;
+}
+
+#range {
+    font-family: monospace;
+}
+
+#title-dropdown {
+    cursor: pointer;
+}
+
+.tooltip-inner {
+    min-width: 100px;
+    max-width: 800px;
+    text-align: left;
+    white-space: pre;
+    font-family: monospace;
 }

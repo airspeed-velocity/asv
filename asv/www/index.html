@@ -19,27 +19,30 @@
         <li>
           <p class="navbar-text">
             <a href="http://github.com/spacetelescope/asv/" class="navbar-link" target="_blank">
-              <img src="swallow.png" width="22" height="22" alt="swallow"/>airspeed velocity</a>
+              <img src="swallow.png" width="22" height="22" alt="swallow"></img>
+              airspeed velocity
+            </a>
             of an unladen
             <a id="project-name" href="#" class="navbar-link" target="_blank">project</a>
           </p>
         </li>
         <li>
-          <a class="navbar-brand">
-            <span id="title">benchmark</span>
-            <span class="caret"></span>
-          </a>
-        </li>
-        <li>
-          <form class="navbar-form navbar-left" role="search">
-            <div class="form-group">
-              <input id="range" type="text" class="form-control" size="24" readonly/>
-            </div>
-          </form>
+          <span class="navbar-brand" id="title">
+            benchmark
+          </span>
         </li>
       </ul>
     </nav>
-    <div id="navigation" style="position: absolute; left: 0; top: 55px; bottom: 0; width: 200px; overflow: scroll">
+    <div id="navigation" style="position: absolute; left: 0; top: 55px; bottom: 0; width: 200px; overflow-y: scroll">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          commits
+        </div>
+        <div class="panel-body">
+          <input id="range" type="text" class="form-control" size="24" readonly/>
+        </div>
+      </div>
+
       <div class="panel panel-default">
         <div class="panel-heading">
           plot settings
@@ -52,10 +55,10 @@
       </div>
     </div>
     <div style="position: absolute; left: 220px; top: 60px; bottom: 10px; right: 20px;">
-      <div style="position: absolute; top: 48px; left: 0; right: 0; bottom: 160px;">
+      <div style="position: absolute; top: 48px; left: 0; right: 0; bottom: 100px;">
         <div id="main-graph" style="width: 100%; height: 100%"></div>
       </div>
-      <div style="position: absolute; height: 160px; left: 0; right: 0; bottom: 0; padding-top: 24px">
+      <div style="position: absolute; height: 100px; left: 0; right: 0; bottom: 0; padding-top: 24px">
         <div id="overview" style="width: 100%; height: 100%"></div>
       </div>
     </div>
