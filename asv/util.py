@@ -217,6 +217,11 @@ def check_output(args, error=True, timeout=60, dots=True, display_error=True,
         proc.terminate()
         raise
 
+    proc.stdout.flush()
+    proc.stderr.flush()
+    stdout_chunks.append(proc.stdout.read())
+    stderr_chunks.append(proc.stderr.read())
+
     stdout = b''.join(stdout_chunks).decode('utf-8', 'replace')
     stderr = b''.join(stderr_chunks).decode('utf-8', 'replace')
 
