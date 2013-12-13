@@ -164,13 +164,23 @@ syntax defined in the `gitrevisions manpage
 For example, to benchmark all of the commits since a particular tag
 (``v0.1``)::
 
-    asv run --range=v0.1..master
+    asv run v0.1..master
 
 In many cases, this may result in more commits than you are able to
 benchmark in a reasonable amount of time.  In that case, the
 ``--steps`` argument may be helpful.  It specifies the maximum number
 of commits you want to test, and it will evenly space them over the
-range specified by ``--range``.
+specified range.
+
+You may also want to benchmark every commit that has already been
+benchmarked on all the other machines.  For that, use::
+
+    asv run existing
+
+You can benchmark all commits since the last one that was benchmarked
+on this machine.  This is useful for running in nightly cron jobs::
+
+    asv run latest
 
 The results are stored as a tree of files in the directory
 ``results/$MACHINE``, where ``$MACHINE`` is the unique machine name

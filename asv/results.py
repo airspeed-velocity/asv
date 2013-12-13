@@ -10,6 +10,24 @@ from .environment import Environment
 from . import util
 
 
+def iter_existing_hashes(root):
+    """
+    Iterate over all the hashes that have already been tested.
+
+    Each element yielded is the pair (hash, date).
+    """
+    for root, dirs, files in os.walk(root):
+        for filename in files:
+            if filename.endswith('.json'):
+                path = os.path.join(root, filename)
+                try:
+                    result = Results.load(path)
+                except:
+                    continue
+
+                yield result.commit_hash, result.date
+
+
 def find_latest_result_hash(machine, root):
     """
     Find the latest result for the given machine.
@@ -18,16 +36,10 @@ def find_latest_result_hash(machine, root):
 
     latest_date = 0
     latest_hash = ''
-    for filename in os.listdir(root):
-        if filename.endswith('.json'):
-            path = os.path.join(root, filename)
-            try:
-                result = Results.load(path)
-            except:
-                continue
-            if result.date > latest_date:
-                latest_date = result.date
-                latest_hash = result.commit_hash
+    for commit_hash, date in iter_existing_hashes(machine, root):
+        if result.date > latest_date:
+            latest_date = result.date
+            latest_hash = result.commit_hash
 
     return latest_hash
 

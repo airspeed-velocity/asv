@@ -14,7 +14,7 @@ from ..config import Config
 from ..console import console
 from ..machine import Machine
 from ..repo import get_repo
-from ..results import Results, find_latest_result_hash
+from ..results import Results, find_latest_result_hash, iter_existing_hashes
 from .. import util
 
 from .setup import Setup
@@ -51,17 +51,15 @@ class Run(object):
             description="Run a benchmark suite.")
 
         parser.add_argument(
-            "--range", "-r", default="master^!",
-            help="""Range of commits to benchmark.  This is passed as
-            the first argument to ``git log``.  See 'specifying
-            ranges' section of the `gitrevisions` manpage for more
-            info.  Default: master only""")
-        parser.add_argument(
-            "--latest", "-l", action="store_true",
-            help="""Benchmark commits since the latest commit that has
-            already been benchmarked.  This is useful for `cron` jobs
-            that run on a regular basis.  If --latest is provided,
-            --range is ignored.""")
+            'range', nargs=1,
+            help="""Range of commits to benchmark.  By default, this
+            is passed as the first argument to ``git log``.  See
+            'specifying ranges' section of the `gitrevisions` manpage
+            for more info.  Also accepts the special values 'latest',
+            and 'existing'.  'latest' will benchmark all commits since
+            the latest benchmarked on this machine.  'existing' will
+            benchmark against all commits for which there are existing
+            benchmarks on any machine.""")
         parser.add_argument(
             "--steps", "-s", type=int, default=0,
             help="""Maximum number of steps to benchmark.  This is
@@ -91,13 +89,14 @@ class Run(object):
     def run_from_args(cls, args):
         conf = Config.load(args.config)
         return cls.run(
-            conf=conf, range=args.range, steps=args.steps, bench=args.bench,
-            parallel=args.parallel, show_exc=args.show_exc, latest=args.latest
+            conf=conf, range_spec=args.range[0], steps=args.steps,
+            bench=args.bench, parallel=args.parallel,
+            show_exc=args.show_exc
         )
 
     @classmethod
-    def run(cls, conf, range="master^!", steps=0, bench=None, parallel=-1,
-            show_exc=False, latest=False):
+    def run(cls, conf, range_spec="master^!", steps=0, bench=None, parallel=-1,
+            show_exc=False):
         params = {}
         machine_params = Machine.load(interactive=True)
         params.update(machine_params.__dict__)
@@ -109,15 +108,24 @@ class Run(object):
             return
 
         repo = get_repo(conf.repo, conf.project)
-        if latest:
+
+        if range_spec == 'existing':
+            commit_hashes = [h for h, d in iter_existing_hashes(
+                conf.results_dir)]
+            range_spec = None
+        elif range_spec == 'latest':
             latest_result = find_latest_result_hash(
                 machine_params.machine, conf.results_dir)
             # TODO: This is shamelessly git-specific
-            range = '{0}..master'.format(latest_result)
-        commit_hashes = repo.get_hashes_from_range(range)
+            range_spec = '{0}..master'.format(latest_result)
+
+        if range_spec is not None:
+            commit_hashes = repo.get_hashes_from_range(range_spec)
+
         if len(commit_hashes) == 0:
             console.message("No commit hashes selected", "yellow")
             return
+
         if steps > 0:
             spacing = int(len(commit_hashes) / steps) or 1
             commit_hashes = [commit_hashes[i] for i in
