@@ -72,22 +72,11 @@ class Publish(object):
 
                 results = Results.load(path)
 
-                date_to_hash[results.date] = results.commit_hash[
-                    :conf.hash_length]
+                date_to_hash[results.date] = results.commit_hash[:conf.hash_length]
 
                 for key, val in six.iteritems(results.params):
                     params.setdefault(key, set())
                     params[key].add(val)
-
-        with console.group("Loading graph data", "green"):
-            for path in dir_contents:
-                console.dot()
-
-                filename = os.path.basename(path)
-                if filename == 'machine.json':
-                    continue
-
-                results = Results.load(path)
 
                 for key, val in six.iteritems(results.results):
                     for param in six.iterkeys(params):
