@@ -137,10 +137,11 @@ $(function() {
             details = details.join('<br/>');
 
             button.tooltip({
-                'title': details,
-                'html': true,
-                'placement': 'right',
-                'container': 'body'
+                title: details,
+                html: true,
+                placement: 'right',
+                container: 'body',
+                animation: false
             });
         });
 
@@ -208,7 +209,8 @@ $(function() {
                 title: benchmark.code,
                 html: true,
                 placement: 'right',
-                container: 'body'
+                container: 'body',
+                animation: 'false'
             });
             if (i == 0) {
                 label.button('toggle');
@@ -243,7 +245,8 @@ $(function() {
                     title: contents,
                     html: true,
                     placement: 'top',
-                    container: 'body'
+                    container: 'body',
+                    animation: false
                 })
                 .tooltip('show');
         }
