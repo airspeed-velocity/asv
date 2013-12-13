@@ -99,7 +99,7 @@ class Run(object):
     def run(cls, conf, range="master^!", steps=0, bench=None, parallel=-1,
             show_exc=False, latest=False):
         params = {}
-        machine_params = Machine.load()
+        machine_params = Machine.load(interactive=True)
         params.update(machine_params.__dict__)
         machine_params.save(conf.results_dir)
 
