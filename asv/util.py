@@ -12,10 +12,8 @@ import io
 import json
 import math
 import os
-try:
-    import posix
-except ImportError:
-    posix = None
+import posix
+import select
 import subprocess
 import threading
 import time
@@ -176,7 +174,7 @@ def check_output(args, error=True, timeout=60, dots=True, display_error=True,
 
     dots : bool, optional
         If `True` (default) write a dot to the console to show
-        progress as the subprocess outputs lines.
+        progress as the subprocess outputs content.
 
     display_error : bool, optional
         If `True` (default) display the stdout and stderr of the
@@ -186,66 +184,40 @@ def check_output(args, error=True, timeout=60, dots=True, display_error=True,
         If `True`, run the command through the shell.  Default is
         `False`.
     """
-    last_time = [time.time()]
+    proc = subprocess.Popen(
+        args,
+        close_fds=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=shell)
 
-    def read_stream(stream, lines):
-        while True:
-            line = stream.readline()
-            if len(line) == 0:
-                break
-            lines.append(line)
-            if dots:
-                console.dot()
-            last_time[0] = time.time()
-
-    def wait():
-        while True:
-            if proc.poll():
-                break
-            time.sleep(0.01)
-
-    kwargs = {}
-    if posix:
-        kwargs = {'close_fds': True}
-    kwargs['stdout'] = subprocess.PIPE
-    kwargs['stderr'] = subprocess.PIPE
-    kwargs['shell'] = shell
-    proc = subprocess.Popen(args, **kwargs)
-
-    stdout_lines = []
-    stderr_lines = []
-    # Setup all worker threads. By now the pipes have been created and
-    # proc.stdout/proc.stderr point to open pipe objects.
-    stdout_reader = threading.Thread(
-        target=read_stream, args=(proc.stdout, stdout_lines))
-    stderr_reader = threading.Thread(
-        target=read_stream, args=(proc.stderr, stderr_lines))
-
-    # Start all workers
-    stdout_reader.start()
-    stderr_reader.start()
+    stdout_chunks = []
+    stderr_chunks = []
     try:
         try:
-            while True:
-                if proc.poll() is not None:
-                    break
-                time.sleep(0.01)
-                if time.time() - last_time[0] > timeout:
-                    proc.terminate()
-                    break
+            fds = {
+                proc.stdout.fileno(): stdout_chunks,
+                proc.stderr.fileno(): stderr_chunks
+                }
+
+            while proc.poll() is None:
+                rlist, wlist, xlist = select.select(
+                    list(fds.keys()), [], [], timeout)
+                for f in rlist:
+                    output = os.read(f, select.PIPE_BUF)
+                    fds[f].append(output)
+                if dots:
+                    console.dot()
         except KeyboardInterrupt:
             proc.terminate()
             raise
     finally:
+        # TODO: Is this still necessary?  Can't really hurt, I guess.
         proc.stdout.flush()
         proc.stderr.flush()
-        stdout_reader.join()
-        stderr_reader.join()
 
-    stdout = b''.join(stdout_lines)
-    stderr = b''.join(stderr_lines)
-    stdout = stdout.decode('utf-8', 'replace')
-    stderr = stderr.decode('utf-8', 'replace')
+    stdout = b''.join(stdout_chunks).decode('utf-8', 'replace')
+    stderr = b''.join(stderr_chunks).decode('utf-8', 'replace')
 
     retcode = proc.poll()
     if retcode:
