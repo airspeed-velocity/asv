@@ -417,6 +417,7 @@ $(function() {
         graphs = [];
 
         to_load = collect_graphs(current_benchmark, state);
+        var failures = 0;
 
         $.each(to_load, function(i, item) {
             $.ajax({
@@ -426,7 +427,12 @@ $(function() {
                     data: data,
                     label: item[1]});
                 update_graphs();
-            }).fail(network_error);
+            }).fail(function() {
+                failures += 1;
+                if (failures == to_load.length) {
+                    network_error();
+                }
+            });
         });
     }
 
