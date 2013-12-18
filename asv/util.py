@@ -159,7 +159,7 @@ def check_call(args, error=True, timeout=60, dots=True, display_error=True,
         display_error=display_error, shell=shell)
 
 
-def check_output(args, error=True, timeout=60, dots=True, display_error=True,
+def check_output(args, error=True, timeout=120, dots=True, display_error=True,
                  shell=False):
     """
     Runs the given command in a subprocess, raising ProcessError if it
