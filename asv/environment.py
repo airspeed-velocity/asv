@@ -145,9 +145,9 @@ class Environment(object):
 
         for key, val in six.iteritems(self._requirements):
             if val is not None:
-                self.install("{0}=={1}".format(key, val))
+                self.upgrade("{0}=={1}".format(key, val))
             else:
-                self.install(key)
+                self.upgrade(key)
 
     def _run_executable(self, executable, args, **kwargs):
         return util.check_output([
@@ -164,7 +164,7 @@ class Environment(object):
         """
         Upgrade a package into the environment using `pip install --upgrade`.
         """
-        console.message("Installing {0}".format(package))
+        console.message("Upgrading {0}".format(package))
         self._run_executable('pip', ['install', '--upgrade', package])
 
     def uninstall(self, package):
