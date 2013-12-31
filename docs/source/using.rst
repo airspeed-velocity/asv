@@ -222,4 +222,39 @@ well, for example.
 Managing the results database
 -----------------------------
 
-TODO
+The ``asv rm`` command can be used to remove benchmarks from the
+database.  The command takes an arbitrary number of ``key=value``
+entries that are "and"ed together to determine which benchmarks to
+remove.
+
+The keys may be one of:
+
+    - ``benchmark``: A benchmark name
+
+    - ``python``: The version of python
+
+    - ``commit_hash``: The commit hash
+
+    - machine-related: ``machine``, ``arch``, ``cpu``, ``os``, ``ram``
+
+    - environment-related: a name of a dependency, e.g. ``numpy``
+
+The values are glob patterns, as supported by the Python standard
+library module `fnmatch`.  So, for example, to remove all benchmarks
+in the ``time_units`` module::
+
+    asv rm "benchmark=time_units.*"
+
+Note the double quotes around the entry to prevent the shell from
+expanding the ``*`` itself.
+
+The ``asv rm`` command will prompt before performing any operations.
+Passing the ``-y`` option will skip the prompt.  Note that generally
+the results will be stored in a source code repository, so it should
+be possible to undo any of the changes using the DVCS directly as
+well.
+
+Here is a more complex example, to remove all of the benchmarks on
+Python 2.7 and the machine named ``giraffe``::
+
+    asv rm python=2.7 machine=giraffe

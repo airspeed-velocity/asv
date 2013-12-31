@@ -10,25 +10,39 @@ from .environment import Environment
 from . import util
 
 
+def iter_results(results):
+    """
+    Iterate over all of the result files.
+    """
+    for root, dirs, files in os.walk(results):
+        for filename in files:
+            if filename.endswith('.json'):
+                path = os.path.join(root, filename)
+                try:
+                    result = Results.load(path)
+                except:
+                    continue
+                yield result
+
+
+def iter_existing_hashes(results):
+    """
+    Iterate over all of the result commit hashes and dates.  Each
+    element yielded is the pair (hash, date).
+
+    May return duplicates.  Use `get_existing_hashes` if that matters.
+    """
+    for result in iter_results(results):
+        yield result.commit_hash, result.date
+
+
 def get_existing_hashes(results):
     """
-    Iterate over all the hashes that have already been tested.
+    Get all of the commit hashes that have already been tested.
 
     Each element yielded is the pair (hash, date).
     """
-    def iter_existing_hashes():
-        for root, dirs, files in os.walk(results):
-            for filename in files:
-                if filename.endswith('.json'):
-                    path = os.path.join(root, filename)
-                    try:
-                        result = Results.load(path)
-                    except:
-                        continue
-
-                    yield result.commit_hash, result.date
-
-    hashes = list(set(iter_existing_hashes()))
+    hashes = list(set(iter_existing_hashes(results)))
     return hashes
 
 
@@ -41,9 +55,9 @@ def find_latest_result_hash(machine, root):
     latest_date = 0
     latest_hash = ''
     for commit_hash, date in iter_existing_hashes(machine, root):
-        if result.date > latest_date:
-            latest_date = result.date
-            latest_hash = result.commit_hash
+        if date > latest_date:
+            latest_date = date
+            latest_hash = commit_hash
 
     return latest_hash
 
@@ -102,6 +116,10 @@ class Results(object):
     def results(self):
         return self._results
 
+    @property
+    def env(self):
+        return self._env
+
     def add_times(self, times):
         """
         Add benchmark times.
@@ -151,7 +169,13 @@ class Results(object):
             d['commit_hash'],
             d['date'])
         obj.add_times(d['results'])
+        obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
+        print(obj._filename)
         return obj
+
+    def rm(self, result_dir):
+        path = os.path.join(result_dir, self._filename)
+        os.remove(path)
 
     @classmethod
     def update(cls, path):

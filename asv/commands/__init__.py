@@ -11,6 +11,7 @@ from .machine import Machine
 from .preview import Preview
 from .publish import Publish
 from .quickstart import Quickstart
+from .rm import Rm
 from .run import Run
 from .setup import Setup
 from .update import Update
@@ -21,6 +22,7 @@ all_commands = [
     Machine,
     Setup,
     Run,
+    Rm,
     Publish,
     Preview,
     Update,
