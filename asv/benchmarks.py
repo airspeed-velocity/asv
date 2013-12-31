@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import imp
 import inspect
+import json
 import os
 import re
 
@@ -61,17 +62,22 @@ def run_benchmark(benchmark, root, env, show_exc=False):
             # output.  This ensures that if the benchmark
             # inadvertently writes to stdout we can still read the
             # numeric output value.
-            output = float(output.splitlines()[-1])
+            output = json.loads(output.splitlines()[-1])
         except:
             console.add("invalid output", "red")
             return None
-        if benchmark.unit == 'seconds':
-            display = util.human_time(output)
-        elif benchmark.unit == 'bytes':
-            display = util.human_file_size(output)
+
+        if isinstance(output, float):
+            if benchmark.unit == 'seconds':
+                display = util.human_time(output)
+            elif benchmark.unit == 'bytes':
+                display = util.human_file_size(output)
+            else:
+                display = json.dumps(output)
         else:
-            display = str(output)
+            display = json.dumps(output)
         console.add(display)
+
         return output
 
 

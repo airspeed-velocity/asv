@@ -14,6 +14,7 @@ its runtime to stdout.
 
 import imp
 import inspect
+import json
 import os
 import re
 import sys
@@ -61,6 +62,7 @@ class Benchmark(object):
         self.module_setup = _get_multi_name_attr(module, 'setup')
         self.module_teardown = _get_multi_name_attr(module, 'teardown')
         self.timeout = getattr(attr_source, "timeout", 60.0)
+        self.params = getattr(attr_source, "params", None)
         self.attr_source = attr_source
 
     def __repr__(self):
@@ -158,6 +160,12 @@ class Benchmark(object):
         if self.teardown is not None:
             self.teardown()
 
+    def do_run(self):
+        if self.params is None:
+            return self.run()
+        else:
+            return map(self.run, self.params)
+
 
 class TimeBenchmark(Benchmark):
     """
@@ -244,14 +252,15 @@ if __name__ == '__main__':
 
     benchmark = Benchmark.from_name(benchmark_dir, benchmark_id)
     benchmark.do_setup()
-    result = benchmark.run()
+    result = benchmark.do_run()
     benchmark.do_teardown()
 
-    # Write the numeric output value as the last line of the output.
+    # Write the output value as the last line of the output.
     sys.stdout.write('\n')
-    sys.stdout.write(str(result))
+    sys.stdout.write(json.dumps(result))
     sys.stdout.write('\n')
     sys.stdout.flush()
+
     # Not strictly necessary, but it's explicit about the successful
     # exit code that we want.
     sys.exit(0)
