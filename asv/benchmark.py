@@ -218,8 +218,14 @@ class MemBenchmark(Benchmark):
         Benchmark.__init__(self, name, func, attr_source)
 
     def run(self):
+        # We can't import asizeof directly, because we haven't loaded
+        # the asv package in the benchmarking process.
+        path = os.path.join(
+            os.path.dirname(__file__), 'extern', 'asizeof.py')
+        asizeof = imp.load_source('asizeof', path)
+
         obj = self.func()
-        return sys.getsizeof(obj)
+        return asizeof.asizeof(obj)
 
 
 class TrackBenchmark(Benchmark):
