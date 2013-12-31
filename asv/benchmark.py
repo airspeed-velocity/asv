@@ -18,6 +18,7 @@ import json
 import os
 import re
 import sys
+import textwrap
 import timeit
 
 
@@ -143,7 +144,6 @@ class Benchmark(object):
 
     @property
     def code(self):
-        import textwrap
         return textwrap.dedent(inspect.getsource(self.func))
 
     def do_setup(self):
