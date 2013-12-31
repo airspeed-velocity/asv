@@ -73,7 +73,7 @@ Similarly, benchmarks can also have a ``teardown`` function that is
 run after the benchmark.  This is useful if, for example, you need to
 clean up any changes made to the filesystem.  Generally, however, it
 is not required: each benchmark runs in its own process, so any
-tearing down of in memory state happens automatically.
+tearing down of in-memory state happens automatically.
 
 Benchmark attributes
 --------------------
@@ -150,7 +150,7 @@ possible, with as much extraneous setup moved to a ``setup`` function::
   `time.time`.  If not provided, defaults to `timeit.default_timer`.
 
   On Windows, `time.clock` has microsecond granularity, but
-  `time.time`‘s granularity is 1/60th of a second. On Unix,
+  `time.time`'s granularity is 1/60th of a second. On Unix,
   `time.clock` has 1/100th of a second granularity, and `time.time` is
   much more precise. On either platform, `timeit.default_timer`
   measures wall clock time, not the CPU time. This means that other
@@ -162,18 +162,18 @@ Memory
 
 Memory benchmarks have the prefix ``mem``.
 
-.. note::
-
-    The memory benchmark functionality is incomplete, and basically
-    exists as a proof-of-concept for custom benchmark types.  The
-    metric used to determine the size of Python objects is
-    `sys.getsizeof` which is next to useless for most things.
-
 Memory benchmarks track the size of Python objects.  To write a memory
 benchmark, write a function that returns the object you want to track::
 
     def mem_list():
         return [0] * 256
+
+The `asizeof <http://pythonhosted.org/Pympler/asizeof.html>`__ module
+is used to determine the size of Python objects.  If you need to do
+something fancier, a generic :ref:`tracking` benchmark could be used
+instead.
+
+.. _tracking:
 
 Tracking (Generic)
 ``````````````````
