@@ -54,7 +54,7 @@ def test_run_benchmarks(tmpdir):
     assert times[
         'subdir.time_subdir.time_foo'] is not None
     assert times[
-        'mem_examples.mem_list'] == sys.getsizeof([0] * 255)
+        'mem_examples.mem_list'] > 2000
     assert times[
         'time_secondary.track_value'] == 42.0
 
