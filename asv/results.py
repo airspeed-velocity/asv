@@ -170,7 +170,6 @@ class Results(object):
             d['date'])
         obj.add_times(d['results'])
         obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
-        print(obj._filename)
         return obj
 
     def rm(self, result_dir):
