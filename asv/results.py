@@ -10,22 +10,26 @@ from .environment import Environment
 from . import util
 
 
-def iter_existing_hashes(root):
+def get_existing_hashes(results):
     """
     Iterate over all the hashes that have already been tested.
 
     Each element yielded is the pair (hash, date).
     """
-    for root, dirs, files in os.walk(root):
-        for filename in files:
-            if filename.endswith('.json'):
-                path = os.path.join(root, filename)
-                try:
-                    result = Results.load(path)
-                except:
-                    continue
+    def iter_existing_hashes():
+        for root, dirs, files in os.walk(results):
+            for filename in files:
+                if filename.endswith('.json'):
+                    path = os.path.join(root, filename)
+                    try:
+                        result = Results.load(path)
+                    except:
+                        continue
 
-                yield result.commit_hash, result.date
+                    yield result.commit_hash, result.date
+
+    hashes = list(set(iter_existing_hashes()))
+    return hashes
 
 
 def find_latest_result_hash(machine, root):

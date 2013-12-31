@@ -14,7 +14,7 @@ from ..config import Config
 from ..console import console
 from ..machine import Machine
 from ..repo import get_repo
-from ..results import Results, find_latest_result_hash, iter_existing_hashes
+from ..results import Results, find_latest_result_hash, get_existing_hashes
 from .. import util
 
 from .setup import Setup
@@ -110,7 +110,7 @@ class Run(object):
         repo = get_repo(conf.repo, conf.project)
 
         if range_spec == 'existing':
-            commit_hashes = [h for h, d in iter_existing_hashes(
+            commit_hashes = [h for h, d in get_existing_hashes(
                 conf.results_dir)]
             range_spec = None
         elif range_spec == 'latest':
