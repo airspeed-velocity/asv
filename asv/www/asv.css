@@ -74,3 +74,7 @@
     white-space: pre;
     font-family: monospace;
 }
+
+.form-control {
+    border-radius: 0;
+}
