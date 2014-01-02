@@ -173,6 +173,11 @@ is used to determine the size of Python objects.  If you need to do
 something fancier, a generic :ref:`tracking` benchmark could be used
 instead.
 
+.. note::
+
+    The memory benchmarking feature is still experimental.
+    ``asizeof`` may not be the most appropriate metric to use.
+
 .. _tracking:
 
 Tracking (Generic)
