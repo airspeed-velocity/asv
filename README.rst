@@ -11,6 +11,9 @@ webserver to host.
 
 See an `example airspeed velocity site <http://mdboom.github.io/astropy-benchmark/>`__.
 
+See the `full documentation <http://spacetelescope.github.io/asv>`__
+for more information.
+
 License: `BSD three-clause license
 <http://opensource.org/licenses/BSD-3-Clause>`__.
 

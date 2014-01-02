@@ -9,7 +9,7 @@ benchmarking projects benchmark directory (as defined by
 arbitrarily nested in subdirectories, and all ``.py`` files will be
 used, regardless of their file name.
 
-Within each ``.py`` file, each benchmark in a function or method.  The
+Within each ``.py`` file, each benchmark is a function or method.  The
 name of the functon must have a special prefix, depending on the type
 of benchmark.  ``asv`` understands how to handle the prefix in either
 ``CamelCase`` or lowercase with underscores.  For example, to create a
@@ -98,9 +98,8 @@ class level.  For example, the following are equivalent::
 
 The following attributes are applicable to all benchmark types::
 
-    - ``timeout``: The amount of time, in seconds, to give the
-      benchmark to run before forcibly killing it.  Defaults to 60
-      seconds.
+- ``timeout``: The amount of time, in seconds, to give the benchmark
+  to run before forcibly killing it.  Defaults to 60 seconds.
 
 Benchmark types
 ---------------
@@ -198,4 +197,4 @@ garbage collector at a given state::
 **Attributes**:
 
 - ``unit``: The unit of the values returned by the benchmark.  Used
-  for display in the web interface.b
+  for display in the web interface.

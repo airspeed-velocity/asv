@@ -41,14 +41,21 @@ do, and there is also a :ref:`conf-reference` with more details.  The
 values that will most likely need to be changed for any benchmarking
 suite are:
 
-   - ``project``: The name of the project being benchmarked
+   - ``project``: The name of the project being benchmarked.
 
-   - ``project_url``: The project's homepage
+   - ``project_url``: The project's homepage.
 
-   - ``repo``: The URL to the DVCS repository for the project
+   - ``repo``: The URL to the DVCS repository for the project.  This
+     should be a read-only URL so that anyone, even those without
+     commit rights to the repository, can run the benchmarks.  For a
+     project on github, for example, the URL would look like:
+     ``https://github.com/spacetelescope/asv.git``
 
    - ``show_commit_url``: The base of URLs used to display commits for
-     the project
+     the project.  This allows users to click on a commit in the web
+     interface and have it display the contents of that commit.  For a
+     github project, the URL is of the form
+     ``http://github.com/$OWNER/$REPO/commit/``.
 
 The rest of the values can usually be left to their defaults, unless
 you want to benchmark against multiple versions of Python or multiple
@@ -132,12 +139,31 @@ into the environment.  The environments are stored in the ``env``
 directory so that the next time the benchmarks are run, things will
 start much faster.
 
+.. note::
+
+    ``asv`` does not build Pythons for you, but it expects to find
+    each of the Python versions specified in the ``asv.conf.json``
+    file available on the ``PATH``.  For example, if the
+    ``asv.conf.json`` file has::
+
+        "pythons": ["2.7", "3.3"]
+
+    then it will use the executables named `python2.7` and `python3.3`
+    on the path.  There are many ways to get multiple versions of
+    Python installed -- your package manager, ``apt-get``, ``yum``,
+    ``MacPorts`` or ``homebrew`` probably has them, or you can also
+    use `pythonbrew <https://github.com/utahta/pythonbrew>`__.
+    ``asv`` always works in a virtual environment, so it will not
+    change what is installed in any of the python environments on your
+    system.
+
 Benchmarking
 ````````````
 
 Finally, the benchmarks are run::
 
-    Benchmarking py2.7
+   $ asv run master^!
+   Benchmarking py2.7
      project commit hash 24ce4372:.
       Uninstalling project..
       Installing ...asv/project.......
@@ -146,20 +172,20 @@ Finally, the benchmarks are run::
        [75.00%] test_benchmarks.TestIteration.test_range: 97.44μs
        [100.00%] test_benchmarks.TestIteration.test_xrange: 94.76μs
 
-Since we ran ``asv run`` without any arguments, only the current
-``master`` branch of the project was benchmarked.  The killer feature
-of **airspeed velocity** is that it can track the benchmark
-performance of your project over time.  By using the ``--range``
-argument, we can specify a range of commits that should be
-benchmarked.  The value of this argument is passed directly to ``git
-log`` to get the set of commits, so it actually has a very powerful
-syntax defined in the `gitrevisions manpage
+To improve reproducibility, each benchmark is run in its own process.
+
+The killer feature of **airspeed velocity** is that it can track the
+benchmark performance of your project over time.  The required
+``range`` argument to ``asv run`` specifies a range of commits that
+should be benchmarked.  The value of this argument is passed directly
+to ``git log`` to get the set of commits, so it actually has a very
+powerful syntax defined in the `gitrevisions manpage
 <https://www.kernel.org/pub/software/scm/git/docs/gitrevisions.html>`__.
 
 .. note::
 
     Yes, this is git-specific for now.  Support for Mercurial or other
-    DVCSes should be possible in the future.
+    DVCSes should be possible in the future, but not at the moment.
 
 For example, to benchmark all of the commits since a particular tag
 (``v0.1``)::
@@ -168,8 +194,8 @@ For example, to benchmark all of the commits since a particular tag
 
 In many cases, this may result in more commits than you are able to
 benchmark in a reasonable amount of time.  In that case, the
-``--steps`` argument may be helpful.  It specifies the maximum number
-of commits you want to test, and it will evenly space them over the
+``--steps`` argument is helpful.  It specifies the maximum number of
+commits you want to test, and it will evenly space them over the
 specified range.
 
 You may also want to benchmark every commit that has already been
