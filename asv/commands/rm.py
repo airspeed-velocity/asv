@@ -60,7 +60,8 @@ class Rm(object):
                 single_benchmark = parts[1]
             else:
                 if parts[0] in global_patterns:
-                    raise ValueError("'{0}' appears more than once".format(parts[0]))
+                    raise ValueError(
+                        "'{0}' appears more than once".format(parts[0]))
                 global_patterns[parts[0]] = parts[1]
 
         for result in iter_results(conf.results_dir):
@@ -100,7 +101,7 @@ class Rm(object):
 
         if not y:
             do = console.get_answer_default("Perform operations", "n")
-            if do.lower() != 'y':
+            if len(do) and do.lower()[0] != 'y':
                 sys.exit(0)
 
         if single_benchmark is not None:
