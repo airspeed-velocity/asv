@@ -148,14 +148,14 @@ start much faster.
 
         "pythons": ["2.7", "3.3"]
 
-    then it will use the executables named `python2.7` and `python3.3`
-    on the path.  There are many ways to get multiple versions of
-    Python installed -- your package manager, ``apt-get``, ``yum``,
-    ``MacPorts`` or ``homebrew`` probably has them, or you can also
-    use `pythonbrew <https://github.com/utahta/pythonbrew>`__.
-    ``asv`` always works in a virtual environment, so it will not
-    change what is installed in any of the python environments on your
-    system.
+    then it will use the executables named ``python2.7`` and
+    ``python3.3`` on the path.  There are many ways to get multiple
+    versions of Python installed -- your package manager, ``apt-get``,
+    ``yum``, ``MacPorts`` or ``homebrew`` probably has them, or you
+    can also use `pythonbrew
+    <https://github.com/utahta/pythonbrew>`__.  ``asv`` always works
+    in a virtual environment, so it will not change what is installed
+    in any of the python environments on your system.
 
 Benchmarking
 ````````````
