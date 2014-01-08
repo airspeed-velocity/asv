@@ -9,6 +9,7 @@ of dependencies.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import inspect
 import os
 import shutil
 
@@ -96,7 +97,11 @@ class Environment(object):
             import virtualenv
         except ImportError:
             raise RuntimeError("virtualenv must be installed to run asv")
-        self._virtualenv_path = os.path.abspath(virtualenv.__file__)
+
+        # Can't use `virtualenv.__file__` here, because that will refer to a
+        # .pyc file which can't be used on another version of Python
+        self._virtualenv_path = os.path.abspath(
+            inspect.getsourcefile(virtualenv))
 
     @property
     def name(self):
