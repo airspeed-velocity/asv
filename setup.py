@@ -33,7 +33,8 @@ setup(
     },
 
     install_requires=[
-        'six>=1.4'
+        'six>=1.4',
+        'virtualenv>=1.10'
     ],
 
     package_data={

@@ -14,7 +14,11 @@ The requirements should be automatically installed.  If they aren't
 installed automatically, for example due to networking restrictions,
 the requirements are:
 
-    - `six <http://pythonhosted.org/six/>`__
+    - `six <http://pythonhosted.org/six/>`__, 1.4 or later
+
+    - `virtualenv <http://virtualenv.org/>`__, 1.10 or later (this is
+      true even with Python 3.3, where virtualenv is included as venv,
+      since venv is not compatible with other versions of Python).
 
 Optional dependencies, required only to determine machine information:
 

@@ -92,9 +92,11 @@ class Environment(object):
         self._path = os.path.join(
             self._env_dir, self.name)
 
-        self._virtualenv_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            'extern', 'virtualenv.py')
+        try:
+            import virtualenv
+        except ImportError:
+            raise RuntimeError("virtualenv must be installed to run asv")
+        self._virtualenv_path = os.path.abspath(virtualenv.__file__)
 
     @property
     def name(self):

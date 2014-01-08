@@ -328,7 +328,7 @@ $(function() {
                     'os': null,
                     'cpu': null,
                     'arch': null,
-                    'mem': null
+                    'ram': null
                 };
 
                 var parts = [];
