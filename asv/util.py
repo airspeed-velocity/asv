@@ -228,7 +228,7 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
     retcode = proc.wait()
     if retcode:
         if error:
-            if display_error:
+            if display_error or True:
                 console.error("Running {0}".format(" ".join(args)))
                 console.add("STDOUT " + ("-" * 60) + '\n', 'red')
                 console.add(stdout)
