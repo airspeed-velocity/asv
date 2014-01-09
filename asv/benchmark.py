@@ -12,6 +12,7 @@ its runtime to stdout.
 # the Python standard library.  This is the only bit of code from asv
 # that is imported into the benchmarking process.
 
+import copy
 import imp
 import inspect
 import json
@@ -225,7 +226,11 @@ class MemBenchmark(Benchmark):
         asizeof = imp.load_source('asizeof', path)
 
         obj = self.func()
-        return asizeof.asizeof(obj)
+
+        sizeof2 = asizeof.asizeof([obj, obj])
+        sizeofcopy = asizeof.asizeof([obj, copy.copy(obj)])
+
+        return sizeofcopy - sizeof2
 
 
 class TrackBenchmark(Benchmark):

@@ -168,8 +168,13 @@ benchmark, write a function that returns the object you want to track::
         return [0] * 256
 
 The `asizeof <http://pythonhosted.org/Pympler/asizeof.html>`__ module
-is used to determine the size of Python objects.  If you need to do
-something fancier, a generic :ref:`tracking` benchmark could be used
+is used to determine the size of Python objects.  Since ``asizeof``
+includes the memory of all of an object's dependencies (including the
+modules in which their classes are defined), a memory benchmark
+instead calculates the incremental memory of a copy of the object,
+which in most cases is probably a more useful indicator of how much
+space *each additional* object will use.  If you need to do something
+more specific, a generic :ref:`tracking` benchmark can be used
 instead.
 
 .. note::
