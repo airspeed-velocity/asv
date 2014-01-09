@@ -28,7 +28,7 @@ def test_matrix_environments(tmpdir):
     pythons = ["2.7", "3.3"]
     matrix = {
         "six": ["1.3", "1.4"],
-        "psutil": ["1.2", "1.0"]
+        "psutil": ["1.2", "1.1"]
     }
 
     environments = list(environment.get_environments(
