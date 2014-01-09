@@ -79,10 +79,6 @@ class Publish(object):
                     params[key].add(val)
 
                 for key, val in six.iteritems(results.results):
-                    for param in six.iterkeys(params):
-                        if param not in results.params:
-                            params[param].add(None)
-
                     benchmark_names.add(key)
                     graph = Graph(key, results.params, params)
                     if graph.path in graphs:
