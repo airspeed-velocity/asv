@@ -76,6 +76,6 @@ class Setup(object):
                 pool.map(_install_requirements_multiprocess, environments)
                 pool.close()
             else:
-                map(_install_requirements, environments)
+                list(map(_install_requirements, environments))
 
         return environments
