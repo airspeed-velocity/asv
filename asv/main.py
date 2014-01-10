@@ -23,5 +23,8 @@ def main():
     except RuntimeError as e:
         console.error(six.text_type(e))
         sys.exit(1)
+    except AttributeError:  # In Python 3.3 func is not set up if no command
+        parser.print_usage()
+        sys.exit(1)
 
     console._newline()

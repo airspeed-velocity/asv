@@ -4,8 +4,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import SimpleHTTPServer
-import SocketServer
+from six.moves import SimpleHTTPServer, socketserver
+
 import os
 
 from ..config import Config
@@ -38,7 +38,7 @@ class Preview(object):
         Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
 
         # Create a server that allows address reuse
-        class MyTCPServer(SocketServer.TCPServer):
+        class MyTCPServer(socketserver.TCPServer):
             allow_reuse_address = True
 
         httpd = MyTCPServer(("", port), Handler)
