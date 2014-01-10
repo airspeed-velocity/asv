@@ -13,3 +13,19 @@ if sys.version_info >= (3, 3):
     # inherited.
     if os.environ.get('__PYVENV_LAUNCHER__'):
         os.unsetenv('__PYVENV_LAUNCHER__')
+
+
+def check_version_compatibility():
+    """
+    Performs a number of compatibility checks with third-party
+    libraries.
+    """
+    from distutils.version import LooseVersion
+
+    if sys.version_info[0] == 3:
+        import virtualenv
+        if LooseVersion(virtualenv.__version__) == LooseVersion('1.11'):
+            raise RuntimeError("asv is not compatible with Python 3.x and virtualenv 1.11")
+
+
+check_version_compatibility()
