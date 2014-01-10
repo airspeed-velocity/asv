@@ -6,10 +6,28 @@ from __future__ import (absolute_import, division, print_function,
 
 from six.moves import SimpleHTTPServer, socketserver
 
+import errno
 import os
+import socket
 
 from ..config import Config
 from ..console import console
+
+
+def random_ports(port, n):
+    """Generate a list of n random ports near the given port.
+
+    The first 5 ports will be sequential, and the remaining n-5 will be
+    randomly selected in the range [port-2*n, port+2*n].
+    """
+    if port != 0:
+        yield port
+    else:
+        port = 8080
+        for i in range(min(5, n)):
+            yield port + i
+        for i in range(n-5):
+            yield max(1, port + random.randint(-2*n, 2*n))
 
 
 class Preview(object):
@@ -20,7 +38,7 @@ class Preview(object):
             help="Preview the results using a local web server",
             description="Preview the results using a local web server")
 
-        parser.add_argument("--port", "-p", type=int, default=8080,
+        parser.add_argument("--port", "-p", type=int, default=0,
                             help="Port to run webserver on.  [8080]")
         parser.add_argument("--browser", "-b", action="store_true",
                             help="Open in webbrowser")
@@ -35,7 +53,7 @@ class Preview(object):
                        browser=args.browser)
 
     @classmethod
-    def run(cls, conf, port=8080, browser=False):
+    def run(cls, conf, port=0, browser=False):
         os.chdir(conf.html_dir)
 
         Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
@@ -44,7 +62,16 @@ class Preview(object):
         class MyTCPServer(socketserver.TCPServer):
             allow_reuse_address = True
 
-        httpd = MyTCPServer(("", port), Handler)
+        for port in random_ports(port, 5):
+            try:
+                httpd = MyTCPServer(("", port), Handler)
+            except socket.error as e:
+                if e.errno == errno.EADDRINUSE:
+                    continue
+                else:
+                    raise
+            else:
+                break
 
         console.message(
             "Serving at http://127.0.0.1:{0}/".format(port), "green")
