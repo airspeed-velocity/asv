@@ -7,5 +7,5 @@ python:
     - 3.3
 
 script:
-    - pip install virtualenv
+    - pip install virtualenv==1.10
     - python setup.py test
