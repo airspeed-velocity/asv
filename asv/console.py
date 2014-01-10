@@ -14,7 +14,7 @@ import locale
 import sys
 
 import six
-from six.moves import xrange
+from six.moves import xrange, input
 
 def isatty(file):
     """
@@ -201,7 +201,7 @@ def color_print(*args, **kwargs):
 
 def get_answer_default(prompt, default):
     print("{0} [{1}]: ".format(prompt, default), end='')
-    x = raw_input()
+    x = input()
     if x.strip() == '':
         return default
     return x
