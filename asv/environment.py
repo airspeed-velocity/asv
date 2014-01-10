@@ -160,12 +160,16 @@ class Environment(object):
         return util.check_output([
             os.path.join(self._path, 'bin', executable)] + args, **kwargs)
 
-    def install(self, package):
+    def install(self, package, editable=False):
         """
         Install a package into the environment using `pip install`.
         """
         console.message("Installing {0}".format(package))
-        self._run_executable('pip', ['install', package])
+        args = ['install']
+        if editable:
+            args.append('-e')
+        args.append(package)
+        self._run_executable('pip', args)
 
     def upgrade(self, package):
         """
