@@ -107,7 +107,7 @@ class Publish(object):
                 }
             for key, val in six.iteritems(params):
                 val = list(val)
-                val.sort()
+                val.sort(key=lambda x: x or '')
                 params[key] = val
             util.write_json(os.path.join(conf.html_dir, "index.json"), {
                 'project': conf.project,
