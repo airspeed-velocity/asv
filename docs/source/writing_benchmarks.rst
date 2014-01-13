@@ -96,7 +96,7 @@ class level.  For example, the following are equivalent::
             for i in range(1000):
                 pass
 
-The following attributes are applicable to all benchmark types::
+The following attributes are applicable to all benchmark types:
 
 - ``timeout``: The amount of time, in seconds, to give the benchmark
   to run before forcibly killing it.  Defaults to 60 seconds.
