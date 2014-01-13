@@ -54,7 +54,7 @@ def find_latest_result_hash(machine, root):
 
     latest_date = 0
     latest_hash = ''
-    for commit_hash, date in iter_existing_hashes(machine, root):
+    for commit_hash, date in iter_existing_hashes(root):
         if date > latest_date:
             latest_date = date
             latest_hash = commit_hash
