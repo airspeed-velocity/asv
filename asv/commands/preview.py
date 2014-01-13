@@ -22,6 +22,8 @@ class Preview(object):
 
         parser.add_argument("--port", "-p", type=int, default=8080,
                             help="Port to run webserver on.  [8080]")
+        parser.add_argument("--browser", "-b", action="store_true",
+                            help="Open in webbrowser")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -29,10 +31,11 @@ class Preview(object):
 
     @classmethod
     def run_from_args(cls, args):
-        return cls.run(conf=Config.load(args.config), port=args.port)
+        return cls.run(conf=Config.load(args.config), port=args.port,
+                       browser=args.browser)
 
     @classmethod
-    def run(cls, conf, port=8080):
+    def run(cls, conf, port=8080, browser=False):
         os.chdir(conf.html_dir)
 
         Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
@@ -45,5 +48,10 @@ class Preview(object):
 
         console.message(
             "Serving at http://127.0.0.1:{0}/".format(port), "green")
+
+        if browser:
+            import webbrowser
+            webbrowser.open("http://127.0.0.1:{0}/".format(port))
+
         console.message("Press ^C to abort")
         httpd.serve_forever()
