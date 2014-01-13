@@ -61,7 +61,7 @@ will look for the binaries ``python2.7`` and ``python3.3`` on the path.
     different versions of Python for you.  They must already be
     installed and on the path.  Depending on your platform, you can
     install multiple versions of Python using your package manager or
-    using `pythonbrew <https://github.com/utahta/pythonbrew>`_.
+    using `pyenv <https://github.com/yyuu/pyenv>`_.
 
 ``matrix``
 ----------

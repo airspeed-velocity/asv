@@ -103,15 +103,20 @@ Running benchmarks
 
 Benchmarks are run using the ``asv run`` subcommand.
 
+Let's start by just benchmarking the current ``master`` of the project::
+
+    $ asv run master^!
+
 Machine information
 ```````````````````
 
-If this is the first time using ``asv run`` on a given machine, you
-will be prompted for information about the machine, such as its
-platform, cpu and memory.  **airspeed velocity** will try to make
-reasonable guesses, so it's usually ok to just press ``Enter`` to
-accept each default value.  This information is stored in the
-``.asv-machine.json`` file in your home directory::
+If this is the first time using ``asv run`` on a given machine, (which
+it probably is, if you're following along), you will be prompted for
+information about the machine, such as its platform, cpu and memory.
+**airspeed velocity** will try to make reasonable guesses, so it's
+usually ok to just press ``Enter`` to accept each default value.  This
+information is stored in the ``.asv-machine.json`` file in your home
+directory::
 
     No ASV machine info file found.
     I will now ask you some questions about this machine to identify
@@ -127,6 +132,11 @@ accept each default value.  This information is stored in the
     CPU [Intel(R) Core(TM) i5-2520M CPU @ 2.50GHz (4 cores)]:
     4. RAM: The amount of physical RAM in the system.
     RAM [8.2G]:
+
+.. note::
+
+    If you ever need to update the machine information later, you can
+    run `asv machine`.
 
 Environments
 ````````````
@@ -152,10 +162,9 @@ start much faster.
     ``python3.3`` on the path.  There are many ways to get multiple
     versions of Python installed -- your package manager, ``apt-get``,
     ``yum``, ``MacPorts`` or ``homebrew`` probably has them, or you
-    can also use `pythonbrew
-    <https://github.com/utahta/pythonbrew>`__.  ``asv`` always works
-    in a virtual environment, so it will not change what is installed
-    in any of the python environments on your system.
+    can also use `pyenv <https://github.com/yyuu/pyenv>`__.  ``asv``
+    always works in a virtual environment, so it will not change what
+    is installed in any of the python environments on your system.
 
 Benchmarking
 ````````````

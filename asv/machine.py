@@ -149,7 +149,7 @@ class Machine(object):
         return values
 
     @classmethod
-    def load(cls, interactive=False, **kwargs):
+    def load(cls, interactive=False, force_interactive=False, **kwargs):
         self = Machine()
 
         unique_machine_name = cls.get_unique_machine_name()
@@ -158,7 +158,7 @@ class Machine(object):
         except ValueError:
             d = {}
         d.update(kwargs)
-        if not len(d) and interactive:
+        if (not len(d) and interactive) or force_interactive:
             d.update(self.generate_machine_file())
 
         self.__dict__.update(d)
