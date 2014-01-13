@@ -43,4 +43,4 @@ class Machine(object):
                 different[key] = kwargs.get(key)
 
         machine.Machine.load(
-            interactive=(len(different) == 0), **different)
+            force_interactive=(len(different) == 0), **different)
