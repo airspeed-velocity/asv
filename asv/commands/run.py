@@ -51,15 +51,16 @@ class Run(object):
             description="Run a benchmark suite.")
 
         parser.add_argument(
-            'range', nargs=1,
-            help="""Range of commits to benchmark.  By default, this
-            is passed as the first argument to ``git log``.  See
-            'specifying ranges' section of the `gitrevisions` manpage
-            for more info.  Also accepts the special values 'latest',
-            and 'existing'.  'latest' will benchmark all commits since
-            the latest benchmarked on this machine.  'existing' will
-            benchmark against all commits for which there are existing
-            benchmarks on any machine.""")
+            'range', nargs='?', default="master",
+            help="""Range of commits to benchmark.  For a git
+            repository, this is passed as the first argument to ``git
+            log``.  See 'specifying ranges' section of the
+            `gitrevisions` manpage for more info.  Also accepts the
+            special values 'latest', and 'existing'.  'latest' will
+            benchmark all commits since the latest benchmarked on this
+            machine.  'existing' will benchmark against all commits
+            for which there are existing benchmarks on any machine.
+            By default, will benchmark the current master branch.""")
         parser.add_argument(
             "--steps", "-s", type=int, default=0,
             help="""Maximum number of steps to benchmark.  This is
@@ -89,13 +90,13 @@ class Run(object):
     def run_from_args(cls, args):
         conf = Config.load(args.config)
         return cls.run(
-            conf=conf, range_spec=args.range[0], steps=args.steps,
+            conf=conf, range_spec=args.range, steps=args.steps,
             bench=args.bench, parallel=args.parallel,
             show_exc=args.show_exc
         )
 
     @classmethod
-    def run(cls, conf, range_spec="master^!", steps=0, bench=None, parallel=-1,
+    def run(cls, conf, range_spec="master", steps=0, bench=None, parallel=-1,
             show_exc=False):
         params = {}
         machine_params = Machine.load(interactive=True)

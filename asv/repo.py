@@ -129,9 +129,11 @@ class Git(Repo):
             ['show', hash, '--quiet', '--format=format:%ct'],
             dots=False).strip().split()[0]) * 1000
 
-    def get_hashes_from_range(self, range):
+    def get_hashes_from_range(self, range_spec):
+        if range_spec == 'master':
+            range_spec = 'master^!'
         return self._run_git(
-            ['log', '--quiet', '--format=format:%H', range], dots=False
+            ['log', '--quiet', '--format=format:%H', range_spec], dots=False
         ).strip().split()
 
     def get_tags(self):

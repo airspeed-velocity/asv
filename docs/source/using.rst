@@ -105,7 +105,7 @@ Benchmarks are run using the ``asv run`` subcommand.
 
 Let's start by just benchmarking the current ``master`` of the project::
 
-    $ asv run master^!
+    $ asv run
 
 Machine information
 ```````````````````
@@ -171,7 +171,6 @@ Benchmarking
 
 Finally, the benchmarks are run::
 
-   $ asv run master^!
    Benchmarking py2.7
      project commit hash 24ce4372:.
       Uninstalling project..
