@@ -20,6 +20,10 @@ the requirements are:
       true even with Python 3.3, where virtualenv is included as venv,
       since venv is not compatible with other versions of Python).
 
+      Note that virtualenv 1.11.0 will not work, as it contains a bug
+      in setuptools that prevents its installation in a clean virtual
+      environment.
+
 Optional dependencies, required only to determine machine information:
 
     - `psutil <https://code.google.com/p/psutil/>`__
