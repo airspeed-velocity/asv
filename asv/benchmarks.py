@@ -4,16 +4,16 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import imp
-import inspect
 import json
 import os
 import re
+import sys
 
 import six
 
-from . import benchmark as bm
 from .console import console
+from .environment import get_environments
+from .repo import get_repo
 from . import util
 
 
@@ -47,11 +47,11 @@ def run_benchmark(benchmark, root, env, show_exc=False):
         runtime in seconds for a timing benchmark) or None if the
         benchmark failed.
     """
-    console.step(benchmark.name + ": ")
+    console.step(benchmark['name'] + ": ")
     try:
         output = env.run(
-            [BENCHMARK_RUN_SCRIPT, root, benchmark.name],
-            dots=False, timeout=benchmark.timeout,
+            [BENCHMARK_RUN_SCRIPT, 'run', root, benchmark['name']],
+            dots=False, timeout=benchmark['timeout'],
             display_error=show_exc)
     except util.ProcessError:
         console.add("failed", "red")
@@ -68,9 +68,9 @@ def run_benchmark(benchmark, root, env, show_exc=False):
             return None
 
         if isinstance(output, float):
-            if benchmark.unit == 'seconds':
+            if benchmark['unit'] == 'seconds':
                 display = util.human_time(output)
-            elif benchmark.unit == 'bytes':
+            elif benchmark['unit'] == 'bytes':
                 display = util.human_file_size(output)
             else:
                 display = json.dumps(output)
@@ -85,87 +85,81 @@ class Benchmarks(dict):
     """
     Manages and runs the set of benchmarks in the project.
     """
-    def __init__(self, benchmark_dir, bench=None):
+    api_version = 1
+
+    def __init__(self, conf, benchmarks=None, regex=None):
         """
         Discover benchmarks in the given `benchmark_dir`.
 
-        `bench` is a list of regular expressions for the benchmarks to
-        run.  If none are provided, all benchmarks are run.
-        """
-        self._benchmark_dir = benchmark_dir
-        if not bench:
-            bench = []
-        if isinstance(bench, six.string_types):
-            bench = [bench]
+        Parameters
+        ----------
+        conf : Config object
+            The project's configuration
 
-        for benchmark in self.disc_benchmarks(self._benchmark_dir):
-            for regex in bench:
-                if not re.search(regex, benchmark.name):
+        regex : str or list of str, optional
+            `regex` is a list of regular expressions matching the
+            benchmarks to run.  If none are provided, all benchmarks
+            are run.
+        """
+        self._conf = conf
+        self._benchmark_dir = conf.benchmark_dir
+
+        if benchmarks is None:
+            benchmarks = self.disc_benchmarks(conf)
+        else:
+            benchmarks = six.itervalues(benchmarks)
+
+        if not regex:
+            regex = []
+        if isinstance(regex, six.string_types):
+            regex = [regex]
+
+        self._all_benchmarks = {}
+        for benchmark in benchmarks:
+            self._all_benchmarks[benchmark['name']] = benchmark
+            for reg in regex:
+                if not re.search(reg, benchmark['name']):
                     break
             else:
-                self[benchmark.name] = benchmark
+                self[benchmark['name']] = benchmark
 
     @classmethod
-    def disc_class(cls, klass):
+    def disc_benchmarks(cls, conf):
         """
-        Iterate over all benchmarks in a given class.
+        Discover all benchmarks in a directory tree.
+        """
+        root = conf.benchmark_dir
 
-        For each method with a special name, yields a Benchmark
-        object.
-        """
-        for key, val in six.iteritems(klass.__dict__):
-            bm_type = bm.get_benchmark_type_from_name(key)
-
-            if bm_type is not None and inspect.isfunction(val):
-                yield bm_type.from_class_method(klass, key)
-
-    @classmethod
-    def disc_objects(cls, module):
-        """
-        Iterate over all benchmarks in a given module, returning
-        Benchmark objects.
-
-        For each class definition, looks for any methods with a
-        special name.
-
-        For each free function, yields all functions with a special
-        name.
-        """
-        for key, val in six.iteritems(module.__dict__):
-            if inspect.isclass(val):
-                for benchmark in cls.disc_class(val):
-                    yield benchmark
-            elif inspect.isfunction(val):
-                bm_type = bm.get_benchmark_type_from_name(key)
-                if bm_type is not None:
-                    yield bm_type.from_function(val)
-
-    @classmethod
-    def disc_files(cls, root, package=''):
-        """
-        Iterate over all .py files in a given directory tree.
-        """
-        for filename in os.listdir(root):
-            path = os.path.join(root, filename)
-            if os.path.isfile(path):
-                filename, ext = os.path.splitext(filename)
-                if ext == '.py':
-                    module = imp.load_source(package + filename, path)
-                    yield module
-            elif os.path.isdir(path):
-                for x in cls.disc_files(path, package + filename + "."):
-                    yield x
-
-    @classmethod
-    def disc_benchmarks(cls, root):
-        """
-        Discover all benchmarks in a given directory tree.
-        """
         cls.check_tree(root)
 
-        for module in cls.disc_files(root):
-            for benchmark in cls.disc_objects(module):
-                yield benchmark
+        environments = get_environments(
+            conf.env_dir, conf.pythons, conf.matrix)
+
+        # Ideally, use an environment in the same Python version as
+        # master, but if one isn't found, just default to the first
+        # one.
+        this_version = "{0:d}.{1:d}".format(
+            sys.version_info[0], sys.version_info[1])
+        for env in environments:
+            if env.python == this_version:
+                break
+        else:
+            env = environments[0]
+
+        repo = get_repo(conf.repo, conf.project)
+        repo.checkout()
+        repo.clean()
+
+        env.install_requirements()
+        env.uninstall(conf.project)
+        env.install(os.path.abspath(conf.project), editable=True)
+
+        output = env.run(
+            [BENCHMARK_RUN_SCRIPT, 'discover', root],
+            dots=False)
+        benchmarks = json.loads(output)
+        for benchmark in benchmarks:
+            yield benchmark
 
     @classmethod
     def check_tree(cls, root):
@@ -199,9 +193,74 @@ class Benchmarks(dict):
                         "benchmark tree: '{0}'".format(path))
                 cls.check_tree(path)
 
+    @classmethod
+    def get_benchmark_file_path(cls, results_dir):
+        """
+        Get the path to the benchmarks.json file in the results dir.
+        """
+        return os.path.join(results_dir, "benchmarks.json")
+
+    def save(self):
+        """
+        Save the ``benchmarks.json`` file, which is a cached set of the
+        metadata about the discovered benchmarks, in the results dir.
+        """
+        path = self.get_benchmark_file_path(self._conf.results_dir)
+        util.write_json(path, self, self.api_version)
+        del self['version']
+
+    @classmethod
+    def load(cls, conf, regex=None):
+        """
+        Load the benchmark descriptions from the `benchmarks.json` file.
+        If the file is not found, one of the given `environments` will
+        be used to discover benchmarks.
+
+        Parameters
+        ----------
+        conf : Config object
+            The project's configuration
+
+        regex : str or list of str, optional
+            `regex` is a list of regular expressions matching the
+            benchmarks to run.  If none are provided, all benchmarks
+            are run.
+
+        Returns
+        -------
+        benchmarks : Benchmarks object
+        """
+        def regenerate():
+            self = cls(conf, regex=regex)
+            self.save()
+            return self
+
+        path = cls.get_benchmark_file_path(conf.results_dir)
+        if not os.path.exists(path):
+            return regenerate()
+
+        d = util.load_json(path)
+        version = d['version']
+        del d['version']
+        if version != cls.api_version:
+            # Just re-do the discovery if the file is the wrong
+            # version
+            return regenerate()
+
+        return cls(conf, benchmarks=d, regex=regex)
+
     def run_benchmarks(self, env, show_exc=False):
         """
         Run all of the benchmarks in the given `Environment`.
+
+        Parameters
+        ----------
+        env : Environment object
+            Environment in which to run the benchmarks.
+
+        show_exc : bool, optional
+            When `True`, display the exception traceback when running
+            a benchmark fails.
         """
         times = {}
         for name, benchmark in six.iteritems(self):

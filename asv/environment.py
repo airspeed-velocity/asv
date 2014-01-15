@@ -103,6 +103,9 @@ class Environment(object):
         self._virtualenv_path = os.path.abspath(
             inspect.getsourcefile(virtualenv))
 
+        self._is_setup = False
+        self._requirements_installed = False
+
     @property
     def name(self):
         """
@@ -132,6 +135,9 @@ class Environment(object):
         created using virtualenv.  Then, all of the requirements are
         installed into it using `pip install`.
         """
+        if self._is_setup:
+            return
+
         if not os.path.exists(self._env_dir):
             os.makedirs(self._env_dir)
 
@@ -147,7 +153,14 @@ class Environment(object):
                 shutil.rmtree(self._path)
             raise
 
+        self._is_setup = True
+
     def install_requirements(self):
+        if self._requirements_installed:
+            return
+
+        self.setup()
+
         self.upgrade('setuptools')
 
         for key, val in six.iteritems(self._requirements):
@@ -155,6 +168,8 @@ class Environment(object):
                 self.upgrade("{0}=={1}".format(key, val))
             else:
                 self.upgrade(key)
+
+        self._requirements_installed = True
 
     def _run_executable(self, executable, args, **kwargs):
         return util.check_output([
@@ -190,4 +205,5 @@ class Environment(object):
         Start up the environment's python executable with the given
         args.
         """
+        self.install_requirements()
         return self._run_executable('python', args, **kwargs)

@@ -41,9 +41,12 @@ class Config(object):
         if not os.path.exists(path):
             raise RuntimeError("Config file {0} not found.".format(path))
 
-        conf = Config()
-
         d = util.load_json(path, cls.api_version)
+        return cls.from_json(d)
+
+    @classmethod
+    def from_json(cls, d):
+        conf = cls()
         conf.__dict__.update(d)
 
         if not getattr(conf, "repo", None):

@@ -13,6 +13,17 @@ from . import console
 from . import util
 
 
+def iter_machine_files(results_dir):
+    """
+    Iterate over all of the machine.json files in the results_dir
+    """
+    for root, dirs, files in os.walk(results_dir):
+        for filename in files:
+            if filename == 'machine.json':
+                path = os.path.join(root, filename)
+                yield path
+
+
 class MachineCollection(object):
     """
     Stores information about 1 or more machines in the

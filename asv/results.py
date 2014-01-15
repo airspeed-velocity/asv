@@ -14,9 +14,12 @@ def iter_results(results):
     """
     Iterate over all of the result files.
     """
+    skip_files = set([
+        'machine.json', 'benchmarks.json'
+    ])
     for root, dirs, files in os.walk(results):
         for filename in files:
-            if filename.endswith('.json'):
+            if filename not in skip_files and filename.endswith('.json'):
                 path = os.path.join(root, filename)
                 try:
                     result = Results.load(path)

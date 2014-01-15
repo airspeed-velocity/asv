@@ -7,7 +7,7 @@ its runtime to stdout.
 """
 
 # !!!!!!!!!!!!!!!!!!!! NOTE !!!!!!!!!!!!!!!!!!!!
-# This file, unlike all others, must be compatible with as many
+# This file, unlike most others, must be compatible with as many
 # versions of Python as possible and have no dependencies outside of
 # the Python standard library.  This is the only bit of code from asv
 # that is imported into the benchmarking process.
@@ -52,8 +52,6 @@ class Benchmark(object):
     # this type of benchmark.  The default in the base class, will
     # match nothing.
     name_regex = re.compile('^$')
-    type = "base"
-    unit = "unit"
 
     def __init__(self, name, func, attr_source):
         self.name = name
@@ -66,6 +64,9 @@ class Benchmark(object):
         self.timeout = getattr(attr_source, "timeout", 60.0)
         self.params = getattr(attr_source, "params", None)
         self.attr_source = attr_source
+        self.code = textwrap.dedent(inspect.getsource(self.func))
+        self.type = "base"
+        self.unit = "unit"
 
     def __repr__(self):
         return '<{0} {1}>'.format(self.__class__.__name__, self.name)
@@ -143,10 +144,6 @@ class Benchmark(object):
 
         return find_on_filesystem(root, parts, '')
 
-    @property
-    def code(self):
-        return textwrap.dedent(inspect.getsource(self.func))
-
     def do_setup(self):
         if self.module_setup is not None:
             self.module_setup()
@@ -174,11 +171,11 @@ class TimeBenchmark(Benchmark):
     """
     name_regex = re.compile(
         '^(Time[A-Z_].+)|(time_.+)$')
-    type = "time"
-    unit = "seconds"
 
     def __init__(self, name, func, attr_source):
         Benchmark.__init__(self, name, func, attr_source)
+        self.type = "time"
+        self.unit = "seconds"
         self.goal_time = getattr(attr_source, 'goal_time', 2.0)
         self.timer = getattr(attr_source, 'timer', timeit.default_timer)
         self.repeat = getattr(attr_source, 'repeat', timeit.default_repeat)
@@ -212,11 +209,11 @@ class MemBenchmark(Benchmark):
     """
     name_regex = re.compile(
         '^(Mem[A-Z_].+)|(mem_.+)$')
-    type = "memory"
-    unit = "bytes"
 
     def __init__(self, name, func, attr_source):
         Benchmark.__init__(self, name, func, attr_source)
+        self.type = "memory"
+        self.unit = "bytes"
 
     def run(self):
         # We can't import asizeof directly, because we haven't loaded
@@ -257,21 +254,109 @@ benchmark_types = [
 ]
 
 
+def disc_class(klass):
+    """
+    Iterate over all benchmarks in a given class.
+
+    For each method with a special name, yields a Benchmark
+    object.
+    """
+    for key, val in klass.__dict__.items():
+        bm_type = get_benchmark_type_from_name(key)
+
+        if bm_type is not None and inspect.isfunction(val):
+            yield bm_type.from_class_method(klass, key)
+
+
+def disc_objects(module):
+    """
+    Iterate over all benchmarks in a given module, returning
+    Benchmark objects.
+
+    For each class definition, looks for any methods with a
+    special name.
+
+    For each free function, yields all functions with a special
+    name.
+    """
+    for key, val in module.__dict__.items():
+        if inspect.isclass(val):
+            for benchmark in disc_class(val):
+                yield benchmark
+        elif inspect.isfunction(val):
+            bm_type = get_benchmark_type_from_name(key)
+            if bm_type is not None:
+                yield bm_type.from_function(val)
+
+
+def disc_files(root, package=''):
+    """
+    Iterate over all .py files in a given directory tree.
+    """
+    for filename in os.listdir(root):
+        path = os.path.join(root, filename)
+        if os.path.isfile(path):
+            filename, ext = os.path.splitext(filename)
+            if ext == '.py':
+                module = imp.load_source(package + filename, path)
+                yield module
+        elif os.path.isdir(path):
+            for x in disc_files(path, package + filename + "."):
+                yield x
+
+
+def disc_benchmarks(root):
+    """
+    Discover all benchmarks in a given directory tree.
+    """
+    for module in disc_files(root):
+        for benchmark in disc_objects(module):
+            yield benchmark
+
+
+def list_benchmarks(root):
+    """
+    List all of the discovered benchmarks to stdout as JSON.
+    """
+    # Streaming of JSON back out to the master process
+
+    sys.stdout.write('[')
+    first = True
+    for benchmark in disc_benchmarks(root):
+        if not first:
+            sys.stdout.write(', ')
+        clean = dict(
+            (k, v) for (k, v) in benchmark.__dict__.items()
+            if isinstance(v, (str, int, float, list, dict)))
+        json.dump(clean, sys.stdout, skipkeys=True)
+        first = False
+    sys.stdout.write(']')
+
+
 if __name__ == '__main__':
-    benchmark_dir = sys.argv[-2]
-    benchmark_id = sys.argv[-1]
+    # TODO: Use argparse here
+    if sys.argv[-2] == 'discover':
+        benchmark_dir = sys.argv[-1]
+        list_benchmarks(benchmark_dir)
+        sys.exit(0)
 
-    benchmark = Benchmark.from_name(benchmark_dir, benchmark_id)
-    benchmark.do_setup()
-    result = benchmark.do_run()
-    benchmark.do_teardown()
+    elif sys.argv[-3] == 'run':
+        benchmark_dir = sys.argv[-2]
+        benchmark_id = sys.argv[-1]
 
-    # Write the output value as the last line of the output.
-    sys.stdout.write('\n')
-    sys.stdout.write(json.dumps(result))
-    sys.stdout.write('\n')
-    sys.stdout.flush()
+        benchmark = Benchmark.from_name(benchmark_dir, benchmark_id)
+        benchmark.do_setup()
+        result = benchmark.do_run()
+        benchmark.do_teardown()
 
-    # Not strictly necessary, but it's explicit about the successful
-    # exit code that we want.
-    sys.exit(0)
+        # Write the output value as the last line of the output.
+        sys.stdout.write('\n')
+        sys.stdout.write(json.dumps(result))
+        sys.stdout.write('\n')
+        sys.stdout.flush()
+
+        # Not strictly necessary, but it's explicit about the successful
+        # exit code that we want.
+        sys.exit(0)
+
+    sys.exit(1)

@@ -102,11 +102,6 @@ class Run(object):
         params.update(machine_params.__dict__)
         machine_params.save(conf.results_dir)
 
-        benchmarks = Benchmarks(conf.benchmark_dir, bench=bench)
-        if len(benchmarks) == 0:
-            console.message("No benchmarks selected", "yellow")
-            return
-
         repo = get_repo(conf.repo, conf.project)
 
         if range_spec == 'existing':
@@ -135,6 +130,12 @@ class Run(object):
         if len(environments) == 0:
             console.message("No environments selected", "yellow")
             return
+
+        benchmarks = Benchmarks(conf, regex=bench)
+        if len(benchmarks) == 0:
+            console.message("No benchmarks selected", "yellow")
+            return
+        benchmarks.save()
 
         steps = len(commit_hashes) * len(benchmarks) * len(environments)
 

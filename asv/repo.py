@@ -74,19 +74,21 @@ class Repo(object):
         raise NotImplementedError()
 
 
-
-
 class Git(Repo):
     def __init__(self, url, path):
         self._git = util.which("git")
 
-        self._path = path
+        self._path = os.path.abspath(path)
         if not os.path.exists(self._path):
             console.message("Cloning project", "green")
             self._run_git(['clone', url, self._path], chdir=False)
 
         console.message("Fetching recent changes", "green")
         self.pull()
+
+    @property
+    def path(self):
+        return self._path
 
     @classmethod
     def url_match(cls, url):
@@ -115,7 +117,7 @@ class Git(Repo):
         self.checkout('master')
         self._run_git(['pull'])
 
-    def checkout(self, branch):
+    def checkout(self, branch='master'):
         self._run_git(['checkout', branch])
 
     def clean(self):
