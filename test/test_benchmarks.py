@@ -11,39 +11,57 @@ import pytest
 import six
 
 from asv import benchmarks
+from asv import config
 from asv import environment
 
-# The benchmark dir is named '.benchmark' so that py.test doesn't look
-# in there for unit tests.
-BENCHMARK_DIR = os.path.join(os.path.dirname(__file__), '.benchmark')
+BENCHMARK_DIR = os.path.join(os.path.dirname(__file__), 'benchmark')
 
-INVALID_BENCHMARK_DIR = os.path.join(os.path.dirname(__file__), '.benchmark.invalid')
+INVALID_BENCHMARK_DIR = os.path.join(
+    os.path.dirname(__file__), 'benchmark.invalid')
+
+ASV_CONF_JSON = {
+    'benchmark_dir': BENCHMARK_DIR,
+    'repo': 'https://github.com/spacetelescope/asv.git',
+    'project': 'asv'
+    }
 
 
-def test_find_benchmarks():
-    b = benchmarks.Benchmarks(BENCHMARK_DIR)
+def test_find_benchmarks(tmpdir):
+    tmpdir = six.text_type(tmpdir)
+    os.chdir(tmpdir)
+
+    d = {}
+    d.update(ASV_CONF_JSON)
+    d['env_dir'] = os.path.join(tmpdir, "env")
+    conf = config.Config.from_json(d)
+
+    b = benchmarks.Benchmarks(conf)
     assert len(b) == 7
 
-
-def test_find_benchmarks_regex():
-    b = benchmarks.Benchmarks(BENCHMARK_DIR, 'secondary')
+    b = benchmarks.Benchmarks(conf, regex='secondary')
     assert len(b) == 3
 
-    b = benchmarks.Benchmarks(BENCHMARK_DIR, 'example')
+    b = benchmarks.Benchmarks(conf, regex='example')
     assert len(b) == 3
 
-    b = benchmarks.Benchmarks(BENCHMARK_DIR, 'time_example_benchmark_1')
+    b = benchmarks.Benchmarks(conf, regex='time_example_benchmark_1')
     assert len(b) == 1
 
 
 def test_run_benchmarks(tmpdir):
-    envdir = six.text_type(tmpdir.join("env"))
-    version = "{0[0]}.{0[1]}".format(sys.version_info)
-    env = environment.Environment(envdir, version, {})
-    env.setup()
+    tmpdir = six.text_type(tmpdir)
+    os.chdir(tmpdir)
 
-    b = benchmarks.Benchmarks(BENCHMARK_DIR)
-    times = b.run_benchmarks(env)
+    d = {}
+    d.update(ASV_CONF_JSON)
+    d['env_dir'] = os.path.join(tmpdir, "env")
+    conf = config.Config.from_json(d)
+
+    envs = list(environment.get_environments(
+        conf.env_dir, conf.pythons, conf.matrix))
+    assert len(envs) == 1
+    b = benchmarks.Benchmarks(conf)
+    times = b.run_benchmarks(envs[0])
 
     assert len(times) == 7
     assert times[
@@ -59,6 +77,15 @@ def test_run_benchmarks(tmpdir):
         'time_secondary.track_value'] == 42.0
 
 
-def test_invalid_benchmark_tree():
+def test_invalid_benchmark_tree(tmpdir):
+    tmpdir = six.text_type(tmpdir)
+    os.chdir(tmpdir)
+
+    d = {}
+    d.update(ASV_CONF_JSON)
+    d['benchmark_dir'] = INVALID_BENCHMARK_DIR
+    d['env_dir'] = os.path.join(tmpdir, "env")
+    conf = config.Config.from_json(d)
+
     with pytest.raises(ValueError):
-        b = benchmarks.Benchmarks(INVALID_BENCHMARK_DIR)
+        b = benchmarks.Benchmarks(conf)

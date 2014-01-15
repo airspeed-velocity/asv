@@ -12,9 +12,11 @@ import six
 from ..benchmarks import Benchmarks
 from ..config import Config
 from ..console import console
+from ..environment import get_environments
 from ..graph import Graph
+from ..machine import iter_machine_files
 from ..repo import get_repo
-from ..results import Results
+from ..results import iter_results
 from .. import util
 
 
@@ -49,30 +51,21 @@ class Publish(object):
         if os.path.exists(conf.html_dir):
             shutil.rmtree(conf.html_dir)
 
-        benchmarks = Benchmarks(conf.benchmark_dir)
+        benchmarks = Benchmarks.load(conf)
 
         template_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), '..', 'www')
         shutil.copytree(template_dir, conf.html_dir)
 
-        dir_contents = []
-        for root, dirs, files in os.walk(conf.results_dir):
-            for filename in files:
-                base, ext = os.path.splitext(filename)
-                if ext == '.json':
-                    dir_contents.append(os.path.join(root, filename))
+        with console.group("Loading machine info", "green"):
+            for path in iter_machine_files(conf.results_dir):
+                d = util.load_json(path)
+                machines[d['machine']] = d
 
         with console.group("Loading results", "green"):
-            for path in dir_contents:
-                filename = os.path.basename(path)
-                if filename == 'machine.json':
-                    d = util.load_json(path)
-                    machines[d['machine']] = d
-                    continue
-
-                results = Results.load(path)
-
-                date_to_hash[results.date] = results.commit_hash[:conf.hash_length]
+            for results in iter_results(conf.results_dir):
+                date_to_hash[results.date] = results.commit_hash[
+                    :conf.hash_length]
 
                 for key, val in six.iteritems(results.params):
                     params.setdefault(key, set())
@@ -98,13 +91,7 @@ class Publish(object):
                 tags[tag] = repo.get_date_from_tag(tag)
 
         with console.group("Writing index", "green"):
-            benchmark_map = {}
-            for name in benchmark_names:
-                benchmark_map[name] = {
-                    'code': benchmarks[name].code,
-                    'type': benchmarks[name].type,
-                    'unit': benchmarks[name].unit
-                }
+            benchmark_map = dict(benchmarks)
             for key, val in six.iteritems(params):
                 val = list(val)
                 val.sort(key=lambda x: x or '')
