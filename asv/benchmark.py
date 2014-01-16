@@ -334,15 +334,16 @@ def list_benchmarks(root):
 
 
 if __name__ == '__main__':
-    # TODO: Use argparse here
-    if sys.argv[-2] == 'discover':
-        benchmark_dir = sys.argv[-1]
+    mode = sys.argv[1]
+    args = sys.argv[2:]
+
+    if mode == 'discover':
+        benchmark_dir = args[0]
         list_benchmarks(benchmark_dir)
         sys.exit(0)
 
-    elif sys.argv[-3] == 'run':
-        benchmark_dir = sys.argv[-2]
-        benchmark_id = sys.argv[-1]
+    elif mode == 'run':
+        benchmark_dir, benchmark_id = args
 
         benchmark = Benchmark.from_name(benchmark_dir, benchmark_id)
         benchmark.do_setup()
@@ -359,4 +360,5 @@ if __name__ == '__main__':
         # exit code that we want.
         sys.exit(0)
 
+    sys.stderr.write("Unknown mode {0}\n".format(mode))
     sys.exit(1)
