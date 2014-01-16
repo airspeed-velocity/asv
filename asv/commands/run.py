@@ -22,9 +22,8 @@ from .setup import Setup
 
 def _do_build(args):
     env, conf = args
-    env.uninstall(conf.project)
     try:
-        env.install(os.path.abspath(conf.project), editable=True)
+        env.install_project(conf.project, os.path.abspath(conf.project))
     except util.ProcessError:
         return False
     return True
@@ -155,7 +154,6 @@ class Run(object):
                     "{0} commit hash {1}:".format(
                         conf.project, commit_hash[:8]), 'green'):
                 repo.checkout(commit_hash)
-                repo.clean()
 
                 for subenv in util.iter_chunks(environments, parallel):
                     with console.group(
