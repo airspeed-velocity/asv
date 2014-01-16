@@ -12,7 +12,6 @@ import six
 from ..benchmarks import Benchmarks
 from ..config import Config
 from ..console import console
-from ..environment import get_environments
 from ..graph import Graph
 from ..machine import iter_machine_files
 from ..repo import get_repo

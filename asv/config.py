@@ -42,7 +42,11 @@ class Config(object):
             raise RuntimeError("Config file {0} not found.".format(path))
 
         d = util.load_json(path, cls.api_version)
-        return cls.from_json(d)
+        try:
+            return cls.from_json(d)
+        except ValueError:
+            raise ValueError(
+                "No repo specified in {0} config file.".format(path))
 
     @classmethod
     def from_json(cls, d):
@@ -51,7 +55,7 @@ class Config(object):
 
         if not getattr(conf, "repo", None):
             raise ValueError(
-                "No repo specified in {0} config file.".format(path))
+                "No repo specified in config file.")
 
         return conf
 

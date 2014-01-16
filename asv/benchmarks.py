@@ -67,7 +67,7 @@ def run_benchmark(benchmark, root, env, show_exc=False):
             console.add("invalid output", "red")
             return None
 
-        if isinstance(output, float):
+        if isinstance(output, (int, float)):
             if benchmark['unit'] == 'seconds':
                 display = util.human_time(output)
             elif benchmark['unit'] == 'bytes':
@@ -132,8 +132,10 @@ class Benchmarks(dict):
 
         cls.check_tree(root)
 
-        environments = get_environments(
-            conf.env_dir, conf.pythons, conf.matrix)
+        environments = list(get_environments(
+            conf.env_dir, conf.pythons, conf.matrix))
+        if len(environments) == 0:
+            raise ValueError("No available environments")
 
         # Ideally, use an environment in the same Python version as
         # master, but if one isn't found, just default to the first

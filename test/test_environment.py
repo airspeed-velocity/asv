@@ -12,13 +12,13 @@ from asv import util
 
 def test_matrix_environments(tmpdir):
     try:
-        python27 = util.which('python2.7')
+        util.which('python2.7')
     except RuntimeError:
         raise RuntimeError(
             "python 2.7 must be installed for this test to pass")
 
     try:
-        python33 = util.which('python3.3')
+        util.which('python3.3')
     except RuntimeError:
         raise RuntimeError(
             "python 3.3 must be installed for this test to pass")
@@ -27,7 +27,7 @@ def test_matrix_environments(tmpdir):
 
     pythons = ["2.7", "3.3"]
     matrix = {
-        "six": ["1.3", "1.4"],
+        "six": ["1.4", None],
         "psutil": ["1.2", "1.1"]
     }
 

@@ -87,9 +87,6 @@ def _color_text(text, color):
         'lightcyan': '1;36',
         'white': '1;37'}
 
-    if sys.platform == 'win32':
-        return text
-
     color_code = color_mapping.get(color, '0;39')
     return '\033[{0}m{1}\033[0m'.format(color_code, text)
 

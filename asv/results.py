@@ -21,11 +21,7 @@ def iter_results(results):
         for filename in files:
             if filename not in skip_files and filename.endswith('.json'):
                 path = os.path.join(root, filename)
-                try:
-                    result = Results.load(path)
-                except:
-                    continue
-                yield result
+                yield Results.load(path)
 
 
 def iter_existing_hashes(results):

@@ -36,8 +36,12 @@ class MachineCollection(object):
         return os.path.expanduser('~/.asv-machine.json')
 
     @classmethod
-    def load(cls, machine_name):
-        path = cls.get_machine_file_path()
+    def load(cls, machine_name, _path=None):
+        if _path is None:
+            path = cls.get_machine_file_path()
+        else:
+            path = _path
+
         if os.path.exists(path):
             d = util.load_json(path, cls.api_version)
             if machine_name in d:
@@ -47,8 +51,11 @@ class MachineCollection(object):
             "No information stored about machine {0}".format(machine_name))
 
     @classmethod
-    def save(cls, machine_name, machine_info):
-        path = cls.get_machine_file_path()
+    def save(cls, machine_name, machine_info, _path=None):
+        if _path is None:
+            path = cls.get_machine_file_path()
+        else:
+            path = _path
         if os.path.exists(path):
             d = util.load_json(path)
         else:
@@ -98,8 +105,12 @@ class Machine(object):
          '4GB'.""")
     ]
 
-    @staticmethod
-    def get_unique_machine_name():
+    hardcoded_machine_name = None
+
+    @classmethod
+    def get_unique_machine_name(cls):
+        if cls.hardcoded_machine_name:
+            return cls.hardcoded_machine_name
         (system, node, release, version, machine, processor) = platform.uname()
         return node
 
@@ -160,12 +171,13 @@ class Machine(object):
         return values
 
     @classmethod
-    def load(cls, interactive=False, force_interactive=False, **kwargs):
+    def load(cls, interactive=False, force_interactive=False, _path=None,
+             **kwargs):
         self = Machine()
 
         unique_machine_name = cls.get_unique_machine_name()
         try:
-            d = MachineCollection.load(unique_machine_name)
+            d = MachineCollection.load(unique_machine_name, _path=_path)
         except ValueError:
             d = {}
         d.update(kwargs)
@@ -173,7 +185,7 @@ class Machine(object):
             d.update(self.generate_machine_file())
 
         self.__dict__.update(d)
-        MachineCollection.save(unique_machine_name, self.__dict__)
+        MachineCollection.save(unique_machine_name, self.__dict__, _path=_path)
         return self
 
     def save(self, results_dir):
