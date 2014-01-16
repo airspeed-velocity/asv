@@ -6,6 +6,8 @@ from __future__ import (absolute_import, division, print_function,
 
 import argparse
 
+import six
+
 from .gh_pages import GithubPages
 from .machine import Machine
 from .preview import Preview
@@ -50,19 +52,17 @@ def make_argparser():
         title='subcommands',
         description='valid subcommands')
 
-    command_parsers = []
     for command in all_commands:
-        command_parsers.append(
-            command.setup_arguments(subparsers))
+        command.setup_arguments(subparsers)
 
-    return parser, command_parsers
+    return parser, subparsers
 
 
 def _make_docstring():
-    parser, command_parsers = make_argparser()
+    parser, subparsers = make_argparser()
 
     lines = []
-    for p in command_parsers:
+    for p in six.itervalues(subparsers.choices):
         lines.append(p.prog)
         lines.append('-' * len(p.prog))
         lines.append('::')

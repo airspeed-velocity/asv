@@ -13,14 +13,22 @@ from .console import console
 
 
 def main():
+    def help(args):
+        parser.print_help()
+        sys.exit(0)
+
     console.enable()
 
-    parser, command_parsers = commands.make_argparser()
+    parser, subparsers = commands.make_argparser()
+
+    help_parser = subparsers.add_parser(
+        "help", help="Display usage information")
+    help_parser.set_defaults(func=help)
 
     args = parser.parse_args()
 
     if not hasattr(args, 'func'):
-        parser.print_usage()
+        parser.print_help()
         sys.exit(1)
 
     try:
