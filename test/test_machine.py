@@ -4,34 +4,30 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+from os.path import join
+
 import six
 
 from asv import machine
 
 
 def test_machine(tmpdir):
-    @staticmethod
-    def get_machine_file_path():
-        return six.text_type(tmpdir.join('asv-machine.json'))
+    tmpdir = six.text_type(tmpdir)
 
-    original_file_path = machine.MachineCollection.get_machine_file_path
-    machine.MachineCollection.get_machine_file_path = get_machine_file_path
+    m = machine.Machine.load(
+        interactive=False,
+        machine="orangutan",
+        os="BeOS",
+        arch="MIPS",
+        cpu="10 MHz",
+        ram="640k",
+        _path=join(tmpdir, 'asv-machine.json'))
 
-    try:
-        m = machine.Machine.load(
-            interactive=False,
-            machine="foo",
-            os="BeOS",
-            arch="MIPS",
-            cpu="10 MHz",
-            ram="640k")
+    m = machine.Machine.load(
+        _path=join(tmpdir, 'asv-machine.json'), interactive=False)
 
-        m = machine.Machine.load(interactive=False)
-
-        assert m.machine == 'foo'
-        assert m.os == 'BeOS'
-        assert m.arch == 'MIPS'
-        assert m.cpu == '10 MHz'
-        assert m.ram == '640k'
-    finally:
-        machine.MachineCollection.get_machine_file_path = original_file_path
+    assert m.machine == 'orangutan'
+    assert m.os == 'BeOS'
+    assert m.arch == 'MIPS'
+    assert m.cpu == '10 MHz'
+    assert m.ram == '640k'

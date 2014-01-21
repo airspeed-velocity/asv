@@ -1,0 +1,120 @@
+{
+    "time_coordinates.time_latitude": {
+        "code": "def time_latitude():\n    coordinates.Latitude(3.2, units.degree)\n", 
+        "goal_time": 2.0, 
+        "name": "time_coordinates.time_latitude", 
+        "number": 0, 
+        "repeat": 3, 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "seconds"
+    }, 
+    "time_quantity.time_quantity_array_conversion": {
+        "code": "def time_quantity_array_conversion():\n    (np.arange(100000) * u.m / u.s).to(u.km / u.hour)\n", 
+        "goal_time": 2.0, 
+        "name": "time_quantity.time_quantity_array_conversion", 
+        "number": 0, 
+        "repeat": 3, 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "seconds"
+    }, 
+    "time_quantity.time_quantity_init_array": {
+        "code": "def time_quantity_init_array():\n    np.arange(100000) * u.m / u.s\n", 
+        "goal_time": 2.0, 
+        "name": "time_quantity.time_quantity_init_array", 
+        "number": 0, 
+        "repeat": 3, 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "seconds"
+    }, 
+    "time_quantity.time_quantity_init_scalar": {
+        "code": "def time_quantity_init_scalar():\n    3. * u.m / u.s\n", 
+        "goal_time": 2.0, 
+        "name": "time_quantity.time_quantity_init_scalar", 
+        "number": 0, 
+        "repeat": 3, 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "seconds"
+    }, 
+    "time_quantity.time_quantity_scalar_conversion": {
+        "code": "def time_quantity_scalar_conversion():\n    (3. * u.m / u.s).to(u.km / u.hour)\n", 
+        "goal_time": 2.0, 
+        "name": "time_quantity.time_quantity_scalar_conversion", 
+        "number": 0, 
+        "repeat": 3, 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "seconds"
+    }, 
+    "time_quantity.time_quantity_ufunc_sin": {
+        "code": "def time_quantity_ufunc_sin():\n    np.sin(np.arange(10000) * u.degree)\n", 
+        "goal_time": 2.0, 
+        "name": "time_quantity.time_quantity_ufunc_sin", 
+        "number": 0, 
+        "repeat": 3, 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "seconds"
+    }, 
+    "time_units.mem_unit": {
+        "code": "def mem_unit():\n    return u.erg\n", 
+        "name": "time_units.mem_unit", 
+        "timeout": 60.0, 
+        "type": "memory", 
+        "unit": "bytes"
+    }, 
+    "time_units.time_simple_unit_parse": {
+        "code": "def time_simple_unit_parse():\n    u.Unit('1 d')\n", 
+        "goal_time": 2.0, 
+        "name": "time_units.time_simple_unit_parse", 
+        "number": 0, 
+        "repeat": 3, 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "seconds"
+    }, 
+    "time_units.time_unit_compose": {
+        "code": "def time_unit_compose():\n    u.Ry.compose()\n", 
+        "goal_time": 2.0, 
+        "name": "time_units.time_unit_compose", 
+        "number": 0, 
+        "repeat": 3, 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "seconds"
+    }, 
+    "time_units.time_unit_parse": {
+        "code": "def time_unit_parse():\n    u.Unit('1e-07 kg m2 / s2')\n", 
+        "goal_time": 2.0, 
+        "name": "time_units.time_unit_parse", 
+        "number": 0, 
+        "repeat": 3, 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "seconds"
+    }, 
+    "time_units.time_unit_to": {
+        "code": "def time_unit_to():\n    u.m.to(u.pc)\n", 
+        "goal_time": 2.0, 
+        "name": "time_units.time_unit_to", 
+        "number": 0, 
+        "repeat": 3, 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "seconds"
+    }, 
+    "time_units.time_very_simple_unit_parse": {
+        "code": "def time_very_simple_unit_parse():\n    u.Unit('d')\n", 
+        "goal_time": 2.0, 
+        "name": "time_units.time_very_simple_unit_parse", 
+        "number": 0, 
+        "repeat": 3, 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "seconds"
+    }, 
+    "version": 1
+}

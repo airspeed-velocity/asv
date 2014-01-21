@@ -7,10 +7,7 @@ from __future__ import (absolute_import, division, print_function,
 import sys
 import time
 
-import six
-
 from asv import util
-from asv import console
 
 
 def test_timeout():

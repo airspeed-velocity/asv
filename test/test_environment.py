@@ -12,13 +12,13 @@ from asv import util
 
 def test_matrix_environments(tmpdir):
     try:
-        python27 = util.which('python2.7')
+        util.which('python2.7')
     except RuntimeError:
         raise RuntimeError(
             "python 2.7 must be installed for this test to pass")
 
     try:
-        python33 = util.which('python3.3')
+        util.which('python3.3')
     except RuntimeError:
         raise RuntimeError(
             "python 3.3 must be installed for this test to pass")
@@ -27,7 +27,7 @@ def test_matrix_environments(tmpdir):
 
     pythons = ["2.7", "3.3"]
     matrix = {
-        "six": ["1.3", "1.4"],
+        "six": ["1.4", None],
         "psutil": ["1.2", "1.1"]
     }
 
@@ -44,8 +44,9 @@ def test_matrix_environments(tmpdir):
 
         output = env.run(
             ['-c', 'import six, sys; sys.stdout.write(six.__version__)'])
-        assert output.startswith(env._requirements['six'])
+        if env._requirements['six'] is not None:
+            assert output.startswith(six.text_type(env._requirements['six']))
 
         output = env.run(
             ['-c', 'import psutil, sys; sys.stdout.write(psutil.__version__)'])
-        assert output.startswith(env._requirements['psutil'])
+        assert output.startswith(six.text_type(env._requirements['psutil']))

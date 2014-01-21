@@ -43,17 +43,19 @@ def get_environments(env_dir, pythons, matrix):
         # TODO: Deal with matrix exclusions
         matrix = dict(matrix)
         key = next(six.iterkeys(matrix))
-        entry = matrix.pop(key)
+        entry = matrix[key]
+        del matrix[key]
 
         for result in iter_matrix(matrix):
-            result = dict(result)
             if len(entry):
                 for value in entry:
-                    result[key] = value
-                    yield result
+                    d = dict(result)
+                    d[key] = value
+                    yield d
             else:
-                result[key] = None
-                yield result
+                d = dict(result)
+                d[key] = None
+                yield d
 
     for python in pythons:
         for configuration in iter_matrix(matrix):

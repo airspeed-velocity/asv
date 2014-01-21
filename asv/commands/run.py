@@ -96,10 +96,10 @@ class Run(object):
         )
 
     @classmethod
-    def run(cls, conf, range_spec="master", steps=0, bench=None, parallel=-1,
-            show_exc=False):
+    def run(cls, conf, range_spec="master", steps=0, bench=None, parallel=1,
+            show_exc=False, _machine_file=None):
         params = {}
-        machine_params = Machine.load(interactive=True)
+        machine_params = Machine.load(_path=_machine_file, interactive=True)
         params.update(machine_params.__dict__)
         machine_params.save(conf.results_dir)
 
