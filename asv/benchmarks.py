@@ -23,7 +23,7 @@ BENCHMARK_RUN_SCRIPT = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "benchmark.py")
 
 
-def run_benchmark(benchmark, root, env, show_exc=False):
+def run_benchmark(benchmark, root, env, show_exc=False, quick=False):
     """
     Run a single benchmark in another process in the given environment.
 
@@ -40,6 +40,9 @@ def run_benchmark(benchmark, root, env, show_exc=False):
         When `True`, write the exception to the console if the
         benchmark fails.
 
+    quick : bool, optional
+        When `True`, run the benchmark function exactly once.
+
     Returns
     -------
     result : float or None
@@ -50,7 +53,7 @@ def run_benchmark(benchmark, root, env, show_exc=False):
     console.step(benchmark['name'] + ": ")
     try:
         output = env.run(
-            [BENCHMARK_RUN_SCRIPT, 'run', root, benchmark['name']],
+            [BENCHMARK_RUN_SCRIPT, 'run', root, benchmark['name'], str(quick)],
             dots=False, timeout=benchmark['timeout'],
             display_error=show_exc)
     except util.ProcessError:
@@ -248,7 +251,7 @@ class Benchmarks(dict):
 
         return cls(conf, benchmarks=d, regex=regex)
 
-    def run_benchmarks(self, env, show_exc=False):
+    def run_benchmarks(self, env, show_exc=False, quick=False):
         """
         Run all of the benchmarks in the given `Environment`.
 
@@ -260,11 +263,18 @@ class Benchmarks(dict):
         show_exc : bool, optional
             When `True`, display the exception traceback when running
             a benchmark fails.
+
+        quick : bool, optional
+            When `True`, run each benchmark function exactly once.
+            This is useful to quickly find errors in the benchmark
+            functions, without taking the time necessary to get
+            accurate timings.
         """
         times = {}
         for name, benchmark in six.iteritems(self):
             times[name] = run_benchmark(
-                benchmark, self._benchmark_dir, env, show_exc=show_exc)
+                benchmark, self._benchmark_dir, env, show_exc=show_exc,
+                quick=quick)
         return times
 
     def skip_benchmarks(self):

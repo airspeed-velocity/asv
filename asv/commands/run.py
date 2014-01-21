@@ -78,8 +78,14 @@ class Run(object):
             in all cases.""")
         parser.add_argument(
             "--show-exc", "-e", action="store_true",
-            help="""When provided, display the exceptions from the
-            benchmarks when they fail.""")
+            help="""Display the exceptions from the benchmarks when
+            they fail.""")
+        parser.add_argument(
+            "--quick", "-q", action="store_true",
+            help="""Do a "quick" run, where each benchmark function is
+            run only once.  This is useful to find basic errors in the
+            benchmark functions faster.  The results are unlikely to
+            be useful, and thus are not saved.""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -91,12 +97,12 @@ class Run(object):
         return cls.run(
             conf=conf, range_spec=args.range, steps=args.steps,
             bench=args.bench, parallel=args.parallel,
-            show_exc=args.show_exc
+            show_exc=args.show_exc, quick=args.quick
         )
 
     @classmethod
     def run(cls, conf, range_spec="master", steps=0, bench=None, parallel=1,
-            show_exc=False, _machine_file=None):
+            show_exc=False, quick=False, _machine_file=None):
         params = {}
         machine_params = Machine.load(_path=_machine_file, interactive=True)
         params.update(machine_params.__dict__)
@@ -177,7 +183,7 @@ class Run(object):
 
                                 with console.indent():
                                     times = benchmarks.run_benchmarks(
-                                        env, show_exc=show_exc)
+                                        env, show_exc=show_exc, quick=quick)
                             else:
                                 console.add(" can't install.  skipping", "yellow")
                                 with console.indent():
