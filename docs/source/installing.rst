@@ -14,21 +14,21 @@ The requirements should be automatically installed.  If they aren't
 installed automatically, for example due to networking restrictions,
 the requirements are:
 
-    - `six <http://pythonhosted.org/six/>`__, 1.4 or later
+- `six <http://pythonhosted.org/six/>`__, 1.4 or later
 
-    - `virtualenv <http://virtualenv.org/>`__, 1.10 or later (this is
-      true even with Python 3.3, where virtualenv is included as venv,
-      since venv is not compatible with other versions of Python).
+- `virtualenv <http://virtualenv.org/>`__, 1.10 or later (this is true
+  even with Python 3.3, where virtualenv is included as venv, since
+  venv is not compatible with other versions of Python).
 
-      Note that virtualenv 1.11.0 will not work, as it contains a bug
-      in setuptools that prevents its installation in a clean virtual
-      environment.
+  Note that virtualenv 1.11.0 will not work, as it contains a bug in
+  setuptools that prevents its installation in a clean virtual
+  environment.
 
 Optional dependencies, required only to determine machine information:
 
-    - `psutil <https://code.google.com/p/psutil/>`__
+- `psutil <https://code.google.com/p/psutil/>`__
 
-    - `numpy <http://www.numpy.org/>`__
+- `numpy <http://www.numpy.org/>`__
 
 Optional optimization
 ---------------------
@@ -39,7 +39,7 @@ Cython, consider installing ``ccache``.  `ccache
 compilation time when the same objects are repeatedly compiled.  In
 **airspeed velocity**, the project being benchmarked is recompiled at
 many different points in its history, often with only minor changes to
-the source code, so `ccache` can help speed up the total benchmarking
+the source code, so ``ccache`` can help speed up the total benchmarking
 time considerably.
 
 Running the self-tests
