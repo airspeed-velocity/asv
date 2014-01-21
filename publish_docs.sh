@@ -19,7 +19,7 @@ git add .nojekyll
 git add *
 git commit -m "Generated from sources"
 
-git push -f origin gh-pages
+git push -f upstream gh-pages
 
 git checkout master
 git branch -D gh-pages
