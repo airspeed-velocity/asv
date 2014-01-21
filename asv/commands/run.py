@@ -127,9 +127,13 @@ class Run(object):
             return
 
         if steps > 0:
-            spacing = int(len(commit_hashes) / steps) or 1
-            commit_hashes = [commit_hashes[i] for i in
-                             six.moves.xrange(0, len(commit_hashes), spacing)]
+            spacing = max(float(len(commit_hashes)) / steps, 1)
+            spaced = []
+            i = 0
+            while int(i) < len(commit_hashes) and len(spaced) < steps:
+                spaced.append(commit_hashes[int(i)])
+                i += spacing
+            commit_hashes = spaced
 
         environments = Setup.run(conf=conf, parallel=parallel)
         if len(environments) == 0:
