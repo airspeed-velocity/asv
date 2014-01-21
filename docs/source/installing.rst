@@ -30,6 +30,18 @@ Optional dependencies, required only to determine machine information:
 
     - `numpy <http://www.numpy.org/>`__
 
+Optional optimization
+---------------------
+
+If your project being benchmarked contains C, C++, Objective-C or
+Cython, consider installing ``ccache``.  `ccache
+<https://ccache.samba.org/>`__ is a compiler cache that speeds up
+compilation time when the same objects are repeatedly compiled.  In
+**airspeed velocity**, the project being benchmarked is recompiled at
+many different points in its history, often with only minor changes to
+the source code, so `ccache` can help speed up the total benchmarking
+time considerably.
+
 Running the self-tests
 ----------------------
 
