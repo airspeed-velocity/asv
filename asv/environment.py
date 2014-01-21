@@ -209,3 +209,13 @@ class Environment(object):
         """
         self.install_requirements()
         return self._run_executable('python', args, **kwargs)
+
+    def install_project(self, project_name, project_dir):
+        """
+        Install a working copy of the benchmarked project into the
+        environment.  Uninstalls any installed copy of the project
+        first.
+        """
+        self.install_requirements()
+        self.uninstall(project_name)
+        self.install(project_dir, editable=True)

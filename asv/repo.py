@@ -38,7 +38,8 @@ class Repo(object):
 
     def checkout(self, branch):
         """
-        Checkout a given branch or commit hash.
+        Checkout a given branch or commit hash.  Also cleans the
+        checkout of any non-source-controlled files.
         """
         raise NotImplementedError()
 
@@ -119,6 +120,7 @@ class Git(Repo):
 
     def checkout(self, branch='master'):
         self._run_git(['checkout', branch])
+        self.clean()
 
     def clean(self):
         self._run_git(['clean', '-fxd'])

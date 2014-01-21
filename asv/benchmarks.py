@@ -150,11 +150,8 @@ class Benchmarks(dict):
 
         repo = get_repo(conf.repo, conf.project)
         repo.checkout()
-        repo.clean()
 
-        env.install_requirements()
-        env.uninstall(conf.project)
-        env.install(os.path.abspath(conf.project), editable=True)
+        env.install_project(conf.project, os.path.abspath(conf.project))
 
         output = env.run(
             [BENCHMARK_RUN_SCRIPT, 'discover', root],
