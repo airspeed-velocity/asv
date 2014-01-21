@@ -35,7 +35,7 @@ def test_workflow(tmpdir):
     Run.run(conf, range_spec="initial..master", steps=2,
             _machine_file=join(local, 'asv-machine.json'))
 
-    assert len(os.listdir(join(tmpdir, 'results', 'orangutan'))) == 3
+    assert len(os.listdir(join(tmpdir, 'results', 'orangutan'))) == 5
     assert len(os.listdir(join(tmpdir, 'results'))) == 2
 
     Publish.run(conf)

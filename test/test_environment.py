@@ -44,7 +44,8 @@ def test_matrix_environments(tmpdir):
 
         output = env.run(
             ['-c', 'import six, sys; sys.stdout.write(six.__version__)'])
-        assert output.startswith(six.text_type(env._requirements['six']))
+        if env._requirements['six'] is not None:
+            assert output.startswith(six.text_type(env._requirements['six']))
 
         output = env.run(
             ['-c', 'import psutil, sys; sys.stdout.write(psutil.__version__)'])
