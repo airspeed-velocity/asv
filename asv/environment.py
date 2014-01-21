@@ -15,7 +15,7 @@ import shutil
 
 import six
 
-from .console import console
+from .console import log
 from . import util
 
 
@@ -144,6 +144,7 @@ class Environment(object):
             os.makedirs(self._env_dir)
 
         try:
+            log.info("Creating virtualenv for {0}".format(self.name))
             if not os.path.exists(self._path):
                 util.check_call([
                     self._executable,
@@ -151,6 +152,7 @@ class Environment(object):
                     '--no-site-packages',
                     self._path])
         except:
+            log.error("Failure creating virtualenv for {0}".format(self.name))
             if os.path.exists(self._path):
                 shutil.rmtree(self._path)
             raise
@@ -181,7 +183,7 @@ class Environment(object):
         """
         Install a package into the environment using `pip install`.
         """
-        console.message("Installing {0}".format(package))
+        log.info("Installing {0} into {1}".format(package, self.name))
         args = ['install']
         if editable:
             args.append('-e')
@@ -192,14 +194,14 @@ class Environment(object):
         """
         Upgrade a package into the environment using `pip install --upgrade`.
         """
-        console.message("Upgrading {0}".format(package))
+        log.info("Upgrading {0} in {1}".format(package, self.name))
         self._run_executable('pip', ['install', '--upgrade', package])
 
     def uninstall(self, package):
         """
         Uninstall a package into the environment using `pip uninstall`.
         """
-        console.message("Uninstalling {0}".format(package))
+        log.info("Uninstalling {0} from {1}".format(package, self.name))
         self._run_executable('pip', ['uninstall', '-y', package], error=False)
 
     def run(self, args, **kwargs):
@@ -207,6 +209,7 @@ class Environment(object):
         Start up the environment's python executable with the given
         args.
         """
+        log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
         self.install_requirements()
         return self._run_executable('python', args, **kwargs)
 

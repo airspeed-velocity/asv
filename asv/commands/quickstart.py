@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function,
 import os
 import shutil
 
-from ..console import console
+from ..console import log
 
 
 class Quickstart(object):
@@ -41,4 +41,4 @@ class Quickstart(object):
             elif os.path.isfile(path):
                 shutil.copyfile(path, os.path.join(dest, entry))
 
-        console.message("Edit asv.conf.json to get started.", "green")
+        log.info("Edit asv.conf.json to get started.")

@@ -8,7 +8,7 @@ from __future__ import (absolute_import, division, print_function,
 import os
 import re
 
-from .console import console
+from .console import log
 from . import util
 
 
@@ -78,13 +78,13 @@ class Repo(object):
 class Git(Repo):
     def __init__(self, url, path):
         self._git = util.which("git")
-
         self._path = os.path.abspath(path)
+
         if not os.path.exists(self._path):
-            console.message("Cloning project", "green")
+            log.info("Cloning project")
             self._run_git(['clone', url, self._path], chdir=False)
 
-        console.message("Fetching recent changes", "green")
+        log.info("Fetching recent changes")
         self.pull()
 
     @property

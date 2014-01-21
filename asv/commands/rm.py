@@ -11,6 +11,7 @@ import sys
 
 from ..config import Config
 from .. import console
+from ..console import log
 from ..results import iter_results
 
 
@@ -94,10 +95,10 @@ class Rm(object):
                 files_to_remove.add(result)
 
         if single_benchmark is not None:
-            print("Removing {0} benchmarks in {1} files".format(
+            log.info("Removing {0} benchmarks in {1} files".format(
                 count, len(files_to_remove)))
         else:
-            print("Removing {0} files".format(len(files_to_remove)))
+            log.info("Removing {0} files".format(len(files_to_remove)))
 
         if not y:
             do = console.get_answer_default("Perform operations", "n")

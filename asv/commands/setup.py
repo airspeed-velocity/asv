@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function,
 import multiprocessing
 
 from ..config import Config
-from ..console import console
+from ..console import log
 from .. import environment
 
 
@@ -66,11 +66,13 @@ class Setup(object):
         if parallel <= 0:
             parallel = multiprocessing.cpu_count()
 
-        with console.group("Creating virtualenvs...", color="green"):
+        log.info("Creating virtualenvs")
+        with log.indent():
             for env in environments:
                 env.setup()
 
-        with console.group("Installing dependencies...", color="green"):
+        log.info("Installing dependencies")
+        with log.indent():
             if parallel != 1:
                 pool = multiprocessing.Pool(parallel)
                 pool.map(_install_requirements_multiprocess, environments)

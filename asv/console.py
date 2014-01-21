@@ -11,10 +11,13 @@ from __future__ import (absolute_import, division, print_function,
 import codecs
 import contextlib
 import locale
+import logging
 import sys
+import textwrap
 
 import six
 from six.moves import xrange, input
+
 
 def isatty(file):
     """
@@ -37,15 +40,17 @@ def _decode_preferred_encoding(s):
     the message cannot be decoded with utf-8.
     """
 
-    enc = locale.getpreferredencoding()
-    try:
+    if six.PY3 and isinstance(s, bytes):
+        enc = locale.getpreferredencoding()
         try:
+            try:
+                return s.decode(enc)
+            except LookupError:
+                enc = 'utf-8'
             return s.decode(enc)
-        except LookupError:
-            enc = 'utf-8'
-        return s.decode(enc)
-    except UnicodeDecodeError:
-        return s.decode('latin-1')
+        except UnicodeDecodeError:
+            return s.decode('latin-1')
+    return s
 
 
 def _color_text(text, color):
@@ -98,7 +103,6 @@ def _write_with_fallback(s, write, fileobj):
     in case of a UnicodeEncodeError.  Failing that attempt to write
     with 'utf-8' or 'latin-1'.
     """
-
     try:
         write(s)
         return write
@@ -174,24 +178,14 @@ def color_print(*args, **kwargs):
 
             if color:
                 msg = _color_text(msg, color)
-
-            # Some file objects support writing unicode sensibly on some Python
-            # versions; if this fails try creating a writer using the locale's
-            # preferred encoding. If that fails too give up.
-            if not six.PY3 and isinstance(msg, bytes):
-                msg = _decode_preferred_encoding(msg)
-
+            msg = _decode_preferred_encoding(msg)
             write = _write_with_fallback(msg, write, file)
 
         write(end)
     else:
         for i in xrange(0, len(args), 2):
             msg = args[i]
-            if not six.PY3 and isinstance(msg, bytes):
-                # Support decoding bytes to unicode on Python 2; use the
-                # preferred encoding for the locale (which is *sometimes*
-                # sensible)
-                msg = _decode_preferred_encoding(msg)
+            msg = _decode_preferred_encoding(msg)
             write(msg)
         write(end)
 
@@ -204,26 +198,65 @@ def get_answer_default(prompt, default):
     return x
 
 
-class _Console(object):
-    def __init__(self, stream=None):
-        if stream is None:
-            stream = sys.stdout
-        self._stream = stream
-        self._indent = 0
+class Log(object):
+    def __init__(self):
+        self._indent = 1
+        self._total = 0
+        self._count = 0
+        self._logger = logging.getLogger()
         self._needs_newline = False
-        self._n_items = 0
-        self._step = 0
-        self._enabled = False
 
-    def enable(self):
-        self._enabled = True
+    def _stream_formatter(self, record):
+        '''
+        The formatter for standard output
+        '''
+        if self._needs_newline:
+            color_print('\n')
+        parts = record.msg.split('\n', 1)
+        first_line = parts[0]
+        if len(parts) == 1:
+            rest = None
+        else:
+            rest = parts[1]
 
-    def disable(self):
-        self._enabled = False
+        if self._total == 0:
+            color_print('          ')
+        else:
+            color_print('[{0:6.02f}%] '.format(
+                (float(self._count) / self._total) * 100.0))
 
-    def _newline(self):
-        if self._needs_newline and self._enabled:
-            self._stream.write("\n")
+        color_print('-' * self._indent)
+        color_print(' ')
+
+        if record.levelno < logging.DEBUG:
+            color = 'default'
+        elif record.levelno < logging.INFO:
+            color = 'default'
+        elif record.levelno < logging.WARN:
+            if self._indent == 1:
+                color = 'green'
+            elif self._indent == 2:
+                color = 'blue'
+            else:
+                color = 'default'
+        elif record.levelno < logging.ERROR:
+            color = 'brown'
+        else:
+            color = 'red'
+
+        indent = self._indent + 11
+        spaces = ' ' * indent
+        color_print(first_line, color)
+        if rest is not None:
+            color_print('\n')
+            detail = textwrap.dedent(rest)
+            for line in detail.split('\n'):
+                color_print(spaces)
+                color_print(line)
+                color_print('\n')
+
+        self._needs_newline = True
+        sys.stdout.flush()
 
     @contextlib.contextmanager
     def indent(self):
@@ -235,96 +268,47 @@ class _Console(object):
         self._indent -= 1
 
     def dot(self):
-        if self._enabled:
-            self._stream.write('.')
-            self._stream.flush()
-        self._needs_newline = True
-
-    def message(self, message, color='default'):
-        """
-        Write a message to the console.
-        """
-        self._newline()
-        if self._enabled:
-            self._stream.write(' ' * self._indent)
-            color_print(message, color, file=self._stream)
-            self._stream.flush()
-        self._needs_newline = True
-
-    def add(self, message, color='default'):
-        """
-        Add content to the end of the message.
-        """
-        if self._enabled:
-            color_print(message, color, file=self._stream)
-            self._stream.flush()
-
-    @contextlib.contextmanager
-    def group(self, message, color='default'):
-        """
-        Context manager for a new console grouping -- messages within
-        the context will be indented.
-        """
-        self._newline()
-        if self._enabled:
-            self._stream.write(' ' * self._indent)
-            color_print(message, color, file=self._stream)
-            self._stream.flush()
-        self._needs_newline = True
-        with self.indent():
-            yield
+        if isatty(sys.stdout):
+            color_print('.', 'darkgrey')
+            sys.stdout.flush()
 
     def set_nitems(self, n):
         """
         Set the number of items in a lengthy process.  Each of these
         steps should be incremented through using `step`.
         """
-        self._n_items = n
-        self._step = 0
+        self._total = n
 
-    def step(self, message, color='default'):
+    def step(self):
         """
         Write that a step has been completed.  A percentage is
         displayed along with it.
         """
-        self._newline()
-        if self._enabled:
-            self._stream.write(' ' * self._indent)
-        self._step += 1
-        if self._enabled:
-            if self._n_items != 0:
-                self._stream.write("[{0:.02f}%] ".format(
-                    (float(self._step) / self._n_items) * 100.0))
-            color_print(message, color, file=self._stream)
-            self._stream.flush()
-        self._needs_newline = True
+        self._count += 1
 
-    def fake_step(self, n):
-        """
-        Increase the step count without displaying a message.
-        """
-        self._step += n
+    def enable(self, verbose=False):
+        sh = logging.StreamHandler()
+        sh.emit = self._stream_formatter
+        self._logger.addHandler(sh)
+        if verbose:
+            self._logger.setLevel(logging.DEBUG)
+        else:
+            self._logger.setLevel(logging.INFO)
 
-    def error(self, message, content=''):
-        """
-        Display an error to the console.
-        """
-        self._newline()
-        if self._enabled:
-            color_print("ERROR: ", "red", file=self._stream)
-            self._stream.write(message)
-            self._stream.write("\n")
-            self._stream.write(content)
+    def info(self, *args, **kwargs):
+        self._logger.info(*args, **kwargs)
 
-    def warning(self, message, content=''):
-        """
-        Display a warning to the console.
-        """
-        self._newline()
-        if self._enabled:
-            color_print("WARNING: ", "yellow", file=self._stream)
-            self._stream.write(message)
-            self._stream.write("\n")
-            self._stream.write(content)
+    def warn(self, *args, **kwargs):
+        self._logger.warn(*args, **kwargs)
 
-console = _Console()
+    def debug(self, *args, **kwargs):
+        self._logger.debug(*args, **kwargs)
+
+    def error(self, *args, **kwargs):
+        self._logger.error(*args, **kwargs)
+
+    def add(self, msg):
+        sys.stdout.write(msg)
+        sys.stdout.flush()
+
+log = Log()

@@ -58,7 +58,7 @@ def test_workflow(tmpdir):
 
 if __name__ == '__main__':
     from asv import console
-    console.console.enable()
+    console.log.enable()
 
     from asv import machine
     machine.Machine.hardcoded_machine_name = 'orangutan'

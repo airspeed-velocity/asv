@@ -11,7 +11,7 @@ import six
 
 from ..benchmarks import Benchmarks
 from ..config import Config
-from ..console import console
+from ..console import log
 from ..machine import Machine
 from ..repo import get_repo
 from ..results import Results, find_latest_result_hash, get_existing_hashes
@@ -124,7 +124,7 @@ class Run(object):
             commit_hashes = repo.get_hashes_from_range(range_spec)
 
         if len(commit_hashes) == 0:
-            console.message("No commit hashes selected", "yellow")
+            log.error("No commit hashes selected")
             return
 
         if steps > 0:
@@ -134,37 +134,38 @@ class Run(object):
 
         environments = Setup.run(conf=conf, parallel=parallel)
         if len(environments) == 0:
-            console.message("No environments selected", "yellow")
+            log.error("No environments selected")
             return
 
         benchmarks = Benchmarks(conf, regex=bench)
         if len(benchmarks) == 0:
-            console.message("No benchmarks selected", "yellow")
+            log.error("No benchmarks selected")
             return
         benchmarks.save()
 
         steps = len(commit_hashes) * len(benchmarks) * len(environments)
 
-        console.message(
+        log.info(
             "Running {0} total benchmarks "
             "({1} commits * {2} environments * {3} benchmarks)".format(
                 steps, len(commit_hashes),
                 len(environments), len(benchmarks)), "green")
-        console.set_nitems(steps)
+        log.set_nitems(steps)
 
         if parallel <= 0:
             parallel = multiprocessing.cpu_count()
 
         for commit_hash in commit_hashes:
-            with console.group(
-                    "{0} commit hash {1}:".format(
-                        conf.project, commit_hash[:8]), 'green'):
+            log.info(
+                "For {0} commit hash {1}:".format(
+                    conf.project, commit_hash[:8]))
+            with log.indent():
                 repo.checkout(commit_hash)
 
                 for subenv in util.iter_chunks(environments, parallel):
-                    with console.group(
-                            "Building for {0}".format(
-                                ', '.join([x.name for x in subenv])), "green"):
+                    log.info("Building for {0}".format(
+                        ', '.join([x.name for x in subenv])))
+                    with log.indent():
                         args = [(env, conf) for env in subenv]
                         if parallel != 1:
                             pool = multiprocessing.Pool(parallel)
@@ -174,29 +175,21 @@ class Run(object):
                             successes = map(_do_build, args)
 
                     for env, success in zip(subenv, successes):
-                        config_name = env.name
+                        if success:
+                            params['python'] = env.python
+                            params.update(env.requirements)
 
-                        with console.group("Benchmarking " + config_name, "green"):
-                            if success:
-                                params['python'] = env.python
-                                params.update(env.requirements)
+                            times = benchmarks.run_benchmarks(
+                                env, show_exc=show_exc, quick=quick)
+                        else:
+                            times = benchmarks.skip_benchmarks()
 
-                                with console.indent():
-                                    times = benchmarks.run_benchmarks(
-                                        env, show_exc=show_exc, quick=quick)
-                            else:
-                                console.add(" can't install.  skipping", "yellow")
-                                with console.indent():
-                                    times = benchmarks.skip_benchmarks()
+                        result = Results(
+                            params,
+                            env,
+                            commit_hash,
+                            repo.get_date(commit_hash))
 
-                            result = Results(
-                                params,
-                                env,
-                                commit_hash,
-                                repo.get_date(commit_hash))
+                        result.add_times(times)
 
-                            result.add_times(times)
-
-                            result.save(conf.results_dir)
-
-        console.message('')
+                        result.save(conf.results_dir)
