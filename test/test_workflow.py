@@ -33,7 +33,7 @@ def test_workflow(tmpdir):
     })
 
     Run.run(conf, range_spec="initial..master", steps=2,
-            _machine_file=join(local, 'asv-machine.json'))
+            _machine_file=join(local, 'asv-machine.json'), quick=True)
 
     assert len(os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))) == 5
     assert len(os.listdir(join(tmpdir, 'results_workflow'))) == 2
@@ -46,7 +46,7 @@ def test_workflow(tmpdir):
     assert exists(join(tmpdir, 'html', 'asv.css'))
 
     Run.run(conf, range_spec="existing",
-            _machine_file=join(local, 'asv-machine.json'))
+            _machine_file=join(local, 'asv-machine.json'), quick=True)
 
     # Remove the benchmarks.json file to make sure publish can
     # regenerate it
