@@ -9,7 +9,7 @@ import sys
 import six
 
 from . import commands
-from .console import console
+from .console import log
 
 
 def main():
@@ -17,9 +17,11 @@ def main():
         parser.print_help()
         sys.exit(0)
 
-    console.enable()
-
     parser, subparsers = commands.make_argparser()
+
+    parser.add_argument(
+        "--verbose", "-v", action="store_true",
+        help="Increase verbosity")
 
     help_parser = subparsers.add_parser(
         "help", help="Display usage information")
@@ -31,10 +33,12 @@ def main():
         parser.print_help()
         sys.exit(1)
 
+    log.enable(args.verbose)
+
     try:
         args.func(args)
     except RuntimeError as e:
-        console.error(six.text_type(e))
+        log.error(six.text_type(e))
         sys.exit(1)
 
-    console._newline()
+    sys.stdout.write('\n')

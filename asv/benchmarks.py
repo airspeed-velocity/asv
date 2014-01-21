@@ -11,7 +11,7 @@ import sys
 
 import six
 
-from .console import console
+from .console import log
 from .environment import get_environments
 from .repo import get_repo
 from . import util
@@ -50,38 +50,45 @@ def run_benchmark(benchmark, root, env, show_exc=False, quick=False):
         runtime in seconds for a timing benchmark) or None if the
         benchmark failed.
     """
-    console.step(benchmark['name'] + ": ")
-    try:
-        output = env.run(
-            [BENCHMARK_RUN_SCRIPT, 'run', root, benchmark['name'], str(quick)],
-            dots=False, timeout=benchmark['timeout'],
-            display_error=show_exc)
-    except util.ProcessError:
-        console.add("failed", "red")
-        return None
-    else:
+    name = benchmark['name']
+
+    log.step()
+    log.info('Running {0:40s}'.format(name[-40:]))
+    with log.indent():
         try:
-            # The numeric (timing) result is the last line of the
-            # output.  This ensures that if the benchmark
-            # inadvertently writes to stdout we can still read the
-            # numeric output value.
-            output = json.loads(output.splitlines()[-1])
-        except:
-            console.add("invalid output", "red")
+            output = env.run(
+                [BENCHMARK_RUN_SCRIPT, 'run', root, name, str(quick)],
+                dots=False, timeout=benchmark['timeout'],
+                display_error=show_exc)
+        except util.ProcessError:
+            log.warn("Benchmark {0} failed".format(name))
             return None
-
-        if isinstance(output, (int, float)):
-            if benchmark['unit'] == 'seconds':
-                display = util.human_time(output)
-            elif benchmark['unit'] == 'bytes':
-                display = util.human_file_size(output)
-            else:
-                display = json.dumps(output)
         else:
-            display = json.dumps(output)
-        console.add(display)
+            try:
+                # The numeric (timing) result is the last line of the
+                # output.  This ensures that if the benchmark
+                # inadvertently writes to stdout we can still read the
+                # numeric output value.
+                parsed = json.loads(output.splitlines()[-1].strip())
+            except:
+                log.warn("Benchmark {0} provided invalid output".format(name))
+                with log.indent():
+                    log.debug(output)
+                return None
 
-        return output
+            if isinstance(parsed, (int, float)):
+                if benchmark['unit'] == 'seconds':
+                    display = util.human_time(parsed)
+                elif benchmark['unit'] == 'bytes':
+                    display = util.human_file_size(parsed)
+                else:
+                    display = json.dumps(parsed)
+            else:
+                display = json.dumps(parsed)
+
+            log.add(' {0:>8}'.format(display))
+
+            return parsed
 
 
 class Benchmarks(dict):
@@ -151,17 +158,20 @@ class Benchmarks(dict):
         else:
             env = environments[0]
 
-        repo = get_repo(conf.repo, conf.project)
-        repo.checkout()
+        log.info("Discovering benchmarks")
+        with log.indent():
+            repo = get_repo(conf.repo, conf.project)
+            repo.checkout()
 
-        env.install_project(conf.project, os.path.abspath(conf.project))
+            env.install_project(conf.project, os.path.abspath(conf.project))
 
-        output = env.run(
-            [BENCHMARK_RUN_SCRIPT, 'discover', root],
-            dots=False)
-        benchmarks = json.loads(output)
-        for benchmark in benchmarks:
-            yield benchmark
+            output = env.run(
+                [BENCHMARK_RUN_SCRIPT, 'discover', root],
+                dots=False)
+
+            benchmarks = json.loads(output)
+            for benchmark in benchmarks:
+                yield benchmark
 
     @classmethod
     def check_tree(cls, root):
@@ -270,20 +280,24 @@ class Benchmarks(dict):
             functions, without taking the time necessary to get
             accurate timings.
         """
-        times = {}
-        for name, benchmark in six.iteritems(self):
-            times[name] = run_benchmark(
-                benchmark, self._benchmark_dir, env, show_exc=show_exc,
-                quick=quick)
+        log.info("Benchmarking {0}".format(env.name))
+        with log.indent():
+            times = {}
+            for name, benchmark in six.iteritems(self):
+                times[name] = run_benchmark(
+                    benchmark, self._benchmark_dir, env, show_exc=show_exc,
+                    quick=quick)
         return times
 
     def skip_benchmarks(self):
         """
         Mark all of the benchmarks as skipped.
         """
-        times = {}
-        for name in self:
-            console.step(name + ": ")
-            console.add("skipped", "yellow")
-            times[name] = None
+        log.warn("Skipping {0}".format(env.name))
+        with log.indent():
+            times = {}
+            for name in self:
+                log.step()
+                log.warn('Benchmark {0} skipped'.format(name))
+                times[name] = None
         return times

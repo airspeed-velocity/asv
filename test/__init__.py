@@ -4,8 +4,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from asv.console import console
-console.enable()
+from asv.console import log
+log.enable()
 
 
 # Monkey-patch the machine name

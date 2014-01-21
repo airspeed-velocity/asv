@@ -11,7 +11,7 @@ import six
 
 from ..benchmarks import Benchmarks
 from ..config import Config
-from ..console import console
+from ..console import log
 from ..graph import Graph
 from ..machine import iter_machine_files
 from ..repo import get_repo
@@ -47,6 +47,8 @@ class Publish(object):
         machines = {}
         benchmark_names = set()
 
+        log.set_nitems(5)
+
         if os.path.exists(conf.html_dir):
             shutil.rmtree(conf.html_dir)
 
@@ -56,13 +58,18 @@ class Publish(object):
             os.path.dirname(os.path.abspath(__file__)), '..', 'www')
         shutil.copytree(template_dir, conf.html_dir)
 
-        with console.group("Loading machine info", "green"):
+        log.step()
+        log.info("Loading machine info")
+        with log.indent():
             for path in iter_machine_files(conf.results_dir):
                 d = util.load_json(path)
                 machines[d['machine']] = d
 
-        with console.group("Loading results", "green"):
+        log.step()
+        log.info("Loading results")
+        with log.indent():
             for results in iter_results(conf.results_dir):
+                log.dot()
                 date_to_hash[results.date] = results.commit_hash[
                     :conf.hash_length]
 
@@ -79,29 +86,36 @@ class Publish(object):
                         graphs[graph.path] = graph
                     graph.add_data_point(results.date, val)
 
-        with console.group("Generating graphs", "green"):
+        log.step()
+        log.info("Generating graphs")
+        with log.indent():
             for graph in six.itervalues(graphs):
+                log.dot()
                 graph.save(conf.html_dir)
 
-        with console.group("Getting tags", "green"):
+        log.step()
+        log.info("Getting tags")
+        with log.indent():
             repo = get_repo(conf.repo, conf.project)
             tags = {}
             for tag in repo.get_tags():
+                log.dot()
                 tags[tag] = repo.get_date_from_tag(tag)
 
-        with console.group("Writing index", "green"):
-            benchmark_map = dict(benchmarks)
-            for key, val in six.iteritems(params):
-                val = list(val)
-                val.sort(key=lambda x: x or '')
-                params[key] = val
-            util.write_json(os.path.join(conf.html_dir, "index.json"), {
-                'project': conf.project,
-                'project_url': conf.project_url,
-                'show_commit_url': conf.show_commit_url,
-                'date_to_hash': date_to_hash,
-                'params': params,
-                'benchmarks': benchmark_map,
-                'machines': machines,
-                'tags': tags
-            })
+        log.step()
+        log.info("Writing index")
+        benchmark_map = dict(benchmarks)
+        for key, val in six.iteritems(params):
+            val = list(val)
+            val.sort(key=lambda x: x or '')
+            params[key] = val
+        util.write_json(os.path.join(conf.html_dir, "index.json"), {
+            'project': conf.project,
+            'project_url': conf.project_url,
+            'show_commit_url': conf.show_commit_url,
+            'date_to_hash': date_to_hash,
+            'params': params,
+            'benchmarks': benchmark_map,
+            'machines': machines,
+            'tags': tags
+        })

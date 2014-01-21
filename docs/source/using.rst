@@ -118,20 +118,27 @@ usually ok to just press ``Enter`` to accept each default value.  This
 information is stored in the ``.asv-machine.json`` file in your home
 directory::
 
-    No ASV machine info file found.
+
     I will now ask you some questions about this machine to identify
     it in the benchmarks.
 
-    1. NAME: A unique name to identify this machine in the results.
-    NAME [cheetah]:
-    2. OS: The OS type and version of this machine.
-    OS [Linux 3.11.7-200.fc19.x86_64]:
-    3. ARCH: The architecture of the machine, e.g. i386
-    ARCH [x86_64]:
-    4. CPU: A human-readable description of the CPU.
-    CPU [Intel(R) Core(TM) i5-2520M CPU @ 2.50GHz (4 cores)]:
-    4. RAM: The amount of physical RAM in the system.
-    RAM [8.2G]:
+    1. machine: A unique name to identify this machine in the results.
+       May be anything, as long as it is unique across all the
+       machines used to benchmark this project.
+    machine [cheetah]:
+    2. os: The OS type and version of this machine.  For example,
+       'Macintosh OS-X 10.8'.
+    os [Linux 3.12.7-300.fc20.x86_64]:
+    3. arch: The generic CPU architecture of this machine.  For
+       example, 'i386' or 'x86_64'.
+    arch [x86_64]:
+    4. cpu: A specific description of the CPU of this machine,
+       including its speed and class.  For example, 'Intel(R) Core(TM)
+       i5-2520M CPU @ 2.50GHz (4 cores)'.
+    cpu [Intel(R) Core(TM) i5-2520M CPU @ 2.50GHz (4 cores)]:
+    5. ram: The amount of physical RAM on this machine.  For example,
+       '4GB'.
+    ram []:
 
 .. note::
 
@@ -171,14 +178,31 @@ Benchmarking
 
 Finally, the benchmarks are run::
 
-   Benchmarking py2.7
-     project commit hash 24ce4372:.
-      Uninstalling project..
-      Installing ...asv/project.......
-       [25.00%] test_benchmarks.TestIteration.test_iterkeys: 73.81μs
-       [50.00%] test_benchmarks.TestIteration.test_keys: 74.04μs
-       [75.00%] test_benchmarks.TestIteration.test_range: 97.44μs
-       [100.00%] test_benchmarks.TestIteration.test_xrange: 94.76μs
+    $ asv run
+              - Cloning project.
+              - Fetching recent changes
+              - Creating virtualenvs
+              -- Creating virtualenv for py2.7.
+              - Installing dependencies
+              -- Upgrading setuptools in py2.7.
+              - Discovering benchmarks
+              -- Fetching recent changes
+              -- Creating virtualenv for py2.7
+              -- Upgrading setuptools in py2.7.
+              -- Uninstalling asv from py2.7
+              -- Installing /home/mdboom/Work/builds/asv.tmp/asv into py2.7.
+              - Running 5 total benchmarks (1 commits * 1
+                environments * 5 benchmarks)
+    [  0.00%] - For asv commit hash 14ce7984:
+    [  0.00%] -- Building for py2.7
+    [  0.00%] --- Uninstalling asv from py2.7
+    [  0.00%] --- Installing /home/mdboom/Work/builds/asv.tmp/asv into py2.7
+    [  0.00%] -- Benchmarking py2.7
+    [ 20.00%] --- Running benchmarks.TimeSuite.time_xrange          30.23μs
+    [ 40.00%] --- Running benchmarks.TimeSuite.time_range           31.85μs
+    [ 60.00%] --- Running benchmarks.MemSuite.mem_list                 2.4k
+    [ 80.00%] --- Running benchmarks.TimeSuite.time_iterkeys         9.86μs
+    [100.00%] --- Running benchmarks.TimeSuite.time_keys            10.29μs
 
 To improve reproducibility, each benchmark is run in its own process.
 

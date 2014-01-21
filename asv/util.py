@@ -13,6 +13,7 @@ import math
 import os
 import select
 import subprocess
+import time
 
 try:
     from select import PIPE_BUF
@@ -23,7 +24,7 @@ except ImportError:
 import six
 from six.moves import xrange
 
-from .console import console
+from .console import log
 from .extern import minify_json
 
 
@@ -176,7 +177,9 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
 
     dots : bool, optional
         If `True` (default) write a dot to the console to show
-        progress as the subprocess outputs content.
+        progress as the subprocess outputs content.  May also be
+        a callback function to call (with no arguments) to indicate
+        progress.
 
     display_error : bool, optional
         If `True` (default) display the stdout and stderr of the
@@ -193,6 +196,7 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
         stderr=subprocess.PIPE,
         shell=shell)
 
+    last_dot_time = time.time()
     stdout_chunks = []
     stderr_chunks = []
     try:
@@ -211,8 +215,12 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
             for f in rlist:
                 output = os.read(f, PIPE_BUF)
                 fds[f].append(output)
-            if dots:
-                console.dot()
+            if dots and time.time() - last_dot_time > 0.5:
+                if dots is True:
+                    log.dot()
+                elif dots:
+                    dots()
+                last_dot_time = time.time()
     except KeyboardInterrupt:
         proc.terminate()
         raise
@@ -226,16 +234,19 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
     stderr = b''.join(stderr_chunks).decode('utf-8', 'replace')
 
     retcode = proc.wait()
-    if retcode:
-        if error:
-            if display_error:
-                console.error("Running {0}".format(" ".join(args)))
-                console.add("STDOUT " + ("-" * 60) + '\n', 'red')
-                console.add(stdout)
-                console.add("STDERR " + ("-" * 60) + '\n', 'red')
-                console.add(stderr)
-                console.add(("-" * 67) + '\n', 'red')
-            raise ProcessError(args, retcode, stdout, stderr)
+    if retcode and error:
+        content = '\n'.join(
+            ['Error running {0}'.format(' '.join(args)),
+             'STDOUT -------->',
+             stdout[:-1],
+             'STDERR -------->',
+             stderr[:-1]
+        ])
+        if display_error:
+            log.error(content)
+        else:
+            log.debug(content)
+        raise ProcessError(args, retcode, stdout, stderr)
 
     return stdout
 

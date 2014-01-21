@@ -11,7 +11,7 @@ import os
 import socket
 
 from ..config import Config
-from ..console import console
+from ..console import log
 
 
 def random_ports(port, n):
@@ -73,12 +73,12 @@ class Preview(object):
             else:
                 break
 
-        console.message(
-            "Serving at http://127.0.0.1:{0}/".format(port), "green")
+        log.info(
+            "Serving at http://127.0.0.1:{0}/".format(port))
 
         if browser:
             import webbrowser
             webbrowser.open("http://127.0.0.1:{0}/".format(port))
 
-        console.message("Press ^C to abort")
+        log.info("Press ^C to abort")
         httpd.serve_forever()
