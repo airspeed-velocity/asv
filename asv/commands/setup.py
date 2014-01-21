@@ -4,11 +4,10 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import multiprocessing
-
 from ..config import Config
 from ..console import console
 from .. import environment
+from .. import util
 
 
 def _install_requirements(env):
@@ -63,8 +62,7 @@ class Setup(object):
             environment.get_environments(
                 conf.env_dir, conf.pythons, conf.matrix))
 
-        if parallel <= 0:
-            parallel = multiprocessing.cpu_count()
+        parallel, multiprocessing = util.get_multiprocessing(parallel)
 
         with console.group("Creating virtualenvs...", color="green"):
             for env in environments:

@@ -330,3 +330,17 @@ def iter_chunks(s, n):
             chunk = []
     if len(chunk):
         yield chunk
+
+
+def get_multiprocessing(parallel):
+    """
+    If parallel indicates that we want to do multiprocessing,
+    imports the multiprocessing module and sets the parallel
+    value accordingly.
+    """
+    if parallel != 1:
+        import multiprocessing
+        if parallel <= 0:
+            parallel = multiprocessing.cpu_count()
+        return parallel, multiprocessing
+    return parallel, None

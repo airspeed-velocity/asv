@@ -4,7 +4,6 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import multiprocessing
 import os
 
 import six
@@ -152,8 +151,7 @@ class Run(object):
                 len(environments), len(benchmarks)), "green")
         console.set_nitems(steps)
 
-        if parallel <= 0:
-            parallel = multiprocessing.cpu_count()
+        parallel, multiprocessing = util.get_multiprocessing(parallel)
 
         for commit_hash in commit_hashes:
             with console.group(
