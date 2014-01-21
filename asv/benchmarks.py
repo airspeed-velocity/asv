@@ -69,7 +69,7 @@ def run_benchmark(benchmark, root, env, show_exc=False, quick=False):
                 # output.  This ensures that if the benchmark
                 # inadvertently writes to stdout we can still read the
                 # numeric output value.
-                parsed = json.loads(output.splitlines()[-1])
+                parsed = json.loads(output.splitlines()[-1].strip())
             except:
                 log.warn("Benchmark {0} provided invalid output".format(name))
                 with log.indent():
@@ -88,7 +88,7 @@ def run_benchmark(benchmark, root, env, show_exc=False, quick=False):
 
             log.add(' {0:>8}'.format(display))
 
-            return output
+            return parsed
 
 
 class Benchmarks(dict):
