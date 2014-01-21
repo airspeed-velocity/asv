@@ -100,7 +100,7 @@ class Benchmark(object):
         return cls(name, func, instance)
 
     @classmethod
-    def from_name(cls, root, name):
+    def from_name(cls, root, name, quick=False):
         """
         Create a benchmark from a fully-qualified benchmark name.
 
@@ -142,7 +142,13 @@ class Benchmark(object):
 
         parts = name.split('.')
 
-        return find_on_filesystem(root, parts, '')
+        benchmark = find_on_filesystem(root, parts, '')
+
+        if quick:
+            benchmark.repeat = 1
+            benchmark.number = 1
+
+        return benchmark
 
     def do_setup(self):
         if self.module_setup is not None:
@@ -343,9 +349,11 @@ if __name__ == '__main__':
         sys.exit(0)
 
     elif mode == 'run':
-        benchmark_dir, benchmark_id = args
+        benchmark_dir, benchmark_id, quick = args
+        quick = quick == 'True'
 
-        benchmark = Benchmark.from_name(benchmark_dir, benchmark_id)
+        benchmark = Benchmark.from_name(
+            benchmark_dir, benchmark_id, quick=quick)
         benchmark.do_setup()
         result = benchmark.do_run()
         benchmark.do_teardown()
