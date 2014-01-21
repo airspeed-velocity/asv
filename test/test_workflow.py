@@ -22,7 +22,7 @@ def test_workflow(tmpdir):
     conf = config.Config.from_json({
         'env_dir': join(tmpdir, 'env'),
         'benchmark_dir': join(local, 'benchmark'),
-        'results_dir': join(tmpdir, 'results'),
+        'results_dir': join(tmpdir, 'results_workflow'),
         'html_dir': join(tmpdir, 'html'),
         'repo': 'https://github.com/spacetelescope/asv.git',
         'project': 'asv',
@@ -35,8 +35,8 @@ def test_workflow(tmpdir):
     Run.run(conf, range_spec="initial..master", steps=2,
             _machine_file=join(local, 'asv-machine.json'))
 
-    assert len(os.listdir(join(tmpdir, 'results', 'orangutan'))) == 5
-    assert len(os.listdir(join(tmpdir, 'results'))) == 2
+    assert len(os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))) == 5
+    assert len(os.listdir(join(tmpdir, 'results_workflow'))) == 2
 
     Publish.run(conf)
 
@@ -51,7 +51,7 @@ def test_workflow(tmpdir):
     # Remove the benchmarks.json file to make sure publish can
     # regenerate it
 
-    os.remove(join(tmpdir, "results", "benchmarks.json"))
+    os.remove(join(tmpdir, "results_workflow", "benchmarks.json"))
 
     Publish.run(conf)
 
