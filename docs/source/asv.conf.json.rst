@@ -118,3 +118,7 @@ in the web interface.  The default value of 8 should be more than
 enough for most projects, but projects with extremely large history
 may need to increase this value.  This does not affect the storage of
 results, where the full commit hash is always retained.
+
+``plugins``
+-----------
+A list of modules to import containing asv plugins.

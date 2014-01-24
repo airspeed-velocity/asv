@@ -6,10 +6,12 @@ from __future__ import (absolute_import, division, print_function,
 
 import six
 
+from . import Command
+
 from .. import machine
 
 
-class Machine(object):
+class Machine(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
@@ -31,7 +33,7 @@ class Machine(object):
         return parser
 
     @classmethod
-    def run_from_args(cls, args):
+    def run_from_args(cls, conf, args):
         return cls.run(**vars(args))
 
     @classmethod

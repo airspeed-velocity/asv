@@ -6,10 +6,8 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 
-import six
-
+from . import Command
 from ..benchmarks import Benchmarks
-from ..config import Config
 from ..console import log
 from ..machine import Machine
 from ..repo import get_repo
@@ -41,7 +39,7 @@ def _do_build_multiprocess(args):
         raise
 
 
-class Run(object):
+class Run(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
@@ -91,8 +89,7 @@ class Run(object):
         return parser
 
     @classmethod
-    def run_from_args(cls, args):
-        conf = Config.load(args.config)
+    def run_from_args(cls, conf, args):
         return cls.run(
             conf=conf, range_spec=args.range, steps=args.steps,
             bench=args.bench, parallel=args.parallel,

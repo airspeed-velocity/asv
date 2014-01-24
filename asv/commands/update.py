@@ -6,12 +6,13 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 
+from . import Command
 from ..config import Config
 from ..machine import Machine, MachineCollection
 from ..results import Results
 
 
-class Update(object):
+class Update(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
@@ -25,7 +26,7 @@ class Update(object):
         return parser
 
     @classmethod
-    def run_from_args(cls, args):
+    def run_from_args(cls, conf, args):
         return cls.run(args.config)
 
     @classmethod

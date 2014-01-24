@@ -9,6 +9,7 @@ import sys
 
 from . import util
 
+# TODO: Some verification of the config values
 
 class Config(object):
     """
@@ -28,6 +29,7 @@ class Config(object):
         self.html_dir = "html"
         self.show_commit_url = "#"
         self.hash_length = 8
+        self.plugins = []
 
     @classmethod
     def load(cls, path=None):

@@ -5,31 +5,35 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import argparse
+import sys
 
 import six
 
-from .gh_pages import GithubPages
-from .machine import Machine
-from .preview import Preview
-from .publish import Publish
-from .quickstart import Quickstart
-from .rm import Rm
-from .run import Run
-from .setup import Setup
-from .update import Update
+from .. import util
 
 # This list is ordered in order of average workflow
-all_commands = [
-    Quickstart,
-    Machine,
-    Setup,
-    Run,
-    Rm,
-    Publish,
-    Preview,
-    Update,
-    GithubPages
+command_order = [
+    'Quickstart',
+    'Machine',
+    'Setup',
+    'Run',
+    'Rm',
+    'Publish',
+    'Preview',
+    'Update'
 ]
+
+
+class Command(object):
+    @classmethod
+    def setup_arguments(cls, subparsers):
+        # TODO: Document me
+        raise NotImplementedError()
+
+    @classmethod
+    def run_from_args(cls, conf, args):
+        # TODO: Document me
+        raise NotImplementedError()
 
 
 def make_argparser():
@@ -39,9 +43,17 @@ def make_argparser():
     Most of the real work is handled by the subcommands in the
     commands subpackage.
     """
+    def help(args):
+        parser.print_help()
+        sys.exit(0)
+
     parser = argparse.ArgumentParser(
         "asv",
         description="Airspeed Velocity: Simple benchmarking tool for Python")
+
+    parser.add_argument(
+        "--verbose", "-v", action="store_true",
+        help="Increase verbosity")
 
     parser.add_argument(
         "--config",
@@ -52,24 +64,35 @@ def make_argparser():
         title='subcommands',
         description='valid subcommands')
 
-    for command in all_commands:
+    help_parser = subparsers.add_parser(
+        "help", help="Display usage information")
+    help_parser.set_defaults(func=help)
+
+    commands = dict((x.__name__, x) for x in util.iter_subclasses(Command))
+
+    for command in command_order:
+        commands[str(command)].setup_arguments(subparsers)
+        del commands[command]
+
+    for name, command in sorted(six.iteritems(commands)):
         command.setup_arguments(subparsers)
 
     return parser, subparsers
 
 
-def _make_docstring():
-    parser, subparsers = make_argparser()
+# TODO: Re-enable this
+# def _make_docstring():
+#     parser, subparsers = make_argparser()
 
-    lines = []
-    for p in six.itervalues(subparsers.choices):
-        lines.append(p.prog)
-        lines.append('-' * len(p.prog))
-        lines.append('::')
-        lines.append('')
-        lines.extend('   ' + x for x in p.format_help().splitlines())
-        lines.append('')
+#     lines = []
+#     for p in six.itervalues(subparsers.choices):
+#         lines.append(p.prog)
+#         lines.append('-' * len(p.prog))
+#         lines.append('::')
+#         lines.append('')
+#         lines.extend('   ' + x for x in p.format_help().splitlines())
+#         lines.append('')
 
-    return '\n'.join(lines)
+#     return '\n'.join(lines)
 
-__doc__ = _make_docstring()
+# __doc__ = _make_docstring()

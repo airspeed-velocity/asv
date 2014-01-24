@@ -4,7 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from ..config import Config
+from . import Command
 from ..console import log
 from .. import environment
 from .. import util
@@ -28,7 +28,7 @@ def _install_requirements_multiprocess(env):
         raise
 
 
-class Setup(object):
+class Setup(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
@@ -52,8 +52,7 @@ class Setup(object):
         return parser
 
     @classmethod
-    def run_from_args(cls, args):
-        conf = Config.load(args.config)
+    def run_from_args(cls, conf, args):
         return cls.run(conf=conf, parallel=args.parallel)
 
     @classmethod
