@@ -29,3 +29,5 @@ def check_version_compatibility():
 
 
 check_version_compatibility()
+
+from . import plugin_manager

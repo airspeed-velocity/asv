@@ -53,10 +53,6 @@ setup(
         ]
     },
 
-    namespace_packages=[
-        'asv.plugins'
-    ],
-
     zip_safe=False,
 
     # py.test testing

@@ -8,6 +8,7 @@ import imp
 import os
 import sys
 
+from . import commands
 from . import plugins
 
 
@@ -30,7 +31,8 @@ class PluginManager(object):
 
         for root, dirs, files in os.walk(path):
             for filename in files:
-                if filename.endswith('.py') and filename != '__init__.py':
+                if (filename.endswith('.py') and filename != '__init__.py' and
+                    not filename.startswith('.')):
                     filebase = os.path.splitext(filename)[0]
                     filepath = os.path.join(root, filename)
                     with open(filepath, 'rb') as fd:
@@ -68,3 +70,6 @@ class PluginManager(object):
 plugin_manager = PluginManager()
 plugin_manager.load_plugins_in_path(
     'asv.plugins', os.path.dirname(plugins.__file__))
+plugin_manager.load_plugins_in_path(
+    'asv.commands',
+    os.path.dirname(commands.__file__))

@@ -16,10 +16,6 @@ from .plugin_manager import plugin_manager
 
 
 def main():
-    plugin_manager.load_plugins_in_path(
-        'asv.commands',
-        os.path.dirname(commands.__file__))
-
     parser, subparsers = commands.make_argparser()
 
     args = parser.parse_args()

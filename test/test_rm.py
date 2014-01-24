@@ -4,15 +4,14 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import os
-from os.path import abspath, dirname, exists, join
+from os.path import abspath, dirname, join
 import shutil
 
 import six
 
 from asv import config
 from asv import results
-from asv.commands import Rm
+from asv.commands.rm import Rm
 
 
 def test_rm(tmpdir):

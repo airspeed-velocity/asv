@@ -43,7 +43,7 @@ def make_argparser():
     Most of the real work is handled by the subcommands in the
     commands subpackage.
     """
-    def help(args):
+    def help(conf, args):
         parser.print_help()
         sys.exit(0)
 
