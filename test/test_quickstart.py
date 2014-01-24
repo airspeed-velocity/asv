@@ -8,7 +8,7 @@ from os.path import exists, join
 
 import six
 
-from asv.commands import Quickstart
+from asv.commands.quickstart import Quickstart
 
 
 def test_quickstart(tmpdir):

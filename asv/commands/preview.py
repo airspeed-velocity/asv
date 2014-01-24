@@ -8,9 +8,11 @@ from six.moves import SimpleHTTPServer, socketserver
 
 import errno
 import os
+import random
 import socket
 
-from ..config import Config
+from . import Command
+
 from ..console import log
 
 
@@ -30,7 +32,7 @@ def random_ports(port, n):
             yield max(1, port + random.randint(-2*n, 2*n))
 
 
-class Preview(object):
+class Preview(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
@@ -48,8 +50,8 @@ class Preview(object):
         return parser
 
     @classmethod
-    def run_from_args(cls, args):
-        return cls.run(conf=Config.load(args.config), port=args.port,
+    def run_from_args(cls, conf, args):
+        return cls.run(conf=conf, port=args.port,
                        browser=args.browser)
 
     @classmethod

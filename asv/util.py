@@ -355,3 +355,13 @@ def get_multiprocessing(parallel):
             parallel = multiprocessing.cpu_count()
         return parallel, multiprocessing
     return parallel, None
+
+
+def iter_subclasses(cls):
+    """
+    Returns all subclasses of a class.
+    """
+    for x in cls.__subclasses__():
+        yield x
+        for y in iter_subclasses(x):
+            yield y

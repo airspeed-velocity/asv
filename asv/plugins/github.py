@@ -6,12 +6,12 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 
-from .publish import Publish
-from ..config import Config
+from ..commands import Command
+from ..commands.publish import Publish
 from .. import util
 
 
-class GithubPages(object):
+class GithubPages(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
@@ -26,8 +26,8 @@ class GithubPages(object):
         return parser
 
     @classmethod
-    def run_from_args(cls, args):
-        return cls.run(conf=Config.load(args.config))
+    def run_from_args(cls, conf, args):
+        return cls.run(conf=conf)
 
     @classmethod
     def run(cls, conf):

@@ -9,8 +9,8 @@ import shutil
 
 import six
 
+from . import Command
 from ..benchmarks import Benchmarks
-from ..config import Config
 from ..console import log
 from ..graph import Graph
 from ..machine import iter_machine_files
@@ -19,7 +19,7 @@ from ..results import iter_results
 from .. import util
 
 
-class Publish(object):
+class Publish(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
@@ -35,8 +35,7 @@ class Publish(object):
         return parser
 
     @classmethod
-    def run_from_args(cls, args):
-        conf = Config.load(args.config)
+    def run_from_args(cls, conf, args):
         return cls.run(conf=conf)
 
     @classmethod

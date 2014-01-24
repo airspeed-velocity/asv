@@ -10,7 +10,7 @@ from os.path import join, exists
 import six
 
 from asv import config
-from asv.commands import Publish
+from asv.commands.publish import Publish
 
 RESULT_DIR = os.path.abspath(os.path.join(
     os.path.dirname(__file__), 'example_results'))

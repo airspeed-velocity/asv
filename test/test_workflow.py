@@ -10,7 +10,8 @@ from os.path import abspath, dirname, exists, join
 import six
 
 from asv import config
-from asv.commands import Run, Publish
+from asv.commands.run import Run
+from asv.commands.publish import Publish
 
 
 def test_workflow(tmpdir):
