@@ -11,8 +11,6 @@ from . import Command
 from ..console import log
 
 
-print("Imported Quickstart")
-
 class Quickstart(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
