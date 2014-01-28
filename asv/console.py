@@ -293,6 +293,9 @@ class Log(object):
         else:
             self._logger.setLevel(logging.INFO)
 
+    def is_debug_enabled(self):
+        return self._logger.getEffectiveLevel() <= logging.DEBUG
+
     def info(self, *args, **kwargs):
         self._logger.info(*args, **kwargs)
 
