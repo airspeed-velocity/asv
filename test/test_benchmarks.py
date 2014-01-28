@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 
+import pstats
 import pytest
 import six
 
@@ -65,6 +66,11 @@ def test_find_benchmarks(tmpdir):
         'time_secondary.track_value']['result'] == 42.0
     assert 'profile' in times[
         'time_secondary.track_value']
+
+    profile_path = os.path.join(tmpdir, 'test.profile')
+    with open(profile_path, 'wb') as fd:
+        fd.write(times['time_secondary.track_value']['profile'])
+    pstats.Stats(profile_path)
 
 
 def test_invalid_benchmark_tree(tmpdir):
