@@ -165,8 +165,7 @@ class Benchmarks(dict):
 
         cls.check_tree(root)
 
-        environments = list(get_environments(
-            conf.env_dir, conf.pythons, conf.matrix))
+        environments = list(get_environments(conf))
         if len(environments) == 0:
             raise ValueError("No available environments")
 
@@ -183,10 +182,10 @@ class Benchmarks(dict):
 
         log.info("Discovering benchmarks")
         with log.indent():
-            repo = get_repo(conf.repo, conf.project)
+            repo = get_repo(conf)
             repo.checkout()
 
-            env.install_project(conf.project, os.path.abspath(conf.project))
+            env.install_project(conf)
 
             output = env.run(
                 [BENCHMARK_RUN_SCRIPT, 'discover', root],

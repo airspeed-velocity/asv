@@ -22,7 +22,7 @@ from .setup import Setup
 def _do_build(args):
     env, conf = args
     try:
-        env.install_project(conf.project, os.path.abspath(conf.project))
+        env.install_project(conf)
     except util.ProcessError:
         return False
     return True
@@ -111,7 +111,7 @@ class Run(Command):
         params.update(machine_params.__dict__)
         machine_params.save(conf.results_dir)
 
-        repo = get_repo(conf.repo, conf.project)
+        repo = get_repo(conf)
 
         if range_spec == 'EXISTING':
             commit_hashes = [h for h, d in get_existing_hashes(

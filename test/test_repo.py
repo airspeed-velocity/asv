@@ -6,14 +6,17 @@ from __future__ import (absolute_import, division, print_function,
 
 import six
 
+from asv import config
 from asv import repo
 
 
 def test_repo(tmpdir):
-    path = six.text_type(tmpdir.join("repo"))
-    url = "https://github.com/spacetelescope/asv.git"
+    conf = config.Config()
 
-    r = repo.get_repo(url, path)
+    conf.project = six.text_type(tmpdir.join("repo"))
+    conf.repo = "https://github.com/spacetelescope/asv.git"
+
+    r = repo.get_repo(conf)
     r.checkout("master")
     r.checkout("gh-pages")
     r.checkout("master")

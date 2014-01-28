@@ -57,9 +57,7 @@ class Setup(Command):
 
     @classmethod
     def run(cls, conf, parallel=-1):
-        environments = list(
-            environment.get_environments(
-                conf.env_dir, conf.pythons, conf.matrix))
+        environments = list(environment.get_environments(conf))
 
         parallel, multiprocessing = util.get_multiprocessing(parallel)
 
