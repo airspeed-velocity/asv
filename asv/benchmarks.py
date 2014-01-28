@@ -80,7 +80,7 @@ def run_benchmark(benchmark, root, env, show_exc=False, quick=False,
             try:
                 output = env.run(
                     [BENCHMARK_RUN_SCRIPT, 'run', root, name, str(quick),
-                     bytes(profile_path)],
+                     profile_path.encode(sys.getfilesystemencoding())],
                     dots=False, timeout=benchmark['timeout'],
                     display_error=show_exc)
             except util.ProcessError:
