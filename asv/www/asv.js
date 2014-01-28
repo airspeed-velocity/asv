@@ -184,41 +184,74 @@ $(function() {
 
         /* Benchmark panel */
         var panel_body = make_panel('benchmark');
-        var buttons = $(
-            '<div class="btn-group-vertical" style="width: 100%" ' +
-                'data-toggle="buttons"/>');
-        panel_body.append(buttons);
-        var i = 0;
-        $.each(index.benchmarks, function(benchmark_name, benchmark) {
-            var label = $('<label class="btn btn-default btn-xs"/>')
-            buttons.append(label);
-            var short_name = benchmark_name.split(".");
-            short_name = short_name[short_name.length - 1];
-            var input = $(
-                '<input type="radio" name="options" id="option' + i + '">' +
-                    short_name + '</input>');
-            label.append(input);
-            label.on('change', function(evt) {
+        var tree = $('<ul class="nav nav-list" style="padding-left: 0px"/>');
+        panel_body.append(tree);
+        var cursor = [];
+        var stack = [tree];
+        var first_benchmark = true;
+
+        /* Note: this relies on the fact that the benchmark names are
+           sorted. */
+        $.each(index.benchmarks, function(bm_name, bm) {
+            var parts = bm_name.split('.');
+            var i = 0;
+            var j;
+
+            for (; i < cursor.length; ++i) {
+                if (cursor[i] !== parts[i]) {
+                    break;
+                }
+            }
+
+            for (j = cursor.length - 1; j >= i; --j) {
+                stack.pop();
+                cursor.pop();
+            }
+
+            for (j = i; j < parts.length - 1; ++j) {
+                var top = $(
+                    '<li class="dropdown">' +
+                        '<label class="nav-header"><b class="caret"/> ' + parts[j] +
+                        '</label><ul class="nav nav-list tree"/></li>');
+                stack[stack.length - 1].append(top);
+                stack.push($(top.children()[1]));
+                cursor.push(parts[j]);
+	        top.children('ul.tree').toggle(0);
+
+                $(top.children()[0]).click(function () {
+	            $(this).parent().children('ul.tree').toggle(150);
+	        });
+            }
+
+            var top = $('<li><a href="#">' + parts[parts.length - 1] + '</li>');
+            stack[stack.length - 1].append(top);
+
+            top.on('click', function(evt) {
                 if (!evt.target.classList.contains("active")) {
-                    current_benchmark = benchmark_name;
-                    $("#title").text(benchmark_name);
+                    current_benchmark = bm_name;
+                    $("#title").text(bm_name);
                     replace_graphs();
                 }
             });
-            label.tooltip({
-                title: benchmark.code,
+
+            top.tooltip({
+                title: bm.code,
                 html: true,
                 placement: 'right',
                 container: 'body',
                 animation: 'false'
             });
-            if (i == 0) {
-                label.button('toggle');
-                current_benchmark = benchmark_name;
+
+            if (first_benchmark) {
+                top.click();
+                first_benchmark = false;
             }
-            ++i;
         });
 
+        /* Set up tree toggling events */
+        $('label.tree-toggler').click(function () {
+	    $(this).parent().children('ul.tree').toggle(300);
+	});
 
         $('#log-scale').on('click', function(evt) {
             log_scale = !evt.target.classList.contains("active");
@@ -308,7 +341,7 @@ $(function() {
             function graph_to_path(benchmark_name, state) {
                 var parts = [];
                 $.each(state, function(key, value) {
-                    if (value) {
+                    if (value !== null) {
                         parts.push(key + "-" + value);
                     } else {
                         parts.push(key);
