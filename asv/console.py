@@ -219,9 +219,7 @@ class Log(object):
         else:
             rest = parts[1]
 
-        if self._total == 0:
-            color_print('          ')
-        else:
+        if self._total:
             color_print('[{0:6.02f}%] '.format(
                 (float(self._count) / self._total) * 100.0))
 

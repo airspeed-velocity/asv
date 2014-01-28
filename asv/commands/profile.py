@@ -8,6 +8,7 @@ import contextlib
 import io
 import os
 import pstats
+import sys
 import tempfile
 
 import six
@@ -36,9 +37,6 @@ def temp_profile(profile_data):
 
 
 class Profile(Command):
-    guis = dict(
-        (x.name, x) for x in iter_subclasses(ProfilerGui) if x.name is not None)
-
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
@@ -57,8 +55,8 @@ class Profile(Command):
             commit hash, or a tag or brach name.""")
         parser.add_argument(
             '--gui', '-g', nargs='?',
-            help="""Display the profile in the given gui.  Currently
-            supported guis are: {0}""".format(', '.join(cls.guis.keys())))
+            help="""Display the profile in the given gui.  Use
+            --gui=list to list available guis.""")
         parser.add_argument(
             '--output', '-o', nargs='?',
             help="""Save the profiling information to the given file.
@@ -83,6 +81,13 @@ class Profile(Command):
         return parser
 
     @classmethod
+    def find_guis(cls):
+        cls.guis = {}
+        for x in iter_subclasses(ProfilerGui):
+            if x.name is not None and x.is_available():
+                cls.guis[x.name] = x
+
+    @classmethod
     def run_from_args(cls, conf, args):
         return cls.run(
             conf=conf, benchmark=args.benchmark[0], revision=args.revision[0],
@@ -92,6 +97,14 @@ class Profile(Command):
     @classmethod
     def run(cls, conf, benchmark, revision, gui=None, output=None,
             force=False, environment=None, _machine_file=None):
+        cls.find_guis()
+
+        if gui == 'list':
+            log.info("Available profiler GUIs:")
+            with log.indent():
+                for x in cls.guis.values():
+                    log.info("{0}: {1}".format(x.name, x.description))
+            return
 
         if gui is not None and gui not in cls.guis:
             raise ValueError("Unknown profiler GUI {0}".format(gui))
@@ -159,8 +172,9 @@ class Profile(Command):
                 profile_data = results[benchmark]['profile']
 
         if gui is not None:
+            log.debug("Opening gui {0}".format(gui))
             with temp_profile(profile_data) as profile_path:
-                cls.guis[gui].open_profiler_gui(profile_path)
+                sys.exit(cls.guis[gui].open_profiler_gui(profile_path))
         elif output is not None:
             with io.open(output, 'wb') as fd:
                 fd.write(profile_data)

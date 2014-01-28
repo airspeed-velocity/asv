@@ -156,8 +156,20 @@ def which(filename):
         if os.path.isfile(candidate):
             candidates.append(candidate)
     if len(candidates) == 0:
-        raise RuntimeError("Could not find '{0}' in PATH.".format(filename))
+        raise RuntimeError("Could not find '{0}' in PATH".format(filename))
     return candidates[0]
+
+
+def has_command(filename):
+    """
+    Returns `True` if the commandline utility exists.
+    """
+    try:
+        which(filename)
+    except RuntimeError:
+        return False
+    else:
+        return True
 
 
 class ProcessError(subprocess.CalledProcessError):
@@ -214,6 +226,8 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
         If `True`, run the command through the shell.  Default is
         `False`.
     """
+    log.debug("Running '{0}'".format(' '.join(args)))
+
     proc = subprocess.Popen(
         args,
         close_fds=True,
