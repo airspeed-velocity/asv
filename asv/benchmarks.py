@@ -4,10 +4,12 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import io
 import json
 import os
 import re
 import sys
+import tempfile
 
 import six
 
@@ -23,7 +25,8 @@ BENCHMARK_RUN_SCRIPT = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "benchmark.py")
 
 
-def run_benchmark(benchmark, root, env, show_exc=False, quick=False):
+def run_benchmark(benchmark, root, env, show_exc=False, quick=False,
+                  profile=False):
     """
     Run a single benchmark in another process in the given environment.
 
@@ -43,27 +46,47 @@ def run_benchmark(benchmark, root, env, show_exc=False, quick=False):
     quick : bool, optional
         When `True`, run the benchmark function exactly once.
 
+    profile : bool, optional
+        When `True`, run the benchmark through the `cProfile` profiler
+        and save the results.
+
     Returns
     -------
-    result : float or None
-        If `float` the numeric value of the benchmark (usually the
-        runtime in seconds for a timing benchmark) or None if the
-        benchmark failed.
+    result : dict
+        Returns a dictionary with the following keys:
+
+        - `result`: The numeric value of the benchmark (usually the
+          runtime in seconds for a timing benchmark), but may be an
+          arbitrary JSON data structure.  Set to `None` if the
+          benchmark failed.
+
+        - `profile`: If `profile` is `True`, this key will exist, and
+          be a byte string containing the cProfile data.
     """
     name = benchmark['name']
+    result = {'result': None}
 
     log.step()
     log.info('Running {0:40s}'.format(name[-40:]))
+
     with log.indent():
-        try:
-            output = env.run(
-                [BENCHMARK_RUN_SCRIPT, 'run', root, name, str(quick)],
-                dots=False, timeout=benchmark['timeout'],
-                display_error=show_exc)
-        except util.ProcessError:
-            log.warn("Benchmark {0} failed".format(name))
-            return None
+        if profile:
+            profile_fd, profile_path = tempfile.mkstemp()
+            os.close(profile_fd)
         else:
+            profile_path = 'None'
+
+        try:
+            try:
+                output = env.run(
+                    [BENCHMARK_RUN_SCRIPT, 'run', root, name, str(quick),
+                     bytes(profile_path)],
+                    dots=False, timeout=benchmark['timeout'],
+                    display_error=show_exc)
+            except util.ProcessError:
+                log.add(" failed".format(name))
+                return result
+
             try:
                 # The numeric (timing) result is the last line of the
                 # output.  This ensures that if the benchmark
@@ -71,24 +94,24 @@ def run_benchmark(benchmark, root, env, show_exc=False, quick=False):
                 # numeric output value.
                 parsed = json.loads(output.splitlines()[-1].strip())
             except:
-                log.warn("Benchmark {0} provided invalid output".format(name))
+                log.add(" invalid output".format(name))
                 with log.indent():
                     log.debug(output)
-                return None
+                return result
 
-            if isinstance(parsed, (int, float)):
-                if benchmark['unit'] == 'seconds':
-                    display = util.human_time(parsed)
-                elif benchmark['unit'] == 'bytes':
-                    display = util.human_file_size(parsed)
-                else:
-                    display = json.dumps(parsed)
-            else:
-                display = json.dumps(parsed)
-
+            display = util.human_value(parsed, benchmark['unit'])
             log.add(' {0:>8}'.format(display))
 
-            return parsed
+            result['result'] = parsed
+
+            if profile:
+                with io.open(profile_path, 'rb') as profile_fd:
+                    result['profile'] = profile_fd.read()
+
+            return result
+        finally:
+            if profile:
+                os.remove(profile_path)
 
 
 class Benchmarks(dict):
@@ -261,7 +284,7 @@ class Benchmarks(dict):
 
         return cls(conf, benchmarks=d, regex=regex)
 
-    def run_benchmarks(self, env, show_exc=False, quick=False):
+    def run_benchmarks(self, env, show_exc=False, quick=False, profile=False):
         """
         Run all of the benchmarks in the given `Environment`.
 
@@ -279,6 +302,28 @@ class Benchmarks(dict):
             This is useful to quickly find errors in the benchmark
             functions, without taking the time necessary to get
             accurate timings.
+
+        profile : bool, optional
+            When `True`, run the benchmark through the `cProfile`
+            profiler.
+
+        Returns
+        -------
+        dict : result
+            Returns a dictionary where the keys are benchmark names
+            and the values are dictionaries containing information
+            about running that benchmark.
+
+            Each of the values in the dictionary has the following
+            keys:
+
+            - `result`: The numeric value of the benchmark (usually
+              the runtime in seconds for a timing benchmark), but may
+              be an arbitrary JSON data structure.  Set to `None` if
+              the benchmark failed.
+
+            - `profile`: If `profile` is `True`, this key will exist,
+              and be a byte string containing the cProfile data.
         """
         log.info("Benchmarking {0}".format(env.name))
         with log.indent():
@@ -286,7 +331,7 @@ class Benchmarks(dict):
             for name, benchmark in six.iteritems(self):
                 times[name] = run_benchmark(
                     benchmark, self._benchmark_dir, env, show_exc=show_exc,
-                    quick=quick)
+                    quick=quick, profile=profile)
         return times
 
     def skip_benchmarks(self):
@@ -299,5 +344,5 @@ class Benchmarks(dict):
             for name in self:
                 log.step()
                 log.warn('Benchmark {0} skipped'.format(name))
-                times[name] = None
+                times[name] = {'result': None}
         return times

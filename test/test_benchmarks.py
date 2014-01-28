@@ -49,20 +49,22 @@ def test_find_benchmarks(tmpdir):
     envs = list(environment.get_environments(
         conf.env_dir, conf.pythons, conf.matrix))
     b = benchmarks.Benchmarks(conf)
-    times = b.run_benchmarks(envs[0])
+    times = b.run_benchmarks(envs[0], profile=True)
 
     assert len(times) == 7
     assert times[
-        'time_examples.TimeSuite.time_example_benchmark_1'] is not None
+        'time_examples.TimeSuite.time_example_benchmark_1']['result'] is not None
     # Benchmarks that raise exceptions should have a time of "None"
     assert times[
-        'time_secondary.TimeSecondary.time_exception'] is None
+        'time_secondary.TimeSecondary.time_exception']['result'] is None
     assert times[
-        'subdir.time_subdir.time_foo'] is not None
+        'subdir.time_subdir.time_foo']['result'] is not None
     assert times[
-        'mem_examples.mem_list'] > 2000
+        'mem_examples.mem_list']['result'] > 2000
     assert times[
-        'time_secondary.track_value'] == 42.0
+        'time_secondary.track_value']['result'] == 42.0
+    assert 'profile' in times[
+        'time_secondary.track_value']
 
 
 def test_invalid_benchmark_tree(tmpdir):

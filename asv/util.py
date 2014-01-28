@@ -118,6 +118,31 @@ def human_time(seconds):
     return '~0'
 
 
+def human_value(value, unit):
+    """
+    Formats a value in a given unit in a human friendly way.
+
+    Parameters
+    ----------
+    value : anything
+        The value to format
+
+    unit : str
+        The unit the value is in.  Currently understands `seconds` and `bytes`.
+    """
+    if isinstance(value, (int, float)):
+        if unit == 'seconds':
+            display = human_time(value)
+        elif unit == 'bytes':
+            display = human_file_size(value)
+        else:
+            display = json.dumps(value)
+    else:
+        display = json.dumps(value)
+
+    return display
+
+
 def which(filename):
     """
     Emulates the UNIX `which` command in Python.
@@ -365,3 +390,11 @@ def iter_subclasses(cls):
         yield x
         for y in iter_subclasses(x):
             yield y
+
+
+def hash_equal(a, b):
+    """
+    Returns `True` if a and b represent the same commit hash.
+    """
+    min_len = min(len(a), len(b))
+    return a.lower()[:min_len] == b.lower()[:min_len]

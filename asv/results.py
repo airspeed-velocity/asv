@@ -4,7 +4,9 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import base64
 import os
+import zlib
 
 from .environment import Environment
 from . import util
@@ -22,6 +24,13 @@ def iter_results(results):
             if filename not in skip_files and filename.endswith('.json'):
                 path = os.path.join(root, filename)
                 yield Results.load(path)
+
+
+def iter_results_for_machine(results, machine_name):
+    """
+    Iterate over all of the result files for a particular machine.
+    """
+    return iter_results(os.path.join(results, machine_name))
 
 
 def iter_existing_hashes(results):
@@ -91,6 +100,7 @@ class Results(object):
         self._commit_hash = commit_hash
         self._date = date
         self._results = {}
+        self._profiles = {}
         self._python = env.python
 
         self._filename = os.path.join(
@@ -119,16 +129,47 @@ class Results(object):
     def env(self):
         return self._env
 
-    def add_times(self, times):
+    def add_time(self, benchmark_name, time):
         """
         Add benchmark times.
 
         Parameters
         ----------
-        times : dict
-            Dictionary mapping benchmark name to runtime (in seconds).
+        benchmark_name : str
+            Name of benchmark
+
+        time : number
+            Numeric result
         """
-        self._results.update(times)
+        self._results[benchmark_name] = time
+
+    def add_profile(self, benchmark_name, profile):
+        """
+        Add benchmark profile data.
+
+        Parameters
+        ----------
+        benchmark_name : str
+            Name of benchmark
+
+        profile : bytes
+            `cProfile` data
+        """
+        self._profiles[benchmark_name] = base64.b64encode(
+            zlib.compress(profile))
+
+    def get_profile(self, benchmark_name):
+        """
+        Get the profile data for the given benchmark name.
+        """
+        return zlib.decompress(
+            base64.b64decode(self._profiles[benchmark_name]))
+
+    def has_profile(self, benchmark_name):
+        """
+        Does the given benchmark data have profiling information?
+        """
+        return benchmark_name in self._profiles
 
     def save(self, result_dir):
         """
@@ -147,7 +188,8 @@ class Results(object):
             'requirements': self._env.requirements,
             'commit_hash': self._commit_hash,
             'date': self._date,
-            'python': self._python
+            'python': self._python,
+            'profiles': self._profiles
         }, self.api_version)
 
     @classmethod
@@ -167,7 +209,9 @@ class Results(object):
             Environment('', d['python'], d['requirements']),
             d['commit_hash'],
             d['date'])
-        obj.add_times(d['results'])
+        obj._results = d['results']
+        if 'profiles' in d:
+            obj._profiles = d['profiles']
         obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
         return obj
 
