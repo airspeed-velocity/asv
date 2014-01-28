@@ -50,7 +50,7 @@ def test_find_benchmarks(tmpdir):
     envs = list(environment.get_environments(
         conf.env_dir, conf.pythons, conf.matrix))
     b = benchmarks.Benchmarks(conf)
-    times = b.run_benchmarks(envs[0], profile=True)
+    times = b.run_benchmarks(envs[0], profile=True, show_exc=True)
 
     assert len(times) == 7
     assert times[

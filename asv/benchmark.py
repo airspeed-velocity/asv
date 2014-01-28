@@ -172,10 +172,13 @@ class Benchmark(object):
             run()
 
         if filename is not None:
+            if hasattr(method_caller, 'func_code'):
+                code = method_caller.func_code
+            else:
+                code = method_caller.__code__
+
             profile.runctx(
-                method_caller.func_code,
-                {'run': self.run}, {},
-                filename)
+                code, {'run': self.run}, {}, filename)
 
 
 class TimeBenchmark(Benchmark):
