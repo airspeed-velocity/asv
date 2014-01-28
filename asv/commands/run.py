@@ -6,6 +6,8 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 
+import six
+
 from . import Command
 from ..benchmarks import Benchmarks
 from ..console import log
@@ -52,16 +54,16 @@ class Run(Command):
             repository, this is passed as the first argument to ``git
             log``.  See 'specifying ranges' section of the
             `gitrevisions` manpage for more info.  Also accepts the
-            special values 'latest', and 'existing'.  'latest' will
+            special values 'NEW', and 'EXISTING'.  'NEW' will
             benchmark all commits since the latest benchmarked on this
-            machine.  'existing' will benchmark against all commits
+            machine.  'EXISTING' will benchmark against all commits
             for which there are existing benchmarks on any machine.
             By default, will benchmark the current master branch.""")
         parser.add_argument(
             "--steps", "-s", type=int, default=0,
             help="""Maximum number of steps to benchmark.  This is
-            used to subsample the commits determined by --range or
-            --latest to a reasonable number.""")
+            used to subsample the commits determined by range to a
+            reasonable number.""")
         parser.add_argument(
             "--bench", "-b", type=str, nargs="*",
             help="""Regular expression(s) for benchmark to run.  When
@@ -83,6 +85,10 @@ class Run(Command):
             run only once.  This is useful to find basic errors in the
             benchmark functions faster.  The results are unlikely to
             be useful, and thus are not saved.""")
+        parser.add_argument(
+            "--profile", "-p", action="store_true",
+            help="""In addition to timing, run the benchmarks through
+            the `cProfile` profiler and store the results.""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -93,12 +99,13 @@ class Run(Command):
         return cls.run(
             conf=conf, range_spec=args.range, steps=args.steps,
             bench=args.bench, parallel=args.parallel,
-            show_exc=args.show_exc, quick=args.quick
+            show_exc=args.show_exc, quick=args.quick,
+            profile=args.profile
         )
 
     @classmethod
     def run(cls, conf, range_spec="master", steps=0, bench=None, parallel=1,
-            show_exc=False, quick=False, _machine_file=None):
+            show_exc=False, quick=False, profile=False, _machine_file=None):
         params = {}
         machine_params = Machine.load(_path=_machine_file, interactive=True)
         params.update(machine_params.__dict__)
@@ -106,11 +113,11 @@ class Run(Command):
 
         repo = get_repo(conf.repo, conf.project)
 
-        if range_spec == 'existing':
+        if range_spec == 'EXISTING':
             commit_hashes = [h for h, d in get_existing_hashes(
                 conf.results_dir)]
             range_spec = None
-        elif range_spec == 'latest':
+        elif range_spec == 'NEW':
             latest_result = find_latest_result_hash(
                 machine_params.machine, conf.results_dir)
             # TODO: This is shamelessly git-specific
@@ -178,10 +185,11 @@ class Run(Command):
                             params['python'] = env.python
                             params.update(env.requirements)
 
-                            times = benchmarks.run_benchmarks(
-                                env, show_exc=show_exc, quick=quick)
+                            results = benchmarks.run_benchmarks(
+                                env, show_exc=show_exc, quick=quick,
+                                profile=profile)
                         else:
-                            times = benchmarks.skip_benchmarks()
+                            results = benchmarks.skip_benchmarks()
 
                         result = Results(
                             params,
@@ -189,6 +197,11 @@ class Run(Command):
                             commit_hash,
                             repo.get_date(commit_hash))
 
-                        result.add_times(times)
+                        for benchmark_name, d in six.iteritems(results):
+                            result.add_time(benchmark_name, d['result'])
+                            if 'profile' in d:
+                                result.add_profile(
+                                    benchmark_name,
+                                    d['profile'])
 
                         result.save(conf.results_dir)

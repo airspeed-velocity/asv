@@ -13,6 +13,7 @@ from . import Command
 from .. import console
 from ..console import log
 from ..results import iter_results
+from ..util import hash_equal
 
 
 class Rm(Command):
@@ -68,7 +69,7 @@ class Rm(Command):
             found = True
             for key, val in six.iteritems(global_patterns):
                 if key == 'commit_hash':
-                    if not fnmatchcase(result.commit_hash[:len(val)], val):
+                    if not hash_equal(result.commit_hash, val):
                         found = False
                         break
                 elif key == 'python':

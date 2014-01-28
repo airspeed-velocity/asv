@@ -46,7 +46,7 @@ def test_workflow(tmpdir):
     assert exists(join(tmpdir, 'html', 'asv.js'))
     assert exists(join(tmpdir, 'html', 'asv.css'))
 
-    Run.run(conf, range_spec="existing",
+    Run.run(conf, range_spec="EXISTING",
             _machine_file=join(local, 'asv-machine.json'), quick=True)
 
     # Remove the benchmarks.json file to make sure publish can

@@ -26,10 +26,11 @@ def test_results(tmpdir):
             env,
             hex(i),
             i * 1000000)
-        r.add_times({
+        for key, val in {
             'suite1.benchmark1': float(i * 0.001),
             'suite1.benchmark2': float(i * i * 0.001),
-            'suite2.benchmark1': float((i + 1) ** -1)})
+            'suite2.benchmark1': float((i + 1) ** -1)}.items():
+            r.add_time(key, val)
         r.save(resultsdir)
 
         r2 = results.Results.load(

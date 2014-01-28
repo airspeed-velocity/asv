@@ -79,6 +79,11 @@ class Git(Repo):
             ['log', '--quiet', '--format=format:%H', range_spec], dots=False
         ).strip().split()
 
+    def get_hash_from_tag(self, tag):
+        return self._run_git(
+            ['show', tag, '--quiet', '--format=format:%H'],
+            dots=False).strip().split()[0]
+
     def get_tags(self):
         return self._run_git(
             ['tag', '-l']).strip().split()

@@ -20,6 +20,7 @@ command_order = [
     'Rm',
     'Publish',
     'Preview',
+    'Profile',
     'Update'
 ]
 

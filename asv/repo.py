@@ -58,6 +58,13 @@ class Repo(object):
         """
         raise NotImplementedError()
 
+    def get_hash_from_tag(self, range):
+        """
+        Get a hash from a given tag, branch or hash.  The acceptable
+        syntax will depend on the DVCS used.
+        """
+        raise NotImplementedError()
+
     def get_tags(self):
         """
         Get a list of all of the tags defined in the repo.

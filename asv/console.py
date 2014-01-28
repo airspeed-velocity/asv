@@ -219,9 +219,7 @@ class Log(object):
         else:
             rest = parts[1]
 
-        if self._total == 0:
-            color_print('          ')
-        else:
+        if self._total:
             color_print('[{0:6.02f}%] '.format(
                 (float(self._count) / self._total) * 100.0))
 
@@ -294,6 +292,9 @@ class Log(object):
             self._logger.setLevel(logging.DEBUG)
         else:
             self._logger.setLevel(logging.INFO)
+
+    def is_debug_enabled(self):
+        return self._logger.getEffectiveLevel() <= logging.DEBUG
 
     def info(self, *args, **kwargs):
         self._logger.info(*args, **kwargs)

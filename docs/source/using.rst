@@ -233,12 +233,12 @@ specified range.
 You may also want to benchmark every commit that has already been
 benchmarked on all the other machines.  For that, use::
 
-    asv run existing
+    asv run EXISTING
 
 You can benchmark all commits since the last one that was benchmarked
 on this machine.  This is useful for running in nightly cron jobs::
 
-    asv run latest
+    asv run NEW
 
 The results are stored as a tree of files in the directory
 ``results/$MACHINE``, where ``$MACHINE`` is the unique machine name
@@ -316,3 +316,93 @@ Here is a more complex example, to remove all of the benchmarks on
 Python 2.7 and the machine named ``giraffe``::
 
     asv rm python=2.7 machine=giraffe
+
+.. profiling_
+
+Running a benchmark in the profiler
+-----------------------------------
+
+**airspeed velocity** can oftentimes tell you *if* something got
+slower, but it can't really tell you *why* it got slower.  That's a
+where a profiler comes in.  **airspeed velocity** has features to
+easily run a given benchmark in the Python standard library's
+`cProfile` profiler, and then open the profiling data in the tool of
+your choice.
+
+``asv profile`` will profiles a given benchmark on a given revision of
+the project.
+
+.. note::
+
+    You can also pass the ``--profile`` option to ``asv run``.  In
+    addition to running the benchmarks as usual, it also generates
+    them again in the `cProfile` profiler and save the results.  ``asv
+    preview`` will use this data, if found, rather than needing to
+    profile the benchmark each time.  However, it's important to note
+    that profiler data contains absolute paths to the source code, so
+    they are generally not portable between machines.
+
+``asv profile`` takes as arguments the name of the benchmark and the
+hash, tag or branch of the project to run it in.  Below is a real
+world example of testing the ``astropy`` project.  By default, a
+simple table summary of profiling results is displayed.
+
+    > asv profile time_units.time_very_simple_unit_parse 10fc29cb
+
+         8700042 function calls in 6.844 seconds
+
+     Ordered by: cumulative time
+
+     ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+          1    0.000    0.000    6.844    6.844 asv/benchmark.py:171(method_caller)
+          1    0.000    0.000    6.844    6.844 asv/benchmark.py:197(run)
+          1    0.000    0.000    6.844    6.844 /usr/lib64/python2.7/timeit.py:201(repeat)
+          3    0.000    0.000    6.844    2.281 /usr/lib64/python2.7/timeit.py:178(timeit)
+          3    0.104    0.035    6.844    2.281 /usr/lib64/python2.7/timeit.py:96(inner)
+     300000    0.398    0.000    6.740    0.000 benchmarks/time_units.py:20(time_very_simple_unit_parse)
+     300000    1.550    0.000    6.342    0.000 astropy/units/core.py:1673(__call__)
+     300000    0.495    0.000    2.416    0.000 astropy/units/format/generic.py:361(parse)
+     300000    1.023    0.000    1.841    0.000 astropy/units/format/__init__.py:31(get_format)
+     300000    0.168    0.000    1.283    0.000 astropy/units/format/generic.py:374(_do_parse)
+     300000    0.986    0.000    1.115    0.000 astropy/units/format/generic.py:345(_parse_unit)
+    3000002    0.735    0.000    0.735    0.000 {isinstance}
+     300000    0.403    0.000    0.403    0.000 {method 'decode' of 'str' objects}
+     300000    0.216    0.000    0.216    0.000 astropy/units/format/generic.py:32(__init__)
+     300000    0.152    0.000    0.188    0.000 /usr/lib64/python2.7/inspect.py:59(isclass)
+     900000    0.170    0.000    0.170    0.000 {method 'lower' of 'unicode' objects}
+     300000    0.133    0.000    0.133    0.000 {method 'count' of 'unicode' objects}
+     300000    0.078    0.000    0.078    0.000 astropy/units/core.py:272(get_current_unit_registry)
+     300000    0.076    0.000    0.076    0.000 {issubclass}
+     300000    0.052    0.000    0.052    0.000 astropy/units/core.py:131(registry)
+     300000    0.038    0.000    0.038    0.000 {method 'strip' of 'str' objects}
+     300003    0.037    0.000    0.037    0.000 {globals}
+     300000    0.033    0.000    0.033    0.000 {len}
+          3    0.000    0.000    0.000    0.000 /usr/lib64/python2.7/timeit.py:143(setup)
+          1    0.000    0.000    0.000    0.000 /usr/lib64/python2.7/timeit.py:121(__init__)
+          6    0.000    0.000    0.000    0.000 {time.time}
+          1    0.000    0.000    0.000    0.000 {min}
+          1    0.000    0.000    0.000    0.000 {range}
+          1    0.000    0.000    0.000    0.000 {hasattr}
+          1    0.000    0.000    0.000    0.000 /usr/lib64/python2.7/timeit.py:94(_template_func)
+          3    0.000    0.000    0.000    0.000 {gc.enable}
+          3    0.000    0.000    0.000    0.000 {method 'append' of 'list' objects}
+          3    0.000    0.000    0.000    0.000 {gc.disable}
+          1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+          3    0.000    0.000    0.000    0.000 {gc.isenabled}
+          1    0.000    0.000    0.000    0.000 <string>:1(<module>)
+
+Navigating these sorts of results can be tricky, and generally you
+want to open the results in a GUI tool, such as `RunSnakeRun
+<http://www.vrplumber.com/programming/runsnakerun/>`__.  By passing
+the ``--gui=runsnake`` to ``asv profile``, the profile is collected
+(or extracted) and opened in the RunSnakeRun tool.
+
+.. note::
+
+    To make sure the line numbers in the profiling data correctly
+    match the source files being viewed in RunSnakeRun, the correct
+    revision of the project is checked out before opening it in the
+    external GUI tool.
+
+You can also get the raw profiling data by using the ``--output``
+argument to ``asv profile``.

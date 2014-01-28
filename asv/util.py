@@ -118,6 +118,31 @@ def human_time(seconds):
     return '~0'
 
 
+def human_value(value, unit):
+    """
+    Formats a value in a given unit in a human friendly way.
+
+    Parameters
+    ----------
+    value : anything
+        The value to format
+
+    unit : str
+        The unit the value is in.  Currently understands `seconds` and `bytes`.
+    """
+    if isinstance(value, (int, float)):
+        if unit == 'seconds':
+            display = human_time(value)
+        elif unit == 'bytes':
+            display = human_file_size(value)
+        else:
+            display = json.dumps(value)
+    else:
+        display = json.dumps(value)
+
+    return display
+
+
 def which(filename):
     """
     Emulates the UNIX `which` command in Python.
@@ -131,8 +156,20 @@ def which(filename):
         if os.path.isfile(candidate):
             candidates.append(candidate)
     if len(candidates) == 0:
-        raise RuntimeError("Could not find '{0}' in PATH.".format(filename))
+        raise RuntimeError("Could not find '{0}' in PATH".format(filename))
     return candidates[0]
+
+
+def has_command(filename):
+    """
+    Returns `True` if the commandline utility exists.
+    """
+    try:
+        which(filename)
+    except RuntimeError:
+        return False
+    else:
+        return True
 
 
 class ProcessError(subprocess.CalledProcessError):
@@ -189,6 +226,21 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
         If `True`, run the command through the shell.  Default is
         `False`.
     """
+    def get_content(header=None):
+        content = []
+        if header is not None:
+            content.append(header)
+        content.extend([
+            'STDOUT -------->',
+            stdout[:-1],
+            'STDERR -------->',
+            stderr[:-1]
+        ])
+
+        return '\n'.join(content)
+
+    log.debug("Running '{0}'".format(' '.join(args)))
+
     proc = subprocess.Popen(
         args,
         close_fds=True,
@@ -235,18 +287,15 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
 
     retcode = proc.wait()
     if retcode and error:
-        content = '\n'.join(
-            ['Error running {0}'.format(' '.join(args)),
-             'STDOUT -------->',
-             stdout[:-1],
-             'STDERR -------->',
-             stderr[:-1]
-        ])
+        header = 'Error running {0}'.format(' '.join(args))
         if display_error:
-            log.error(content)
+            log.error(get_content(header))
         else:
-            log.debug(content)
+            if log.is_debug_enabled():
+                log.debug(get_content(header))
         raise ProcessError(args, retcode, stdout, stderr)
+    elif log.is_debug_enabled():
+        log.debug(get_content())
 
     return stdout
 
@@ -365,3 +414,11 @@ def iter_subclasses(cls):
         yield x
         for y in iter_subclasses(x):
             yield y
+
+
+def hash_equal(a, b):
+    """
+    Returns `True` if a and b represent the same commit hash.
+    """
+    min_len = min(len(a), len(b))
+    return a.lower()[:min_len] == b.lower()[:min_len]

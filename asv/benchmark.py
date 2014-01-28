@@ -13,6 +13,7 @@ its runtime to stdout.
 # that is imported into the benchmarking process.
 
 import copy
+import cProfile as profile
 import imp
 import inspect
 import json
@@ -62,7 +63,6 @@ class Benchmark(object):
         self.module_setup = _get_multi_name_attr(module, 'setup')
         self.module_teardown = _get_multi_name_attr(module, 'teardown')
         self.timeout = getattr(attr_source, "timeout", 60.0)
-        self.params = getattr(attr_source, "params", None)
         self.attr_source = attr_source
         self.code = textwrap.dedent(inspect.getsource(self.func))
         self.type = "base"
@@ -165,10 +165,20 @@ class Benchmark(object):
             self.teardown()
 
     def do_run(self):
-        if self.params is None:
-            return self.run()
-        else:
-            return map(self.run, self.params)
+        return self.run()
+
+    def do_profile(self, filename=None):
+        def method_caller():
+            run()
+
+        if filename is not None:
+            if hasattr(method_caller, 'func_code'):
+                code = method_caller.func_code
+            else:
+                code = method_caller.__code__
+
+            profile.runctx(
+                code, {'run': self.run}, {}, filename)
 
 
 class TimeBenchmark(Benchmark):
@@ -202,8 +212,9 @@ class TimeBenchmark(Benchmark):
                 if timer.timeit(number) >= self.goal_time / 10.0:
                     break
                 number *= 10
+            self.number = number
 
-        all_runs = timer.repeat(self.repeat, number)
+        all_runs = timer.repeat(self.repeat, self.number)
         best = min(all_runs) / number
         return best
 
@@ -349,13 +360,17 @@ if __name__ == '__main__':
         sys.exit(0)
 
     elif mode == 'run':
-        benchmark_dir, benchmark_id, quick = args
-        quick = quick == 'True'
+        benchmark_dir, benchmark_id, quick, profile_path = args
+        quick = (quick == 'True')
+        if profile_path == 'None':
+            profile_path = None
 
         benchmark = Benchmark.from_name(
             benchmark_dir, benchmark_id, quick=quick)
         benchmark.do_setup()
         result = benchmark.do_run()
+        if profile_path is not None:
+            benchmark.do_profile(profile_path)
         benchmark.do_teardown()
 
         # Write the output value as the last line of the output.
