@@ -19,7 +19,7 @@ from .console import log
 from . import util
 
 
-def get_environments(env_dir, pythons, matrix):
+def get_environments(conf):
     """
     Iterator returning `Environment` objects for all of the
     permutations of the given versions of Python and a matrix of
@@ -57,9 +57,9 @@ def get_environments(env_dir, pythons, matrix):
                 d[key] = None
                 yield d
 
-    for python in pythons:
-        for configuration in iter_matrix(matrix):
-            yield Environment(env_dir, python, configuration)
+    for python in conf.pythons:
+        for configuration in iter_matrix(conf.matrix):
+            yield Environment(conf.env_dir, python, configuration)
 
 
 class Environment(object):
@@ -213,12 +213,12 @@ class Environment(object):
         self.install_requirements()
         return self._run_executable('python', args, **kwargs)
 
-    def install_project(self, project_name, project_dir):
+    def install_project(self, conf):
         """
         Install a working copy of the benchmarked project into the
         environment.  Uninstalls any installed copy of the project
         first.
         """
         self.install_requirements()
-        self.uninstall(project_name)
-        self.install(project_dir, editable=True)
+        self.uninstall(conf.project)
+        self.install(os.path.abspath(conf.project), editable=True)

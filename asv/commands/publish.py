@@ -95,7 +95,7 @@ class Publish(Command):
         log.step()
         log.info("Getting tags")
         with log.indent():
-            repo = get_repo(conf.repo, conf.project)
+            repo = get_repo(conf)
             tags = {}
             for tag in repo.get_tags():
                 log.dot()

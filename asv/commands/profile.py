@@ -110,7 +110,7 @@ class Profile(Command):
             raise ValueError("Unknown profiler GUI {0}".format(gui))
 
         machine_name = Machine.get_unique_machine_name()
-        repo = get_repo(conf.repo, conf.project)
+        repo = get_repo(conf)
         commit_hash = repo.get_hash_from_tag(revision)
 
         profile_data = None
@@ -133,9 +133,7 @@ class Profile(Command):
                             break
 
         if profile_data is None:
-            environments = list(
-                get_environments(
-                    conf.env_dir, conf.pythons, conf.matrix))
+            environments = list(get_environments(conf))
 
             if len(environments) == 0:
                 log.error("No environments selected")
@@ -163,8 +161,7 @@ class Profile(Command):
             else:
                 log.info("Running profiler")
             with log.indent():
-                env.install_project(
-                    conf.project, os.path.abspath(conf.project))
+                env.install_project(conf)
 
                 results = benchmarks.run_benchmarks(
                     env, show_exc=True, quick=False, profile=True)

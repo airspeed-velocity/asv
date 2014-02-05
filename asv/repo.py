@@ -78,10 +78,17 @@ class Repo(object):
         raise NotImplementedError()
 
 
-def get_repo(url, path):
+def get_repo(conf):
+    """
+    Get a Repo subclass for the given configuration.
+
+    If the configuration does not explicitly specify a repository
+    type, it will attempt to automatically determine one from the
+    ``conf.repo`` URL.
+    """
     for cls in util.iter_subclasses(Repo):
-        if cls.url_match(url):
-            return cls(url, path)
+        if cls.url_match(conf.repo):
+            return cls(conf.repo, conf.project)
 
     raise ValueError(
-        "Can not determine what kind of DVCS to use for URL '{0}'".format(url))
+        "Can not determine what kind of DVCS to use for URL '{0}'".format(conf.repo))

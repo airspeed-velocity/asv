@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import six
 
+from asv import config
 from asv import environment
 from asv import util
 
@@ -23,16 +24,17 @@ def test_matrix_environments(tmpdir):
         raise RuntimeError(
             "python 3.3 must be installed for this test to pass")
 
-    envdir = six.text_type(tmpdir.join("env"))
+    conf = config.Config()
 
-    pythons = ["2.7", "3.3"]
-    matrix = {
+    conf.env_dir = six.text_type(tmpdir.join("env"))
+
+    conf.pythons = ["2.7", "3.3"]
+    conf.matrix = {
         "six": ["1.4", None],
         "psutil": ["1.2", "1.1"]
     }
 
-    environments = list(environment.get_environments(
-        envdir, pythons, matrix))
+    environments = list(environment.get_environments(conf))
 
     assert len(environments) == 2 * 2 * 2
 
