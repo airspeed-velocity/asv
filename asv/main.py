@@ -26,18 +26,13 @@ def main():
 
     log.enable(args.verbose)
 
-    conf = Config.load(args.config)
-
     # Use the path to the config file as the cwd for the remainder of
     # the run
     dirname = os.path.dirname(os.path.abspath(args.config))
     os.chdir(dirname)
 
-    for plugin in conf.plugins:
-        plugin_manager.import_plugin(plugin)
-
     try:
-        args.func(conf, args)
+        args.func(args)
     except RuntimeError as e:
         log.error(six.text_type(e))
         sys.exit(1)

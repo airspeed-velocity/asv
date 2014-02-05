@@ -33,7 +33,7 @@ class Machine(Command):
         return parser
 
     @classmethod
-    def run_from_args(cls, conf, args):
+    def run_from_conf_args(cls, conf, args):
         return cls.run(**vars(args))
 
     @classmethod

@@ -26,7 +26,7 @@ class Update(Command):
         return parser
 
     @classmethod
-    def run_from_args(cls, conf, args):
+    def run_from_args(cls, args):
         return cls.run(args.config)
 
     @classmethod

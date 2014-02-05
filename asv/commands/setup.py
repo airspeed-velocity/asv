@@ -52,7 +52,7 @@ class Setup(Command):
         return parser
 
     @classmethod
-    def run_from_args(cls, conf, args):
+    def run_from_conf_args(cls, conf, args):
         return cls.run(conf=conf, parallel=args.parallel)
 
     @classmethod

@@ -9,6 +9,7 @@ import sys
 
 import six
 
+from .. import config
 from .. import util
 
 # This list is ordered in order of average workflow
@@ -32,8 +33,15 @@ class Command(object):
         raise NotImplementedError()
 
     @classmethod
-    def run_from_args(cls, conf, args):
-        # TODO: Document me
+    def run_from_args(cls, args):
+        from .. import plugin_manager
+        conf = config.Config.load(args.config)
+        for plugin in conf.plugins:
+            plugin_manager.import_plugin(plugin)
+        return cls.run_from_conf_args(conf, args)
+
+    @classmethod
+    def run_from_conf_args(cls, conf, args):
         raise NotImplementedError()
 
 

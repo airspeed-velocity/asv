@@ -40,7 +40,7 @@ class Rm(Command):
         return parser
 
     @classmethod
-    def run_from_args(cls, conf, args):
+    def run_from_conf_args(cls, conf, args):
         return cls.run(conf, args.patterns, args.y)
 
     @classmethod

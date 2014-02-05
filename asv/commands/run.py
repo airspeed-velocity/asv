@@ -95,7 +95,7 @@ class Run(Command):
         return parser
 
     @classmethod
-    def run_from_args(cls, conf, args):
+    def run_from_conf_args(cls, conf, args):
         return cls.run(
             conf=conf, range_spec=args.range, steps=args.steps,
             bench=args.bench, parallel=args.parallel,
