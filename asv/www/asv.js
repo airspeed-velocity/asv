@@ -71,6 +71,12 @@ $(function() {
     var graphs = [];
     /* True when log scaling is enabled. */
     var log_scale = false;
+    /* True when log scaling is enabled. */
+    var reference_scale = false;
+    /* True when selecting a reference point */
+    var select_reference = false;
+    /* The reference value */
+    var reference = 1.0;
     /* The index.json content as returned from the server */
     var master_json = {};
     /* A little div to handle tooltip placement on the graph */
@@ -228,6 +234,11 @@ $(function() {
 
             top.on('click', function(evt) {
                 if (!evt.target.classList.contains("active")) {
+                    if (reference_scale) {
+                        reference_scale = false;
+                        $('#reference').removeClass('active');
+                        reference = 1.0;
+                    }
                     current_benchmark = bm_name;
                     $("#title").text(bm_name);
                     replace_graphs();
@@ -255,7 +266,27 @@ $(function() {
 
         $('#log-scale').on('click', function(evt) {
             log_scale = !evt.target.classList.contains("active");
+            reference_scale = false;
+            $('#reference').removeClass('active');
+            reference = 1.0;
             update_graphs();
+        });
+
+        $('#reference').on('click', function(evt) {
+            reference_scale = !evt.target.classList.contains("active");
+            log_scale = false;
+            $('#log-scale').removeClass('active');
+            if (!reference_scale) {
+                update_graphs();
+            } else {
+                $('#reference').popover({
+                    content: 'Select a reference point',
+                    placement: 'top',
+                    container: 'body'});
+                $('#reference').popover('show');
+                reference = 1.0;
+                select_reference = true;
+            }
         });
 
         tooltip = $("<div></div>");
@@ -311,16 +342,25 @@ $(function() {
             if (item) {
                 if (previous_click != item.datapoint) {
                     previous_click = item.datapoint;
-                    var commit_hash = master_json.date_to_hash[item.datapoint[0]];
-                    if (previous_hash !== commit_hash) {
-                        previous_hash = commit_hash;
-                        window.open(
-                            master_json.show_commit_url + previous_hash,
-                            '_blank');
+                    if (select_reference) {
+                        $('#reference').popover('destroy');
+                        select_reference = false;
+                        reference = item.datapoint[1];
+                        console.log(reference);
+                        update_graphs();
+                    } else {
+                        var commit_hash = master_json.date_to_hash[item.datapoint[0]];
+                        if (previous_hash !== commit_hash) {
+                            previous_hash = commit_hash;
+                            window.open(
+                                master_json.show_commit_url + previous_hash,
+                                '_blank');
+                        }
                     }
                 }
             }
         });
+
     }).fail(function () {
         network_error();
     });
@@ -481,16 +521,21 @@ $(function() {
             var data = graph.data;
             for (var j = 0; j < data.length; ++j) {
                 var p = data[j][1];
-                if (p !== null && p < min) {
-                    min = p;
-                }
-                if (p > max) {
-                    max = p;
+                if (p != null) {
+                    if (p < min) {
+                        min = p;
+                    }
+                    if (p > max) {
+                        max = p;
+                    }
                 }
             }
         });
 
-        if (log_scale) {
+        min /= reference;
+        max /= reference;
+
+        if (log_scale || reference_scale) {
             min = Math.floor(Math.log(min) / Math.LN10);
             max = Math.ceil(Math.log(max) / Math.LN10);
 
@@ -500,12 +545,14 @@ $(function() {
 
             var ticks = []
             for (var x = min; x <= max; ++x) {
-                ticks.push(Math.pow(10, x));
+                ticks.push(Math.pow(10, x) * reference);
             }
+
+            console.log(ticks);
 
             options.yaxis.ticks = ticks;
             options.yaxis.transform = function(v) {
-                return Math.log(v) / Math.LN10;
+                return Math.log(v / reference) / Math.LN10;
             };
             /* inverseTransform is required for plothover to work */
             options.yaxis.inverseTransform = function (v) {
@@ -515,10 +562,10 @@ $(function() {
             options.yaxis.tickFormatter = function (v, axis) {
                 return "10" + (
                     Math.round(
-                        Math.log(v) / Math.LN10)).toString().sup();
+                        Math.log(v / reference) / Math.LN10)).toString().sup();
             };
-            options.yaxis.min = Math.pow(10, min);
-            options.yaxis.max = Math.pow(10, max);
+            options.yaxis.min = Math.pow(10, min) * reference;
+            options.yaxis.max = Math.pow(10, max) * reference;
         } else if (master_json.benchmarks[current_benchmark].unit === 'seconds') {
             var unit_name = null;
             var multiplier = null;
@@ -553,6 +600,13 @@ $(function() {
             );
         });
 
+        var unit;
+        if (reference_scale) {
+            unit = 'relative';
+        } else {
+            unit = master_json.benchmarks[current_benchmark].unit;
+        }
+
         var options = {
             colors: colors,
             series: {
@@ -579,7 +633,7 @@ $(function() {
                 axisLabelFontSizePixels: 12
             },
             yaxis: {
-                axisLabel: master_json.benchmarks[current_benchmark].unit,
+                axisLabel: unit,
                 axisLabelUseCanvas: true,
                 axisLabelFontFamily: "sans-serif",
                 axisLabelFontSizePixels: 12
