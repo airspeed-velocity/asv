@@ -128,7 +128,7 @@ class Run(Command):
 
         if len(commit_hashes) == 0:
             log.error("No commit hashes selected")
-            return
+            return 1
 
         if steps > 0:
             spacing = max(float(len(commit_hashes)) / steps, 1)
@@ -142,12 +142,12 @@ class Run(Command):
         environments = Setup.run(conf=conf, parallel=parallel)
         if len(environments) == 0:
             log.error("No environments selected")
-            return
+            return 1
 
         benchmarks = Benchmarks(conf, regex=bench)
         if len(benchmarks) == 0:
             log.error("No benchmarks selected")
-            return
+            return 1
         benchmarks.save()
 
         steps = len(commit_hashes) * len(benchmarks) * len(environments)

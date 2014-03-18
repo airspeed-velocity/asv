@@ -143,7 +143,7 @@ directory::
 .. note::
 
     If you ever need to update the machine information later, you can
-    run `asv machine`.
+    run ``asv machine``.
 
 Environments
 ````````````
@@ -273,6 +273,8 @@ can be used to preview the website.  Just run::
 and open the URL that is displayed at the console.  Press Ctrl+C to
 stop serving.
 
+.. image:: screenshot.png
+
 To share the website on the open internet, simply put these files on
 any webserver that can serve static content.  Github Pages works quite
 well, for example.
@@ -316,6 +318,46 @@ Here is a more complex example, to remove all of the benchmarks on
 Python 2.7 and the machine named ``giraffe``::
 
     asv rm python=2.7 machine=giraffe
+
+
+Finding a commit that produces a large regression
+-------------------------------------------------
+
+Since benchmarking can be rather time consuming, it's possible likely
+that you're only benchmarking a subset of all commits in the
+repository.  When you discover from the graph that the runtime between
+commit A and commit B suddenly doubles, you don't know which
+particular commit in that range is the likely culprit.  ``asv find``
+can be used to help find a commit within that range that produced a
+large regression using a binary search.  You can select a range of
+commits easily from the web interface by dragging a box around the
+commits in question.  The commit hashes associated with that range
+is then displayed in the "commits" section of the sidebar.  We'll copy
+and paste this commit range into the commandline arguments of the
+``asv find`` command, along with the name of a single benchmark to use.
+The output below is truncated to show how the search progresses:
+
+    $ asv find 05d4f83d..b96fcc53 time_coordinates.time_latitude
+    - Running approximately 10 benchmarks within 1156 commits
+    - Testing <----------------------------O----------------------------->
+    - Testing <-------------O-------------->------------------------------
+    - Testing --------------<-------O------>------------------------------
+    - Testing --------------<---O--->-------------------------------------
+    - Testing --------------<-O->-----------------------------------------
+    - Testing --------------<O>-------------------------------------------
+    - Testing --------------<>--------------------------------------------
+    - Greatest regression found: 2918f61e
+
+The result, ``2918f61e`` is the commit found with the largest
+regression, using the binary search.
+
+.. note::
+
+    The binary search used by ``asv find`` will only be effective when
+    the runtimes over the range are more-or-less monotonic.  If there
+    is a lot of variation within that range, it may find only a local
+    maximum, rather than the global maximum.  For best results, use a
+    reasonably small commit range.
 
 .. profiling_
 

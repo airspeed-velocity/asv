@@ -44,6 +44,7 @@ class Git(Repo):
         return False
 
     def _run_git(self, args, chdir=True, **kwargs):
+        log.debug(str(args))
         if chdir:
             orig_dir = os.getcwd()
             os.chdir(self._path)

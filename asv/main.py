@@ -32,9 +32,14 @@ def main():
     os.chdir(dirname)
 
     try:
-        args.func(args)
+        result = args.func(args)
     except RuntimeError as e:
         log.error(six.text_type(e))
         sys.exit(1)
 
     sys.stdout.write('\n')
+
+    if result is None:
+        result = 0
+
+    sys.exit(result)
