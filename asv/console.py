@@ -223,7 +223,7 @@ class Log(object):
             color_print('[{0:6.02f}%] '.format(
                 (float(self._count) / self._total) * 100.0))
 
-        color_print('-' * self._indent)
+        color_print('·' * self._indent)
         color_print(' ')
 
         if record.levelno < logging.DEBUG:

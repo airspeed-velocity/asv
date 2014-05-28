@@ -183,7 +183,8 @@ class Environment(object):
         """
         Install a package into the environment using `pip install`.
         """
-        log.info("Installing {0} into {1}".format(package, self.name))
+        rel = os.path.relpath(package, os.getcwd())
+        log.info("Installing {0} into {1}".format(rel, self.name))
         args = ['install']
         if editable:
             args.append('-e')
