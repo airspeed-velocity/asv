@@ -13,6 +13,7 @@ import math
 import os
 import select
 import subprocess
+import sys
 import time
 
 try:
@@ -422,3 +423,47 @@ def hash_equal(a, b):
     """
     min_len = min(len(a), len(b))
     return a.lower()[:min_len] == b.lower()[:min_len]
+
+
+def get_cpu_info():
+    """
+    Gets a human-friendly description of this machine's CPU.
+
+    Returns '' if it can't be obtained.
+    """
+    if sys.platform.startswith('linux'):
+        with open("/proc/cpuinfo", "rb") as fd:
+            lines = fd.readlines()
+        for line in lines:
+            if b':' in line:
+                key, val = line.split(b':', 1)
+                key = key.strip()
+                val = val.strip()
+                if key == b'model name':
+                    return val.decode('ascii')
+    elif sys.platform.startswith('darwin'):
+        sysctl = which('sysctl')
+        return check_output([sysctl, '-n', 'machdep.cpu.brand_string']).strip()
+    return ''
+
+
+def get_memsize():
+    """
+    Returns the amount of physical memory in this machine.
+
+    Returns '' if it can't be obtained.
+    """
+    if sys.platform.startswith('linux'):
+        with open("/proc/meminfo", "rb") as fd:
+            lines = fd.readlines()
+        for line in lines:
+            if b':' in line:
+                key, val = line.split(b':', 1)
+                key = key.strip()
+                val = val.strip()
+                if key == b'MemTotal':
+                    return int(val.split()[0])
+    elif sys.platform.startswith('darwin'):
+        sysctl = which('sysctl')
+        return int(check_output([sysctl, '-n', 'hw.memsize']).strip())
+    return ''

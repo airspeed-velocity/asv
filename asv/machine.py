@@ -118,25 +118,9 @@ class Machine(object):
     def get_defaults():
         (system, node, release, version, machine, processor) = platform.uname()
 
-        if sys.platform.startswith('linux'):
-            try:
-                from numpy.distutils import cpuinfo
-            except ImportError:
-                cpu = ''
-            else:
-                info = cpuinfo.cpuinfo().info
-                cpu = "{0} ({1} cores)".format(
-                    info[0]['model name'], len(info))
-        else:
-            # TODO: Get this on a Mac
-            cpu = ''
+        cpu = util.get_cpu_info()
 
-        try:
-            import psutil
-        except ImportError:
-            ram = ''
-        else:
-            ram = util.human_file_size(psutil.phymem_usage().total)
+        ram = util.get_memsize()
 
         return {
             'machine': node,
