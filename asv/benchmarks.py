@@ -333,7 +333,7 @@ class Benchmarks(dict):
                     quick=quick, profile=profile)
         return times
 
-    def skip_benchmarks(self):
+    def skip_benchmarks(self, env):
         """
         Mark all of the benchmarks as skipped.
         """

@@ -189,7 +189,7 @@ class Run(Command):
                                 env, show_exc=show_exc, quick=quick,
                                 profile=profile)
                         else:
-                            results = benchmarks.skip_benchmarks()
+                            results = benchmarks.skip_benchmarks(env)
 
                         result = Results(
                             params,
