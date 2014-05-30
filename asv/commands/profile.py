@@ -161,6 +161,7 @@ class Profile(Command):
             else:
                 log.info("Running profiler")
             with log.indent():
+                repo.checkout(commit_hash)
                 env.install_project(conf)
 
                 results = benchmarks.run_benchmarks(
