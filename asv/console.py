@@ -49,7 +49,7 @@ def _decode_preferred_encoding(s):
                 enc = 'utf-8'
             return s.decode(enc)
         except UnicodeDecodeError:
-            return s.decode('latin-1')
+            return s.decode('latin-1', 'replace')
     return s
 
 
@@ -128,8 +128,12 @@ def _write_with_fallback(s, write, fileobj):
         write = f.write
 
     # If this doesn't work let the exception bubble up; I'm out of ideas
-    write(s)
-    return write
+    try:
+        write(s)
+        return write
+    except UnicodeEncodeError:
+        write(s.encode('ascii', 'replace'))
+        return write
 
 
 def color_print(*args, **kwargs):
@@ -186,7 +190,7 @@ def color_print(*args, **kwargs):
         for i in xrange(0, len(args), 2):
             msg = args[i]
             msg = _decode_preferred_encoding(msg)
-            write(msg)
+            write = _write_with_fallback(msg, write, file)
         write(end)
 
 
@@ -309,7 +313,7 @@ class Log(object):
         self._logger.error(*args, **kwargs)
 
     def add(self, msg):
-        sys.stdout.write(msg)
+        _write_with_fallback(msg, sys.stdout.write, sys.stdout)
         sys.stdout.flush()
 
 log = Log()
