@@ -1,6 +1,3 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import ez_setup
 ez_setup.use_setuptools()
 
@@ -33,8 +30,8 @@ setup(
     },
 
     install_requires=[
-        'six>=1.4',
-        'virtualenv>=1.10,!=1.11.0'
+        str('six>=1.4'),
+        str('virtualenv>=1.10,!=1.11.0')
     ],
 
     package_data={
