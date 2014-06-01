@@ -26,7 +26,7 @@ class GithubPages(Command):
         return parser
 
     @classmethod
-    def run_from_args(cls, conf, args):
+    def run_from_conf_args(cls, conf, args):
         return cls.run(conf=conf)
 
     @classmethod
@@ -40,8 +40,16 @@ class GithubPages(Command):
 
         git = util.which('git')
 
+        # Get the current branch name
+        current_branch = util.check_output(
+            [git, 'rev-parse', '--abbrev-ref', 'HEAD']).strip()
+        if current_branch == 'gh-pages':
+            util.check_call([git, 'checkout', 'master'])
+
         # Create a new "orphaned" branch -- we don't need history for
         # the built products
+        util.check_call([git, 'branch', '-D', 'gh-pages'],
+                        error=False, display_error=False)
         util.check_call([git, 'checkout', '--orphan', 'gh-pages'])
 
         # We need to tell github this is not a Jekyll document
@@ -54,4 +62,4 @@ class GithubPages(Command):
         util.check_call([git, 'commit', '-m', 'Generated from sources'])
 
         util.check_call([git, 'push', '-f', 'origin', 'gh-pages'])
-        util.check_call([git, 'checkout', '-'])
+        util.check_call([git, 'checkout', current_branch])
