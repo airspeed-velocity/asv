@@ -165,7 +165,7 @@ class Environment(object):
 
         self.setup()
 
-        self.upgrade('setuptools')
+        self.upgrade('setuptools==3.8')
 
         for key, val in six.iteritems(self._requirements):
             if val is not None:
