@@ -15,7 +15,7 @@ class TimeSecondary:
         for i in xrange(100):
             x *= i
         # This is to generate invalid output
-        sys.stdout("X")
+        sys.stdout.write("X")
 
     def time_exception(self):
         raise RuntimeError()
