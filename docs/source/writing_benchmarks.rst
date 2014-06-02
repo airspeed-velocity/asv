@@ -116,6 +116,11 @@ stolen from IPython's `%timeit
 magic function.  This means that in most cases the benchmark function
 itself will be run many times to achieve accurate timing.
 
+The default timing function is the POSIX CLOCK_PROCESS_CPUTIME, which
+measures the CPU time used by the current process and none others.
+This is available as ``time.process_time`` in Python 3.3 and later,
+but a backport is included with asv for earlier versions of Python.
+
 For best results, the benchmark function should contain as little as
 possible, with as much extraneous setup moved to a ``setup`` function::
 
@@ -145,8 +150,12 @@ possible, with as much extraneous setup moved to a ``setup`` function::
   When not provided, defaults to `timeit.default_repeat` (3).
 
 - ``timer``: The timing function to use, which can be any source of
-  monotonically increasing numbers, such as `time.clock` or
-  `time.time`.  If not provided, defaults to `timeit.default_timer`.
+  monotonically increasing numbers, such as `time.clock`, `time.time`
+  or ``time.process_time``.  If it's not provided, it defaults to
+  ``time.process_time`` (or a backported version of it for versions of
+  Python prior to 3.3), but other useful values are
+  `timeit.default_timer` to use the default ``timeit`` behavior on
+  your version of Python.
 
   On Windows, `time.clock` has microsecond granularity, but
   `time.time`'s granularity is 1/60th of a second. On Unix,
@@ -154,7 +163,9 @@ possible, with as much extraneous setup moved to a ``setup`` function::
   much more precise. On either platform, `timeit.default_timer`
   measures wall clock time, not the CPU time. This means that other
   processes running on the same computer may interfere with the
-  timing.
+  timing.  That's why the default of ``time.process_time``, which only
+  measures the time used by the current process, is often the best
+  choice.
 
 Memory
 ``````
