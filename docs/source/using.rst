@@ -277,7 +277,9 @@ stop serving.
 
 To share the website on the open internet, simply put these files on
 any webserver that can serve static content.  Github Pages works quite
-well, for example.
+well, for example.  If using Github Pages, asv includes the
+convenience command ``asv gh-pages`` to automatically publish the
+results to the ``gh-pages`` branch.
 
 Managing the results database
 -----------------------------
