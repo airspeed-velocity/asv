@@ -67,7 +67,11 @@ def run_benchmark(benchmark, root, env, show_exc=False, quick=False,
     result = {'result': None}
 
     log.step()
-    log.info('Running {0:40s}'.format(name[-40:]))
+    if len(name) > 40:
+        short_name = '...' + name[-37:]
+    else:
+        short_name = name
+    log.info('Running {0:40s}'.format(short_name))
 
     with log.indent():
         if profile:
