@@ -156,8 +156,11 @@ class Machine(object):
 
     @classmethod
     def load(cls, interactive=False, force_interactive=False, _path=None,
-             **kwargs):
+             use_defaults=False, **kwargs):
         self = Machine()
+        if use_defaults:
+            self.__dict__.update(cls.get_defaults())
+            return self
 
         unique_machine_name = cls.get_unique_machine_name()
         try:
