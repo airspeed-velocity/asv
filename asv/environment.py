@@ -59,7 +59,15 @@ def get_environments(conf):
 
     for python in conf.pythons:
         for configuration in iter_matrix(conf.matrix):
-            yield Environment(conf.env_dir, python, configuration)
+            try:
+                yield Environment(conf.env_dir, python, configuration)
+            except PythonMissingError:
+                log.warn("No executable found for python {0}".format(python))
+                break
+
+
+class PythonMissingError(BaseException):
+    pass
 
 
 class Environment(object):
@@ -84,10 +92,10 @@ class Environment(object):
             Dictionary mapping a PyPI package name to a version
             identifier string.
         """
-        executables = util.which("python{0}".format(python))
-        if len(executables) == 0:
-            raise RuntimeError(
-                "No executable found for version {0}".format(python))
+        try:
+            executables = util.which("python{0}".format(python))
+        except RuntimeError:
+            raise PythonMissingError()
         self._executable = executables
         self._env_dir = env_dir
         self._python = python
