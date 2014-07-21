@@ -65,6 +65,12 @@ class Repo(object):
         """
         raise NotImplementedError()
 
+    def get_hash_from_head(self):
+        """
+        Get the hash of the currently checked-out commit.
+        """
+        raise NotImplementedError()
+
     def get_tags(self):
         """
         Get a list of all of the tags defined in the repo.
@@ -73,7 +79,19 @@ class Repo(object):
 
     def get_date_from_tag(self, tag):
         """
-        Get a Javascript timestamp for a particular tag
+        Get a Javascript timestamp for a particular tag.
+        """
+        raise NotImplementedError()
+
+    def checkout_remote_branch(self, remote, branch):
+        """
+        Fetch and then checkout a remote branch.
+        """
+        raise NotImplementedError()
+
+    def checkout_parent(self):
+        """
+        Checkout the parent of the currently checked out commit.
         """
         raise NotImplementedError()
 

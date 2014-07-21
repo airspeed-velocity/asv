@@ -202,6 +202,13 @@ def get_answer_default(prompt, default):
     return x
 
 
+def truncate_left(s, l):
+    if len(s) > l:
+        return '...' + s[-(l - 3):]
+    else:
+        return s
+
+
 class Log(object):
     def __init__(self):
         self._indent = 1

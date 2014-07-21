@@ -70,6 +70,18 @@ def find_latest_result_hash(machine, root):
     return latest_hash
 
 
+def get_filename(machine, commit_hash, env):
+    """
+    Get the result filename for a given machine, commit_hash and
+    environment.
+    """
+    return os.path.join(
+        machine,
+        "{0}-{1}.json".format(
+            commit_hash[:8],
+            env.name))
+
+
 class Results(object):
     """
     Manage a set of benchmark results for a single machine and commit
@@ -103,11 +115,8 @@ class Results(object):
         self._profiles = {}
         self._python = env.python
 
-        self._filename = os.path.join(
-            params['machine'],
-            "{0}-{1}.json".format(
-                self._commit_hash[:8],
-                env.name))
+        self._filename = get_filename(
+            params['machine'], self._commit_hash, env)
 
     @property
     def commit_hash(self):
