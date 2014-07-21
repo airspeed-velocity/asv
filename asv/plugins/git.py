@@ -86,9 +86,19 @@ class Git(Repo):
             ['show', tag, '--quiet', '--format=format:%H'],
             dots=False).strip().split()[0]
 
+    def get_hash_from_head(self):
+        return self.get_hash_from_tag('HEAD')
+
     def get_tags(self):
         return self._run_git(
             ['tag', '-l']).strip().split()
 
     def get_date_from_tag(self, tag):
         return self.get_date(tag + "^{commit}")
+
+    def checkout_remote_branch(self, remote, branch):
+        self._run_git(['fetch', remote, branch])
+        self.checkout('FETCH_HEAD')
+
+    def checkout_parent(self):
+        self.checkout('HEAD^')

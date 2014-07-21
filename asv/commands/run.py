@@ -4,8 +4,6 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import os
-
 import six
 
 from . import Command
@@ -110,7 +108,7 @@ class Run(Command):
     @classmethod
     def run(cls, conf, range_spec="master", steps=0, bench=None, parallel=1,
             show_exc=False, quick=False, profile=False, machine_defaults=False,
-            _machine_file=None):
+            _machine_file=None, _returns={}):
         params = {}
         machine_params = Machine.load(use_defaults=machine_defaults,
                                       _path=_machine_file, interactive=True)
@@ -129,7 +127,9 @@ class Run(Command):
             # TODO: This is shamelessly git-specific
             range_spec = '{0}..master'.format(latest_result)
 
-        if range_spec is not None:
+        if isinstance(range_spec, list):
+            commit_hashes = range_spec
+        elif range_spec is not None:
             commit_hashes = repo.get_hashes_from_range(range_spec)
 
         if len(commit_hashes) == 0:
@@ -166,6 +166,10 @@ class Run(Command):
         log.set_nitems(steps)
 
         parallel, multiprocessing = util.get_multiprocessing(parallel)
+
+        _returns['benchmarks'] = benchmarks
+        _returns['environments'] = environments
+        _returns['machine_params'] = machine_params.__dict__
 
         for commit_hash in commit_hashes:
             log.info(

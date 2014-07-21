@@ -18,6 +18,7 @@ command_order = [
     'Machine',
     'Setup',
     'Run',
+    'Continuous',
     'Find',
     'Rm',
     'Publish',

@@ -13,7 +13,7 @@ import tempfile
 
 import six
 
-from .console import log
+from .console import log, truncate_left
 from .environment import get_environments
 from .repo import get_repo
 from . import util
@@ -67,10 +67,7 @@ def run_benchmark(benchmark, root, env, show_exc=False, quick=False,
     result = {'result': None}
 
     log.step()
-    if len(name) > 40:
-        short_name = '...' + name[-37:]
-    else:
-        short_name = name
+    short_name = truncate_left(name, 40)
     log.info('Running {0:40s}'.format(short_name))
 
     with log.indent():
