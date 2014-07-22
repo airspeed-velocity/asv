@@ -30,8 +30,7 @@ setup(
     },
 
     install_requires=[
-        str('six>=1.4'),
-        str('virtualenv>=1.10,!=1.11.0')
+        str('six>=1.4')
     ],
 
     package_data={

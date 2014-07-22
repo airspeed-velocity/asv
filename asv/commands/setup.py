@@ -61,7 +61,7 @@ class Setup(Command):
 
         parallel, multiprocessing = util.get_multiprocessing(parallel)
 
-        log.info("Creating virtualenvs")
+        log.info("Creating environments")
         with log.indent():
             for env in environments:
                 env.setup()

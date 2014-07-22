@@ -24,6 +24,11 @@ the requirements are:
   setuptools that prevents its installation in a clean virtual
   environment.
 
+.. note::
+
+   If your Python executable is managed by `conda
+   <http://conda.pydata.org/>`, ``virtualenv`` is not required.
+
 Optional dependencies, required only to determine machine information:
 
 - `psutil <https://code.google.com/p/psutil/>`__
