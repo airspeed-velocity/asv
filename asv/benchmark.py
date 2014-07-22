@@ -201,13 +201,17 @@ class Benchmark(object):
         """
         def find_on_filesystem(root, parts, package):
             path = os.path.join(root, parts[0])
+            if package:
+                new_package = package + '.' + parts[0]
+            else:
+                new_package = parts[0]
             if os.path.isfile(path + '.py'):
                 module = imp.load_source(
-                    package + '.' + parts[0], path + '.py')
+                    new_package, path + '.py')
                 return find_in_module(module, parts[1:])
             elif os.path.isdir(path):
                 return find_on_filesystem(
-                    path, parts[1:], package + '.' + parts[0])
+                    path, parts[1:], new_package)
 
         def find_in_module(module, parts):
             attr = getattr(module, parts[0], None)
