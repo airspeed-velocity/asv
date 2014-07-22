@@ -29,7 +29,9 @@ class Virtualenv(Environment):
         try:
             import virtualenv
         except ImportError:
-            raise RuntimeError("virtualenv must be installed to run asv")
+            raise RuntimeError(
+                "virtualenv must be installed to run asv with the given "
+                "Python executable")
 
         # Can't use `virtualenv.__file__` here, because that will refer to a
         # .pyc file which can't be used on another version of Python
