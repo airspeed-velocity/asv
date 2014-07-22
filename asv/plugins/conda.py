@@ -36,14 +36,7 @@ class Conda(Environment):
     def matches(self, executable):
         output = util.check_output([executable, '--version'],
                                    return_stderr=True)
-        if 'Continuum Analytics' in output:
-            try:
-                output = util.check_call([executable, '-c', 'import conda'])
-            except util.ProcessError:
-                return False
-            return True
-
-        return False
+        return 'Continuum Analytics' in output
 
     def setup(self):
         if self._is_setup:
