@@ -326,7 +326,12 @@ def load_json(path, api_version=None):
         content = fd.read()
 
     content = minify_json.json_minify(content)
-    d = json.loads(content)
+    try:
+        d = json.loads(content)
+    except ValueError as e:
+        raise ValueError(
+            "Error parsing JSON in file '{0}': {1}".format(
+                path, six.text_type(e)))
 
     if api_version is not None:
         if 'version' in d:
