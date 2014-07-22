@@ -154,7 +154,7 @@ def which(filename):
     candidates = []
     for location in locations:
         candidate = os.path.join(location, filename)
-        if os.path.isfile(candidate):
+        if os.path.isfile(candidate) or os.path.islink(candidate):
             candidates.append(candidate)
     if len(candidates) == 0:
         raise RuntimeError("Could not find '{0}' in PATH".format(filename))
@@ -199,7 +199,7 @@ def check_call(args, error=True, timeout=60, dots=True, display_error=True,
 
 
 def check_output(args, error=True, timeout=120, dots=True, display_error=True,
-                 shell=False):
+                 shell=False, return_stderr=False):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.  Returns stdout as a string on success.
@@ -298,7 +298,10 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
     elif log.is_debug_enabled():
         log.debug(get_content())
 
-    return stdout
+    if return_stderr:
+        return stderr
+    else:
+        return stdout
 
 
 def write_json(path, data, api_version=None):
