@@ -36,7 +36,9 @@ class Conda(Environment):
     def matches(self, executable):
         output = util.check_output([executable, '--version'],
                                    return_stderr=True)
-        return 'Continuum Analytics' in output
+        if 'Continuum Analytics' in output:
+            return os.path.isfile(
+                os.path.join(os.path.dirname(executable), 'conda'))
 
     def setup(self):
         if self._is_setup:
@@ -53,9 +55,7 @@ class Conda(Environment):
         try:
             log.info("Creating conda environment for {0}".format(self.name))
             util.check_call([
-                self._executable,
-                '-c',
-                'from conda import __main__',
+                os.path.join(os.path.dirname(self._executable), 'conda'),
                 'create',
                 '--yes',
                 '-p',
