@@ -8,7 +8,7 @@ import base64
 import os
 import zlib
 
-from .environment import Environment
+from .environment import get_environment
 from . import util
 
 
@@ -215,7 +215,7 @@ class Results(object):
 
         obj = cls(
             d['params'],
-            Environment('', d['python'], d['requirements']),
+            get_environment('', d['python'], d['requirements']),
             d['commit_hash'],
             d['date'])
         obj._results = d['results']

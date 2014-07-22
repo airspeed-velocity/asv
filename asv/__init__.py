@@ -22,10 +22,15 @@ def check_version_compatibility():
     """
     from distutils.version import LooseVersion
 
-    import virtualenv
-    if LooseVersion(virtualenv.__version__) == LooseVersion('1.11.0'):
-        raise RuntimeError(
-            "asv is not compatible with virtualenv 1.11 due to a bug in setuptools.")
+    try:
+        import virtualenv
+    except ImportError:
+        pass
+    else:
+        if LooseVersion(virtualenv.__version__) == LooseVersion('1.11.0'):
+            raise RuntimeError(
+                "asv is not compatible with virtualenv 1.11 due to a bug in "
+                "setuptools.")
 
 
 check_version_compatibility()
