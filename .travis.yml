@@ -1,10 +1,33 @@
 language: python
 
+env:
+  global:
+    - USE_CONDA=false
+
 python:
-    - 2.6
-    - 2.7
-    - 3.2
-    - 3.3
+  - 2.6
+  - 2.7
+  - 3.2
+  - 3.3
+  - 3.4
+
+matrix:
+  include:
+    - python: 2.7
+      env: USE_CONDA=true
+
+    - python: 3.4
+      env: USE_CONDA=true
+
+install:
+  - |
+    if [[ $USE_CONDA == true ]]; then
+      wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
+      chmod +x miniconda.sh;
+      ./miniconda.sh -b;
+      export PATH=/home/travis/miniconda/bin:$PATH;
+      conda update --yes conda;
+    fi
 
 script:
     - pip install virtualenv==1.10
