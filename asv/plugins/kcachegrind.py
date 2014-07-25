@@ -5,11 +5,11 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 
-from .. import profile
+from .. import profiling
 from .. import util
 
 
-class KCachegrindGui(profile.ProfilerGui):
+class KCachegrindGui(profiling.ProfilerGui):
     name = 'kcachegrind'
     description = "kcachegrind through pyprof2calltree"
 
