@@ -5,11 +5,11 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 
-from .. import profile
+from .. import profiling
 from .. import util
 
 
-class RunSnakeRunGui(profile.ProfilerGui):
+class RunSnakeRunGui(profiling.ProfilerGui):
     name = 'runsnake'
     description = "RunSnakeRun http://www.vrplumber.com/programming/runsnakerun/"
 

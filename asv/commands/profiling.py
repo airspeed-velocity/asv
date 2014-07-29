@@ -18,7 +18,7 @@ from ..benchmarks import Benchmarks
 from ..console import log
 from ..environment import get_environments
 from ..machine import Machine
-from ..profile import ProfilerGui
+from ..profiling import ProfilerGui
 from ..repo import get_repo
 from ..results import iter_results_for_machine
 from ..util import hash_equal, iter_subclasses
