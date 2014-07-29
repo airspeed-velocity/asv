@@ -389,7 +389,7 @@ the project.
 ``asv profile`` takes as arguments the name of the benchmark and the
 hash, tag or branch of the project to run it in.  Below is a real
 world example of testing the ``astropy`` project.  By default, a
-simple table summary of profiling results is displayed.
+simple table summary of profiling results is displayed::
 
     > asv profile time_units.time_very_simple_unit_parse 10fc29cb
 

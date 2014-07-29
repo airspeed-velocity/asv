@@ -147,7 +147,7 @@ possible, with as much extraneous setup moved to a ``setup`` function::
 - ``repeat``: The number of times to repeat the benchmark, with each
   repetition running the benchmark ``number`` of times.  The minimum
   time from all of these repetitions is used as the final result.
-  When not provided, defaults to `timeit.default_repeat` (3).
+  When not provided, defaults to ``timeit.default_repeat`` (3).
 
 - ``timer``: The timing function to use, which can be any source of
   monotonically increasing numbers, such as `time.clock`, `time.time`
