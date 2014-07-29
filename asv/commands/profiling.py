@@ -172,7 +172,7 @@ class Profile(Command):
         if gui is not None:
             log.debug("Opening gui {0}".format(gui))
             with temp_profile(profile_data) as profile_path:
-                sys.exit(cls.guis[gui].open_profiler_gui(profile_path))
+                return cls.guis[gui].open_profiler_gui(profile_path)
         elif output is not None:
             with io.open(output, 'wb') as fd:
                 fd.write(profile_data)
