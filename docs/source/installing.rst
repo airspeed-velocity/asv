@@ -16,18 +16,28 @@ the requirements are:
 
 - `six <http://pythonhosted.org/six/>`__, 1.4 or later
 
-- `virtualenv <http://virtualenv.org/>`__, 1.10 or later (this is true
-  even with Python 3.3, where virtualenv is included as venv, since
-  venv is not compatible with other versions of Python).
+One of the following:
 
-  Note that virtualenv 1.11.0 will not work, as it contains a bug in
-  setuptools that prevents its installation in a clean virtual
-  environment.
+  - `virtualenv <http://virtualenv.org/>`__, 1.10 or later (this is true
+    even with Python 3.3, where virtualenv is included as venv, since
+    venv is not compatible with other versions of Python).
+
+    Note that virtualenv 1.11.0 will not work, as it contains a bug in
+    setuptools that prevents its installation in a clean virtual
+    environment.
+
+  - An `anaconda <https://store.continuum.io/cshop/anaconda/>`__ or
+    `miniconda <http://conda.pydata.org/miniconda.html>`__
+    installation, with the ``conda`` command available on your path.
 
 .. note::
 
-   If your Python executable is managed by `conda
-   <http://conda.pydata.org/>`, ``virtualenv`` is not required.
+   Anaconda or miniconda is preferred if the dependencies of your
+   project involve a lot of compiled C/C++ extensions and are
+   available in the ``conda`` repository, since ``conda`` will be able
+   to fetch precompiled binaries for these dependencies in many cases.
+   Using ``virtualenv``, these dependencies will have to be compiled
+   every time the environments are set up.
 
 Optional dependencies, required only to determine machine information:
 
