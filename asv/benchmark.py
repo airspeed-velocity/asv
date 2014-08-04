@@ -388,6 +388,8 @@ def disc_objects(module):
     name.
     """
     for key, val in module.__dict__.items():
+        if key.startswith('_'):
+            continue
         if inspect.isclass(val):
             for benchmark in disc_class(val):
                 yield benchmark
