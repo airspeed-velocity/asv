@@ -371,8 +371,7 @@ def disc_class(klass):
     """
     for key, val in klass.__dict__.items():
         bm_type = get_benchmark_type_from_name(key)
-
-        if bm_type is not None and inspect.isfunction(val):
+        if bm_type is not None and (inspect.isfunction(val) or inspect.ismethod(val)):
             yield bm_type.from_class_method(klass, key)
 
 
