@@ -23,3 +23,7 @@ class TimeSuite:
         for i in xrange(self.n):
             s.append('x')
         ''.join(s)
+
+
+class TimeSuiteSub(TimeSuite):
+    pass
