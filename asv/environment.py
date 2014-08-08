@@ -177,7 +177,8 @@ def get_environment(env_dir, python, requirements):
     except RuntimeError:
         raise PythonMissingError()
 
-    for cls in util.iter_subclasses(Environment):
+    # Try the subclasses in reverse order so custom plugins come first
+    for cls in list(util.iter_subclasses(Environment))[::-1]:
         if cls.matches(executable):
             return cls(env_dir, python, executable, requirements)
 
