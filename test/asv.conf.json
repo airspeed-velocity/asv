@@ -20,5 +20,7 @@
 
     "show_commit_url": "http://github.com/astropy/astropy/commit/",
 
-    "version": 1
+    "version": 1,
+
+    "plugins": [".example_plugin"]
 }

@@ -36,7 +36,7 @@ class Command(object):
 
     @classmethod
     def run_from_args(cls, args):
-        from .. import plugin_manager
+        from ..plugin_manager import plugin_manager
         conf = config.Config.load(args.config)
         for plugin in conf.plugins:
             plugin_manager.import_plugin(plugin)
