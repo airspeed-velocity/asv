@@ -369,7 +369,7 @@ def disc_class(klass):
     For each method with a special name, yields a Benchmark
     object.
     """
-    for key, val in klass.__dict__.items():
+    for key, val in inspect.getmembers(klass):
         bm_type = get_benchmark_type_from_name(key)
         if bm_type is not None and (inspect.isfunction(val) or inspect.ismethod(val)):
             yield bm_type.from_class_method(klass, key)
