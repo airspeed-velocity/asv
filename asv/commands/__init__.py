@@ -91,19 +91,16 @@ def make_argparser():
     return parser, subparsers
 
 
-# TODO: Re-enable this
-# def _make_docstring():
-#     parser, subparsers = make_argparser()
+def _make_docstring():
+    parser, subparsers = make_argparser()
 
-#     lines = []
-#     for p in six.itervalues(subparsers.choices):
-#         lines.append(p.prog)
-#         lines.append('-' * len(p.prog))
-#         lines.append('::')
-#         lines.append('')
-#         lines.extend('   ' + x for x in p.format_help().splitlines())
-#         lines.append('')
+    lines = []
+    for p in six.itervalues(subparsers.choices):
+        lines.append(p.prog)
+        lines.append('-' * len(p.prog))
+        lines.append('::')
+        lines.append('')
+        lines.extend('   ' + x for x in p.format_help().splitlines())
+        lines.append('')
 
-#     return '\n'.join(lines)
-
-# __doc__ = _make_docstring()
+    return '\n'.join(lines)

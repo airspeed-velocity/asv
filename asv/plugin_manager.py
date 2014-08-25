@@ -69,7 +69,9 @@ class PluginManager(object):
 
 plugin_manager = PluginManager()
 plugin_manager.load_plugins_in_path(
-    'asv.plugins', os.path.dirname(plugins.__file__))
-plugin_manager.load_plugins_in_path(
     'asv.commands',
     os.path.dirname(commands.__file__))
+plugin_manager.load_plugins_in_path(
+    'asv.plugins', os.path.dirname(plugins.__file__))
+
+commands.__doc__ = commands._make_docstring()
