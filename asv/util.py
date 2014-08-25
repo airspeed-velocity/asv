@@ -329,6 +329,8 @@ def load_json(path, api_version=None):
         content = fd.read()
 
     content = minify_json.json_minify(content)
+    content = content.replace(",]", "]")
+    content = content.replace(",}", "}")
     try:
         d = json.loads(content)
     except ValueError as e:
