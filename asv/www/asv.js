@@ -77,6 +77,10 @@ $(function() {
     var select_reference = false;
     /* The reference value */
     var reference = 1.0;
+    /* Is even commit spacing being used? */
+    var even_spacing = false;
+    var even_dates = {};
+    var even_dates_inv = {};
     /* The index.json content as returned from the server */
     var master_json = {};
     /* A little div to handle tooltip placement on the graph */
@@ -287,6 +291,11 @@ $(function() {
                 reference = 1.0;
                 select_reference = true;
             }
+        });
+
+        $('#even-spacing').on('click', function(evt) {
+            even_spacing = !evt.target.classList.contains("active");
+            update_graphs();
         });
 
         tooltip = $("<div></div>");
@@ -586,6 +595,48 @@ $(function() {
         }
     }
 
+    function handle_x_scale(options) {
+        if (even_spacing) {
+            var all_dates = {};
+            $.each(graphs, function(i, graph) {
+                var data = graph.data;
+                for (var j = 0; j < data.length; ++j) {
+                    all_dates[data[j][0]] = null;
+                }
+            });
+            all_dates = Object.keys(all_dates);
+            all_dates.sort();
+
+            even_dates = {};
+            even_dates_inv = {};
+            var last_date = null;
+            var j = 0
+            for (var i = 0; i < all_dates.length; ++i) {
+                if (all_dates[i] != last_date) {
+                    even_dates[all_dates[i]] = j;
+                    even_dates_inv[j] = all_dates[i];
+                    ++j;
+                    last_date = all_dates[i];
+                }
+            }
+
+            options['xaxis']['axisLabel'] = 'commits';
+            options.xaxis.transform = function(v) {
+                return even_dates[v];
+            };
+            /* inverseTransform is required for plothover to work */
+            options.xaxis.inverseTransform = function (v) {
+                return even_dates_inv[v];
+            }
+            options.xaxis.tickFormatter = function (v, axis) {
+                return "";
+            };
+        } else {
+            options['xaxis']['mode'] = 'time';
+            options['xaxis']['axisLabel'] = 'commit date';
+        }
+    }
+
     /* Once we have all of the graphs loaded, send them to flot for
        drawing. */
     function update_graphs() {
@@ -625,9 +676,7 @@ $(function() {
                 markings: markings
             },
             xaxis: {
-                mode: "time",
                 tickLength: 5,
-                axisLabel: "commit date",
                 axisLabelUseCanvas: true,
                 axisLabelFontFamily: "sans-serif",
                 axisLabelFontSizePixels: 12
@@ -647,6 +696,7 @@ $(function() {
         };
 
         handle_y_scale(options);
+        handle_x_scale(options);
 
         var graph_div = $('#main-graph');
         var overview_div = $('#overview');
