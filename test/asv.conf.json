@@ -22,5 +22,5 @@
 
     "version": 1,
 
-    "plugins": [".example_plugin"]
+    "plugins": [".example_plugin"],
 }
