@@ -88,6 +88,8 @@ $(function() {
         url: "index.json",
         cache: false
     }).done(function (index) {
+        var hash = window.location.hash.replace('#', '');
+
         master_json = index;
 
         /* Page title */
@@ -194,7 +196,7 @@ $(function() {
         panel_body.append(tree);
         var cursor = [];
         var stack = [tree];
-        var first_benchmark = true;
+        var first_benchmark = null;
 
         /* Note: this relies on the fact that the benchmark names are
            sorted. */
@@ -229,7 +231,7 @@ $(function() {
 	        });
             }
 
-            var top = $('<li><a href="#">' + parts[parts.length - 1] + '</li>');
+            var top = $('<li><a href="#' + bm_name + '">' + parts[parts.length - 1] + '</li>');
             stack[stack.length - 1].append(top);
 
             top.on('click', function(evt) {
@@ -253,16 +255,22 @@ $(function() {
                 animation: 'false'
             });
 
-            if (first_benchmark) {
-                top.click();
-                first_benchmark = false;
+            if (!first_benchmark) {
+                first_benchmark = top;
+            }
+            if (hash === bm_name) {
+                first_benchmark = top;
             }
         });
 
-        /* Set up tree toggling events */
-        $('label.tree-toggler').click(function () {
-	    $(this).parent().children('ul.tree').toggle(300);
-	});
+        first_benchmark.click();
+        // Reveal the current benchmark in the tree and all of its
+        // parents
+        parent = first_benchmark.parent();
+        while (parent[0] != tree[0]) {
+            parent.parent().children('ul.tree').toggle();
+            parent = parent.parent().parent();
+        }
 
         $('#log-scale').on('click', function(evt) {
             log_scale = !evt.target.classList.contains("active");
@@ -360,7 +368,6 @@ $(function() {
                 }
             }
         });
-
     }).fail(function () {
         network_error();
     });
