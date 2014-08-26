@@ -71,6 +71,8 @@ $(function() {
     var graphs = [];
     /* True when log scaling is enabled. */
     var log_scale = false;
+    /* True when zero scaling is enabled. */
+    var zero_scale = false;
     /* True when log scaling is enabled. */
     var reference_scale = false;
     /* True when selecting a reference point */
@@ -279,7 +281,19 @@ $(function() {
         $('#log-scale').on('click', function(evt) {
             log_scale = !evt.target.classList.contains("active");
             reference_scale = false;
+            zero_scale = false;
             $('#reference').removeClass('active');
+            $('#zero-scale').removeClass('active');
+            reference = 1.0;
+            update_graphs();
+        });
+
+        $('#zero-scale').on('click', function(evt) {
+            zero_scale = !evt.target.classList.contains("active");
+            reference_scale = false;
+            log_scale = false;
+            $('#reference').removeClass('active');
+            $('#log-scale').removeClass('active');
             reference = 1.0;
             update_graphs();
         });
@@ -287,7 +301,9 @@ $(function() {
         $('#reference').on('click', function(evt) {
             reference_scale = !evt.target.classList.contains("active");
             log_scale = false;
+            zero_scale = false;
             $('#log-scale').removeClass('active');
+            $('#zero-scale').removeClass('active');
             if (!reference_scale) {
                 update_graphs();
             } else {
@@ -581,8 +597,15 @@ $(function() {
                         Math.log(v / reference) / Math.LN10)).toString().sup();
             };
             options.yaxis.min = Math.pow(10, min) * reference;
-            options.yaxis.max = Math.pow(10, max) * reference;
+            options.yaxis.max = Math.pow(10, max) * reference;     
+
         } else if (master_json.benchmarks[current_benchmark].unit === 'seconds') {
+
+            if (zero_scale) {
+                options.yaxis.min = 0.;
+                options.yaxis.max = max * 1.3;
+            }
+
             var unit_name = null;
             var multiplier = null;
             for (var i = 0; i < time_units.length - 1; ++i) {
