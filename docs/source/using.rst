@@ -214,6 +214,11 @@ to ``git log`` to get the set of commits, so it actually has a very
 powerful syntax defined in the `gitrevisions manpage
 <https://www.kernel.org/pub/software/scm/git/docs/gitrevisions.html>`__.
 
+For example, one can test a range of commits on a particular branch
+since the branch was created::
+
+        asv run mybranch@{u}..mybranch
+
 .. note::
 
     Yes, this is git-specific for now.  Support for Mercurial or other
@@ -337,7 +342,7 @@ commits in question.  The commit hashes associated with that range
 is then displayed in the "commits" section of the sidebar.  We'll copy
 and paste this commit range into the commandline arguments of the
 ``asv find`` command, along with the name of a single benchmark to use.
-The output below is truncated to show how the search progresses:
+The output below is truncated to show how the search progresses::
 
     $ asv find 05d4f83d..b96fcc53 time_coordinates.time_latitude
     - Running approximately 10 benchmarks within 1156 commits
