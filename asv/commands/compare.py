@@ -24,9 +24,11 @@ class Compare(Command):
         parser.add_argument(
             'revision1', nargs=1,
             help="""The reference revision.""")
+
         parser.add_argument(
             'revision2', nargs=1,
             help="""The revision being compared""")
+
         parser.add_argument(
             '--threshold', '-t', nargs='?', type=float, default=2,
             help="""The threshold to use to color-code divergent results. This
@@ -34,9 +36,10 @@ class Compare(Command):
                     highlight all results differing by more than a factor of
                     2.""")
         parser.add_argument(
-           '--split', '-s', nargs='?', action='store_true',
+           '--split', '-s', action='store_true',
            help="""Split the output into a table of benchmarks that have
            improved, stayed the same, and gotten worse""")
+
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -44,8 +47,10 @@ class Compare(Command):
 
     @classmethod
     def run_from_conf_args(cls, conf, args):
-        return cls.run(
-            conf=conf, revision1=args.revision1[0], revision2=args.revision2[0], threshold=args.threshold, split=args.split)
+        return cls.run(conf=conf,
+                       revision1=args.revision1[0],
+                       revision2=args.revision2[0],
+                       threshold=args.threshold, split=args.split)
 
     @classmethod
     def run(cls, conf, revision1, revision2, threshold=2, split=False, _machine_file=None):
@@ -108,31 +113,36 @@ class Compare(Command):
                 color = 'default'
 
             details = "{0:>9s} {1:>9s} {2:>9s}  ".format('failed' if time_1 is None else human_time(time_1),
-                                                        'failed' if time_2 is None else human_time(time_2),
-                                                        ratio)
+                                                         'failed' if time_2 is None else human_time(time_2),
+                                                         ratio)
 
             if split:
-                bench[color] = (details, benchmark)
+                bench[color].append((details, benchmark))
             else:
-                bench['all'] = (details, benchmark)
+                bench['all'].append((details, benchmark))
 
         if split:
-            keys = ['good', 'same', 'bad']
+            keys = ['green', 'default', 'red']
         else:
             keys = ['all']
 
         titles = {}
-        titles['good'] = "Benchmarks that have improved"
-        titles['same'] = "Benchmarks that have stayed the same"
-        titles['bad'] = "Benchmarks that have got worse"
-        titles['all'] = "All benchmarks"
+        titles['green'] = "Benchmarks that have improved:"
+        titles['default'] = "Benchmarks that have stayed the same:"
+        titles['red'] = "Benchmarks that have got worse:"
+        titles['all'] = "All benchmarks:"
+
+        print("")
 
         for key in keys:
+
+            if len(bench[key]) == 0:
+                continue
 
             print("")
             print(titles[key])
             print("")
-            print("  before     after    speedup")
+            print("  before     after    ratio")
 
             for details, benchmark in bench[key]:
                 color_print(details, key, end='')
