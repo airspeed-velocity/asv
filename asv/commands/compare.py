@@ -33,6 +33,10 @@ class Compare(Command):
                     is a factor, so for example setting this to 2 will
                     highlight all results differing by more than a factor of
                     2.""")
+        parser.add_argument(
+           '--split', '-s', nargs='?', action='store_true',
+           help="""Split the output into a table of benchmarks that have
+           improved, stayed the same, and gotten worse""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -41,10 +45,10 @@ class Compare(Command):
     @classmethod
     def run_from_conf_args(cls, conf, args):
         return cls.run(
-            conf=conf, revision1=args.revision1[0], revision2=args.revision2[0], threshold=args.threshold)
+            conf=conf, revision1=args.revision1[0], revision2=args.revision2[0], threshold=args.threshold, split=args.split)
 
     @classmethod
-    def run(cls, conf, revision1, revision2, threshold=2, _machine_file=None):
+    def run(cls, conf, revision1, revision2, threshold=2, split=False, _machine_file=None):
 
         machine_params = Machine.load(_path=_machine_file, interactive=True)
 
@@ -73,8 +77,14 @@ class Compare(Command):
 
         common_benchmarks = sorted(list(benchmarks_1 & benchmarks_2))
 
-        print("")
-        print("  before     after    speedup")
+        bench = {}
+
+        if split:
+            bench['green'] = []
+            bench['red'] = []
+            bench['default'] = []
+        else:
+            bench['all'] = []
 
         for benchmark in common_benchmarks:
 
@@ -97,7 +107,33 @@ class Compare(Command):
             else:
                 color = 'default'
 
-            color_print("{0:>9s} {1:>9s} {2:>9s}  ".format('failed' if time_1 is None else human_time(time_1),
-                                                   'failed' if time_2 is None else human_time(time_2),
-                                                    ratio), color, end='')
-            print(benchmark)
+            details = "{0:>9s} {1:>9s} {2:>9s}  ".format('failed' if time_1 is None else human_time(time_1),
+                                                        'failed' if time_2 is None else human_time(time_2),
+                                                        ratio)
+
+            if split:
+                bench[color] = (details, benchmark)
+            else:
+                bench['all'] = (details, benchmark)
+
+        if split:
+            keys = ['good', 'same', 'bad']
+        else:
+            keys = ['all']
+
+        titles = {}
+        titles['good'] = "Benchmarks that have improved"
+        titles['same'] = "Benchmarks that have stayed the same"
+        titles['bad'] = "Benchmarks that have got worse"
+        titles['all'] = "All benchmarks"
+
+        for key in keys:
+
+            print("")
+            print(titles[key])
+            print("")
+            print("  before     after    speedup")
+
+            for details, benchmark in bench[key]:
+                color_print(details, key, end='')
+                print(benchmark)
