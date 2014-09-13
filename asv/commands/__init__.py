@@ -24,7 +24,8 @@ command_order = [
     'Publish',
     'Preview',
     'Profile',
-    'Update'
+    'Update',
+    'Compare'
 ]
 
 
