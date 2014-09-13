@@ -117,9 +117,9 @@ class Compare(Command):
                                                          ratio)
 
             if split:
-                bench[color].append((details, benchmark))
+                bench[color].append((color, details, benchmark))
             else:
-                bench['all'].append((details, benchmark))
+                bench['all'].append((color, details, benchmark))
 
         if split:
             keys = ['green', 'default', 'red']
@@ -144,6 +144,6 @@ class Compare(Command):
             print("")
             print("  before     after    ratio")
 
-            for details, benchmark in bench[key]:
-                color_print(details, key, end='')
+            for color, details, benchmark in bench[key]:
+                color_print(details, color, end='')
                 print(benchmark)
