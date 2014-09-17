@@ -79,8 +79,10 @@ class Continuous(Command):
         tabulated = []
         for commit_hash in commit_hashes:
             subtab = {}
+            totals = {}
             for benchmark in run_objs['benchmarks']:
                 subtab[benchmark] = 0.0
+                totals[benchmark] = 0
 
             for env in run_objs['environments']:
                 filename = results.get_filename(
@@ -89,10 +91,13 @@ class Continuous(Command):
                 result = results.Results.load(filename)
 
                 for benchmark in run_objs['benchmarks']:
-                    subtab[benchmark] += result.results[benchmark]
+                    timing = results.results.get(benchmark, None)
+                    if timing is not None:
+                        subtab[benchmark] += timing
+                        totals[benchmark] += 1
 
             for benchmark in run_objs['benchmarks']:
-                subtab[benchmark] /= len(run_objs['environments'])
+                subtab[benchmark] /= totals.get(benchmark, 1)
 
             tabulated.append(subtab)
 
