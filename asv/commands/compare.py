@@ -35,10 +35,15 @@ class Compare(Command):
                     is a factor, so for example setting this to 2 will
                     highlight all results differing by more than a factor of
                     2.""")
+
         parser.add_argument(
            '--split', '-s', action='store_true',
            help="""Split the output into a table of benchmarks that have
            improved, stayed the same, and gotten worse""")
+
+        parser.add_argument(
+            '--machine', '-m', nargs='?', type=str, default=None,
+            help="""The machine to compare the revisions for""")
 
 
         parser.set_defaults(func=cls.run_from_args)
@@ -50,7 +55,8 @@ class Compare(Command):
         return cls.run(conf=conf,
                        hash_1=args.revision1[0],
                        hash_2=args.revision2[0],
-                       threshold=args.threshold, split=args.split)
+                       threshold=args.threshold, split=args.split,
+                       machine=args.machine)
 
     @classmethod
     def run(cls, conf, hash_1, hash_2, threshold=2, split=False, machine=None):
