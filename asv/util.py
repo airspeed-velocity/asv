@@ -186,7 +186,7 @@ class ProcessError(subprocess.CalledProcessError):
 
 
 def check_call(args, error=True, timeout=60, dots=True, display_error=True,
-               shell=False):
+               shell=False, env=None):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.
@@ -195,11 +195,11 @@ def check_call(args, error=True, timeout=60, dots=True, display_error=True,
     """
     check_output(
         args, error=error, timeout=timeout, dots=dots,
-        display_error=display_error, shell=shell)
+        display_error=display_error, shell=shell, env=env)
 
 
 def check_output(args, error=True, timeout=120, dots=True, display_error=True,
-                 shell=False, return_stderr=False):
+                 shell=False, return_stderr=False, env=None):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.  Returns stdout as a string on success.
@@ -226,6 +226,8 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
     shell : bool, optional
         If `True`, run the command through the shell.  Default is
         `False`.
+    env : dict, optional
+        Specify environment variables for the subprocess.
     """
     def get_content(header=None):
         content = []
@@ -245,6 +247,7 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
     proc = subprocess.Popen(
         args,
         close_fds=True,
+        env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         shell=shell)
