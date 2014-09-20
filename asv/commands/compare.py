@@ -5,10 +5,10 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 from . import Command
-from ..machine import Machine
+from ..machine import Machine, iter_machine_files
 from ..repo import get_repo
-from ..results import iter_results_for_machine
-from ..util import hash_equal, human_time
+from ..results import iter_results, iter_results_for_machine
+from ..util import hash_equal, human_time, load_json
 from ..console import color_print
 
 
@@ -48,34 +48,43 @@ class Compare(Command):
     @classmethod
     def run_from_conf_args(cls, conf, args):
         return cls.run(conf=conf,
-                       revision1=args.revision1[0],
-                       revision2=args.revision2[0],
+                       hash_1=args.revision1[0],
+                       hash_2=args.revision2[0],
                        threshold=args.threshold, split=args.split)
 
     @classmethod
-    def run(cls, conf, revision1, revision2, threshold=2, split=False, _machine_file=None):
+    def run(cls, conf, hash_1, hash_2, threshold=2, split=False, machine=None):
 
-        machine_params = Machine.load(_path=_machine_file, interactive=True)
-
-        repo = get_repo(conf)
-
-        commit_hash_1 = repo.get_hash_from_tag(revision1)
-        commit_hash_2 = repo.get_hash_from_tag(revision2)
+        machines = []
+        for path in iter_machine_files(conf.results_dir):
+            d = load_json(path)
+            machines.append(d['machine'])
+        
+        if len(machines) == 0:
+            raise Exception("No results found")
+        elif machine is None:
+            if len(machines) > 1:
+                raise Exception("Results available for several machines: {0} - "
+                                "specify which one to use with the --machine option".format('/'.join(machines)))
+            else:
+                machine = machines[0]
+        elif not machine in machines:        
+            raise ValueError("Results for machine '{0} not found".format(machine))
 
         results_1 = None
         results_2 = None
 
-        for result in iter_results_for_machine(conf.results_dir, machine_params.machine):
-            if hash_equal(commit_hash_1, result.commit_hash):
+        for result in iter_results_for_machine(conf.results_dir, machine):
+            if hash_equal(hash_1, result.commit_hash):
                 results_1 = result
-            if hash_equal(commit_hash_2, result.commit_hash):
+            if hash_equal(hash_2, result.commit_hash):
                 results_2 = result
 
         if results_1 is None:
-            raise ValueError("Did not find results for commit {0}".format(commit_hash_1))
+            raise ValueError("Did not find results for commit {0}".format(hash_1))
 
         if results_2 is None:
-            raise ValueError("Did not find results for commit {0}".format(commit_hash_2))
+            raise ValueError("Did not find results for commit {0}".format(hash_2))
 
         benchmarks_1 = set(results_1.results.keys())
         benchmarks_2 = set(results_2.results.keys())
@@ -112,7 +121,7 @@ class Compare(Command):
             else:
                 color = 'default'
 
-            details = "{0:>9s} {1:>9s} {2:>9s}  ".format('failed' if time_1 is None else human_time(time_1),
+            details = "{0:>9s}  {1:>9s} {2:>9s}  ".format('failed' if time_1 is None else human_time(time_1),
                                                          'failed' if time_2 is None else human_time(time_2),
                                                          ratio)
 
@@ -132,8 +141,6 @@ class Compare(Command):
         titles['red'] = "Benchmarks that have got worse:"
         titles['all'] = "All benchmarks:"
 
-        print("")
-
         for key in keys:
 
             if len(bench[key]) == 0:
@@ -142,7 +149,8 @@ class Compare(Command):
             print("")
             print(titles[key])
             print("")
-            print("  before     after    ratio")
+            print("  before     after       ratio")
+            print("[{0:8s}] [{1:8s}]".format(hash_1[:8], hash_2[:8]))
 
             for color, details, benchmark in bench[key]:
                 color_print(details, color, end='')
