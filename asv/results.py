@@ -12,9 +12,9 @@ from .environment import get_environment
 from . import util
 
 
-def iter_results(results):
+def iter_results_paths(results):
     """
-    Iterate over all of the result files.
+    Iterate over all of the result file paths.
     """
     skip_files = set([
         'machine.json', 'benchmarks.json'
@@ -22,8 +22,15 @@ def iter_results(results):
     for root, dirs, files in os.walk(results):
         for filename in files:
             if filename not in skip_files and filename.endswith('.json'):
-                path = os.path.join(root, filename)
-                yield Results.load(path)
+                yield (root, filename)
+
+
+def iter_results(results):
+    """
+    Iterate over all of the result files.
+    """
+    for (root, filename) in iter_results_paths(results):
+        yield Results.load(os.path.join(root, filename))
 
 
 def iter_results_for_machine(results, machine_name):
@@ -31,6 +38,19 @@ def iter_results_for_machine(results, machine_name):
     Iterate over all of the result files for a particular machine.
     """
     return iter_results(os.path.join(results, machine_name))
+
+
+def iter_results_for_machine_and_hash(results, machine_name, commit):
+    """
+    Iterate over all of the result files with a given hash for a
+    particular machine.
+    """
+    for (root, filename) in iter_results_paths(
+            os.path.join(results, machine_name)):
+        results_commit = filename.split('-')[0]
+        max_len = max(len(commit), len(results_commit))
+        if results_commit[:max_len] == commit[:max_len]:
+            yield Results.load(os.path.join(root, filename))
 
 
 def iter_existing_hashes(results):

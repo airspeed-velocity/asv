@@ -5,10 +5,9 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 from . import Command
-from ..machine import Machine, iter_machine_files
-from ..repo import get_repo
-from ..results import iter_results, iter_results_for_machine
-from ..util import hash_equal, human_time, load_json
+from ..machine import iter_machine_files
+from ..results import iter_results_for_machine_and_hash
+from ..util import human_time, load_json
 from ..console import color_print
 
 
@@ -89,19 +88,19 @@ class Compare(Command):
         results_1 = {}
         results_2 = {}
 
-        for result in iter_results_for_machine(conf.results_dir, machine):
+        for result in iter_results_for_machine_and_hash(
+                conf.results_dir, machine, hash_1):
+            for key in result.results:
+                if key not in results_1:
+                    results_1[key] = []
+                results_1[key].append(result.results[key])
 
-            if hash_equal(hash_1, result.commit_hash):
-                for key in result.results:
-                    if key not in results_1:
-                        results_1[key] = []
-                    results_1[key].append(result.results[key])
-
-            if hash_equal(hash_2, result.commit_hash):
-                for key in result.results:
-                    if key not in results_2:
-                        results_2[key] = []
-                    results_2[key].append(result.results[key])
+        for result in iter_results_for_machine_and_hash(
+                conf.results_dir, machine, hash_2):
+            for key in result.results:
+                if key not in results_2:
+                    results_2[key] = []
+                results_2[key].append(result.results[key])
 
         if len(results_1) == 0:
             raise ValueError("Did not find results for commit {0}".format(hash_1))
