@@ -137,18 +137,24 @@ class Compare(Command):
                 color = 'red'
             elif time_1 is None and time_2 is None:
                 color = 'green'
+                mark = '^'
             elif time_1 is not None and time_2 is None:
                 color = 'red'
+                mark = 'v'
             elif time_2 < time_1 / threshold:
                 color = 'green'
+                mark = '^'
             elif time_2 > time_1 * threshold:
                 color = 'red'
+                mark = 'v'
             else:
                 color = 'default'
-
-            details = "{0:>9s}  {1:>9s} {2:>9s}  ".format('failed' if time_1 is None else human_time(time_1),
-                                                         'failed' if time_2 is None else human_time(time_2),
-                                                         ratio)
+                mark = ' '
+            details = "{0:1s} {1:>9s}  {2:>9s} {3:>9s}  ".format(
+                mark,
+                'failed' if time_1 is None else human_time(time_1),
+                'failed' if time_2 is None else human_time(time_2),
+                ratio)
 
             if split:
                 bench[color].append((color, details, benchmark))
@@ -174,8 +180,8 @@ class Compare(Command):
             print("")
             print(titles[key])
             print("")
-            print("  before     after       ratio")
-            print("[{0:8s}] [{1:8s}]".format(hash_1[:8], hash_2[:8]))
+            print("    before     after       ratio")
+            print("  [{0:8s}] [{1:8s}]".format(hash_1[:8], hash_2[:8]))
 
             for color, details, benchmark in bench[key]:
                 color_print(details, color, end='')
