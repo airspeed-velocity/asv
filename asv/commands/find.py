@@ -85,7 +85,7 @@ class Find(Command):
 
         repo = get_repo(conf)
 
-        commit_hashes = repo.get_hashes_from_range(range_spec)
+        commit_hashes = repo.get_hashes_from_range(range_spec)[::-1]
 
         if len(commit_hashes) == 0:
             log.error("No commit hashes selected")
