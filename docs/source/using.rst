@@ -103,7 +103,8 @@ Running benchmarks
 
 Benchmarks are run using the ``asv run`` subcommand.
 
-Let's start by just benchmarking the current ``master`` of the project::
+Let's start by just benchmarking the latest commit in the current ``master`` of
+the project::
 
     $ asv run
 

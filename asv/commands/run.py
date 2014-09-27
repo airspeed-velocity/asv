@@ -58,7 +58,7 @@ class Run(Command):
             benchmark all commits in the project's history that have not yet
             been benchmarked. 'EXISTING' will benchmark against all commits for
             which there are existing benchmarks on any machine. By default,
-            will benchmark the current master branch.""")
+            will benchmark the head of the current master branch.""")
         parser.add_argument(
             "--steps", "-s", type=int, default=0,
             help="""Maximum number of steps to benchmark.  This is
