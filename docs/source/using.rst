@@ -103,7 +103,8 @@ Running benchmarks
 
 Benchmarks are run using the ``asv run`` subcommand.
 
-Let's start by just benchmarking the current ``master`` of the project::
+Let's start by just benchmarking the latest commit in the current ``master`` of
+the project::
 
     $ asv run
 
@@ -235,6 +236,10 @@ benchmark in a reasonable amount of time.  In that case, the
 commits you want to test, and it will evenly space them over the
 specified range.
 
+You can benchmark all commits in the repository by using::
+
+    asv run ALL
+
 You may also want to benchmark every commit that has already been
 benchmarked on all the other machines.  For that, use::
 
@@ -244,6 +249,11 @@ You can benchmark all commits since the last one that was benchmarked
 on this machine.  This is useful for running in nightly cron jobs::
 
     asv run NEW
+
+Finally, you can also benchmark all commits that have not yet been benchmarked
+for this machine::
+
+    asv run MISSING
 
 The results are stored as a tree of files in the directory
 ``results/$MACHINE``, where ``$MACHINE`` is the unique machine name
