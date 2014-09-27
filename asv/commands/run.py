@@ -52,11 +52,13 @@ class Run(Command):
             repository, this is passed as the first argument to ``git
             log``.  See 'specifying ranges' section of the
             `gitrevisions` manpage for more info.  Also accepts the
-            special values 'NEW', and 'EXISTING'.  'NEW' will
-            benchmark all commits since the latest benchmarked on this
-            machine.  'EXISTING' will benchmark against all commits
-            for which there are existing benchmarks on any machine.
-            By default, will benchmark the current master branch.""")
+            special values 'NEW', 'ALL', 'MISSING', and 'EXISTING'. 'NEW' will
+            benchmark all commits since the latest benchmarked on this machine.
+            'ALL' will benchmark all commits in the project. 'MISSING' will
+            benchmark all commits in the project's history that have not yet
+            been benchmarked. 'EXISTING' will benchmark against all commits for
+            which there are existing benchmarks on any machine. By default,
+            will benchmark the current master branch.""")
         parser.add_argument(
             "--steps", "-s", type=int, default=0,
             help="""Maximum number of steps to benchmark.  This is
@@ -126,6 +128,15 @@ class Run(Command):
                 machine_params.machine, conf.results_dir)
             # TODO: This is shamelessly git-specific
             range_spec = '{0}..master'.format(latest_result)
+        elif range_spec == "ALL":
+            range_spec = ""
+        elif range_spec == "MISSING":
+            commit_hashes = repo.get_hashes_from_range("")
+            for h, d in get_existing_hashes(conf.results_dir):
+                if h in commit_hashes:
+                    commit_hashes.remove(h)
+            range_spec = None
+
 
         if isinstance(range_spec, list):
             commit_hashes = range_spec

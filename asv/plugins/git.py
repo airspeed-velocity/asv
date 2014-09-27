@@ -75,10 +75,10 @@ class Git(Repo):
     def get_hashes_from_range(self, range_spec):
         if range_spec == 'master':
             range_spec = 'master^!'
-        return self._run_git(
-            ['log', '--quiet', '--first-parent', '--format=format:%H',
-             range_spec], dots=False
-        ).strip().split()
+        args = ['log', '--quiet', '--first-parent', '--format=format:%H']
+        if range_spec != "":
+            args += [range_spec]
+        return self._run_git(args, dots=False).strip().split()
 
     def get_hash_from_tag(self, tag):
         return self._run_git(
