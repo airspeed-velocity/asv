@@ -111,18 +111,34 @@ except ImportError:  # Python <3.3
         process_time = timeit.default_timer
 
 
-def _get_multi_name_attr(obj, name):
-    attrs = [getattr(obj, key) for key in dir(obj)
-             if key.lower() == name.lower()]
+def _get_attr(source, name, ignore_case=False):
+    if ignore_case:
+        attrs = [getattr(source, key) for key in dir(source)
+                 if key.lower() == name.lower()]
 
-    if len(attrs) > 1:
-        raise ValueError(
-            "{0} contains multiple {1} functions.".format(
-                obj.__name__, name))
-    elif len(attrs) == 1:
-        return attrs[0]
+        if len(attrs) > 1:
+            raise ValueError(
+                "{0} contains multiple {1} functions.".format(
+                    source.__name__, name))
+        elif len(attrs) == 1:
+            return attrs[0]
+        else:
+            return None
     else:
-        return None
+        return getattr(source, name, None)
+
+
+def _get_all_attrs(sources, name, ignore_case=False):
+    for source in sources:
+        val = _get_attr(source, name, ignore_case=ignore_case)
+        if val is not None:
+            yield val
+
+
+def _get_first_attr(sources, name, default, ignore_case=False):
+    for val in _get_all_attrs(sources, name, ignore_case=ignore_case):
+        return val
+    return default
 
 
 def get_benchmark_type_from_name(name):
@@ -141,16 +157,13 @@ class Benchmark(object):
     # match nothing.
     name_regex = re.compile('^$')
 
-    def __init__(self, name, func, attr_source):
+    def __init__(self, name, func, attr_sources):
         self.name = name
         self.func = func
-        self.setup = _get_multi_name_attr(attr_source, 'setup')
-        self.teardown = _get_multi_name_attr(attr_source, 'teardown')
-        module = inspect.getmodule(attr_source)
-        self.module_setup = _get_multi_name_attr(module, 'setup')
-        self.module_teardown = _get_multi_name_attr(module, 'teardown')
-        self.timeout = getattr(attr_source, "timeout", 60.0)
-        self.attr_source = attr_source
+        self._attr_sources = attr_sources
+        self._setups = list(_get_all_attrs(attr_sources, 'setup', True))[::-1]
+        self._teardowns = list(_get_all_attrs(attr_sources, 'teardown', True))
+        self.timeout = _get_first_attr(attr_sources, "timeout", 60.0)
         self.code = textwrap.dedent(inspect.getsource(self.func))
         self.type = "base"
         self.unit = "unit"
@@ -163,9 +176,13 @@ class Benchmark(object):
         """
         Create a benchmark object from a free function.
         """
-        name = '.'.join(
-            [inspect.getmodule(func).__name__, func.__name__])
-        return cls(name, func, func)
+        module = inspect.getmodule(func)
+        if hasattr(func, '__qualname__'):
+            name = func.__qualname__
+        else:
+            name = '.'.join(
+                [module.__name__, func.__name__])
+        return cls(name, func, [func, inspect.getmodule(func)])
 
     @classmethod
     def from_class_method(cls, klass, method_name):
@@ -180,11 +197,15 @@ class Benchmark(object):
         method_name : str
             The name of the method.
         """
-        name = '.'.join(
-            [inspect.getmodule(klass).__name__, klass.__name__, method_name])
+        module = inspect.getmodule(klass)
         instance = klass()
         func = getattr(instance, method_name)
-        return cls(name, func, instance)
+        if hasattr(func, '__qualname__'):
+            name = func.__qualname__
+        else:
+            name = '.'.join(
+                [module.__name__, klass.__name__, method_name])
+        return cls(name, func, [func, instance, module])
 
     @classmethod
     def from_name(cls, root, name, quick=False):
@@ -242,18 +263,12 @@ class Benchmark(object):
         return benchmark
 
     def do_setup(self):
-        if self.module_setup is not None:
-            self.module_setup()
-
-        if self.setup is not None:
-            self.setup()
+        for setup in self._setups:
+            setup()
 
     def do_teardown(self):
-        if self.module_teardown is not None:
-            self.module_teardown()
-
-        if self.teardown is not None:
-            self.teardown()
+        for teardown in self._teardowns:
+            teardown()
 
     def do_run(self):
         return self.run()
@@ -279,14 +294,15 @@ class TimeBenchmark(Benchmark):
     name_regex = re.compile(
         '^(Time[A-Z_].+)|(time_.+)$')
 
-    def __init__(self, name, func, attr_source):
-        Benchmark.__init__(self, name, func, attr_source)
+    def __init__(self, name, func, attr_sources):
+        Benchmark.__init__(self, name, func, attr_sources)
         self.type = "time"
         self.unit = "seconds"
-        self.goal_time = getattr(attr_source, 'goal_time', 2.0)
-        self.timer = getattr(attr_source, 'timer', process_time)
-        self.repeat = getattr(attr_source, 'repeat', timeit.default_repeat)
-        self.number = int(getattr(attr_source, 'number', 0))
+        self.goal_time = _get_first_attr(attr_sources, 'goal_time', 2.0)
+        self.timer = _get_first_attr(attr_sources, 'timer', process_time)
+        self.repeat = _get_first_attr(
+            attr_sources, 'repeat', timeit.default_repeat)
+        self.number = int(_get_first_attr(attr_sources, 'number', 0))
 
     def run(self):
         number = self.number
@@ -318,8 +334,8 @@ class MemBenchmark(Benchmark):
     name_regex = re.compile(
         '^(Mem[A-Z_].+)|(mem_.+)$')
 
-    def __init__(self, name, func, attr_source):
-        Benchmark.__init__(self, name, func, attr_source)
+    def __init__(self, name, func, attr_sources):
+        Benchmark.__init__(self, name, func, attr_sources)
         self.type = "memory"
         self.unit = "bytes"
 
@@ -345,10 +361,10 @@ class TrackBenchmark(Benchmark):
     name_regex = re.compile(
         '^(Track[A-Z_].+)|(track_.+)$')
 
-    def __init__(self, name, func, attr_source):
-        Benchmark.__init__(self, name, func, attr_source)
-        self.type = getattr(attr_source, "type", "track")
-        self.unit = getattr(attr_source, "unit", "unit")
+    def __init__(self, name, func, attr_sources):
+        Benchmark.__init__(self, name, func, attr_sources)
+        self.type = _get_first_attr(attr_sources, "type", "track")
+        self.unit = _get_first_attr(attr_sources, "unit", "unit")
 
     def run(self):
         return self.func()
@@ -436,7 +452,8 @@ def list_benchmarks(root):
             sys.stdout.write(', ')
         clean = dict(
             (k, v) for (k, v) in benchmark.__dict__.items()
-            if isinstance(v, (str, int, float, list, dict)))
+            if isinstance(v, (str, int, float, list, dict)) and not
+               k.startswith('_'))
         json.dump(clean, sys.stdout, skipkeys=True)
         first = False
     sys.stdout.write(']')
