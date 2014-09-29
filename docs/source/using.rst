@@ -465,3 +465,36 @@ the ``--gui=runsnake`` to ``asv profile``, the profile is collected
 
 You can also get the raw profiling data by using the ``--output``
 argument to ``asv profile``.
+
+.. comparing_
+
+Comparing the resuls for two revisions
+--------------------------------------
+
+In some cases, you may want to directly compare the results for two specific
+revisions of the project. You can do so with the ``compare`` command::
+
+    $ asv compare 7810d6d7 19aa5743
+    · Fetching recent changes.
+
+    All benchmarks:
+
+        before     after       ratio
+      [7810d6d7] [19aa5743]
+    +    1.75ms   152.84ms     87.28  time_quantity.time_quantity_array_conversion
+    +  933.71μs   108.22ms    115.90  time_quantity.time_quantity_init_array
+        83.65μs    55.38μs      0.66  time_quantity.time_quantity_init_scalar
+       281.71μs   146.88μs      0.52  time_quantity.time_quantity_scalar_conversion
+    +    1.31ms     7.75ms      5.91  time_quantity.time_quantity_ufunc_sin
+          5.73m      5.73m      1.00  time_units.mem_unit
+    ...
+
+This will show the times for each benchmark for the first and second revision,
+and the ratio of the second to the first. In addition, the benchmarks will be
+color coded green and red if the bechmark improves or worsens more than a
+certain threshold factor, which defaults to 2 (that is, benchmarks that improve
+by more than a factor of 2 or worsen by a factor of 2 are color coded). The
+threshold can be set with the ``--threshold=value`` option. Finally, the
+benchmarks can be split into ones that have improved, stayed the same, and
+worsened, using the same threshold.
+
