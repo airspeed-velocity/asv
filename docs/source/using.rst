@@ -469,13 +469,14 @@ revisions of the project. You can do so with the ``compare`` command::
 
     All benchmarks:
 
-      before     after    ratio
-      98.30ms   68.19ms      0.69  benchmarks.AperturePhotometry.time_01
-     139.58ms  108.97ms      0.78  benchmarks.AperturePhotometry.time_02
-      98.94ms   67.96ms      0.69  benchmarks.AperturePhotometry.time_03
-     105.35ms   73.63ms      0.70  benchmarks.AperturePhotometry.time_04
-     116.30ms   86.23ms      0.74  benchmarks.AperturePhotometry.time_05
-      48.15ms   51.00ms      1.06  benchmarks.AperturePhotometry.time_06
+        before     after       ratio
+      [7810d6d7] [19aa5743]
+    v    1.75ms   152.84ms     87.28  time_quantity.time_quantity_array_conversion
+    v  933.71μs   108.22ms    115.90  time_quantity.time_quantity_init_array
+        83.65μs    55.38μs      0.66  time_quantity.time_quantity_init_scalar
+       281.71μs   146.88μs      0.52  time_quantity.time_quantity_scalar_conversion
+    v    1.31ms     7.75ms      5.91  time_quantity.time_quantity_ufunc_sin
+          5.73m      5.73m      1.00  time_units.mem_unit
     ...
 
 This will show the times for each benchmark for the first and second revision,
