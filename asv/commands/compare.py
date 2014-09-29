@@ -134,18 +134,18 @@ class Compare(Command):
 
             if time_1 is None and time_2 is None:
                 color = 'red'
-            elif time_1 is None and time_2 is None:
+            elif time_1 is None and time_2 is not None:
                 color = 'green'
-                mark = '^'
+                mark = '-'
             elif time_1 is not None and time_2 is None:
                 color = 'red'
-                mark = 'v'
+                mark = '!'
             elif time_2 < time_1 / threshold:
                 color = 'green'
-                mark = '^'
+                mark = '-'
             elif time_2 > time_1 * threshold:
                 color = 'red'
-                mark = 'v'
+                mark = '+'
             else:
                 color = 'default'
                 mark = ' '
