@@ -177,11 +177,8 @@ class Benchmark(object):
         Create a benchmark object from a free function.
         """
         module = inspect.getmodule(func)
-        if hasattr(func, '__qualname__'):
-            name = func.__qualname__
-        else:
-            name = '.'.join(
-                [module.__name__, func.__name__])
+        name = '.'.join(
+            [module.__name__, func.__name__])
         return cls(name, func, [func, inspect.getmodule(func)])
 
     @classmethod
@@ -200,11 +197,8 @@ class Benchmark(object):
         module = inspect.getmodule(klass)
         instance = klass()
         func = getattr(instance, method_name)
-        if hasattr(func, '__qualname__'):
-            name = func.__qualname__
-        else:
-            name = '.'.join(
-                [module.__name__, klass.__name__, method_name])
+        name = '.'.join(
+            [module.__name__, klass.__name__, method_name])
         return cls(name, func, [func, instance, module])
 
     @classmethod
