@@ -12,13 +12,22 @@ from ..util import hash_equal, human_time, load_json
 from ..console import color_print
 
 
+def mean(values):
+    if all([value is None for value in values]):
+        return None
+    else:
+        values = [value for value in values if value is not None]
+        return sum(values) / float(len(values))
+
+
 class Compare(Command):
 
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
             "compare",
-            help="""Compare the benchmark results between two revisions""",
+            help="""Compare the benchmark results between two revisions
+                    (averaged over configurations)""",
             description="Compare two sets of results")
 
         parser.add_argument(
@@ -65,7 +74,7 @@ class Compare(Command):
         for path in iter_machine_files(conf.results_dir):
             d = load_json(path)
             machines.append(d['machine'])
-        
+
         if len(machines) == 0:
             raise Exception("No results found")
         elif machine is None:
@@ -74,26 +83,34 @@ class Compare(Command):
                                 "specify which one to use with the --machine option".format('/'.join(machines)))
             else:
                 machine = machines[0]
-        elif not machine in machines:        
+        elif not machine in machines:
             raise ValueError("Results for machine '{0} not found".format(machine))
 
-        results_1 = None
-        results_2 = None
+        results_1 = {}
+        results_2 = {}
 
         for result in iter_results_for_machine(conf.results_dir, machine):
-            if hash_equal(hash_1, result.commit_hash):
-                results_1 = result
-            if hash_equal(hash_2, result.commit_hash):
-                results_2 = result
 
-        if results_1 is None:
+            if hash_equal(hash_1, result.commit_hash):
+                for key in result.results:
+                    if key not in results_1:
+                        results_1[key] = []
+                    results_1[key].append(result.results[key])
+
+            if hash_equal(hash_2, result.commit_hash):
+                for key in result.results:
+                    if key not in results_2:
+                        results_2[key] = []
+                    results_2[key].append(result.results[key])
+
+        if len(results_1) == 0:
             raise ValueError("Did not find results for commit {0}".format(hash_1))
 
-        if results_2 is None:
+        if len(results_2) == 0:
             raise ValueError("Did not find results for commit {0}".format(hash_2))
 
-        benchmarks_1 = set(results_1.results.keys())
-        benchmarks_2 = set(results_2.results.keys())
+        benchmarks_1 = set(results_1.keys())
+        benchmarks_2 = set(results_2.keys())
 
         common_benchmarks = sorted(list(benchmarks_1 & benchmarks_2))
 
@@ -108,15 +125,17 @@ class Compare(Command):
 
         for benchmark in common_benchmarks:
 
-            time_1 = results_1.results[benchmark]
-            time_2 = results_2.results[benchmark]
+            time_1 = mean(results_1[benchmark])
+            time_2 = mean(results_2[benchmark])
 
             if time_1 is None or time_2 is None:
                 ratio = 'n/a'
             else:
                 ratio = "{0:6.2f}".format(time_2 / time_1)
 
-            if time_1 is None and time_2 is not None:
+            if time_1 is None and time_2 is None:
+                color = 'red'
+            elif time_1 is None and time_2 is None:
                 color = 'green'
             elif time_1 is not None and time_2 is None:
                 color = 'red'
