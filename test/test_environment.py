@@ -5,24 +5,31 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import six
+import pytest
 
 from asv import config
 from asv import environment
 from asv import util
 
 
-def test_matrix_environments(tmpdir):
-    try:
-        util.which('python2.7')
-    except RuntimeError:
-        raise RuntimeError(
-            "python 2.7 must be installed for this test to pass")
 
-    try:
-        util.which('python3.3')
-    except RuntimeError:
-        raise RuntimeError(
-            "python 3.3 must be installed for this test to pass")
+try:
+    util.which('python2.7')
+    HAS_PYTHON_27 = True
+except RuntimeError:
+    HAS_PYTHON_27 = False
+
+
+try:
+    util.which('python3.3')
+    HAS_PYTHON_33 = True
+except RuntimeError:
+    HAS_PYTHON_33 = False
+
+
+@pytest.mark.xfail(not HAS_PYTHON_27 or not HAS_PYTHON_33,
+                   reason="Requires Python 2.7 and 3.3")
+def test_matrix_environments(tmpdir):
 
     conf = config.Config()
 
