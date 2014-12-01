@@ -8,6 +8,7 @@ import os
 
 from ..commands import Command
 from ..commands.publish import Publish
+from ..console import log
 from .. import util
 
 
@@ -61,5 +62,6 @@ class GithubPages(Command):
         util.check_call("git mv html/* .", shell=True)
         util.check_call([git, 'commit', '-m', 'Generated from sources'])
 
+        log.info("Updating gh-pages branch on github")
         util.check_call([git, 'push', '-f', 'origin', 'gh-pages'])
         util.check_call([git, 'checkout', current_branch])
