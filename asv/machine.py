@@ -4,6 +4,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import six
+
 import os
 import platform
 import sys
@@ -120,7 +122,7 @@ class Machine(object):
 
         cpu = util.get_cpu_info()
 
-        ram = util.get_memsize()
+        ram = six.text_type(util.get_memsize())
 
         return {
             'machine': node,
