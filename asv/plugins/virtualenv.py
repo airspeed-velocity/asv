@@ -46,6 +46,10 @@ class Virtualenv(Environment):
         # This is the default, so just fall through, don't ever match
         return False
 
+    @property
+    def path(self):
+        return self._path
+
     def setup(self):
         """
         Setup the environment on disk.  If it doesn't exist, it is

@@ -41,6 +41,10 @@ class Conda(Environment):
         else:
             return True
 
+    @property
+    def path(self):
+        return self._path
+
     def setup(self):
         if self._is_setup:
             return

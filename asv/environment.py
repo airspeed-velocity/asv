@@ -9,11 +9,13 @@ of dependencies.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import io
 import os
 
 import six
 
 from .console import log
+from .repo import get_repo
 from . import util
 
 
@@ -100,6 +102,13 @@ class Environment(object):
         return False
 
     @property
+    def path(self):
+        """
+        Return the path to the environment.
+        """
+        raise NotImplementedError()
+
+    @property
     def name(self):
         """
         Get a name to uniquely identify this environment.
@@ -164,8 +173,25 @@ class Environment(object):
         first.
         """
         self.install_requirements()
-        self.uninstall(conf.project)
-        self.install(os.path.abspath(conf.project), editable=True)
+
+        repo = get_repo(conf)
+        commit_hash = repo.get_hash_from_head()
+
+        same_commit = False
+        commit_file = os.path.join(self.path, "commit_hash")
+        if os.path.exists(commit_file):
+            with io.open(commit_file, 'r', encoding='ascii') as fd:
+                current_hash = fd.read().strip()
+            min_len = min(len(current_hash), len(commit_hash))
+            if (min_len > 8 and
+                current_hash[:min_len] == commit_hash[:min_len]):
+                same_commit = True
+
+        if not same_commit:
+            self.uninstall(conf.project)
+            self.install(os.path.abspath(conf.project))
+            with io.open(commit_file, 'w', encoding='ascii') as fd:
+                fd.write(commit_hash)
 
 
 def get_environment(env_dir, python, requirements):
