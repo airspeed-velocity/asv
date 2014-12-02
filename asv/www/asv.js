@@ -61,6 +61,12 @@ $(function() {
         $("#error").modal('show');
     }
 
+    function no_data(ajax, status, error) {
+        $("#error-message").text(
+            "No data for this combination of filters. ");
+        $("#error").modal('show');
+    }
+
     /* GLOBAL STATE */
     /* The state of the parameters in the sidebar.  Dictionary mapping
        strings to arrays containing the "enabled" configurations. */
@@ -527,6 +533,7 @@ $(function() {
         $.each(to_load, function(i, item) {
             $.ajax({
                 url: item[0],
+                cache: false
             }).done(function(data) {
                 graphs.push({
                     data: data,
@@ -535,7 +542,19 @@ $(function() {
             }).fail(function() {
                 failures += 1;
                 if (failures == to_load.length) {
-                    network_error();
+                    /* If we don't get any results, we check that the
+                    webserver is still live by loading a file we know
+                    we have.  If that fails, too, then the webserver
+                    is probably down. */
+                    $.ajax({
+                        url: "swallow.ico",
+                        cache: false
+                    }).done(function (index) {
+                        update_graphs();
+                        no_data();
+                    }).fail(function () {
+                        network_error();
+                    });
                 }
             });
         });
@@ -597,7 +616,7 @@ $(function() {
                         Math.log(v / reference) / Math.LN10)).toString().sup();
             };
             options.yaxis.min = Math.pow(10, min) * reference;
-            options.yaxis.max = Math.pow(10, max) * reference;     
+            options.yaxis.max = Math.pow(10, max) * reference;
 
         } else if (master_json.benchmarks[current_benchmark].unit === 'seconds') {
 
@@ -626,6 +645,9 @@ $(function() {
     }
 
     function handle_x_scale(options) {
+        if (!graphs.length)
+            return;
+
         if (even_spacing) {
             var all_dates = {};
             $.each(graphs, function(i, graph) {
@@ -707,12 +729,13 @@ $(function() {
             },
             xaxis: {
                 tickLength: 5,
+                axisLabel: "",
                 axisLabelUseCanvas: true,
                 axisLabelFontFamily: "sans-serif",
                 axisLabelFontSizePixels: 12
             },
             yaxis: {
-                axisLabel: unit,
+                axisLabel: "",
                 axisLabelUseCanvas: true,
                 axisLabelFontFamily: "sans-serif",
                 axisLabelFontSizePixels: 12
