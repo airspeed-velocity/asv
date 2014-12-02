@@ -379,7 +379,6 @@ $(function() {
                         $('#reference').popover('destroy');
                         select_reference = false;
                         reference = item.datapoint[1];
-                        console.log(reference);
                         update_graphs();
                     } else {
                         var commit_hash = master_json.date_to_hash[item.datapoint[0]];
@@ -580,8 +579,6 @@ $(function() {
                 ticks.push(Math.pow(10, x) * reference);
             }
 
-            console.log(ticks);
-
             options.yaxis.ticks = ticks;
             options.yaxis.transform = function(v) {
                 return Math.log(v / reference) / Math.LN10;
@@ -597,7 +594,7 @@ $(function() {
                         Math.log(v / reference) / Math.LN10)).toString().sup();
             };
             options.yaxis.min = Math.pow(10, min) * reference;
-            options.yaxis.max = Math.pow(10, max) * reference;     
+            options.yaxis.max = Math.pow(10, max) * reference;
 
         } else if (master_json.benchmarks[current_benchmark].unit === 'seconds') {
 
@@ -619,7 +616,7 @@ $(function() {
             if (unit_name) {
                 options.yaxis.axisLabel = unit_name;
                 options.yaxis.tickFormatter = function (v, axis) {
-                    return Math.floor(v / multiplier);
+                    return (v / multiplier).toPrecision(3);
                 };
             }
         }
