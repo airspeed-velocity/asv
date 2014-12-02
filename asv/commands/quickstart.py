@@ -37,6 +37,15 @@ class Quickstart(Command):
             os.path.dirname(os.path.abspath(__file__)), '..', 'template')
         for entry in os.listdir(template_path):
             path = os.path.join(template_path, entry)
+            dest_path = os.path.join(dest, entry)
+            if os.path.exists(dest_path):
+                log.info("Template content already exists.")
+                log.info("Edit asv.conf.json to continue.")
+                return 1
+
+        for entry in os.listdir(template_path):
+            path = os.path.join(template_path, entry)
+            dest_path = os.path.join(dest, entry)
             if os.path.isdir(path):
                 shutil.copytree(path, os.path.join(dest, entry))
             elif os.path.isfile(path):
