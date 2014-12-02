@@ -21,21 +21,20 @@ except RuntimeError:
 
 
 try:
-    util.which('python3.3')
-    HAS_PYTHON_33 = True
+    util.which('python3.4')
+    HAS_PYTHON_34 = True
 except RuntimeError:
-    HAS_PYTHON_33 = False
+    HAS_PYTHON_34 = False
 
 
-@pytest.mark.xfail(not HAS_PYTHON_27 or not HAS_PYTHON_33,
-                   reason="Requires Python 2.7 and 3.3")
+@pytest.mark.xfail(not HAS_PYTHON_27 or not HAS_PYTHON_34,
+                   reason="Requires Python 2.7 and 3.4")
 def test_matrix_environments(tmpdir):
-
     conf = config.Config()
 
     conf.env_dir = six.text_type(tmpdir.join("env"))
 
-    conf.pythons = ["2.7", "3.3"]
+    conf.pythons = ["2.7", "3.4"]
     conf.matrix = {
         "six": ["1.4", None],
         "psutil": ["1.2", "1.1"]
