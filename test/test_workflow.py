@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 from os.path import abspath, dirname, exists, join
+import shutil
 
 import six
 
@@ -19,6 +20,9 @@ def test_workflow(tmpdir):
     tmpdir = six.text_type(tmpdir)
     local = abspath(dirname(__file__))
     os.chdir(tmpdir)
+
+    shutil.copyfile(join(local, 'asv-machine.json'),
+                    join(tmpdir, 'asv-machine.json'))
 
     conf = config.Config.from_json({
         'env_dir': join(tmpdir, 'env'),
@@ -34,7 +38,7 @@ def test_workflow(tmpdir):
     })
 
     Run.run(conf, range_spec="initial..master", steps=2,
-            _machine_file=join(local, 'asv-machine.json'), quick=True)
+            _machine_file=join(tmpdir, 'asv-machine.json'), quick=True)
 
     assert len(os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))) == 5
     assert len(os.listdir(join(tmpdir, 'results_workflow'))) == 2
@@ -47,7 +51,7 @@ def test_workflow(tmpdir):
     assert exists(join(tmpdir, 'html', 'asv.css'))
 
     Run.run(conf, range_spec="EXISTING",
-            _machine_file=join(local, 'asv-machine.json'), quick=True)
+            _machine_file=join(tmpdir, 'asv-machine.json'), quick=True)
 
     # Remove the benchmarks.json file to make sure publish can
     # regenerate it
