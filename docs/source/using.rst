@@ -41,21 +41,21 @@ do, and there is also a :ref:`conf-reference` with more details.  The
 values that will most likely need to be changed for any benchmarking
 suite are:
 
-   - ``project``: The name of the project being benchmarked.
+- ``project``: The name of the project being benchmarked.
 
-   - ``project_url``: The project's homepage.
+- ``project_url``: The project's homepage.
 
-   - ``repo``: The URL to the DVCS repository for the project.  This
-     should be a read-only URL so that anyone, even those without
-     commit rights to the repository, can run the benchmarks.  For a
-     project on github, for example, the URL would look like:
-     ``https://github.com/spacetelescope/asv.git``
+- ``repo``: The URL to the DVCS repository for the project.  This
+  should be a read-only URL so that anyone, even those without commit
+  rights to the repository, can run the benchmarks.  For a project on
+  github, for example, the URL would look like:
+  ``https://github.com/spacetelescope/asv.git``
 
-   - ``show_commit_url``: The base of URLs used to display commits for
-     the project.  This allows users to click on a commit in the web
-     interface and have it display the contents of that commit.  For a
-     github project, the URL is of the form
-     ``http://github.com/$OWNER/$REPO/commit/``.
+- ``show_commit_url``: The base of URLs used to display commits for
+  the project.  This allows users to click on a commit in the web
+  interface and have it display the contents of that commit.  For a
+  github project, the URL is of the form
+  ``http://github.com/$OWNER/$REPO/commit/``.
 
 The rest of the values can usually be left to their defaults, unless
 you want to benchmark against multiple versions of Python or multiple
@@ -306,15 +306,15 @@ remove.
 
 The keys may be one of:
 
-    - ``benchmark``: A benchmark name
+- ``benchmark``: A benchmark name
 
-    - ``python``: The version of python
+- ``python``: The version of python
 
-    - ``commit_hash``: The commit hash
+- ``commit_hash``: The commit hash
 
-    - machine-related: ``machine``, ``arch``, ``cpu``, ``os``, ``ram``
+- machine-related: ``machine``, ``arch``, ``cpu``, ``os``, ``ram``
 
-    - environment-related: a name of a dependency, e.g. ``numpy``
+- environment-related: a name of a dependency, e.g. ``numpy``
 
 The values are glob patterns, as supported by the Python standard
 library module `fnmatch`.  So, for example, to remove all benchmarks
@@ -497,4 +497,3 @@ by more than a factor of 2 or worsen by a factor of 2 are color coded). The
 threshold can be set with the ``--threshold=value`` option. Finally, the
 benchmarks can be split into ones that have improved, stayed the same, and
 worsened, using the same threshold.
-
