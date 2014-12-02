@@ -18,17 +18,17 @@ the requirements are:
 
 One of the following:
 
-  - `virtualenv <http://virtualenv.org/>`__, 1.10 or later (this is true
-    even with Python 3.3, where virtualenv is included as venv, since
-    venv is not compatible with other versions of Python).
+- `virtualenv <http://virtualenv.org/>`__, 1.10 or later (this is true
+  even with Python 3.3, where virtualenv is included as venv, since
+  venv is not compatible with other versions of Python).
 
-    Note that virtualenv 1.11.0 will not work, as it contains a bug in
-    setuptools that prevents its installation in a clean virtual
-    environment.
+  Note that virtualenv 1.11.0 will not work, as it contains a bug in
+  setuptools that prevents its installation in a clean virtual
+  environment.
 
-  - An `anaconda <https://store.continuum.io/cshop/anaconda/>`__ or
-    `miniconda <http://conda.pydata.org/miniconda.html>`__
-    installation, with the ``conda`` command available on your path.
+- An `anaconda <https://store.continuum.io/cshop/anaconda/>`__ or
+  `miniconda <http://conda.pydata.org/miniconda.html>`__
+  installation, with the ``conda`` command available on your path.
 
 .. note::
 
