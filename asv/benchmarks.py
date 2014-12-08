@@ -67,7 +67,7 @@ def run_benchmark(benchmark, root, env, show_exc=False, quick=False,
     result = {'result': None}
 
     log.step()
-    name_max_width = util.get_terminal_width() // 2
+    name_max_width = util.get_terminal_width() - 33
     short_name = truncate_left(name, name_max_width)
     log.info('Running {0:{1}s}'.format(short_name, name_max_width))
 
