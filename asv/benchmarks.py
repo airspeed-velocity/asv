@@ -121,7 +121,8 @@ class Benchmarks(dict):
     """
     api_version = 1
 
-    def __init__(self, conf, benchmarks=None, regex=None):
+    def __init__(self, conf, benchmarks=None, regex=None,
+                 force_env=None, force_repo=None):
         """
         Discover benchmarks in the given `benchmark_dir`.
 
@@ -137,6 +138,8 @@ class Benchmarks(dict):
         """
         self._conf = conf
         self._benchmark_dir = conf.benchmark_dir
+        self._force_env = force_env
+        self._force_repo = force_repo
 
         if benchmarks is None:
             benchmarks = self.disc_benchmarks(conf)
@@ -157,33 +160,38 @@ class Benchmarks(dict):
             else:
                 self[benchmark['name']] = benchmark
 
-    @classmethod
-    def disc_benchmarks(cls, conf):
+    def disc_benchmarks(self, conf):
         """
         Discover all benchmarks in a directory tree.
         """
         root = conf.benchmark_dir
 
-        cls.check_tree(root)
+        self.check_tree(root)
 
-        environments = list(get_environments(conf))
-        if len(environments) == 0:
-            raise ValueError("No available environments")
-
-        # Ideally, use an environment in the same Python version as
-        # master, but if one isn't found, just default to the first
-        # one.
-        this_version = "{0:d}.{1:d}".format(
-            sys.version_info[0], sys.version_info[1])
-        for env in environments:
-            if env.python == this_version:
-                break
+        if self._force_env is not None:
+            env = self._force_env
         else:
-            env = environments[0]
+            environments = list(get_environments(conf))
+            if len(environments) == 0:
+                raise ValueError("No available environments")
+
+            # Ideally, use an environment in the same Python version as
+            # master, but if one isn't found, just default to the first
+            # one.
+            this_version = "{0:d}.{1:d}".format(
+                sys.version_info[0], sys.version_info[1])
+            for env in environments:
+                if env.python == this_version:
+                    break
+            else:
+                env = environments[0]
 
         log.info("Discovering benchmarks")
         with log.indent():
-            repo = get_repo(conf)
+            if self._force_repo is not None:
+                repo = self._force_repo
+            else:
+                repo = get_repo(conf)
             repo.checkout()
 
             env.install_project(conf)
