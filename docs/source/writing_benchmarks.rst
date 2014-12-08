@@ -62,7 +62,7 @@ pass the ``--show-exc`` flag::
 Finally, there is a special command, ``asv dev``, that uses all of
 these features and is equivalent to::
 
-       asv run --python=same --quick --show-exc
+       asv run --python=same --quick --show-exc --dry-run
 
 Setup and teardown functions
 ----------------------------
