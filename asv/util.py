@@ -13,6 +13,7 @@ import math
 import os
 import select
 import subprocess
+import struct
 import sys
 import time
 
@@ -480,3 +481,41 @@ def get_memsize():
         sysctl = which('sysctl')
         return int(check_output([sysctl, '-n', 'hw.memsize']).strip())
     return ''
+
+
+def _get_terminal_size_fallback():
+    """
+    Returns a tuple (height, width) containing the height and width of
+    the terminal.  Fallback for when sys.get_terminal_size() doesn't
+    exist or fails.
+    """
+    try:
+        # Unix-specific code
+        import fcntl
+        import termios
+        s = struct.pack(str("HHHH"), 0, 0, 0, 0)
+        x = fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ, s)
+        (lines, width, xpixels, ypixels) = struct.unpack(str("HHHH"), x)
+        if lines > 12:
+            lines -= 6
+        if width > 10:
+            width -= 1
+        return (lines, width)
+    except:
+        # Fall back on environment variables, or if not set, (25, 80)
+        try:
+            return (int(os.environ.get('LINES')),
+                    int(os.environ.get('COLUMNS')))
+        except TypeError:
+            return 25, 80
+
+
+def get_terminal_width():
+    """
+    Return the terminal width, or an estimate thereof.
+    """
+    try:
+        # Python 3.3 and higher: this works under Windows and Unix
+        return os.get_terminal_size().columns
+    except (AttributeError, OSError):
+        return _get_terminal_size_fallback()[1]
