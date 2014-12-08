@@ -329,7 +329,8 @@ class Benchmarks(dict):
         log.info("Benchmarking {0}".format(env.name))
         with log.indent():
             times = {}
-            for name, benchmark in six.iteritems(self):
+            benchmarks = sorted(list(six.iteritems(self)))
+            for name, benchmark in benchmarks:
                 times[name] = run_benchmark(
                     benchmark, self._benchmark_dir, env, show_exc=show_exc,
                     quick=quick, profile=profile)
