@@ -8,10 +8,7 @@ import contextlib
 import io
 import os
 import pstats
-import sys
 import tempfile
-
-import six
 
 from . import Command
 from ..benchmarks import Benchmarks
@@ -21,7 +18,7 @@ from ..machine import Machine
 from ..profiling import ProfilerGui
 from ..repo import get_repo
 from ..results import iter_results_for_machine
-from ..util import hash_equal, iter_subclasses
+from ..util import hash_equal, iter_subclasses, override_python_interpreter
 
 
 @contextlib.contextmanager
@@ -50,7 +47,7 @@ class Profile(Command):
             help="""The benchmark to profile.  Must be a
             fully-specified benchmark name.""")
         parser.add_argument(
-            'revision', nargs=1,
+            'revision', nargs='?',
             help="""The revision of the project to profile.  May be a
             commit hash, or a tag or brach name.""")
         parser.add_argument(
@@ -75,6 +72,16 @@ class Profile(Command):
             specified.  This should the name of an environment
             directory as already created by the run command. If `None`
             is specified, one will be chosen at random.""")
+        parser.add_argument(
+            "--python", nargs='?', type=str, default=None,
+            help="""Specify a Python interpreter in which to run the
+            profile.  It may be an executable to be searched for on
+            the $PATH, an absolute path, or the special value "same"
+            which will use the same Python interpreter that asv is
+            using.  This interpreter must have the benchmarked project
+            already installed, including its dependencies.  May not be
+            used with --environment.  May not specify a specific
+            revision.""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -90,13 +97,14 @@ class Profile(Command):
     @classmethod
     def run_from_conf_args(cls, conf, args):
         return cls.run(
-            conf=conf, benchmark=args.benchmark[0], revision=args.revision[0],
+            conf=conf, benchmark=args.benchmark[0], revision=args.revision,
             gui=args.gui, output=args.output, force=args.force,
-            environment=args.environment)
+            environment=args.environment, python=args.python)
 
     @classmethod
-    def run(cls, conf, benchmark, revision, gui=None, output=None,
-            force=False, environment=None, _machine_file=None):
+    def run(cls, conf, benchmark, revision=None, gui=None, output=None,
+            force=False, environment=None, python=None,
+            _machine_file=None):
         cls.find_guis()
 
         if gui == 'list':
@@ -109,8 +117,25 @@ class Profile(Command):
         if gui is not None and gui not in cls.guis:
             raise ValueError("Unknown profiler GUI {0}".format(gui))
 
-        machine_name = Machine.get_unique_machine_name()
         repo = get_repo(conf)
+
+        if python is not None:
+            override_python_interpreter(conf, python)
+            if environment is not None:
+                raise RuntimeError(
+                    "--python and --environment may not both be provided.")
+            if revision is not None:
+                raise RuntimeError(
+                    "--python and an explicit revision may not both be "
+                    "provided.")
+        elif revision is None:
+            raise RuntimeError("Must specify a revision to profile.")
+        else:
+            repo.pull()
+
+        machine_name = Machine.get_unique_machine_name()
+        if revision is None:
+            revision = 'master'
         commit_hash = repo.get_hash_from_tag(revision)
 
         profile_data = None

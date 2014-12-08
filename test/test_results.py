@@ -9,23 +9,22 @@ import sys
 
 import six
 
-from asv import environment
 from asv import results
 
 
 def test_results(tmpdir):
     envdir = six.text_type(tmpdir.join("env"))
     version = "{0[0]}.{0[1]}".format(sys.version_info)
-    env = environment.get_environment(envdir, version, {})
 
     resultsdir = six.text_type(tmpdir.join("results"))
     for i in six.moves.xrange(10):
         r = results.Results(
             {'machine': 'foo',
              'arch': 'x86_64'},
-            env,
+            {},
             hex(i),
-            i * 1000000)
+            i * 1000000l,
+            '2.7')
         for key, val in {
             'suite1.benchmark1': float(i * 0.001),
             'suite1.benchmark2': float(i * i * 0.001),

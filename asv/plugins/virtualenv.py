@@ -9,16 +9,32 @@ import shutil
 
 import six
 
-from ..environment import Environment
+from .. import environment
 from ..console import log
 from .. import util
 
 
-class Virtualenv(Environment):
+class Virtualenv(environment.Environment):
     """
     Manage an environment using virtualenv.
     """
     def __init__(self, env_dir, python, executable, requirements):
+        """
+        Parameters
+        ----------
+        env_dir : str
+            Root path in which to cache environments on disk.
+
+        python : str
+            Version of Python.  Must be of the form "MAJOR.MINOR".
+
+        executable : str
+            Path to Python executable.
+
+        requirements : dict
+            Dictionary mapping a PyPI package name to a version
+            identifier string.
+        """
         self._executable = executable
         self._env_dir = env_dir
         self._python = python
@@ -42,9 +58,19 @@ class Virtualenv(Environment):
         self._requirements_installed = False
 
     @classmethod
-    def matches(self, executable):
-        # This is the default, so just fall through, don't ever match
-        return False
+    def get_environments(cls, conf, python):
+        executable = util.which('python{0}'.format(python))
+        for configuration in environment.iter_configuration_matrix(conf.matrix):
+            yield cls(conf.env_dir, python, executable, configuration)
+
+    @classmethod
+    def matches(self, python):
+        try:
+            util.which('python{0}'.format(python))
+        except IOError:
+            return False
+        else:
+            return True
 
     def setup(self):
         """
@@ -115,6 +141,3 @@ class Virtualenv(Environment):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
         self.install_requirements()
         return self._run_executable('python', args, **kwargs)
-
-
-Environment.default_class = Virtualenv

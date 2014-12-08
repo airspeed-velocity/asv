@@ -8,12 +8,12 @@ import shutil
 
 import six
 
-from ..environment import Environment
+from .. import environment
 from ..console import log
 from .. import util
 
 
-class Conda(Environment):
+class Conda(environment.Environment):
     """
     Manage an environment using conda.
 
@@ -22,7 +22,19 @@ class Conda(Environment):
     method to install from an arbitrary ``setup.py``).
     """
     def __init__(self, env_dir, python, executable, requirements):
-        self._executable = executable
+        """
+        Parameters
+        ----------
+        env_dir : str
+            Root path in which to cache environments on disk.
+
+        python : str
+            Version of Python.  Must be of the form "MAJOR.MINOR".
+
+        requirements : dict
+            Dictionary mapping a PyPI package name to a version
+            identifier string.
+        """
         self._env_dir = env_dir
         self._python = python
         self._requirements = requirements
@@ -33,13 +45,30 @@ class Conda(Environment):
         self._requirements_installed = False
 
     @classmethod
-    def matches(self, executable):
+    def matches(self, python):
         try:
             util.which('conda')
-        except RuntimeError:
+        except IOError:
             return False
         else:
-            return True
+            # Check that the version number is valid
+            try:
+                util.check_call([
+                    conda,
+                    'create',
+                    '--yes',
+                    '-p',
+                    'env',
+                    'python={0}'.format(python)])
+            except util.ProcessError:
+                return False
+            else:
+                return True
+
+    @classmethod
+    def get_environments(cls, conf, python):
+        for configuration in environment.iter_configuration_matrix(conf.matrix):
+            yield cls(conf.env_dir, python, configuration)
 
     def setup(self):
         if self._is_setup:
@@ -55,8 +84,8 @@ class Conda(Environment):
 
         conda = util.which('conda')
 
+        log.info("Creating conda environment for {0}".format(self.name))
         try:
-            log.info("Creating conda environment for {0}".format(self.name))
             util.check_call([
                 conda,
                 'create',
@@ -64,7 +93,7 @@ class Conda(Environment):
                 '-p',
                 self._path,
                 'python={0}'.format(self._python), 'pip'])
-        except:
+        except util.ProcessError:
             log.error("Failure creating conda environment for {0}".format(
                 self.name))
             if os.path.exists(self._path):

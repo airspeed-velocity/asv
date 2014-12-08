@@ -20,13 +20,11 @@ class Git(Repo):
     def __init__(self, url, path):
         self._git = util.which("git")
         self._path = os.path.abspath(path)
+        self._pulled = False
 
         if not os.path.exists(self._path):
             log.info("Cloning project")
             self._run_git(['clone', url, self._path], chdir=False)
-
-        log.info("Fetching recent changes")
-        self.pull()
 
     @property
     def path(self):
@@ -55,9 +53,16 @@ class Git(Repo):
                 os.chdir(orig_dir)
 
     def pull(self):
+        # We assume the remote isn't updated during the run of asv
+        # itself.
+        if self._pulled is True:
+            return
+
+        log.info("Fetching recent changes")
         self._run_git(['fetch', 'origin'])
         self.checkout('master')
         self._run_git(['pull'])
+        self._pulled = True
 
     def checkout(self, branch='master'):
         self._run_git(['checkout', branch])

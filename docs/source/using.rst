@@ -255,6 +255,12 @@ for this machine::
 
     asv run MISSING
 
+.. note::
+
+   There is a special version of ``asv run`` that is useful when
+   developing benchmarks, called ``asv dev``.  See
+   :ref:`writing-benchmarks` for more information.
+
 The results are stored as a tree of files in the directory
 ``results/$MACHINE``, where ``$MACHINE`` is the unique machine name
 that was set up in your ``~/.asv-machine.json`` file.  In order to

@@ -11,7 +11,7 @@ import six
 from . import Command
 from .run import Run
 
-from ..console import log, truncate_left, color_print
+from ..console import truncate_left, color_print
 from ..repo import get_repo
 from .. import results
 from .. import util
@@ -60,6 +60,7 @@ class Continuous(Command):
     def run(cls, conf, branch="master", factor=2.0, bench=None,
             machine_defaults=False):
         repo = get_repo(conf)
+        repo.pull()
 
         repo.checkout_remote_branch('origin', branch)
         head = repo.get_hash_from_head()

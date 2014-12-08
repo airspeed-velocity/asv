@@ -35,6 +35,7 @@ def main():
         result = args.func(args)
     except RuntimeError as e:
         log.error(six.text_type(e))
+        sys.stdout.write('\n')
         sys.exit(1)
 
     sys.stdout.write('\n')
