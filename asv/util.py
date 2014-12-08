@@ -480,3 +480,14 @@ def get_memsize():
         sysctl = which('sysctl')
         return int(check_output([sysctl, '-n', 'hw.memsize']).strip())
     return ''
+
+
+def get_terminal_width():
+    """
+    Return the terminal width, or an estimate thereof.
+    """
+    try:
+        # Python 3.3 and higher
+        return os.get_terminal_size().columns
+    except (AttributeError, OSError):
+        return 80
