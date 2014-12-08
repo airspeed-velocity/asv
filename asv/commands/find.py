@@ -50,8 +50,8 @@ class Find(Command):
             help="""Search for a decrease in the benchmark value,
             rather than an increase.""")
         parser.add_argument(
-            "--show-exc", "-e", action="store_true",
-            help="""Display the exceptions from the benchmarks when
+            "--show-stderr", "-e", action="store_true",
+            help="""Display the stderr output from the benchmarks when
             they fail.""")
         parser.add_argument(
             "--machine-defaults", action="store_true",
@@ -66,12 +66,12 @@ class Find(Command):
     def run_from_conf_args(cls, conf, args):
         return cls.run(
             conf, args.range[0], args.bench[0],
-            invert=args.invert, show_exc=args.show_exc,
+            invert=args.invert, show_stderr=args.show_stderr,
             machine_defaults=args.machine_defaults
         )
 
     @classmethod
-    def run(cls, conf, range_spec, bench, invert=False, show_exc=False,
+    def run(cls, conf, range_spec, bench, invert=False, show_stderr=False,
             machine_defaults=False, _machine_file=None):
         # TODO: Allow for choosing an environment
 
@@ -127,7 +127,7 @@ class Find(Command):
             repo.checkout(commit_hash)
             env.install_project(conf)
             x = benchmarks.run_benchmarks(
-                env, show_exc=show_exc)
+                env, show_stderr=show_stderr)
             results[i] = list(x.values())[0]['result']
 
             return results[i]

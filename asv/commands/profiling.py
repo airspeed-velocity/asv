@@ -165,7 +165,7 @@ class Profile(Command):
                 env.install_project(conf)
 
                 results = benchmarks.run_benchmarks(
-                    env, show_exc=True, quick=False, profile=True)
+                    env, show_stderr=True, quick=False, profile=True)
 
                 profile_data = results[benchmark]['profile']
 
