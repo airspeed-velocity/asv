@@ -47,7 +47,7 @@ class Conda(environment.Environment):
     @classmethod
     def matches(self, python):
         try:
-            util.which('conda')
+            conda = util.which('conda')
         except IOError:
             return False
         else:
