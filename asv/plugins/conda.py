@@ -21,7 +21,7 @@ class Conda(environment.Environment):
     project is installed using ``pip`` (since ``conda`` doesn't have a
     method to install from an arbitrary ``setup.py``).
     """
-    def __init__(self, env_dir, python, executable, requirements):
+    def __init__(self, env_dir, python, requirements):
         """
         Parameters
         ----------
