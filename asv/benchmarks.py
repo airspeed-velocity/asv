@@ -106,7 +106,7 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
                         with io.open(profile_path, 'rb') as profile_fd:
                             result['profile'] = profile_fd.read()
 
-            if err.strip():
+            if show_stderr and err.strip():
                 with log.indent():
                     log.error(err.strip())
 
