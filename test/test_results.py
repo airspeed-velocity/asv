@@ -23,7 +23,7 @@ def test_results(tmpdir):
              'arch': 'x86_64'},
             {},
             hex(i),
-            i * 1000000l,
+            i * 1000000,
             '2.7')
         for key, val in {
             'suite1.benchmark1': float(i * 0.001),
