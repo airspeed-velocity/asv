@@ -17,7 +17,6 @@ import cProfile as profile
 import ctypes
 from ctypes.util import find_library
 import errno
-import importlib
 import imp
 import inspect
 import json
@@ -110,6 +109,35 @@ except ImportError:  # Python <3.3
     else:
         # Fallback to default timer
         process_time = timeit.default_timer
+
+
+try:
+    from importlib import import_module
+except ImportError:  # For Python 2.6
+    def _resolve_name(name, package, level):
+        if not hasattr(package, 'rindex'):
+            raise ValueError("'package' not set to a string")
+        dot = len(package)
+        for x in xrange(level, 1, -1):
+            try:
+                dot = package.rindex('.', 0, dot)
+            except ValueError:
+                raise ValueError("attempted relative import beyond top-level "
+                                  "package")
+        return "%s.%s" % (package[:dot], name)
+
+    def import_module(name, package=None):
+        if name.startswith('.'):
+            if not package:
+                raise TypeError("relative imports require the 'package' argument")
+            level = 0
+            for character in name:
+                if character != '.':
+                    break
+                level += 1
+            name = _resolve_name(name[level:], package, level)
+        __import__(name)
+        return sys.modules[name]
 
 
 def _get_attr(source, name, ignore_case=False):
@@ -225,8 +253,7 @@ class Benchmark(object):
             else:
                 new_package = parts[0]
             if os.path.isfile(path + '.py'):
-                module = importlib.import_module(
-                    new_package)
+                module = import_module(new_package)
                 return find_in_module(module, parts[1:])
             elif os.path.isdir(path):
                 return find_on_filesystem(
@@ -426,7 +453,7 @@ def disc_files(root, package=''):
         if os.path.isfile(path):
             filename, ext = os.path.splitext(filename)
             if ext == '.py':
-                module = importlib.import_module(package + filename)
+                module = import_module(package + filename)
                 yield module
         elif os.path.isdir(path):
             for x in disc_files(path, package + filename + "."):
