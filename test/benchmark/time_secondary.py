@@ -9,6 +9,9 @@ if sys.version_info[0] == 3:
     xrange = range
 
 
+from .shared import shared_function
+
+
 class TimeSecondary:
     def time_factorial(self):
         x = 1
@@ -23,3 +26,7 @@ class TimeSecondary:
 
 def track_value():
     return 42.0
+
+
+def test_shared_code():
+    assert shared_function() == 42

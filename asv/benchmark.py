@@ -17,6 +17,7 @@ import cProfile as profile
 import ctypes
 from ctypes.util import find_library
 import errno
+import importlib
 import imp
 import inspect
 import json
@@ -158,6 +159,7 @@ class Benchmark(object):
     name_regex = re.compile('^$')
 
     def __init__(self, name, func, attr_sources):
+        name = name.split('.', 1)[1]
         self.name = name
         self.func = func
         self._attr_sources = attr_sources
@@ -214,6 +216,8 @@ class Benchmark(object):
         name : str
             Fully-qualified name to a specific benchmark.
         """
+        update_sys_path(root)
+
         def find_on_filesystem(root, parts, package):
             path = os.path.join(root, parts[0])
             if package:
@@ -221,8 +225,8 @@ class Benchmark(object):
             else:
                 new_package = parts[0]
             if os.path.isfile(path + '.py'):
-                module = imp.load_source(
-                    new_package, path + '.py')
+                module = importlib.import_module(
+                    new_package)
                 return find_in_module(module, parts[1:])
             elif os.path.isdir(path):
                 return find_on_filesystem(
@@ -248,7 +252,8 @@ class Benchmark(object):
 
         parts = name.split('.')
 
-        benchmark = find_on_filesystem(root, parts, '')
+        benchmark = find_on_filesystem(
+            root, parts, os.path.basename(root))
 
         if quick:
             benchmark.repeat = 1
@@ -372,6 +377,10 @@ benchmark_types = [
 ]
 
 
+def update_sys_path(root):
+    sys.path.insert(0, os.path.dirname(root))
+
+
 def disc_class(klass):
     """
     Iterate over all benchmarks in a given class.
@@ -417,7 +426,7 @@ def disc_files(root, package=''):
         if os.path.isfile(path):
             filename, ext = os.path.splitext(filename)
             if ext == '.py':
-                module = imp.load_source(package + filename, path)
+                module = importlib.import_module(package + filename)
                 yield module
         elif os.path.isdir(path):
             for x in disc_files(path, package + filename + "."):
@@ -428,7 +437,7 @@ def disc_benchmarks(root):
     """
     Discover all benchmarks in a given directory tree.
     """
-    for module in disc_files(root):
+    for module in disc_files(root, os.path.basename(root) + '.'):
         for benchmark in disc_objects(module):
             yield benchmark
 
@@ -437,6 +446,8 @@ def list_benchmarks(root):
     """
     List all of the discovered benchmarks to stdout as JSON.
     """
+    update_sys_path(root)
+
     # Streaming of JSON back out to the master process
 
     sys.stdout.write('[')
