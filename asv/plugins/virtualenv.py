@@ -59,9 +59,13 @@ class Virtualenv(environment.Environment):
 
     @classmethod
     def get_environments(cls, conf, python):
-        executable = util.which('python{0}'.format(python))
-        for configuration in environment.iter_configuration_matrix(conf.matrix):
-            yield cls(conf.env_dir, python, executable, configuration)
+        try:
+            executable = util.which('python{0}'.format(python))
+        except IOError:
+            log.warn("No executable found for python {0}".format(python))
+        else:
+            for configuration in environment.iter_configuration_matrix(conf.matrix):
+                yield cls(conf.env_dir, python, executable, configuration)
 
     @classmethod
     def matches(self, python):
