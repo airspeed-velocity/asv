@@ -111,6 +111,35 @@ except ImportError:  # Python <3.3
         process_time = timeit.default_timer
 
 
+try:
+    from importlib import import_module
+except ImportError:  # For Python 2.6
+    def _resolve_name(name, package, level):
+        if not hasattr(package, 'rindex'):
+            raise ValueError("'package' not set to a string")
+        dot = len(package)
+        for x in xrange(level, 1, -1):
+            try:
+                dot = package.rindex('.', 0, dot)
+            except ValueError:
+                raise ValueError("attempted relative import beyond top-level "
+                                  "package")
+        return "%s.%s" % (package[:dot], name)
+
+    def import_module(name, package=None):
+        if name.startswith('.'):
+            if not package:
+                raise TypeError("relative imports require the 'package' argument")
+            level = 0
+            for character in name:
+                if character != '.':
+                    break
+                level += 1
+            name = _resolve_name(name[level:], package, level)
+        __import__(name)
+        return sys.modules[name]
+
+
 def _get_attr(source, name, ignore_case=False):
     if ignore_case:
         attrs = [getattr(source, key) for key in dir(source)
@@ -158,6 +187,7 @@ class Benchmark(object):
     name_regex = re.compile('^$')
 
     def __init__(self, name, func, attr_sources):
+        name = name.split('.', 1)[1]
         self.name = name
         self.func = func
         self._attr_sources = attr_sources
@@ -214,6 +244,8 @@ class Benchmark(object):
         name : str
             Fully-qualified name to a specific benchmark.
         """
+        update_sys_path(root)
+
         def find_on_filesystem(root, parts, package):
             path = os.path.join(root, parts[0])
             if package:
@@ -221,8 +253,7 @@ class Benchmark(object):
             else:
                 new_package = parts[0]
             if os.path.isfile(path + '.py'):
-                module = imp.load_source(
-                    new_package, path + '.py')
+                module = import_module(new_package)
                 return find_in_module(module, parts[1:])
             elif os.path.isdir(path):
                 return find_on_filesystem(
@@ -248,7 +279,8 @@ class Benchmark(object):
 
         parts = name.split('.')
 
-        benchmark = find_on_filesystem(root, parts, '')
+        benchmark = find_on_filesystem(
+            root, parts, os.path.basename(root))
 
         if quick:
             benchmark.repeat = 1
@@ -372,6 +404,10 @@ benchmark_types = [
 ]
 
 
+def update_sys_path(root):
+    sys.path.insert(0, os.path.dirname(root))
+
+
 def disc_class(klass):
     """
     Iterate over all benchmarks in a given class.
@@ -417,7 +453,7 @@ def disc_files(root, package=''):
         if os.path.isfile(path):
             filename, ext = os.path.splitext(filename)
             if ext == '.py':
-                module = imp.load_source(package + filename, path)
+                module = import_module(package + filename)
                 yield module
         elif os.path.isdir(path):
             for x in disc_files(path, package + filename + "."):
@@ -428,7 +464,7 @@ def disc_benchmarks(root):
     """
     Discover all benchmarks in a given directory tree.
     """
-    for module in disc_files(root):
+    for module in disc_files(root, os.path.basename(root) + '.'):
         for benchmark in disc_objects(module):
             yield benchmark
 
@@ -437,6 +473,8 @@ def list_benchmarks(root):
     """
     List all of the discovered benchmarks to stdout as JSON.
     """
+    update_sys_path(root)
+
     # Streaming of JSON back out to the master process
 
     sys.stdout.write('[')

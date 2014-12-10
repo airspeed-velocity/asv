@@ -78,9 +78,8 @@ class Run(Command):
             parallel building is still experimental and may not work
             in all cases.""")
         parser.add_argument(
-            "--show-exc", "-e", action="store_true",
-            help="""Display the exceptions from the benchmarks when
-            they fail.""")
+            "--show-stderr", "-e", action="store_true",
+            help="""Display the stderr output from the benchmarks.""")
         parser.add_argument(
             "--quick", "-q", action="store_true",
             help="""Do a "quick" run, where each benchmark function is
@@ -110,13 +109,13 @@ class Run(Command):
         return cls.run(
             conf=conf, range_spec=args.range, steps=args.steps,
             bench=args.bench, parallel=args.parallel,
-            show_exc=args.show_exc, quick=args.quick, dumb=args.dumb,
+            show_stderr=args.show_stderr, quick=args.quick, dumb=args.dumb,
             profile=args.profile, machine_defaults=args.machine_defaults,
         )
 
     @classmethod
     def run(cls, conf, range_spec="master", steps=0, bench=None, parallel=1,
-            show_exc=False, quick=False, profile=False, dumb=False,
+            show_stderr=False, quick=False, profile=False, dumb=False,
             machine_defaults=False, _machine_file=None, _returns={}):
         params = {}
         machine_params = Machine.load(use_defaults=machine_defaults,
@@ -134,7 +133,7 @@ class Run(Command):
 
         if dumb:
             benchmarks.run_benchmarks(
-                DumbEnv(), show_exc=show_exc, quick=quick,
+                DumbEnv(), show_stderr=show_stderr, quick=quick,
                 profile=profile)
             return
 
@@ -221,7 +220,7 @@ class Run(Command):
                             params.update(env.requirements)
 
                             results = benchmarks.run_benchmarks(
-                                env, show_exc=show_exc, quick=quick,
+                                env, show_stderr=show_stderr, quick=quick,
                                 profile=profile)
                         else:
                             results = benchmarks.skip_benchmarks(env)
