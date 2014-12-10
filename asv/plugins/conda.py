@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 
 import os
 import shutil
+import tempfile
 
 import six
 
@@ -51,6 +52,10 @@ class Conda(environment.Environment):
         except IOError:
             return False
         else:
+            # This directory never gets created, since we're just
+            # doing a dry run below.  All it needs to be is something
+            # that doesn't already exist.
+            path = os.path.join(tempfile.gettempdir(), 'check')
             # Check that the version number is valid
             try:
                 util.check_call([
@@ -58,8 +63,9 @@ class Conda(environment.Environment):
                     'create',
                     '--yes',
                     '-p',
-                    'env',
-                    'python={0}'.format(python)])
+                    path,
+                    'python={0}'.format(python),
+                    '--dry-run'])
             except util.ProcessError:
                 return False
             else:
