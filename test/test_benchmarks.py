@@ -49,7 +49,7 @@ def test_find_benchmarks(tmpdir):
 
     envs = list(environment.get_environments(conf))
     b = benchmarks.Benchmarks(conf)
-    times = b.run_benchmarks(envs[0], profile=True, show_exc=True)
+    times = b.run_benchmarks(envs[0], profile=True, show_stderr=True)
 
     assert len(times) == 9
     assert times[

@@ -227,6 +227,10 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
     shell : bool, optional
         If `True`, run the command through the shell.  Default is
         `False`.
+
+    return_stderr : bool, optional
+        If `True`, return both the stdout and stderr as a tuple.
+
     env : dict, optional
         Specify environment variables for the subprocess.
     """
@@ -303,7 +307,7 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
         log.debug(get_content())
 
     if return_stderr:
-        return stderr
+        return (stdout, stderr)
     else:
         return stdout
 

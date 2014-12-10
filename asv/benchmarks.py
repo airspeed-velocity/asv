@@ -25,7 +25,7 @@ BENCHMARK_RUN_SCRIPT = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "benchmark.py")
 
 
-def run_benchmark(benchmark, root, env, show_exc=False, quick=False,
+def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
                   profile=False):
     """
     Run a single benchmark in another process in the given environment.
@@ -39,9 +39,8 @@ def run_benchmark(benchmark, root, env, show_exc=False, quick=False,
 
     env : Environment object
 
-    show_exc : bool
-        When `True`, write the exception to the console if the
-        benchmark fails.
+    show_stderr : bool
+        When `True`, write the stderr out to the console.
 
     quick : bool, optional
         When `True`, run the benchmark function exactly once.
@@ -80,35 +79,36 @@ def run_benchmark(benchmark, root, env, show_exc=False, quick=False,
 
         try:
             try:
-                output = env.run(
+                output, err = env.run(
                     [BENCHMARK_RUN_SCRIPT, 'run', root, name, str(quick),
                      profile_path],
                     dots=False, timeout=benchmark['timeout'],
-                    display_error=show_exc)
+                    return_stderr=True)
             except util.ProcessError:
                 log.add(" failed".format(name))
-                return result
+            else:
+                try:
+                    # The numeric (timing) result is the last line of the
+                    # output.  This ensures that if the benchmark
+                    # inadvertently writes to stdout we can still read the
+                    # numeric output value.
+                    parsed = json.loads(output.splitlines()[-1].strip())
+                except:
+                    log.add(" invalid output".format(name))
+                    with log.indent():
+                        log.debug(output)
+                else:
+                    display = util.human_value(parsed, benchmark['unit'])
+                    log.add(' {0:>8}'.format(display))
+                    result['result'] = parsed
 
-            try:
-                # The numeric (timing) result is the last line of the
-                # output.  This ensures that if the benchmark
-                # inadvertently writes to stdout we can still read the
-                # numeric output value.
-                parsed = json.loads(output.splitlines()[-1].strip())
-            except:
-                log.add(" invalid output".format(name))
-                with log.indent():
-                    log.debug(output)
-                return result
+                    if profile:
+                        with io.open(profile_path, 'rb') as profile_fd:
+                            result['profile'] = profile_fd.read()
 
-            display = util.human_value(parsed, benchmark['unit'])
-            log.add(' {0:>8}'.format(display))
-
-            result['result'] = parsed
-
-            if profile:
-                with io.open(profile_path, 'rb') as profile_fd:
-                    result['profile'] = profile_fd.read()
+                if show_stderr and err.strip():
+                    with log.indent():
+                        log.error(err.strip())
 
             return result
         finally:
@@ -285,7 +285,7 @@ class Benchmarks(dict):
 
         return cls(conf, benchmarks=d, regex=regex)
 
-    def run_benchmarks(self, env, show_exc=False, quick=False, profile=False):
+    def run_benchmarks(self, env, show_stderr=False, quick=False, profile=False):
         """
         Run all of the benchmarks in the given `Environment`.
 
@@ -294,9 +294,8 @@ class Benchmarks(dict):
         env : Environment object
             Environment in which to run the benchmarks.
 
-        show_exc : bool, optional
-            When `True`, display the exception traceback when running
-            a benchmark fails.
+        show_stderr : bool, optional
+            When `True`, display any stderr emitted by the benchmark.
 
         quick : bool, optional
             When `True`, run each benchmark function exactly once.
@@ -332,7 +331,7 @@ class Benchmarks(dict):
             benchmarks = sorted(list(six.iteritems(self)))
             for name, benchmark in benchmarks:
                 times[name] = run_benchmark(
-                    benchmark, self._benchmark_dir, env, show_exc=show_exc,
+                    benchmark, self._benchmark_dir, env, show_stderr=show_stderr,
                     quick=quick, profile=profile)
         return times
 
