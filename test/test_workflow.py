@@ -33,7 +33,7 @@ def test_workflow(tmpdir):
         'project': 'asv',
         'matrix': {
             "six": [None],
-            "psutil": ["1.2", "1.1"]
+            "psutil": ["1.2", "2.1"]
         }
     })
 
