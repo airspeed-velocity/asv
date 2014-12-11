@@ -13,7 +13,7 @@ from . import Command
 from .. import console
 from ..console import log
 from ..results import iter_results
-from ..util import hash_equal
+from . import util
 
 
 class Rm(Command):
@@ -53,15 +53,15 @@ class Rm(Command):
         for pattern in patterns:
             parts = pattern.split('=', 1)
             if len(parts) != 2:
-                raise ValueError("Invalid pattern '{0}'".format(pattern))
+                raise util.UserError("Invalid pattern '{0}'".format(pattern))
 
             if parts[0] == 'benchmark':
                 if single_benchmark is not None:
-                    raise ValueError("'benchmark' appears more than once")
+                    raise util.UserError("'benchmark' appears more than once")
                 single_benchmark = parts[1]
             else:
                 if parts[0] in global_patterns:
-                    raise ValueError(
+                    raise util.UserError(
                         "'{0}' appears more than once".format(parts[0]))
                 global_patterns[parts[0]] = parts[1]
 
@@ -69,7 +69,7 @@ class Rm(Command):
             found = True
             for key, val in six.iteritems(global_patterns):
                 if key == 'commit_hash':
-                    if not hash_equal(result.commit_hash, val):
+                    if not util.hash_equal(result.commit_hash, val):
                         found = False
                         break
                 elif key == 'python':

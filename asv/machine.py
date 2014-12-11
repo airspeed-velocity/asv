@@ -49,7 +49,7 @@ class MachineCollection(object):
             if machine_name in d:
                 return d[machine_name]
 
-        raise ValueError(
+        raise UserError(
             "No information stored about machine {0}".format(machine_name))
 
     @classmethod
@@ -135,7 +135,7 @@ class Machine(object):
     @staticmethod
     def generate_machine_file():
         if not sys.stdout.isatty():
-            raise RuntimeError(
+            raise util.UserError(
                 "Run asv at the console the first time to generate "
                 "one.".format(path))
 

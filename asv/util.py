@@ -30,6 +30,10 @@ from .console import log
 from .extern import minify_json
 
 
+class UserError(Exception):
+    pass
+
+
 def human_file_size(size):
     """
     Returns a human-friendly string representing a file size

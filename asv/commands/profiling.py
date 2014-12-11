@@ -19,6 +19,7 @@ from ..profiling import ProfilerGui
 from ..repo import get_repo
 from ..results import iter_results_for_machine
 from ..util import hash_equal, iter_subclasses, override_python_interpreter
+from .. import util
 
 
 @contextlib.contextmanager
@@ -115,7 +116,8 @@ class Profile(Command):
             return
 
         if gui is not None and gui not in cls.guis:
-            raise ValueError("Unknown profiler GUI {0}".format(gui))
+            raise util.UserError(
+                "Unknown profiler GUI {0}".format(gui))
 
         repo = get_repo(conf)
 
@@ -171,12 +173,12 @@ class Profile(Command):
                     if env.name == environment:
                         break
                 else:
-                    raise ValueError(
+                    raise util.UserError(
                         "Environment {0} not found.".format(environment))
 
             benchmarks = Benchmarks(conf, regex=benchmark)
             if len(benchmarks) != 1:
-                raise ValueError(
+                raise util.UserError(
                     "Could not find benchmark {0}".format(benchmark))
 
             if not force:
