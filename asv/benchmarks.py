@@ -83,7 +83,7 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
                     [BENCHMARK_RUN_SCRIPT, 'run', root, name, str(quick),
                      profile_path],
                     dots=False, timeout=benchmark['timeout'],
-                    return_stderr=True)
+                    display_error=False, return_stderr=True)
             except util.ProcessError:
                 log.add(" failed".format(name))
             else:
