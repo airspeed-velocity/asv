@@ -13,7 +13,10 @@ its runtime to stdout.
 # that is imported into the benchmarking process.
 
 import copy
-import cProfile as profile
+try:
+    import cProfile as profile
+except:
+    profile = None
 import ctypes
 from ctypes.util import find_library
 import errno
@@ -302,6 +305,9 @@ class Benchmark(object):
     def do_profile(self, filename=None):
         def method_caller():
             run()
+
+        if profile is None:
+            raise RuntimeError("cProfile could not be imported")
 
         if filename is not None:
             if hasattr(method_caller, 'func_code'):
