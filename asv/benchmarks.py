@@ -203,12 +203,21 @@ class Benchmarks(dict):
         Check the benchmark tree for files with the same name as
         directories.
 
+        Also, ensure that every directory has an __init__.py file.
+
         Raises
         ------
         ValueError :
             A .py file and directory with the same name (excluding the
             extension) were found.
         """
+        if os.path.basename(root) == '__pycache__':
+            return
+
+        if not os.path.exists(os.path.join(root, '__init__.py')):
+            raise RuntimeError(
+                "No __init__.py file in '{0}'".format(root))
+
         # First, check for the case where a .py file and a directory
         # have the same name (without the extension).  This can't be
         # handled, so just raise an exception
