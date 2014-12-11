@@ -41,5 +41,5 @@ class Dev(Run):
     @classmethod
     def run_from_conf_args(cls, conf, args):
         return cls.run(
-            conf=conf, bench=args.bench, show_exc=True, quick=True,
+            conf=conf, bench=args.bench, show_stderr=True, quick=True,
             python=args.python, dry_run=True)
