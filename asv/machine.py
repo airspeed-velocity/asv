@@ -49,7 +49,7 @@ class MachineCollection(object):
             if machine_name in d:
                 return d[machine_name]
 
-        raise UserError(
+        raise util.UserError(
             "No information stored about machine {0}".format(machine_name))
 
     @classmethod

@@ -13,6 +13,7 @@ import six
 from asv import benchmarks
 from asv import config
 from asv import environment
+from asv import util
 
 BENCHMARK_DIR = os.path.join(os.path.dirname(__file__), 'benchmark')
 
@@ -82,5 +83,5 @@ def test_invalid_benchmark_tree(tmpdir):
     d['env_dir'] = os.path.join(tmpdir, "env")
     conf = config.Config.from_json(d)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(util.UserError):
         b = benchmarks.Benchmarks(conf)
