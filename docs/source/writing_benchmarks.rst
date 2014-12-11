@@ -40,11 +40,11 @@ Running benchmarks during development
 There are some options to ``asv run`` that may be useful when writing
 benchmarks, that aren't normally used during actual benchmarking.
 
-You may find that `asv run` spends a lot of time setting up the
-environment each time.  You can have `asv run` use an existing Python
-environment that already has the benchmarked project and all of its
-dependencies installed.  Use the ``--python`` argument to specify a
-Python environment to use::
+You may find that ``asv run`` spends a lot of time setting up the
+environment each time.  You can have ``asv run`` use an existing
+Python environment that already has the benchmarked project and all of
+its dependencies installed.  Use the ``--python`` argument to specify
+a Python environment to use::
 
        asv run --python=python
 
