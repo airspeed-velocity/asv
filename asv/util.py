@@ -149,7 +149,7 @@ def which(filename):
     """
     Emulates the UNIX `which` command in Python.
 
-    Raises a RuntimeError if no result is found.
+    Raises an IOError if no result is found.
     """
     locations = os.environ.get("PATH").split(os.pathsep)
     candidates = []
@@ -158,7 +158,7 @@ def which(filename):
         if os.path.isfile(candidate) or os.path.islink(candidate):
             candidates.append(candidate)
     if len(candidates) == 0:
-        raise RuntimeError("Could not find '{0}' in PATH".format(filename))
+        raise IOError("Could not find '{0}' in PATH".format(filename))
     return candidates[0]
 
 
@@ -168,7 +168,7 @@ def has_command(filename):
     """
     try:
         which(filename)
-    except RuntimeError:
+    except IOError:
         return False
     else:
         return True
@@ -523,3 +523,21 @@ def get_terminal_width():
         return os.get_terminal_size().columns
     except (AttributeError, OSError):
         return _get_terminal_size_fallback()[1]
+
+
+def override_python_interpreter(conf, python):
+    """
+    Performs the necessary override for commands that have a --python command.
+    """
+    if python is None:
+        return
+
+    if python == 'same':
+        python = sys.executable
+    else:
+        try:
+            which(python)
+        except IOError:
+            raise ValueError("{0} can not be found on path".format(python))
+
+    conf.pythons = [python]

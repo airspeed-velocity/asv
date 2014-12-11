@@ -6,8 +6,6 @@ from __future__ import (absolute_import, division, print_function,
 
 import math
 
-import six
-
 from . import Command
 from ..benchmarks import Benchmarks
 from ..console import log
@@ -84,6 +82,7 @@ class Find(Command):
         machine_params.save(conf.results_dir)
 
         repo = get_repo(conf)
+        repo.pull()
 
         commit_hashes = repo.get_hashes_from_range(range_spec)[::-1]
 

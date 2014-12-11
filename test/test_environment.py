@@ -37,7 +37,7 @@ def test_matrix_environments(tmpdir):
     conf.pythons = ["2.7", "3.4"]
     conf.matrix = {
         "six": ["1.4", None],
-        "psutil": ["1.2", "1.1"]
+        "psutil": ["1.2", "2.1"]
     }
 
     environments = list(environment.get_environments(conf))

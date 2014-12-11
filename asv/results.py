@@ -8,7 +8,7 @@ import base64
 import os
 import zlib
 
-from .environment import get_environment
+from . import environment
 from . import util
 
 
@@ -90,7 +90,7 @@ def find_latest_result_hash(machine, root):
     return latest_hash
 
 
-def get_filename(machine, commit_hash, env):
+def get_filename(machine, commit_hash, env_name):
     """
     Get the result filename for a given machine, commit_hash and
     environment.
@@ -99,7 +99,7 @@ def get_filename(machine, commit_hash, env):
         machine,
         "{0}-{1}.json".format(
             commit_hash[:8],
-            env.name))
+            env_name))
 
 
 class Results(object):
@@ -109,7 +109,7 @@ class Results(object):
     """
     api_version = 1
 
-    def __init__(self, params, env, commit_hash, date):
+    def __init__(self, params, requirements, commit_hash, date, python):
         """
         Parameters
         ----------
@@ -117,8 +117,8 @@ class Results(object):
             Parameters describing the environment in which the
             benchmarks were run.
 
-        env : Environment object
-            Environment in which the benchmarks were run.
+        requirements : list
+            Requirements of the benchmarks being run.
 
         commit_hash : str
             The commit hash for the benchmark run.
@@ -126,17 +126,21 @@ class Results(object):
         date : int
             Javascript timestamp for when the commit was merged into
             the repository.
+
+        python : str
+            A Python version specifier.
         """
         self._params = params
-        self._env = env
+        self._requirements = requirements
         self._commit_hash = commit_hash
         self._date = date
         self._results = {}
         self._profiles = {}
-        self._python = env.python
+        self._python = python
 
         self._filename = get_filename(
-            params['machine'], self._commit_hash, env)
+            params['machine'], self._commit_hash,
+            environment.get_env_name(python, requirements))
 
     @property
     def commit_hash(self):
@@ -153,10 +157,6 @@ class Results(object):
     @property
     def results(self):
         return self._results
-
-    @property
-    def env(self):
-        return self._env
 
     def add_time(self, benchmark_name, time):
         """
@@ -214,7 +214,7 @@ class Results(object):
         util.write_json(path, {
             'results': self._results,
             'params': self._params,
-            'requirements': self._env.requirements,
+            'requirements': self._requirements,
             'commit_hash': self._commit_hash,
             'date': self._date,
             'python': self._python,
@@ -235,9 +235,11 @@ class Results(object):
 
         obj = cls(
             d['params'],
-            get_environment('', d['python'], d['requirements']),
+            d['requirements'],
             d['commit_hash'],
-            d['date'])
+            d['date'],
+            d['python']
+        )
         obj._results = d['results']
         if 'profiles' in d:
             obj._profiles = d['profiles']

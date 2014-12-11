@@ -15,7 +15,7 @@ def _install_requirements(env):
         env.install_requirements()
     except:
         import traceback
-        traceback.format_exc()
+        traceback.print_exc()
         raise
 
 
@@ -24,7 +24,7 @@ def _install_requirements_multiprocess(env):
         return _install_requirements(env)
     except:
         import traceback
-        traceback.format_exc()
+        traceback.print_exc()
         raise
 
 

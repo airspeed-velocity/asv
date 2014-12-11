@@ -34,6 +34,36 @@ Benchmarks may be organized into methods of classes if desired::
             for i in xrange(1000):
                 pass
 
+Running benchmarks during development
+-------------------------------------
+
+There are some options to ``asv run`` that may be useful when writing
+benchmarks, that aren't normally used during actual benchmarking.
+
+You may find that `asv run` spends a lot of time setting up the
+environment each time.  You can have `asv run` use an existing Python
+environment that already has the benchmarked project and all of its
+dependencies installed.  Use the ``--python`` argument to specify a
+Python environment to use::
+
+       asv run --python=python
+
+If you don't care about getting accurate timings, but just want to
+ensure the code is running, you can add the ``--quick`` argument,
+which will run each benchmark only once::
+
+       asv run --quick
+
+In order to display any exceptions that your benchmarks may produce,
+pass the ``--show-exc`` flag::
+
+       asv run --show-exc
+
+Finally, there is a special command, ``asv dev``, that uses all of
+these features and is equivalent to::
+
+       asv run --python=same --quick --show-exc --dry-run
+
 Setup and teardown functions
 ----------------------------
 
