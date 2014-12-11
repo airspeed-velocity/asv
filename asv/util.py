@@ -346,25 +346,25 @@ def load_json(path, api_version=None):
     try:
         d = json.loads(content)
     except ValueError as e:
-        raise ValueError(
+        raise UserError(
             "Error parsing JSON in file '{0}': {1}".format(
                 path, six.text_type(e)))
 
     if api_version is not None:
         if 'version' in d:
             if d['version'] < api_version:
-                raise RuntimeError(
+                raise UserError(
                     "{0} is stored in an old file format.  Run "
                     "`asv update` to update it.".format(path))
             elif d['version'] > api_version:
-                raise RuntimeError(
+                raise UserError(
                     "{0} is stored in a format that is newer than "
                     "what this version of asv understands.  Update "
                     "asv to use this file.".format(path))
 
             del d['version']
         else:
-            raise RuntimeError(
+            raise UserError(
                 "No version specified in {0}.".format(path))
 
     return d
@@ -388,7 +388,7 @@ def update_json(cls, path, api_version):
     """
     d = load_json(path)
     if 'version' not in d:
-        raise RuntimeError(
+        raise UserError(
             "No version specified in {0}.".format(path))
 
     if d['version'] < api_version:
@@ -396,7 +396,7 @@ def update_json(cls, path, api_version):
             d = getattr(cls, 'update_to_{0}'.format(x), lambda x: x)(d)
         write_json(path, d, api_version)
     elif d['version'] > api_version:
-        raise RuntimeError(
+        raise UserError(
             "version of {0} is newer than understood by this version of "
             "asv. Upgrade asv in order to use or add to these results.")
 

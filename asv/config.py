@@ -41,13 +41,13 @@ class Config(object):
             path = "asv.conf.json"
 
         if not os.path.exists(path):
-            raise RuntimeError("Config file {0} not found.".format(path))
+            raise util.UserError("Config file {0} not found.".format(path))
 
         d = util.load_json(path, cls.api_version)
         try:
             return cls.from_json(d)
         except ValueError:
-            raise ValueError(
+            raise util.UserError(
                 "No repo specified in {0} config file.".format(path))
 
     @classmethod
@@ -56,7 +56,7 @@ class Config(object):
         conf.__dict__.update(d)
 
         if not getattr(conf, "repo", None):
-            raise ValueError(
+            raise util.UserError(
                 "No repo specified in config file.")
 
         return conf
@@ -67,6 +67,6 @@ class Config(object):
             path = "asv.conf.json"
 
         if not os.path.exists(path):
-            raise RuntimeError("Config file {0} not found.".format(path))
+            raise util.UserError("Config file {0} not found.".format(path))
 
         util.update_json(cls, path, cls.api_version)

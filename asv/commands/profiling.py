@@ -124,14 +124,14 @@ class Profile(Command):
         if python is not None:
             override_python_interpreter(conf, python)
             if environment is not None:
-                raise RuntimeError(
+                raise util.UserError(
                     "--python and --environment may not both be provided.")
             if revision is not None:
-                raise RuntimeError(
+                raise util.UserError(
                     "--python and an explicit revision may not both be "
                     "provided.")
         elif revision is None:
-            raise RuntimeError("Must specify a revision to profile.")
+            raise util.UserError("Must specify a revision to profile.")
         else:
             repo.pull()
 

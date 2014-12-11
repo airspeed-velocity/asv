@@ -138,7 +138,7 @@ class Run(Command):
         if python is not None:
             util.override_python_interpreter(conf, python)
             if range_spec != 'master':
-                raise RuntimeError(
+                raise util.UserError(
                     "No range spec may be specified if benchmarking in "
                     "an existing environment")
         else:
