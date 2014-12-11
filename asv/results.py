@@ -9,6 +9,7 @@ import os
 import zlib
 
 from . import environment
+from . import log
 from . import util
 
 
@@ -70,6 +71,7 @@ def get_existing_hashes(results):
 
     Each element yielded is the pair (hash, date).
     """
+    log.info("Getting existing hashes")
     hashes = list(set(iter_existing_hashes(results)))
     return hashes
 
