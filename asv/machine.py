@@ -137,7 +137,7 @@ class Machine(object):
         if not sys.stdout.isatty():
             raise util.UserError(
                 "Run asv at the console the first time to generate "
-                "one.".format(path))
+                "one.")
 
         print("I will now ask you some questions about this machine to "
               "identify it in the benchmarks.")
@@ -167,7 +167,7 @@ class Machine(object):
         unique_machine_name = cls.get_unique_machine_name()
         try:
             d = MachineCollection.load(unique_machine_name, _path=_path)
-        except ValueError:
+        except util.UserError:
             d = {}
         d.update(kwargs)
         if (not len(d) and interactive) or force_interactive:
