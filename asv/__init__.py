@@ -15,24 +15,4 @@ if sys.version_info >= (3, 3):
         os.unsetenv('__PYVENV_LAUNCHER__')
 
 
-def check_version_compatibility():
-    """
-    Performs a number of compatibility checks with third-party
-    libraries.
-    """
-    from distutils.version import LooseVersion
-
-    try:
-        import virtualenv
-    except ImportError:
-        pass
-    else:
-        if LooseVersion(virtualenv.__version__) == LooseVersion('1.11.0'):
-            raise RuntimeError(
-                "asv is not compatible with virtualenv 1.11 due to a bug in "
-                "setuptools.")
-
-
-check_version_compatibility()
-
 from . import plugin_manager
