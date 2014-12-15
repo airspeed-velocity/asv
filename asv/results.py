@@ -9,7 +9,7 @@ import os
 import zlib
 
 from . import environment
-from . import log
+from .console import log
 from . import util
 
 
