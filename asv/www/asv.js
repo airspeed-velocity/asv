@@ -481,6 +481,7 @@ $(function() {
                     }
                 });
 
+                results.sort();
                 return results;
             }
 
