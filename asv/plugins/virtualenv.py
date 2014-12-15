@@ -3,6 +3,7 @@
 
 from __future__ import absolute_import, division, unicode_literals, print_function
 
+from distutils.version import LooseVersion
 import inspect
 import os
 import shutil
@@ -69,6 +70,19 @@ class Virtualenv(environment.Environment):
 
     @classmethod
     def matches(self, python):
+        try:
+            import virtualenv
+        except ImportError:
+            return False
+        else:
+            if LooseVersion(virtualenv.__version__) == LooseVersion('1.11.0'):
+                log.warn(
+                    "asv is not compatible with virtualenv 1.11 due to a bug in "
+                    "setuptools.")
+            if LooseVersion(virtualenv.__version__) < LooseVersion('1.10'):
+                log.warn(
+                    "If using virtualenv, it much be at least version 1.10")
+
         try:
             util.which('python{0}'.format(python))
         except IOError:
