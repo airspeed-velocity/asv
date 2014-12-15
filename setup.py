@@ -3,7 +3,7 @@
 import ez_setup
 ez_setup.use_setuptools()
 
-from setuptools import setup, find_packages
+from setuptools import setup
 from setuptools.command.test import test as TestCommand
 import sys
 
@@ -24,7 +24,7 @@ class PyTest(TestCommand):
 setup(
     name="asv",
     version="0.1",
-    packages=find_packages(),
+    packages=['asv'],
     entry_points={
         'console_scripts': [
             'asv = asv.main:main'
