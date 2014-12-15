@@ -45,7 +45,7 @@ class Virtualenv(environment.Environment):
         try:
             import virtualenv
         except ImportError:
-            raise RuntimeError(
+            raise util.UserError(
                 "virtualenv must be installed to run asv with the given "
                 "Python executable")
 

@@ -169,7 +169,7 @@ class Benchmarks(dict):
 
         environments = list(get_environments(conf))
         if len(environments) == 0:
-            raise ValueError("No available environments")
+            raise util.UserError("No available environments")
 
         # Ideally, use an environment in the same Python version as
         # master, but if one isn't found, just default to the first
@@ -215,7 +215,7 @@ class Benchmarks(dict):
             return
 
         if not os.path.exists(os.path.join(root, '__init__.py')):
-            raise RuntimeError(
+            raise util.UserError(
                 "No __init__.py file in '{0}'".format(root))
 
         # First, check for the case where a .py file and a directory
@@ -233,7 +233,7 @@ class Benchmarks(dict):
             path = os.path.join(root, dirname)
             if os.path.isdir(path):
                 if dirname in found:
-                    raise ValueError(
+                    raise util.UserError(
                         "Found a directory and python file with same name in "
                         "benchmark tree: '{0}'".format(path))
                 cls.check_tree(path)

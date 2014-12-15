@@ -13,6 +13,7 @@ from . import commands
 from .config import Config
 from .console import log
 from .plugin_manager import plugin_manager
+from . import util
 
 
 def main():
@@ -33,7 +34,7 @@ def main():
 
     try:
         result = args.func(args)
-    except RuntimeError as e:
+    except (RuntimeError, util.UserError) as e:
         log.error(six.text_type(e))
         sys.stdout.write('\n')
         sys.exit(1)

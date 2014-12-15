@@ -108,5 +108,5 @@ def get_repo(conf):
         if cls.url_match(conf.repo):
             return cls(conf.repo, conf.project)
 
-    raise ValueError(
+    raise util.UserError(
         "Can not determine what kind of DVCS to use for URL '{0}'".format(conf.repo))

@@ -49,7 +49,7 @@ class MachineCollection(object):
             if machine_name in d:
                 return d[machine_name]
 
-        raise ValueError(
+        raise util.UserError(
             "No information stored about machine {0}".format(machine_name))
 
     @classmethod
@@ -135,9 +135,9 @@ class Machine(object):
     @staticmethod
     def generate_machine_file():
         if not sys.stdout.isatty():
-            raise RuntimeError(
+            raise util.UserError(
                 "Run asv at the console the first time to generate "
-                "one.".format(path))
+                "one.")
 
         print("I will now ask you some questions about this machine to "
               "identify it in the benchmarks.")
@@ -167,7 +167,7 @@ class Machine(object):
         unique_machine_name = cls.get_unique_machine_name()
         try:
             d = MachineCollection.load(unique_machine_name, _path=_path)
-        except ValueError:
+        except util.UserError:
             d = {}
         d.update(kwargs)
         if (not len(d) and interactive) or force_interactive:

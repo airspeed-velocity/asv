@@ -11,6 +11,7 @@ from ..benchmarks import Benchmarks
 from ..console import log
 from ..machine import Machine
 from ..repo import get_repo
+from .. import util
 
 from .setup import Setup
 
@@ -148,7 +149,7 @@ class Find(Command):
                     if lo_result is None:
                         lo += 1
                         if lo >= mid:
-                            raise RuntimeError("Too many commits failed")
+                            raise util.UserError("Too many commits failed")
 
                 mid_result = None
                 while mid_result is None:
@@ -156,7 +157,7 @@ class Find(Command):
                     if mid_result is None:
                         mid += 1
                         if mid >= hi:
-                            raise RuntimeError("Too many commits failed")
+                            raise util.UserError("Too many commits failed")
 
                 hi_result = None
                 while hi_result is None:
@@ -164,7 +165,7 @@ class Find(Command):
                     if hi_result is None:
                         hi -= 1
                         if hi <= mid:
-                            raise RuntimeError("Too many commits failed")
+                            raise util.UserError("Too many commits failed")
 
             diff_a = mid_result - lo_result
             diff_b = hi_result - mid_result

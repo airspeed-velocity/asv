@@ -9,6 +9,7 @@ from ..machine import iter_machine_files
 from ..results import iter_results_for_machine_and_hash
 from ..util import human_time, load_json
 from ..console import color_print
+from .. import util
 
 
 def mean(values):
@@ -75,15 +76,18 @@ class Compare(Command):
             machines.append(d['machine'])
 
         if len(machines) == 0:
-            raise Exception("No results found")
+            raise util.UserError("No results found")
         elif machine is None:
             if len(machines) > 1:
-                raise Exception("Results available for several machines: {0} - "
-                                "specify which one to use with the --machine option".format('/'.join(machines)))
+                raise util.UserError(
+                    "Results available for several machines: {0} - "
+                    "specify which one to use with the --machine option".format(
+                        '/'.join(machines)))
             else:
                 machine = machines[0]
         elif not machine in machines:
-            raise ValueError("Results for machine '{0} not found".format(machine))
+            raise util.UserError(
+                "Results for machine '{0} not found".format(machine))
 
         results_1 = {}
         results_2 = {}
@@ -103,10 +107,12 @@ class Compare(Command):
                 results_2[key].append(result.results[key])
 
         if len(results_1) == 0:
-            raise ValueError("Did not find results for commit {0}".format(hash_1))
+            raise util.UserError(
+                "Did not find results for commit {0}".format(hash_1))
 
         if len(results_2) == 0:
-            raise ValueError("Did not find results for commit {0}".format(hash_2))
+            raise util.UserError(
+                "Did not find results for commit {0}".format(hash_2))
 
         benchmarks_1 = set(results_1.keys())
         benchmarks_2 = set(results_2.keys())
