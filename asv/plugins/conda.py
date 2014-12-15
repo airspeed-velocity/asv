@@ -65,7 +65,7 @@ class Conda(environment.Environment):
                     '-p',
                     path,
                     'python={0}'.format(python),
-                    '--dry-run'])
+                    '--dry-run'], display_error=False)
             except util.ProcessError:
                 return False
             else:
