@@ -77,13 +77,16 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
         else:
             profile_path = 'None'
 
+        err = ''
+
         try:
             try:
                 output, err = env.run(
                     [BENCHMARK_RUN_SCRIPT, 'run', root, name, str(quick),
                      profile_path],
                     dots=False, timeout=benchmark['timeout'],
-                    display_error=False, return_stderr=True)
+                    display_error=False, return_stderr=True,
+                    error=False)
             except util.ProcessError:
                 log.add(" failed".format(name))
             else:
@@ -106,9 +109,9 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
                         with io.open(profile_path, 'rb') as profile_fd:
                             result['profile'] = profile_fd.read()
 
-                if show_stderr and err.strip():
-                    with log.indent():
-                        log.error(err.strip())
+            if show_stderr and err.strip():
+                with log.indent():
+                    log.error(err.strip())
 
             return result
         finally:

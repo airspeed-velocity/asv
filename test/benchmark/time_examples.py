@@ -27,3 +27,11 @@ class TimeSuite:
 
 class TimeSuiteSub(TimeSuite):
     pass
+
+
+def time_foo():
+    import warnings
+    print('hi')
+    warnings.warn('before')
+    1 / 0
+    warning.warn('after')
