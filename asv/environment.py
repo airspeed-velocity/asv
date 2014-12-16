@@ -90,8 +90,8 @@ def get_environments_for_python(conf, python):
         Python version specifier.  Acceptable values depend on the
         Environment plugins installed but generally are:
 
-        - 'X.Y': A Python version, in which case conda or virtualenv will
-          be used to create a new environment.
+        - 'X.Y': A Python version, in which case conda or virtualenv
+          will be used to create a new environment.
 
         - 'python' or '/usr/bin/python': Search for the given
           executable on the search PATH, and use that.  It is assumed
