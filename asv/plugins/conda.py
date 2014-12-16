@@ -98,7 +98,9 @@ class Conda(environment.Environment):
                 '--yes',
                 '-p',
                 self._path,
-                'python={0}'.format(self._python), 'pip'])
+                '--use-index-cache',
+                'python={0}'.format(self._python),
+                'pip'])
         except util.ProcessError:
             log.error("Failure creating conda environment for {0}".format(
                 self.name))
