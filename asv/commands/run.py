@@ -184,11 +184,12 @@ class Run(Command):
         if len(environments) == 0:
             log.error("No environments selected")
             return 1
-        for env in environments:
-            if not env.can_install_project():
-                raise util.UserError(
-                    "No range spec may be specified if benchmarking in "
-                    "an existing environment")
+        if range_spec != 'master':
+            for env in environments:
+                if not env.can_install_project():
+                    raise util.UserError(
+                        "No range spec may be specified if benchmarking in "
+                        "an existing environment")
 
         benchmarks = Benchmarks(conf, regex=bench)
         if len(benchmarks) == 0:
