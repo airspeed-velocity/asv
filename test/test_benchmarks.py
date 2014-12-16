@@ -40,19 +40,19 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 3
 
     b = benchmarks.Benchmarks(conf, regex='example')
-    assert len(b) == 5
+    assert len(b) == 6
 
     b = benchmarks.Benchmarks(conf, regex='time_example_benchmark_1')
     assert len(b) == 2
 
     b = benchmarks.Benchmarks(conf)
-    assert len(b) == 9
+    assert len(b) == 10
 
     envs = list(environment.get_environments(conf))
     b = benchmarks.Benchmarks(conf)
     times = b.run_benchmarks(envs[0], profile=True, show_stderr=True)
 
-    assert len(times) == 9
+    assert len(times) == 10
     assert times[
         'time_examples.TimeSuite.time_example_benchmark_1']['result'] is not None
     # Benchmarks that raise exceptions should have a time of "None"
@@ -66,6 +66,9 @@ def test_find_benchmarks(tmpdir):
         'time_secondary.track_value']['result'] == 42.0
     assert 'profile' in times[
         'time_secondary.track_value']
+    assert 'stderr' in times[
+        'time_examples.time_with_warnings']
+    assert times['time_examples.time_with_warnings']['errcode'] != 0
 
     profile_path = os.path.join(tmpdir, 'test.profile')
     with open(profile_path, 'wb') as fd:

@@ -8,6 +8,8 @@ import sys
 if sys.version_info[0] == 3:
     xrange = range
 
+import warnings
+
 
 class TimeSuite:
     def setup(self):
@@ -27,3 +29,10 @@ class TimeSuite:
 
 class TimeSuiteSub(TimeSuite):
     pass
+
+
+def time_with_warnings():
+    print('hi')
+    warnings.warn('before')
+    1 / 0
+    warnings.warn('after')
