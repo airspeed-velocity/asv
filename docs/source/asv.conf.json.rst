@@ -47,21 +47,27 @@ The versions of Python to run the benchmarks in.  If not provided, it
 will to default to the version of Python that the ``asv`` command
 (master) is being run under.
 
-If provided, it should be a list of strings.  The string will be
-appended to ``python`` and that string will be searched on the current
-``PATH`` to find the appropriate Python binary.  For example::
+If provided, it should be a list of strings.  It may be one of the
+following:
 
-   "pythons": ["2.7", "3.3"]
+- a Python version string, e.g. ``"2.7"``, in which case:
 
-will look for the binaries ``python2.7`` and ``python3.3`` on the path.
+  - if ``conda`` is found, ``conda`` will be used to create an
+    environment for that version of Python
 
-.. note::
+  - if ``virtualenv`` is installed, ``asv`` will search for that
+    version of Python on the ``PATH`` and create a new virtual
+    environment based on it.  ``asv`` does not handle downloading and
+    installing different versions of Python for you.  They must
+    already be installed and on the path.  Depending on your platform,
+    you can install multiple versions of Python using your package
+    manager or using `pyenv <https://github.com/yyuu/pyenv>`_.
 
-    **airspeed velocity** does not handle downloading and installing
-    different versions of Python for you.  They must already be
-    installed and on the path.  Depending on your platform, you can
-    install multiple versions of Python using your package manager or
-    using `pyenv <https://github.com/yyuu/pyenv>`_.
+- an executable name on the ``PATH` or an absolute path to an
+  executable.  In this case, the environment is assumed to be already
+  fully loaded and read-only.  Thus, the benchmarked project must
+  already be installed, and it will not be possible to benchmark
+  multiple revisions of the project.
 
 ``matrix``
 ----------
