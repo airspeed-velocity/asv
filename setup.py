@@ -49,6 +49,7 @@ setup(
             'www/flot/*.js',
             'www/bootstrap/*.js',
             'www/bootstrap/*.css',
+            'template/__init__.py',
             'template/asv.conf.json',
             'template/benchmarks/*.py'
         ]
