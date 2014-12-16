@@ -233,7 +233,8 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
         `False`.
 
     return_stderr : bool, optional
-        If `True`, return both the stdout and stderr as a tuple.
+        If `True`, return both the (stdout, stderr, errcode) as a
+        tuple.
 
     env : dict, optional
         Specify environment variables for the subprocess.
@@ -311,7 +312,7 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
         log.debug(get_content())
 
     if return_stderr:
-        return (stdout, stderr)
+        return (stdout, stderr, retcode)
     else:
         return stdout
 

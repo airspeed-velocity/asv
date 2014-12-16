@@ -68,6 +68,7 @@ def test_find_benchmarks(tmpdir):
         'time_secondary.track_value']
     assert 'stderr' in times[
         'time_examples.time_with_warnings']
+    assert times['time_examples.time_with_warnings']['errcode'] != 0
 
     profile_path = os.path.join(tmpdir, 'test.profile')
     with open(profile_path, 'wb') as fd:
