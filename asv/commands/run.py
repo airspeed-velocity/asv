@@ -96,9 +96,13 @@ class Run(Command):
             the $PATH, an absolute path, or the special value "same"
             which will use the same Python interpreter that asv is
             using.  This interpreter must have the benchmarked project
-            already installed, including its dependencies.  A specific
-            revision may not be provided when --python is
-            provided.""")
+            already installed, including its dependencies, and a specific
+            revision of the benchmarked project may not be provided.
+
+            It may also be any string accepted by any of the
+            environment plugins.  For example, the conda plugin
+            accepts "2.7" to mean create a new Conda environment with
+            Python version 2.7.""")
         parser.add_argument(
             "--dry-run", "-n", action="store_true",
             default=None,
@@ -137,10 +141,6 @@ class Run(Command):
 
         if python is not None:
             util.override_python_interpreter(conf, python)
-            if range_spec != 'master':
-                raise util.UserError(
-                    "No range spec may be specified if benchmarking in "
-                    "an existing environment")
         else:
             repo.pull()
 
@@ -184,6 +184,11 @@ class Run(Command):
         if len(environments) == 0:
             log.error("No environments selected")
             return 1
+        for env in environments:
+            if not env.can_install_project():
+                raise util.UserError(
+                    "No range spec may be specified if benchmarking in "
+                    "an existing environment")
 
         benchmarks = Benchmarks(conf, regex=bench)
         if len(benchmarks) == 0:

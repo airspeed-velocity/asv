@@ -539,10 +539,5 @@ def override_python_interpreter(conf, python):
 
     if python == 'same':
         python = sys.executable
-    else:
-        try:
-            which(python)
-        except IOError:
-            raise ValueError("{0} can not be found on path".format(python))
 
     conf.pythons = [python]

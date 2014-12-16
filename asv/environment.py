@@ -209,6 +209,13 @@ class Environment(object):
         self.uninstall(conf.project)
         self.install(os.path.abspath(conf.project), editable=True)
 
+    def can_install_project(self):
+        """
+        Return `True` if specific revisions of the benchmarked project
+        can be installed into this environment.
+        """
+        return True
+
 
 class ExistingEnvironment(Environment):
     def __init__(self, executable):
@@ -246,6 +253,9 @@ class ExistingEnvironment(Environment):
 
     def install_project(self, conf):
         pass
+
+    def can_install_project(self):
+        return True
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
