@@ -22,6 +22,7 @@ class Config(object):
         self.project_url = "#"
         self.repo = None
         self.pythons = ["{0[0]}.{0[1]}".format(sys.version_info)]
+        self.python_executable = None
         self.matrix = {}
         self.env_dir = "env"
         self.benchmark_dir = "benchmarks"
