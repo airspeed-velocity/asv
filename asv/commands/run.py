@@ -141,44 +141,46 @@ class Run(Command):
                 raise util.UserError(
                     "No range spec may be specified if benchmarking in "
                     "an existing environment")
+            commit_hashes = ['master']
+
         else:
             repo.pull()
 
-        if range_spec == 'EXISTING':
-            commit_hashes = [h for h, d in get_existing_hashes(
-                conf.results_dir)]
-            range_spec = None
-        elif range_spec == 'NEW':
-            latest_result = find_latest_result_hash(
-                machine_params.machine, conf.results_dir)
-            # TODO: This is shamelessly git-specific
-            range_spec = '{0}..master'.format(latest_result)
-        elif range_spec == "ALL":
-            range_spec = ""
-        elif range_spec == "MISSING":
-            commit_hashes = repo.get_hashes_from_range("")
-            for h, d in get_existing_hashes(conf.results_dir):
-                if h in commit_hashes:
-                    commit_hashes.remove(h)
-            range_spec = None
+            if range_spec == 'EXISTING':
+                commit_hashes = [h for h, d in get_existing_hashes(
+                    conf.results_dir)]
+                range_spec = None
+            elif range_spec == 'NEW':
+                latest_result = find_latest_result_hash(
+                    machine_params.machine, conf.results_dir)
+                # TODO: This is shamelessly git-specific
+                range_spec = '{0}..master'.format(latest_result)
+            elif range_spec == "ALL":
+                range_spec = ""
+            elif range_spec == "MISSING":
+                commit_hashes = repo.get_hashes_from_range("")
+                for h, d in get_existing_hashes(conf.results_dir):
+                    if h in commit_hashes:
+                        commit_hashes.remove(h)
+                range_spec = None
 
-        if isinstance(range_spec, list):
-            commit_hashes = range_spec
-        elif range_spec is not None:
-            commit_hashes = repo.get_hashes_from_range(range_spec)
+            if isinstance(range_spec, list):
+                commit_hashes = range_spec
+            elif range_spec is not None:
+                commit_hashes = repo.get_hashes_from_range(range_spec)
 
-        if len(commit_hashes) == 0:
-            log.error("No commit hashes selected")
-            return 1
+            if len(commit_hashes) == 0:
+                log.error("No commit hashes selected")
+                return 1
 
-        if steps > 0:
-            spacing = max(float(len(commit_hashes)) / steps, 1)
-            spaced = []
-            i = 0
-            while int(i) < len(commit_hashes) and len(spaced) < steps:
-                spaced.append(commit_hashes[int(i)])
-                i += spacing
-            commit_hashes = spaced
+            if steps > 0:
+                spacing = max(float(len(commit_hashes)) / steps, 1)
+                spaced = []
+                i = 0
+                while int(i) < len(commit_hashes) and len(spaced) < steps:
+                    spaced.append(commit_hashes[int(i)])
+                    i += spacing
+                commit_hashes = spaced
 
         environments = Setup.run(conf=conf, parallel=parallel)
         if len(environments) == 0:
