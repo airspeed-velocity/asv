@@ -18,7 +18,7 @@ from ..machine import Machine
 from ..profiling import ProfilerGui
 from ..repo import get_repo
 from ..results import iter_results_for_machine
-from ..util import hash_equal, iter_subclasses, override_python_interpreter
+from ..util import hash_equal, iter_subclasses
 from .. import util
 
 
@@ -126,7 +126,7 @@ class Profile(Command):
         repo = get_repo(conf)
 
         if python is not None:
-            override_python_interpreter(conf, python)
+            conf.pythons = [python]
             if environment is not None:
                 raise util.UserError(
                     "--python and --environment may not both be provided.")

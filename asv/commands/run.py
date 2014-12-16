@@ -140,7 +140,7 @@ class Run(Command):
         repo = get_repo(conf)
 
         if python is not None:
-            util.override_python_interpreter(conf, python)
+            conf.pythons = [python]
         else:
             repo.pull()
 

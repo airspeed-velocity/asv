@@ -10,6 +10,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
+import sys
 
 import six
 
@@ -234,6 +235,9 @@ class ExistingEnvironment(Environment):
 
     @classmethod
     def matches(cls, python):
+        if python == 'same':
+            python = sys.executable
+
         try:
             util.which(python)
         except IOError:
