@@ -50,7 +50,7 @@ setup(
             'www/bootstrap/*.js',
             'www/bootstrap/*.css',
             'template/asv.conf.json',
-            'template/benchmarks/benchmarks.py'
+            'template/benchmarks/*.py'
         ]
     },
 
