@@ -21,7 +21,7 @@ README like this:
 
 By using the following markdown::
 
-  [![asv](http://img.shields.io/badge/benchmarked%20by-asv-green.svg?style=flat)](http://astrofrog.github.io/wcsaxes-benchmarks/)
+  [![asv](http://img.shields.io/badge/benchmarked%20by-asv-green.svg?style=flat)](http://your-url-here/)
 
 License: `BSD three-clause license
 <http://opensource.org/licenses/BSD-3-Clause>`__.
