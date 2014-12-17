@@ -119,32 +119,42 @@ usually ok to just press ``Enter`` to accept each default value.  This
 information is stored in the ``.asv-machine.json`` file in your home
 directory::
 
-
     I will now ask you some questions about this machine to identify
     it in the benchmarks.
 
     1. machine: A unique name to identify this machine in the results.
        May be anything, as long as it is unique across all the
-       machines used to benchmark this project.
+       machines used to benchmark this project.  NOTE: If changed from
+       the default, it will no longer match the hostname of this
+       machine, and you may need to explicitly use the --machine
+       argument to asv.
     machine [cheetah]:
     2. os: The OS type and version of this machine.  For example,
        'Macintosh OS-X 10.8'.
-    os [Linux 3.12.7-300.fc20.x86_64]:
+    os [Linux 3.17.6-300.fc21.x86_64]:
     3. arch: The generic CPU architecture of this machine.  For
        example, 'i386' or 'x86_64'.
     arch [x86_64]:
     4. cpu: A specific description of the CPU of this machine,
        including its speed and class.  For example, 'Intel(R) Core(TM)
        i5-2520M CPU @ 2.50GHz (4 cores)'.
-    cpu [Intel(R) Core(TM) i5-2520M CPU @ 2.50GHz (4 cores)]:
+    cpu [Intel(R) Core(TM) i5-2520M CPU @ 2.50GHz]:
     5. ram: The amount of physical RAM on this machine.  For example,
        '4GB'.
-    ram []:
+    ram [8055476]:
 
 .. note::
 
     If you ever need to update the machine information later, you can
     run ``asv machine``.
+
+.. note::
+
+    By default, the name of the machine is determined from your
+    hostname.  If you have a hostname that frequently changes, you can
+    provide a static one in question 1. above, and then pass that name
+    as the ``--machine`` argument to ``asv run`` and other commands
+    that need machine information.
 
 Environments
 ````````````
