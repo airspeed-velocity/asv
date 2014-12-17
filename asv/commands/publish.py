@@ -85,6 +85,13 @@ class Publish(Command):
                         graphs[graph.path] = graph
                     graph.add_data_point(results.date, val)
 
+                    graph = Graph(key, {'summary': None}, {})
+                    if graph.path in graphs:
+                        graph = graphs[graph.path]
+                    else:
+                        graphs[graph.path] = graph
+                    graph.add_data_point(results.date, val)
+
         log.step()
         log.info("Generating graphs")
         with log.indent():
