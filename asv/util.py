@@ -545,4 +545,5 @@ def override_python_interpreter(conf, python):
         except IOError:
             raise ValueError("{0} can not be found on path".format(python))
 
-    conf.pythons = [python]
+    conf.pythons = []
+    conf.python_executable = python

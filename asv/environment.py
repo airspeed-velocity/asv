@@ -71,6 +71,8 @@ def get_environments(conf):
     conf : dict
         asv configuration object
     """
+    if conf.python_executable is not None:
+        yield ExistingEnvironment(conf.python_executable)
     for python in conf.pythons:
         for env in get_environments_for_python(conf, python):
             yield env
