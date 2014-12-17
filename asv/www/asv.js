@@ -1,6 +1,6 @@
 $(function() {
     var colors = [
-        '#348ABD',
+        '#247AAD',
         '#E24A33',
         '#988ED5',
         '#777777',
