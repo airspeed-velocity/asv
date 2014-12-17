@@ -34,6 +34,22 @@ class UserError(Exception):
     pass
 
 
+def human_list(l):
+    """
+    Formats a list of strings in a human-friendly way.
+    """
+    l = ["'{0}'".format(x) for x in l]
+
+    if len(l) == 0:
+        return 'nothing'
+    elif len(l) == 1:
+        return l[0]
+    elif len(l) == 2:
+        return ' and '.join(l)
+    else:
+        return ', '.join(l[:-1]) + ' and ' + l[-1]
+
+
 def human_file_size(size):
     """
     Returns a human-friendly string representing a file size

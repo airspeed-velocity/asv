@@ -39,12 +39,6 @@ One of the following:
    Using ``virtualenv``, these dependencies will have to be compiled
    every time the environments are set up.
 
-Optional dependencies, required only to determine machine information:
-
-- `psutil <https://code.google.com/p/psutil/>`__
-
-- `numpy <http://www.numpy.org/>`__
-
 Optional optimization
 ---------------------
 

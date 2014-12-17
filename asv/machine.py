@@ -26,6 +26,11 @@ def iter_machine_files(results_dir):
                 yield path
 
 
+def _get_unique_machine_name():
+    (system, node, release, version, machine, processor) = platform.uname()
+    return node
+
+
 class MachineCollection(object):
     """
     Stores information about 1 or more machines in the
@@ -48,9 +53,12 @@ class MachineCollection(object):
             d = util.load_json(path, cls.api_version)
             if machine_name in d:
                 return d[machine_name]
+            elif len(d) == 1 and machine_name == _get_unique_machine_name():
+                return d[list(d.keys())[0]]
 
         raise util.UserError(
-            "No information stored about machine {0}".format(machine_name))
+            "No information stored about machine '{0}'. I know about {1}.".format(
+                machine_name, util.human_list(d.keys())))
 
     @classmethod
     def save(cls, machine_name, machine_info, _path=None):
@@ -83,7 +91,12 @@ class Machine(object):
          """
          A unique name to identify this machine in the results.  May
          be anything, as long as it is unique across all the machines used
-         to benchmark this project."""),
+         to benchmark this project.
+
+         NOTE: If changed from the default, it will no longer match
+         the hostname of this machine, and you may need to explicitly
+         use the --machine argument to asv.
+         """),
 
         ("os",
          """
@@ -113,8 +126,7 @@ class Machine(object):
     def get_unique_machine_name(cls):
         if cls.hardcoded_machine_name:
             return cls.hardcoded_machine_name
-        (system, node, release, version, machine, processor) = platform.uname()
-        return node
+        return _get_unique_machine_name()
 
     @staticmethod
     def get_defaults():
@@ -158,23 +170,24 @@ class Machine(object):
 
     @classmethod
     def load(cls, interactive=False, force_interactive=False, _path=None,
-             use_defaults=False, **kwargs):
+             machine_name=None, **kwargs):
         self = Machine()
-        if use_defaults:
-            self.__dict__.update(cls.get_defaults())
-            return self
 
-        unique_machine_name = cls.get_unique_machine_name()
+        if machine_name is None:
+            machine_name = cls.get_unique_machine_name()
         try:
-            d = MachineCollection.load(unique_machine_name, _path=_path)
-        except util.UserError:
+            d = MachineCollection.load(machine_name, _path=_path)
+        except util.UserError as e:
+            console.log.error(str(e) + '\n')
             d = {}
         d.update(kwargs)
         if (not len(d) and interactive) or force_interactive:
             d.update(self.generate_machine_file())
 
+        machine_name = d['machine']
+
         self.__dict__.update(d)
-        MachineCollection.save(unique_machine_name, self.__dict__, _path=_path)
+        MachineCollection.save(machine_name, self.__dict__, _path=_path)
         return self
 
     def save(self, results_dir):
