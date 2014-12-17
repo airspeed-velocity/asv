@@ -528,21 +528,3 @@ def get_terminal_width():
         return os.get_terminal_size().columns
     except (AttributeError, OSError):
         return _get_terminal_size_fallback()[1]
-
-
-def override_python_interpreter(conf, python):
-    """
-    Performs the necessary override for commands that have a --python command.
-    """
-    if python is None:
-        return
-
-    if python == 'same':
-        python = sys.executable
-    else:
-        try:
-            which(python)
-        except IOError:
-            raise ValueError("{0} can not be found on path".format(python))
-
-    conf.pythons = [python]

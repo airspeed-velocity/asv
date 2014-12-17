@@ -10,6 +10,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
+import sys
 
 import six
 
@@ -209,6 +210,13 @@ class Environment(object):
         self.uninstall(conf.project)
         self.install(os.path.abspath(conf.project), editable=True)
 
+    def can_install_project(self):
+        """
+        Return `True` if specific revisions of the benchmarked project
+        can be installed into this environment.
+        """
+        return True
+
 
 class ExistingEnvironment(Environment):
     def __init__(self, executable):
@@ -227,6 +235,9 @@ class ExistingEnvironment(Environment):
 
     @classmethod
     def matches(cls, python):
+        if python == 'same':
+            python = sys.executable
+
         try:
             util.which(python)
         except IOError:
@@ -246,6 +257,9 @@ class ExistingEnvironment(Environment):
 
     def install_project(self, conf):
         pass
+
+    def can_install_project(self):
+        return True
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))

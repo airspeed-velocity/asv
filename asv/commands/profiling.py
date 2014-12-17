@@ -18,7 +18,7 @@ from ..machine import Machine
 from ..profiling import ProfilerGui
 from ..repo import get_repo
 from ..results import iter_results_for_machine
-from ..util import hash_equal, iter_subclasses, override_python_interpreter
+from ..util import hash_equal, iter_subclasses
 from .. import util
 
 
@@ -76,13 +76,17 @@ class Profile(Command):
         parser.add_argument(
             "--python", nargs='?', type=str, default=None,
             help="""Specify a Python interpreter in which to run the
-            profile.  It may be an executable to be searched for on
+            benchmarks.  It may be an executable to be searched for on
             the $PATH, an absolute path, or the special value "same"
             which will use the same Python interpreter that asv is
             using.  This interpreter must have the benchmarked project
-            already installed, including its dependencies.  May not be
-            used with --environment.  May not specify a specific
-            revision.""")
+            already installed, including its dependencies, and a specific
+            revision of the benchmarked project may not be provided.
+
+            It may also be any string accepted by any of the
+            environment plugins.  For example, the conda plugin
+            accepts "2.7" to mean create a new Conda environment with
+            Python version 2.7.""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -122,16 +126,10 @@ class Profile(Command):
         repo = get_repo(conf)
 
         if python is not None:
-            override_python_interpreter(conf, python)
+            conf.pythons = [python]
             if environment is not None:
                 raise util.UserError(
                     "--python and --environment may not both be provided.")
-            if revision is not None:
-                raise util.UserError(
-                    "--python and an explicit revision may not both be "
-                    "provided.")
-        elif revision is None:
-            raise util.UserError("Must specify a revision to profile.")
         else:
             repo.pull()
 
@@ -165,6 +163,13 @@ class Profile(Command):
             if len(environments) == 0:
                 log.error("No environments selected")
                 return
+
+            if revision is not None:
+                for env in environments:
+                    if not env.can_install_project():
+                        raise util.UserError(
+                            "An explicit revision may not be specified when "
+                            "using an existing environment.")
 
             if environment is None:
                 env = environments[0]
