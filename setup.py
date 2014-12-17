@@ -24,7 +24,10 @@ class PyTest(TestCommand):
 setup(
     name="asv",
     version="0.1",
-    packages=['asv'],
+    packages=['asv',
+              'asv.commands',
+              'asv.plugins',
+              'asv.extern'],
     entry_points={
         'console_scripts': [
             'asv = asv.main:main'
