@@ -49,6 +49,7 @@ class MachineCollection(object):
         else:
             path = _path
 
+        d = {}
         if os.path.exists(path):
             d = util.load_json(path, cls.api_version)
             if machine_name in d:
