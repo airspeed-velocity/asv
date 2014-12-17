@@ -103,8 +103,8 @@ Running benchmarks
 
 Benchmarks are run using the ``asv run`` subcommand.
 
-Let's start by just benchmarking the latest commit in the current ``master`` of
-the project::
+Let's start by just benchmarking the latest commit on the current
+``master`` branch of the project::
 
     $ asv run
 
@@ -116,9 +116,8 @@ it probably is, if you're following along), you will be prompted for
 information about the machine, such as its platform, cpu and memory.
 **airspeed velocity** will try to make reasonable guesses, so it's
 usually ok to just press ``Enter`` to accept each default value.  This
-information is stored in the ``.asv-machine.json`` file in your home
+information is stored in the ``~/.asv-machine.json`` file in your home
 directory::
-
 
     I will now ask you some questions about this machine to identify
     it in the benchmarks.
@@ -149,20 +148,27 @@ directory::
 Environments
 ````````````
 
-Next, the Python virtual environments will be set up: one for each of
-the combinations of Python versions and the matrix of project
-dependencies, if any.  The first time this is run, this may take some
-time, as many files are copied over and dependencies are installed
-into the environment.  The environments are stored in the ``env``
-directory so that the next time the benchmarks are run, things will
-start much faster.
+Next, the Python environments to run the benchmarks are set up.  One
+environment will be set up for each of the combinations of Python
+versions and the matrix of project dependencies, if any.  The first
+time this is run, this may take some time, as many files are copied
+over and dependencies are installed into the environment.  The
+environments are stored in the ``env`` directory so that the next time
+the benchmarks are run, things will start much faster.
 
 .. note::
 
-    ``asv`` does not build Pythons for you, but it expects to find
-    each of the Python versions specified in the ``asv.conf.json``
-    file available on the ``PATH``.  For example, if the
-    ``asv.conf.json`` file has::
+    The easiest way to benchmark in multiple versions of Python is to
+    install `anaconda <https://store.continuum.io/cshop/anaconda/>`__
+    or `miniconda <http://conda.pydata.org/miniconda.html>`__
+    installation, and make sure the ``conda`` command is available on
+    your ``PATH``.
+
+    If not using Conda, virtualenv will be used.  In this case,
+    ``asv`` does not build Python interpreters for you, but it expects
+    to find each of the Python versions specified in the
+    ``asv.conf.json`` file available on the ``PATH``.  For example, if
+    the ``asv.conf.json`` file has::
 
         "pythons": ["2.7", "3.3"]
 
@@ -171,8 +177,9 @@ start much faster.
     versions of Python installed -- your package manager, ``apt-get``,
     ``yum``, ``MacPorts`` or ``homebrew`` probably has them, or you
     can also use `pyenv <https://github.com/yyuu/pyenv>`__.  ``asv``
-    always works in a virtual environment, so it will not change what
-    is installed in any of the python environments on your system.
+    always runs its benchmarks in a virtual environment, so it will
+    not change what is installed in any of the python environments on
+    your system.
 
 Benchmarking
 ````````````
@@ -180,39 +187,45 @@ Benchmarking
 Finally, the benchmarks are run::
 
     $ asv run
-              - Cloning project.
-              - Fetching recent changes
-              - Creating virtualenvs
-              -- Creating virtualenv for py2.7.
-              - Installing dependencies
-              -- Upgrading setuptools in py2.7.
-              - Discovering benchmarks
-              -- Fetching recent changes
-              -- Creating virtualenv for py2.7
-              -- Upgrading setuptools in py2.7.
-              -- Uninstalling asv from py2.7
-              -- Installing /home/mdboom/Work/builds/asv.tmp/asv into py2.7.
-              - Running 5 total benchmarks (1 commits * 1
-                environments * 5 benchmarks)
-    [  0.00%] - For asv commit hash 14ce7984:
-    [  0.00%] -- Building for py2.7
-    [  0.00%] --- Uninstalling asv from py2.7
-    [  0.00%] --- Installing /home/mdboom/Work/builds/asv.tmp/asv into py2.7
-    [  0.00%] -- Benchmarking py2.7
-    [ 20.00%] --- Running benchmarks.TimeSuite.time_xrange          30.23μs
-    [ 40.00%] --- Running benchmarks.TimeSuite.time_range           31.85μs
-    [ 60.00%] --- Running benchmarks.MemSuite.mem_list                 2.4k
-    [ 80.00%] --- Running benchmarks.TimeSuite.time_iterkeys         9.86μs
-    [100.00%] --- Running benchmarks.TimeSuite.time_keys            10.29μs
+    · Cloning project.
+    · Fetching recent changes..
+    · Creating environments
+    ·· Creating conda environment for py2.7
+    ·· Creating conda environment for py3.4
+    · Installing dependencies..
+    · Discovering benchmarks
+    ·· Creating conda environment for py2.7
+    ·· Uninstalling project from py2.7
+    ·· Installing project into py2.7.
+    · Running 10 total benchmarks (1 commits * 2 environments * 5 benchmarks)
+    [  0.00%] · For project commit hash ac71c70d:
+    [  0.00%] ·· Building for py2.7
+    [  0.00%] ··· Uninstalling project from py2.7
+    [  0.00%] ··· Installing project into py2.7.
+    [  0.00%] ·· Benchmarking py2.7
+    [ 10.00%] ··· Running benchmarks.MemSuite.mem_list                               2.4k
+    [ 20.00%] ··· Running benchmarks.TimeSuite.time_iterkeys                       9.27μs
+    [ 30.00%] ··· Running benchmarks.TimeSuite.time_keys                          10.74μs
+    [ 40.00%] ··· Running benchmarks.TimeSuite.time_range                         42.20μs
+    [ 50.00%] ··· Running benchmarks.TimeSuite.time_xrange                        32.94μs
+    [ 50.00%] ·· Building for py3.4
+    [ 50.00%] ··· Uninstalling project from py3.4
+    [ 50.00%] ··· Installing project into py3.4..
+    [ 50.00%] ·· Benchmarking py3.4
+    [ 60.00%] ··· Running benchmarks.MemSuite.mem_list                               2.4k
+    [ 70.00%] ··· Running benchmarks.TimeSuite.time_iterkeys                     failed
+    [ 80.00%] ··· Running benchmarks.TimeSuite.time_keys                           7.29μs
+    [ 90.00%] ··· Running benchmarks.TimeSuite.time_range                         30.41μs
+    [100.00%] ··· Running benchmarks.TimeSuite.time_xrange                       failed
 
 To improve reproducibility, each benchmark is run in its own process.
 
 The killer feature of **airspeed velocity** is that it can track the
-benchmark performance of your project over time.  The required
-``range`` argument to ``asv run`` specifies a range of commits that
-should be benchmarked.  The value of this argument is passed directly
-to ``git log`` to get the set of commits, so it actually has a very
-powerful syntax defined in the `gitrevisions manpage
+benchmark performance of your project over time.  The ``range``
+argument to ``asv run`` specifies a range of commits that should be
+benchmarked.  The value of this argument is passed directly to ``git
+log`` to get the set of commits, so it actually has a very powerful
+syntax defined in the `gitrevisions manpage
 <https://www.kernel.org/pub/software/scm/git/docs/gitrevisions.html>`__.
 
 For example, one can test a range of commits on a particular branch
@@ -267,7 +280,8 @@ that was set up in your ``~/.asv-machine.json`` file.  In order to
 combine results from multiple machines, the normal workflow is to
 commit these results to a source code repository alongside the results
 from other machines.  These results are then collated and "published"
-altogether into a single interactive website for viewing.
+altogether into a single interactive website for viewing (see
+:ref:`viewing-results`).
 
 You can also continue to generate benchmark results for other commits,
 or for new benchmarks and continue to throw them in the ``results``
@@ -275,6 +289,8 @@ directory.  **airspeed velocity** is designed from the ground up to
 handle missing data where certain benchmarks have yet to be performed
 -- it's entirely up to you how often you want to generate results, and
 on which commits and in which configurations.
+
+.. _viewing-results:
 
 Viewing the results
 -------------------
@@ -346,19 +362,19 @@ Python 2.7 and the machine named ``giraffe``::
 Finding a commit that produces a large regression
 -------------------------------------------------
 
-Since benchmarking can be rather time consuming, it's possible likely
-that you're only benchmarking a subset of all commits in the
-repository.  When you discover from the graph that the runtime between
-commit A and commit B suddenly doubles, you don't know which
-particular commit in that range is the likely culprit.  ``asv find``
-can be used to help find a commit within that range that produced a
-large regression using a binary search.  You can select a range of
-commits easily from the web interface by dragging a box around the
-commits in question.  The commit hashes associated with that range
-is then displayed in the "commits" section of the sidebar.  We'll copy
-and paste this commit range into the commandline arguments of the
-``asv find`` command, along with the name of a single benchmark to use.
-The output below is truncated to show how the search progresses::
+Since benchmarking can be rather time consuming, it's likely that
+you're only benchmarking a subset of all commits in the repository.
+When you discover from the graph that the runtime between commit A and
+commit B suddenly doubles, you don't know which particular commit in
+that range is the likely culprit.  ``asv find`` can be used to help
+find a commit within that range that produced a large regression using
+a binary search.  You can select a range of commits easily from the
+web interface by dragging a box around the commits in question.  The
+commit hashes associated with that range is then displayed in the
+"commits" section of the sidebar.  We'll copy and paste this commit
+range into the commandline arguments of the ``asv find`` command,
+along with the name of a single benchmark to use.  The output below is
+truncated to show how the search progresses::
 
     $ asv find 05d4f83d..b96fcc53 time_coordinates.time_latitude
     - Running approximately 10 benchmarks within 1156 commits
@@ -382,26 +398,26 @@ regression, using the binary search.
     maximum, rather than the global maximum.  For best results, use a
     reasonably small commit range.
 
-.. profiling_
+.. _profiling:
 
 Running a benchmark in the profiler
 -----------------------------------
 
 **airspeed velocity** can oftentimes tell you *if* something got
-slower, but it can't really tell you *why* it got slower.  That's a
+slower, but it can't really tell you *why* it got slower.  That's
 where a profiler comes in.  **airspeed velocity** has features to
 easily run a given benchmark in the Python standard library's
 `cProfile` profiler, and then open the profiling data in the tool of
 your choice.
 
-``asv profile`` will profiles a given benchmark on a given revision of
-the project.
+The ``asv profile`` command profiles a given benchmark on a given
+revision of the project.
 
 .. note::
 
     You can also pass the ``--profile`` option to ``asv run``.  In
-    addition to running the benchmarks as usual, it also generates
-    them again in the `cProfile` profiler and save the results.  ``asv
+    addition to running the benchmarks as usual, it also runs them
+    again in the `cProfile` profiler and save the results.  ``asv
     preview`` will use this data, if found, rather than needing to
     profile the benchmark each time.  However, it's important to note
     that profiler data contains absolute paths to the source code, so
@@ -472,10 +488,10 @@ the ``--gui=runsnake`` to ``asv profile``, the profile is collected
 You can also get the raw profiling data by using the ``--output``
 argument to ``asv profile``.
 
-.. comparing_
+.. _comparing:
 
-Comparing the resuls for two revisions
---------------------------------------
+Comparing the benachmarking results for two revisions
+-----------------------------------------------------
 
 In some cases, you may want to directly compare the results for two specific
 revisions of the project. You can do so with the ``compare`` command::
@@ -495,11 +511,12 @@ revisions of the project. You can do so with the ``compare`` command::
           5.73m      5.73m      1.00  time_units.mem_unit
     ...
 
-This will show the times for each benchmark for the first and second revision,
-and the ratio of the second to the first. In addition, the benchmarks will be
-color coded green and red if the bechmark improves or worsens more than a
-certain threshold factor, which defaults to 2 (that is, benchmarks that improve
-by more than a factor of 2 or worsen by a factor of 2 are color coded). The
-threshold can be set with the ``--threshold=value`` option. Finally, the
-benchmarks can be split into ones that have improved, stayed the same, and
-worsened, using the same threshold.
+This will show the times for each benchmark for the first and second
+revision, and the ratio of the second to the first. In addition, the
+benchmarks will be color coded green and red if the benchmark improves
+or worsens more than a certain threshold factor, which defaults to 2
+(that is, benchmarks that improve by more than a factor of 2 or worsen
+by a factor of 2 are color coded). The threshold can be set with the
+``--threshold=value`` option. Finally, the benchmarks can be split
+into ones that have improved, stayed the same, and worsened, using the
+same threshold.
