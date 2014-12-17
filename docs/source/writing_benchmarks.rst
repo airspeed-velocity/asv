@@ -4,7 +4,7 @@ Writing benchmarks
 ==================
 
 Benchmarks are stored in a collection of ``.py`` files in the
-benchmarking projects benchmark directory (as defined by
+benchmark suite's ``benchmark`` directory (as defined by
 ``benchmark_dir`` in the ``asv.conf.json`` file).  They may be
 arbitrarily nested in subdirectories, and all ``.py`` files will be
 used, regardless of their file name.
@@ -38,7 +38,7 @@ Running benchmarks during development
 -------------------------------------
 
 There are some options to ``asv run`` that may be useful when writing
-benchmarks, that aren't normally used during actual benchmarking.
+benchmarks.
 
 You may find that ``asv run`` spends a lot of time setting up the
 environment each time.  You can have ``asv run`` use an existing
@@ -146,10 +146,10 @@ stolen from IPython's `%timeit
 magic function.  This means that in most cases the benchmark function
 itself will be run many times to achieve accurate timing.
 
-The default timing function is the POSIX CLOCK_PROCESS_CPUTIME, which
-measures the CPU time used by the current process and none others.
-This is available as ``time.process_time`` in Python 3.3 and later,
-but a backport is included with asv for earlier versions of Python.
+The default timing function is the POSIX ``CLOCK_PROCESS_CPUTIME``,
+which measures the CPU time used only by the current process.  This is
+available as ``time.process_time`` in Python 3.3 and later, but a
+backport is included with ``asv`` for earlier versions of Python.
 
 For best results, the benchmark function should contain as little as
 possible, with as much extraneous setup moved to a ``setup`` function::
