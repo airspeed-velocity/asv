@@ -151,10 +151,10 @@ directory::
 .. note::
 
     By default, the name of the machine is determined from your
-    hostname.  If you have a hostname that frequently changes, you can
-    provide a static one in question 1. above, and then pass that name
-    as the ``--machine`` argument to ``asv run`` and other commands
-    that need machine information.
+    hostname.  If you have a hostname that frequently changes, and
+    your ``~/.asv-machine.json`` file contains more than one entry,
+    you will need to use the ``--machine`` argument to ``asv run`` and
+    similar commands.
 
 Environments
 ````````````
