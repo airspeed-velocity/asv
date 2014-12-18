@@ -33,6 +33,12 @@ class Dev(Run):
             the benchmarked project already installed, including its
             dependencies.  A specific revision may not be provided
             when --python is provided.""")
+        parser.add_argument(
+            "--machine", "-m", nargs='?', type=str, default=None,
+            help="""Use the given name to retrieve machine
+            information.  If not provided, the hostname is used.  If
+            that is not found, and there is only one entry in
+            ~/.asv-machine.json, that one entry will be used.""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -42,4 +48,4 @@ class Dev(Run):
     def run_from_conf_args(cls, conf, args):
         return cls.run(
             conf=conf, bench=args.bench, show_stderr=True, quick=True,
-            python=args.python, dry_run=True)
+            python=args.python, machine=args.machine, dry_run=True)
