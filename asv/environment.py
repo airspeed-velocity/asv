@@ -231,6 +231,9 @@ class ExistingEnvironment(Environment):
 
     @classmethod
     def get_environments(cls, conf, python):
+        if python == 'same':
+            python = sys.executable
+
         yield cls(util.which(python))
 
     @classmethod
