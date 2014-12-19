@@ -67,7 +67,7 @@ class Run(Command):
             used to subsample the commits determined by range to a
             reasonable number.""")
         parser.add_argument(
-            "--bench", "-b", type=str, nargs="*",
+            "--bench", "-b", type=str, nargs="?",
             help="""Regular expression(s) for benchmark to run.  When
             not provided, all benchmarks are run.""")
         parser.add_argument(
