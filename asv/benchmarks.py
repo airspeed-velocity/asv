@@ -294,7 +294,7 @@ class Benchmarks(dict):
         if not os.path.exists(path):
             return regenerate()
 
-        d = util.load_json(path)
+        d = util.load_json(path, cleanup=False)
         version = d['version']
         del d['version']
         if version != cls.api_version:

@@ -348,7 +348,7 @@ def write_json(path, data, api_version=None):
         json.dump(data, fd, indent=4, sort_keys=True)
 
 
-def load_json(path, api_version=None):
+def load_json(path, api_version=None, cleanup=True):
     """
     Loads JSON to the given path, ignoring any C-style comments.
     """
@@ -357,9 +357,11 @@ def load_json(path, api_version=None):
     with open(path, 'r') as fd:
         content = fd.read()
 
-    content = minify_json.json_minify(content)
-    content = content.replace(",]", "]")
-    content = content.replace(",}", "}")
+    if cleanup:
+        content = minify_json.json_minify(content)
+        content = content.replace(",]", "]")
+        content = content.replace(",}", "}")
+
     try:
         d = json.loads(content)
     except ValueError as e:

@@ -1,4 +1,14 @@
 $(function() {
+    var colors = [
+        '#247AAD',
+        '#E24A33',
+        '#988ED5',
+        '#777777',
+        '#FBC15E',
+        '#8EBA42',
+        '#FFB5B8'
+    ];
+
     /* UTILITY FUNCTIONS */
     function arr_remove_from(a, x) {
         var out = [];
@@ -29,6 +39,21 @@ $(function() {
         for (var prop in data)
             return prop;
     };
+
+    /* Callback a function when an element comes in view */
+    function callback_in_view(element, func) {
+        function handler(evt) {
+            var visible = (
+                (element.offset().top <= $(window).height() + $(window).scrollTop()) &&
+                    (element.offset().top + element.height() >= $(window).scrollTop()));
+            if (visible) {
+                func();
+                $(window).unbind('scroll', handler);
+            }
+        }
+        $(window).on('scroll', handler);
+        $(window).scroll();
+    }
 
     time_units = [
         ['ps', 'picoseconds', 0.000000000001],
@@ -94,14 +119,26 @@ $(function() {
     /* A little div to handle tooltip placement on the graph */
     var tooltip = null;
 
+    function display_benchmark(bm_name) {
+        $('#graph-display').show();
+        $('#summary-display').hide();
+
+        if (reference_scale) {
+            reference_scale = false;
+            $('#reference').removeClass('active');
+            reference = 1.0;
+        }
+        current_benchmark = bm_name;
+        $("#title").text(bm_name);
+        replace_graphs();
+    }
+
     /* Fetch the master index.json and then set up the page elements
        based on it. */
     $.ajax({
         url: "index.json",
         cache: false
     }).done(function (index) {
-        var hash = window.location.hash.replace('#', '');
-
         master_json = index;
 
         /* Page title */
@@ -204,11 +241,11 @@ $(function() {
 
         /* Benchmark panel */
         var panel_body = make_panel('benchmark');
+
         var tree = $('<ul class="nav nav-list" style="padding-left: 0px"/>');
         panel_body.append(tree);
         var cursor = [];
         var stack = [tree];
-        var first_benchmark = null;
 
         /* Note: this relies on the fact that the benchmark names are
            sorted. */
@@ -246,19 +283,6 @@ $(function() {
             var top = $('<li><a href="#' + bm_name + '">' + parts[parts.length - 1] + '</li>');
             stack[stack.length - 1].append(top);
 
-            top.on('click', function(evt) {
-                if (!evt.target.classList.contains("active")) {
-                    if (reference_scale) {
-                        reference_scale = false;
-                        $('#reference').removeClass('active');
-                        reference = 1.0;
-                    }
-                    current_benchmark = bm_name;
-                    $("#title").text(bm_name);
-                    replace_graphs();
-                }
-            });
-
             top.tooltip({
                 title: bm.code,
                 html: true,
@@ -266,23 +290,9 @@ $(function() {
                 container: 'body',
                 animation: 'false'
             });
-
-            if (!first_benchmark) {
-                first_benchmark = top;
-            }
-            if (hash === bm_name) {
-                first_benchmark = top;
-            }
         });
 
-        first_benchmark.click();
-        // Reveal the current benchmark in the tree and all of its
-        // parents
-        parent = first_benchmark.parent();
-        while (parent[0] != tree[0]) {
-            parent.parent().children('ul.tree').toggle();
-            parent = parent.parent().parent();
-        }
+        make_summary();
 
         $('#log-scale').on('click', function(evt) {
             log_scale = !evt.target.classList.contains("active");
@@ -398,6 +408,20 @@ $(function() {
                 }
             }
         });
+
+        function hashchange() {
+            var hash = window.location.hash.replace('#', '');
+
+            if (hash === '') {
+                show_summary();
+            } else {
+                display_benchmark(hash);
+            }
+        }
+
+        $(window).on('hashchange', hashchange);
+
+        hashchange();
     }).fail(function () {
         network_error();
     });
@@ -407,9 +431,82 @@ $(function() {
         update_graphs();
     });
 
+    function make_summary() {
+        $.each(master_json.benchmarks, function(bm_name, bm) {
+            var container = $(
+                '<a class="btn" href="#' + bm_name +
+                '" style="float: left; width: 300px; height: 116px; padding: 4px"/>')
+            var plot_div = $(
+                '<div id="summary-' + bm_name + '" style="width: 292px; height: 92px"/>');
+            var name = $('<div style="width: 292px; overflow: hidden">' + bm_name + '</div>');
+            name.tooltip({
+                title: bm_name,
+                html: true,
+                placement: 'top',
+                container: 'body',
+                animation: false
+            });
+
+            plot_div.tooltip({
+                title: bm.code,
+                html: true,
+                placement: 'bottom',
+                container: 'body',
+                animation: false
+            });
+
+            container.append(name);
+            container.append(plot_div);
+            $('#summary-display').append(container);
+
+            callback_in_view(plot_div, function() {
+                $.ajax({
+                    url: 'graphs/summary/' + bm_name + '.json',
+                    cache: false
+                }).done(function(data) {
+                    var options = {
+                        colors: colors,
+                        series: {
+                            lines: {
+                                show: true,
+                                lineWidth: 2
+                            },
+                            shadowSize: 0
+                        },
+                        grid: {
+                            borderWidth: 1,
+                            margin: 0,
+                            labelMargin: 0,
+                            axisMargin: 0,
+                            minBorderMargin: 0
+                        },
+                        xaxis: {
+                            ticks: [],
+                        },
+                        yaxis: {
+                            ticks: [],
+                        },
+                        legend: {
+                            show: false
+                        }
+                    };
+
+                    var plot = $.plot(
+                        plot_div, [{data: data}], options);
+                }).fail(function() {
+                    // TODO: Handle failure
+                });
+            });
+        });
+    }
+
+    function show_summary() {
+        $('#graph-display').hide();
+        $('#summary-display').show();
+        $("#title").text("All benchmarks");
+    }
 
     function replace_graphs() {
-
         /* Given the settings in the sidebar, generate a list of the
            graphs we need to load. */
         function collect_graphs(current_benchmark, state) {
@@ -690,10 +787,6 @@ $(function() {
     /* Once we have all of the graphs loaded, send them to flot for
        drawing. */
     function update_graphs() {
-        var colors = [
-            '#73cf26', '#e89f0c', '#e0001a', '#2b16de', '#1fdeb0'
-        ];
-
         var markings = [];
         $.each(master_json.tags, function(tag, date) {
             markings.push(
@@ -874,4 +967,6 @@ $(function() {
         update_tags();
         update_range();
     };
+
+    show_summary();
 });

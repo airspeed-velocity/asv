@@ -74,7 +74,25 @@ class Graph(object):
         runtime : float
             The runtime (in seconds) of the benchmark.
         """
-        self.data_points[date] = runtime
+        self.data_points.setdefault(date, [])
+        if runtime is not None:
+            self.data_points[date].append(runtime)
+
+    def get_data(self):
+        """
+        Get the sorted and reduced data.
+        """
+        def mean(v):
+            if not len(v):
+                return None
+            else:
+                return sum(v) / float(len(v))
+
+        val = [(k, mean(v)) for (k, v) in
+               six.iteritems(self.data_points)]
+        val.sort()
+
+        return val
 
     def save(self, html_dir):
         """
@@ -87,7 +105,6 @@ class Graph(object):
         """
         filename = os.path.join(html_dir, self.path + ".json")
 
-        val = list(six.iteritems(self.data_points))
-        val.sort()
+        val = self.get_data()
 
         util.write_json(filename, val)

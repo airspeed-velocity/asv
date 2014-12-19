@@ -233,7 +233,7 @@ class Results(object):
         path : str
             Path to results file.
         """
-        d = util.load_json(path, cls.api_version)
+        d = util.load_json(path, cls.api_version, cleanup=False)
 
         obj = cls(
             d['params'],
