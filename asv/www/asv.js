@@ -122,6 +122,7 @@ $(function() {
     function display_benchmark(bm_name) {
         $('#graph-display').show();
         $('#summary-display').hide();
+        $('.tooltip').remove();
 
         if (reference_scale) {
             reference_scale = false;
@@ -504,6 +505,7 @@ $(function() {
         $('#graph-display').hide();
         $('#summary-display').show();
         $("#title").text("All benchmarks");
+        $('.tooltip').remove();
     }
 
     function replace_graphs() {
@@ -787,6 +789,10 @@ $(function() {
     /* Once we have all of the graphs loaded, send them to flot for
        drawing. */
     function update_graphs() {
+        if (current_benchmark == null) {
+            return;
+        }
+
         var markings = [];
         $.each(master_json.tags, function(tag, date) {
             markings.push(
