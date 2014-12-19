@@ -501,8 +501,8 @@ argument to ``asv profile``.
 
 .. _comparing:
 
-Comparing the benachmarking results for two revisions
------------------------------------------------------
+Comparing the benchmarking results for two revisions
+----------------------------------------------------
 
 In some cases, you may want to directly compare the results for two specific
 revisions of the project. You can do so with the ``compare`` command::
