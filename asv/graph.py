@@ -7,6 +7,7 @@ from __future__ import (absolute_import, division, print_function,
 import os
 
 import six
+from six.moves import xrange
 
 from . import util
 
@@ -92,7 +93,17 @@ class Graph(object):
                six.iteritems(self.data_points)]
         val.sort()
 
-        return val
+        i = 0
+        for i in xrange(len(val)):
+            if val[i][1] is not None:
+                break
+
+        j = i
+        for j in xrange(len(val) - 1, i, -1):
+            if val[j][1] is not None:
+                break
+
+        return val[i:j]
 
     def save(self, html_dir):
         """
