@@ -59,7 +59,7 @@ class GithubPages(Command):
         util.check_call([git, 'add', '.nojekyll'])
 
         util.check_call([git, 'add', '-f', 'html'])
-        util.check_call("git mv html/* .", shell=True)
+        util.check_call(["git mv html/* ."], shell=True)
         util.check_call([git, 'commit', '-m', 'Generated from sources'])
 
         log.info("Updating gh-pages branch on github")
