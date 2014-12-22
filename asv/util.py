@@ -268,6 +268,9 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
 
         return '\n'.join(content)
 
+    if isinstance(args, six.string_types):
+        args = [args]
+
     log.debug("Running '{0}'".format(' '.join(args)))
 
     proc = subprocess.Popen(
