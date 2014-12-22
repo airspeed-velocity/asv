@@ -102,8 +102,8 @@ $(function() {
     var graphs = [];
     /* True when log scaling is enabled. */
     var log_scale = false;
-    /* True when zero scaling is enabled. */
-    var zero_scale = false;
+    /* True when zooming in on the y-axis. */
+    var zoom_y_axis = false;
     /* True when log scaling is enabled. */
     var reference_scale = false;
     /* True when selecting a reference point */
@@ -298,15 +298,15 @@ $(function() {
         $('#log-scale').on('click', function(evt) {
             log_scale = !evt.target.classList.contains("active");
             reference_scale = false;
-            zero_scale = false;
+            zoom_y_axis = false;
             $('#reference').removeClass('active');
-            $('#zero-scale').removeClass('active');
+            $('#zoom-y-axis').removeClass('active');
             reference = 1.0;
             update_graphs();
         });
 
-        $('#zero-scale').on('click', function(evt) {
-            zero_scale = !evt.target.classList.contains("active");
+        $('#zoom-y-axis').on('click', function(evt) {
+            zoom_y_axis = !evt.target.classList.contains("active");
             reference_scale = false;
             log_scale = false;
             $('#reference').removeClass('active');
@@ -318,9 +318,9 @@ $(function() {
         $('#reference').on('click', function(evt) {
             reference_scale = !evt.target.classList.contains("active");
             log_scale = false;
-            zero_scale = false;
+            zoom_y_axis = false;
             $('#log-scale').removeClass('active');
-            $('#zero-scale').removeClass('active');
+            $('#zoom-y-axis').removeClass('active');
             if (!reference_scale) {
                 update_graphs();
             } else {
@@ -486,6 +486,7 @@ $(function() {
                         },
                         yaxis: {
                             ticks: [],
+                            min: 0
                         },
                         legend: {
                             show: false
@@ -717,7 +718,7 @@ $(function() {
 
         } else if (master_json.benchmarks[current_benchmark].unit === 'seconds') {
 
-            if (zero_scale) {
+            if (!zoom_y_axis) {
                 options.yaxis.min = 0.;
                 options.yaxis.max = max * 1.3;
             }
