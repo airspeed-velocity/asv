@@ -103,7 +103,7 @@ class Graph(object):
             if val[j][1] is not None:
                 break
 
-        return val[i:j]
+        return val[i:j+1]
 
     def save(self, html_dir):
         """
