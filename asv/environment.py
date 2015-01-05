@@ -226,7 +226,7 @@ class ExistingEnvironment(Environment):
              '-c',
              'import sys; '
              'print(str(sys.version_info[0]) + "." + str(sys.version_info[1]))'
-         ])
+         ]).strip()
         self._requirements = {}
 
     @classmethod
