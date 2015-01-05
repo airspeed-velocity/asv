@@ -73,9 +73,17 @@ class Git(Repo):
 
     def get_date(self, hash):
         # TODO: This works on Linux, but should be extended for other platforms
-        return int(self._run_git(
-            ['show', hash, '--quiet', '--format=format:%ct'],
-            dots=False).strip().split()[0]) * 1000
+        try:
+            value = self._run_git(
+                ['show', hash, '--quiet', '--format=format:%ct'],
+                dots=False)
+        except util.ProcessError as e:
+            # Earlier versions of git return 1 for non-merge commits
+            if e.retcode == 1:
+                value = e.stdout
+            else:
+                raise
+        return int(value.strip().split()[0]) * 1000
 
     def get_hashes_from_range(self, range_spec):
         if range_spec == 'master':
@@ -83,7 +91,15 @@ class Git(Repo):
         args = ['log', '--quiet', '--first-parent', '--format=format:%H']
         if range_spec != "":
             args += [range_spec]
-        return self._run_git(args, dots=False).strip().split()
+        try:
+            value = self._run_git(args, dots=False)
+        except util.ProcessError as e:
+            # Earlier versions of git return 1 for non-merge commits
+            if e.retcode == 1:
+                value = e.stdout
+            else:
+                raise
+        return value.strip().split()
 
     def get_hash_from_tag(self, tag):
         return self._run_git(
