@@ -208,7 +208,7 @@ class Environment(object):
         """
         self.install_requirements()
         self.uninstall(conf.project)
-        self.install(os.path.abspath(conf.project), editable=True)
+        self.install(os.path.abspath(conf.project))
 
     def can_install_project(self):
         """
