@@ -436,7 +436,7 @@ $(function() {
         $.each(master_json.benchmarks, function(bm_name, bm) {
             var container = $(
                 '<a class="btn" href="#' + bm_name +
-                '" style="float: left; width: 300px; height: 116px; padding: 4px"/>')
+                '" style="float: left; width: 300px; height: 116px; padding: 4px"/>');
             var plot_div = $(
                 '<div id="summary-' + bm_name + '" style="width: 292px; height: 92px"/>');
             var name = $('<div style="width: 292px; overflow: hidden">' + bm_name + '</div>');
@@ -567,7 +567,7 @@ $(function() {
                 var entry = matrix[key];
                 delete matrix[key];
 
-                var results = []
+                var results = [];
                 $.each(permutations(matrix), function(i, result) {
                     result = obj_copy(result);
                     if (entry.length) {
@@ -612,7 +612,7 @@ $(function() {
 
                 /* Generate a master list of URLs and legend labels for
                    the graphs. */
-                var all = []
+                var all = [];
                 $.each(graphs, function(i, graph) {
                     all.push([graph_to_path(current_benchmark, graph),
                               graph_label(graph, different)]);
@@ -694,7 +694,7 @@ $(function() {
                 --min;
             }
 
-            var ticks = []
+            var ticks = [];
             for (var x = min; x <= max; ++x) {
                 ticks.push(Math.pow(10, x) * reference);
             }
@@ -706,7 +706,7 @@ $(function() {
             /* inverseTransform is required for plothover to work */
             options.yaxis.inverseTransform = function (v) {
                 return Math.pow(10.0, v);
-            }
+            };
             options.yaxis.tickDecimals = 3;
             options.yaxis.tickFormatter = function (v, axis) {
                 return "10" + (
@@ -760,7 +760,7 @@ $(function() {
             even_dates = {};
             even_dates_inv = {};
             var last_date = null;
-            var j = 0
+            var j = 0;
             for (var i = 0; i < all_dates.length; ++i) {
                 if (all_dates[i] != last_date) {
                     even_dates[all_dates[i]] = j;
@@ -777,7 +777,7 @@ $(function() {
             /* inverseTransform is required for plothover to work */
             options.xaxis.inverseTransform = function (v) {
                 return even_dates_inv[v];
-            }
+            };
             options.xaxis.tickFormatter = function (v, axis) {
                 return "";
             };
