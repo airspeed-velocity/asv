@@ -54,15 +54,15 @@ which will run each benchmark only once::
 
        asv run --quick
 
-In order to display any exceptions that your benchmarks may produce,
-pass the ``--show-exc`` flag::
+In order to display the standard error output (this includes exception tracebacks)
+that your benchmarks may produce, pass the ``--show-stderr`` flag::
 
-       asv run --show-exc
+       asv run --show-stderr
 
 Finally, there is a special command, ``asv dev``, that uses all of
 these features and is equivalent to::
 
-       asv run --python=same --quick --show-exc --dry-run
+       asv run --python=same --quick --show-stderr --dry-run
 
 Setup and teardown functions
 ----------------------------

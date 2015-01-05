@@ -15,7 +15,7 @@ class Dev(Run):
             description="""
                 This runs a benchmark suite in a mode that is useful
                 during development.  It is equivalent to ``asv run
-                --quick --show-exc --python=same``""")
+                --quick --show-stderr --python=same``""")
 
         parser.add_argument(
             "--bench", "-b", type=str, nargs="*",

@@ -35,6 +35,7 @@ distribute-*.tar.gz
 .project
 .pydevproject
 .settings
+.idea
 .coverage
 cover
 htmlcov
