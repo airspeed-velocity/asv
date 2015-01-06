@@ -50,7 +50,7 @@ class GithubPages(Command):
         # Create a new "orphaned" branch -- we don't need history for
         # the built products
         util.check_call([git, 'branch', '-D', 'gh-pages'],
-                        error=False, display_error=False)
+                        valid_return_codes=None, display_error=False)
         util.check_call([git, 'checkout', '--orphan', 'gh-pages'])
 
         # We need to tell github this is not a Jekyll document

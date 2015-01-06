@@ -75,7 +75,7 @@ class Git(Repo):
         # TODO: This works on Linux, but should be extended for other platforms
         return int(self._run_git(
             ['show', hash, '--quiet', '--format=format:%ct'],
-            dots=False).strip().split()[0]) * 1000
+            valid_return_codes=(0, 1), dots=False).strip().split()[0]) * 1000
 
     def get_hashes_from_range(self, range_spec):
         if range_spec == 'master':
@@ -83,7 +83,8 @@ class Git(Repo):
         args = ['log', '--quiet', '--first-parent', '--format=format:%H']
         if range_spec != "":
             args += [range_spec]
-        return self._run_git(args, dots=False).strip().split()
+        output = self._run_git(args, valid_return_codes=(0, 1), dots=False)
+        return output.strip().split()
 
     def get_hash_from_tag(self, tag):
         return self._run_git(

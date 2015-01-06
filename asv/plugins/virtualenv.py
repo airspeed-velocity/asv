@@ -153,7 +153,8 @@ class Virtualenv(environment.Environment):
 
     def uninstall(self, package):
         log.info("Uninstalling {0} from {1}".format(package, self.name))
-        self._run_executable('pip', ['uninstall', '-y', package], error=False)
+        self._run_executable('pip', ['uninstall', '-y', package],
+                             valid_return_codes=None)
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
