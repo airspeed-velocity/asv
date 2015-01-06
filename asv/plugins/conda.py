@@ -116,11 +116,16 @@ class Conda(environment.Environment):
 
         self.setup()
 
+        # Install all the dependencies with a single conda command.
+        # This ensures we get the versions requested, or an error
+        # otherwise. It's also quicker than doing it one by one.
+        args = ['install', '-p', self._path, '--yes']
         for key, val in six.iteritems(self._requirements):
             if val is not None:
-                self.upgrade("{0}={1}".format(key, val))
+                args.append("{0}={1}".format(key, val))
             else:
-                self.upgrade(key)
+                args.append(key)
+        self._run_executable('conda', args)
 
         self._requirements_installed = True
 
