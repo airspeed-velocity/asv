@@ -206,8 +206,8 @@ class ProcessError(subprocess.CalledProcessError):
             ' '.join(self.args), self.retcode)
 
 
-def check_call(args, error=True, timeout=60, dots=True, display_error=True,
-               shell=False, env=None):
+def check_call(args, valid_return_codes=(0,), timeout=60, dots=True,
+               display_error=True, shell=False, env=None):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.
@@ -215,21 +215,22 @@ def check_call(args, error=True, timeout=60, dots=True, display_error=True,
     See `check_output` for parameters.
     """
     check_output(
-        args, error=error, timeout=timeout, dots=dots,
-        display_error=display_error, shell=shell, env=env)
+        args, valid_return_codes=valid_return_codes, timeout=timeout,
+        dots=dots, display_error=display_error, shell=shell, env=env)
 
 
-def check_output(args, error=True, timeout=120, dots=True, display_error=True,
-                 shell=False, return_stderr=False, env=None):
+def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
+                 display_error=True, shell=False, return_stderr=False,
+                 env=None):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.  Returns stdout as a string on success.
 
     Parameters
     ----------
-    error : bool, optional
-        When `True` (default) raise a ProcessError if the subprocess
-        returns an error code.
+    valid_return_codes : list, optional
+        A list of return codes to ignore. Defaults to only ignoring zero.
+        Setting to None ignores all return codes.
 
     timeout : number, optional
         Kill the process if it lasts longer than `timeout` seconds.
@@ -319,7 +320,7 @@ def check_output(args, error=True, timeout=120, dots=True, display_error=True,
     stderr = b''.join(stderr_chunks).decode('utf-8', 'replace')
 
     retcode = proc.wait()
-    if retcode and error:
+    if valid_return_codes is not None and retcode not in valid_return_codes:
         header = 'Error running {0}'.format(' '.join(args))
         if display_error:
             log.error(get_content(header))

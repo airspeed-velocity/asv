@@ -86,7 +86,7 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
                  profile_path],
                 dots=False, timeout=benchmark['timeout'],
                 display_error=False, return_stderr=True,
-                error=False)
+                valid_return_codes=None)
             if errcode:
                 log.add(" failed".format(name))
             else:
