@@ -124,13 +124,13 @@ class Virtualenv(environment.Environment):
 
         self.setup()
 
-        self.upgrade('setuptools==3.8')
+        self._upgrade('setuptools==3.8')
 
         for key, val in six.iteritems(self._requirements):
             if val is not None:
-                self.upgrade("{0}=={1}".format(key, val))
+                self._upgrade("{0}=={1}".format(key, val))
             else:
-                self.upgrade(key)
+                self._upgrade(key)
 
         self._requirements_installed = True
 
@@ -147,7 +147,7 @@ class Virtualenv(environment.Environment):
         args.append(package)
         self._run_executable('pip', args)
 
-    def upgrade(self, package):
+    def _upgrade(self, package):
         log.info("Upgrading {0} in {1}".format(package, self.name))
         self._run_executable('pip', ['install', '--upgrade', package])
 

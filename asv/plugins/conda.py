@@ -143,12 +143,6 @@ class Conda(environment.Environment):
         args.append(package)
         self._run_executable('pip', args)
 
-    def upgrade(self, package):
-        log.info("Upgrading {0} in {1}".format(package, self.name))
-        self._run_executable(
-            'conda',
-            ['install', '-p', self._path, '--yes', package])
-
     def uninstall(self, package):
         log.info("Uninstalling {0} from {1}".format(package, self.name))
         self._run_executable('pip', ['uninstall', '-y', package],

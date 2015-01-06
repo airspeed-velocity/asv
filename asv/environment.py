@@ -181,12 +181,6 @@ class Environment(object):
         """
         raise NotImplementedError()
 
-    def upgrade(self, package):
-        """
-        Upgrade a package into the environment.
-        """
-        raise NotImplementedError()
-
     def uninstall(self, package):
         """
         Uninstall a package into the environment.
