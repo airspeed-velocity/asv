@@ -116,11 +116,17 @@ class Conda(environment.Environment):
 
         self.setup()
 
-        for key, val in six.iteritems(self._requirements):
-            if val is not None:
-                self.upgrade("{0}={1}".format(key, val))
-            else:
-                self.upgrade(key)
+        if self._requirements:
+            # Install all the dependencies with a single conda command.
+            # This ensures we get the versions requested, or an error
+            # otherwise. It's also quicker than doing it one by one.
+            args = ['install', '-p', self._path, '--yes']
+            for key, val in six.iteritems(self._requirements):
+                if val is not None:
+                    args.append("{0}={1}".format(key, val))
+                else:
+                    args.append(key)
+            self._run_executable('conda', args)
 
         self._requirements_installed = True
 
@@ -136,12 +142,6 @@ class Conda(environment.Environment):
             args.append('-e')
         args.append(package)
         self._run_executable('pip', args)
-
-    def upgrade(self, package):
-        log.info("Upgrading {0} in {1}".format(package, self.name))
-        self._run_executable(
-            'conda',
-            ['install', '-p', self._path, '--yes', package])
 
     def uninstall(self, package):
         log.info("Uninstalling {0} from {1}".format(package, self.name))

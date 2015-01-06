@@ -124,13 +124,17 @@ class Virtualenv(environment.Environment):
 
         self.setup()
 
-        self.upgrade('setuptools==3.8')
+        self._run_executable('pip', ['install', '--upgrade',
+                                     'setuptools==3.8'])
 
-        for key, val in six.iteritems(self._requirements):
-            if val is not None:
-                self.upgrade("{0}=={1}".format(key, val))
-            else:
-                self.upgrade(key)
+        if self._requirements:
+            args = ['install', '--upgrade']
+            for key, val in six.iteritems(self._requirements):
+                if val is not None:
+                    args.append("{0}=={1}".format(key, val))
+                else:
+                    args.append(key)
+            self._run_executable('pip', args)
 
         self._requirements_installed = True
 
@@ -146,10 +150,6 @@ class Virtualenv(environment.Environment):
             args.append('-e')
         args.append(package)
         self._run_executable('pip', args)
-
-    def upgrade(self, package):
-        log.info("Upgrading {0} in {1}".format(package, self.name))
-        self._run_executable('pip', ['install', '--upgrade', package])
 
     def uninstall(self, package):
         log.info("Uninstalling {0} from {1}".format(package, self.name))
