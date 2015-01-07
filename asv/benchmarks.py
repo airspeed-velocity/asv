@@ -261,8 +261,8 @@ class Benchmarks(dict):
         metadata about the discovered benchmarks, in the results dir.
         """
         path = self.get_benchmark_file_path(self._conf.results_dir)
-        util.write_json(path, self, self.api_version)
-        del self['version']
+        util.write_json(path, self._all_benchmarks, self.api_version)
+        del self._all_benchmarks['version']
 
     @classmethod
     def load(cls, conf, regex=None):
