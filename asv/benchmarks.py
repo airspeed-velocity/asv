@@ -265,7 +265,7 @@ class Benchmarks(dict):
         del self._all_benchmarks['version']
 
     @classmethod
-    def load(cls, conf, regex=None):
+    def load(cls, conf):
         """
         Load the benchmark descriptions from the `benchmarks.json` file.
         If the file is not found, one of the given `environments` will
@@ -276,17 +276,12 @@ class Benchmarks(dict):
         conf : Config object
             The project's configuration
 
-        regex : str or list of str, optional
-            `regex` is a list of regular expressions matching the
-            benchmarks to run.  If none are provided, all benchmarks
-            are run.
-
         Returns
         -------
         benchmarks : Benchmarks object
         """
         def regenerate():
-            self = cls(conf, regex=regex)
+            self = cls(conf)
             self.save()
             return self
 
@@ -302,7 +297,7 @@ class Benchmarks(dict):
             # version
             return regenerate()
 
-        return cls(conf, benchmarks=d, regex=regex)
+        return cls(conf, benchmarks=d)
 
     def run_benchmarks(self, env, show_stderr=False, quick=False, profile=False):
         """
