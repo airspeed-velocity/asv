@@ -19,6 +19,8 @@ class Virtualenv(environment.Environment):
     """
     Manage an environment using virtualenv.
     """
+    tool_name = "virtualenv"
+
     def __init__(self, env_dir, python, executable, requirements):
         """
         Parameters
