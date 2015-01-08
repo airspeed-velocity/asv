@@ -206,7 +206,28 @@ class Results(object):
 
     def save(self, result_dir):
         """
-        Save the results to disk.
+        Save the results to disk, replacing existing results.
+
+        Parameters
+        ----------
+        result_dir : str
+            Path to root of results tree.
+        """
+        path = os.path.join(result_dir, self._filename)
+
+        util.write_json(path, {
+            'results': self._results,
+            'params': self._params,
+            'requirements': self._requirements,
+            'commit_hash': self._commit_hash,
+            'date': self._date,
+            'python': self._python,
+            'profiles': self._profiles
+        }, self.api_version)
+
+    def update_save(self, result_dir):
+        """
+        Save the results to disk, adding to any existing results.
 
         Parameters
         ----------
@@ -219,15 +240,7 @@ class Results(object):
             old_results = self.load(path)
             self.add_existing_results(old_results)
 
-        util.write_json(path, {
-            'results': self._results,
-            'params': self._params,
-            'requirements': self._requirements,
-            'commit_hash': self._commit_hash,
-            'date': self._date,
-            'python': self._python,
-            'profiles': self._profiles
-        }, self.api_version)
+        self.save(result_dir)
 
     @classmethod
     def load(cls, path):

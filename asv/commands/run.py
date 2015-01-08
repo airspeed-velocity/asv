@@ -264,4 +264,4 @@ class Run(Command):
                                     benchmark_name,
                                     d['profile'])
 
-                        result.save(conf.results_dir)
+                        result.update_save(conf.results_dir)
