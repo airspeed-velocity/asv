@@ -273,6 +273,8 @@ Examples
 To write a multi benchmark that tests process time, wall clock time
 and memory usage::
 
+  import asvtools
+
   def multi_range():
       range(100000)
   multi_range.types = [
@@ -283,6 +285,8 @@ and memory usage::
 
 If you have multiple benchmarks that you want to run in the same way,
 you can assign the types to a variable and reuse that::
+
+  import asvtools
 
   my_types = [
       ('process_time', 'time'),
@@ -299,6 +303,8 @@ you can assign the types to a variable and reuse that::
   multi_xrange.types = my_types
 
 Or, you can put all of the benchmarks in a suite::
+
+  import asvtools
 
   class MySuite:
       types = [
