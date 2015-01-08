@@ -17,9 +17,6 @@ try:
     import cProfile as profile
 except:
     profile = None
-import ctypes
-from ctypes.util import find_library
-import errno
 import imp
 import inspect
 import json
@@ -29,89 +26,13 @@ import sys
 import textwrap
 import timeit
 
-# The best timer we can use is time.process_time, but it is not
-# available in the Python stdlib until Python 3.3.  This is a ctypes
-# backport for Pythons that don't have it.
-
-try:
-    from time import process_time
-except ImportError:  # Python <3.3
-    if sys.platform.startswith("linux"):
-        CLOCK_PROCESS_CPUTIME_ID = 2  # time.h
-
-        clockid_t = ctypes.c_int
-        time_t = ctypes.c_long
-
-        class timespec(ctypes.Structure):
-            _fields_ = [
-                ('tv_sec', time_t),         # seconds
-                ('tv_nsec', ctypes.c_long)  # nanoseconds
-            ]
-        _clock_gettime = ctypes.CDLL(
-            find_library('rt'), use_errno=True).clock_gettime
-        _clock_gettime.argtypes = [clockid_t, ctypes.POINTER(timespec)]
-
-        def process_time():
-            tp = timespec()
-            if _clock_gettime(CLOCK_PROCESS_CPUTIME_ID, ctypes.byref(tp)) < 0:
-                err = ctypes.get_errno()
-                msg = errno.errorcode[err]
-                if err == errno.EINVAL:
-                    msg += (
-                        "The clk_id (4) specified is not supported on this system")
-                raise OSError(err, msg)
-            return tp.tv_sec + tp.tv_nsec * 1e-9
-
-    elif sys.platform == 'darwin':
-        RUSAGE_SELF = 0  # sys/resources.h
-
-        time_t = ctypes.c_long
-        suseconds_t = ctypes.c_int32
-
-        class timeval(ctypes.Structure):
-            _fields_ = [
-                ('tv_sec', time_t),
-                ('tv_usec', suseconds_t)
-            ]
-
-        class rusage(ctypes.Structure):
-            _fields_ = [
-                ('ru_utime', timeval),
-                ('ru_stime', timeval),
-                ('ru_maxrss', ctypes.c_long),
-                ('ru_ixrss', ctypes.c_long),
-                ('ru_idrss', ctypes.c_long),
-                ('ru_isrss', ctypes.c_long),
-                ('ru_minflt', ctypes.c_long),
-                ('ru_majflt', ctypes.c_long),
-                ('ru_nswap', ctypes.c_long),
-                ('ru_inblock', ctypes.c_long),
-                ('ru_oublock', ctypes.c_long),
-                ('ru_msgsnd', ctypes.c_long),
-                ('ru_msgrcv', ctypes.c_long),
-                ('ru_nsignals', ctypes.c_long),
-                ('ru_nvcsw', ctypes.c_long),
-                ('ru_nivcsw', ctypes.c_long)
-            ]
-
-        _getrusage = ctypes.CDLL(find_library('c'), use_errno=True).getrusage
-        _getrusage.argtypes = [ctypes.c_int, ctypes.POINTER(rusage)]
-
-        def process_time():
-            ru = rusage()
-            if _getrusage(RUSAGE_SELF, ctypes.byref(ru)) < 0:
-                err = ctypes.get_errno()
-                msg = errno.errorcode[err]
-                if err == errno.EINVAL:
-                    msg += (
-                        "The clk_id (0) specified is not supported on this system")
-                raise OSError(err, msg)
-            return float(ru.ru_utime.tv_sec + ru.ru_utime.tv_usec * 1e-6 +
-                         ru.ru_stime.tv_sec + ru.ru_stime.tv_usec * 1e-6)
-
-    else:
-        # Fallback to default timer
-        process_time = timeit.default_timer
+# Insert `asvtools` into the module namespace.  We have to import it
+# in this convoluted way since `asv` is not installed into the
+# environment in which we run benchmarks.
+path = os.path.join(
+    os.path.dirname(__file__), 'asvtools.py')
+asvtools = imp.load_source('asvtools', path)
+sys.modules['asvtools'] = asvtools
 
 
 try:
@@ -141,6 +62,25 @@ except ImportError:  # For Python 2.6
             name = _resolve_name(name[level:], package, level)
         __import__(name)
         return sys.modules[name]
+
+
+def _to_full_name(name, subname):
+    if subname:
+        return '{0}[{1}]'.format(name, subname)
+    else:
+        return name
+
+
+def _return_first(gen, name):
+    all = list(gen)
+    if len(all) > 1:
+        raise ValueError(
+            "Benchmark name '{0}' is ambiguous".format(name))
+    elif len(all) == 0:
+        raise ValueError(
+            "Could not find benchmark '{0}'".format(name))
+    else:
+        return all[0]
 
 
 def _get_attr(source, name, ignore_case=False):
@@ -205,17 +145,26 @@ class Benchmark(object):
         return '<{0} {1}>'.format(self.__class__.__name__, self.name)
 
     @classmethod
-    def from_function(cls, func):
+    def get_benchmarks(cls, name, subname, func, attr_sources):
+        if subname:
+            raise ValueError(
+                "Unknown benchmark '{0}[{1}]'".format(name, subname))
+        yield cls(name, func, attr_sources)
+
+    @classmethod
+    def from_function(cls, func, subname=''):
         """
         Create a benchmark object from a free function.
         """
         module = inspect.getmodule(func)
         name = '.'.join(
             [module.__name__, func.__name__])
-        return cls(name, func, [func, inspect.getmodule(func)])
+        for bench in cls.get_benchmarks(
+                name, subname, func, [func, inspect.getmodule(func)]):
+            yield bench
 
     @classmethod
-    def from_class_method(cls, klass, method_name):
+    def from_class_method(cls, klass, method_name, subname=''):
         """
         Create a benchmark object from a method.
 
@@ -232,10 +181,12 @@ class Benchmark(object):
         func = getattr(instance, method_name)
         name = '.'.join(
             [module.__name__, klass.__name__, method_name])
-        return cls(name, func, [func, instance, module])
+        for bench in cls.get_benchmarks(
+                name, subname, func, [func, instance, module]):
+            yield bench
 
     @classmethod
-    def from_name(cls, root, name, quick=False):
+    def from_name(cls, root, fullname, quick=False):
         """
         Create a benchmark from a fully-qualified benchmark name.
 
@@ -249,7 +200,7 @@ class Benchmark(object):
         """
         update_sys_path(root)
 
-        def find_on_filesystem(root, parts, package):
+        def find_on_filesystem(root, parts, subname, package):
             path = os.path.join(root, parts[0])
             if package:
                 new_package = package + '.' + parts[0]
@@ -257,12 +208,12 @@ class Benchmark(object):
                 new_package = parts[0]
             if os.path.isfile(path + '.py'):
                 module = import_module(new_package)
-                return find_in_module(module, parts[1:])
+                return find_in_module(module, parts[1:], subname)
             elif os.path.isdir(path):
                 return find_on_filesystem(
-                    path, parts[1:], new_package)
+                    path, parts[1:], subname, new_package)
 
-        def find_in_module(module, parts):
+        def find_in_module(module, parts, subname):
             attr = getattr(module, parts[0], None)
 
             if attr is not None:
@@ -270,20 +221,27 @@ class Benchmark(object):
                     if len(parts) == 1:
                         bm_type = get_benchmark_type_from_name(parts[0])
                         if bm_type is not None:
-                            return bm_type.from_function(attr)
+                            return _return_first(
+                                bm_type.from_function(attr, subname), fullname)
                 elif inspect.isclass(attr):
                     if len(parts) == 2:
                         bm_type = get_benchmark_type_from_name(parts[1])
                         if bm_type is not None:
-                            return bm_type.from_class_method(attr, parts[1])
+                            return _return_first(
+                                bm_type.from_class_method(attr, parts[1], subname),
+                                fullname)
 
             raise ValueError(
-                "Could not find benchmark '{0}'".format(name))
+                "Could not find benchmark '{0}'".format(
+                    _to_full_name(name, subname)))
 
+        match = re.match('(?P<name>.+?)(\[(?P<subname>.+)\])?$', fullname)
+        name = match.group('name')
+        subname = match.group('subname')
         parts = name.split('.')
 
         benchmark = find_on_filesystem(
-            root, parts, os.path.basename(root))
+            root, parts, subname, os.path.basename(root))
 
         if quick:
             benchmark.repeat = 1
@@ -331,7 +289,8 @@ class TimeBenchmark(Benchmark):
         self.type = "time"
         self.unit = "seconds"
         self.goal_time = _get_first_attr(attr_sources, 'goal_time', 2.0)
-        self.timer = _get_first_attr(attr_sources, 'timer', process_time)
+        self.timer = _get_first_attr(
+            attr_sources, 'timer', asvtools.process_time)
         self.repeat = _get_first_attr(
             attr_sources, 'repeat', timeit.default_repeat)
         self.number = int(_get_first_attr(attr_sources, 'number', 0))
@@ -402,11 +361,48 @@ class TrackBenchmark(Benchmark):
         return self.func()
 
 
+class MultiBenchmark(Benchmark):
+    name_regex = re.compile(
+        '^(Multi[A-Z_].+)|(multi_.+)$')
+
+    def __init__(self, *args, **kwargs):
+        raise RuntimeError("MultiBenchmark should not be instantiated")
+
+    @classmethod
+    def get_benchmarks(cls, name, subname, func, attr_sources):
+        class Object(object):
+            pass
+
+        types = _get_first_attr(attr_sources, "types", [])
+
+        for entry in types:
+            type_name = entry[0]
+            bm_type_name = entry[1]
+            if len(entry) == 3:
+                attrs = entry[2]
+            else:
+                attrs = {}
+
+            obj = Object()
+            obj.__dict__.update(attrs)
+
+            if not subname or subname == type_name:
+                bm_type = get_benchmark_type_from_name(bm_type_name + '_XXX')
+                if bm_type is not None:
+                    new_name = '{0}[{1}]'.format(name, type_name)
+                    for bench in bm_type.get_benchmarks(
+                            new_name, '', func, [obj] + attr_sources):
+                        yield bench
+                else:
+                    raise ValueError(
+                        "Unknown benchmark type '{0}'".format(bm_type_name))
+
+
 # TODO: Support the creation of custom benchmark types
 
 
 benchmark_types = [
-    TimeBenchmark, MemBenchmark, TrackBenchmark
+    TimeBenchmark, MemBenchmark, TrackBenchmark, MultiBenchmark
 ]
 
 
@@ -424,7 +420,8 @@ def disc_class(klass):
     for key, val in inspect.getmembers(klass):
         bm_type = get_benchmark_type_from_name(key)
         if bm_type is not None and (inspect.isfunction(val) or inspect.ismethod(val)):
-            yield bm_type.from_class_method(klass, key)
+            for bench in bm_type.from_class_method(klass, key):
+                yield bench
 
 
 def disc_objects(module):
@@ -447,7 +444,8 @@ def disc_objects(module):
         elif inspect.isfunction(val):
             bm_type = get_benchmark_type_from_name(key)
             if bm_type is not None:
-                yield bm_type.from_function(val)
+                for bench in bm_type.from_function(val):
+                    yield bench
 
 
 def disc_files(root, package=''):

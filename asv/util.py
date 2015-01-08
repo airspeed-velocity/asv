@@ -154,15 +154,10 @@ def human_value(value, unit):
     """
     if isinstance(value, (int, float)):
         if unit == 'seconds':
-            display = human_time(value)
+            return human_time(value)
         elif unit == 'bytes':
-            display = human_file_size(value)
-        else:
-            display = json.dumps(value)
-    else:
-        display = json.dumps(value)
-
-    return display
+            return human_file_size(value)
+    return json.dumps(value).strip()
 
 
 def which(filename):

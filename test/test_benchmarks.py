@@ -46,13 +46,13 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 2
 
     b = benchmarks.Benchmarks(conf)
-    assert len(b) == 10
+    assert len(b) == 19
 
     envs = list(environment.get_environments(conf))
     b = benchmarks.Benchmarks(conf)
     times = b.run_benchmarks(envs[0], profile=True, show_stderr=True)
 
-    assert len(times) == 10
+    assert len(times) == 19
     assert times[
         'time_examples.TimeSuite.time_example_benchmark_1']['result'] is not None
     # Benchmarks that raise exceptions should have a time of "None"
@@ -69,6 +69,20 @@ def test_find_benchmarks(tmpdir):
     assert 'stderr' in times[
         'time_examples.time_with_warnings']
     assert times['time_examples.time_with_warnings']['errcode'] != 0
+
+    assert 'multiple.multi_bench[memory]' in times
+    assert 'multiple.multi_bench[process_time]' in times
+    assert 'multiple.multi_bench[wall_time]' in times
+    assert times['multiple.multi_bench[memory]']['result'] == 0.0
+    assert times['multiple.multi_bench[process_time]']['result'] > 0.0
+    assert b['multiple.multi_bench[wall_time]']['repeat'] == 30
+
+    for bench in ('multi_range', 'multi_xrange'):
+        for subbench in ('memory', 'process_time', 'wall_time'):
+            assert 'multiple.MySuite.{0}[{1}]'.format(bench, subbench)
+        assert times['multiple.MySuite.{0}[memory]'.format(bench)]['result'] == 0.0
+        assert times['multiple.MySuite.{0}[process_time]'.format(bench)]['result'] > 0.0
+        assert b['multiple.MySuite.{0}[wall_time]'.format(bench)]['repeat'] == 30
 
     profile_path = os.path.join(tmpdir, 'test.profile')
     with open(profile_path, 'wb') as fd:
