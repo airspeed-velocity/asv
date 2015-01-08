@@ -317,7 +317,7 @@ Or, you can put all of the benchmarks in a suite::
       ]
 
       def multi_range(self):
-          range(100000)
+          return range(100000)
 
       def multi_for_loop(self):
           x = 0
