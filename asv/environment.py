@@ -72,18 +72,6 @@ def get_environments(conf):
     ----------
     conf : dict
         asv configuration object
-
-    python : str
-        Python version specifier.  Acceptable values depend on the
-        Environment plugins installed but generally are:
-
-        - 'X.Y': A Python version, in which case conda or virtualenv
-          will be used to create a new environment.
-
-        - 'python' or '/usr/bin/python': Search for the given
-          executable on the search PATH, and use that.  It is assumed
-          that all dependencies and the benchmarked project itself are
-          already installed.
     """
     for python in conf.pythons:
         for env in get_environments_for_python(conf, python):
@@ -98,6 +86,18 @@ def get_environment_class(conf, python):
     ----------
     conf : dict
         asv configuration object
+
+    python : str
+        Python version specifier.  Acceptable values depend on the
+        Environment plugins installed but generally are:
+
+        - 'X.Y': A Python version, in which case conda or virtualenv
+          will be used to create a new environment.
+
+        - 'python' or '/usr/bin/python': Search for the given
+          executable on the search PATH, and use that.  It is assumed
+          that all dependencies and the benchmarked project itself are
+          already installed.
     """
     if conf.environment_type:
         for cls in util.iter_subclasses(Environment):
