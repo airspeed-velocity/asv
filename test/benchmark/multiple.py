@@ -9,7 +9,7 @@ types = [
 
 
 def multi_bench():
-    range(100)
+    range(10000)
 multi_bench.types = types
 
 
@@ -17,7 +17,9 @@ class MySuite:
     types = types
 
     def multi_range(self):
-        range(100000)
+        range(1000)
 
-    def multi_xrange(self):
-        xrange(100000)
+    def multi_for_loop(self):
+        x = 0
+        for i in range(1000):
+            x *= i
