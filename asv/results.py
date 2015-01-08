@@ -8,6 +8,8 @@ import base64
 import os
 import zlib
 
+import six
+
 from . import environment
 from .console import log
 from . import util
@@ -213,6 +215,10 @@ class Results(object):
         """
         path = os.path.join(result_dir, self._filename)
 
+        if os.path.exists(path):
+            old_results = self.load(path)
+            self.add_existing_results(old_results)
+
         util.write_json(path, {
             'results': self._results,
             'params': self._params,
@@ -247,6 +253,18 @@ class Results(object):
             obj._profiles = d['profiles']
         obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
         return obj
+
+    def add_existing_results(self, old):
+        """
+        Add any existing old results that aren't overridden by the
+        current results.
+        """
+        for key, val in six.iteritems(old.results):
+            if key not in self._results:
+                self._results[key] = val
+        for key, val in six.iteritems(old._profiles):
+            if key not in self._profiles:
+                self._profiles[key] = val
 
     def rm(self, result_dir):
         path = os.path.join(result_dir, self._filename)
