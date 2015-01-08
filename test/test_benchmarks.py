@@ -77,7 +77,7 @@ def test_find_benchmarks(tmpdir):
     assert times['multiple.multi_bench[process_time]']['result'] > 0.0
     assert b['multiple.multi_bench[wall_time]']['repeat'] == 30
 
-    for bench in ('multi_range', 'multi_xrange'):
+    for bench in ('multi_range', 'multi_for_loop'):
         for subbench in ('memory', 'process_time', 'wall_time'):
             assert 'multiple.MySuite.{0}[{1}]'.format(bench, subbench)
         assert times['multiple.MySuite.{0}[memory]'.format(bench)]['result'] == 0.0

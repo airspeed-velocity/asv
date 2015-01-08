@@ -9,7 +9,7 @@ types = [
 
 
 def multi_bench():
-    range(10000)
+    range(1000)
 multi_bench.types = types
 
 
