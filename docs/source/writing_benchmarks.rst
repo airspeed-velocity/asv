@@ -185,7 +185,9 @@ possible, with as much extraneous setup moved to a ``setup`` function::
   ``time.process_time`` (or a backported version of it for versions of
   Python prior to 3.3), but other useful values are
   `timeit.default_timer` to use the default ``timeit`` behavior on
-  your version of Python.
+  your version of Python.  The ``asvtools`` module, which you can
+  import from your benchmark suite, contains the aliases
+  ``process_time`` and ``wall_time`` which can also be used here.
 
   On Windows, `time.clock` has microsecond granularity, but
   `time.time`'s granularity is 1/60th of a second. On Unix,
@@ -244,3 +246,81 @@ garbage collector at a given state::
 
 - ``unit``: The unit of the values returned by the benchmark.  Used
   for display in the web interface.
+
+Multiple
+````````
+
+There is also a special benchmark type for benchmarks that you want to
+test in multiple ways, for example to test both for memory usage and
+run time.  "Multiple" benchmarks use the prefix ``multi`` and have a
+required attribute ``types``, which is a list of benchmark types to
+run.
+
+**Attributes**:
+
+- ``types``: A list of types to run on the benchmark.  Each entry is a
+  2- or 3-length tuple with the following elements:
+
+  - ``name``: The name of the subbenchmark
+  - ``type``: The type of benchmark.  Must be a supported benchmark
+    prefix, e.g. ``time``, ``mem`` or ``track``.
+  - ``args``: A dictionary of attributes for the benchmark.  This can
+    be used to override any of the benchmark-type-specific attributes.
+
+Examples
+~~~~~~~~
+
+To write a multi benchmark that tests process time, wall clock time
+and memory usage::
+
+  import asvtools
+
+  def multi_range():
+      return range(100000)
+  multi_range.types = [
+      ('process_time', 'time'),
+      ('wall_time', 'time', {'timer': asvtools.wall_time}),
+      ('memory', 'mem')
+  ]
+
+If you have multiple benchmarks that you want to run in the same way,
+you can assign the types to a variable and reuse that::
+
+  import asvtools
+
+  my_types = [
+      ('process_time', 'time'),
+      ('wall_time', 'time', {'timer': asvtools.wall_time}),
+      ('memory', 'mem')
+  ]
+
+  def multi_range():
+      return range(100000)
+  multi_range.types = my_types
+
+  def multi_for_loop():
+      x = 0
+      for i in range(100000):
+          x *= i
+      return x
+  multi_xrange.types = my_types
+
+Or, you can put all of the benchmarks in a suite::
+
+  import asvtools
+
+  class MySuite:
+      types = [
+          ('process_time', 'time'),
+          ('wall_time', 'time', {'timer': asvtools.wall_time}),
+          ('memory', 'mem')
+      ]
+
+      def multi_range(self):
+          return range(100000)
+
+      def multi_for_loop(self):
+          x = 0
+          for i in range(100000):
+              x *= i
+          return x
