@@ -276,7 +276,7 @@ and memory usage::
   import asvtools
 
   def multi_range():
-      range(100000)
+      return range(100000)
   multi_range.types = [
       ('process_time', 'time'),
       ('wall_time', 'time', {'timer': asvtools.wall_time}),
@@ -295,11 +295,14 @@ you can assign the types to a variable and reuse that::
   ]
 
   def multi_range():
-      range(100000)
+      return range(100000)
   multi_range.types = my_types
 
-  def multi_xrange():
-      xrange(100000)
+  def multi_for_loop():
+      x = 0
+      for i in range(100000):
+          x *= i
+      return x
   multi_xrange.types = my_types
 
 Or, you can put all of the benchmarks in a suite::
@@ -316,5 +319,8 @@ Or, you can put all of the benchmarks in a suite::
       def multi_range(self):
           range(100000)
 
-      def multi_xrange(self):
-          xrange(100000)
+      def multi_for_loop(self):
+          x = 0
+          for i in range(100000):
+              x *= i
+          return x
