@@ -21,9 +21,9 @@ class Continuous(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "continuous", help=
-            "Run a side-by-side comparison of two commits for continuous "
-            "integration.")
+            "continuous", help="Compare two commits directly",
+            description="""Run a side-by-side comparison of two commits for
+            continuous integration.""")
 
         parser.add_argument(
             'branch', nargs=1, default='master',
