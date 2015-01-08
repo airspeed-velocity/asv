@@ -8,6 +8,7 @@ import contextlib
 import io
 import os
 import pstats
+import sys
 import tempfile
 
 from . import Command
@@ -185,7 +186,12 @@ class Profile(Command):
                     raise util.UserError(
                         "Environment {0} not found.".format(environment))
 
-            benchmarks = Benchmarks(conf, regex=benchmark)
+            if env.python != "{0}.{1}".format(*sys.version_info[:2]):
+                raise util.UserError(
+                    "Profiles must be run in the same version of Python as the "
+                    "asv master process")
+
+            benchmarks = Benchmarks(conf, regex='^{0}$'.format(benchmark))
             if len(benchmarks) != 1:
                 raise util.UserError(
                     "Could not find benchmark {0}".format(benchmark))
