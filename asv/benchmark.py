@@ -316,7 +316,7 @@ class Benchmark(object):
                 code = method_caller.__code__
 
             profile.runctx(
-                code, {'run': self.run}, {}, filename)
+                code, {'run': self.func}, {}, filename)
 
 
 class TimeBenchmark(Benchmark):
