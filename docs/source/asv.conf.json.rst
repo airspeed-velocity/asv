@@ -63,7 +63,7 @@ following:
     you can install multiple versions of Python using your package
     manager or using `pyenv <https://github.com/yyuu/pyenv>`_.
 
-- an executable name on the ``PATH` or an absolute path to an
+- an executable name on the ``PATH`` or an absolute path to an
   executable.  In this case, the environment is assumed to be already
   fully loaded and read-only.  Thus, the benchmarked project must
   already be installed, and it will not be possible to benchmark
@@ -101,6 +101,13 @@ the project being benchmarked may specify in its ``setup.py`` file.
 The directory, relative to the current directory, that benchmarks are
 stored in.  Should rarely need to be overridden.  If not provided,
 defaults to ``"benchmarks"``.
+
+``environment_type``
+--------------------
+Specifies the tool to use to create environments.  May be "conda",
+"virtualenv" or another value depending on the plugins in use.  If
+missing or the empty string, the tool will be automatically determined
+by looking for tools on the ``PATH`` environment variable.
 
 ``env_dir``
 -----------
