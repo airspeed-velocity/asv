@@ -44,13 +44,13 @@ class Profile(Command):
             description="Profile a benchmark")
 
         parser.add_argument(
-            'benchmark', nargs=1,
+            'benchmark', nargs='?',
             help="""The benchmark to profile.  Must be a
             fully-specified benchmark name.""")
         parser.add_argument(
             'revision', nargs='?',
             help="""The revision of the project to profile.  May be a
-            commit hash, or a tag or brach name.""")
+            commit hash, or a tag or branch name.""")
         parser.add_argument(
             '--gui', '-g', nargs='?',
             help="""Display the profile in the given gui.  Use
@@ -102,7 +102,7 @@ class Profile(Command):
     @classmethod
     def run_from_conf_args(cls, conf, args):
         return cls.run(
-            conf=conf, benchmark=args.benchmark[0], revision=args.revision,
+            conf=conf, benchmark=args.benchmark, revision=args.revision,
             gui=args.gui, output=args.output, force=args.force,
             environment=args.environment, python=args.python)
 
@@ -122,6 +122,10 @@ class Profile(Command):
         if gui is not None and gui not in cls.guis:
             raise util.UserError(
                 "Unknown profiler GUI {0}".format(gui))
+
+        if benchmark is None:
+            raise util.UserError(
+                "Must specify benchmark to run")
 
         repo = get_repo(conf)
 
