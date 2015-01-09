@@ -58,3 +58,27 @@ def test_matrix_environments(tmpdir):
         output = env.run(
             ['-c', 'import psutil, sys; sys.stdout.write(psutil.__version__)'])
         assert output.startswith(six.text_type(env._requirements['psutil']))
+
+
+@pytest.mark.xfail(not HAS_PYTHON_27,
+                   reason="Requires Python 2.7")
+def test_large_environment_matrix(tmpdir):
+    # As seen in issue #169, conda can't handle using really long
+    # directory names in its environment.  This creates an environment
+    # with many dependencies in order to ensure it still works.
+
+    conf = config.Config()
+
+    conf.env_dir = six.text_type(tmpdir.join("env"))
+    conf.pythons = ["2.7"]
+    for i in range(25):
+        conf.matrix['foo{0}'.format(i)] = []
+
+    environments = list(environment.get_environments(conf))
+
+    for env in environments:
+        # Since *actually* installing all the dependencies would make
+        # this test run a long time, we only set up the environment,
+        # but don't actually install dependencies into it.  This is
+        # enough to trigger the bug in #169.
+        env.setup()

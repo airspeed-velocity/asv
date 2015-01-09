@@ -9,6 +9,7 @@ of dependencies.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import hashlib
 import os
 import sys
 
@@ -158,6 +159,13 @@ class Environment(object):
         return get_env_name(self._python, self._requirements)
 
     @property
+    def hashname(self):
+        """
+        Get a hash to uniquely identify this environment.
+        """
+        return hashlib.md5(self.name.encode('utf-8')).hexdigest()
+
+    @property
     def requirements(self):
         return self._requirements
 
@@ -210,6 +218,18 @@ class Environment(object):
         can be installed into this environment.
         """
         return True
+
+    def save_info_file(self, path):
+        """
+        Save a file with information about the environment into
+        directory `path`.
+        """
+        path = os.path.join(path, 'asv-env-info.json')
+        content = {
+            'python': self._python,
+            'requirements': self._requirements
+        }
+        util.write_json(path, content)
 
 
 class ExistingEnvironment(Environment):

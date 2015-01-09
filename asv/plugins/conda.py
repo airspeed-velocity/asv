@@ -40,7 +40,7 @@ class Conda(environment.Environment):
         self._python = python
         self._requirements = requirements
         self._path = os.path.join(
-            self._env_dir, self.name)
+            self._env_dir, self.hashname)
 
         self._is_setup = False
         self._requirements_installed = False
@@ -107,6 +107,8 @@ class Conda(environment.Environment):
             if os.path.exists(self._path):
                 shutil.rmtree(self._path)
             raise
+
+        self.save_info_file(self._path)
 
         self._is_setup = True
 
