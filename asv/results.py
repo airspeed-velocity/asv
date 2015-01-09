@@ -8,6 +8,8 @@ import base64
 import os
 import zlib
 
+import six
+
 from . import environment
 from .console import log
 from . import util
@@ -204,7 +206,7 @@ class Results(object):
 
     def save(self, result_dir):
         """
-        Save the results to disk.
+        Save the results to disk, replacing existing results.
 
         Parameters
         ----------
@@ -222,6 +224,23 @@ class Results(object):
             'python': self._python,
             'profiles': self._profiles
         }, self.api_version)
+
+    def update_save(self, result_dir):
+        """
+        Save the results to disk, adding to any existing results.
+
+        Parameters
+        ----------
+        result_dir : str
+            Path to root of results tree.
+        """
+        path = os.path.join(result_dir, self._filename)
+
+        if os.path.exists(path):
+            old_results = self.load(path)
+            self.add_existing_results(old_results)
+
+        self.save(result_dir)
 
     @classmethod
     def load(cls, path):
@@ -247,6 +266,18 @@ class Results(object):
             obj._profiles = d['profiles']
         obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
         return obj
+
+    def add_existing_results(self, old):
+        """
+        Add any existing old results that aren't overridden by the
+        current results.
+        """
+        for key, val in six.iteritems(old.results):
+            if key not in self._results:
+                self._results[key] = val
+        for key, val in six.iteritems(old._profiles):
+            if key not in self._profiles:
+                self._profiles[key] = val
 
     def rm(self, result_dir):
         path = os.path.join(result_dir, self._filename)
