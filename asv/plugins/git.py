@@ -65,7 +65,7 @@ class Git(Repo):
         self._pulled = True
 
     def checkout(self, branch='master'):
-        self._run_git(['checkout', branch])
+        self._run_git(['checkout', '-f', branch])
         self.clean()
 
     def clean(self):
