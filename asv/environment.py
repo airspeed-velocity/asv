@@ -106,6 +106,9 @@ def get_environment_class(conf, python):
         raise ValueError(
             "Unknown environment type '{0}'".format(conf.environment_type))
     else:
+        log.warn(
+            "No `environment_type` specified in asv.conf.json. "
+            "This will be required in the future.")
         # Try the subclasses in reverse order so custom plugins come first
         for cls in list(util.iter_subclasses(Environment))[::-1]:
             if cls.matches(python):

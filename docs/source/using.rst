@@ -57,6 +57,11 @@ suite are:
   github project, the URL is of the form
   ``http://github.com/$OWNER/$REPO/commit/``.
 
+- ``environment_type``: The tool used to create environments.  May be
+  ``conda`` or ``virtualenv``.  If Conda supports the dependencies you
+  need, that is the recommended method.  See :ref:`environments` for
+  more information.
+
 The rest of the values can usually be left to their defaults, unless
 you want to benchmark against multiple versions of Python or multiple
 versions of third-party dependencies.
@@ -156,6 +161,8 @@ directory::
     you will need to use the ``--machine`` argument to ``asv run`` and
     similar commands.
 
+.. _environments:
+
 Environments
 ````````````
 
@@ -173,13 +180,11 @@ Environments can be created using different tools.  By default,
 ``asv`` ships with support for `anaconda
 <https://store.continuum.io/cshop/anaconda/>`__ and `virtualenv
 <https://pypi.python.org/pypi/virtualenv>`__, though plugins may be
-installed to support other environment tools.  By default, if
-``conda`` is found in your ``PATH``, it will be used, and if not, fall
-back to ``virtualenv``.  To override this behavior, the
-``environment_type`` variable in the ``asv.conf.json`` file can be set
-to either ``"conda"`` or ``"virtualenv"``.
+installed to support other environment tools.  The
+``environment_type`` key in ``asv.conf.json`` is used to select the
+tool used to create environments.
 
-``anaconda`` is a recommended method if it contains the dependencies
+``conda`` is a recommended method if it contains the dependencies
 your project needs, because it is faster and in many cases will not
 have to compile the dependencies from scratch.
 
