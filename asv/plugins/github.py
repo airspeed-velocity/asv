@@ -13,10 +13,15 @@ from .. import util
 
 
 def _has_staged_changes(git):
-    output = util.check_output([git, 'status', '--porcelain'])
-    for line in output.splitlines():
-        if line.startswith('M'):
+    try:
+        util.check_call(
+            [git, 'diff-index', '--quiet', '--cached', 'HEAD'],
+            display_error=False)
+    except util.ProcessError as e:
+        if e.retcode == 1:
             return True
+        else:
+            raise
     return False
 
 
