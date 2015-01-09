@@ -56,8 +56,6 @@ def get_env_name(python, requirements):
     for key, val in reqs:
         if val is not None:
             name.append(''.join([key, val]))
-        else:
-            name.append(key)
     return '-'.join(name)
 
 
