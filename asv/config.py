@@ -29,6 +29,7 @@ class Config(object):
         self.html_dir = "html"
         self.show_commit_url = "#"
         self.hash_length = 8
+        self.environment_type = None
         self.plugins = []
 
     @classmethod

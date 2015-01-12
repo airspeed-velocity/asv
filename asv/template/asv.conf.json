@@ -13,7 +13,14 @@
     // benchmarked
     "repo": "",
 
-    // The base URL to show a commit for the project.
+    // The tool to use to create environments.  May be "conda",
+    // "virtualenv" or other value depending on the plugins in use.
+    // If missing or the empty string, the tool will be automatically
+    // determined by looking for tools on the PATH environment
+    // variable.
+    "environment_type": "virtualenv",
+
+    // the base URL to show a commit for the project.
     // "show_commit_url": "http://github.com/owner/project/commit/",
 
     // The Pythons you'd like to test against.  If not provided, defaults
@@ -35,6 +42,7 @@
     // The directory (relative to the current directory) to cache the Python
     // environments in.  If not provided, defaults to "env"
     // "env_dir": "env",
+
 
     // The directory (relative to the current directory) that raw benchmark
     // results are stored in.  If not provided, defaults to "results".

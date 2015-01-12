@@ -78,6 +78,45 @@ def get_environments(conf):
             yield env
 
 
+def get_environment_class(conf, python):
+    """
+    Get a matching environment type class.
+
+    Parameters
+    ----------
+    conf : dict
+        asv configuration object
+
+    python : str
+        Python version specifier.  Acceptable values depend on the
+        Environment plugins installed but generally are:
+
+        - 'X.Y': A Python version, in which case conda or virtualenv
+          will be used to create a new environment.
+
+        - 'python' or '/usr/bin/python': Search for the given
+          executable on the search PATH, and use that.  It is assumed
+          that all dependencies and the benchmarked project itself are
+          already installed.
+    """
+    if conf.environment_type:
+        for cls in util.iter_subclasses(Environment):
+            if cls.tool_name == conf.environment_type:
+                return cls
+        raise ValueError(
+            "Unknown environment type '{0}'".format(conf.environment_type))
+    else:
+        log.warn(
+            "No `environment_type` specified in asv.conf.json. "
+            "This will be required in the future.")
+        # Try the subclasses in reverse order so custom plugins come first
+        for cls in list(util.iter_subclasses(Environment))[::-1]:
+            if cls.matches(python):
+                return cls
+        raise ValueError(
+            "No way to create environment for '{0}'".format(python))
+
+
 def get_environments_for_python(conf, python):
     """
     Get an iterator of Environment subclasses for the given python
@@ -100,14 +139,9 @@ def get_environments_for_python(conf, python):
           that all dependencies and the benchmarked project itself are
           already installed.
     """
-    # Try the subclasses in reverse order so custom plugins come first
-    for cls in list(util.iter_subclasses(Environment))[::-1]:
-        if cls.matches(python):
-            for env in cls.get_environments(conf, python):
-                yield env
-            break
-    else:
-        raise ValueError("No way to create environment for '{0}'".format(python))
+    cls = get_environment_class(conf, python)
+    for env in cls.get_environments(conf, python):
+        yield env
 
 
 class PythonMissingError(BaseException):
@@ -122,6 +156,8 @@ class Environment(object):
 
     Environments are created in the
     """
+    tool_name = None
+
     def __init__(self):
         raise NotImplementedError()
 

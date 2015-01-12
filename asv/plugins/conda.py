@@ -22,6 +22,8 @@ class Conda(environment.Environment):
     project is installed using ``pip`` (since ``conda`` doesn't have a
     method to install from an arbitrary ``setup.py``).
     """
+    tool_name = "conda"
+
     def __init__(self, env_dir, python, requirements):
         """
         Parameters
@@ -88,7 +90,10 @@ class Conda(environment.Environment):
         if os.path.exists(self._path):
             shutil.rmtree(self._path)
 
-        conda = util.which('conda')
+        try:
+            conda = util.which('conda')
+        except IOError as e:
+            raise util.UserError(str(e))
 
         log.info("Creating conda environment for {0}".format(self.name))
         try:

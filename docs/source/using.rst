@@ -57,6 +57,11 @@ suite are:
   github project, the URL is of the form
   ``http://github.com/$OWNER/$REPO/commit/``.
 
+- ``environment_type``: The tool used to create environments.  May be
+  ``conda`` or ``virtualenv``.  If Conda supports the dependencies you
+  need, that is the recommended method.  See :ref:`environments` for
+  more information.
+
 The rest of the values can usually be left to their defaults, unless
 you want to benchmark against multiple versions of Python or multiple
 versions of third-party dependencies.
@@ -156,10 +161,14 @@ directory::
     you will need to use the ``--machine`` argument to ``asv run`` and
     similar commands.
 
+.. _environments:
+
 Environments
 ````````````
 
-Next, the Python environments to run the benchmarks are set up.  One
+Next, the Python environments to run the benchmarks are set up.
+``asv`` always runs its benchmarks in an environment that it creates,
+in order to not change any of your existing Python environments.  One
 environment will be set up for each of the combinations of Python
 versions and the matrix of project dependencies, if any.  The first
 time this is run, this may take some time, as many files are copied
@@ -167,30 +176,30 @@ over and dependencies are installed into the environment.  The
 environments are stored in the ``env`` directory so that the next time
 the benchmarks are run, things will start much faster.
 
-.. note::
+Environments can be created using different tools.  By default,
+``asv`` ships with support for `anaconda
+<https://store.continuum.io/cshop/anaconda/>`__ and `virtualenv
+<https://pypi.python.org/pypi/virtualenv>`__, though plugins may be
+installed to support other environment tools.  The
+``environment_type`` key in ``asv.conf.json`` is used to select the
+tool used to create environments.
 
-    The easiest way to benchmark in multiple versions of Python is to
-    install `anaconda <https://store.continuum.io/cshop/anaconda/>`__
-    or `miniconda <http://conda.pydata.org/miniconda.html>`__
-    installation, and make sure the ``conda`` command is available on
-    your ``PATH``.
+``conda`` is a recommended method if it contains the dependencies
+your project needs, because it is faster and in many cases will not
+have to compile the dependencies from scratch.
 
-    If not using Conda, virtualenv will be used.  In this case,
-    ``asv`` does not build Python interpreters for you, but it expects
-    to find each of the Python versions specified in the
-    ``asv.conf.json`` file available on the ``PATH``.  For example, if
-    the ``asv.conf.json`` file has::
+When using ``virtualenv``, ``asv`` does not build Python interpreters
+for you, but it expects to find each of the Python versions specified
+in the ``asv.conf.json`` file available on the ``PATH``.  For example,
+if the ``asv.conf.json`` file has::
 
-        "pythons": ["2.7", "3.3"]
+  "pythons": ["2.7", "3.3"]
 
-    then it will use the executables named ``python2.7`` and
-    ``python3.3`` on the path.  There are many ways to get multiple
-    versions of Python installed -- your package manager, ``apt-get``,
-    ``yum``, ``MacPorts`` or ``homebrew`` probably has them, or you
-    can also use `pyenv <https://github.com/yyuu/pyenv>`__.  ``asv``
-    always runs its benchmarks in a virtual environment, so it will
-    not change what is installed in any of the python environments on
-    your system.
+then it will use the executables named ``python2.7`` and
+``python3.3`` on the path.  There are many ways to get multiple
+versions of Python installed -- your package manager, ``apt-get``,
+``yum``, ``MacPorts`` or ``homebrew`` probably has them, or you
+can also use `pyenv <https://github.com/yyuu/pyenv>`__.
 
 Benchmarking
 ````````````
