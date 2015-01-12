@@ -12,6 +12,19 @@ from ..console import log
 from .. import util
 
 
+def _has_staged_changes(git):
+    try:
+        util.check_call(
+            [git, 'diff-index', '--quiet', '--cached', 'HEAD'],
+            display_error=False)
+    except util.ProcessError as e:
+        if e.retcode == 1:
+            return True
+        else:
+            raise
+    return False
+
+
 class GithubPages(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
@@ -35,11 +48,17 @@ class GithubPages(Command):
         # TODO: For transactional integrity, we probably need to check
         # out the repo in a temporary directory
 
+        git = util.which('git')
+
+        if _has_staged_changes(git):
+            raise util.UserError(
+                "You currently have staged changes. "
+                "Commit, stash or revert them before continuing.")
+
         Publish.run(conf)
 
         os.environ['HTML_DIR'] = conf.html_dir
 
-        git = util.which('git')
 
         # Get the current branch name
         current_branch = util.check_output(
