@@ -10,7 +10,10 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 import re
-import hglib
+try:
+    import hglib
+except ImportError as exc:
+    hglib = None
 
 from ..console import log
 from ..repo import Repo
@@ -21,6 +24,8 @@ class Hg(Repo):
     def __init__(self, url, path):
         self._path = os.path.abspath(path)
         self._pulled = False
+        if hglib is None:
+            raise ImportError("hglib")
 
         if not os.path.exists(self._path):
             log.info("Cloning project")
