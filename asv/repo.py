@@ -32,6 +32,13 @@ class Repo(object):
         """
         raise NotImplementedError()
 
+    def get_new_range_spec(self, latest_result):
+        """
+        Returns a formatted string giving the results between the 
+        latest result and the newest hash.
+        """
+        raise NotImplementedError()
+
     def checkout(self, branch):
         """
         Checkout a given branch or commit hash.  Also cleans the

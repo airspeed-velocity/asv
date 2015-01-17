@@ -43,6 +43,9 @@ class Hg(Repo):
                 return True
         return False
 
+    def get_new_range_spec(self, latest_result):
+        return '{0}::tip'.format(latest_result)
+
     def pull(self):
         # We assume the remote isn't updated during the run of asv
         # itself.

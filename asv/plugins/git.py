@@ -52,6 +52,9 @@ class Git(Repo):
             if chdir:
                 os.chdir(orig_dir)
 
+    def get_new_range_spec(self, latest_result):
+        return '{0}..master'.format(latest_result)
+
     def pull(self):
         # We assume the remote isn't updated during the run of asv
         # itself.
