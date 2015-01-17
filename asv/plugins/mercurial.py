@@ -36,7 +36,7 @@ class Hg(Repo):
     def url_match(cls, url):
         regexes = [
             '^https?://.*?\.hg$',
-            '^hg@.*$']
+            '^ssh://hg@.*$']
 
         for regex in regexes:
             if re.match(regex, url):
@@ -57,7 +57,7 @@ class Hg(Repo):
         self.checkout('tip')
         self._pulled = True
 
-    def checkout(self, branch='master'):
+    def checkout(self, branch='tip'):
         self._repo.update(branch, clean=True)
         self.clean()
 
