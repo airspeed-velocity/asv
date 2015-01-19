@@ -87,7 +87,7 @@ class Hg(Repo):
         return self.get_hash_from_tag('tip')
 
     def get_tags(self):
-        return self._repo.tags()
+        return [item[0] for item in self._repo.tags()]
 
     def get_date_from_tag(self, tag):
         return self.get_date(tag)
