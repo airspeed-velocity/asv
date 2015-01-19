@@ -28,6 +28,8 @@ class Hg(Repo):
 
         if not os.path.exists(self._path):
             log.info("Cloning project")
+            if url.startswith("hg+"):
+                url = url[3:]
             hglib.clone(url, dest=self._path)
 
         self._repo = hglib.open(self._path)
@@ -39,6 +41,7 @@ class Hg(Repo):
     @classmethod
     def url_match(cls, url):
         regexes = [
+            '^hg\+https?://.*$',
             '^https?://.*?\.hg$',
             '^ssh://hg@.*$']
 
