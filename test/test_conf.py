@@ -20,9 +20,10 @@ def test_config():
     assert conf.project == 'astropy'
     assert conf.matrix == {
         "numpy": ["1.8"],
-        "Cython": []
+        "Cython": [],
+        "jinja2": [],
     }
-
+    assert conf.benchmark_dir == 'benchmark'
 
 class CustomCommand(Command):
     @classmethod

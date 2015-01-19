@@ -8,7 +8,8 @@
     // version.
     "matrix": {
         "numpy": ["1.8"],
-        "Cython": []
+        "Cython": [],
+        "jinja2": [],
     },
 
     // The git URL to the project being tested
@@ -23,4 +24,6 @@
     "version": 1,
 
     "plugins": [".example_plugin"],
+
+    "benchmark_dir": "benchmark",
 }
