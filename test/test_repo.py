@@ -5,10 +5,15 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import six
+import pytest
 
 from asv import config
 from asv import repo
 
+try:
+    import hglib
+except ImportError:
+    hglib = None
 
 def _test_generic_repo(conf,
                        hash_range="ae0c27b65741..e6f382a704f7",
@@ -39,6 +44,8 @@ def test_repo_git(tmpdir):
     _test_generic_repo(conf)
 
 
+@pytest.mark.xfail(hglib is None,
+                   reason="needs hglib")
 def test_repo_hg(tmpdir):
     conf = config.Config()
 
