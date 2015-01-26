@@ -9,9 +9,15 @@
     // The project's homepage
     "project_url": "http://project-homepage.org/",
 
-    // The URL of the source code repository for the project being
-    // benchmarked
+    // The URL or local path of the source code repository for the
+    // project being benchmarked
     "repo": "",
+
+    // The DVCS being used.  If not set, it will be automatically
+    // determined from "repo" by looking at the protocol in the URL
+    // (if remote), or by looking for special directories, such as
+    // ".git" (if local).
+    // "dvcs": "git",
 
     // The tool to use to create environments.  May be "conda",
     // "virtualenv" or other value depending on the plugins in use.
