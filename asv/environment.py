@@ -99,6 +99,9 @@ def get_environment_class(conf, python):
           that all dependencies and the benchmarked project itself are
           already installed.
     """
+    if python == 'same':
+        conf.environment_type = 'existing'
+
     if conf.environment_type:
         for cls in util.iter_subclasses(Environment):
             if cls.tool_name == conf.environment_type:
@@ -269,6 +272,8 @@ class Environment(object):
 
 
 class ExistingEnvironment(Environment):
+    tool_name = "existing"
+
     def __init__(self, executable):
         self._executable = executable
         self._python = util.check_output(
