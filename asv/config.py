@@ -41,7 +41,7 @@ class Config(object):
         if not path:
             path = "asv.conf.json"
 
-        if not os.path.exists(path):
+        if not os.path.isfile(path):
             raise util.UserError("Config file {0} not found.".format(path))
 
         d = util.load_json(path, cls.api_version)
@@ -67,7 +67,7 @@ class Config(object):
         if not path:
             path = "asv.conf.json"
 
-        if not os.path.exists(path):
+        if not os.path.isfile(path):
             raise util.UserError("Config file {0} not found.".format(path))
 
         util.update_json(cls, path, cls.api_version)

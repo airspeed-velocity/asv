@@ -22,7 +22,7 @@ class Git(Repo):
         self._path = os.path.abspath(path)
         self._pulled = False
 
-        if not os.path.exists(self._path):
+        if not os.path.isdir(self._path):
             log.info("Cloning project")
             self._run_git(['clone', url, self._path], chdir=False)
 

@@ -50,7 +50,7 @@ class MachineCollection(object):
             path = _path
 
         d = {}
-        if os.path.exists(path):
+        if os.path.isfile(path):
             d = util.load_json(path, cls.api_version)
             if machine_name in d:
                 return d[machine_name]
@@ -67,7 +67,7 @@ class MachineCollection(object):
             path = cls.get_machine_file_path()
         else:
             path = _path
-        if os.path.exists(path):
+        if os.path.isfile(path):
             d = util.load_json(path)
         else:
             d = {}
@@ -77,7 +77,7 @@ class MachineCollection(object):
     @classmethod
     def update(cls):
         path = cls.get_machine_file_path()
-        if os.path.exists(path):
+        if os.path.isfile(path):
             util.update_json(cls, path, cls.api_version)
 
 

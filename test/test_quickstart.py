@@ -4,7 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from os.path import exists, join
+from os.path import isfile, join
 
 import six
 
@@ -16,5 +16,5 @@ def test_quickstart(tmpdir):
 
     Quickstart.run(tmpdir)
 
-    assert exists(join(tmpdir, 'asv.conf.json'))
-    assert exists(join(tmpdir, 'benchmarks', 'benchmarks.py'))
+    assert isfile(join(tmpdir, 'asv.conf.json'))
+    assert isfile(join(tmpdir, 'benchmarks', 'benchmarks.py'))

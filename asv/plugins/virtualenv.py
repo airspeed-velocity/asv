@@ -106,7 +106,7 @@ class Virtualenv(environment.Environment):
 
         try:
             log.info("Creating virtualenv for {0}".format(self.name))
-            if not os.path.exists(self._path):
+            if not os.path.isdir(self._path):
                 util.check_call([
                     self._executable,
                     self._virtualenv_path,

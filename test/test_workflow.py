@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
-from os.path import abspath, dirname, exists, join
+from os.path import abspath, dirname, exists, join, isfile
 import shutil
 
 import six
@@ -45,10 +45,10 @@ def test_workflow(tmpdir):
 
     Publish.run(conf)
 
-    assert exists(join(tmpdir, 'html', 'index.html'))
-    assert exists(join(tmpdir, 'html', 'index.json'))
-    assert exists(join(tmpdir, 'html', 'asv.js'))
-    assert exists(join(tmpdir, 'html', 'asv.css'))
+    assert isfile(join(tmpdir, 'html', 'index.html'))
+    assert isfile(join(tmpdir, 'html', 'index.json'))
+    assert isfile(join(tmpdir, 'html', 'asv.js'))
+    assert isfile(join(tmpdir, 'html', 'asv.css'))
 
     Run.run(conf, range_spec="EXISTING",
             _machine_file=join(tmpdir, 'asv-machine.json'), quick=True)

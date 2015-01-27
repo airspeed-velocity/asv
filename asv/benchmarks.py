@@ -224,7 +224,7 @@ class Benchmarks(dict):
         if os.path.basename(root) == '__pycache__':
             return
 
-        if not os.path.exists(os.path.join(root, '__init__.py')):
+        if not os.path.isfile(os.path.join(root, '__init__.py')):
             raise util.UserError(
                 "No __init__.py file in '{0}'".format(root))
 
@@ -286,7 +286,7 @@ class Benchmarks(dict):
             return self
 
         path = cls.get_benchmark_file_path(conf.results_dir)
-        if not os.path.exists(path):
+        if not os.path.isdir(path):
             return regenerate()
 
         d = util.load_json(path, cleanup=False)

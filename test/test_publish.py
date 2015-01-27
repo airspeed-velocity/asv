@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
-from os.path import join, exists
+from os.path import join, isfile
 
 import six
 
@@ -28,7 +28,7 @@ def test_publish(tmpdir):
 
     Publish.run(conf)
 
-    assert exists(join(tmpdir, 'html', 'index.html'))
-    assert exists(join(tmpdir, 'html', 'index.json'))
-    assert exists(join(tmpdir, 'html', 'asv.js'))
-    assert exists(join(tmpdir, 'html', 'asv.css'))
+    assert isfile(join(tmpdir, 'html', 'index.html'))
+    assert isfile(join(tmpdir, 'html', 'index.json'))
+    assert isfile(join(tmpdir, 'html', 'asv.js'))
+    assert isfile(join(tmpdir, 'html', 'asv.css'))
