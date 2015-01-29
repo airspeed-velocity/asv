@@ -30,6 +30,7 @@ class Config(object):
         self.show_commit_url = "#"
         self.hash_length = 8
         self.environment_type = None
+        self.dvcs = None
         self.plugins = []
 
     @classmethod

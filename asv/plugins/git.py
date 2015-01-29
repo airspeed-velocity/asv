@@ -17,6 +17,8 @@ from .. import util
 
 
 class Git(Repo):
+    dvcs = "git"
+
     def __init__(self, url, path):
         self._git = util.which("git")
         self._path = os.path.abspath(path)
@@ -39,6 +41,11 @@ class Git(Repo):
         for regex in regexes:
             if re.match(regex, url):
                 return True
+
+        # Check for a local path
+        if os.path.isdir(url) and os.path.isdir(os.path.join(url, '.git')):
+            return True
+
         return False
 
     def _run_git(self, args, chdir=True, **kwargs):

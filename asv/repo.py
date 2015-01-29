@@ -104,9 +104,14 @@ def get_repo(conf):
     type, it will attempt to automatically determine one from the
     ``conf.repo`` URL.
     """
-    for cls in util.iter_subclasses(Repo):
-        if cls.url_match(conf.repo):
-            return cls(conf.repo, conf.project)
+    if conf.dvcs is not None:
+        for cls in util.iter_subclasses(Repo):
+            if getattr(cls, 'dvcs') == conf.dvcs:
+                return cls(conf.repo, conf.project)
+    else:
+        for cls in util.iter_subclasses(Repo):
+            if cls.url_match(conf.repo):
+                return cls(conf.repo, conf.project)
 
     raise util.UserError(
         "Can not determine what kind of DVCS to use for URL '{0}'".format(conf.repo))
