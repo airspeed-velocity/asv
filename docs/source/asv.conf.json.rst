@@ -134,4 +134,4 @@ results, where the full commit hash is always retained.
 
 ``plugins``
 -----------
-A list of modules to import containing asv plugins.
+A list of modules to import that contain ``asv`` plugins.
