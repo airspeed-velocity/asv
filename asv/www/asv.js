@@ -118,6 +118,13 @@ $(function() {
     var master_json = {};
     /* A little div to handle tooltip placement on the graph */
     var tooltip = null;
+    /* X-axis coordinate axis in the data set; always 0 for
+       non-parameterized tests where time is the only potential x-axis */
+    var x_coordinate_axis = 0;
+    var x_coordinate_is_category = false;
+    /* List of lists of value combinations to plot (apart from x-axis) 
+       in parameterized tests. */
+    var benchmark_param_selection = [[null]];
 
     function display_benchmark(bm_name) {
         $('#graph-display').show();
@@ -131,6 +138,7 @@ $(function() {
         }
         current_benchmark = bm_name;
         $("#title").text(bm_name);
+        setup_benchmark_params();
         replace_graphs();
     }
 
@@ -274,11 +282,11 @@ $(function() {
                 stack[stack.length - 1].append(top);
                 stack.push($(top.children()[1]));
                 cursor.push(parts[j]);
-	        top.children('ul.tree').toggle(0);
+                top.children('ul.tree').toggle(0);
 
                 $(top.children()[0]).click(function () {
-	            $(this).parent().children('ul.tree').toggle(150);
-	        });
+                    $(this).parent().children('ul.tree').toggle(150);
+                });
             }
 
             var top = $('<li><a href="#' + bm_name + '">' + parts[parts.length - 1] + '</li>');
@@ -509,10 +517,61 @@ $(function() {
         $('.tooltip').remove();
     }
 
+    function setup_benchmark_params() {
+        if (!current_benchmark) {
+            x_coordinate_axis = 0;
+            x_coordinate_is_category = false;
+            benchmark_param_selection = [[null]];
+            return
+        }
+
+        var params = master_json.benchmarks[current_benchmark].params;
+
+        /* Default plot: time series */
+        x_coordinate_axis = 0;
+
+        /* Default plot: up to 4 different parameter values */
+        benchmark_param_selection = [];
+        if (params.length >= 1) {
+            for (var j = 0; j < params[0].length && j < 4; ++j) {
+                var item = [null, j];
+                for (var k = 1; k < params.length; ++k) {
+                    item.push(0);
+                }
+                benchmark_param_selection.push(item);
+            }
+        }
+        else {
+            benchmark_param_selection.push([null]);
+        }
+
+        check_x_coordinate_axis();
+
+        /* XXX: benchmark parameter selection UI */
+    }
+
+    /* Check if x-axis is a category axis */
+    function check_x_coordinate_axis() {
+        if (!current_benchmark) {
+            return;
+        }
+
+        var params = master_json.benchmarks[current_benchmark].params;
+        x_coordinate_is_category = false;
+        if (x_coordinate_axis != 0) {
+            for (var j = 0; j < params[x_coordinate_axis-1].length; ++j) {
+                if (typeof params[x_coordinate_axis-1][j] != "number") {
+                    x_coordinate_is_category = true;
+                    break;
+                }
+            }
+        }
+    }
+
     function replace_graphs() {
         /* Given the settings in the sidebar, generate a list of the
            graphs we need to load. */
-        function collect_graphs(current_benchmark, state) {
+        function collect_graphs(current_benchmark, state, param_selection) {
             /* Given a specific group of parameters, generate the URL to
                use to load that graph. */
             function graph_to_path(benchmark_name, state) {
@@ -605,17 +664,45 @@ $(function() {
 
             if (current_benchmark) {
                 /* For the current set of enabled parameters, generate a
-                   list of all the graphs we need to load. */
-                var graphs = permutations(state);
+                   list of all the permutations we need to load. */
+                var state_permutations = permutations(state);
                 /* Find where the parameters are different. */
-                var different = find_different_properties(graphs);
+                var different = find_different_properties(state_permutations);
+                /* For parameterized tests: names of benchmark parameters */
+                var params = master_json.benchmarks[current_benchmark].params;
+                var param_names = master_json.benchmarks[current_benchmark].param_names;
 
                 /* Generate a master list of URLs and legend labels for
                    the graphs. */
                 var all = [];
-                $.each(graphs, function(i, graph) {
-                    all.push([graph_to_path(current_benchmark, graph),
-                              graph_label(graph, different)]);
+                $.each(state_permutations, function(i, perm) {
+                    /* For each state value, there can be several 
+                       benchmark parameter sets to plot */
+                    for (var k = 0; k < param_selection.length; ++k) {
+                        labels = obj_copy(perm);
+                        for (var axis = 0; axis < param_selection[k].length; ++axis) {
+                            if (axis != x_coordinate_axis) {
+                                if (axis == 0) {
+                                    var timestamp = param_selection[k][axis];
+                                    different["commit"] = true;
+                                    if (timestamp === null) {
+                                        labels["commit"] = "last";
+                                    }
+                                    else {
+                                        labels["commit"] = ""+master_json.date_to_hash[timestamp];
+                                    }
+                                }
+                                else if (params[axis-1].length > 1) {
+                                    different[param_names[axis-1]] = true;
+                                    labels[param_names[axis-1]] = ""+param_selection[k][axis];
+                                }
+                            }
+                        }
+
+                        all.push([graph_to_path(current_benchmark, perm),
+                                  param_selection[k],
+                                  graph_label(labels, different)]);
+                    }
                 });
                 return all;
             } else {
@@ -623,11 +710,81 @@ $(function() {
             }
         }
 
+        /* Convert loaded graph data to a format flot understands, by
+           treating either time or one of the parameters as x-axis,
+           and selecting only one value of the remaining axes */
+        function filter_graph_data(raw_series, x_axis, other_indices) {
+            var params = master_json.benchmarks[current_benchmark].params;
+
+            if (!params) {
+                /* Simple time series */
+                var series = new Array(raw_series.length);
+                for (var k = 0; k < series.length; ++k) {
+                    series[k] = [raw_series[k][0], raw_series[k][1][0]];
+                }
+                return series;
+            }
+
+            /* Compute position of data entry in the results list,
+               and stride corresponding to plot x-axis parameter */
+            var stride = 1;
+            var param_stride = 0;
+            var param_idx = 0;
+            for (var k = params.length - 1; k >= 0; --k) {
+                if (k == x_axis - 1) {
+                    param_stride = stride;
+                }
+                else {
+                    param_idx += other_indices[k + 1] * stride;
+                }
+                stride *= params[k].length;
+            }
+
+            if (x_axis == 0) {
+                /* x-axis is time axis */
+                var series = new Array(raw_series.length);
+                for (var k = 0; k < raw_series.length; ++k) {
+                    series[k] = [raw_series[k][0],
+                                 raw_series[k][1][param_idx]];
+                }
+                return series;
+            }
+            else {
+                /* x-axis is some parameter axis */
+                var time_idx = null;
+                if (other_indices[0] === null) {
+                    time_idx = raw_series.length - 1;
+                }
+                else {
+                    /* Need to search for the correct time value */
+                    for (var k = 0; k < raw_series.length; ++k) {
+                        if (raw_series[k][0] == other_indices[0]) {
+                            time_idx = k;
+                            break;
+                        }
+                    }
+                    if (time_idx === null) {
+                        /* No data points */
+                        return [];
+                    }
+                }
+
+                var x_values = params[x_axis - 1];
+                var series = new Array(x_values.length);
+                for (var k = 0; k < x_values.length; ++k) {
+                    series[k] = [x_values[k],
+                                 raw_series[time_idx][1][param_idx]];
+                    param_idx += param_stride;
+                }
+                return series;
+            }
+        }
+
         /* Before loading graphs, remove any that are currently
            active. */
         graphs = [];
 
-        to_load = collect_graphs(current_benchmark, state);
+        to_load = collect_graphs(current_benchmark, state, benchmark_param_selection);
         var failures = 0;
 
         $.each(to_load, function(i, item) {
@@ -635,9 +792,15 @@ $(function() {
                 url: item[0],
                 cache: false
             }).done(function(data) {
+                var series;
+                series = filter_graph_data(data, 
+                                           x_coordinate_axis, 
+                                           item[1]);
                 graphs.push({
-                    data: data,
-                    label: item[1]});
+                    data: series,
+                    label: item[2],
+                    bars: { order: i, },
+                });
                 update_graphs();
             }).fail(function() {
                 failures += 1;
@@ -746,44 +909,63 @@ $(function() {
         if (!graphs.length)
             return;
 
-        if (even_spacing) {
-            var all_dates = {};
-            $.each(graphs, function(i, graph) {
-                var data = graph.data;
-                for (var j = 0; j < data.length; ++j) {
-                    all_dates[data[j][0]] = null;
+        if (x_coordinate_axis == 0) {
+            if (even_spacing) {
+                var all_dates = {};
+                $.each(graphs, function(i, graph) {
+                    var data = graph.data;
+                    for (var j = 0; j < data.length; ++j) {
+                        all_dates[data[j][0]] = null;
+                    }
+                });
+                all_dates = Object.keys(all_dates);
+                all_dates.sort();
+                
+                even_dates = {};
+                even_dates_inv = {};
+                var last_date = null;
+                var j = 0;
+                for (var i = 0; i < all_dates.length; ++i) {
+                    if (all_dates[i] != last_date) {
+                        even_dates[all_dates[i]] = j;
+                        even_dates_inv[j] = all_dates[i];
+                        ++j;
+                        last_date = all_dates[i];
+                    }
                 }
-            });
-            all_dates = Object.keys(all_dates);
-            all_dates.sort();
-
-            even_dates = {};
-            even_dates_inv = {};
-            var last_date = null;
-            var j = 0;
-            for (var i = 0; i < all_dates.length; ++i) {
-                if (all_dates[i] != last_date) {
-                    even_dates[all_dates[i]] = j;
-                    even_dates_inv[j] = all_dates[i];
-                    ++j;
-                    last_date = all_dates[i];
-                }
+                
+                options.xaxis.axisLabel = 'commits';
+                options.xaxis.transform = function(v) {
+                    return even_dates[v];
+                };
+                /* inverseTransform is required for plothover to work */
+                options.xaxis.inverseTransform = function (v) {
+                    return even_dates_inv[v];
+                };
+                options.xaxis.tickFormatter = function (v, axis) {
+                    return "";
+                };
+            } else {
+                options.xaxis.mode = 'time';
+                options.xaxis.axisLabel = 'commit date';
             }
-
-            options.xaxis.axisLabel = 'commits';
-            options.xaxis.transform = function(v) {
-                return even_dates[v];
-            };
-            /* inverseTransform is required for plothover to work */
-            options.xaxis.inverseTransform = function (v) {
-                return even_dates_inv[v];
-            };
-            options.xaxis.tickFormatter = function (v, axis) {
-                return "";
-            };
         } else {
-            options.xaxis.mode = 'time';
-            options.xaxis.axisLabel = 'commit date';
+            if (x_coordinate_is_category) {
+                options.xaxis.mode = 'categories';
+                options.xaxis.tickLength = 0;
+                options.series = {
+                    bars: {
+                        show: true,
+                        barWidth: 0.6 / graphs.length,
+                        align: "center"
+                    },
+                    points: {
+                        show: true
+                    }
+                };
+            }
+            var param_names = master_json.benchmarks[current_benchmark].param_names;
+            options.xaxis.axisLabel = param_names[x_coordinate_axis-1];
         }
     }
 
@@ -852,7 +1034,7 @@ $(function() {
         var graph_div = $('#main-graph');
         var overview_div = $('#overview');
 
-        var plot = $.plot(graph_div, graphs, options);
+	var plot = $.plot(graph_div, graphs, options);
 
         /* Set up the "overview" plot */
         var overview = $.plot(overview_div, graphs, {
@@ -908,6 +1090,11 @@ $(function() {
         });
 
         function update_range() {
+            if (x_coordinate_axis != 0) {
+                /* Only applies when x-axis is the time axis */
+                return;
+            }
+
             /* Find the minimum and maximum values */
             var min = Infinity;
             var left = plot.getAxes().xaxis.min;

@@ -77,20 +77,33 @@ class Publish(Command):
                     params[key].add(val)
 
                 for key, val in six.iteritems(results.results):
+                    # Drop points in parameterized tests computed for
+                    # parameter sets differing from the current set
+                    b = benchmarks.get(key)
+                    if not b and isinstance(val, dict):
+                        result = None
+                    elif b and b['params']:
+                        if val and val['params'] == b['params']:
+                            result = val['result']
+                        else:
+                            result = None
+                    else:
+                        result = val
+
                     benchmark_names.add(key)
                     graph = Graph(key, results.params, params)
                     if graph.path in graphs:
                         graph = graphs[graph.path]
                     else:
                         graphs[graph.path] = graph
-                    graph.add_data_point(results.date, val)
+                    graph.add_data_point(results.date, result)
 
-                    graph = Graph(key, {'summary': None}, {})
+                    graph = Graph(key, {'summary': None}, {}, summary=True)
                     if graph.path in graphs:
                         graph = graphs[graph.path]
                     else:
                         graphs[graph.path] = graph
-                    graph.add_data_point(results.date, val)
+                    graph.add_data_point(results.date, result)
 
         log.step()
         log.info("Generating graphs")
