@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
-from os.path import join, exists
+from os.path import join, isfile
 
 import six
 
@@ -14,6 +14,8 @@ from asv.commands.publish import Publish
 
 RESULT_DIR = os.path.abspath(os.path.join(
     os.path.dirname(__file__), 'example_results'))
+BENCHMARK_DIR = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), 'benchmark'))
 
 
 def test_publish(tmpdir):
@@ -21,14 +23,15 @@ def test_publish(tmpdir):
     os.chdir(tmpdir)
 
     conf = config.Config.from_json(
-        {'results_dir': RESULT_DIR,
+        {'benchmark_dir': BENCHMARK_DIR,
+         'results_dir': RESULT_DIR,
          'html_dir': join(tmpdir, 'html'),
          'repo': 'https://github.com/spacetelescope/asv.git',
          'project': 'asv'})
 
     Publish.run(conf)
 
-    assert exists(join(tmpdir, 'html', 'index.html'))
-    assert exists(join(tmpdir, 'html', 'index.json'))
-    assert exists(join(tmpdir, 'html', 'asv.js'))
-    assert exists(join(tmpdir, 'html', 'asv.css'))
+    assert isfile(join(tmpdir, 'html', 'index.html'))
+    assert isfile(join(tmpdir, 'html', 'index.json'))
+    assert isfile(join(tmpdir, 'html', 'asv.js'))
+    assert isfile(join(tmpdir, 'html', 'asv.css'))

@@ -26,7 +26,7 @@ class PluginManager(object):
         self._plugins = []
 
     def load_plugins_in_path(self, namespace, path):
-        if not os.path.exists(path):
+        if not os.path.isdir(path):
             return
 
         for root, dirs, files in os.walk(path):

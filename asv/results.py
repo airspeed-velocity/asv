@@ -236,7 +236,7 @@ class Results(object):
         """
         path = os.path.join(result_dir, self._filename)
 
-        if os.path.exists(path):
+        if os.path.isfile(path):
             old_results = self.load(path)
             self.add_existing_results(old_results)
 
