@@ -28,6 +28,7 @@ import re
 import sys
 import textwrap
 import timeit
+import itertools
 
 # The best timer we can use is time.process_time, but it is not
 # available in the Python stdlib until Python 3.3.  This is a ctypes
@@ -200,6 +201,24 @@ class Benchmark(object):
         self.code = textwrap.dedent(inspect.getsource(self.func))
         self.type = "base"
         self.unit = "unit"
+        self.params = _get_first_attr(attr_sources, "params", [])
+        self.param_names = _get_first_attr(attr_sources, "param_names", [])
+        self._setup_params = list(_get_all_attrs(attr_sources, 'setup_params', False))[::-1]
+        self._teardown_params = list(_get_all_attrs(attr_sources, 'teardown_params', False))
+
+        # Enforce params format
+        if self.params:
+            try:
+                self.params = list(self.params)
+            except ValueError:
+                raise ValueError("Test %s.params is not a list" % (name,))
+
+            # Accept a single list for one parameter only
+            if self.params and not isinstance(self.params[0], (tuple, list)):
+                self.params = [self.params]
+
+            if not self.param_names:
+                self.param_names = ['param%d' % (k,) for k in range(1, len(self.params)+1)]
 
     def __repr__(self):
         return '<{0} {1}>'.format(self.__class__.__name__, self.name)
@@ -299,8 +318,37 @@ class Benchmark(object):
         for teardown in self._teardowns:
             teardown()
 
+    def do_setup_params(self, params):
+        for setup_params in self._setup_params:
+            setup_params(*params)
+
+    def do_teardown_params(self, params):
+        for teardown_params in self._teardown_params:
+            teardown_params(params)
+
     def do_run(self):
-        return self.run()
+        if not self.params:
+            return self.run()
+        else:
+            return self.do_run_params()
+
+    def do_run_params(self):
+        results = []
+        result = {
+            'params': self.params,
+            'result': results,
+        }
+
+        for p in itertools.product(*self.params):
+            r = None
+            self.do_setup_params(p)
+            try:
+                r = self.run(*p)
+            finally:
+                self.do_teardown_params(p)
+            results.append(r)
+
+        return result
 
     def do_profile(self, filename=None):
         def method_caller():
@@ -316,7 +364,7 @@ class Benchmark(object):
                 code = method_caller.__code__
 
             profile.runctx(
-                code, {'run': self.func}, {}, filename)
+                code, {'run': self.do_run}, {}, filename)
 
 
 class TimeBenchmark(Benchmark):
@@ -336,11 +384,16 @@ class TimeBenchmark(Benchmark):
             attr_sources, 'repeat', timeit.default_repeat)
         self.number = int(_get_first_attr(attr_sources, 'number', 0))
 
-    def run(self):
+    def run(self, *param):
         number = self.number
 
+        if param:
+            func = lambda: self.func(*param)
+        else:
+            func = self.func
+
         timer = timeit.Timer(
-            stmt=self.func,
+            stmt=func,
             timer=self.timer)
 
         if number == 0:
@@ -371,14 +424,14 @@ class MemBenchmark(Benchmark):
         self.type = "memory"
         self.unit = "bytes"
 
-    def run(self):
+    def run(self, *param):
         # We can't import asizeof directly, because we haven't loaded
         # the asv package in the benchmarking process.
         path = os.path.join(
             os.path.dirname(__file__), 'extern', 'asizeof.py')
         asizeof = imp.load_source('asizeof', path)
 
-        obj = self.func()
+        obj = self.func(*param)
 
         sizeof2 = asizeof.asizeof([obj, obj])
         sizeofcopy = asizeof.asizeof([obj, copy.copy(obj)])
@@ -398,8 +451,8 @@ class TrackBenchmark(Benchmark):
         self.type = _get_first_attr(attr_sources, "type", "track")
         self.unit = _get_first_attr(attr_sources, "unit", "unit")
 
-    def run(self):
-        return self.func()
+    def run(self, *param):
+        return self.func(*param)
 
 
 # TODO: Support the creation of custom benchmark types
@@ -490,7 +543,7 @@ def list_benchmarks(root, fp):
             fp.write(', ')
         clean = dict(
             (k, v) for (k, v) in benchmark.__dict__.items()
-            if isinstance(v, (str, int, float, list, dict)) and not
+            if isinstance(v, (str, int, float, list, dict, bool)) and not
                k.startswith('_'))
         json.dump(clean, fp, skipkeys=True)
         first = False

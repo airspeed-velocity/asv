@@ -101,9 +101,12 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
                     with log.indent():
                         log.debug(data)
                 else:
-                    display = util.human_value(parsed, benchmark['unit'])
-                    log.add(' {0:>8}'.format(display))
                     result['result'] = parsed
+                    if benchmark['params']:
+                        display = util.human_value(parsed['result'][0], benchmark['unit']) + ";..."
+                    else:
+                        display = util.human_value(parsed, benchmark['unit'])
+                    log.add(' {0:>8}'.format(display))
 
                     if profile:
                         with io.open(profile_path, 'rb') as profile_fd:
@@ -345,8 +348,12 @@ class Benchmarks(dict):
 
             - `result`: The numeric value of the benchmark (usually
               the runtime in seconds for a timing benchmark), but may
-              be an arbitrary JSON data structure.  Set to `None` if
-              the benchmark failed.
+              be an arbitrary JSON data structure. For parameterized tests, 
+              this is a dictionary with keys 'params' and 'result', where
+              the value of 'params' contains a list of lists of parameter values,
+              and 'result' is a list of results, corresponding to itertools.product
+              iteration over parameters. 
+              Set to `None` if the benchmark failed.
 
             - `profile`: If `profile` is `True`, this key will exist,
               and be a byte string containing the cProfile data.

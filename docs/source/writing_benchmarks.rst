@@ -131,6 +131,58 @@ The following attributes are applicable to all benchmark types:
 - ``timeout``: The amount of time, in seconds, to give the benchmark
   to run before forcibly killing it.  Defaults to 60 seconds.
 
+Parameterized benchmarks
+------------------------
+
+You might want to run a single benchmark for multiple values of some
+parameter. This can be done by adding a ``params`` attribute to the
+benchmark object::
+
+    def time_range(n):
+       for i in range(n):
+           pass
+    time_range.params = [0, 10, 20, 30]
+
+The setup and teardown functions are called only once and are not
+parameterized. You can add parameterized ``setup_params`` and
+``teardown_params`` functions that will be called for each parameter
+set::
+
+    class Suite:
+        params = [0, 10, 20]
+
+        def setup_params(self, n):
+            self.obj = range(n)
+
+        def teardown_params(self, n):
+            del self.obj
+
+        def time_range_iter(self, n):
+            for i in self.obj:
+                pass
+
+The parameter values can be strings, integers, or floats.
+
+When you have multiple parameters, the test is run for all
+of their combinations::
+
+     def time_ranges(n, func_name):
+         f = {'range': range, 'arange': numpy.arange}[f]
+         for i in f(n):
+             pass
+
+     time_ranges.params = ([10, 1000], ['range', 'arange'])
+
+The test will be run for parameters ``(10, 'range'), (10, 'arange'),
+(1000, 'range'), (1000, 'arange')``.
+
+You can also provide informative names for the parameters::
+
+     time_ranges.param_names = ['n', 'function']
+
+These will appear in the test output; if not provided you get default
+names such as "param1", "param2".
+
 Benchmark types
 ---------------
 

@@ -40,19 +40,19 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 3
 
     b = benchmarks.Benchmarks(conf, regex='example')
-    assert len(b) == 6
+    assert len(b) == 9
 
     b = benchmarks.Benchmarks(conf, regex='time_example_benchmark_1')
     assert len(b) == 2
 
     b = benchmarks.Benchmarks(conf)
-    assert len(b) == 10
+    assert len(b) == 13
 
     envs = list(environment.get_environments(conf))
     b = benchmarks.Benchmarks(conf)
     times = b.run_benchmarks(envs[0], profile=True, show_stderr=True)
 
-    assert len(times) == 10
+    assert len(times) == 13
     assert times[
         'time_examples.TimeSuite.time_example_benchmark_1']['result'] is not None
     # Benchmarks that raise exceptions should have a time of "None"
@@ -69,6 +69,15 @@ def test_find_benchmarks(tmpdir):
     assert 'stderr' in times[
         'time_examples.time_with_warnings']
     assert times['time_examples.time_with_warnings']['errcode'] != 0
+
+    assert times['params_examples.track_param']['result']['params'] == [[10, 20]]
+    assert times['params_examples.track_param']['result']['result'] == [42, 42]
+
+    assert times['params_examples.mem_param']['result']['params'] == [[10, 20], [2, 3]]
+    assert len(times['params_examples.mem_param']['result']['result']) == 2*2
+
+    assert times['params_examples.ParamSuite.track_value']['result']['params'] == [['a', 'b', 'c']]
+    assert times['params_examples.ParamSuite.track_value']['result']['result'] == [1+0, 2+1, 3+2]
 
     profile_path = os.path.join(tmpdir, 'test.profile')
     with open(profile_path, 'wb') as fd:
