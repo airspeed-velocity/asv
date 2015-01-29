@@ -80,26 +80,26 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
         err = ''
         errcode = 0
 
+        result_file = tempfile.NamedTemporaryFile(delete=False)
         try:
-            output, err, errcode = env.run(
+            result_file.close()
+            out, err, errcode = env.run(
                 [BENCHMARK_RUN_SCRIPT, 'run', root, name, str(quick),
-                 profile_path],
+                 profile_path, result_file.name],
                 dots=False, timeout=benchmark['timeout'],
                 display_error=False, return_stderr=True,
                 valid_return_codes=None)
             if errcode:
                 log.add(" failed".format(name))
             else:
+                with open(result_file.name, 'rb') as stream:
+                    data = stream.read()
                 try:
-                    # The numeric (timing) result is the last line of the
-                    # output.  This ensures that if the benchmark
-                    # inadvertently writes to stdout we can still read the
-                    # numeric output value.
-                    parsed = json.loads(output.splitlines()[-1].strip())
+                    parsed = json.loads(data)
                 except:
                     log.add(" invalid output".format(name))
                     with log.indent():
-                        log.debug(output)
+                        log.debug(data)
                 else:
                     display = util.human_value(parsed, benchmark['unit'])
                     log.add(' {0:>8}'.format(display))
@@ -110,18 +110,22 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
                             result['profile'] = profile_fd.read()
 
             err = err.strip()
-            if err:
+            out = out.strip()
+            if err or out:
                 if show_stderr:
                     with log.indent():
                         log.error(err)
+                        log.error(out)
 
                 result['stderr'] = err
+                result['stdout'] = out
 
             if errcode:
                 result['errcode'] = errcode
 
             return result
         finally:
+            os.remove(result_file.name)
             if profile:
                 os.remove(profile_path)
 
@@ -199,11 +203,19 @@ class Benchmarks(dict):
 
             env.install_project(conf)
 
-            output = env.run(
-                [BENCHMARK_RUN_SCRIPT, 'discover', root],
-                dots=False)
+            result_file = tempfile.NamedTemporaryFile(delete=False)
+            try:
+                result_file.close()
+                output = env.run(
+                    [BENCHMARK_RUN_SCRIPT, 'discover', root,
+                     result_file.name],
+                    dots=False)
 
-            benchmarks = json.loads(output)
+                with open(result_file.name, 'rb') as fp:
+                    benchmarks = json.load(fp)
+            finally:
+                os.remove(result_file.name)
+
             for benchmark in benchmarks:
                 yield benchmark
 

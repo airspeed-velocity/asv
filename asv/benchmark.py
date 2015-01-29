@@ -3,7 +3,7 @@
 
 """
 Manage a single benchmark and, when run from the commandline, report
-its runtime to stdout.
+its runtime to a file.
 """
 
 # !!!!!!!!!!!!!!!!!!!! NOTE !!!!!!!!!!!!!!!!!!!!
@@ -475,26 +475,26 @@ def disc_benchmarks(root):
             yield benchmark
 
 
-def list_benchmarks(root):
+def list_benchmarks(root, fp):
     """
-    List all of the discovered benchmarks to stdout as JSON.
+    List all of the discovered benchmarks to fp as JSON.
     """
     update_sys_path(root)
 
     # Streaming of JSON back out to the master process
 
-    sys.stdout.write('[')
+    fp.write('[')
     first = True
     for benchmark in disc_benchmarks(root):
         if not first:
-            sys.stdout.write(', ')
+            fp.write(', ')
         clean = dict(
             (k, v) for (k, v) in benchmark.__dict__.items()
             if isinstance(v, (str, int, float, list, dict)) and not
                k.startswith('_'))
-        json.dump(clean, sys.stdout, skipkeys=True)
+        json.dump(clean, fp, skipkeys=True)
         first = False
-    sys.stdout.write(']')
+    fp.write(']')
 
 
 if __name__ == '__main__':
@@ -502,12 +502,13 @@ if __name__ == '__main__':
     args = sys.argv[2:]
 
     if mode == 'discover':
-        benchmark_dir = args[0]
-        list_benchmarks(benchmark_dir)
+        benchmark_dir, result_file = args
+        with open(result_file, 'wb') as fp:
+            list_benchmarks(benchmark_dir, fp)
         sys.exit(0)
 
     elif mode == 'run':
-        benchmark_dir, benchmark_id, quick, profile_path = args
+        benchmark_dir, benchmark_id, quick, profile_path, result_file = args
         quick = (quick == 'True')
         if profile_path == 'None':
             profile_path = None
@@ -520,11 +521,9 @@ if __name__ == '__main__':
             benchmark.do_profile(profile_path)
         benchmark.do_teardown()
 
-        # Write the output value as the last line of the output.
-        sys.stdout.write('\n')
-        sys.stdout.write(json.dumps(result))
-        sys.stdout.write('\n')
-        sys.stdout.flush()
+        # Write the output value
+        with open(result_file, 'wb') as fp:
+            json.dump(result, fp)
 
         # Not strictly necessary, but it's explicit about the successful
         # exit code that we want.
