@@ -14,6 +14,8 @@ from asv.commands.publish import Publish
 
 RESULT_DIR = os.path.abspath(os.path.join(
     os.path.dirname(__file__), 'example_results'))
+BENCHMARK_DIR = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), 'benchmark'))
 
 
 def test_publish(tmpdir):
@@ -21,7 +23,8 @@ def test_publish(tmpdir):
     os.chdir(tmpdir)
 
     conf = config.Config.from_json(
-        {'results_dir': RESULT_DIR,
+        {'benchmark_dir': BENCHMARK_DIR,
+         'results_dir': RESULT_DIR,
          'html_dir': join(tmpdir, 'html'),
          'repo': 'https://github.com/spacetelescope/asv.git',
          'project': 'asv'})
