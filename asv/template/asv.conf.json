@@ -60,4 +60,8 @@
 
     // The number of characters to retain in the commit hashes.
     // "hash_length": 8
+
+    // A list of plugins to load into asv.  Each entry is a Python module
+    // on the Python path.
+    // "plugins": []
 }

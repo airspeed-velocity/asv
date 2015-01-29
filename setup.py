@@ -27,7 +27,8 @@ setup(
     packages=['asv',
               'asv.commands',
               'asv.plugins',
-              'asv.extern'],
+              'asv.extern',
+              'asv.ext'],
     entry_points={
         'console_scripts': [
             'asv = asv.main:main'
