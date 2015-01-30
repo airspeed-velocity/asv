@@ -42,8 +42,8 @@ class Virtualenv(environment.Environment):
         self._env_dir = env_dir
         self._python = python
         self._requirements = requirements
-        self._path = os.path.join(
-            self._env_dir, self.hashname)
+        self._path = os.path.abspath(os.path.join(
+            self._env_dir, self.hashname))
 
         try:
             import virtualenv
