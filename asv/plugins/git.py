@@ -50,14 +50,12 @@ class Git(Repo):
 
     def _run_git(self, args, chdir=True, **kwargs):
         if chdir:
-            orig_dir = os.getcwd()
-            os.chdir(self._path)
-        try:
-            return util.check_output(
-                [self._git] + args, **kwargs)
-        finally:
-            if chdir:
-                os.chdir(orig_dir)
+            cwd = self._path
+        else:
+            cwd = None
+        kwargs['cwd'] = cwd
+        return util.check_output(
+            [self._git] + args, **kwargs)
 
     def pull(self):
         # We assume the remote isn't updated during the run of asv

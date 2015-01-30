@@ -250,12 +250,7 @@ class Environment(object):
         self.install_requirements()
         self.uninstall(conf.project)
         log.info("Building {0} for {1}".format(conf.project, self.name))
-        orig_path = os.getcwd()
-        os.chdir(conf.project)
-        try:
-            self.run(['setup.py', 'build'])
-        finally:
-            os.chdir(orig_path)
+        self.run(['setup.py', 'build'], cwd=os.path.abspath(conf.project))
         self.install(os.path.abspath(conf.project))
 
     def can_install_project(self):
