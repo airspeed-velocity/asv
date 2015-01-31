@@ -897,7 +897,11 @@ $(function() {
                 /* Simple time series */
                 var series = new Array(raw_series.length);
                 for (var k = 0; k < series.length; ++k) {
-                    series[k] = [raw_series[k][0], raw_series[k][1][0]];
+                    if (raw_series[k][1] === null) {
+                        series[k] = [raw_series[k][0], null];
+                    } else {
+                        series[k] = [raw_series[k][0], raw_series[k][1][0]];
+                    }
                 }
                 return series;
             }
@@ -921,8 +925,12 @@ $(function() {
                 /* x-axis is time axis */
                 var series = new Array(raw_series.length);
                 for (var k = 0; k < raw_series.length; ++k) {
-                    series[k] = [raw_series[k][0],
-                                 raw_series[k][1][param_idx]];
+                    if (raw_series[k][1] === null) {
+                        series[k] = [raw_series[k][0], null];
+                    } else {
+                        series[k] = [raw_series[k][0],
+                                     raw_series[k][1][param_idx]];
+                    }
                 }
                 return series;
             }
@@ -949,8 +957,13 @@ $(function() {
                 var x_values = params[x_axis - 1];
                 var series = new Array(x_values.length);
                 for (var k = 0; k < x_values.length; ++k) {
-                    series[k] = [x_values[k],
-                                 raw_series[time_idx][1][param_idx]];
+                    if (raw_series[time_idx][1] === null) {
+                        series[k] = [x_values[k], null];
+                    }
+                    else {
+                        series[k] = [x_values[k],
+                                     raw_series[time_idx][1][param_idx]];
+                    }
                     param_idx += param_stride;
                 }
                 return series;
