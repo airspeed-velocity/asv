@@ -414,7 +414,6 @@ class TimeBenchmark(Benchmark):
                 if timer.timeit(number) >= self.goal_time / 10.0:
                     break
                 number *= 10
-            self.number = number
 
         all_runs = timer.repeat(self.repeat, self.number)
         best = min(all_runs) / number
