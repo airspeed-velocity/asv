@@ -286,7 +286,7 @@ class Benchmarks(dict):
             return self
 
         path = cls.get_benchmark_file_path(conf.results_dir)
-        if not os.path.isdir(path):
+        if not os.path.isfile(path):
             return regenerate()
 
         d = util.load_json(path, cleanup=False)
