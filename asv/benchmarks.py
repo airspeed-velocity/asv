@@ -197,7 +197,7 @@ class Benchmarks(dict):
             repo = get_repo(conf)
             repo.checkout()
 
-            env.install_project(conf)
+            env.install_project(conf, repo.get_hash_from_head())
 
             output = env.run(
                 [BENCHMARK_RUN_SCRIPT, 'discover', root],
