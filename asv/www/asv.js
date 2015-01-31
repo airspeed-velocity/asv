@@ -122,7 +122,7 @@ $(function() {
        non-parameterized tests where time is the only potential x-axis */
     var x_coordinate_axis = 0;
     var x_coordinate_is_category = false;
-    /* List of lists of value combinations to plot (apart from x-axis) 
+    /* List of lists of value combinations to plot (apart from x-axis)
        in parameterized tests. */
     var benchmark_param_selection = [[null]];
 
@@ -142,6 +142,17 @@ $(function() {
         replace_graphs();
     }
 
+    function make_panel(nav, heading) {
+        var panel = $('<div class="panel panel-default"/>');
+        nav.append(panel);
+        var panel_header = $(
+            '<div class="panel-heading">' + heading + '</div>');
+        panel.append(panel_header);
+        var panel_body = $('<div class="panel-body"/>');
+        panel.append(panel_body);
+        return panel_body;
+    }
+
     /* Fetch the master index.json and then set up the page elements
        based on it. */
     $.ajax({
@@ -150,6 +161,8 @@ $(function() {
     }).done(function (index) {
         master_json = index;
 
+        var nav = $("#navigation");
+
         /* Page title */
         var project_name = $("#project-name")[0];
         project_name.textContent = index.project;
@@ -157,22 +170,9 @@ $(function() {
         $("#project-name").textContent = index.project;
         document.title = "airspeed velocity of an unladen " + index.project;
 
-        var nav = $("#navigation");
-
-        function make_panel(heading) {
-            var panel = $('<div class="panel panel-default"/>');
-            nav.append(panel);
-            var panel_header = $(
-                '<div class="panel-heading">' + heading + '</div>');
-            panel.append(panel_header);
-            var panel_body = $('<div class="panel-body"/>');
-            panel.append(panel_body);
-            return panel_body;
-        }
-
         /* Machine selection */
         state.machine = index.params.machine;
-        var panel_body = make_panel('machine');
+        var panel_body = make_panel(nav, 'machine');
         var buttons = $(
             '<div class="btn-group-vertical" style="width: 100%" ' +
                 'data-toggle="buttons"/>');
@@ -216,7 +216,7 @@ $(function() {
             state[param] = values;
 
             if (values.length > 1 && param !== 'machine') {
-                var panel_body = make_panel(param);
+                var panel_body = make_panel(nav, param);
                 var buttons = $(
                     '<div class="btn-group btn-group-justified" ' +
                         'data-toggle="buttons"/>');
@@ -248,8 +248,12 @@ $(function() {
             }
         });
 
+        /* Add insertion point for benchmark parameters */
+        bench_params_nav = $("<div id='navigation-params'/>");
+        nav.append(bench_params_nav);
+
         /* Benchmark panel */
-        panel_body = make_panel('benchmark');
+        panel_body = make_panel(nav, 'benchmark');
 
         var tree = $('<ul class="nav nav-list" style="padding-left: 0px"/>');
         panel_body.append(tree);
@@ -526,28 +530,193 @@ $(function() {
         }
 
         var params = master_json.benchmarks[current_benchmark].params;
+        var param_names = master_json.benchmarks[current_benchmark].param_names;
 
         /* Default plot: time series */
         x_coordinate_axis = 0;
 
         /* Default plot: up to 4 different parameter values */
-        benchmark_param_selection = [];
+        benchmark_param_selection = [[null]];
         if (params.length >= 1) {
+            var item = [];
             for (var j = 0; j < params[0].length && j < 4; ++j) {
-                var item = [null, j];
-                for (var k = 1; k < params.length; ++k) {
-                    item.push(0);
-                }
-                benchmark_param_selection.push(item);
+                item.push(j);
             }
-        }
-        else {
-            benchmark_param_selection.push([null]);
+            benchmark_param_selection.push(item);
+            for (var k = 1; k < params.length; ++k) {
+                benchmark_param_selection.push([0]);
+            }
         }
 
         check_x_coordinate_axis();
+        replace_benchmark_params_ui();
+    }
 
-        /* XXX: benchmark parameter selection UI */
+    function replace_benchmark_params_ui() {
+        var params = master_json.benchmarks[current_benchmark].params;
+        var param_names = master_json.benchmarks[current_benchmark].param_names;
+
+        /* Parameter selection UI */
+        var nav = $('#navigation-params');
+        nav.empty();
+
+        if (params.length == 0) {
+            /* Simple time series: no need for parameter selection UI */
+            return;
+        }
+
+        /* x-axis selector */
+        {
+            var panel_body = make_panel(nav, "x-axis");
+            var buttons = $(
+                '<div class="btn-group btn-group-justified" ' +
+                    'data-toggle="buttons"/>');
+            panel_body.append(buttons);
+
+            function add_button(axis) {
+                if (axis == 0) {
+                    text = "commit";
+                } else {
+                    text = param_names[axis - 1];
+                }
+                var button = $(
+                    '<a class="btn btn-default btn-xs" role="button"/>');
+                if (x_coordinate_axis == axis) {
+                    button.addClass('active');
+                }
+                button.text(text);
+
+                button.on('click', function (evt) {
+                    buttons.children().removeClass('active');
+                    x_coordinate_axis = axis;
+
+                    /* Reset parameter selection for this axis to
+                       avoid inadvertently showing many graphs when
+                       changing axes later on */
+                    if (axis == 0) {
+                        benchmark_param_selection[axis] = [null];
+                    } else {
+                        benchmark_param_selection[axis] = [0];
+                    }
+
+                    check_x_coordinate_axis();
+                    replace_benchmark_params_ui();
+                    replace_graphs();
+                    update_graphs();
+                });
+
+                buttons.append(button);
+            }
+
+            for (var axis = 0; axis < params.length + 1; ++axis) {
+                add_button(axis);
+            }
+        }
+
+        /* Time/commit value selector */
+        if (x_coordinate_axis != 0) {
+            var panel_body = make_panel(nav, "commit");
+
+            var buttons = $(
+                '<div class="btn-group btn-group-vertical" ' +
+                    'data-toggle="buttons" style="width: 100%; max-height: 20ex; overflow-y: scroll;" />');
+            panel_body.append(buttons);
+
+            /* Generate list of all commits+dates */
+            var dates = Object.keys(master_json.date_to_hash).map(function (x) { return parseInt(x); });
+            dates.sort();
+            dates.push(null);
+            dates.reverse();
+
+            $.each(dates, function(idx, date) {
+                var button = $(
+                    '<a class="btn btn-default btn-xs" role="button" />');
+                if (date === null) {
+                    button.text("last");
+                } else {
+                    var date_fmt = new Date(date);
+                    button.text(master_json.date_to_hash[date]
+                                + " "
+                                + date_fmt.toUTCString());
+                }
+                buttons.append(button);
+
+                if ($.inArray(date, benchmark_param_selection[0]) != -1) {
+                    button.addClass('active');
+                }
+
+                button.on('click', function(evt) {
+                    var idx = $.inArray(date, benchmark_param_selection[0]);
+                    if (!evt.target.classList.contains("active")) {
+                        if (idx == -1) {
+                            benchmark_param_selection[0].push(date);
+                            benchmark_param_selection[0].sort();
+                        }
+                    } else {
+                        if (idx != -1) {
+                            benchmark_param_selection[0].splice(idx, 1);
+                        }
+                    }
+                    replace_graphs();
+                    update_graphs();
+                });
+            });
+        }
+
+        /* Parameters axes value selector */
+        $.each(params, function(param_idx, values) {
+            var axis = param_idx + 1;
+
+            if (axis == x_coordinate_axis) {
+                return;
+            }
+
+            name = param_names[param_idx];
+
+            var panel_body = make_panel(nav, name);
+
+            var buttons = $(
+                '<div class="btn-group btn-group-justified" ' +
+                    'data-toggle="buttons"/>');
+            panel_body.append(buttons);
+
+            /* Add benchmark parameters */
+            $.each(values, function(value_idx, value) {
+                var value_display;
+                value_display = '' + value;
+
+                var button = $(
+                    '<a class="btn btn-default btn-xs active" role="button"/>');
+                button.text(value_display);
+                if ($.inArray(value_idx, benchmark_param_selection[axis]) == -1) {
+                    button.removeClass('active');
+                }
+
+                buttons.append(button);
+
+                button.on('click', function(evt) {
+                    var new_selection = [];
+                    var old_selection = benchmark_param_selection[param_idx+1];
+
+                    if (!evt.target.classList.contains("active")) {
+                        for (var k = 0; k < params[param_idx].length; ++k) {
+                            if ($.inArray(k, old_selection) != -1 || k == value_idx) {
+                                new_selection.push(k);
+                            }
+                        }
+                    } else {
+                        for (var k = 0; k < params[param_idx].length; ++k) {
+                            if ($.inArray(k, old_selection) != -1 && k != value_idx) {
+                                new_selection.push(k);
+                            }
+                        }
+                    }
+                    benchmark_param_selection[param_idx+1] = new_selection;
+                    replace_graphs();
+                    update_graphs();
+                });
+            });
+        });
     }
 
     /* Check if x-axis is a category axis */
@@ -671,19 +840,22 @@ $(function() {
                 /* For parameterized tests: names of benchmark parameters */
                 var params = master_json.benchmarks[current_benchmark].params;
                 var param_names = master_json.benchmarks[current_benchmark].param_names;
+                /* Selected permutations of benchmark parameters */
+                var param_permutations = permutations(param_selection);
 
                 /* Generate a master list of URLs and legend labels for
                    the graphs. */
                 var all = [];
                 $.each(state_permutations, function(i, perm) {
-                    /* For each state value, there can be several 
-                       benchmark parameter sets to plot */
-                    for (var k = 0; k < param_selection.length; ++k) {
+                    $.each(param_permutations, function(k, param_perm) {
+                        /* For each state value, there can be several
+                           benchmark parameter sets to plot */
                         labels = obj_copy(perm);
-                        for (var axis = 0; axis < param_selection[k].length; ++axis) {
+                        for (var axis = 0; axis < params.length + 1; ++axis) {
                             if (axis != x_coordinate_axis) {
                                 if (axis == 0) {
-                                    var timestamp = param_selection[k][axis];
+                                    /* Add time/commit value to the labels */
+                                    var timestamp = param_perm[axis];
                                     different["commit"] = true;
                                     if (timestamp === null) {
                                         labels["commit"] = "last";
@@ -693,16 +865,21 @@ $(function() {
                                     }
                                 }
                                 else if (params[axis-1].length > 1) {
+                                    /* Add parameter value to the labels */
+                                    if (param_perm[axis] === null) {
+                                        /* Empty permutation */
+                                        return;
+                                    }
                                     different[param_names[axis-1]] = true;
-                                    labels[param_names[axis-1]] = ""+param_selection[k][axis];
+                                    labels[param_names[axis-1]] = "" + params[axis-1][param_perm[axis]];
                                 }
                             }
                         }
 
                         all.push([graph_to_path(current_benchmark, perm),
-                                  param_selection[k],
+                                  param_perm,
                                   graph_label(labels, different)]);
-                    }
+                    });
                 });
                 return all;
             } else {
@@ -793,8 +970,8 @@ $(function() {
                 cache: false
             }).done(function(data) {
                 var series;
-                series = filter_graph_data(data, 
-                                           x_coordinate_axis, 
+                series = filter_graph_data(data,
+                                           x_coordinate_axis,
                                            item[1]);
                 graphs.push({
                     data: series,
@@ -920,7 +1097,7 @@ $(function() {
                 });
                 all_dates = Object.keys(all_dates);
                 all_dates.sort();
-                
+
                 even_dates = {};
                 even_dates_inv = {};
                 var last_date = null;
@@ -933,7 +1110,7 @@ $(function() {
                         last_date = all_dates[i];
                     }
                 }
-                
+
                 options.xaxis.axisLabel = 'commits';
                 options.xaxis.transform = function(v) {
                     return even_dates[v];
@@ -1034,34 +1211,41 @@ $(function() {
         var graph_div = $('#main-graph');
         var overview_div = $('#overview');
 
-	var plot = $.plot(graph_div, graphs, options);
+        var plot = $.plot(graph_div, graphs, options);
 
         /* Set up the "overview" plot */
-        var overview = $.plot(overview_div, graphs, {
-            colors: colors,
-            series: {
-                lines: {
-                    show: true,
-                    lineWidth: 1
+        var overview = null;
+
+        if (x_coordinate_axis != 0) {
+            /* Overview is useful mostly for the time axis */
+            overview_div.empty();
+        }  else {
+            overview = $.plot(overview_div, graphs, {
+                colors: colors,
+                series: {
+                    lines: {
+                        show: true,
+                        lineWidth: 1
+                    },
+                    shadowSize: 0
                 },
-                shadowSize: 0
-            },
-            xaxis: {
-                ticks: [],
-                mode: "time"
-            },
-            yaxis: {
-                ticks: [],
-                min: 0,
-                autoscaleMargin: 0.1
-            },
-            selection: {
-                mode: "x"
-            },
-            legend: {
-                show: false
-            }
-        });
+                xaxis: {
+                    ticks: [],
+                    mode: "time"
+                },
+                yaxis: {
+                    ticks: [],
+                    min: 0,
+                    autoscaleMargin: 0.1
+                },
+                selection: {
+                    mode: "x"
+                },
+                legend: {
+                    show: false
+                }
+            });
+        }
 
         graph_div.unbind("plotselected");
         graph_div.bind("plotselected", function (event, ranges) {
@@ -1078,7 +1262,9 @@ $(function() {
             update_range();
 
             // don't fire event on the overview to prevent eternal loop
-            overview.setSelection(ranges, true);
+            if (overview) {
+                overview.setSelection(ranges, true);
+            }
         });
 
         overview_div.unbind("plotselected");
