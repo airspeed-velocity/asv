@@ -90,6 +90,9 @@ class Publish(Command):
                     else:
                         result = val
 
+                    if result is None:
+                        continue
+
                     benchmark_names.add(key)
                     graph = Graph(key, results.params, params)
                     if graph.path in graphs:
