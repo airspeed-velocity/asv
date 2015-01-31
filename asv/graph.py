@@ -138,7 +138,11 @@ class Graph(object):
 
 
 def _mean_with_none(values):
-    values = [x for x in values if x is not None]
+    """
+    Take a mean, with the understanding that None and NaN stand for
+    missing data.
+    """
+    values = [x for x in values if x is not None and x == x]
     if values:
         return sum(values) / float(len(values))
     else:
