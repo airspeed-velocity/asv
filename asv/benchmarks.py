@@ -195,8 +195,7 @@ class Benchmarks(dict):
 
         log.info("Discovering benchmarks")
         with log.indent():
-            env.repo.checkout()
-            env.install_project(conf)
+            env.install_project(conf, repo.get_hash_from_head())
 
             output = env.run(
                 [BENCHMARK_RUN_SCRIPT, 'discover', root],

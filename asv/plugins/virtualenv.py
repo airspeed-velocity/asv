@@ -145,3 +145,67 @@ class Virtualenv(environment.Environment):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
         self.install_requirements()
         return self._run_executable('python', args, **kwargs)
+
+    def _get_wheel_cache_path(self, commit_hash):
+        """Get the wheel cache path corresponding to a given commit hash"""
+        if commit_hash is None:
+            return None
+
+        path = os.path.join(self._wheel_cache_path, commit_hash)
+        stamp = os.path.join(path, 'timestamp')
+        if not os.path.isdir(path):
+            os.makedirs(path)
+        with open(stamp, 'wb'):
+            pass
+        return path
+
+    def _get_wheel(self, commit_hash):
+        cache_path = self._get_wheel_cache_path(commit_hash)
+        if cache_path is None:
+            return
+        for fn in os.listdir(cache_path):
+            if fn.endswith('.whl'):
+                return os.path.join(cache_path, fn)
+        return None
+
+    def _cache_wheel(self, package, commit_hash):
+        wheel = self._get_wheel(commit_hash)
+        if wheel:
+            return wheel
+
+        cache_path = self._get_wheel_cache_path(commit_hash)
+        if cache_path is None:
+            return
+
+        self._cleanup_wheel_cache()
+
+        rel = os.path.relpath(package, os.getcwd())
+        log.info("Building a wheel from {0} in {1}".format(rel, self.name))
+        try:
+            self._run_executable('pip', ['wheel', '--wheel-dir', cache_path,
+                                         '--no-deps', '--no-index', package])
+        except util.ProcessError:
+            # failed -- clean up
+            shutil.rmtree(cache_path)
+
+        return self._get_wheel(commit_hash)
+
+    def _cleanup_wheel_cache(self):
+        if not os.path.isdir(self._wheel_cache_path):
+            return
+
+        def sort_key(name):
+            path = os.path.join(self._wheel_cache_path, name,
+                                'timestamp')
+            try:
+                return os.stat(path).st_mtime
+            except OSError:
+                return 0
+
+        names = os.listdir(self._wheel_cache_path)
+        names.sort(key=sort_key, reverse=True)
+
+        for name in names[self._wheel_cache_size:]:
+            path = os.path.join(self._wheel_cache_path, name)
+            if os.path.isdir(path):
+                shutil.rmtree(name)

@@ -123,8 +123,8 @@ class Conda(environment.Environment):
         return util.check_output([
             os.path.join(self._path, 'bin', executable)] + args, **kwargs)
 
-    def install(self, package):
-        log.info("Installing {0} into {1}".format(self.name))
+    def install(self, package, commit_hash=None):
+        log.info("Installing {0} into {1}".format(rel, self.name))
         self._run_executable('pip', ['install', package])
 
     def uninstall(self, package):

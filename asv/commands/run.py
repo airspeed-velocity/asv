@@ -23,8 +23,7 @@ def _do_build(args):
     env, conf, commit_hash = args
     try:
         with log.set_level(logging.WARN):
-            env.repo.checkout(commit_hash)
-            env.install_project(conf, silent=True)
+            env.install_project(conf, commit_hash)
     except util.ProcessError:
         return False
     return True
