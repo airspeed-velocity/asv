@@ -341,11 +341,21 @@ class Benchmark(object):
 
         for p in itertools.product(*self.params):
             r = None
-            self.do_setup_params(p)
             try:
-                r = self.run(*p)
-            finally:
-                self.do_teardown_params(p)
+                try:
+                    self.do_setup_params(p)
+                except NotImplementedError:
+                    # skip test
+                    results.append(r)
+                    continue
+                try:
+                    r = self.run(*p)
+                finally:
+                    self.do_teardown_params(p)
+            except:
+                import traceback
+                sys.stderr.write("Failure for parameters: %s\n" % (repr(p),))
+                traceback.print_exc(file=sys.stderr)
             results.append(r)
 
         return result

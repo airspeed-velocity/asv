@@ -161,6 +161,9 @@ set::
             for i in self.obj:
                 pass
 
+If the ``setup_params`` raises a ``NotImplementedError``, the test is skipped
+for the parameter values in question.
+
 The parameter values can be strings, integers, or floats.
 
 When you have multiple parameters, the test is run for all
