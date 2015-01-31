@@ -88,7 +88,7 @@ class Graph(object):
         self.data_points.setdefault(date, [])
         if value is not None:
             if self.summary and hasattr(value, '__len__'):
-                value = sum(value) / float(len(value))
+                value = _mean_with_none(value)
             self.data_points[date].append(value)
 
     def get_data(self):
@@ -100,10 +100,10 @@ class Graph(object):
                 return None
             else:
                 if hasattr(v[0], '__len__'):
-                    return [sum(x[j] for x in v) / float(len(v))
+                    return [_mean_with_none(x[j] for x in v)
                             for j in range(len(v[0]))]
                 else:
-                    return sum(v) / float(len(v))
+                    return _mean_with_none(v)
 
         val = [(k, mean(v)) for (k, v) in
                six.iteritems(self.data_points)]
@@ -135,3 +135,11 @@ class Graph(object):
         val = self.get_data()
 
         util.write_json(filename, val)
+
+
+def _mean_with_none(values):
+    values = [x for x in values if x is not None]
+    if values:
+        return sum(values) / float(len(values))
+    else:
+        return None
