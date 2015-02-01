@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import tempfile
+import itertools
 
 import six
 
@@ -94,7 +95,6 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
             else:
                 with open(result_file.name, 'r') as stream:
                     data = stream.read()
-
                 try:
                     parsed = json.loads(data)
                 except:
@@ -103,11 +103,21 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
                         log.debug(data)
                 else:
                     result['result'] = parsed
-                    if benchmark['params']:
-                        display = util.human_value(parsed['result'][0], benchmark['unit']) + ";..."
-                    else:
+
+                    # Display results
+                    if not benchmark['params']:
                         display = util.human_value(parsed, benchmark['unit'])
-                    log.add(' {0:>8}'.format(display))
+                        log.add(' {0:>8}'.format(display))
+                    else:
+                        if not parsed['result']:
+                            display = util.human_value(parsed['result'], benchmark['unit'])
+                            log.add(' {0:>8}'.format(display))
+                        elif not show_stderr:
+                            display = util.human_value(parsed['result'][0], benchmark['unit']) + ";..."
+                            log.add(' {0:>8}'.format(display))
+                        else:
+                            display = _format_benchmark_result(parsed, benchmark)
+                            log.info("\n" + "\n".join(display))
 
                     if profile:
                         with io.open(profile_path, 'rb') as profile_fd:
@@ -381,3 +391,58 @@ class Benchmarks(dict):
                 log.warn('Benchmark {0} skipped'.format(name))
                 times[name] = {'result': None}
         return times
+
+
+def _format_benchmark_result(result, benchmark, max_width=None):
+    """
+    Format the result from a parameterized benchmark as an ASCII table
+    """
+    if not result['result']:
+        return ['[]']
+
+    # Fold result to a table
+    if max_width is None:
+        max_width = util.get_terminal_width() * 3//4
+
+    # Determine which (if any) parameters can be fit to columns
+    column_params = []
+    width = 1
+    for j in range(len(benchmark['params'])-1, 0, -1):
+        width *= max(16 * len(benchmark['params'][j]),
+                     len(benchmark['param_names'][j]) + 2)
+        if width > max_width:
+            break
+        column_params.append(benchmark['params'][j])
+
+    # Generate output
+    rows = []
+    if column_params:
+        row_params = benchmark['params'][:-len(column_params)]
+        header = benchmark['param_names'][:len(row_params)]
+        column_param_permutations = list(itertools.product(*column_params))
+        header += ["/".join(map(str, x)) for x in column_param_permutations]
+        rows.append(header)
+        column_items = len(column_param_permutations)
+        name_header = "/".join(benchmark['param_names'][len(row_params):])
+    else:
+        column_items = 1
+        row_params = benchmark['params']
+        name_header = ""
+        header = benchmark['param_names']
+        rows.append(header)
+
+    result = result['result']
+
+    for j, values in enumerate(itertools.product(*row_params)):
+        row_results = [util.human_value(x, benchmark['unit'])
+                       for x in result[j*column_items:(j+1)*column_items]]
+        row = list(values) + row_results
+        rows.append(row)
+
+    if name_header:
+        display = util.format_text_table(rows, 1, 
+                                         top_header_text=name_header,
+                                         top_header_span_start=len(row_params))
+    else:
+        display = util.format_text_table(rows, 1)
+    return display.splitlines()

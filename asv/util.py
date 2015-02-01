@@ -550,3 +550,63 @@ def get_terminal_width():
         return os.get_terminal_size().columns
     except (AttributeError, OSError):
         return _get_terminal_size_fallback()[1]
+
+
+def format_text_table(rows, num_headers=0,
+                      top_header_span_start=0,
+                      top_header_text=None):
+    """
+    Format rows in as a reStructuredText table, in the vein of::
+
+       ========== ========== ==========
+       --         top header text, span start 1
+       ---------- ---------------------
+        row0col0     r0c1      r0c2
+       ========== ========== ==========
+        row1col0     r1c1      r1c2
+        row2col0     r2c1      r2c2
+       ========== ========== ==========
+
+    """
+
+    # Format content
+    text_rows = [["{0}".format(item).replace("\n", " ") for item in row]
+                 for row in rows]
+
+    # Ensure same number of items on all rows
+    num_items = max(len(row) for row in text_rows)
+    for row in text_rows:
+        row.extend(['']*(num_items - len(row)))
+
+    # Determine widths
+    col_widths = [max(len(row[j]) for row in text_rows) + 2
+                  for j in range(num_items)]
+
+    # Pad content
+    text_rows = [[item.center(w) for w, item in zip(col_widths, row)]
+                 for row in text_rows]
+
+    # Generate result
+    headers = [" ".join(row) for row in text_rows[:num_headers]]
+    content = [" ".join(row) for row in text_rows[num_headers:]]
+    separator = " ".join("-"*w for w in col_widths)
+
+    result = []
+    if top_header_text is not None:
+        left_span = "-".join("-"*w for w in col_widths[:top_header_span_start])
+        right_span = "-".join("-"*w for w in col_widths[top_header_span_start:])
+        if left_span and right_span:
+            result += ["--" + " " * (len(left_span)-1) + top_header_text.center(len(right_span))]
+            result += [" ".join([left_span, right_span])]
+        else:
+            result += [top_header_text.center(len(separator))]
+            result += ["-".join([left_span, right_span])]
+        result += headers
+        result += [separator.replace("-", "=")]
+    elif headers:
+        result += headers
+        result += [separator]
+    result += content
+    result = [separator.replace("-", "=")] + result
+    result += [separator.replace("-", "=")]
+    return "\n".join(result)

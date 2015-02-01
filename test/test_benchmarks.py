@@ -97,3 +97,55 @@ def test_invalid_benchmark_tree(tmpdir):
 
     with pytest.raises(util.UserError):
         b = benchmarks.Benchmarks(conf)
+
+
+def test_table_formatting():
+    params = []
+    param_names = []
+    benchmark = {'params': params, 'param_names': param_names, 'unit': 's'}
+    result = {'params': params, 'result': []}
+    expected = ["[]"]
+    assert benchmarks._format_benchmark_result(result, benchmark) == expected
+
+    params = [['a', 'b', 'c']]
+    param_names = ['param1']
+    benchmark = {'params': params, 'param_names': param_names, "unit": "seconds"}
+    result = {'params': params, 'result': [1e-6, 2e-6, 3e-6]}
+    expected = ("======== ========\n"
+                " param1          \n"
+                "-------- --------\n"
+                "   a      1.00\u03bcs \n"
+                "   b      2.00\u03bcs \n"
+                "   c      3.00\u03bcs \n"
+                "======== ========")
+    table = "\n".join(benchmarks._format_benchmark_result(result, benchmark, max_width=80))
+    assert table == expected
+
+    params = [['a', 'b', 'c'], [[1], [2]]]
+    param_names = ['param1', 'param2']
+    benchmark = {'params': params, 'param_names': param_names, "unit": "seconds"}
+    result = {'params': params, 'result': [1, 2, 3, 4, 5, 6]}
+    expected = ("======== ======= =======\n"
+                "--            param2    \n"
+                "-------- ---------------\n"
+                " param1    [1]     [2]  \n"
+                "======== ======= =======\n"
+                "   a      1.00s   2.00s \n"
+                "   b      3.00s   4.00s \n"
+                "   c      5.00s   6.00s \n"
+                "======== ======= =======")
+    table = "\n".join(benchmarks._format_benchmark_result(result, benchmark, max_width=80))
+    assert table == expected
+
+    expected = ("======== ======== =======\n"
+                " param1   param2         \n"
+                "-------- -------- -------\n"
+                "   a       [1]     1.00s \n"
+                "   a       [2]     2.00s \n"
+                "   b       [1]     3.00s \n"
+                "   b       [2]     4.00s \n"
+                "   c       [1]     5.00s \n"
+                "   c       [2]     6.00s \n"
+                "======== ======== =======")
+    table = "\n".join(benchmarks._format_benchmark_result(result, benchmark, max_width=0))
+    assert table == expected
