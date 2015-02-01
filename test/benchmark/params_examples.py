@@ -25,13 +25,13 @@ class ParamSuite:
         self.values = {'a': 1, 'b': 2, 'c': 3}
         self.count = 0
 
-    def setup_param(self, p):
+    def setup_params(self, p):
         self.value = self.values[p]
 
     def track_value(self, p):
         return self.value + self.count
 
-    def teardown_param(self, p):
+    def teardown_params(self, p):
         self.count += 1
         del self.value
 
