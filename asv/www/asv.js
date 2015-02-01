@@ -893,17 +893,9 @@ $(function() {
         function filter_graph_data(raw_series, x_axis, other_indices) {
             var params = master_json.benchmarks[current_benchmark].params;
 
-            if (!params) {
+            if (params.length == 0) {
                 /* Simple time series */
-                var series = new Array(raw_series.length);
-                for (var k = 0; k < series.length; ++k) {
-                    if (raw_series[k][1] === null) {
-                        series[k] = [raw_series[k][0], null];
-                    } else {
-                        series[k] = [raw_series[k][0], raw_series[k][1][0]];
-                    }
-                }
-                return series;
+                return raw_series;
             }
 
             /* Compute position of data entry in the results list,
