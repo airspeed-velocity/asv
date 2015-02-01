@@ -92,8 +92,9 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
             if errcode:
                 log.add(" failed".format(name))
             else:
-                with open(result_file.name, 'rb') as stream:
+                with open(result_file.name, 'r') as stream:
                     data = stream.read()
+
                 try:
                     parsed = json.loads(data)
                 except:
@@ -214,7 +215,7 @@ class Benchmarks(dict):
                      result_file.name],
                     dots=False)
 
-                with open(result_file.name, 'rb') as fp:
+                with open(result_file.name, 'r') as fp:
                     benchmarks = json.load(fp)
             finally:
                 os.remove(result_file.name)

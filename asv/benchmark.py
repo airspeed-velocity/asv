@@ -572,7 +572,7 @@ if __name__ == '__main__':
 
     if mode == 'discover':
         benchmark_dir, result_file = args
-        with open(result_file, 'wb') as fp:
+        with open(result_file, 'w') as fp:
             list_benchmarks(benchmark_dir, fp)
         sys.exit(0)
 
@@ -591,7 +591,7 @@ if __name__ == '__main__':
         benchmark.do_teardown()
 
         # Write the output value
-        with open(result_file, 'wb') as fp:
+        with open(result_file, 'w') as fp:
             json.dump(result, fp)
 
         # Not strictly necessary, but it's explicit about the successful
