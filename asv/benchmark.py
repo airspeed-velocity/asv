@@ -218,7 +218,14 @@ class Benchmark(object):
                 self.params = [self.params]
 
             if not self.param_names:
-                self.param_names = ['param%d' % (k,) for k in range(1, len(self.params)+1)]
+                self.param_names = []
+            else:
+                self.param_names = list(self.param_names)
+
+            if len(self.param_names) != len(self.params):
+                self.param_names = self.param_names[:len(self.params)]
+                self.param_names += ['param%d' % (k+1,) for k in range(len(self.param_names),
+                                                                       len(self.params))]
 
     def __repr__(self):
         return '<{0} {1}>'.format(self.__class__.__name__, self.name)
