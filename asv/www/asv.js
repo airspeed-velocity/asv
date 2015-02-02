@@ -847,6 +847,7 @@ $(function() {
                    the graphs. */
                 var all = [];
                 $.each(state_permutations, function(i, perm) {
+                    var graph_contents = [];
                     $.each(param_permutations, function(k, param_perm) {
                         /* For each state value, there can be several
                            benchmark parameter sets to plot */
@@ -875,11 +876,11 @@ $(function() {
                                 }
                             }
                         }
-
-                        all.push([graph_to_path(current_benchmark, perm),
-                                  param_perm,
-                                  graph_label(labels, different)]);
+                        graph_contents.push([param_perm,
+                                             graph_label(labels, different)]);
                     });
+                    all.push([graph_to_path(current_benchmark, perm),
+                              graph_contents]);
                 });
                 return all;
             } else {
@@ -968,20 +969,24 @@ $(function() {
 
         to_load = collect_graphs(current_benchmark, state, benchmark_param_selection);
         var failures = 0;
+        var count = 1;
 
         $.each(to_load, function(i, item) {
             $.ajax({
                 url: item[0],
                 cache: false
             }).done(function(data) {
-                var series;
-                series = filter_graph_data(data,
-                                           x_coordinate_axis,
-                                           item[1]);
-                graphs.push({
-                    data: series,
-                    label: item[2],
-                    bars: { order: i, },
+                $.each(item[1], function(j, graph_content) {
+                    var series;
+                    series = filter_graph_data(data,
+                                               x_coordinate_axis,
+                                               graph_content[0]);
+                    graphs.push({
+                        data: series,
+                        label: graph_content[1],
+                        bars: { order: count, },
+                    });
+                    count += 1;
                 });
                 update_graphs();
             }).fail(function() {
