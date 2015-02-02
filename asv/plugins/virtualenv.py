@@ -20,12 +20,11 @@ class Virtualenv(environment.Environment):
     """
     tool_name = "virtualenv"
 
-    def __init__(self, env_dir, python, executable, requirements, source_repo):
+    def __init__(self, conf, python, executable, requirements):
         """
         Parameters
         ----------
-        env_dir : str
-            Root path in which to cache environments on disk.
+        conf : Config instance
 
         python : str
             Version of Python.  Must be of the form "MAJOR.MINOR".
@@ -41,12 +40,9 @@ class Virtualenv(environment.Environment):
             The source repo to use to install the project
         """
         self._executable = executable
-        self._env_dir = env_dir
         self._python = python
         self._requirements = requirements
-        self._path = os.path.abspath(os.path.join(
-            self._env_dir, self.hashname))
-        self._source_repo = source_repo
+        super(Virtualenv, self).__init__(conf)
 
         try:
             import virtualenv
@@ -60,18 +56,15 @@ class Virtualenv(environment.Environment):
         self._virtualenv_path = os.path.abspath(
             inspect.getsourcefile(virtualenv))
 
-        self._is_setup = False
-        self._requirements_installed = False
-
     @classmethod
-    def get_environments(cls, conf, python, repo):
+    def get_environments(cls, conf, python):
         try:
             executable = util.which('python{0}'.format(python))
         except IOError:
             log.warn("No executable found for python {0}".format(python))
         else:
             for configuration in environment.iter_configuration_matrix(conf.matrix):
-                yield cls(conf.env_dir, python, executable, configuration, repo)
+                yield cls(conf, python, executable, configuration)
 
     @classmethod
     def matches(self, python):
@@ -116,6 +109,7 @@ class Virtualenv(environment.Environment):
 
         self._run_executable('pip', ['install', '--upgrade',
                                      'setuptools'])
+        self._run_executable('pip', ['install', 'wheel'])
 
         if self._requirements:
             args = ['install', '--upgrade']
@@ -145,67 +139,3 @@ class Virtualenv(environment.Environment):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
         self.install_requirements()
         return self._run_executable('python', args, **kwargs)
-
-    def _get_wheel_cache_path(self, commit_hash):
-        """Get the wheel cache path corresponding to a given commit hash"""
-        if commit_hash is None:
-            return None
-
-        path = os.path.join(self._wheel_cache_path, commit_hash)
-        stamp = os.path.join(path, 'timestamp')
-        if not os.path.isdir(path):
-            os.makedirs(path)
-        with open(stamp, 'wb'):
-            pass
-        return path
-
-    def _get_wheel(self, commit_hash):
-        cache_path = self._get_wheel_cache_path(commit_hash)
-        if cache_path is None:
-            return
-        for fn in os.listdir(cache_path):
-            if fn.endswith('.whl'):
-                return os.path.join(cache_path, fn)
-        return None
-
-    def _cache_wheel(self, package, commit_hash):
-        wheel = self._get_wheel(commit_hash)
-        if wheel:
-            return wheel
-
-        cache_path = self._get_wheel_cache_path(commit_hash)
-        if cache_path is None:
-            return
-
-        self._cleanup_wheel_cache()
-
-        rel = os.path.relpath(package, os.getcwd())
-        log.info("Building a wheel from {0} in {1}".format(rel, self.name))
-        try:
-            self._run_executable('pip', ['wheel', '--wheel-dir', cache_path,
-                                         '--no-deps', '--no-index', package])
-        except util.ProcessError:
-            # failed -- clean up
-            shutil.rmtree(cache_path)
-
-        return self._get_wheel(commit_hash)
-
-    def _cleanup_wheel_cache(self):
-        if not os.path.isdir(self._wheel_cache_path):
-            return
-
-        def sort_key(name):
-            path = os.path.join(self._wheel_cache_path, name,
-                                'timestamp')
-            try:
-                return os.stat(path).st_mtime
-            except OSError:
-                return 0
-
-        names = os.listdir(self._wheel_cache_path)
-        names.sort(key=sort_key, reverse=True)
-
-        for name in names[self._wheel_cache_size:]:
-            path = os.path.join(self._wheel_cache_path, name)
-            if os.path.isdir(path):
-                shutil.rmtree(name)

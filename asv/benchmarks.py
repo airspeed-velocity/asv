@@ -178,7 +178,7 @@ class Benchmarks(dict):
 
         cls.check_tree(root)
 
-        environments = list(get_environments(conf, repo))
+        environments = list(get_environments(conf))
         if len(environments) == 0:
             raise util.UserError("No available environments")
 

@@ -163,7 +163,7 @@ class Profile(Command):
                             break
 
         if profile_data is None:
-            environments = list(get_environments(conf, repo))
+            environments = list(get_environments(conf))
 
             if len(environments) == 0:
                 log.error("No environments selected")

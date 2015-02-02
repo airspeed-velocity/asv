@@ -17,7 +17,9 @@ import sys
 import six
 
 from .console import log
+from .repo import get_repo
 from . import util
+from . import wheel_cache
 
 
 def iter_configuration_matrix(matrix):
@@ -62,8 +64,7 @@ def get_env_name(python, requirements):
     return '-'.join(name)
 
 
-
-def get_environments(conf, repo):
+def get_environments(conf):
     """
     Iterator returning `Environment` objects for all of the
     permutations of the given versions of Python and a matrix of
@@ -73,12 +74,9 @@ def get_environments(conf, repo):
     ----------
     conf : dict
         asv configuration object
-
-    repo : Repo instance
-        The repository to clone from
     """
     for python in conf.pythons:
-        for env in get_environments_for_python(conf, python, repo):
+        for env in get_environments_for_python(conf, python):
             yield env
 
 
@@ -124,7 +122,7 @@ def get_environment_class(conf, python):
             "No way to create environment for '{0}'".format(python))
 
 
-def get_environments_for_python(conf, python, repo):
+def get_environments_for_python(conf, python):
     """
     Get an iterator of Environment subclasses for the given python
     specifier and all combinations in the configuration matrix.
@@ -145,12 +143,9 @@ def get_environments_for_python(conf, python, repo):
           executable on the search PATH, and use that.  It is assumed
           that all dependencies and the benchmarked project itself are
           already installed.
-
-    repo : Repo instance
-        The project repository to clone from.
     """
     cls = get_environment_class(conf, python)
-    for env in cls.get_environments(conf, python, repo):
+    for env in cls.get_environments(conf, python):
         yield env
 
 
@@ -168,11 +163,19 @@ class Environment(object):
     """
     tool_name = None
 
-    def __init__(self):
-        raise NotImplementedError()
+    def __init__(self, conf):
+        self._env_dir = conf.env_dir
+        self._path = os.path.abspath(os.path.join(
+            self._env_dir, self.hashname))
+
+        self._is_setup = False
+        self._requirements_installed = False
+
+        self._source_repo = get_repo(conf)
+        self._cache = wheel_cache.WheelCache(conf, self._path)
 
     @classmethod
-    def get_environments(cls, conf, python, repo):
+    def get_environments(cls, conf, python):
         """
         Get all of the environments for the configuration matrix for
         the given Python version specifier.
@@ -186,9 +189,6 @@ class Environment(object):
             A Python version specifier.  This is the same as passed to
             the `matches` method, and its exact meaning depends on the
             environment.
-
-        repo : Repo instance
-            The source repository to clone from.
         """
         raise NotImplementedError()
 
@@ -289,6 +289,13 @@ class Environment(object):
         """
         raise NotImplementedError()
 
+    def build_project(self, commit_hash):
+        log.info("Building for {0}".format(self.name))
+        build_root = os.path.abspath(self.repo.path)
+        self.repo.checkout(commit_hash)
+        self.run(['setup.py', 'build'], cwd=build_root)
+        return build_root
+
     def install_project(self, conf, commit_hash):
         """
         Install a working copy of the benchmarked project into the
@@ -297,10 +304,14 @@ class Environment(object):
         """
         self.install_requirements()
         self.uninstall(conf.project)
-        log.info("Building {0} for {1}".format(conf.project, self.name))
-        self.repo.checkout(commit_hash)
-        self.run(['setup.py', 'build'], cwd=os.path.abspath(self.repo.path))
-        self.install(self.repo.path)
+
+        build_root = self._cache.build_project_cached(
+            self, conf, commit_hash)
+
+        if build_root is None:
+            build_root = self.build_project(commit_hash)
+
+        self.install(build_root)
 
     def can_install_project(self):
         """
@@ -325,7 +336,9 @@ class Environment(object):
 class ExistingEnvironment(Environment):
     tool_name = "existing"
 
-    def __init__(self, executable):
+    def __init__(self, conf, executable):
+        super(ExistingEnvironment, self).__init__(conf)
+
         self._executable = executable
         self._python = util.check_output(
             [executable,
@@ -340,7 +353,7 @@ class ExistingEnvironment(Environment):
         if python == 'same':
             python = sys.executable
 
-        yield cls(util.which(python))
+        yield cls(conf, util.which(python))
 
     @classmethod
     def matches(cls, python):

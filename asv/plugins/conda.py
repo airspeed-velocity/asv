@@ -24,12 +24,11 @@ class Conda(environment.Environment):
     """
     tool_name = "conda"
 
-    def __init__(self, env_dir, python, requirements, source_repo):
+    def __init__(self, conf, python, requirements):
         """
         Parameters
         ----------
-        env_dir : str
-            Root path in which to cache environments on disk.
+        conf : Config instance
 
         python : str
             Version of Python.  Must be of the form "MAJOR.MINOR".
@@ -41,15 +40,9 @@ class Conda(environment.Environment):
         source_repo : Repo instance
             The source repo to use to install the project
         """
-        self._env_dir = env_dir
         self._python = python
         self._requirements = requirements
-        self._path = os.path.abspath(os.path.join(
-            self._env_dir, self.hashname))
-        self._source_repo = source_repo
-
-        self._is_setup = False
-        self._requirements_installed = False
+        super(Conda, self).__init__(conf)
 
     @classmethod
     def matches(self, python):
@@ -80,7 +73,7 @@ class Conda(environment.Environment):
     @classmethod
     def get_environments(cls, conf, python, repo):
         for configuration in environment.iter_configuration_matrix(conf.matrix):
-            yield cls(conf.env_dir, python, configuration, repo)
+            yield cls(conf, python, configuration)
 
     def setup(self):
         try:
@@ -109,7 +102,7 @@ class Conda(environment.Environment):
             # Install all the dependencies with a single conda command.
             # This ensures we get the versions requested, or an error
             # otherwise. It's also quicker than doing it one by one.
-            args = ['install', '-p', self._path, '--yes']
+            args = ['install', '-p', self._path, '--yes', 'wheel']
             for key, val in six.iteritems(self._requirements):
                 if val is not None:
                     args.append("{0}={1}".format(key, val))
@@ -123,7 +116,7 @@ class Conda(environment.Environment):
         return util.check_output([
             os.path.join(self._path, 'bin', executable)] + args, **kwargs)
 
-    def install(self, package, commit_hash=None):
+    def install(self, package):
         log.info("Installing {0} into {1}".format(rel, self.name))
         self._run_executable('pip', ['install', package])
 
