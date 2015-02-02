@@ -24,7 +24,7 @@ class Conda(environment.Environment):
     """
     tool_name = "conda"
 
-    def __init__(self, env_dir, python, requirements):
+    def __init__(self, env_dir, python, requirements, source_repo):
         """
         Parameters
         ----------
@@ -37,12 +37,16 @@ class Conda(environment.Environment):
         requirements : dict
             Dictionary mapping a PyPI package name to a version
             identifier string.
+
+        source_repo : Repo instance
+            The source repo to use to install the project
         """
         self._env_dir = env_dir
         self._python = python
         self._requirements = requirements
         self._path = os.path.abspath(os.path.join(
             self._env_dir, self.hashname))
+        self._source_repo = source_repo
 
         self._is_setup = False
         self._requirements_installed = False
@@ -74,54 +78,32 @@ class Conda(environment.Environment):
                 return True
 
     @classmethod
-    def get_environments(cls, conf, python):
+    def get_environments(cls, conf, python, repo):
         for configuration in environment.iter_configuration_matrix(conf.matrix):
-            yield cls(conf.env_dir, python, configuration)
+            yield cls(conf.env_dir, python, configuration, repo)
 
     def setup(self):
-        if self._is_setup:
-            return
-
-        if not os.path.exists(self._env_dir):
-            os.makedirs(self._env_dir)
-
-        # We start with a clean conda environment everytime, since
-        # they are so quick to create.
-        if os.path.exists(self._path):
-            shutil.rmtree(self._path)
-
         try:
             conda = util.which('conda')
         except IOError as e:
             raise util.UserError(str(e))
 
         log.info("Creating conda environment for {0}".format(self.name))
-        try:
-            util.check_call([
-                conda,
-                'create',
-                '--yes',
-                '-p',
-                self._path,
-                '--use-index-cache',
-                'python={0}'.format(self._python),
-                'pip'])
-        except util.ProcessError:
-            log.error("Failure creating conda environment for {0}".format(
-                self.name))
-            if os.path.exists(self._path):
-                shutil.rmtree(self._path)
-            raise
-
-        self.save_info_file(self._path)
-
-        self._is_setup = True
+        util.check_call([
+            conda,
+            'create',
+            '--yes',
+            '-p',
+            self._path,
+            '--use-index-cache',
+            'python={0}'.format(self._python),
+            'pip'])
 
     def install_requirements(self):
         if self._requirements_installed:
             return
 
-        self.setup()
+        self.create()
 
         if self._requirements:
             # Install all the dependencies with a single conda command.
@@ -141,14 +123,9 @@ class Conda(environment.Environment):
         return util.check_output([
             os.path.join(self._path, 'bin', executable)] + args, **kwargs)
 
-    def install(self, package, editable=False):
-        rel = os.path.relpath(package, os.getcwd())
-        log.info("Installing {0} into {1}".format(rel, self.name))
-        args = ['install']
-        if editable:
-            args.append('-e')
-        args.append(package)
-        self._run_executable('pip', args)
+    def install(self, package):
+        log.info("Installing {0} into {1}".format(self.name))
+        self._run_executable('pip', ['install', package])
 
     def uninstall(self, package):
         log.info("Uninstalling {0} from {1}".format(package, self.name))

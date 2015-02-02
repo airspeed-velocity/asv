@@ -6,7 +6,6 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 from distutils.version import LooseVersion
 import inspect
 import os
-import shutil
 
 import six
 
@@ -21,7 +20,7 @@ class Virtualenv(environment.Environment):
     """
     tool_name = "virtualenv"
 
-    def __init__(self, env_dir, python, executable, requirements):
+    def __init__(self, env_dir, python, executable, requirements, source_repo):
         """
         Parameters
         ----------
@@ -37,6 +36,9 @@ class Virtualenv(environment.Environment):
         requirements : dict
             Dictionary mapping a PyPI package name to a version
             identifier string.
+
+        source_repo : Repo instance
+            The source repo to use to install the project
         """
         self._executable = executable
         self._env_dir = env_dir
@@ -44,6 +46,7 @@ class Virtualenv(environment.Environment):
         self._requirements = requirements
         self._path = os.path.abspath(os.path.join(
             self._env_dir, self.hashname))
+        self._source_repo = source_repo
 
         try:
             import virtualenv
@@ -61,14 +64,14 @@ class Virtualenv(environment.Environment):
         self._requirements_installed = False
 
     @classmethod
-    def get_environments(cls, conf, python):
+    def get_environments(cls, conf, python, repo):
         try:
             executable = util.which('python{0}'.format(python))
         except IOError:
             log.warn("No executable found for python {0}".format(python))
         else:
             for configuration in environment.iter_configuration_matrix(conf.matrix):
-                yield cls(conf.env_dir, python, executable, configuration)
+                yield cls(conf.env_dir, python, executable, configuration, repo)
 
     @classmethod
     def matches(self, python):
@@ -98,35 +101,18 @@ class Virtualenv(environment.Environment):
         created using virtualenv.  Then, all of the requirements are
         installed into it using `pip install`.
         """
-        if self._is_setup:
-            return
-
-        if not os.path.exists(self._env_dir):
-            os.makedirs(self._env_dir)
-
-        try:
-            log.info("Creating virtualenv for {0}".format(self.name))
-            if not os.path.isdir(self._path):
-                util.check_call([
-                    self._executable,
-                    self._virtualenv_path,
-                    '--no-site-packages',
-                    self._path])
-        except:
-            log.error("Failure creating virtualenv for {0}".format(self.name))
-            if os.path.exists(self._path):
-                shutil.rmtree(self._path)
-            raise
-
-        self.save_info_file(self._path)
-
-        self._is_setup = True
+        log.info("Creating virtualenv for {0}".format(self.name))
+        util.check_call([
+            self._executable,
+            self._virtualenv_path,
+            '--no-site-packages',
+            self._path])
 
     def install_requirements(self):
         if self._requirements_installed:
             return
 
-        self.setup()
+        self.create()
 
         self._run_executable('pip', ['install', '--upgrade',
                                      'setuptools'])
@@ -146,14 +132,9 @@ class Virtualenv(environment.Environment):
         return util.check_output([
             os.path.join(self._path, 'bin', executable)] + args, **kwargs)
 
-    def install(self, package, editable=False):
-        rel = os.path.relpath(package, os.getcwd())
-        log.info("Installing {0} into {1}".format(rel, self.name))
-        args = ['install']
-        if editable:
-            args.append('-e')
-        args.append(package)
-        self._run_executable('pip', args)
+    def install(self, package):
+        log.info("Installing into {0}".format(self.name))
+        self._run_executable('pip', ['install', package])
 
     def uninstall(self, package):
         log.info("Uninstalling {0} from {1}".format(package, self.name))

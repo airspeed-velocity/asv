@@ -13,6 +13,7 @@ import six
 from asv import benchmarks
 from asv import config
 from asv import environment
+from asv.repo import get_repo
 from asv import util
 
 BENCHMARK_DIR = os.path.join(os.path.dirname(__file__), 'benchmark')
@@ -35,6 +36,7 @@ def test_find_benchmarks(tmpdir):
     d.update(ASV_CONF_JSON)
     d['env_dir'] = os.path.join(tmpdir, "env")
     conf = config.Config.from_json(d)
+    repo = get_repo(conf)
 
     b = benchmarks.Benchmarks(conf, regex='secondary')
     assert len(b) == 3
@@ -48,7 +50,7 @@ def test_find_benchmarks(tmpdir):
     b = benchmarks.Benchmarks(conf)
     assert len(b) == 10
 
-    envs = list(environment.get_environments(conf))
+    envs = list(environment.get_environments(conf, repo))
     b = benchmarks.Benchmarks(conf)
     times = b.run_benchmarks(envs[0], profile=True, show_stderr=True)
 

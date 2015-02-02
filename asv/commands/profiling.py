@@ -163,7 +163,7 @@ class Profile(Command):
                             break
 
         if profile_data is None:
-            environments = list(get_environments(conf))
+            environments = list(get_environments(conf, repo))
 
             if len(environments) == 0:
                 log.error("No environments selected")
@@ -203,7 +203,7 @@ class Profile(Command):
             else:
                 log.info("Running profiler")
             with log.indent():
-                repo.checkout(commit_hash)
+                env.repo.checkout(commit_hash)
                 env.install_project(conf)
 
                 results = benchmarks.run_benchmarks(

@@ -11,6 +11,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import hashlib
 import os
+import shutil
 import sys
 
 import six
@@ -62,7 +63,7 @@ def get_env_name(python, requirements):
 
 
 
-def get_environments(conf):
+def get_environments(conf, repo):
     """
     Iterator returning `Environment` objects for all of the
     permutations of the given versions of Python and a matrix of
@@ -72,9 +73,12 @@ def get_environments(conf):
     ----------
     conf : dict
         asv configuration object
+
+    repo : Repo instance
+        The repository to clone from
     """
     for python in conf.pythons:
-        for env in get_environments_for_python(conf, python):
+        for env in get_environments_for_python(conf, python, repo):
             yield env
 
 
@@ -120,7 +124,7 @@ def get_environment_class(conf, python):
             "No way to create environment for '{0}'".format(python))
 
 
-def get_environments_for_python(conf, python):
+def get_environments_for_python(conf, python, repo):
     """
     Get an iterator of Environment subclasses for the given python
     specifier and all combinations in the configuration matrix.
@@ -141,9 +145,12 @@ def get_environments_for_python(conf, python):
           executable on the search PATH, and use that.  It is assumed
           that all dependencies and the benchmarked project itself are
           already installed.
+
+    repo : Repo instance
+        The project repository to clone from.
     """
     cls = get_environment_class(conf, python)
-    for env in cls.get_environments(conf, python):
+    for env in cls.get_environments(conf, python, repo):
         yield env
 
 
@@ -165,7 +172,7 @@ class Environment(object):
         raise NotImplementedError()
 
     @classmethod
-    def get_environments(cls, conf, python):
+    def get_environments(cls, conf, python, repo):
         """
         Get all of the environments for the configuration matrix for
         the given Python version specifier.
@@ -179,6 +186,9 @@ class Environment(object):
             A Python version specifier.  This is the same as passed to
             the `matches` method, and its exact meaning depends on the
             environment.
+
+        repo : Repo instance
+            The source repository to clone from.
         """
         raise NotImplementedError()
 
@@ -212,6 +222,44 @@ class Environment(object):
     def python(self):
         return self._python
 
+    @property
+    def repo(self):
+        if not self._is_setup:
+            raise ValueError("No repo set up yet")
+        return self._repo
+
+    def create(self):
+        """
+        Create the outer layers of the environment, including an
+        information file and a local clone of the project repository.
+        Calls `setup` internally to setup a specific kind of
+        environment.
+        """
+        if self._is_setup:
+            return
+
+        if not os.path.exists(self._env_dir):
+            os.makedirs(self._env_dir)
+
+        if not os.path.exists(self._path):
+            os.makedirs(self._path)
+
+        try:
+            self.setup()
+        except:
+            log.error("Failure creating environment for {0}".format(self.name))
+            if os.path.exists(self._path):
+                shutil.rmtree(self._path)
+            raise
+
+        self.save_info_file(self._path)
+        if self._source_repo is not None:  # For testing only
+            self._repo = self._source_repo.__class__(
+                self._source_repo.path, os.path.join(self._path, 'project'),
+                shared=True)
+
+        self._is_setup = True
+
     def setup(self):
         """
         Setup the environment on disk.  If it doesn't exist, it is
@@ -222,7 +270,7 @@ class Environment(object):
     def install_requirements(self):
         raise NotImplementedError()
 
-    def install(self, package, editable=False):
+    def install(self, package):
         """
         Install a package into the environment.
         """
@@ -241,7 +289,7 @@ class Environment(object):
         """
         raise NotImplementedError()
 
-    def install_project(self, conf):
+    def install_project(self, conf, silent=False):
         """
         Install a working copy of the benchmarked project into the
         environment.  Uninstalls any installed copy of the project
@@ -250,8 +298,8 @@ class Environment(object):
         self.install_requirements()
         self.uninstall(conf.project)
         log.info("Building {0} for {1}".format(conf.project, self.name))
-        self.run(['setup.py', 'build'], cwd=os.path.abspath(conf.project))
-        self.install(os.path.abspath(conf.project))
+        self.run(['setup.py', 'build'], cwd=os.path.abspath(self.repo.path))
+        self.install(self.repo.path)
 
     def can_install_project(self):
         """

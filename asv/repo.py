@@ -12,7 +12,7 @@ class Repo(object):
     """
     Base class for repository handlers.
     """
-    def __init__(self, url, path):
+    def __init__(self, url, path, shared=False):
         """
         Parameters
         ----------
@@ -21,6 +21,10 @@ class Repo(object):
 
         path : str
             The local path to clone into
+
+        shared : bool, optional.
+            When `True`, share the repository history with the source
+            repo's history.
         """
         raise NotImplementedError()
 

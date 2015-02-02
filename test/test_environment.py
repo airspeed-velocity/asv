@@ -12,7 +12,6 @@ from asv import environment
 from asv import util
 
 
-
 try:
     util.which('python2.7')
     HAS_PYTHON_27 = True
@@ -39,8 +38,7 @@ def test_matrix_environments(tmpdir):
         "six": ["1.4", None],
         "psutil": ["1.2", "2.1"]
     }
-
-    environments = list(environment.get_environments(conf))
+    environments = list(environment.get_environments(conf, None))
 
     assert len(environments) == 2 * 2 * 2
 
@@ -74,7 +72,7 @@ def test_large_environment_matrix(tmpdir):
     for i in range(25):
         conf.matrix['foo{0}'.format(i)] = []
 
-    environments = list(environment.get_environments(conf))
+    environments = list(environment.get_environments(conf, None))
 
     for env in environments:
         # Since *actually* installing all the dependencies would make

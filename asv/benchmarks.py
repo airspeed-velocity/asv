@@ -174,10 +174,11 @@ class Benchmarks(dict):
         Discover all benchmarks in a directory tree.
         """
         root = conf.benchmark_dir
+        repo = get_repo(conf)
 
         cls.check_tree(root)
 
-        environments = list(get_environments(conf))
+        environments = list(get_environments(conf, repo))
         if len(environments) == 0:
             raise util.UserError("No available environments")
 
@@ -194,9 +195,7 @@ class Benchmarks(dict):
 
         log.info("Discovering benchmarks")
         with log.indent():
-            repo = get_repo(conf)
-            repo.checkout()
-
+            env.repo.checkout()
             env.install_project(conf)
 
             output = env.run(

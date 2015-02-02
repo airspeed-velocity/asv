@@ -126,7 +126,7 @@ class Find(Command):
                 "For {0} commit hash {1}:".format(
                     conf.project, commit_hash[:8]))
 
-            repo.checkout(commit_hash)
+            env.repo.checkout(commit_hash)
             env.install_project(conf)
             x = benchmarks.run_benchmarks(
                 env, show_stderr=show_stderr)
