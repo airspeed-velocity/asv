@@ -143,25 +143,22 @@ benchmark object::
            pass
     time_range.params = [0, 10, 20, 30]
 
-The setup and teardown functions are called only once and are not
-parameterized. You can add parameterized ``setup_params`` and
-``teardown_params`` functions that will be called for each parameter
-set::
+This will also make the setup and teardown functions parameterized::
 
     class Suite:
         params = [0, 10, 20]
 
-        def setup_params(self, n):
+        def setup(self, n):
             self.obj = range(n)
 
-        def teardown_params(self, n):
+        def teardown(self, n):
             del self.obj
 
         def time_range_iter(self, n):
             for i in self.obj:
                 pass
 
-If the ``setup_params`` raises a ``NotImplementedError``, the test is skipped
+If ``setup`` raises a ``NotImplementedError``, the test is skipped
 for the parameter values in question.
 
 The parameter values can be strings, integers, or floats.

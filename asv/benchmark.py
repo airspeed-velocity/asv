@@ -203,8 +203,7 @@ class Benchmark(object):
         self.unit = "unit"
         self.params = _get_first_attr(attr_sources, "params", [])
         self.param_names = _get_first_attr(attr_sources, "param_names", [])
-        self._setup_params = list(_get_all_attrs(attr_sources, 'setup_params', False))[::-1]
-        self._teardown_params = list(_get_all_attrs(attr_sources, 'teardown_params', False))
+        self._current_params = ()
 
         # Enforce params format
         if self.params:
@@ -226,6 +225,13 @@ class Benchmark(object):
                 self.param_names = self.param_names[:len(self.params)]
                 self.param_names += ['param%d' % (k+1,) for k in range(len(self.param_names),
                                                                        len(self.params))]
+
+    def set_param_idx(self, param_idx):
+        try:
+            self._current_params, = itertools.islice(itertools.product(*self.params),
+                                                     param_idx, param_idx + 1)
+        except ValueError:
+            raise ValueError("Invalid benchmark parameter permutation index: %r" % (param_idx,))
 
     def __repr__(self):
         return '<{0} {1}>'.format(self.__class__.__name__, self.name)
@@ -310,6 +316,7 @@ class Benchmark(object):
 
         benchmark = find_on_filesystem(
             root, parts, os.path.basename(root))
+        benchmark._param_idx = param_idx
 
         if quick:
             benchmark.repeat = 1
@@ -318,58 +325,24 @@ class Benchmark(object):
         return benchmark
 
     def do_setup(self):
-        for setup in self._setups:
-            setup()
+        try:
+            for setup in self._setups:
+                setup(*self._current_params)
+        except NotImplementedError:
+            # allow skipping test
+            return True
+        return False
 
     def do_teardown(self):
         for teardown in self._teardowns:
-            teardown()
-
-    def do_setup_params(self, params):
-        for setup_params in self._setup_params:
-            setup_params(*params)
-
-    def do_teardown_params(self, params):
-        for teardown_params in self._teardown_params:
-            teardown_params(params)
+            teardown(*self._current_params)
 
     def do_run(self):
-        if not self.params:
-            return self.run()
-        else:
-            return self.do_run_params()
-
-    def do_run_params(self):
-        results = []
-        result = {
-            'params': self.params,
-            'result': results,
-        }
-
-        for p in itertools.product(*self.params):
-            r = None
-            try:
-                try:
-                    self.do_setup_params(p)
-                except NotImplementedError:
-                    # skip test
-                    results.append(r)
-                    continue
-                try:
-                    r = self.run(*p)
-                finally:
-                    self.do_teardown_params(p)
-            except:
-                import traceback
-                sys.stderr.write("Failure for parameters: %s\n" % (repr(p),))
-                traceback.print_exc(file=sys.stderr)
-            results.append(r)
-
-        return result
+        return self.run(*self._current_params)
 
     def do_profile(self, filename=None):
         def method_caller():
-            run()
+            run(*params)
 
         if profile is None:
             raise RuntimeError("cProfile could not be imported")
@@ -381,7 +354,8 @@ class Benchmark(object):
                 code = method_caller.__code__
 
             profile.runctx(
-                code, {'run': self.do_run}, {}, filename)
+                code, {'run': self.func, 'params': self._current_params},
+                {}, filename)
 
 
 class TimeBenchmark(Benchmark):
@@ -582,13 +556,29 @@ if __name__ == '__main__':
         if profile_path == 'None':
             profile_path = None
 
+        if '-' in benchmark_id:
+            try:
+                benchmark_id, param_idx = benchmark_id.split('-', 1)
+                param_idx = int(param_idx)
+            except ValueError:
+                raise ValueError("Benchmark id %r is invalid" % (name,))
+        else:
+            param_idx = None
+
         benchmark = Benchmark.from_name(
             benchmark_dir, benchmark_id, quick=quick)
-        benchmark.do_setup()
-        result = benchmark.do_run()
-        if profile_path is not None:
-            benchmark.do_profile(profile_path)
-        benchmark.do_teardown()
+        if param_idx is not None:
+            benchmark.set_param_idx(param_idx)
+        skip = benchmark.do_setup()
+        try:
+            if skip:
+                result = None
+            else:
+                result = benchmark.do_run()
+                if profile_path is not None:
+                    benchmark.do_profile(profile_path)
+        finally:
+            benchmark.do_teardown()
 
         # Write the output value
         with open(result_file, 'w') as fp:

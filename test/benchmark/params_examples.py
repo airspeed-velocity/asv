@@ -21,19 +21,14 @@ mem_param.param_names = ['number', 'depth']
 class ParamSuite:
     params = ['a', 'b', 'c']
 
-    def setup(self):
-        self.values = {'a': 1, 'b': 2, 'c': 3}
+    def setup(self, p):
+        values = {'a': 1, 'b': 2, 'c': 3}
         self.count = 0
-
-    def setup_params(self, p):
-        self.value = self.values[p]
+        self.value = values[p]
 
     def track_value(self, p):
         return self.value + self.count
 
-    def teardown_params(self, p):
+    def teardown(self, p):
         self.count += 1
         del self.value
-
-    def teardown(self):
-        del self.values

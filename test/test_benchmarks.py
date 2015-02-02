@@ -77,7 +77,7 @@ def test_find_benchmarks(tmpdir):
     assert len(times['params_examples.mem_param']['result']['result']) == 2*2
 
     assert times['params_examples.ParamSuite.track_value']['result']['params'] == [['a', 'b', 'c']]
-    assert times['params_examples.ParamSuite.track_value']['result']['result'] == [1+0, 2+1, 3+2]
+    assert times['params_examples.ParamSuite.track_value']['result']['result'] == [1+0, 2+0, 3+0]
 
     profile_path = os.path.join(tmpdir, 'test.profile')
     with open(profile_path, 'wb') as fd:
@@ -100,17 +100,13 @@ def test_invalid_benchmark_tree(tmpdir):
 
 
 def test_table_formatting():
-    params = []
-    param_names = []
-    benchmark = {'params': params, 'param_names': param_names, 'unit': 's'}
-    result = {'params': params, 'result': []}
+    benchmark = {'params': [], 'param_names': [], 'unit': 's'}
+    result = []
     expected = ["[]"]
     assert benchmarks._format_benchmark_result(result, benchmark) == expected
 
-    params = [['a', 'b', 'c']]
-    param_names = ['param1']
-    benchmark = {'params': params, 'param_names': param_names, "unit": "seconds"}
-    result = {'params': params, 'result': [1e-6, 2e-6, 3e-6]}
+    benchmark = {'params': [['a', 'b', 'c']], 'param_names': ['param1'], "unit": "seconds"}
+    result = [1e-6, 2e-6, 3e-6]
     expected = ("======== ========\n"
                 " param1          \n"
                 "-------- --------\n"
@@ -121,10 +117,8 @@ def test_table_formatting():
     table = "\n".join(benchmarks._format_benchmark_result(result, benchmark, max_width=80))
     assert table == expected
 
-    params = [['a', 'b', 'c'], [[1], [2]]]
-    param_names = ['param1', 'param2']
-    benchmark = {'params': params, 'param_names': param_names, "unit": "seconds"}
-    result = {'params': params, 'result': [1, 2, 3, 4, 5, 6]}
+    benchmark = {'params': [['a', 'b', 'c'], [[1], [2]]], 'param_names': ['param1', 'param2'], "unit": "seconds"}
+    result = [1, 2, 3, 4, 5, 6]
     expected = ("======== ======= =======\n"
                 "--            param2    \n"
                 "-------- ---------------\n"
