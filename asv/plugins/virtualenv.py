@@ -35,9 +35,6 @@ class Virtualenv(environment.Environment):
         requirements : dict
             Dictionary mapping a PyPI package name to a version
             identifier string.
-
-        source_repo : Repo instance
-            The source repo to use to install the project
         """
         self._executable = executable
         self._python = python

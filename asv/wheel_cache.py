@@ -71,9 +71,6 @@ class WheelCache(object):
         if not os.path.isdir(self._path):
             return
 
-        if commit_hash is None:
-            commit_hash = env.repo.get_hash_from_head()
-
         wheel = self._get_wheel(commit_hash)
         if wheel:
             return wheel

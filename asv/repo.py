@@ -108,6 +108,9 @@ def get_repo(conf):
     type, it will attempt to automatically determine one from the
     ``conf.repo`` URL.
     """
+    if conf.repo is None:
+        return None
+
     if conf.dvcs is not None:
         for cls in util.iter_subclasses(Repo):
             if getattr(cls, 'dvcs') == conf.dvcs:

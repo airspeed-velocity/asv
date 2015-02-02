@@ -4,7 +4,6 @@
 from __future__ import absolute_import, division, unicode_literals, print_function
 
 import os
-import shutil
 import tempfile
 
 import six
@@ -36,9 +35,6 @@ class Conda(environment.Environment):
         requirements : dict
             Dictionary mapping a PyPI package name to a version
             identifier string.
-
-        source_repo : Repo instance
-            The source repo to use to install the project
         """
         self._python = python
         self._requirements = requirements
@@ -71,7 +67,7 @@ class Conda(environment.Environment):
                 return True
 
     @classmethod
-    def get_environments(cls, conf, python, repo):
+    def get_environments(cls, conf, python):
         for configuration in environment.iter_configuration_matrix(conf.matrix):
             yield cls(conf, python, configuration)
 

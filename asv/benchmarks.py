@@ -15,7 +15,6 @@ import six
 
 from .console import log, truncate_left
 from .environment import get_environments
-from .repo import get_repo
 from . import util
 
 
@@ -174,7 +173,6 @@ class Benchmarks(dict):
         Discover all benchmarks in a directory tree.
         """
         root = conf.benchmark_dir
-        repo = get_repo(conf)
 
         cls.check_tree(root)
 
@@ -195,7 +193,8 @@ class Benchmarks(dict):
 
         log.info("Discovering benchmarks")
         with log.indent():
-            env.install_project(conf, repo.get_hash_from_head())
+            env.create()
+            env.install_project(conf)
 
             output = env.run(
                 [BENCHMARK_RUN_SCRIPT, 'discover', root],

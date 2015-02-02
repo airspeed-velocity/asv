@@ -296,12 +296,15 @@ class Environment(object):
         self.run(['setup.py', 'build'], cwd=build_root)
         return build_root
 
-    def install_project(self, conf, commit_hash):
+    def install_project(self, conf, commit_hash=None):
         """
         Install a working copy of the benchmarked project into the
         environment.  Uninstalls any installed copy of the project
         first.
         """
+        if commit_hash is None:
+            commit_hash = self.repo.get_hash_from_head()
+
         self.install_requirements()
         self.uninstall(conf.project)
 
