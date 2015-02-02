@@ -1145,9 +1145,6 @@ $(function() {
                         show: true,
                         barWidth: 0.6 / graphs.length,
                         align: "center"
-                    },
-                    points: {
-                        show: true
                     }
                 };
             }
