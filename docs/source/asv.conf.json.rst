@@ -113,7 +113,7 @@ by looking for tools on the ``PATH`` environment variable.
 -----------
 The directory, relative to the current directory, to cache the Python
 environments in.  If not provided, defaults to ``"env"``.
-
+`
 ``results_dir``
 ---------------
 The directory, relative to the current directory, that the raw results
@@ -135,3 +135,7 @@ results, where the full commit hash is always retained.
 ``plugins``
 -----------
 A list of modules to import containing asv plugins.
+
+``wheel_cache_size``
+--------------------
+The number of wheels (builds) to cache for each environment.
