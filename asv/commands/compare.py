@@ -4,6 +4,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import itertools
+
 from . import Command
 from ..machine import iter_machine_files
 from ..results import iter_results_for_machine_and_hash
@@ -18,6 +20,30 @@ def mean(values):
     else:
         values = [value for value in values if value is not None]
         return sum(values) / float(len(values))
+
+
+def unroll_result(benchmark_name, result):
+    """
+    Iterate through parameterized result values
+
+    Yields
+    ------
+    name
+        Strings of the form "benchmark_name(value1, value2)" with
+        parameter values substituted in. For non-parameterized
+        results, simply the benchmark name.
+    value
+        Benchmark timing or other scalar value.
+
+    """
+    if not isinstance(result, dict):
+        yield benchmark_name, result
+        return
+
+    for params, result in zip(itertools.product(*result['params']),
+                              result['result']):
+        name = "%s(%s)" % (benchmark_name, ", ".join(map(repr, params)))
+        yield name, result
 
 
 class Compare(Command):
@@ -95,16 +121,18 @@ class Compare(Command):
         for result in iter_results_for_machine_and_hash(
                 conf.results_dir, machine, hash_1):
             for key in result.results:
-                if key not in results_1:
-                    results_1[key] = []
-                results_1[key].append(result.results[key])
+                for name, value in unroll_result(key, result.results[key]):
+                    if name not in results_1:
+                        results_1[name] = []
+                    results_1[name].append(value)
 
         for result in iter_results_for_machine_and_hash(
                 conf.results_dir, machine, hash_2):
             for key in result.results:
-                if key not in results_2:
-                    results_2[key] = []
-                results_2[key].append(result.results[key])
+                for name, value in unroll_result(key, result.results[key]):
+                    if name not in results_2:
+                        results_2[name] = []
+                    results_2[name].append(value)
 
         if len(results_1) == 0:
             raise util.UserError(
