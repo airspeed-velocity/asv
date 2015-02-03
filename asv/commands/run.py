@@ -18,9 +18,9 @@ from .setup import Setup
 
 
 def _do_build(args):
-    env, conf = args
+    env, conf, commit_hash = args
     try:
-        env.install_project(conf)
+        env.install_project(conf, commit_hash)
     except util.ProcessError:
         return False
     return True
@@ -228,7 +228,7 @@ class Run(Command):
                     log.info("Building for {0}".format(
                         ', '.join([x.name for x in subenv])))
                     with log.indent():
-                        args = [(env, conf) for env in subenv]
+                        args = [(env, conf, commit_hash) for env in subenv]
                         if parallel != 1:
                             pool = multiprocessing.Pool(parallel)
                             successes = pool.map(_do_build_multiprocess, args)

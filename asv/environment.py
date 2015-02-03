@@ -241,7 +241,7 @@ class Environment(object):
         """
         raise NotImplementedError()
 
-    def install_project(self, conf):
+    def install_project(self, conf, commit_hash):
         """
         Install a working copy of the benchmarked project into the
         environment.  Uninstalls any installed copy of the project
@@ -313,7 +313,7 @@ class ExistingEnvironment(Environment):
     def install_requirements(self):
         pass
 
-    def install_project(self, conf):
+    def install_project(self, conf, commit_hash):
         pass
 
     def can_install_project(self):
