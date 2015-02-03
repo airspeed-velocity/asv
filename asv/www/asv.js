@@ -153,6 +153,43 @@ $(function() {
         return panel_body;
     }
 
+    function make_value_selector_panel(nav, heading, values, setup_callback) {
+        var panel_body = make_panel(nav, heading);
+        var vertical = false;
+        var button_list = [];
+        var buttons = $('<div class="btn-group" ' +
+                        'data-toggle="buttons"/>');
+
+        $.each(values, function (idx, value) {
+            var button = $(
+                '<a class="btn btn-default btn-xs active" role="button"/>');
+            var element = setup_callback(idx, value, button);
+            if (!element) {
+                element = button;
+            }
+            button_list.push(button);
+        });
+
+        buttons.append(button_list);
+        panel_body.append(buttons);
+        nav.append(panel_body);
+
+        vertical = (buttons[0].scrollWidth >= nav[0].clientWidth &&
+                    nav[0].clientWidth > 0);
+
+        if (vertical) {
+            buttons.addClass("btn-group-vertical");
+            buttons.css("width", "100%");
+            buttons.css("max-height", "20ex");
+            buttons.css("overflow-y", "scroll");
+        }
+        else {
+            buttons.addClass("btn-group-justified");
+        }
+
+        return panel_body;
+    }
+
     /* Fetch the master index.json and then set up the page elements
        based on it. */
     $.ajax({
@@ -172,16 +209,9 @@ $(function() {
 
         /* Machine selection */
         state.machine = index.params.machine;
-        var panel_body = make_panel(nav, 'machine');
-        var buttons = $(
-            '<div class="btn-group-vertical" style="width: 100%" ' +
-                'data-toggle="buttons"/>');
-        panel_body.append(buttons);
-        $.each(index.params.machine, function(i, machine) {
-            var button = $(
-                '<a class="btn btn-default btn-xs active" role="button">' +
-                    machine + '</a>');
-            buttons.append(button);
+
+        make_value_selector_panel(nav, 'machine', index.params.machine,  function(i, machine, button) {
+            button.text(machine);
 
             if (index.params.machine.length > 1) {
                 button.on('click', function(evt) {
@@ -216,22 +246,14 @@ $(function() {
             state[param] = values;
 
             if (values.length > 1 && param !== 'machine') {
-                var panel_body = make_panel(nav, param);
-                var buttons = $(
-                    '<div class="btn-group btn-group-justified" ' +
-                        'data-toggle="buttons"/>');
-                panel_body.append(buttons);
-                $.each(values, function(i, value) {
+                make_value_selector_panel(nav, param, values, function(i, value, button) {
                     var value_display;
                     if (!value)
                         value_display = '[none]';
                     else
                         value_display = value;
 
-                    var button = $(
-                        '<a class="btn btn-default btn-xs active" role="button">' +
-                            value_display + '</a>');
-                    buttons.append(button);
+                    button.text(value_display);
 
                     if (values.length > 1) {
                         button.on('click', function(evt) {
@@ -567,27 +589,24 @@ $(function() {
 
         /* x-axis selector */
         {
-            var panel_body = make_panel(nav, "x-axis");
-            var buttons = $(
-                '<div class="btn-group btn-group-justified" ' +
-                    'data-toggle="buttons"/>');
-            panel_body.append(buttons);
+            var axes = [];
+            for (var axis = 0; axis < params.length + 1; ++axis) {
+                axes.push(axis);
+            }
 
-            function add_button(axis) {
+            make_value_selector_panel(nav, "x-axis", axes, function (idx, axis, button) {
                 if (axis == 0) {
                     text = "commit";
                 } else {
                     text = param_names[axis - 1];
                 }
-                var button = $(
-                    '<a class="btn btn-default btn-xs" role="button"/>');
-                if (x_coordinate_axis == axis) {
-                    button.addClass('active');
+                if (x_coordinate_axis != axis) {
+                    button.removeClass('active');
                 }
                 button.text(text);
 
                 button.on('click', function (evt) {
-                    buttons.children().removeClass('active');
+                    $(evt.target).siblings().removeClass('active');
                     x_coordinate_axis = axis;
 
                     /* Reset parameter selection for this axis to
@@ -604,33 +623,19 @@ $(function() {
                     replace_graphs();
                     update_graphs();
                 });
-
-                buttons.append(button);
-            }
-
-            for (var axis = 0; axis < params.length + 1; ++axis) {
-                add_button(axis);
-            }
+            });
         }
 
         /* Time/commit value selector */
         if (x_coordinate_axis != 0) {
-            var panel_body = make_panel(nav, "commit");
-
-            var buttons = $(
-                '<div class="btn-group btn-group-vertical" ' +
-                    'data-toggle="buttons" style="width: 100%; max-height: 20ex; overflow-y: scroll;" />');
-            panel_body.append(buttons);
-
             /* Generate list of all commits+dates */
             var dates = Object.keys(master_json.date_to_hash).map(function (x) { return parseInt(x); });
             dates.sort();
             dates.push(null);
             dates.reverse();
 
-            $.each(dates, function(idx, date) {
-                var button = $(
-                    '<a class="btn btn-default btn-xs" role="button" />');
+            /* Add buttons */
+            make_value_selector_panel(nav, "commit", dates, function(idx, date, button) {
                 if (date === null) {
                     button.text("last");
                 } else {
@@ -639,10 +644,9 @@ $(function() {
                                 + " "
                                 + date_fmt.toUTCString());
                 }
-                buttons.append(button);
 
-                if ($.inArray(date, benchmark_param_selection[0]) != -1) {
-                    button.addClass('active');
+                if ($.inArray(date, benchmark_param_selection[0]) == -1) {
+                    button.removeClass('active');
                 }
 
                 button.on('click', function(evt) {
@@ -673,26 +677,16 @@ $(function() {
 
             name = param_names[param_idx];
 
-            var panel_body = make_panel(nav, name);
-
-            var buttons = $(
-                '<div class="btn-group btn-group-justified" ' +
-                    'data-toggle="buttons"/>');
-            panel_body.append(buttons);
-
-            /* Add benchmark parameters */
-            $.each(values, function(value_idx, value) {
+            /* Add benchmark parameter selector */
+            make_value_selector_panel(nav, name, values, function(value_idx, value, button) {
                 var value_display;
                 value_display = '' + value;
 
-                var button = $(
-                    '<a class="btn btn-default btn-xs active" role="button"/>');
                 button.text(value_display);
+
                 if ($.inArray(value_idx, benchmark_param_selection[axis]) == -1) {
                     button.removeClass('active');
                 }
-
-                buttons.append(button);
 
                 button.on('click', function(evt) {
                     var new_selection = [];
