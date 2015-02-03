@@ -94,11 +94,13 @@ class Conda(environment.Environment):
 
         self.create()
 
+        self.install('wheel')
+
         if self._requirements:
             # Install all the dependencies with a single conda command.
             # This ensures we get the versions requested, or an error
             # otherwise. It's also quicker than doing it one by one.
-            args = ['install', '-p', self._path, '--yes', 'wheel']
+            args = ['install', '-p', self._path, '--yes']
             for key, val in six.iteritems(self._requirements):
                 if val is not None:
                     args.append("{0}={1}".format(key, val))
@@ -113,11 +115,11 @@ class Conda(environment.Environment):
             os.path.join(self._path, 'bin', executable)] + args, **kwargs)
 
     def install(self, package):
-        log.info("Installing {0} into {1}".format(rel, self.name))
+        log.info("Installing into {0}".format(self.name))
         self._run_executable('pip', ['install', package])
 
     def uninstall(self, package):
-        log.info("Uninstalling {0} from {1}".format(package, self.name))
+        log.info("Uninstalling from {0}".format(self.name))
         self._run_executable('pip', ['uninstall', '-y', package],
                              valid_return_codes=None)
 

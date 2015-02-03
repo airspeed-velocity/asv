@@ -242,15 +242,13 @@ class Environment(object):
             os.makedirs(self._env_dir)
 
         if not os.path.exists(self._path):
-            os.makedirs(self._path)
-
-        try:
-            self.setup()
-        except:
-            log.error("Failure creating environment for {0}".format(self.name))
-            if os.path.exists(self._path):
-                shutil.rmtree(self._path)
-            raise
+            try:
+                self.setup()
+            except:
+                log.error("Failure creating environment for {0}".format(self.name))
+                if os.path.exists(self._path):
+                    shutil.rmtree(self._path)
+                raise
 
         self.save_info_file(self._path)
         if self._source_repo is not None:  # For testing only
