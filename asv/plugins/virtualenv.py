@@ -129,7 +129,7 @@ class Virtualenv(environment.Environment):
         self.setup()
 
         self._run_executable('pip', ['install', '--upgrade',
-                                     'setuptools==3.8'])
+                                     'setuptools'])
 
         if self._requirements:
             args = ['install', '--upgrade']
