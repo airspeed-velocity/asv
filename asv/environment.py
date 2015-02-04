@@ -338,8 +338,6 @@ class ExistingEnvironment(Environment):
     tool_name = "existing"
 
     def __init__(self, conf, executable):
-        super(ExistingEnvironment, self).__init__(conf)
-
         self._executable = executable
         self._python = util.check_output(
             [executable,
@@ -348,6 +346,8 @@ class ExistingEnvironment(Environment):
              'print(str(sys.version_info[0]) + "." + str(sys.version_info[1]))'
          ]).strip()
         self._requirements = {}
+
+        super(ExistingEnvironment, self).__init__(conf)
 
     @classmethod
     def get_environments(cls, conf, python):
@@ -378,7 +378,7 @@ class ExistingEnvironment(Environment):
     def install_requirements(self):
         pass
 
-    def install_project(self, conf, commit_hash):
+    def install_project(self, conf, commit_hash=None):
         pass
 
     def can_install_project(self):
