@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import (absolute_import, division, print_function)
+
+class ClassOne(object):
+    pass
+
+class ClassTwo(object):
+    pass
 
 
 def track_param(n):
     return 42
 
-track_param.params = [10, 20]
+track_param.params = [ClassOne, ClassTwo]
 
 
 def mem_param(n, m):

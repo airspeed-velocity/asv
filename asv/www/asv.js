@@ -713,6 +713,35 @@ $(function() {
         });
     }
 
+    /* Convert a benchmark parameter value from their native Python
+       repr format to a number or a string, ready for presentation */
+    function convert_benchmark_param_value(value_repr) {
+        var match = Number(value_repr);
+        if (!isNaN(match)) {
+            return match;
+        }
+
+        /* Python str */
+        match = value_repr.match(/^'(.+)'$/);
+        if (match) {
+            return match[1];
+        }
+
+        /* Python unicode */
+        match = value_repr.match(/^u'(.+)'$/);
+        if (match) {
+            return match[1];
+        }
+
+        /* Python class */
+        match = value_repr.match(/^<class '(.+)'>$/);
+        if (match) {
+            return match[1];
+        }
+
+        return value_repr;
+    }
+
     /* Check if x-axis is a category axis */
     function check_x_coordinate_axis() {
         if (!current_benchmark) {
@@ -723,7 +752,8 @@ $(function() {
         x_coordinate_is_category = false;
         if (x_coordinate_axis != 0) {
             for (var j = 0; j < params[x_coordinate_axis-1].length; ++j) {
-                if (typeof params[x_coordinate_axis-1][j] != "number") {
+                var value = convert_benchmark_param_value(params[x_coordinate_axis-1][j]);
+                if (typeof value != "number") {
                     x_coordinate_is_category = true;
                     break;
                 }
@@ -866,7 +896,7 @@ $(function() {
                                         return;
                                     }
                                     different[param_names[axis-1]] = true;
-                                    labels[param_names[axis-1]] = "" + params[axis-1][param_perm[axis]];
+                                    labels[param_names[axis-1]] = "" + convert_benchmark_param_value(params[axis-1][param_perm[axis]]);
                                 }
                             }
                         }
@@ -945,10 +975,11 @@ $(function() {
                 var series = new Array(x_values.length);
                 for (var k = 0; k < x_values.length; ++k) {
                     if (raw_series[time_idx][1] === null) {
-                        series[k] = [x_values[k], null];
+                        series[k] = [convert_benchmark_param_value(x_values[k]),
+                                     null];
                     }
                     else {
-                        series[k] = [x_values[k],
+                        series[k] = [convert_benchmark_param_value(x_values[k]),
                                      raw_series[time_idx][1][param_idx]];
                     }
                     param_idx += param_stride;

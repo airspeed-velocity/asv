@@ -201,34 +201,39 @@ class Benchmark(object):
         self.code = textwrap.dedent(inspect.getsource(self.func))
         self.type = "base"
         self.unit = "unit"
-        self.params = _get_first_attr(attr_sources, "params", [])
+
+        self._params = _get_first_attr(attr_sources, "params", [])
         self.param_names = _get_first_attr(attr_sources, "param_names", [])
         self._current_params = ()
 
         # Enforce params format
-        if self.params:
-            try:
-                self.params = list(self.params)
-            except ValueError:
-                raise ValueError("Test %s.params is not a list" % (name,))
+        try:
+            self.param_names = [str(x) for x in list(self.param_names)]
+        except ValueError:
+            raise ValueError("%s.param_names is not a list of strings" % (name,))
 
+        try:
+            self._params = list(self._params)
+        except ValueError:
+            raise ValueError("%s.params is not a list" % (name,))
+
+        if self._params and not isinstance(self._params[0], (tuple, list)):
             # Accept a single list for one parameter only
-            if self.params and not isinstance(self.params[0], (tuple, list)):
-                self.params = [self.params]
+            self._params = [self._params]
+        else:
+            self._params = [[item for item in entry] for entry in self._params]
 
-            if not self.param_names:
-                self.param_names = []
-            else:
-                self.param_names = list(self.param_names)
+        if len(self.param_names) != len(self._params):
+            self.param_names = self.param_names[:len(self._params)]
+            self.param_names += ['param%d' % (k+1,) for k in range(len(self.param_names),
+                                                                   len(self._params))]
 
-            if len(self.param_names) != len(self.params):
-                self.param_names = self.param_names[:len(self.params)]
-                self.param_names += ['param%d' % (k+1,) for k in range(len(self.param_names),
-                                                                       len(self.params))]
+        # Exported parameter representations
+        self.params = [[repr(item) for item in entry] for entry in self._params]
 
     def set_param_idx(self, param_idx):
         try:
-            self._current_params, = itertools.islice(itertools.product(*self.params),
+            self._current_params, = itertools.islice(itertools.product(*self._params),
                                                      param_idx, param_idx + 1)
         except ValueError:
             raise ValueError("Invalid benchmark parameter permutation index: %r" % (param_idx,))

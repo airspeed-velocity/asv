@@ -42,7 +42,7 @@ def unroll_result(benchmark_name, result):
 
     for params, result in zip(itertools.product(*result['params']),
                               result['result']):
-        name = "%s(%s)" % (benchmark_name, ", ".join(map(repr, params)))
+        name = "%s(%s)" % (benchmark_name, ", ".join(params))
         yield name, result
 
 

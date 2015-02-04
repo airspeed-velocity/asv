@@ -70,13 +70,14 @@ def test_find_benchmarks(tmpdir):
         'time_examples.time_with_warnings']
     assert times['time_examples.time_with_warnings']['errcode'] != 0
 
-    assert times['params_examples.track_param']['result']['params'] == [[10, 20]]
+    assert times['params_examples.track_param']['result']['params'] == [["<class 'benchmark.params_examples.ClassOne'>",
+                                                                         "<class 'benchmark.params_examples.ClassTwo'>"]]
     assert times['params_examples.track_param']['result']['result'] == [42, 42]
 
-    assert times['params_examples.mem_param']['result']['params'] == [[10, 20], [2, 3]]
+    assert times['params_examples.mem_param']['result']['params'] == [['10', '20'], ['2', '3']]
     assert len(times['params_examples.mem_param']['result']['result']) == 2*2
 
-    assert times['params_examples.ParamSuite.track_value']['result']['params'] == [['a', 'b', 'c']]
+    assert times['params_examples.ParamSuite.track_value']['result']['params'] == [["'a'", "'b'", "'c'"]]
     assert times['params_examples.ParamSuite.track_value']['result']['result'] == [1+0, 2+0, 3+0]
 
     profile_path = os.path.join(tmpdir, 'test.profile')
