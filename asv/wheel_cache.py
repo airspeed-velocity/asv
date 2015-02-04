@@ -68,9 +68,6 @@ class WheelCache(object):
         if self._wheel_cache_size == 0:
             return None
 
-        if not os.path.isdir(self._path):
-            return
-
         wheel = self._get_wheel(commit_hash)
         if wheel:
             return wheel
