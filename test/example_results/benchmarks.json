@@ -16,9 +16,9 @@
         ], 
         "params": [
             [
-                "u'a'", 
-                "u'b'", 
-                "u'c'"
+                "'a'", 
+                "'b'", 
+                "'c'"
             ]
         ], 
         "timeout": 60.0, 
@@ -54,8 +54,8 @@
         ], 
         "params": [
             [
-                "10", 
-                "20"
+                "<class 'benchmark.params_examples.ClassOne'>", 
+                "<class 'benchmark.params_examples.ClassTwo'>"
             ]
         ], 
         "timeout": 60.0, 
