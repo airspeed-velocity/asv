@@ -11,6 +11,7 @@ import re
 import sys
 import tempfile
 import itertools
+import pstats
 
 import six
 
@@ -66,6 +67,7 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
     name = benchmark['name']
     result = {}
     bench_results = []
+    bench_profiles = []
 
     log.step()
     name_max_width = util.get_terminal_width() - 33
@@ -89,10 +91,11 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
             if success:
                 bench_results.append(data)
                 if profile:
-                    result['profile'] = profile_data
+                    bench_profiles.append(profile_data)
             else:
                 all_success = False
                 bench_results.append(None)
+                bench_profiles.append(None)
                 if data is not None:
                     bad_output = data
 
@@ -148,8 +151,15 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
         if benchmark['params']:
             result['result'] = dict(result=bench_results,
                                     params=benchmark['params'])
+            if profile:
+                # Produce only a single profile
+                profile_data = _combine_profile_data(bench_profiles)
+                if profile_data is not None:
+                    result['profile'] = profile_data
         else:
             result['result'] = bench_results[0]
+            if profile and bench_profiles[0] is not None:
+                result['profile'] = bench_profiles[0]
 
         return result
 
@@ -469,6 +479,44 @@ class Benchmarks(dict):
                 log.warn('Benchmark {0} skipped'.format(name))
                 times[name] = {'result': None}
         return times
+
+
+def _combine_profile_data(datasets):
+    """
+    Combine a list of profile data to a single profile
+    """
+    datasets = [data for data in datasets if data is not None]
+    if not datasets:
+        return None
+    elif len(datasets) == 1:
+        return datasets[0]
+
+    # Load and combine stats
+    stats = None
+
+    while datasets:
+        data = datasets.pop(0)
+
+        f = tempfile.NamedTemporaryFile(delete=False)
+        try:
+            f.write(data)
+            f.close()
+            if stats is None:
+                stats = pstats.Stats(f.name)
+            else:
+                stats.add(f.name)
+        finally:
+            os.remove(f.name)
+
+    # Write combined stats out
+    f = tempfile.NamedTemporaryFile(delete=False)
+    try:
+        f.close()
+        stats.dump_stats(f.name)
+        with open(f.name, 'rb') as fp:
+            return fp.read()
+    finally:
+        os.remove(f.name)
 
 
 def _format_benchmark_result(result, benchmark, max_width=None):
