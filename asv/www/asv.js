@@ -680,7 +680,7 @@ $(function() {
             /* Add benchmark parameter selector */
             make_value_selector_panel(nav, name, values, function(value_idx, value, button) {
                 var value_display;
-                value_display = '' + value;
+                value_display = '' + convert_benchmark_param_value(value);
 
                 button.text(value_display);
 
