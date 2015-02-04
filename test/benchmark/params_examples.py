@@ -37,3 +37,23 @@ class ParamSuite:
     def teardown(self, p):
         self.count += 1
         del self.value
+
+
+class TuningTest:
+    params = [1, 2]
+    counter = [0]
+    number = 10
+    repeat = 10
+
+    def setup(self, n):
+        self.number = 1
+        self.repeat = n
+        self.counter[0] = 0
+
+    def time_it(self, n):
+        self.counter[0] += 1
+
+    def teardown(self, n):
+        # The time benchmark may call it one additional time
+        if not (n <= self.counter[0] <= n + 1):
+            raise RuntimeError("Number and repeat didn't have effect")

@@ -374,11 +374,20 @@ class TimeBenchmark(Benchmark):
         Benchmark.__init__(self, name, func, attr_sources)
         self.type = "time"
         self.unit = "seconds"
-        self.goal_time = _get_first_attr(attr_sources, 'goal_time', 2.0)
-        self.timer = _get_first_attr(attr_sources, 'timer', process_time)
+        self._attr_sources = attr_sources
+        self._load_vars()
+
+    def _load_vars(self):
         self.repeat = _get_first_attr(
-            attr_sources, 'repeat', timeit.default_repeat)
-        self.number = int(_get_first_attr(attr_sources, 'number', 0))
+            self._attr_sources, 'repeat', timeit.default_repeat)
+        self.number = int(_get_first_attr(self._attr_sources, 'number', 0))
+        self.goal_time = _get_first_attr(self._attr_sources, 'goal_time', 2.0)
+        self.timer = _get_first_attr(self._attr_sources, 'timer', process_time)
+
+    def do_setup(self):
+        Benchmark.do_setup(self)
+        # For parameterized tests, setup() is allowed to change these
+        self._load_vars()
 
     def run(self, *param):
         number = self.number

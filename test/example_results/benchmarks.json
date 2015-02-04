@@ -25,6 +25,25 @@
         "type": "track", 
         "unit": "unit"
     }, 
+    "params_examples.TuningTest.time_it": {
+        "code": "def time_it(self, n):\n    self.counter[0] += 1\n", 
+        "goal_time": 2.0, 
+        "name": "params_examples.TuningTest.time_it", 
+        "number": 10, 
+        "param_names": [
+            "param1"
+        ], 
+        "params": [
+            [
+                "1", 
+                "2"
+            ]
+        ], 
+        "repeat": 10, 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "seconds"
+    }, 
     "params_examples.mem_param": {
         "code": "def mem_param(n, m):\n    return [[0]*m]*n\n", 
         "name": "params_examples.mem_param", 

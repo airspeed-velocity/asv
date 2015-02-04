@@ -249,6 +249,10 @@ possible, with as much extraneous setup moved to a ``setup`` function::
   measures the time used by the current process, is often the best
   choice.
 
+The ``goal_time``, ``number``, ``repeat``, and ``timer`` attributes
+can be adjusted in the ``setup()`` routine, which can be useful for
+parameterized benchmarks.
+
 Memory
 ``````
 
