@@ -161,7 +161,9 @@ This will also make the setup and teardown functions parameterized::
 If ``setup`` raises a ``NotImplementedError``, the test is skipped
 for the parameter values in question.
 
-The parameter values can be strings, integers, or floats.
+The parameter values can be any Python objects. However, it is often
+best to use only strings or numbers, because these have simple
+unambiguous text representations.
 
 When you have multiple parameters, the test is run for all
 of their combinations::
