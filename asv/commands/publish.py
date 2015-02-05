@@ -50,6 +50,29 @@ def compatible_results(result, benchmark):
     return new_results
 
 
+def check_benchmark_params(name, benchmark):
+    """
+    Check benchmark params and param_keys items, so that the javascript can
+    assume this data is valid. It is checked in benchmark.py already when it
+    is generated, but best to double check in any case.
+    """
+    if 'params' not in benchmark:
+        # Old-format benchmarks.json
+        benchmark['params'] = []
+        benchmark['param_names'] = []
+
+    msg = "Information in benchmarks.json for benchmark %s is malformed" % (
+        name)
+    if (not isinstance(benchmark['params'], list) or
+        not isinstance(benchmark['param_names'], list)):
+        raise ValueError(msg)
+    if len(benchmark['params']) != len(benchmark['param_names']):
+        raise ValueError(msg)
+    for item in benchmark['params']:
+        if not isinstance(item, list):
+            raise ValueError(msg)
+
+
 class Publish(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
@@ -146,6 +169,8 @@ class Publish(Command):
         log.step()
         log.info("Writing index")
         benchmark_map = dict(benchmarks)
+        for key in six.iterkeys(benchmark_map):
+            check_benchmark_params(key, benchmark_map[key])
         for key, val in six.iteritems(params):
             val = list(val)
             val.sort(key=lambda x: x or '')
