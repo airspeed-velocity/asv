@@ -6,8 +6,10 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 import shutil
+import itertools
 
 import six
+from six.moves import zip as izip
 
 from . import Command
 from ..benchmarks import Benchmarks
@@ -17,6 +19,35 @@ from ..machine import iter_machine_files
 from ..repo import get_repo
 from ..results import iter_results
 from .. import util
+
+
+def compatible_results(result, benchmark):
+    """
+    Obtain values from *result* that are compatible with
+    parameters of *benchmark*
+    """
+    if not benchmark or not benchmark['params']:
+        # Not a parameterized benchmark, or a benchmark that is not
+        # currently there. The javascript side doesn't know how to
+        # visualize benchmarks unless the params are the same as those
+        # of the current benchmark. Single floating point values are
+        # OK, but not parameterized ones.
+        if isinstance(result, dict):
+            return None
+        else:
+            return result
+
+    # Pick results for those parameters that also appear in the
+    # current benchmark
+    old_results = {}
+    for param, value in izip(itertools.product(*result['params']),
+                             result['result']):
+        old_results[param] = value
+
+    new_results = []
+    for param in itertools.product(*benchmark['params']):
+        new_results.append(old_results.get(param))
+    return new_results
 
 
 class Publish(Command):
@@ -77,18 +108,8 @@ class Publish(Command):
                     params[key].add(val)
 
                 for key, val in six.iteritems(results.results):
-                    # Drop points in parameterized tests computed for
-                    # parameter sets differing from the current set
                     b = benchmarks.get(key)
-                    if not b and isinstance(val, dict):
-                        result = None
-                    elif b and b['params']:
-                        if val and val['params'] == b['params']:
-                            result = val['result']
-                        else:
-                            result = None
-                    else:
-                        result = val
+                    result = compatible_results(val, b)
 
                     benchmark_names.add(key)
                     graph = Graph(key, results.params, params)
