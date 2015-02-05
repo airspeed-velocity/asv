@@ -37,6 +37,9 @@ class WheelCache(object):
     def _get_wheel(self, commit_hash):
         cache_path = self._get_wheel_cache_path(commit_hash)
 
+        if not os.path.isdir(cache_path):
+            return None
+
         for fn in os.listdir(cache_path):
             if fn.endswith('.whl'):
                 return os.path.join(cache_path, fn)
