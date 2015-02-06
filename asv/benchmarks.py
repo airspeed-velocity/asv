@@ -72,7 +72,12 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
     log.step()
     name_max_width = util.get_terminal_width() - 33
     short_name = truncate_left(name, name_max_width)
-    log.info('Running {0:{1}s}'.format(short_name, name_max_width))
+    initial_message = 'Running {0}'.format(short_name)
+    log.info(initial_message)
+
+    def log_result(msg):
+        padding = " "*(util.get_terminal_width() - len(initial_message) - 14 - 1 - len(msg))
+        log.add(" {0}{1}".format(padding, msg))
 
     with log.indent():
         if benchmark['params']:
@@ -80,20 +85,22 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
         else:
             param_iter = [(None, None)]
 
-        all_success = True
         bad_output = None
+        failure_count = 0
+        total_count = 0
 
         for param_idx, params in param_iter:
             success, data, profile_data, err, out, errcode = \
                 _run_benchmark_single(benchmark, root, env, param_idx,
                                       quick=quick, profile=profile)
 
+            total_count += 1
             if success:
                 bench_results.append(data)
                 if profile:
                     bench_profiles.append(profile_data)
             else:
-                all_success = False
+                failure_count += 1
                 bench_results.append(None)
                 bench_profiles.append(None)
                 if data is not None:
@@ -116,23 +123,26 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
                 result['errcode'] = errcode
 
         # Display status
-        if not all_success:
+        if failure_count > 0:
             if bad_output is None:
-                log.add(" failed".format(name))
+                if failure_count == total_count:
+                    log_result("failed")
+                else:
+                    log_result("{0}/{1} failed".format(failure_count, total_count))
             else:
-                log.add(" invalid output".format(name))
+                log_result("invalid output")
                 with log.indent():
                     log.debug(data)
 
         # Display results
         if benchmark['params'] and show_stderr:
             # Long format display
-            if all_success:
-                log.add(' {0:>8}'.format("success"))
+            if failure_count == 0:
+                log_result("ok")
             display = _format_benchmark_result(bench_results, benchmark)
             log.info("\n" + "\n".join(display))
         else:
-            if all_success:
+            if failure_count == 0:
                 # Failure already shown above
                 if not bench_results:
                     display = "[]"
@@ -140,7 +150,7 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
                     display = util.human_value(bench_results[0], benchmark['unit'])
                     if len(bench_results) > 1:
                         display += ";..."
-                log.add(' {0:>8}'.format(display))
+                log_result(display)
 
         # Dump program output
         if show_stderr and result.get('stderr'):
