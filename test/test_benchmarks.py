@@ -120,7 +120,7 @@ def test_table_formatting():
     table = "\n".join(benchmarks._format_benchmark_result(result, benchmark, max_width=80))
     assert table == expected
 
-    benchmark = {'params': [['a', 'b', 'c'], [[1], [2]]], 'param_names': ['param1', 'param2'], "unit": "seconds"}
+    benchmark = {'params': [["'a'", "'b'", "'c'"], ["[1]", "[2]"]], 'param_names': ['param1', 'param2'], "unit": "seconds"}
     result = [1, 2, 3, 4, 5, 6]
     expected = ("======== ======= =======\n"
                 "--            param2    \n"

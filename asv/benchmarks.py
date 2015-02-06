@@ -104,7 +104,7 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
             if err or out:
                 err += out
                 if benchmark['params']:
-                    head_msg = "\n\nFor parameters: %r\n" % (params,)
+                    head_msg = "\n\nFor parameters: %s\n" % (", ".join(params),)
                 else:
                     head_msg = ''
 
@@ -546,7 +546,8 @@ def _format_benchmark_result(result, benchmark, max_width=None):
         row_params = benchmark['params'][:-len(column_params)]
         header = benchmark['param_names'][:len(row_params)]
         column_param_permutations = list(itertools.product(*column_params))
-        header += ["/".join(map(str, x)) for x in column_param_permutations]
+        header += ["/".join(_format_param_value(value) for value in values)
+                   for values in column_param_permutations]
         rows.append(header)
         column_items = len(column_param_permutations)
         name_header = "/".join(benchmark['param_names'][len(row_params):])
@@ -560,7 +561,7 @@ def _format_benchmark_result(result, benchmark, max_width=None):
     for j, values in enumerate(itertools.product(*row_params)):
         row_results = [util.human_value(x, benchmark['unit'])
                        for x in result[j*column_items:(j+1)*column_items]]
-        row = list(values) + row_results
+        row = [_format_param_value(value) for value in values] + row_results
         rows.append(row)
 
     if name_header:
@@ -570,3 +571,21 @@ def _format_benchmark_result(result, benchmark, max_width=None):
     else:
         display = util.format_text_table(rows, 1)
     return display.splitlines()
+
+
+def _format_param_value(value_repr):
+    """
+    Format a parameter value for displaying it as test output. The
+    values are string obtained via Python repr.
+
+    """
+    regexs = ["^'(.+)'$",
+              "^u'(.+)'$",
+              "^<class '(.+)'>$"]
+
+    for regex in regexs:
+        m = re.match(regex, value_repr)
+        if m and m.group(1).strip():
+            return m.group(1)
+
+    return value_repr
