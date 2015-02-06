@@ -385,9 +385,10 @@ class TimeBenchmark(Benchmark):
         self.timer = _get_first_attr(self._attr_sources, 'timer', process_time)
 
     def do_setup(self):
-        Benchmark.do_setup(self)
+        result = Benchmark.do_setup(self)
         # For parameterized tests, setup() is allowed to change these
         self._load_vars()
+        return result
 
     def run(self, *param):
         number = self.number

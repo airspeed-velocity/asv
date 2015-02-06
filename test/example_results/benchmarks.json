@@ -65,6 +65,26 @@
         "type": "memory", 
         "unit": "bytes"
     }, 
+    "params_examples.time_skip": {
+        "code": "def time_skip(n):\n    list(range(n))\n", 
+        "goal_time": 0.01, 
+        "name": "params_examples.time_skip", 
+        "number": 0, 
+        "param_names": [
+            "param1"
+        ], 
+        "params": [
+            [
+                "1000", 
+                "2000", 
+                "3000"
+            ]
+        ], 
+        "repeat": 3, 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "seconds"
+    }, 
     "params_examples.track_param": {
         "code": "def track_param(n):\n    return 42\n", 
         "name": "params_examples.track_param", 

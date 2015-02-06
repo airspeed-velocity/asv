@@ -97,7 +97,7 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
             total_count += 1
             if success:
                 bench_results.append(data)
-                if profile:
+                if profile and profile_data:
                     bench_profiles.append(profile_data)
             else:
                 failure_count += 1

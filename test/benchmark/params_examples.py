@@ -57,3 +57,15 @@ class TuningTest:
         # The time benchmark may call it one additional time
         if not (n <= self.counter[0] <= n + 1):
             raise RuntimeError("Number and repeat didn't have effect")
+
+
+def setup_skip(n):
+    if n > 2000:
+        raise NotImplementedError()
+
+
+def time_skip(n):
+    list(range(n))
+time_skip.params = [1000, 2000, 3000]
+time_skip.setup = setup_skip
+time_skip.goal_time = 0.01
