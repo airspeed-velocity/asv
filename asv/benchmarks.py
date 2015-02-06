@@ -536,51 +536,59 @@ def _format_benchmark_result(result, benchmark, max_width=None):
     if not result:
         return ['[]']
 
-    # Fold result to a table
+    def do_formatting(num_column_params):
+        # Fold result to a table
+        if num_column_params > 0:
+            column_params = benchmark['params'][-num_column_params:]
+        else:
+            column_params = []
+
+        rows = []
+        if column_params:
+            row_params = benchmark['params'][:-len(column_params)]
+            header = benchmark['param_names'][:len(row_params)]
+            column_param_permutations = list(itertools.product(*column_params))
+            header += [" / ".join(_format_param_value(value) for value in values)
+                       for values in column_param_permutations]
+            rows.append(header)
+            column_items = len(column_param_permutations)
+            name_header = " / ".join(benchmark['param_names'][len(row_params):])
+        else:
+            column_items = 1
+            row_params = benchmark['params']
+            name_header = ""
+            header = benchmark['param_names']
+            rows.append(header)
+
+        for j, values in enumerate(itertools.product(*row_params)):
+            row_results = [util.human_value(x, benchmark['unit'])
+                           for x in result[j*column_items:(j+1)*column_items]]
+            row = [_format_param_value(value) for value in values] + row_results
+            rows.append(row)
+
+        if name_header:
+            display = util.format_text_table(rows, 1,
+                                             top_header_text=name_header,
+                                             top_header_span_start=len(row_params))
+        else:
+            display = util.format_text_table(rows, 1)
+
+        return display.splitlines()
+
+    # Determine how many parameters can be fit to columns
     if max_width is None:
         max_width = util.get_terminal_width() * 3//4
 
-    # Determine which (if any) parameters can be fit to columns
-    column_params = []
-    width = 1
-    for j in range(len(benchmark['params'])-1, 0, -1):
-        width *= max(16 * len(benchmark['params'][j]),
-                     len(benchmark['param_names'][j]) + 2)
-        if width > max_width:
+    text = do_formatting(0)
+    for j in range(1, len(benchmark['params'])):
+        new_text = do_formatting(j)
+        width = max(len(line) for line in new_text)
+        if width < max_width:
+            text = new_text
+        else:
             break
-        column_params.append(benchmark['params'][j])
 
-    # Generate output
-    rows = []
-    if column_params:
-        row_params = benchmark['params'][:-len(column_params)]
-        header = benchmark['param_names'][:len(row_params)]
-        column_param_permutations = list(itertools.product(*column_params))
-        header += ["/".join(_format_param_value(value) for value in values)
-                   for values in column_param_permutations]
-        rows.append(header)
-        column_items = len(column_param_permutations)
-        name_header = "/".join(benchmark['param_names'][len(row_params):])
-    else:
-        column_items = 1
-        row_params = benchmark['params']
-        name_header = ""
-        header = benchmark['param_names']
-        rows.append(header)
-
-    for j, values in enumerate(itertools.product(*row_params)):
-        row_results = [util.human_value(x, benchmark['unit'])
-                       for x in result[j*column_items:(j+1)*column_items]]
-        row = [_format_param_value(value) for value in values] + row_results
-        rows.append(row)
-
-    if name_header:
-        display = util.format_text_table(rows, 1, 
-                                         top_header_text=name_header,
-                                         top_header_span_start=len(row_params))
-    else:
-        display = util.format_text_table(rows, 1)
-    return display.splitlines()
+    return text
 
 
 def _format_param_value(value_repr):
