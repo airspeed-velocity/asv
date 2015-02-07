@@ -12,6 +12,8 @@ import warnings
 
 
 class TimeSuite:
+    goal_time = 0.1
+
     def setup(self):
         self.n = 100
 
@@ -36,3 +38,5 @@ def time_with_warnings():
     warnings.warn('before')
     1 / 0
     warnings.warn('after')
+
+time_with_warnings.goal_time = 0.1

@@ -15,7 +15,7 @@ from asv.commands.run import Run
 from asv.commands.publish import Publish
 
 
-def test_workflow(tmpdir):
+def test_run_publish(tmpdir):
     # Tests a typical complete run/publish workflow
     tmpdir = six.text_type(tmpdir)
     local = abspath(dirname(__file__))
@@ -29,7 +29,8 @@ def test_workflow(tmpdir):
         'benchmark_dir': join(local, 'benchmark'),
         'results_dir': join(tmpdir, 'results_workflow'),
         'html_dir': join(tmpdir, 'html'),
-        'repo': 'https://github.com/spacetelescope/asv.git',
+        'repo': os.path.join(local, '..'),
+        'dvcs': 'git',
         'project': 'asv',
         'matrix': {
             "six": [None],
