@@ -19,6 +19,7 @@ from asv import config
 from asv.commands.run import Run
 from asv.commands.publish import Publish
 from asv.commands.find import Find
+from asv.commands.continuous import Continuous
 
 
 @pytest.fixture
@@ -92,6 +93,25 @@ def test_run_publish(basic_conf):
 
     Publish.run(conf)
 
+
+def test_continuous(basic_conf):
+    tmpdir, local, conf, machine_file = basic_conf
+
+    # Check that asv continuous runs
+    s = StringIO()
+    stdout = sys.stdout
+    os.environ['_ASV_TEST_TRACK_FILE'] = join(tmpdir, 'track-file')
+    try:
+        sys.stdout = s
+        Continuous.run(conf, _machine_file=machine_file)
+    finally:
+        sys.stdout = stdout
+        del os.environ['_ASV_TEST_TRACK_FILE']
+
+    s.seek(0)
+    text = s.read()
+    assert "SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY" in text
+    assert "params_examples.track_find_test(2)              1.0        6.0   6.00000000x" in text
 
 def test_find(basic_conf):
     tmpdir, local, conf, machine_file = basic_conf

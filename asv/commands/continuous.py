@@ -62,7 +62,7 @@ class Continuous(Command):
 
     @classmethod
     def run(cls, conf, branch="master", factor=2.0, bench=None,
-            machine=None):
+            machine=None, _machine_file=None):
         repo = get_repo(conf)
         repo.pull()
 
@@ -77,7 +77,8 @@ class Continuous(Command):
 
         result = Run.run(
             conf, range_spec=commit_hashes, bench=bench,
-            machine=machine, _returns=run_objs)
+            machine=machine, _returns=run_objs,
+            _machine_file=_machine_file)
         if result:
             return result
 
@@ -120,7 +121,7 @@ class Continuous(Command):
             if change > factor:
                 slowed_down = True
 
-        print()
+        print("")
 
         if not len(table):
             color_print("BENCHMARKS NOT SIGNIFICANTLY CHANGED.\n", 'green')
@@ -129,7 +130,7 @@ class Continuous(Command):
         table.sort(reverse=True)
 
         color_print("SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY.\n", 'red')
-        print()
+        print("")
         color_print(
             "{0:40s}   {1:>8}   {2:>8}   {3:>8}\n".format("BENCHMARK", "BEFORE", "AFTER", "FACTOR"),
             'blue')
