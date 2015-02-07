@@ -28,7 +28,11 @@
         "time_units.time_unit_compose": 0.0016420300006866455, 
         "time_units.time_unit_parse": 0.00037211203575134277, 
         "time_units.time_unit_to": 6.909289360046387e-05, 
-        "time_units.time_very_simple_unit_parse": 1.186551809310913e-05
+        "time_units.time_very_simple_unit_parse": 1.186551809310913e-05,
+	"time_other.time_parameterized": {
+	    "params": [["1", "2", "3"]],
+	    "result": [1, 2, 3]
+	}
     }, 
     "version": 1
 }
