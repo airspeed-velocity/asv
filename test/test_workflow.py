@@ -9,6 +9,7 @@ import sys
 from os.path import abspath, dirname, exists, join, isfile
 import shutil
 import glob
+from io import StringIO
 
 import six
 import json
@@ -81,6 +82,20 @@ def test_run_publish(basic_conf):
         assert isinstance(data[0][1][0], float)
         assert isinstance(data[0][1][1], float)
         assert data[0][1][2] is None
+
+    # Check that the skip options work
+    s = StringIO()
+    stdout = sys.stdout
+    try:
+        sys.stdout = s
+        Run.run(conf, range_spec="6b1fb9b04f..2927a27ec", steps=2,
+                _machine_file=join(tmpdir, 'asv-machine.json'), quick=True,
+                skip_successful=True, skip_failed=True)
+    finally:
+        sys.stdout = stdout
+    s.seek(0)
+    text = s.read()
+    assert 'Running benchmarks.' not in text
 
     # Check EXISTING works
     Run.run(conf, range_spec="EXISTING",
