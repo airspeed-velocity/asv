@@ -155,7 +155,7 @@ class Find(Command):
 
         def difference_3way(a, b, c):
             """
-            Return largest normalized differences (a-b, b-c).
+            Return largest regression (a-b, b-c).
             """
             results_ab = [0]
             results_bc = [0]
@@ -166,9 +166,7 @@ class Find(Command):
                         denom = 1.0
                     results_ab.append((va - vb) / denom)
                     results_bc.append((vb - vc) / denom)
-            results_ab.sort(key=lambda x: abs(x))
-            results_bc.sort(key=lambda x: abs(x))
-            return results_ab[-1], results_bc[-1]
+            return max(results_ab), max(results_bc)
 
         def do_search(lo, hi):
             if hi - lo <= 1:
@@ -214,7 +212,7 @@ class Find(Command):
                 diff_a *= -1.0
                 diff_b *= -1.0
 
-            if diff_a > diff_b:
+            if diff_a >= diff_b:
                 return do_search(lo, mid)
             else:
                 return do_search(mid, hi)

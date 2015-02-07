@@ -5,26 +5,32 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
+import sys
 from os.path import abspath, dirname, exists, join, isfile
 import shutil
 import glob
 
 import six
 import json
+import pytest
+from io import StringIO
 
 from asv import config
 from asv.commands.run import Run
 from asv.commands.publish import Publish
+from asv.commands.find import Find
 
 
-def test_run_publish(tmpdir):
-    # Tests a typical complete run/publish workflow
+@pytest.fixture
+def basic_conf(tmpdir):
     tmpdir = six.text_type(tmpdir)
     local = abspath(dirname(__file__))
     os.chdir(tmpdir)
 
+    machine_file = join(tmpdir, 'asv-machine.json')
+
     shutil.copyfile(join(local, 'asv-machine.json'),
-                    join(tmpdir, 'asv-machine.json'))
+                    machine_file)
 
     conf = config.Config.from_json({
         'env_dir': join(tmpdir, 'env'),
@@ -40,8 +46,15 @@ def test_run_publish(tmpdir):
         }
     })
 
+    return tmpdir, local, conf, machine_file
+
+
+def test_run_publish(basic_conf):
+    tmpdir, local, conf, machine_file = basic_conf
+
+    # Tests a typical complete run/publish workflow
     Run.run(conf, range_spec="6b1fb9b04f..2927a27ec", steps=2,
-            _machine_file=join(tmpdir, 'asv-machine.json'), quick=True)
+            _machine_file=machine_file, quick=True)
 
     assert len(os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))) == 5
     assert len(os.listdir(join(tmpdir, 'results_workflow'))) == 2
@@ -70,7 +83,7 @@ def test_run_publish(tmpdir):
 
     # Check EXISTING works
     Run.run(conf, range_spec="EXISTING",
-            _machine_file=join(tmpdir, 'asv-machine.json'), quick=True)
+            _machine_file=machine_file, quick=True)
 
     # Remove the benchmarks.json file to make sure publish can
     # regenerate it
@@ -78,6 +91,27 @@ def test_run_publish(tmpdir):
     os.remove(join(tmpdir, "results_workflow", "benchmarks.json"))
 
     Publish.run(conf)
+
+
+def test_find(basic_conf):
+    tmpdir, local, conf, machine_file = basic_conf
+
+    # Test find at least runs
+    s = StringIO()
+    stdout = sys.stdout
+    os.environ['_ASV_TEST_TRACK_FILE'] = join(tmpdir, 'track-file')
+    try:
+        sys.stdout = s
+        Find.run(conf, "6b1fb9b04f..2927a27ec", "params_examples.track_find_test",
+                 _machine_file=machine_file)
+    finally:
+        sys.stdout = stdout
+        del os.environ['_ASV_TEST_TRACK_FILE']
+
+    # Check it found the first commit after the initially tested one
+    s.seek(0)
+    output = s.read()
+    assert "Greatest regression found: 85172e6d" in output
 
 
 if __name__ == '__main__':
