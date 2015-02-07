@@ -372,6 +372,9 @@ class ExistingEnvironment(Environment):
     def name(self):
         return self._executable
 
+    def create(self):
+        pass
+
     def setup(self):
         pass
 
@@ -382,7 +385,7 @@ class ExistingEnvironment(Environment):
         pass
 
     def can_install_project(self):
-        return True
+        return False
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))

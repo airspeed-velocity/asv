@@ -46,6 +46,10 @@ class Dev(Run):
 
     @classmethod
     def run_from_conf_args(cls, conf, args):
-        return cls.run(
-            conf=conf, bench=args.bench, show_stderr=True, quick=True,
-            python=args.python, machine=args.machine, dry_run=True)
+        return cls.run(conf, bench=args.bench, machine=args.machine, python=args.python)
+
+    @classmethod
+    def run(cls, conf, bench=None, python="same", machine=None, _machine_file=None):
+        return super(cls, Dev).run(conf=conf, bench=bench, show_stderr=True, quick=True,
+                                   python=python, machine=machine, dry_run=True,
+                                   _machine_file=_machine_file)
