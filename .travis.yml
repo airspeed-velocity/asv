@@ -31,4 +31,6 @@ install:
 
 script:
     - pip install virtualenv
+    - pip install "mercurial>=3.3"
+    - pip install python-hglib==1.5
     - python setup.py test
