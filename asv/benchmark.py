@@ -378,8 +378,7 @@ class TimeBenchmark(Benchmark):
         self._load_vars()
 
     def _load_vars(self):
-        self.repeat = _get_first_attr(
-            self._attr_sources, 'repeat', timeit.default_repeat)
+        self.repeat = _get_first_attr(self._attr_sources, 'repeat', 0)
         self.number = int(_get_first_attr(self._attr_sources, 'number', 0))
         self.goal_time = _get_first_attr(self._attr_sources, 'goal_time', 2.0)
         self.timer = _get_first_attr(self._attr_sources, 'timer', process_time)
@@ -392,6 +391,10 @@ class TimeBenchmark(Benchmark):
 
     def run(self, *param):
         number = self.number
+        repeat = self.repeat
+
+        if repeat == 0:
+            repeat = timeit.default_repeat
 
         if param:
             func = lambda: self.func(*param)
@@ -407,12 +410,24 @@ class TimeBenchmark(Benchmark):
             # goal_time / 10 <= total time < goal_time
             number = 1
             for i in range(1, 10):
-                if timer.timeit(number) >= self.goal_time / 10.0:
+                timing = timer.timeit(number)
+                if timing >= 5*self.goal_time and number == 1 and self.repeat == 0:
+                    # very slow benchmark: use a default repeat value of 1
+                    self.repeat = repeat = 1
+                    break
+                elif timing >= self.goal_time / 10.0:
                     break
                 number *= 10
             self.number = number
 
-        all_runs = timer.repeat(self.repeat, self.number)
+            # keep the timing from the run we already made
+            repeat -= 1
+            all_runs = [timing]
+        else:
+            all_runs = []
+
+        if repeat > 0:
+            all_runs.extend(timer.repeat(repeat, number))
         best = min(all_runs) / number
         return best
 
