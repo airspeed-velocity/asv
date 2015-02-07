@@ -51,8 +51,8 @@ def iter_results_for_machine_and_hash(results, machine_name, commit):
     for (root, filename) in iter_results_paths(
             os.path.join(results, machine_name)):
         results_commit = filename.split('-')[0]
-        max_len = max(len(commit), len(results_commit))
-        if results_commit[:max_len] == commit[:max_len]:
+        cmp_len = min(len(commit), len(results_commit))
+        if results_commit[:cmp_len] == commit[:cmp_len]:
             yield Results.load(os.path.join(root, filename))
 
 
