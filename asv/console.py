@@ -308,8 +308,10 @@ class Log(object):
     def set_level(self, level):
         orig_level = self._logger.level
         self._logger.setLevel(level)
-        yield
-        self._logger.setLevel(orig_level)
+        try:
+            yield
+        finally:
+            self._logger.setLevel(orig_level)
 
     def is_debug_enabled(self):
         return self._logger.getEffectiveLevel() <= logging.DEBUG
