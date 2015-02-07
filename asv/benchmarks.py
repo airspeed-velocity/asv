@@ -97,7 +97,7 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
             total_count += 1
             if success:
                 bench_results.append(data)
-                if profile and profile_data:
+                if profile:
                     bench_profiles.append(profile_data)
             else:
                 failure_count += 1
@@ -232,6 +232,8 @@ def _run_benchmark_single(benchmark, root, env, param_idx, profile, quick):
         if profile:
             with io.open(profile_path, 'rb') as profile_fd:
                 profile_data = profile_fd.read()
+            if not profile_data:
+                profile_data = None
         else:
             profile_data = None
 
