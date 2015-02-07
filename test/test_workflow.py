@@ -7,8 +7,10 @@ from __future__ import (absolute_import, division, print_function,
 import os
 from os.path import abspath, dirname, exists, join, isfile
 import shutil
+import glob
 
 import six
+import json
 
 from asv import config
 from asv.commands.run import Run
@@ -51,6 +53,22 @@ def test_run_publish(tmpdir):
     assert isfile(join(tmpdir, 'html', 'asv.js'))
     assert isfile(join(tmpdir, 'html', 'asv.css'))
 
+    # Check parameterized test json data format
+    filename = glob.glob(os.path.join(tmpdir, 'html', 'graphs', 'arch-x86_64',
+                                      'cpu-Blazingly fast', 'machine-orangutan', 'os-GNU',
+                                      'Linux', 'psutil-2.1', 'python-*', 'ram-128GB',
+                                      'six', 'params_examples.time_skip.json'))[0]
+    with open(filename, 'r') as fp:
+        data = json.load(fp)
+        assert len(data) == 2
+        assert isinstance(data[0][0], int)  # date
+        assert len(data[0][1]) == 3
+        assert len(data[1][1]) == 3
+        assert isinstance(data[0][1][0], float)
+        assert isinstance(data[0][1][1], float)
+        assert data[0][1][2] is None
+
+    # Check EXISTING works
     Run.run(conf, range_spec="EXISTING",
             _machine_file=join(tmpdir, 'asv-machine.json'), quick=True)
 
