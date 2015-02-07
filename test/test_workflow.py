@@ -37,7 +37,7 @@ def test_workflow(tmpdir):
         }
     })
 
-    Run.run(conf, range_spec="initial..master", steps=2,
+    Run.run(conf, range_spec="6b1fb9b04f..2927a27ec", steps=2,
             _machine_file=join(tmpdir, 'asv-machine.json'), quick=True)
 
     assert len(os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))) == 5
