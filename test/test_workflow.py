@@ -38,7 +38,7 @@ def basic_conf(tmpdir):
         'benchmark_dir': join(local, 'benchmark'),
         'results_dir': join(tmpdir, 'results_workflow'),
         'html_dir': join(tmpdir, 'html'),
-        'repo': os.path.join(local, '..'),
+        'repo': 'https://github.com/spacetelescope/asv.git',
         'dvcs': 'git',
         'project': 'asv',
         'matrix': {
