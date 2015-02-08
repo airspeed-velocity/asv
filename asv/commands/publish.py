@@ -37,6 +37,15 @@ def compatible_results(result, benchmark):
         else:
             return result
 
+    if result is None:
+        # All results missing, eg. build failure
+        return result
+
+    if not isinstance(result, dict) or 'params' not in result:
+        # Not a parameterized result -- test probably was once
+        # non-parameterized
+        return None
+
     # Pick results for those parameters that also appear in the
     # current benchmark
     old_results = {}
