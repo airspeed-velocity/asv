@@ -20,6 +20,7 @@ from ..repo import Repo
 
 
 class Hg(Repo):
+    dvcs = "hg"
     def __init__(self, url, path):
         self._path = os.path.abspath(path)
         self._pulled = False
@@ -48,6 +49,11 @@ class Hg(Repo):
         for regex in regexes:
             if re.match(regex, url):
                 return True
+
+        # Check for a local path
+        if os.path.isdir(url) and os.path.isdir(os.path.join(url, '.hg')):
+            return True
+
         return False
 
     def get_new_range_spec(self, latest_result):
