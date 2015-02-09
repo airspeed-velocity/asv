@@ -243,25 +243,24 @@ To improve reproducibility, each benchmark is run in its own process.
 The killer feature of **airspeed velocity** is that it can track the
 benchmark performance of your project over time.  The ``range``
 argument to ``asv run`` specifies a range of commits that should be
-benchmarked.  The value of this argument is passed directly to ``git
-log`` to get the set of commits, so it actually has a very powerful
-syntax defined in the `gitrevisions manpage
-<https://www.kernel.org/pub/software/scm/git/docs/gitrevisions.html>`__.
+benchmarked.  The value of this argument is passed directly to either ``git
+log`` or to the Mercurial log command to get the set of commits, so it actually
+has a very powerful syntax defined in the `gitrevisions manpage
+<https://www.kernel.org/pub/software/scm/git/docs/gitrevisions.html>`__, or the
+`revsets help section <http://www.selenic.com/hg/help/revsets>`_ for Mercurial.
 
-For example, one can test a range of commits on a particular branch
-since the branch was created::
+For example, in a Git repository, one can test a range of commits on a
+particular branch since the branch was created::
 
         asv run mybranch@{u}..mybranch
-
-.. note::
-
-    Yes, this is git-specific for now.  Support for Mercurial or other
-    DVCSes should be possible in the future, but not at the moment.
 
 For example, to benchmark all of the commits since a particular tag
 (``v0.1``)::
 
     asv run v0.1..master
+
+Corresponding examples for Mercurial using the revsets specification are also
+possible.
 
 In many cases, this may result in more commits than you are able to
 benchmark in a reasonable amount of time.  In that case, the

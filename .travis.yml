@@ -31,4 +31,6 @@ install:
 
 script:
     - pip install virtualenv==1.10
+    - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then pip install "mercurial>=3.3" ; fi
+    - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then pip install python-hglib==1.5 ; fi
     - python setup.py test

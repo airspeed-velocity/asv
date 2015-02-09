@@ -156,8 +156,7 @@ class Run(Command):
         elif range_spec == 'NEW':
             latest_result = find_latest_result_hash(
                 machine_params.machine, conf.results_dir)
-            # TODO: This is shamelessly git-specific
-            range_spec = '{0}..master'.format(latest_result)
+            range_spec = repo.get_new_range_spec(latest_result)
         elif range_spec == "ALL":
             range_spec = ""
         elif range_spec == "MISSING":
