@@ -557,16 +557,19 @@ $(function() {
         /* Default plot: time series */
         x_coordinate_axis = 0;
 
-        /* Default plot: up to 4 different parameter values */
+        /* Default plot: up to 8 lines */
         benchmark_param_selection = [[null]];
         if (params.length >= 1) {
-            var item = [];
-            for (var j = 0; j < params[0].length && j < 4; ++j) {
-                item.push(j);
-            }
-            benchmark_param_selection.push(item);
-            for (var k = 1; k < params.length; ++k) {
-                benchmark_param_selection.push([0]);
+            var count = 1;
+            var max_curves = 8;
+
+            for (var k = 0; k < params.length; ++k) {
+                var item = [];
+                for (var j = 0; j < params[k].length && (j+1)*count <= max_curves; ++j) {
+                    item.push(j);
+                }
+                count = count * item.length;
+                benchmark_param_selection.push(item);
             }
         }
 
@@ -608,15 +611,6 @@ $(function() {
                 button.on('click', function (evt) {
                     $(evt.target).siblings().removeClass('active');
                     x_coordinate_axis = axis;
-
-                    /* Reset parameter selection for this axis to
-                       avoid inadvertently showing many graphs when
-                       changing axes later on */
-                    if (axis == 0) {
-                        benchmark_param_selection[axis] = [null];
-                    } else {
-                        benchmark_param_selection[axis] = [0];
-                    }
 
                     check_x_coordinate_axis();
                     replace_benchmark_params_ui();
