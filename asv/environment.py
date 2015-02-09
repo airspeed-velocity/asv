@@ -11,12 +11,15 @@ from __future__ import (absolute_import, division, print_function,
 
 import hashlib
 import os
+import shutil
 import sys
 
 import six
 
 from .console import log
+from .repo import get_repo
 from . import util
+from . import wheel_cache
 
 
 def iter_configuration_matrix(matrix):
@@ -59,7 +62,6 @@ def get_env_name(python, requirements):
         else:
             name.append(key)
     return '-'.join(name)
-
 
 
 def get_environments(conf):
@@ -161,8 +163,16 @@ class Environment(object):
     """
     tool_name = None
 
-    def __init__(self):
-        raise NotImplementedError()
+    def __init__(self, conf):
+        self._env_dir = conf.env_dir
+        self._path = os.path.abspath(os.path.join(
+            self._env_dir, self.hashname))
+
+        self._is_setup = False
+        self._requirements_installed = False
+
+        self._source_repo = get_repo(conf)
+        self._cache = wheel_cache.WheelCache(conf, self._path)
 
     @classmethod
     def get_environments(cls, conf, python):
@@ -212,6 +222,42 @@ class Environment(object):
     def python(self):
         return self._python
 
+    @property
+    def repo(self):
+        if not self._is_setup:
+            raise ValueError("No repo set up yet")
+        return self._repo
+
+    def create(self):
+        """
+        Create the outer layers of the environment, including an
+        information file and a local clone of the project repository.
+        Calls `setup` internally to setup a specific kind of
+        environment.
+        """
+        if self._is_setup:
+            return
+
+        if not os.path.exists(self._env_dir):
+            os.makedirs(self._env_dir)
+
+        if not os.path.exists(self._path):
+            try:
+                self.setup()
+            except:
+                log.error("Failure creating environment for {0}".format(self.name))
+                if os.path.exists(self._path):
+                    shutil.rmtree(self._path)
+                raise
+
+        self.save_info_file(self._path)
+        if self._source_repo is not None:  # For testing only
+            self._repo = self._source_repo.__class__(
+                self._source_repo.path, os.path.join(self._path, 'project'),
+                shared=True)
+
+        self._is_setup = True
+
     def setup(self):
         """
         Setup the environment on disk.  If it doesn't exist, it is
@@ -222,7 +268,7 @@ class Environment(object):
     def install_requirements(self):
         raise NotImplementedError()
 
-    def install(self, package, editable=False):
+    def install(self, package):
         """
         Install a package into the environment.
         """
@@ -241,15 +287,32 @@ class Environment(object):
         """
         raise NotImplementedError()
 
-    def install_project(self, conf):
+    def build_project(self, commit_hash):
+        log.info("Building for {0}".format(self.name))
+        build_root = os.path.abspath(self.repo.path)
+        self.repo.checkout(commit_hash)
+        self.run(['setup.py', 'build'], cwd=build_root)
+        return build_root
+
+    def install_project(self, conf, commit_hash=None):
         """
         Install a working copy of the benchmarked project into the
         environment.  Uninstalls any installed copy of the project
         first.
         """
+        if commit_hash is None:
+            commit_hash = self.repo.get_hash_from_head()
+
         self.install_requirements()
         self.uninstall(conf.project)
-        self.install(os.path.abspath(conf.project))
+
+        build_root = self._cache.build_project_cached(
+            self, conf, commit_hash)
+
+        if build_root is None:
+            build_root = self.build_project(commit_hash)
+
+        self.install(build_root)
 
     def can_install_project(self):
         """
@@ -274,7 +337,7 @@ class Environment(object):
 class ExistingEnvironment(Environment):
     tool_name = "existing"
 
-    def __init__(self, executable):
+    def __init__(self, conf, executable):
         self._executable = executable
         self._python = util.check_output(
             [executable,
@@ -284,12 +347,14 @@ class ExistingEnvironment(Environment):
          ]).strip()
         self._requirements = {}
 
+        super(ExistingEnvironment, self).__init__(conf)
+
     @classmethod
     def get_environments(cls, conf, python):
         if python == 'same':
             python = sys.executable
 
-        yield cls(util.which(python))
+        yield cls(conf, util.which(python))
 
     @classmethod
     def matches(cls, python):
@@ -313,7 +378,7 @@ class ExistingEnvironment(Environment):
     def install_requirements(self):
         pass
 
-    def install_project(self, conf):
+    def install_project(self, conf, commit_hash=None):
         pass
 
     def can_install_project(self):

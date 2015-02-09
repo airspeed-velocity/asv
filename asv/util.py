@@ -207,7 +207,7 @@ class ProcessError(subprocess.CalledProcessError):
 
 
 def check_call(args, valid_return_codes=(0,), timeout=60, dots=True,
-               display_error=True, shell=False, env=None):
+               display_error=True, shell=False, env=None, cwd=None):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.
@@ -216,12 +216,13 @@ def check_call(args, valid_return_codes=(0,), timeout=60, dots=True,
     """
     check_output(
         args, valid_return_codes=valid_return_codes, timeout=timeout,
-        dots=dots, display_error=display_error, shell=shell, env=env)
+        dots=dots, display_error=display_error, shell=shell, env=env,
+        cwd=cwd)
 
 
 def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
                  display_error=True, shell=False, return_stderr=False,
-                 env=None):
+                 env=None, cwd=None):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.  Returns stdout as a string on success.
@@ -255,6 +256,10 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
 
     env : dict, optional
         Specify environment variables for the subprocess.
+
+    cwd : str, optional
+        Specify the current working directory to use when running the
+        process.
     """
     def get_content(header=None):
         content = []
@@ -280,7 +285,8 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
         env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        shell=shell)
+        shell=shell,
+        cwd=cwd)
 
     last_dot_time = time.time()
     stdout_chunks = []

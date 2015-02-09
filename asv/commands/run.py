@@ -6,6 +6,8 @@ from __future__ import (absolute_import, division, print_function,
 
 import six
 
+import logging
+
 from . import Command
 from ..benchmarks import Benchmarks
 from ..console import log
@@ -18,9 +20,10 @@ from .setup import Setup
 
 
 def _do_build(args):
-    env, conf = args
+    env, conf, commit_hash = args
     try:
-        env.install_project(conf)
+        with log.set_level(logging.WARN):
+            env.install_project(conf, commit_hash)
     except util.ProcessError:
         return False
     return True
@@ -78,9 +81,7 @@ class Run(Command):
             "--parallel", "-j", nargs='?', type=int, default=1, const=-1,
             help="""Build (but don't benchmark) in parallel.  The
             value is the number of CPUs to use, or if no number
-            provided, use the number of cores on this machine.  NOTE:
-            parallel building is still experimental and may not work
-            in all cases.""")
+            provided, use the number of cores on this machine.""")
         parser.add_argument(
             "--show-stderr", "-e", action="store_true",
             help="""Display the stderr output from the benchmarks.""")
@@ -222,13 +223,11 @@ class Run(Command):
                 "For {0} commit hash {1}:".format(
                     conf.project, commit_hash[:8]))
             with log.indent():
-                repo.checkout(commit_hash)
-
                 for subenv in util.iter_chunks(environments, parallel):
                     log.info("Building for {0}".format(
                         ', '.join([x.name for x in subenv])))
                     with log.indent():
-                        args = [(env, conf) for env in subenv]
+                        args = [(env, conf, commit_hash) for env in subenv]
                         if parallel != 1:
                             pool = multiprocessing.Pool(parallel)
                             successes = pool.map(_do_build_multiprocess, args)

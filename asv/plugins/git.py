@@ -19,14 +19,18 @@ from .. import util
 class Git(Repo):
     dvcs = "git"
 
-    def __init__(self, url, path):
+    def __init__(self, url, path, shared=False):
         self._git = util.which("git")
         self._path = os.path.abspath(path)
         self._pulled = False
 
         if not os.path.isdir(self._path):
             log.info("Cloning project")
-            self._run_git(['clone', url, self._path], chdir=False)
+            args = ['clone']
+            if shared:
+                args.append('--shared')
+            args.extend([url, self._path])
+            self._run_git(args, chdir=False)
 
     @property
     def path(self):
@@ -50,14 +54,12 @@ class Git(Repo):
 
     def _run_git(self, args, chdir=True, **kwargs):
         if chdir:
-            orig_dir = os.getcwd()
-            os.chdir(self._path)
-        try:
-            return util.check_output(
-                [self._git] + args, **kwargs)
-        finally:
-            if chdir:
-                os.chdir(orig_dir)
+            cwd = self._path
+        else:
+            cwd = None
+        kwargs['cwd'] = cwd
+        return util.check_output(
+            [self._git] + args, **kwargs)
 
     def pull(self):
         # We assume the remote isn't updated during the run of asv

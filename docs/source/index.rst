@@ -29,3 +29,4 @@ License: `BSD three-clause license
    using.rst
    writing_benchmarks.rst
    reference.rst
+   dev.rst

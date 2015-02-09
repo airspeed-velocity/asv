@@ -4,15 +4,19 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import logging
+
 from . import Command
 from ..console import log
 from .. import environment
+from ..repo import get_repo
 from .. import util
 
 
 def _install_requirements(env):
     try:
-        env.install_requirements()
+        with log.set_level(logging.WARN):
+            env.install_requirements()
     except:
         import traceback
         traceback.print_exc()
@@ -43,9 +47,7 @@ class Setup(Command):
             "--parallel", "-j", nargs='?', type=int, default=1, const=-1,
             help="""Build (but don't benchmark) in parallel.  The
             value is the number of CPUs to use, or if no number
-            provided, use the number of cores on this machine. NOTE:
-            parallel building is still considered experimental and may
-            not work in all cases.""")
+            provided, use the number of cores on this machine.""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -64,7 +66,7 @@ class Setup(Command):
         log.info("Creating environments")
         with log.indent():
             for env in environments:
-                env.setup()
+                env.create()
 
         log.info("Installing dependencies")
         with log.indent():

@@ -15,7 +15,6 @@ import six
 
 from .console import log, truncate_left
 from .environment import get_environments
-from .repo import get_repo
 from . import util
 
 
@@ -194,9 +193,7 @@ class Benchmarks(dict):
 
         log.info("Discovering benchmarks")
         with log.indent():
-            repo = get_repo(conf)
-            repo.checkout()
-
+            env.create()
             env.install_project(conf)
 
             output = env.run(

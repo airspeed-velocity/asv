@@ -12,7 +12,6 @@ from asv import environment
 from asv import util
 
 
-
 try:
     util.which('python2.7')
     HAS_PYTHON_27 = True
@@ -39,7 +38,6 @@ def test_matrix_environments(tmpdir):
         "six": ["1.4", None],
         "psutil": ["1.2", "2.1"]
     }
-
     environments = list(environment.get_environments(conf))
 
     assert len(environments) == 2 * 2 * 2

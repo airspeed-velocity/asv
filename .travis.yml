@@ -30,5 +30,5 @@ install:
     fi
 
 script:
-    - pip install virtualenv==1.10
+    - pip install virtualenv
     - python setup.py test

@@ -105,6 +105,8 @@ clean up any changes made to the filesystem.  Generally, however, it
 is not required: each benchmark runs in its own process, so any
 tearing down of in-memory state happens automatically.
 
+.. _benchmark-attributes:
+
 Benchmark attributes
 --------------------
 
