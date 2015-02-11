@@ -91,6 +91,9 @@ def test_run_publish(basic_conf):
         Run.run(conf, range_spec="6b1fb9b04f..2927a27ec", steps=2,
                 _machine_file=join(tmpdir, 'asv-machine.json'), quick=True,
                 skip_successful=True, skip_failed=True)
+        Run.run(conf, range_spec="6b1fb9b04f..2927a27ec", steps=2,
+                _machine_file=join(tmpdir, 'asv-machine.json'), quick=True,
+                skip_existing_commits=True)
     finally:
         sys.stdout = stdout
     s.seek(0)
