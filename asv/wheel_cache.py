@@ -45,9 +45,13 @@ class WheelCache(object):
                 return os.path.join(cache_path, fn)
         return None
 
-    def _cleanup_wheel_cache(self):
+    def _get_cache_contents(self):
+        """
+        Return list of commit hash directories in the cache (containing
+        wheels or not), sorted by decreasing timestamp
+        """
         if not os.path.isdir(self._path):
-            return
+            return []
 
         def sort_key(name):
             path = os.path.join(self._path, name, 'timestamp')
@@ -57,11 +61,11 @@ class WheelCache(object):
                 return 0
 
         names = os.listdir(self._path)
-        if len(names) < self._wheel_cache_size:
-            return
-
         names.sort(key=sort_key, reverse=True)
+        return names
 
+    def _cleanup_wheel_cache(self):
+        names = self._get_cache_contents()
         for name in names[self._wheel_cache_size:]:
             path = os.path.join(self._path, name)
             if os.path.isdir(path):
@@ -90,3 +94,17 @@ class WheelCache(object):
             raise
 
         return self._get_wheel(commit_hash)
+
+    def get_existing_commit_hash(self):
+        """
+        Return a commit hash for which a wheel already exists,
+        or None if none is found.
+        """
+        names = self._get_cache_contents()
+
+        for commit_hash in names[:self._wheel_cache_size]:
+            names = os.listdir(os.path.join(self._path, commit_hash))
+            if any(name.endswith('.whl') for name in names):
+                return commit_hash
+
+        return None

@@ -296,12 +296,17 @@ class Environment(object):
 
     def install_project(self, conf, commit_hash=None):
         """
-        Install a working copy of the benchmarked project into the
-        environment.  Uninstalls any installed copy of the project
-        first.
+        Install the benchmarked project into the environment.
+        Uninstalls any installed copy of the project first.
+        If no specific commit hash is given, one is chosen;
+        either a choice that already exist in wheel cache,
+        or current master branch in the repository.
         """
         if commit_hash is None:
-            commit_hash = self.repo.get_hash_from_head()
+            commit_hash = self._cache.get_existing_commit_hash()
+            if commit_hash is None:
+                self.repo.checkout()
+                commit_hash = self.repo.get_hash_from_head()
 
         self.install_requirements()
         self.uninstall(conf.project)
