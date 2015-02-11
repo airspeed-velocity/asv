@@ -422,7 +422,8 @@ class Benchmarks(dict):
 
         return cls(conf, benchmarks=d)
 
-    def run_benchmarks(self, env, show_stderr=False, quick=False, profile=False):
+    def run_benchmarks(self, env, show_stderr=False, quick=False, profile=False,
+                       skip=None):
         """
         Run all of the benchmarks in the given `Environment`.
 
@@ -443,6 +444,9 @@ class Benchmarks(dict):
         profile : bool, optional
             When `True`, run the benchmark through the `cProfile`
             profiler.
+
+        skip : set, optional
+            Benchmark names to skip.
 
         Returns
         -------
@@ -471,6 +475,8 @@ class Benchmarks(dict):
             times = {}
             benchmarks = sorted(list(six.iteritems(self)))
             for name, benchmark in benchmarks:
+                if skip and name in skip:
+                    continue
                 times[name] = run_benchmark(
                     benchmark, self._benchmark_dir, env, show_stderr=show_stderr,
                     quick=quick, profile=profile)
@@ -478,7 +484,7 @@ class Benchmarks(dict):
 
     def skip_benchmarks(self, env):
         """
-        Mark all of the benchmarks as skipped.
+        Mark benchmarks as skipped.
         """
         log.warn("Skipping {0}".format(env.name))
         with log.indent():

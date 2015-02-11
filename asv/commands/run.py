@@ -13,7 +13,7 @@ from ..benchmarks import Benchmarks
 from ..console import log
 from ..machine import Machine
 from ..repo import get_repo
-from ..results import Results, find_latest_result_hash, get_existing_hashes
+from ..results import Results, find_latest_result_hash, get_existing_hashes, iter_results_for_machine_and_hash
 from .. import util
 
 from .setup import Setup
@@ -55,15 +55,12 @@ class Run(Command):
             repository, this is passed as the first argument to ``git
             log``.  See 'specifying ranges' section of the
             `gitrevisions` manpage for more info.  Also accepts the
-            special values 'NEW', 'ALL', 'MISSING', and
-            'EXISTING'. 'NEW' will benchmark all commits since the
-            latest benchmarked on this machine.  'ALL' will benchmark
-            all commits in the project. 'MISSING' will benchmark all
-            commits in the project's history that have not yet been
-            benchmarked. 'EXISTING' will benchmark against all commits
-            for which there are existing benchmarks on any machine. By
-            default, will benchmark the head of the current master
-            branch.""")
+            special values 'NEW', 'ALL', and 'EXISTING'. 'NEW' will
+            benchmark all commits since the latest benchmarked on this
+            machine.  'ALL' will benchmark all commits in the project.
+            'EXISTING' will benchmark against all commits for which
+            there are existing benchmarks on any machine. By default,
+            will benchmark the head of the current master branch.""")
         parser.add_argument(
             "--steps", "-s", type=int, default=0,
             help="""Maximum number of steps to benchmark.  This is
@@ -116,6 +113,22 @@ class Run(Command):
             information.  If not provided, the hostname is used.  If
             that is not found, and there is only one entry in
             ~/.asv-machine.json, that one entry will be used.""")
+        parser.add_argument(
+            "--skip-existing-successful", action="store_true",
+            help="""Skip running benchmarks that have previous successful
+            results""")
+        parser.add_argument(
+            "--skip-existing-failed", action="store_true",
+            help="""Skip running benchmarks that have previous failed
+            results""")
+        parser.add_argument(
+            "--skip-existing-commits", action="store_true",
+            help="""Skip running benchmarks for commits that have existing
+            results""")
+        parser.add_argument(
+            "--skip-existing", "-k", action="store_true",
+            help="""Skip running benchmarks that have previous successful
+            or failed results""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -128,14 +141,17 @@ class Run(Command):
             bench=args.bench, parallel=args.parallel,
             show_stderr=args.show_stderr, quick=args.quick,
             profile=args.profile, python=args.python,
-            dry_run=args.dry_run, machine=args.machine
+            dry_run=args.dry_run, machine=args.machine,
+            skip_successful=args.skip_existing_successful or args.skip_existing,
+            skip_failed=args.skip_existing_failed or args.skip_existing,
+            skip_existing_commits=args.skip_existing_commits
         )
 
     @classmethod
     def run(cls, conf, range_spec="master", steps=0, bench=None, parallel=1,
             show_stderr=False, quick=False, profile=False, python=None,
-            dry_run=False, machine=None, _machine_file=None,
-            _returns={}):
+            dry_run=False, machine=None, _machine_file=None, skip_successful=False,
+            skip_failed=False, skip_existing_commits=False, _returns={}):
         params = {}
         machine_params = Machine.load(
             machine_name=machine,
@@ -165,12 +181,6 @@ class Run(Command):
             range_spec = repo.get_new_range_spec(latest_result)
         elif range_spec == "ALL":
             range_spec = ""
-        elif range_spec == "MISSING":
-            commit_hashes = repo.get_hashes_from_range("")
-            for h, d in get_existing_hashes(conf.results_dir):
-                if h in commit_hashes:
-                    commit_hashes.remove(h)
-            range_spec = None
 
         if isinstance(range_spec, list):
             commit_hashes = range_spec
@@ -223,10 +233,39 @@ class Run(Command):
         _returns['machine_params'] = machine_params.__dict__
 
         for commit_hash in commit_hashes:
+            skipped_benchmarks = set()
+
+            if skip_successful or skip_failed or skip_existing_commits:
+                try:
+                    for result in iter_results_for_machine_and_hash(
+                            conf.results_dir, machine_params.machine, commit_hash):
+
+                        if skip_existing_commits:
+                            skipped_benchmarks.update(benchmarks)
+                            break
+
+                        for key, value in six.iteritems(result.results):
+                            failed = value is None or (isinstance(value, dict) and None in value['result'])
+                            if skip_failed and failed:
+                                skipped_benchmarks.add(key)
+                            if skip_successful and not failed:
+                                skipped_benchmarks.add(key)
+                except IOError:
+                    pass
+
+            for env in environments:
+                for bench in benchmarks:
+                    if bench in skipped_benchmarks:
+                        log.step()
+
+            if not set(six.iterkeys(benchmarks)).difference(skipped_benchmarks):
+                continue
+
             if commit_hash:
                 log.info(
                     "For {0} commit hash {1}:".format(
                         conf.project, commit_hash[:8]))
+
             with log.indent():
                 for subenv in util.iter_chunks(environments, parallel):
                     log.info("Building for {0}".format(
@@ -244,10 +283,9 @@ class Run(Command):
                         if success:
                             params['python'] = env.python
                             params.update(env.requirements)
-
                             results = benchmarks.run_benchmarks(
                                 env, show_stderr=show_stderr, quick=quick,
-                                profile=profile)
+                                profile=profile, skip=skipped_benchmarks)
                         else:
                             results = benchmarks.skip_benchmarks(env)
 
