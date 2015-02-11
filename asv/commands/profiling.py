@@ -223,5 +223,5 @@ class Profile(Command):
         else:
             with temp_profile(profile_data) as profile_path:
                 stats = pstats.Stats(profile_path)
-                stats.sort_stats('cumtime')
+                stats.sort_stats('cumulative')
                 stats.print_stats()
