@@ -21,14 +21,24 @@ results page back to your project.
 --------
 The URL to the repository for the project.
 
-Currently, only ``git`` repositories are supported, so this must be a
-URL that ``git`` knows how to clone from, for example:
+Currently, only ``git`` and ``hg`` repositories are supported, so this must be
+a URL that ``git`` or ``hg`` know how to clone from, for example:
 
    - git@github.com:spacetelescope/asv.git
 
    - https://github.com/spacetelescope/asv.git
 
+   - ssh://hg@bitbucket.org/yt_analysis/yt
+
+   - hg+https://bitbucket.org/yt_analysis/yt
+
 The repository may be readonly.
+
+.. note::
+
+   Currently, mercurial works only on Python 2, although the interface to
+   Mercurial used in ``asv`` (``python-hglib``) is being ported to Python 3.
+   At the present time, Mercurial support will only function on Python 2.
 
 ``show_commit_url``
 -------------------

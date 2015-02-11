@@ -38,6 +38,10 @@ setup(
         str('six>=1.4')
     ],
 
+    extras_require={
+        str('hg'): ["python-hglib>=1.5"]
+    },
+
     package_data={
         str('asv'): [
             'www/*.html',
