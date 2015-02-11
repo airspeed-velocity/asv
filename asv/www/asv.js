@@ -858,8 +858,10 @@ $(function() {
                 /* For parameterized tests: names of benchmark parameters */
                 var params = master_json.benchmarks[current_benchmark].params;
                 var param_names = master_json.benchmarks[current_benchmark].param_names;
-                /* Selected permutations of benchmark parameters */
-                var param_permutations = permutations(param_selection);
+                /* Selected permutations of benchmark parameters, omitting x-axis */
+                var selection = obj_copy(param_selection);
+                selection[x_coordinate_axis] = [null]; /* value not referenced, set to null */
+                var param_permutations = permutations(selection);
 
                 /* Generate a master list of URLs and legend labels for
                    the graphs. */
