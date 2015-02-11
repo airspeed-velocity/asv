@@ -128,6 +128,9 @@ class Profile(Command):
             raise util.UserError(
                 "Must specify benchmark to run")
 
+        if python == "same":
+            conf.dvcs = "none"
+
         repo = get_repo(conf)
 
         if python is not None:
@@ -152,7 +155,7 @@ class Profile(Command):
 
         # First, we see if we already have the profile in the results
         # database
-        if not force:
+        if not force and commit_hash:
             for result in iter_results_for_machine(
                     conf.results_dir, machine_name):
                 if hash_equal(commit_hash, result.commit_hash):
@@ -169,7 +172,7 @@ class Profile(Command):
                 log.error("No environments selected")
                 return
 
-            if revision is not None:
+            if revision != "master":
                 for env in environments:
                     if not env.can_install_project():
                         raise util.UserError(
@@ -220,5 +223,5 @@ class Profile(Command):
         else:
             with temp_profile(profile_data) as profile_path:
                 stats = pstats.Stats(profile_path)
-                stats.sort_stats('cumtime')
+                stats.sort_stats('cumulative')
                 stats.print_stats()

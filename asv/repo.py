@@ -107,6 +107,60 @@ class Repo(object):
         raise NotImplementedError()
 
 
+class NoRepository(Repo):
+    """
+    Project installed in the current environment
+    """
+
+    dvcs = "none"
+
+    def __init__(self, url=None, path=None, shared=False):
+        self.url = None
+        self.path = None
+
+    def _raise_error(self):
+        raise ValueError("Using the currently installed project version: "
+                         "operations requiring repository are not possible")
+
+    def _check_branch(self, branch):
+        if branch is not None:
+            self._raise_error()
+
+    @classmethod
+    def url_match(cls, url):
+        return False
+
+    def checkout(self, branch):
+        self._check_branch(branch)
+
+    def clean(self, branch):
+        self._check_branch(branch)
+
+    def get_date(self, hash):
+        self._raise_error()
+
+    def get_hashes_from_range(self, range):
+        return [None]
+
+    def get_hash_from_head(self):
+        return None
+
+    def get_hash_from_tag(self, range):
+        return None
+
+    def get_tags(self):
+        return []
+
+    def get_date_from_tag(self, tag):
+        self._raise_error()
+
+    def checkout_remote_branch(self, remote, branch):
+        self._raise_error()
+
+    def checkout_parent(self):
+        self._raise_error()
+
+
 def get_repo(conf):
     """
     Get a Repo subclass for the given configuration.

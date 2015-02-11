@@ -61,6 +61,10 @@ class Setup(Command):
     def run(cls, conf, parallel=-1):
         environments = list(environment.get_environments(conf))
 
+        if all(isinstance(env, environment.ExistingEnvironment) for env in environments):
+            # Nothing to do, so don't print anything
+            return environments
+
         parallel, multiprocessing = util.get_multiprocessing(parallel)
 
         log.info("Creating environments")

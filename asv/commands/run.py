@@ -143,6 +143,11 @@ class Run(Command):
         params.update(machine_params.__dict__)
         machine_params.save(conf.results_dir)
 
+        if python == "same":
+            conf.dvcs = "none"
+            conf.repo = ""
+            dry_run = True
+
         repo = get_repo(conf)
 
         if python is not None:
@@ -218,9 +223,10 @@ class Run(Command):
         _returns['machine_params'] = machine_params.__dict__
 
         for commit_hash in commit_hashes:
-            log.info(
-                "For {0} commit hash {1}:".format(
-                    conf.project, commit_hash[:8]))
+            if commit_hash:
+                log.info(
+                    "For {0} commit hash {1}:".format(
+                        conf.project, commit_hash[:8]))
             with log.indent():
                 for subenv in util.iter_chunks(environments, parallel):
                     log.info("Building for {0}".format(
