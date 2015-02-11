@@ -86,3 +86,11 @@
 .nav>li>a {
     padding: 0;
 }
+
+.nav-list>li {
+    overflow-x: hidden;
+}
+
+.nav-list>li>.nav-header {
+    white-space: nowrap;
+}
