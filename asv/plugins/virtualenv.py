@@ -104,8 +104,6 @@ class Virtualenv(environment.Environment):
 
         self.create()
 
-        self._run_executable('pip', ['install', '--upgrade',
-                                     'setuptools'])
         self._run_executable('pip', ['install', 'wheel'])
 
         if self._requirements:
