@@ -26,7 +26,7 @@ def compatible_results(result, benchmark):
     Obtain values from *result* that are compatible with
     parameters of *benchmark*
     """
-    if not benchmark or not benchmark['params']:
+    if not benchmark or not benchmark.get('params'):
         # Not a parameterized benchmark, or a benchmark that is not
         # currently there. The javascript side doesn't know how to
         # visualize benchmarks unless the params are the same as those
