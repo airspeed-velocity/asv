@@ -21,7 +21,13 @@ from ..repo import Repo
 
 class Hg(Repo):
     dvcs = "hg"
-    def __init__(self, url, path):
+
+    def __init__(self, url, path, shared=False):
+        # TODO: shared repositories in Mercurial are only possible
+        # through an extension, and it's not clear how to use those in
+        # this context.  So here, we always make full clones for
+        # each of the environments.
+
         self._path = os.path.abspath(path)
         self._pulled = False
         if hglib is None:
