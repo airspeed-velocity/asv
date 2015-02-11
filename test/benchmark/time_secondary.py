@@ -13,6 +13,8 @@ from .shared import shared_function
 
 
 class TimeSecondary:
+    goal_time = 0.05
+
     def time_factorial(self):
         x = 1
         for i in xrange(100):

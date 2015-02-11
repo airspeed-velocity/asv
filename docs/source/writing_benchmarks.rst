@@ -133,6 +133,60 @@ The following attributes are applicable to all benchmark types:
 - ``timeout``: The amount of time, in seconds, to give the benchmark
   to run before forcibly killing it.  Defaults to 60 seconds.
 
+Parameterized benchmarks
+------------------------
+
+You might want to run a single benchmark for multiple values of some
+parameter. This can be done by adding a ``params`` attribute to the
+benchmark object::
+
+    def time_range(n):
+       for i in range(n):
+           pass
+    time_range.params = [0, 10, 20, 30]
+
+This will also make the setup and teardown functions parameterized::
+
+    class Suite:
+        params = [0, 10, 20]
+
+        def setup(self, n):
+            self.obj = range(n)
+
+        def teardown(self, n):
+            del self.obj
+
+        def time_range_iter(self, n):
+            for i in self.obj:
+                pass
+
+If ``setup`` raises a ``NotImplementedError``, the test is skipped
+for the parameter values in question.
+
+The parameter values can be any Python objects. However, it is often
+best to use only strings or numbers, because these have simple
+unambiguous text representations.
+
+When you have multiple parameters, the test is run for all
+of their combinations::
+
+     def time_ranges(n, func_name):
+         f = {'range': range, 'arange': numpy.arange}[f]
+         for i in f(n):
+             pass
+
+     time_ranges.params = ([10, 1000], ['range', 'arange'])
+
+The test will be run for parameters ``(10, 'range'), (10, 'arange'),
+(1000, 'range'), (1000, 'arange')``.
+
+You can also provide informative names for the parameters::
+
+     time_ranges.param_names = ['n', 'function']
+
+These will appear in the test output; if not provided you get default
+names such as "param1", "param2".
+
 Benchmark types
 ---------------
 
@@ -198,6 +252,10 @@ possible, with as much extraneous setup moved to a ``setup`` function::
   timing.  That's why the default of ``time.process_time``, which only
   measures the time used by the current process, is often the best
   choice.
+
+The ``goal_time``, ``number``, ``repeat``, and ``timer`` attributes
+can be adjusted in the ``setup()`` routine, which can be useful for
+parameterized benchmarks.
 
 Memory
 ``````

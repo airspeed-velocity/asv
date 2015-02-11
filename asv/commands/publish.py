@@ -6,8 +6,10 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 import shutil
+import itertools
 
 import six
+from six.moves import zip as izip
 
 from . import Command
 from ..benchmarks import Benchmarks
@@ -17,6 +19,67 @@ from ..machine import iter_machine_files
 from ..repo import get_repo
 from ..results import iter_results
 from .. import util
+
+
+def compatible_results(result, benchmark):
+    """
+    Obtain values from *result* that are compatible with
+    parameters of *benchmark*
+    """
+    if not benchmark or not benchmark['params']:
+        # Not a parameterized benchmark, or a benchmark that is not
+        # currently there. The javascript side doesn't know how to
+        # visualize benchmarks unless the params are the same as those
+        # of the current benchmark. Single floating point values are
+        # OK, but not parameterized ones.
+        if isinstance(result, dict):
+            return None
+        else:
+            return result
+
+    if result is None:
+        # All results missing, eg. build failure
+        return result
+
+    if not isinstance(result, dict) or 'params' not in result:
+        # Not a parameterized result -- test probably was once
+        # non-parameterized
+        return None
+
+    # Pick results for those parameters that also appear in the
+    # current benchmark
+    old_results = {}
+    for param, value in izip(itertools.product(*result['params']),
+                             result['result']):
+        old_results[param] = value
+
+    new_results = []
+    for param in itertools.product(*benchmark['params']):
+        new_results.append(old_results.get(param))
+    return new_results
+
+
+def check_benchmark_params(name, benchmark):
+    """
+    Check benchmark params and param_keys items, so that the javascript can
+    assume this data is valid. It is checked in benchmark.py already when it
+    is generated, but best to double check in any case.
+    """
+    if 'params' not in benchmark:
+        # Old-format benchmarks.json
+        benchmark['params'] = []
+        benchmark['param_names'] = []
+
+    msg = "Information in benchmarks.json for benchmark %s is malformed" % (
+        name)
+    if (not isinstance(benchmark['params'], list) or
+        not isinstance(benchmark['param_names'], list)):
+        raise ValueError(msg)
+    if len(benchmark['params']) != len(benchmark['param_names']):
+        raise ValueError(msg)
+    for item in benchmark['params']:
+        if not isinstance(item, list):
+            raise ValueError(msg)
 
 
 class Publish(Command):
@@ -77,20 +140,23 @@ class Publish(Command):
                     params[key].add(val)
 
                 for key, val in six.iteritems(results.results):
+                    b = benchmarks.get(key)
+                    result = compatible_results(val, b)
+
                     benchmark_names.add(key)
                     graph = Graph(key, results.params, params)
                     if graph.path in graphs:
                         graph = graphs[graph.path]
                     else:
                         graphs[graph.path] = graph
-                    graph.add_data_point(results.date, val)
+                    graph.add_data_point(results.date, result)
 
-                    graph = Graph(key, {'summary': None}, {})
+                    graph = Graph(key, {'summary': None}, {}, summary=True)
                     if graph.path in graphs:
                         graph = graphs[graph.path]
                     else:
                         graphs[graph.path] = graph
-                    graph.add_data_point(results.date, val)
+                    graph.add_data_point(results.date, result)
 
         log.step()
         log.info("Generating graphs")
@@ -112,6 +178,8 @@ class Publish(Command):
         log.step()
         log.info("Writing index")
         benchmark_map = dict(benchmarks)
+        for key in six.iterkeys(benchmark_map):
+            check_benchmark_params(key, benchmark_map[key])
         for key, val in six.iteritems(params):
             val = list(val)
             val.sort(key=lambda x: x or '')

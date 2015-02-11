@@ -3,7 +3,7 @@
 
 """
 Manage a single benchmark and, when run from the commandline, report
-its runtime to stdout.
+its runtime to a file.
 """
 
 # !!!!!!!!!!!!!!!!!!!! NOTE !!!!!!!!!!!!!!!!!!!!
@@ -28,6 +28,7 @@ import re
 import sys
 import textwrap
 import timeit
+import itertools
 
 # The best timer we can use is time.process_time, but it is not
 # available in the Python stdlib until Python 3.3.  This is a ctypes
@@ -201,6 +202,42 @@ class Benchmark(object):
         self.type = "base"
         self.unit = "unit"
 
+        self._params = _get_first_attr(attr_sources, "params", [])
+        self.param_names = _get_first_attr(attr_sources, "param_names", [])
+        self._current_params = ()
+
+        # Enforce params format
+        try:
+            self.param_names = [str(x) for x in list(self.param_names)]
+        except ValueError:
+            raise ValueError("%s.param_names is not a list of strings" % (name,))
+
+        try:
+            self._params = list(self._params)
+        except ValueError:
+            raise ValueError("%s.params is not a list" % (name,))
+
+        if self._params and not isinstance(self._params[0], (tuple, list)):
+            # Accept a single list for one parameter only
+            self._params = [self._params]
+        else:
+            self._params = [[item for item in entry] for entry in self._params]
+
+        if len(self.param_names) != len(self._params):
+            self.param_names = self.param_names[:len(self._params)]
+            self.param_names += ['param%d' % (k+1,) for k in range(len(self.param_names),
+                                                                   len(self._params))]
+
+        # Exported parameter representations
+        self.params = [[repr(item) for item in entry] for entry in self._params]
+
+    def set_param_idx(self, param_idx):
+        try:
+            self._current_params, = itertools.islice(itertools.product(*self._params),
+                                                     param_idx, param_idx + 1)
+        except ValueError:
+            raise ValueError("Invalid benchmark parameter permutation index: %r" % (param_idx,))
+
     def __repr__(self):
         return '<{0} {1}>'.format(self.__class__.__name__, self.name)
 
@@ -284,6 +321,7 @@ class Benchmark(object):
 
         benchmark = find_on_filesystem(
             root, parts, os.path.basename(root))
+        benchmark._param_idx = param_idx
 
         if quick:
             benchmark.repeat = 1
@@ -292,19 +330,24 @@ class Benchmark(object):
         return benchmark
 
     def do_setup(self):
-        for setup in self._setups:
-            setup()
+        try:
+            for setup in self._setups:
+                setup(*self._current_params)
+        except NotImplementedError:
+            # allow skipping test
+            return True
+        return False
 
     def do_teardown(self):
         for teardown in self._teardowns:
-            teardown()
+            teardown(*self._current_params)
 
     def do_run(self):
-        return self.run()
+        return self.run(*self._current_params)
 
     def do_profile(self, filename=None):
         def method_caller():
-            run()
+            run(*params)
 
         if profile is None:
             raise RuntimeError("cProfile could not be imported")
@@ -316,7 +359,8 @@ class Benchmark(object):
                 code = method_caller.__code__
 
             profile.runctx(
-                code, {'run': self.func}, {}, filename)
+                code, {'run': self.func, 'params': self._current_params},
+                {}, filename)
 
 
 class TimeBenchmark(Benchmark):
@@ -330,17 +374,32 @@ class TimeBenchmark(Benchmark):
         Benchmark.__init__(self, name, func, attr_sources)
         self.type = "time"
         self.unit = "seconds"
-        self.goal_time = _get_first_attr(attr_sources, 'goal_time', 2.0)
-        self.timer = _get_first_attr(attr_sources, 'timer', process_time)
-        self.repeat = _get_first_attr(
-            attr_sources, 'repeat', timeit.default_repeat)
-        self.number = int(_get_first_attr(attr_sources, 'number', 0))
+        self._attr_sources = attr_sources
+        self._load_vars()
 
-    def run(self):
+    def _load_vars(self):
+        self.repeat = _get_first_attr(
+            self._attr_sources, 'repeat', timeit.default_repeat)
+        self.number = int(_get_first_attr(self._attr_sources, 'number', 0))
+        self.goal_time = _get_first_attr(self._attr_sources, 'goal_time', 2.0)
+        self.timer = _get_first_attr(self._attr_sources, 'timer', process_time)
+
+    def do_setup(self):
+        result = Benchmark.do_setup(self)
+        # For parameterized tests, setup() is allowed to change these
+        self._load_vars()
+        return result
+
+    def run(self, *param):
         number = self.number
 
+        if param:
+            func = lambda: self.func(*param)
+        else:
+            func = self.func
+
         timer = timeit.Timer(
-            stmt=self.func,
+            stmt=func,
             timer=self.timer)
 
         if number == 0:
@@ -371,14 +430,14 @@ class MemBenchmark(Benchmark):
         self.type = "memory"
         self.unit = "bytes"
 
-    def run(self):
+    def run(self, *param):
         # We can't import asizeof directly, because we haven't loaded
         # the asv package in the benchmarking process.
         path = os.path.join(
             os.path.dirname(__file__), 'extern', 'asizeof.py')
         asizeof = imp.load_source('asizeof', path)
 
-        obj = self.func()
+        obj = self.func(*param)
 
         sizeof2 = asizeof.asizeof([obj, obj])
         sizeofcopy = asizeof.asizeof([obj, copy.copy(obj)])
@@ -398,8 +457,8 @@ class TrackBenchmark(Benchmark):
         self.type = _get_first_attr(attr_sources, "type", "track")
         self.unit = _get_first_attr(attr_sources, "unit", "unit")
 
-    def run(self):
-        return self.func()
+    def run(self, *param):
+        return self.func(*param)
 
 
 # TODO: Support the creation of custom benchmark types
@@ -475,26 +534,26 @@ def disc_benchmarks(root):
             yield benchmark
 
 
-def list_benchmarks(root):
+def list_benchmarks(root, fp):
     """
-    List all of the discovered benchmarks to stdout as JSON.
+    List all of the discovered benchmarks to fp as JSON.
     """
     update_sys_path(root)
 
     # Streaming of JSON back out to the master process
 
-    sys.stdout.write('[')
+    fp.write('[')
     first = True
     for benchmark in disc_benchmarks(root):
         if not first:
-            sys.stdout.write(', ')
+            fp.write(', ')
         clean = dict(
             (k, v) for (k, v) in benchmark.__dict__.items()
-            if isinstance(v, (str, int, float, list, dict)) and not
+            if isinstance(v, (str, int, float, list, dict, bool)) and not
                k.startswith('_'))
-        json.dump(clean, sys.stdout, skipkeys=True)
+        json.dump(clean, fp, skipkeys=True)
         first = False
-    sys.stdout.write(']')
+    fp.write(']')
 
 
 if __name__ == '__main__':
@@ -502,29 +561,44 @@ if __name__ == '__main__':
     args = sys.argv[2:]
 
     if mode == 'discover':
-        benchmark_dir = args[0]
-        list_benchmarks(benchmark_dir)
+        benchmark_dir, result_file = args
+        with open(result_file, 'w') as fp:
+            list_benchmarks(benchmark_dir, fp)
         sys.exit(0)
 
     elif mode == 'run':
-        benchmark_dir, benchmark_id, quick, profile_path = args
+        benchmark_dir, benchmark_id, quick, profile_path, result_file = args
         quick = (quick == 'True')
         if profile_path == 'None':
             profile_path = None
 
+        if '-' in benchmark_id:
+            try:
+                benchmark_id, param_idx = benchmark_id.split('-', 1)
+                param_idx = int(param_idx)
+            except ValueError:
+                raise ValueError("Benchmark id %r is invalid" % (name,))
+        else:
+            param_idx = None
+
         benchmark = Benchmark.from_name(
             benchmark_dir, benchmark_id, quick=quick)
-        benchmark.do_setup()
-        result = benchmark.do_run()
-        if profile_path is not None:
-            benchmark.do_profile(profile_path)
-        benchmark.do_teardown()
+        if param_idx is not None:
+            benchmark.set_param_idx(param_idx)
+        skip = benchmark.do_setup()
+        try:
+            if skip:
+                result = None
+            else:
+                result = benchmark.do_run()
+                if profile_path is not None:
+                    benchmark.do_profile(profile_path)
+        finally:
+            benchmark.do_teardown()
 
-        # Write the output value as the last line of the output.
-        sys.stdout.write('\n')
-        sys.stdout.write(json.dumps(result))
-        sys.stdout.write('\n')
-        sys.stdout.flush()
+        # Write the output value
+        with open(result_file, 'w') as fp:
+            json.dump(result, fp)
 
         # Not strictly necessary, but it's explicit about the successful
         # exit code that we want.

@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
+import itertools
 
 import six
 from six.moves import xrange
@@ -19,7 +20,8 @@ class Graph(object):
     Unlike "results", which contain the timings for a single commit,
     these contain the timings for a single benchmark.
     """
-    def __init__(self, benchmark_name, params, all_params):
+    def __init__(self, benchmark_name, params, all_params,
+                 summary=False):
         """
         Initially the graph contains no data.  It must be added using
         multiple calls to `add_data_point`.
@@ -38,6 +40,11 @@ class Graph(object):
             benchmark results.  This is used to fill in blanks for
             parameters that might not have been recorded for a
             particular result.
+
+        summary : bool, optional
+            Whether to generate summary graph, averaged over parameter
+            configurations (if test is parametric).
+
         """
         # Fill in missing parameters
         for key in six.iterkeys(all_params):
@@ -60,9 +67,10 @@ class Graph(object):
                 parts.append('{0}-{1}'.format(key, val))
         parts.append(benchmark_name)
 
+        self.summary = summary
         self.path = os.path.join(*parts)
 
-    def add_data_point(self, date, runtime):
+    def add_data_point(self, date, value):
         """
         Add a data point to the graph.
 
@@ -72,12 +80,16 @@ class Graph(object):
             A Javascript timestamp value representing the time a
             particular commit was merged into the repository.
 
-        runtime : float
-            The runtime (in seconds) of the benchmark.
+        value : float or list
+            The value(s) to plot in the benchmark.
+
         """
+        # Add simple time series
         self.data_points.setdefault(date, [])
-        if runtime is not None:
-            self.data_points[date].append(runtime)
+        if value is not None:
+            if self.summary and hasattr(value, '__len__'):
+                value = _mean_with_none(value)
+            self.data_points[date].append(value)
 
     def get_data(self):
         """
@@ -87,7 +99,11 @@ class Graph(object):
             if not len(v):
                 return None
             else:
-                return sum(v) / float(len(v))
+                if hasattr(v[0], '__len__'):
+                    return [_mean_with_none(x[j] for x in v)
+                            for j in range(len(v[0]))]
+                else:
+                    return _mean_with_none(v)
 
         val = [(k, mean(v)) for (k, v) in
                six.iteritems(self.data_points)]
@@ -119,3 +135,15 @@ class Graph(object):
         val = self.get_data()
 
         util.write_json(filename, val)
+
+
+def _mean_with_none(values):
+    """
+    Take a mean, with the understanding that None and NaN stand for
+    missing data.
+    """
+    values = [x for x in values if x is not None and x == x]
+    if values:
+        return sum(values) / float(len(values))
+    else:
+        return None

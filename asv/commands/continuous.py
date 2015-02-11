@@ -10,6 +10,7 @@ import six
 
 from . import Command
 from .run import Run
+from .compare import unroll_result
 
 from ..console import truncate_left, color_print
 from ..repo import get_repo
@@ -61,7 +62,7 @@ class Continuous(Command):
 
     @classmethod
     def run(cls, conf, branch="master", factor=2.0, bench=None,
-            machine=None):
+            machine=None, _machine_file=None):
         repo = get_repo(conf)
         repo.pull()
 
@@ -76,32 +77,35 @@ class Continuous(Command):
 
         result = Run.run(
             conf, range_spec=commit_hashes, bench=bench,
-            machine=machine, _returns=run_objs)
+            machine=machine, _returns=run_objs,
+            _machine_file=_machine_file)
         if result:
             return result
 
         tabulated = []
+        all_benchmarks = {}
         for commit_hash in commit_hashes:
             subtab = {}
             totals = {}
-            for benchmark in run_objs['benchmarks']:
-                subtab[benchmark] = 0.0
-                totals[benchmark] = 0
 
             for env in run_objs['environments']:
                 filename = results.get_filename(
-                    run_objs['machine_params']['machine'], commit_hash, env)
+                    run_objs['machine_params']['machine'], commit_hash, env.name)
                 filename = os.path.join(conf.results_dir, filename)
                 result = results.Results.load(filename)
 
-                for benchmark in run_objs['benchmarks']:
-                    timing = results.results.get(benchmark, None)
-                    if timing is not None:
-                        subtab[benchmark] += timing
-                        totals[benchmark] += 1
+                for benchmark_name, benchmark in six.iteritems(run_objs['benchmarks']):
+                    for name, value in unroll_result(benchmark_name,
+                                                     result.results.get(benchmark_name, None)):
+                        if value is not None:
+                            all_benchmarks[name] = benchmark
+                            subtab.setdefault(name, 0.0)
+                            totals.setdefault(name, 0)
+                            subtab[name] += value
+                            totals[name] += 1
 
-            for benchmark in run_objs['benchmarks']:
-                subtab[benchmark] /= totals.get(benchmark, 1)
+            for name in totals.keys():
+                subtab[name] /= totals[name]
 
             tabulated.append(subtab)
 
@@ -109,7 +113,7 @@ class Continuous(Command):
 
         table = []
         slowed_down = False
-        for name, benchmark in six.iteritems(run_objs['benchmarks']):
+        for name, benchmark in six.iteritems(all_benchmarks):
             change = after[name] / before[name]
             if change > factor or change < 1.0 / factor:
                 table.append(
@@ -117,7 +121,7 @@ class Continuous(Command):
             if change > factor:
                 slowed_down = True
 
-        print()
+        print("")
 
         if not len(table):
             color_print("BENCHMARKS NOT SIGNIFICANTLY CHANGED.\n", 'green')
@@ -126,7 +130,7 @@ class Continuous(Command):
         table.sort(reverse=True)
 
         color_print("SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY.\n", 'red')
-        print()
+        print("")
         color_print(
             "{0:40s}   {1:>8}   {2:>8}   {3:>8}\n".format("BENCHMARK", "BEFORE", "AFTER", "FACTOR"),
             'blue')

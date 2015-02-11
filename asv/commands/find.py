@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import math
+import six
 
 from . import Command
 from ..benchmarks import Benchmarks
@@ -129,9 +130,42 @@ class Find(Command):
             env.install_project(conf, commit_hash)
             x = benchmarks.run_benchmarks(
                 env, show_stderr=show_stderr)
-            results[i] = list(x.values())[0]['result']
+            result = list(x.values())[0]['result']
+
+            if isinstance(result, dict):
+                # parameterized results
+                result = result['result']
+            else:
+                # single value
+                result = [result]
+
+            results[i] = result
 
             return results[i]
+
+        def non_null_results(*results):
+            """
+            Whether some value is non-null in all result sets
+            """
+            for values in zip(*results):
+                if all(x is not None for x in values):
+                    return True
+            return False
+
+        def difference_3way(a, b, c):
+            """
+            Return largest regression (a-b, b-c).
+            """
+            results_ab = [0]
+            results_bc = [0]
+            for va, vb, vc in zip(a, b, c):
+                if va is not None and vb is not None and vc is not None:
+                    denom = abs(va) + abs(vb) + abs(vc)
+                    if denom == 0:
+                        denom = 1.0
+                    results_ab.append((va - vb) / denom)
+                    results_bc.append((vb - vc) / denom)
+            return max(results_ab), max(results_bc)
 
         def do_search(lo, hi):
             if hi - lo <= 1:
@@ -147,7 +181,8 @@ class Find(Command):
                 lo_result = None
                 while lo_result is None:
                     lo_result = do_benchmark(lo)
-                    if lo_result is None:
+                    if not non_null_results(lo_result):
+                        lo_result = None
                         lo += 1
                         if lo >= mid:
                             raise util.UserError("Too many commits failed")
@@ -155,7 +190,8 @@ class Find(Command):
                 mid_result = None
                 while mid_result is None:
                     mid_result = do_benchmark(mid)
-                    if mid_result is None:
+                    if not non_null_results(mid_result, lo_result):
+                        mid_result = None
                         mid += 1
                         if mid >= hi:
                             raise util.UserError("Too many commits failed")
@@ -163,19 +199,19 @@ class Find(Command):
                 hi_result = None
                 while hi_result is None:
                     hi_result = do_benchmark(hi)
-                    if hi_result is None:
+                    if not non_null_results(lo_result, mid_result, hi_result):
+                        hi_result = None
                         hi -= 1
                         if hi <= mid:
                             raise util.UserError("Too many commits failed")
 
-            diff_a = mid_result - lo_result
-            diff_b = hi_result - mid_result
+            diff_b, diff_a = difference_3way(hi_result, mid_result, lo_result)
 
             if invert:
                 diff_a *= -1.0
                 diff_b *= -1.0
 
-            if diff_a > diff_b:
+            if diff_a >= diff_b:
                 return do_search(lo, mid)
             else:
                 return do_search(mid, hi)
