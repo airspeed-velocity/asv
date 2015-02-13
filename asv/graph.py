@@ -13,6 +13,14 @@ from six.moves import xrange
 from . import util
 
 
+# This is the maximum number of points to include in summary graphs.
+# It is based on the number of pixels in the summary graph display on
+# a recent Retina MacBook Pro (3840 pixels across the screen, divided
+# by 5 summaries across, divided by 2 for good measure and to account
+# for width of the line).
+RESAMPLED_POINTS = (3840 / 5 / 2)
+
+
 class Graph(object):
     """
     Manages a single "line" in the resulting plots for the front end.
@@ -91,6 +99,25 @@ class Graph(object):
                 value = _mean_with_none(value)
             self.data_points[date].append(value)
 
+    def resample_data(self, val):
+        if len(val) < RESAMPLED_POINTS:
+            return val
+
+        min_time = min(x[0] for x in val)
+        max_time = max(x[0] for x in val)
+        step_size = int((max_time - min_time) / RESAMPLED_POINTS)
+
+        new_val = []
+        j = 0
+        for i in xrange(min_time + step_size, max_time + step_size, step_size):
+            chunk = []
+            while j < len(val) and val[j][0] < i:
+                chunk.append(val[j][1])
+                j += 1
+            if len(chunk):
+                new_val.append((i, _mean_with_none(chunk)))
+        return new_val
+
     def get_data(self):
         """
         Get the sorted and reduced data.
@@ -119,7 +146,12 @@ class Graph(object):
             if val[j][1] is not None:
                 break
 
-        return val[i:j+1]
+        val = val[i:j+1]
+
+        if self.summary:
+            val = self.resample_data(val)
+
+        return val
 
     def save(self, html_dir):
         """
