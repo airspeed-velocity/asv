@@ -72,6 +72,15 @@ A benchmark suite directory has the following layout.  The
 
     - ``code``: The Python code of the benchmark
 
+    - ``params``: List of lists describing parameter values of a
+      parameterized benchmark. If benchmark is not parameterized, an
+      empty list. Otherwise, the n-th entry of the list is a list of
+      the Python ``repr()`` strings for the values the n-th parameter
+      should loop over.
+
+    - ``param_names``: Names for parameters for a parameterized
+      benchmark. Must be of the same length as the ``params`` list.
+
     Other keys are specific to the kind of benchmark, and correspond
     to :ref:`benchmark-attributes`.
 
@@ -96,6 +105,20 @@ A benchmark suite directory has the following layout.  The
 
       - ``results``: A dictionary from benchmark names to benchmark
         results.
+
+        - If non-parameterized benchmark, the result is a single value
+
+        - For parameterized benchmarks, the result is a dictionary
+          with keys ``params`` and ``result``. The ``params`` value
+          contains a copy of the parameter values of the benchmark, as
+          described above. If the user has modified the benchmark
+          after the benchmark was run, these may differ from the
+          current values. The ``result`` value is a list of
+          results. Each entry corresponds to one combination of the
+          parameter values. The n-th entry in the list corresponds to
+          the parameter combination ``itertools.product(*params)[n]``,
+          i.e., the results appear in cartesian product order, with
+          the last parameters varying fastest.
 
 - ``$html_dir/``: The output of ``asv publish``, that turns the raw
   results in ``$results_dir/`` into something viewable in a web
@@ -132,4 +155,8 @@ A benchmark suite directory has the following layout.  The
 
     - ``BENCHMARK_NAME.json``: At the leaves of this tree are the
       actual benchmark graphs.  It contains a list of pairs, where
-      each pair is of the form ``(timestamp, result_value)``.
+      each pair is of the form ``(timestamp, result_value)``.  For
+      parameterized benchmarks, ``result_value`` is a list of results,
+      corresponding to ``itertools.product`` iteration over the
+      parameter combinations, similarly as in the result files. For
+      non-parameterized benchmarks, it is directly the result.
