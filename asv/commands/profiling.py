@@ -143,8 +143,9 @@ class Profile(Command):
 
         machine_name = Machine.get_unique_machine_name()
         if revision is None:
-            revision = 'master'
-        commit_hash = repo.get_hash_from_name(revision)
+            commit_hash = repo.get_hash_from_master()
+        else:
+            commit_hash = repo.get_hash_from_name(revision)
 
         profile_data = None
         checked_out = set()
@@ -174,7 +175,7 @@ class Profile(Command):
                 log.error("No environments selected")
                 return
 
-            if revision != "master":
+            if revision is not None:
                 for env in environments:
                     if not env.can_install_project():
                         raise util.UserError(
