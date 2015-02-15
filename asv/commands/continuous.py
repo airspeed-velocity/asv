@@ -27,10 +27,12 @@ class Continuous(Command):
             continuous integration.""")
 
         parser.add_argument(
-            'branch', nargs=1, default='master',
-            help="""The HEAD branch to test.  This commit and its
-            parent commit will be used as the two commits for
-            comparison.""")
+            'base', nargs='?', default=None,
+            help="""The commit/branch to compare against. By default, the
+            parent of the tested commit.""")
+        parser.add_argument(
+            'branch', default=None,
+            help="""The commit/branch to test. By default, the master branch.""")
         parser.add_argument(
             '--factor', "-f", nargs='?', type=float, default=2.0,
             help="""The factor above or below which a result is
@@ -56,18 +58,24 @@ class Continuous(Command):
     @classmethod
     def run_from_conf_args(cls, conf, args):
         return cls.run(
-            conf=conf, branch=args.branch[0], factor=args.factor,
+            conf=conf, branch=args.branch, base=args.base, factor=args.factor,
             bench=args.bench, machine=args.machine
         )
 
     @classmethod
-    def run(cls, conf, branch="master", factor=2.0, bench=None,
+    def run(cls, conf, branch=None, base=None, factor=2.0, bench=None,
             machine=None, _machine_file=None):
         repo = get_repo(conf)
         repo.pull()
 
-        head = repo.get_hash_from_name(branch)
-        parent = repo.get_hash_from_parent(branch)
+        if branch is None:
+            head = repo.get_hash_from_master()
+        else:
+            head = repo.get_hash_from_name(branch)
+        if base is None:
+            parent = repo.get_hash_from_parent(head)
+        else:
+            parent = repo.get_hash_from_name(base)
 
         commit_hashes = [head, parent]
         run_objs = {}
