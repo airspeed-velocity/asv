@@ -144,14 +144,10 @@ class Profile(Command):
         machine_name = Machine.get_unique_machine_name()
         if revision is None:
             revision = 'master'
-        commit_hash = repo.get_hash_from_tag(revision)
+        commit_hash = repo.get_hash_from_name(revision)
 
         profile_data = None
-
-        # Even if we don't end up running the profile, we need to
-        # checkout the correct commit_hash so the line numbers in the
-        # profile data match up with what's in the source tree.
-        repo.checkout(commit_hash)
+        checked_out = set()
 
         # First, we see if we already have the profile in the results
         # database
@@ -162,6 +158,12 @@ class Profile(Command):
                     if result.has_profile(benchmark):
                         if (environment is None or
                             result.env.name == environment):
+                            if result.env.name not in checked_out:
+                                # We need to checkout the correct commit so that
+                                # the line numbers in the profile data match up with
+                                # what's in the source tree.
+                                result.env.checkout_project(commit_hash)
+                                checked_out.add(result.env.name)
                             profile_data = result.get_profile(benchmark)
                             break
 

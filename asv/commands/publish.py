@@ -173,7 +173,7 @@ class Publish(Command):
             tags = {}
             for tag in repo.get_tags():
                 log.dot()
-                tags[tag] = repo.get_date_from_tag(tag)
+                tags[tag] = repo.get_date_from_name(tag)
 
         log.step()
         log.info("Writing index")

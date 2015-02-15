@@ -66,11 +66,8 @@ class Continuous(Command):
         repo = get_repo(conf)
         repo.pull()
 
-        repo.checkout_remote_branch('origin', branch)
-        head = repo.get_hash_from_head()
-
-        repo.checkout_parent()
-        parent = repo.get_hash_from_head()
+        head = repo.get_hash_from_name(branch)
+        parent = repo.get_hash_from_parent(branch)
 
         commit_hashes = [head, parent]
         run_objs = {}

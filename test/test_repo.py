@@ -16,14 +16,18 @@ except ImportError:
     hglib = None
 
 def _test_generic_repo(conf,
+                       tmpdir,
                        hash_range="ae0c27b65741..e6f382a704f7",
                        master="master",
                        branch="gh-pages"):
 
+    workcopy_dir = six.text_type(tmpdir.join("workcopy"))
+
     r = repo.get_repo(conf)
-    r.checkout(master)
-    r.checkout(branch)
-    r.checkout(master)
+
+    r.checkout(workcopy_dir, master)
+    r.checkout(workcopy_dir, branch)
+    r.checkout(workcopy_dir, master)
 
     hashes = r.get_hashes_from_range(hash_range)
     assert len(hashes) == 4
@@ -33,7 +37,7 @@ def _test_generic_repo(conf,
 
     tags = r.get_tags()
     for tag in tags:
-        r.get_date_from_tag(tag)
+        r.get_date_from_name(tag)
 
 
 def test_repo_git(tmpdir):
@@ -41,7 +45,7 @@ def test_repo_git(tmpdir):
 
     conf.project = six.text_type(tmpdir.join("repo"))
     conf.repo = "https://github.com/spacetelescope/asv.git"
-    _test_generic_repo(conf)
+    _test_generic_repo(conf, tmpdir)
 
 
 @pytest.mark.xfail(hglib is None,
@@ -51,5 +55,5 @@ def test_repo_hg(tmpdir):
 
     conf.project = six.text_type(tmpdir.join("repo"))
     conf.repo = "hg+https://bitbucket.org/nds-org/nds-labs"
-    _test_generic_repo(conf, hash_range="a8ca24ac6b77:9dc758deba8",
+    _test_generic_repo(conf, tmpdir, hash_range="a8ca24ac6b77:9dc758deba8",
                        master="tip", branch="dev")
