@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>asv.conf.json reference &mdash; airspeed velocity 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-3.2.0/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-3.2.0/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.2.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="shortcut icon" href="_static/swallow.ico"/>
+    <link rel="top" title="airspeed velocity 0.1 documentation" href="index.html" />
+    <link rel="up" title="Reference" href="reference.html" />
+    <link rel="next" title="Commands" href="commands.html" />
+    <link rel="prev" title="Reference" href="reference.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+  
+  <a href="https://github.com/spacetelescope/asv"
+     class="visible-desktop"><img
+    style="position: absolute; top: 40px; right: 0; border: 0;"
+    src="https://s3.amazonaws.com/github/ribbons/forkme_right_white_ffffff.png"
+    alt="Fork me on GitHub"></a>
+
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          airspeed velocity</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.1</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installing.html">Installing airspeed velocity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using.html">Using airspeed velocity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="writing_benchmarks.html">Writing benchmarks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev.html">Developer Docs</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">asv.conf.json</span></tt> reference</a><ul>
+<li><a class="reference internal" href="#project"><tt class="docutils literal"><span class="pre">project</span></tt></a></li>
+<li><a class="reference internal" href="#project-url"><tt class="docutils literal"><span class="pre">project_url</span></tt></a></li>
+<li><a class="reference internal" href="#repo"><tt class="docutils literal"><span class="pre">repo</span></tt></a></li>
+<li><a class="reference internal" href="#show-commit-url"><tt class="docutils literal"><span class="pre">show_commit_url</span></tt></a></li>
+<li><a class="reference internal" href="#pythons"><tt class="docutils literal"><span class="pre">pythons</span></tt></a></li>
+<li><a class="reference internal" href="#matrix"><tt class="docutils literal"><span class="pre">matrix</span></tt></a></li>
+<li><a class="reference internal" href="#benchmark-dir"><tt class="docutils literal"><span class="pre">benchmark_dir</span></tt></a></li>
+<li><a class="reference internal" href="#environment-type"><tt class="docutils literal"><span class="pre">environment_type</span></tt></a></li>
+<li><a class="reference internal" href="#env-dir"><tt class="docutils literal"><span class="pre">env_dir</span></tt></a></li>
+<li><a class="reference internal" href="#html-dir"><tt class="docutils literal"><span class="pre">html_dir</span></tt></a></li>
+<li><a class="reference internal" href="#hash-length"><tt class="docutils literal"><span class="pre">hash_length</span></tt></a></li>
+<li><a class="reference internal" href="#plugins"><tt class="docutils literal"><span class="pre">plugins</span></tt></a></li>
+<li><a class="reference internal" href="#wheel-cache-size"><tt class="docutils literal"><span class="pre">wheel_cache_size</span></tt></a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="reference.html" title="Previous Chapter: Reference"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Reference</span>
+    </a>
+  </li>
+  <li>
+    <a href="commands.html" title="Next Chapter: Commands"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Commands &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="asv-conf-json-reference">
+<span id="conf-reference"></span><h1><tt class="docutils literal"><span class="pre">asv.conf.json</span></tt> reference<a class="headerlink" href="#asv-conf-json-reference" title="Permalink to this headline">¶</a></h1>
+<p>The <tt class="docutils literal"><span class="pre">asv.conf.json</span></tt> file contains information about a particular
+benchmarking project.  The following describes each of the keys in
+this file and their expected values.</p>
+<div class="section" id="project">
+<h2><tt class="docutils literal"><span class="pre">project</span></tt><a class="headerlink" href="#project" title="Permalink to this headline">¶</a></h2>
+<p>The name of the project being benchmarked.</p>
+</div>
+<div class="section" id="project-url">
+<h2><tt class="docutils literal"><span class="pre">project_url</span></tt><a class="headerlink" href="#project-url" title="Permalink to this headline">¶</a></h2>
+<p>The URL to the homepage of the project.  This can point to anywhere,
+really, as it&#8217;s only used for the link at the top of the benchmark
+results page back to your project.</p>
+</div>
+<div class="section" id="repo">
+<h2><tt class="docutils literal"><span class="pre">repo</span></tt><a class="headerlink" href="#repo" title="Permalink to this headline">¶</a></h2>
+<p>The URL to the repository for the project.</p>
+<p>Currently, only <tt class="docutils literal"><span class="pre">git</span></tt> and <tt class="docutils literal"><span class="pre">hg</span></tt> repositories are supported, so this must be
+a URL that <tt class="docutils literal"><span class="pre">git</span></tt> or <tt class="docutils literal"><span class="pre">hg</span></tt> know how to clone from, for example:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="mailto:git&#37;&#52;&#48;github&#46;com">git<span>&#64;</span>github<span>&#46;</span>com</a>:spacetelescope/asv.git</li>
+<li><a class="reference external" href="https://github.com/spacetelescope/asv.git">https://github.com/spacetelescope/asv.git</a></li>
+<li><a class="reference external" href="ssh://hg&#64;bitbucket.org/yt_analysis/yt">ssh://hg&#64;bitbucket.org/yt_analysis/yt</a></li>
+<li>hg+https://bitbucket.org/yt_analysis/yt</li>
+</ul>
+</div></blockquote>
+<p>The repository may be readonly.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Currently, mercurial works only on Python 2, although the interface to
+Mercurial used in <tt class="docutils literal"><span class="pre">asv</span></tt> (<tt class="docutils literal"><span class="pre">python-hglib</span></tt>) is being ported to Python 3.
+At the present time, Mercurial support will only function on Python 2.</p>
+</div>
+</div>
+<div class="section" id="show-commit-url">
+<h2><tt class="docutils literal"><span class="pre">show_commit_url</span></tt><a class="headerlink" href="#show-commit-url" title="Permalink to this headline">¶</a></h2>
+<p>The base URL to show information about a particular commit.  The
+commit hash will be added to the end of this URL and then opened in a
+new tab when a data point is clicked on in the web interface.</p>
+<p>For example, if using Github to host your repository, the
+<tt class="docutils literal"><span class="pre">show_commit_url</span></tt> should be:</p>
+<blockquote>
+<div><a class="reference external" href="http://github.com/owner/project/commit/">http://github.com/owner/project/commit/</a></div></blockquote>
+</div>
+<div class="section" id="pythons">
+<h2><tt class="docutils literal"><span class="pre">pythons</span></tt><a class="headerlink" href="#pythons" title="Permalink to this headline">¶</a></h2>
+<p>The versions of Python to run the benchmarks in.  If not provided, it
+will to default to the version of Python that the <tt class="docutils literal"><span class="pre">asv</span></tt> command
+(master) is being run under.</p>
+<p>If provided, it should be a list of strings.  It may be one of the
+following:</p>
+<ul class="simple">
+<li>a Python version string, e.g. <tt class="docutils literal"><span class="pre">&quot;2.7&quot;</span></tt>, in which case:<ul>
+<li>if <tt class="docutils literal"><span class="pre">conda</span></tt> is found, <tt class="docutils literal"><span class="pre">conda</span></tt> will be used to create an
+environment for that version of Python</li>
+<li>if <tt class="docutils literal"><span class="pre">virtualenv</span></tt> is installed, <tt class="docutils literal"><span class="pre">asv</span></tt> will search for that
+version of Python on the <tt class="docutils literal"><span class="pre">PATH</span></tt> and create a new virtual
+environment based on it.  <tt class="docutils literal"><span class="pre">asv</span></tt> does not handle downloading and
+installing different versions of Python for you.  They must
+already be installed and on the path.  Depending on your platform,
+you can install multiple versions of Python using your package
+manager or using <a class="reference external" href="https://github.com/yyuu/pyenv">pyenv</a>.</li>
+</ul>
+</li>
+<li>an executable name on the <tt class="docutils literal"><span class="pre">PATH</span></tt> or an absolute path to an
+executable.  In this case, the environment is assumed to be already
+fully loaded and read-only.  Thus, the benchmarked project must
+already be installed, and it will not be possible to benchmark
+multiple revisions of the project.</li>
+</ul>
+</div>
+<div class="section" id="matrix">
+<h2><tt class="docutils literal"><span class="pre">matrix</span></tt><a class="headerlink" href="#matrix" title="Permalink to this headline">¶</a></h2>
+<p>Defines a matrix of third-party dependencies to run the benchmarks with.</p>
+<p>If provided, it must be a dictionary, where the keys are the names of
+dependencies and the values are lists of versions (as strings) of that
+dependency.  If the list is empty, use the &#8220;latest&#8221; version of that
+dependency available on PyPI.</p>
+<p>For example, the following will test with two different versions of
+Numpy, and the latest version of Cython:</p>
+<div class="highlight-python"><div class="highlight"><pre>&quot;matrix&quot;: {
+    &quot;numpy&quot;: [&quot;1.7&quot;, &quot;1.8&quot;],
+    &quot;Cython&quot;: []
+}
+</pre></div>
+</div>
+<p>The matrix dependencies are installed <em>before</em> any dependencies that
+the project being benchmarked may specify in its <tt class="docutils literal"><span class="pre">setup.py</span></tt> file.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">At present, this functionality is rather limited, as it only
+supports dependencies that are installable from PyPI using
+<tt class="docutils literal"><span class="pre">pip</span></tt>, and there is no functionality for limiting the matrix to
+specific combinations.</p>
+</div>
+</div>
+<div class="section" id="benchmark-dir">
+<h2><tt class="docutils literal"><span class="pre">benchmark_dir</span></tt><a class="headerlink" href="#benchmark-dir" title="Permalink to this headline">¶</a></h2>
+<p>The directory, relative to the current directory, that benchmarks are
+stored in.  Should rarely need to be overridden.  If not provided,
+defaults to <tt class="docutils literal"><span class="pre">&quot;benchmarks&quot;</span></tt>.</p>
+</div>
+<div class="section" id="environment-type">
+<h2><tt class="docutils literal"><span class="pre">environment_type</span></tt><a class="headerlink" href="#environment-type" title="Permalink to this headline">¶</a></h2>
+<p>Specifies the tool to use to create environments.  May be &#8220;conda&#8221;,
+&#8220;virtualenv&#8221; or another value depending on the plugins in use.  If
+missing or the empty string, the tool will be automatically determined
+by looking for tools on the <tt class="docutils literal"><span class="pre">PATH</span></tt> environment variable.</p>
+</div>
+<div class="section" id="env-dir">
+<h2><tt class="docutils literal"><span class="pre">env_dir</span></tt><a class="headerlink" href="#env-dir" title="Permalink to this headline">¶</a></h2>
+<p>The directory, relative to the current directory, to cache the Python
+environments in.  If not provided, defaults to <tt class="docutils literal"><span class="pre">&quot;env&quot;</span></tt>.
+`
+<tt class="docutils literal"><span class="pre">results_dir</span></tt>
+&#8212;&#8212;&#8212;&#8212;&#8212;
+The directory, relative to the current directory, that the raw results
+are stored in.  If not provided, defaults to <tt class="docutils literal"><span class="pre">&quot;results&quot;</span></tt>.</p>
+</div>
+<div class="section" id="html-dir">
+<h2><tt class="docutils literal"><span class="pre">html_dir</span></tt><a class="headerlink" href="#html-dir" title="Permalink to this headline">¶</a></h2>
+<p>The directory, relative to the current directory, to save the website
+content in.  If not provided, defaults to <tt class="docutils literal"><span class="pre">&quot;html&quot;</span></tt>.</p>
+</div>
+<div class="section" id="hash-length">
+<h2><tt class="docutils literal"><span class="pre">hash_length</span></tt><a class="headerlink" href="#hash-length" title="Permalink to this headline">¶</a></h2>
+<p>The number of characters to retain in the commit hashes when displayed
+in the web interface.  The default value of 8 should be more than
+enough for most projects, but projects with extremely large history
+may need to increase this value.  This does not affect the storage of
+results, where the full commit hash is always retained.</p>
+</div>
+<div class="section" id="plugins">
+<h2><tt class="docutils literal"><span class="pre">plugins</span></tt><a class="headerlink" href="#plugins" title="Permalink to this headline">¶</a></h2>
+<p>A list of modules to import containing asv plugins.</p>
+</div>
+<div class="section" id="wheel-cache-size">
+<h2><tt class="docutils literal"><span class="pre">wheel_cache_size</span></tt><a class="headerlink" href="#wheel-cache-size" title="Permalink to this headline">¶</a></h2>
+<p>The number of wheels (builds) to cache for each environment.</p>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2013, Michael Droettboom.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
