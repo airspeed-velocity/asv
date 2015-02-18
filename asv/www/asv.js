@@ -1043,7 +1043,7 @@ $(function() {
             var data = graph.data;
             for (var j = 0; j < data.length; ++j) {
                 var p = data[j][1];
-                if (p !== null) {
+                if (p !== null && (!log_scale || p > 0)) {
                     if (p < min) {
                         min = p;
                     }
@@ -1053,6 +1053,10 @@ $(function() {
                 }
             }
         });
+
+        if (!isFinite(min) || !isFinite(max)) {
+            min = max = 1;
+        }
 
         min /= reference;
         max /= reference;
@@ -1072,7 +1076,11 @@ $(function() {
 
             options.yaxis.ticks = ticks;
             options.yaxis.transform = function(v) {
-                return Math.log(v / reference) / Math.LN10;
+                if (v <= 0) {
+                    return null;
+                } else {
+                    return Math.log(v / reference) / Math.LN10;
+                }
             };
             /* inverseTransform is required for plothover to work */
             options.yaxis.inverseTransform = function (v) {
