@@ -156,32 +156,31 @@ $(function() {
     function make_value_selector_panel(nav, heading, values, setup_callback) {
         var panel_body = make_panel(nav, heading);
         var vertical = false;
-        var button_list = [];
         var buttons = $('<div class="btn-group" ' +
                         'data-toggle="buttons"/>');
+        var width = 0;
+
+        panel_body.append(buttons);
 
         $.each(values, function (idx, value) {
             var button = $(
                 '<a class="btn btn-default btn-xs active" role="button"/>');
-            var element = setup_callback(idx, value, button);
-            if (!element) {
-                element = button;
-            }
-            button_list.push(button);
+            setup_callback(idx, value, button);
+            buttons.append(button);
         });
 
-        buttons.append(button_list);
-        panel_body.append(buttons);
-        nav.append(panel_body);
+        $.each(buttons.children(), function(idx, value) {
+            width += value.scrollWidth;
+        });
 
-        vertical = (buttons[0].scrollWidth >= nav[0].clientWidth &&
+        vertical = (width >= nav[0].clientWidth &&
                     nav[0].clientWidth > 0);
 
         if (vertical) {
             buttons.addClass("btn-group-vertical");
             buttons.css("width", "100%");
             buttons.css("max-height", "20ex");
-            buttons.css("overflow-y", "scroll");
+            buttons.css("overflow-y", "auto");
         }
         else {
             buttons.addClass("btn-group-justified");
@@ -209,6 +208,9 @@ $(function() {
 
         /* Machine selection */
         state.machine = index.params.machine;
+
+        /* Make the static tooltips look correct */
+        $('[data-toggle="tooltip"]').tooltip({container: 'body'});
 
         make_value_selector_panel(nav, 'machine', index.params.machine,  function(i, machine, button) {
             button.text(machine);
@@ -303,7 +305,7 @@ $(function() {
             for (j = i; j < parts.length - 1; ++j) {
                 var top = $(
                     '<li class="dropdown">' +
-                        '<label class="nav-header"><b class="caret"/> ' + parts[j] +
+                        '<label class="nav-header"><b class="caret-right"/> ' + parts[j] +
                         '</label><ul class="nav nav-list tree"/></li>');
                 stack[stack.length - 1].append(top);
                 stack.push($(top.children()[1]));
@@ -312,6 +314,12 @@ $(function() {
 
                 $(top.children()[0]).click(function () {
                     $(this).parent().children('ul.tree').toggle(150);
+                    var caret = $(this).children('b');
+                    if (caret.attr('class') == 'caret') {
+                        caret.removeClass().addClass("caret-right");
+                    } else {
+                        caret.removeClass().addClass("caret");
+                    }
                 });
             }
 
@@ -469,11 +477,11 @@ $(function() {
     function make_summary() {
         $.each(master_json.benchmarks, function(bm_name, bm) {
             var container = $(
-                '<a class="btn" href="#' + bm_name +
-                '" style="float: left; width: 300px; height: 116px; padding: 4px"/>');
+                '<a class="btn benchmark-container" href="#' + bm_name +
+                '"/>');
             var plot_div = $(
-                '<div id="summary-' + bm_name + '" style="width: 292px; height: 92px"/>');
-            var name = $('<div style="width: 292px; overflow: hidden">' + bm_name + '</div>');
+                '<div id="summary-' + bm_name + '" class="benchmark-plot"/>');
+            var name = $('<div class="benchmark-text">' + bm_name + '</div>');
             name.tooltip({
                 title: bm_name,
                 html: true,
