@@ -5,7 +5,6 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
-import itertools
 
 import six
 from six.moves import xrange
@@ -77,6 +76,8 @@ class Graph(object):
 
         self.summary = summary
         self.path = os.path.join(*parts)
+        self.n_series = None
+        self.scalar_series = True
 
     def add_data_point(self, date, value):
         """
@@ -95,8 +96,16 @@ class Graph(object):
         # Add simple time series
         self.data_points.setdefault(date, [])
         if value is not None:
-            if self.summary and hasattr(value, '__len__'):
-                value = _mean_with_none(value)
+            if not hasattr(value, '__len__'):
+                value = [value]
+            else:
+                self.scalar_series = False
+
+            if self.n_series is None:
+                self.n_series = len(value)
+            elif len(value) != self.n_series:
+                raise ValueError("Mismatching number of data series in graph")
+
             self.data_points[date].append(value)
 
     def resample_data(self, val):
@@ -122,33 +131,96 @@ class Graph(object):
         """
         Get the sorted and reduced data.
         """
-        def mean(v):
-            if not len(v):
-                return None
-            else:
-                if hasattr(v[0], '__len__'):
-                    return [_mean_with_none(x[j] for x in v)
-                            for j in range(len(v[0]))]
-                else:
-                    return _mean_with_none(v)
 
-        val = [(k, mean(v)) for (k, v) in
+        if self.n_series is None:
+            # No non-null data points
+            self.n_series = 1
+
+        def mean_axis0(v):
+            if not v:
+                return [None]*self.n_series
+            return [_mean_with_none(x[j] for x in v)
+                    for j in xrange(self.n_series)]
+
+        # Average data over dates
+        val = [(k, mean_axis0(v)) for (k, v) in
                six.iteritems(self.data_points)]
         val.sort()
 
+        # Discard missing data at edges
         i = 0
         for i in xrange(len(val)):
-            if val[i][1] is not None:
+            if any(v is not None for v in val[i][1]):
                 break
+        else:
+            i = len(val)
 
         j = i
         for j in xrange(len(val) - 1, i, -1):
-            if val[j][1] is not None:
+            if any(v is not None for v in val[j][1]):
                 break
 
         val = val[i:j+1]
 
+        # Reduce data for summary
+        if self.summary and self.n_series > 1:
+            # Given multiple input series
+            #
+            #     val = [(x_0, (y[0,0], y[0,1], ..., y[0,n])), 
+            #            (x_1, (y[1,0], y[1,1], ..., y[1,n])),
+            #            ... ]
+            #
+            # calculate summary data series
+            #
+            #     z = geom_mean(y, axis=1)
+            #
+            # Missing data in y is filled by the previous non-null
+            # values (or the first non-null value, for nulls at the
+            # beginning), to avoid meaningless jumps in the result.
+            # Data points missing from all series are not filled.
+
+            # Find first non-null values
+            first_values = [None]*self.n_series
+            for k, v in val:
+                for j, x in enumerate(v):
+                    if first_values[j] is None and x is not None:
+                        first_values[j] = x
+                if not any(x is None for x in first_values):
+                    break
+
+            first_values = [fv if fv is not None else 1.0 
+                            for fv in first_values]
+
+            # Compute geom mean of filled series
+            last_values = [None]*self.n_series
+            new_val = []
+            for k, v in val:
+                # Fill missing data, unless it's missing from all
+                # parameter combinations
+                cur_vals = []
+                if any(x is not None for x in v):
+                    for j, x in enumerate(v):
+                        if x is None:
+                            if last_values[j] is not None:
+                                x = last_values[j]
+                            else:
+                                x = first_values[j]
+                        else:
+                            last_values[j] = x
+
+                        cur_vals.append(x)
+
+                # Mean of normalized values, on top of mean of means
+                v = _geom_mean_with_none(cur_vals)
+                new_val.append((k, v))
+
+            val = new_val
+        elif self.summary or self.scalar_series:
+            # Single-element series
+            val = [(k, v[0]) for k, v in val]
+
         if self.summary:
+            # Resample
             val = self.resample_data(val)
 
         return val
@@ -176,6 +248,24 @@ def _mean_with_none(values):
     """
     values = [x for x in values if x is not None and x == x]
     if values:
-        return sum(values) / float(len(values))
+        return sum(values) / len(values)
+    else:
+        return None
+
+
+def _geom_mean_with_none(values):
+    """
+    Compute geometric mean, with the understanding that None and NaN
+    stand for missing data.
+    """
+    values = [x for x in values if x is not None and x == x]
+    if values:
+        exponent = 1/len(values)
+        prod = 1.0
+        acc = 0
+        for x in values:
+            prod *= abs(x)**exponent
+            acc += x
+        return prod if acc >= 0 else -prod
     else:
         return None
