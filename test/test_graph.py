@@ -96,5 +96,24 @@ def test_graph_multi():
         assert abs(xd - expected) < 1e-10
 
 
+def test_empty_graph():
+    g = Graph('foo', {}, {})
+    g.add_data_point(1, None)
+    g.add_data_point(2, None)
+    g.add_data_point(3, None)
+    data = g.get_data()
+    assert data == []
+
+
+    g = Graph('foo', {}, {})
+    g.add_data_point(1, None)
+    g.add_data_point(1, [None, None])
+    g.add_data_point(2, [None, None])
+    g.add_data_point(3, None)
+    g.add_data_point(4, [None, None])
+    data = g.get_data()
+    assert data == []
+
+
 def _sgn(x):
     return 1 if x >= 0 else -1

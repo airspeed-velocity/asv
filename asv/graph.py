@@ -77,7 +77,7 @@ class Graph(object):
         self.summary = summary
         self.path = os.path.join(*parts)
         self.n_series = None
-        self.scalar_series = False
+        self.scalar_series = True
 
     def add_data_point(self, date, value):
         """
@@ -97,8 +97,9 @@ class Graph(object):
         self.data_points.setdefault(date, [])
         if value is not None:
             if not hasattr(value, '__len__'):
-                self.scalar_series = True
                 value = [value]
+            else:
+                self.scalar_series = False
 
             if self.n_series is None:
                 self.n_series = len(value)
@@ -131,7 +132,13 @@ class Graph(object):
         Get the sorted and reduced data.
         """
 
+        if self.n_series is None:
+            # No non-null data points
+            self.n_series = 1
+
         def mean_axis0(v):
+            if not v:
+                return [None]*self.n_series
             return [_mean_with_none(x[j] for x in v)
                     for j in xrange(self.n_series)]
 
@@ -145,6 +152,8 @@ class Graph(object):
         for i in xrange(len(val)):
             if any(v is not None for v in val[i][1]):
                 break
+        else:
+            i = len(val)
 
         j = i
         for j in xrange(len(val) - 1, i, -1):
