@@ -12,8 +12,10 @@ class Repo(object):
     """
     Base class for repository handlers.
     """
-    def __init__(self, url, path, shared=False):
+    def __init__(self, url, path):
         """
+        Create a mirror of the repository at `url`, without a working tree.
+
         Parameters
         ----------
         url : str
@@ -21,10 +23,21 @@ class Repo(object):
 
         path : str
             The local path to clone into
+        """
+        raise NotImplementedError()
 
-        shared : bool, optional.
-            When `True`, share the repository history with the source
-            repo's history.
+    def checkout(self, path, commit_hash):
+        """
+        Check out a clean working tree from the current repository
+        to the given path
+
+        Parameters
+        ----------
+        path : str
+            The local path to check out into
+        commit_hash : str
+            The commit hash to check out
+
         """
         raise NotImplementedError()
 
@@ -43,19 +56,6 @@ class Repo(object):
         """
         raise NotImplementedError()
 
-    def checkout(self, branch):
-        """
-        Checkout a given branch or commit hash.  Also cleans the
-        checkout of any non-source-controlled files.
-        """
-        raise NotImplementedError()
-
-    def clean(self):
-        """
-        Clean the repository of any non-checked-in files.
-        """
-        raise NotImplementedError()
-
     def get_date(self, hash):
         """
         Get a Javascript timestamp for a particular commit.
@@ -69,16 +69,22 @@ class Repo(object):
         """
         raise NotImplementedError()
 
-    def get_hash_from_tag(self, range):
+    def get_hash_from_name(self, name):
         """
         Get a hash from a given tag, branch or hash.  The acceptable
         syntax will depend on the DVCS used.
         """
         raise NotImplementedError()
 
-    def get_hash_from_head(self):
+    def get_hash_from_master(self):
         """
-        Get the hash of the currently checked-out commit.
+        Get the hash of the current master branch commit.
+        """
+        raise NotImplementedError()
+
+    def get_hash_from_parent(self, name):
+        """
+        Checkout the parent of the currently checked out commit.
         """
         raise NotImplementedError()
 
@@ -88,21 +94,9 @@ class Repo(object):
         """
         raise NotImplementedError()
 
-    def get_date_from_tag(self, tag):
+    def get_date_from_name(self, name):
         """
-        Get a Javascript timestamp for a particular tag.
-        """
-        raise NotImplementedError()
-
-    def checkout_remote_branch(self, remote, branch):
-        """
-        Fetch and then checkout a remote branch.
-        """
-        raise NotImplementedError()
-
-    def checkout_parent(self):
-        """
-        Checkout the parent of the currently checked out commit.
+        Get a Javascript timestamp for a particular name.
         """
         raise NotImplementedError()
 
@@ -114,7 +108,7 @@ class NoRepository(Repo):
 
     dvcs = "none"
 
-    def __init__(self, url=None, path=None, shared=False):
+    def __init__(self, url=None, path=None):
         self.url = None
         self.path = None
 
@@ -130,11 +124,11 @@ class NoRepository(Repo):
     def url_match(cls, url):
         return False
 
-    def checkout(self, branch):
-        self._check_branch(branch)
+    def checkout(self, path, commit_hash):
+        self._check_branch(commit_hash)
 
-    def clean(self, branch):
-        self._check_branch(branch)
+    def clean(self):
+        return
 
     def get_date(self, hash):
         self._raise_error()
@@ -142,22 +136,19 @@ class NoRepository(Repo):
     def get_hashes_from_range(self, range):
         return [None]
 
-    def get_hash_from_head(self):
+    def get_hash_from_master(self):
         return None
 
-    def get_hash_from_tag(self, range):
+    def get_hash_from_name(self, name):
         return None
+
+    def get_hash_from_parent(self, name):
+        self._raise_error()
 
     def get_tags(self):
         return []
 
-    def get_date_from_tag(self, tag):
-        self._raise_error()
-
-    def checkout_remote_branch(self, remote, branch):
-        self._raise_error()
-
-    def checkout_parent(self):
+    def get_date_from_name(self, name):
         self._raise_error()
 
 

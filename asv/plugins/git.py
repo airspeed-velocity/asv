@@ -19,7 +19,7 @@ from .. import util
 class Git(Repo):
     dvcs = "git"
 
-    def __init__(self, url, path, shared=False):
+    def __init__(self, url, path, _checkout_copy=False):
         self._git = util.which("git")
         self._path = os.path.abspath(path)
         self._pulled = False
@@ -27,14 +27,12 @@ class Git(Repo):
         if not os.path.isdir(self._path):
             log.info("Cloning project")
             args = ['clone']
-            if shared:
+            if _checkout_copy:
                 args.append('--shared')
+            else:
+                args.append('--mirror')
             args.extend([url, self._path])
             self._run_git(args, chdir=False)
-
-    @property
-    def path(self):
-        return self._path
 
     @classmethod
     def url_match(cls, url):
@@ -72,13 +70,12 @@ class Git(Repo):
 
         log.info("Fetching recent changes")
         self._run_git(['fetch', 'origin'])
-        self.checkout('master')
-        self._run_git(['pull'])
         self._pulled = True
 
-    def checkout(self, branch='master'):
-        self._run_git(['checkout', '-f', branch])
-        self.clean()
+    def checkout(self, path, commit_hash):
+        subrepo = Git(self._path, path, _checkout_copy=True)
+        subrepo._run_git(['checkout', '-f', commit_hash])
+        subrepo.clean()
 
     def clean(self):
         self._run_git(['clean', '-fxd'])
@@ -98,24 +95,19 @@ class Git(Repo):
         output = self._run_git(args, valid_return_codes=(0, 1), dots=False)
         return output.strip().split()
 
-    def get_hash_from_tag(self, tag):
-        return self._run_git(
-            ['show', tag, '--quiet', '--format=format:%H'],
-            dots=False).strip().split()[0]
+    def get_hash_from_name(self, name):
+        return self._run_git(['rev-parse', name],
+                             dots=False).strip().split()[0]
 
-    def get_hash_from_head(self):
-        return self.get_hash_from_tag('HEAD')
+    def get_hash_from_master(self):
+        return self.get_hash_from_name('master')
+
+    def get_hash_from_parent(self, name):
+        return self.get_hash_from_name(name + '^')
 
     def get_tags(self):
         return self._run_git(
             ['tag', '-l']).strip().split()
 
-    def get_date_from_tag(self, tag):
-        return self.get_date(tag + "^{commit}")
-
-    def checkout_remote_branch(self, remote, branch):
-        self._run_git(['fetch', remote, branch])
-        self.checkout('FETCH_HEAD')
-
-    def checkout_parent(self):
-        self.checkout('HEAD^')
+    def get_date_from_name(self, name):
+        return self.get_date(name + "^{commit}")

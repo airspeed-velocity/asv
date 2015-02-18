@@ -171,8 +171,9 @@ class Environment(object):
         self._is_setup = False
         self._requirements_installed = False
 
-        self._source_repo = get_repo(conf)
+        self._repo = get_repo(conf)
         self._cache = wheel_cache.WheelCache(conf, self._path)
+        self._build_root = os.path.abspath(os.path.join(self._path, 'project'))
 
     @classmethod
     def get_environments(cls, conf, python):
@@ -251,10 +252,6 @@ class Environment(object):
                 raise
 
         self.save_info_file(self._path)
-        if self._source_repo is not None:  # For testing only
-            self._repo = self._source_repo.__class__(
-                self._source_repo.path, os.path.join(self._path, 'project'),
-                shared=True)
 
         self._is_setup = True
 
@@ -287,12 +284,17 @@ class Environment(object):
         """
         raise NotImplementedError()
 
+    def checkout_project(self, commit_hash):
+        """
+        Check out the working tree of the project at given commit hash
+        """
+        self._repo.checkout(self._build_root, commit_hash)
+
     def build_project(self, commit_hash):
         log.info("Building for {0}".format(self.name))
-        build_root = os.path.abspath(self.repo.path)
-        self.repo.checkout(commit_hash)
-        self.run(['setup.py', 'build'], cwd=build_root)
-        return build_root
+        self.checkout_project(commit_hash)
+        self.run(['setup.py', 'build'], cwd=self._build_root)
+        return self._build_root
 
     def install_project(self, conf, commit_hash=None):
         """
@@ -305,8 +307,7 @@ class Environment(object):
         if commit_hash is None:
             commit_hash = self._cache.get_existing_commit_hash()
             if commit_hash is None:
-                self.repo.checkout()
-                commit_hash = self.repo.get_hash_from_head()
+                commit_hash = self.repo.get_hash_from_master()
 
         self.install_requirements()
         self.uninstall(conf.project)

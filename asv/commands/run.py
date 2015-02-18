@@ -50,7 +50,7 @@ class Run(Command):
             description="Run a benchmark suite.")
 
         parser.add_argument(
-            'range', nargs='?', default="master",
+            'range', nargs='?', default=None,
             help="""Range of commits to benchmark.  For a git
             repository, this is passed as the first argument to ``git
             log``.  See 'specifying ranges' section of the
@@ -148,7 +148,7 @@ class Run(Command):
         )
 
     @classmethod
-    def run(cls, conf, range_spec="master", steps=0, bench=None, parallel=1,
+    def run(cls, conf, range_spec=None, steps=0, bench=None, parallel=1,
             show_stderr=False, quick=False, profile=False, python=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
             skip_failed=False, skip_existing_commits=False, _returns={}):
@@ -171,20 +171,21 @@ class Run(Command):
         else:
             repo.pull()
 
-        if range_spec == 'EXISTING':
+        if range_spec is None:
+            commit_hashes = [repo.get_hash_from_master()]
+        elif range_spec == 'EXISTING':
             commit_hashes = [h for h, d in get_existing_hashes(
                 conf.results_dir)]
-            range_spec = None
         elif range_spec == 'NEW':
             latest_result = find_latest_result_hash(
                 machine_params.machine, conf.results_dir)
-            range_spec = repo.get_new_range_spec(latest_result)
+            commit_hashes = repo.get_hashes_from_range(
+                repo.get_new_range_spec(latest_result))
         elif range_spec == "ALL":
-            range_spec = ""
-
-        if isinstance(range_spec, list):
+            commit_hashes = repo.get_hashes_from_range("")
+        elif isinstance(range_spec, list):
             commit_hashes = range_spec
-        elif range_spec is not None:
+        else:
             commit_hashes = repo.get_hashes_from_range(range_spec)
 
         if len(commit_hashes) == 0:
@@ -204,7 +205,7 @@ class Run(Command):
         if len(environments) == 0:
             log.error("No environments selected")
             return 1
-        if range_spec != 'master':
+        if range_spec is not None:
             for env in environments:
                 if not env.can_install_project():
                     raise util.UserError(
