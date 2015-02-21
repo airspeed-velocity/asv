@@ -25,11 +25,11 @@ class Git(Repo):
         self._pulled = False
 
         if not os.path.isdir(self._path):
-            log.info("Cloning project")
             args = ['clone']
             if _checkout_copy:
                 args.append('--shared')
             else:
+                log.info("Cloning project")
                 args.append('--mirror')
             args.extend([url, self._path])
             self._run_git(args, chdir=False)
