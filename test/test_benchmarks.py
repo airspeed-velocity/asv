@@ -84,7 +84,7 @@ def test_find_benchmarks(tmpdir):
 
     assert isinstance(times['params_examples.time_skip']['result']['result'][0], float)
     assert isinstance(times['params_examples.time_skip']['result']['result'][1], float)
-    assert times['params_examples.time_skip']['result']['result'][2] is None
+    assert _isnan(times['params_examples.time_skip']['result']['result'][2])
 
     profile_path = os.path.join(tmpdir, 'test.profile')
     with open(profile_path, 'wb') as fd:
@@ -125,28 +125,34 @@ def test_table_formatting():
     assert table == expected
 
     benchmark = {'params': [["'a'", "'b'", "'c'"], ["[1]", "[2]"]], 'param_names': ['param1', 'param2'], "unit": "seconds"}
-    result = [1, 2, 3, 4, 5, 6]
-    expected = ("======== ======= =======\n"
-                "--            param2    \n"
-                "-------- ---------------\n"
-                " param1    [1]     [2]  \n"
-                "======== ======= =======\n"
-                "   a      1.00s   2.00s \n"
-                "   b      3.00s   4.00s \n"
-                "   c      5.00s   6.00s \n"
-                "======== ======= =======")
+    result = [1, 2, None, 4, 5, float('nan')]
+    expected = ("======== ======== =======\n"
+                "--            param2     \n"
+                "-------- ----------------\n"
+                " param1    [1]      [2]  \n"
+                "======== ======== =======\n"
+                "   a      1.00s    2.00s \n"
+                "   b      failed   4.00s \n"
+                "   c      5.00s     n/a  \n"
+                "======== ======== =======")
     table = "\n".join(benchmarks._format_benchmark_result(result, benchmark, max_width=80))
     assert table == expected
 
-    expected = ("======== ======== =======\n"
-                " param1   param2         \n"
-                "-------- -------- -------\n"
-                "   a       [1]     1.00s \n"
-                "   a       [2]     2.00s \n"
-                "   b       [1]     3.00s \n"
-                "   b       [2]     4.00s \n"
-                "   c       [1]     5.00s \n"
-                "   c       [2]     6.00s \n"
-                "======== ======== =======")
+    expected = ("======== ======== ========\n"
+                " param1   param2          \n"
+                "-------- -------- --------\n"
+                "   a       [1]     1.00s  \n"
+                "   a       [2]     2.00s  \n"
+                "   b       [1]     failed \n"
+                "   b       [2]     4.00s  \n"
+                "   c       [1]     5.00s  \n"
+                "   c       [2]      n/a   \n"
+                "======== ======== ========")
     table = "\n".join(benchmarks._format_benchmark_result(result, benchmark, max_width=0))
     assert table == expected
+
+
+def _isnan(x):
+    if isinstance(x, float):
+        return x != x
+    return False
