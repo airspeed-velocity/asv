@@ -121,7 +121,7 @@ def test_continuous(basic_conf):
     os.environ['_ASV_TEST_TRACK_FILE'] = join(tmpdir, 'track-file')
     try:
         sys.stdout = s
-        Continuous.run(conf, _machine_file=machine_file)
+        Continuous.run(conf, _machine_file=machine_file, show_stderr=True)
     finally:
         sys.stdout = stdout
         del os.environ['_ASV_TEST_TRACK_FILE']
@@ -130,6 +130,8 @@ def test_continuous(basic_conf):
     text = s.read()
     assert "SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY" in text
     assert "params_examples.track_find_test(2)              1.0        6.0   6.00000000x" in text
+    assert "params_examples.ClassOne" in text
+
 
 def test_find(basic_conf):
     tmpdir, local, conf, machine_file = basic_conf

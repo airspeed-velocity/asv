@@ -40,6 +40,9 @@ class Continuous(Command):
             if a benchmark gets twice as slow or twice as fast, it
             will be displayed in the results list.""")
         parser.add_argument(
+            "--show-stderr", "-e", action="store_true",
+            help="""Display the stderr output from the benchmarks.""")
+        parser.add_argument(
             "--bench", "-b", type=str, nargs="*",
             help="""Regular expression(s) for benchmark to run.  When
             not provided, all benchmarks are run.""")
@@ -59,11 +62,11 @@ class Continuous(Command):
     def run_from_conf_args(cls, conf, args):
         return cls.run(
             conf=conf, branch=args.branch, base=args.base, factor=args.factor,
-            bench=args.bench, machine=args.machine
+            show_stderr=args.show_stderr, bench=args.bench, machine=args.machine
         )
 
     @classmethod
-    def run(cls, conf, branch=None, base=None, factor=2.0, bench=None,
+    def run(cls, conf, branch=None, base=None, factor=2.0, show_stderr=False, bench=None,
             machine=None, _machine_file=None):
         repo = get_repo(conf)
         repo.pull()
@@ -82,7 +85,7 @@ class Continuous(Command):
 
         result = Run.run(
             conf, range_spec=commit_hashes, bench=bench,
-            machine=machine, _returns=run_objs,
+            show_stderr=show_stderr, machine=machine, _returns=run_objs,
             _machine_file=_machine_file)
         if result:
             return result
