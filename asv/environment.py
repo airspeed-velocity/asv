@@ -291,8 +291,8 @@ class Environment(object):
         self._repo.checkout(self._build_root, commit_hash)
 
     def build_project(self, commit_hash):
-        log.info("Building for {0}".format(self.name))
         self.checkout_project(commit_hash)
+        log.info("Building for {0}".format(self.name))
         self.run(['setup.py', 'build'], cwd=self._build_root)
         return self._build_root
 

@@ -34,7 +34,8 @@ class Hg(Repo):
             raise ImportError("hglib")
 
         if not os.path.exists(self._path):
-            log.info("Cloning project")
+            if not _checkout_copy:
+                log.info("Cloning project")
             if url.startswith("hg+"):
                 url = url[3:]
 
