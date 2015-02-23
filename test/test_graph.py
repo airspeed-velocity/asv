@@ -8,7 +8,8 @@ def test_graph_single():
         (3, 3),
         (4, 4),
         (5, 5),
-        (6, None)
+        (6, None),
+        (7, float('nan')),
     ]
 
     # Should give same data back, excluding missing values at edges
@@ -16,7 +17,7 @@ def test_graph_single():
     for k, v in vals:
         g.add_data_point(k, v)
     data = g.get_data()
-    assert data == vals[:-1]
+    assert data == vals[:-2]
 
     # Should average duplicate values
     g = Graph('foo', {}, {})
@@ -33,7 +34,7 @@ def test_graph_single():
     for k, v in vals:
         g.add_data_point(k, v)
     data = g.get_data()
-    assert len(data) == len(vals) - 1
+    assert len(data) == len(vals) - 2
     for v, d in zip(vals, data):
         kv, xv = v
         kd, xd = d
@@ -44,7 +45,7 @@ def test_graph_single():
 def test_graph_multi():
     vals = [
         (0, [None, None, None]),
-        (1, [1, None, None]),
+        (1, [1, None, float('nan')]),
         (2, [2,    5, 4]),
         (3, [3,    4, -60]),
         (4, [4,    3, 2]),
@@ -66,7 +67,8 @@ def test_graph_multi():
     for k, v in vals:
         g.add_data_point(k, v)
     data = g.get_data()
-    assert data == vals[1:]
+    assert data[0] == (1, [1, None, None])
+    assert data[1:] == vals[2:]
 
     # Should average duplicate values
     g = Graph('foo', {}, {})
@@ -113,6 +115,27 @@ def test_empty_graph():
     g.add_data_point(4, [None, None])
     data = g.get_data()
     assert data == []
+
+
+def test_nan():
+    g = Graph('foo', {}, {})
+    g.add_data_point(1, 1)
+    g.add_data_point(2, 2)
+    g.add_data_point(2, float('nan'))
+    g.add_data_point(3, 3)
+    g.add_data_point(4, float('nan'))
+    data = g.get_data()
+    assert data == [(1, 1), (2, 2), (3,3)]
+
+
+    g = Graph('foo', {}, {})
+    g.add_data_point(1, None)
+    g.add_data_point(1, [1, float('nan')])
+    g.add_data_point(2, [2, 2])
+    g.add_data_point(3, [float('nan'), float('nan')])
+    g.add_data_point(4, [None, float('nan')])
+    data = g.get_data()
+    assert data == [(1, [1, None]), (2, [2, 2])]
 
 
 def _sgn(x):

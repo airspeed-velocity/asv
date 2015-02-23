@@ -603,7 +603,7 @@ if __name__ == '__main__':
         skip = benchmark.do_setup()
         try:
             if skip:
-                result = None
+                result = float('nan')
             else:
                 result = benchmark.do_run()
                 if profile_path is not None:

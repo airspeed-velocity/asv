@@ -106,7 +106,7 @@ A benchmark suite directory has the following layout.  The
       - ``results``: A dictionary from benchmark names to benchmark
         results.
 
-        - If non-parameterized benchmark, the result is a single value
+        - If non-parameterized benchmark, the result is a single value.
 
         - For parameterized benchmarks, the result is a dictionary
           with keys ``params`` and ``result``. The ``params`` value
@@ -119,6 +119,10 @@ A benchmark suite directory has the following layout.  The
           the parameter combination ``itertools.product(*params)[n]``,
           i.e., the results appear in cartesian product order, with
           the last parameters varying fastest.
+
+        - In the results, ``null`` indicates a failed benchmark,
+          including failures in installing the project version. ``NaN``
+          indicates a benchmark explicitly skipped by the benchmark suite.
 
 - ``$html_dir/``: The output of ``asv publish``, that turns the raw
   results in ``$results_dir/`` into something viewable in a web
@@ -160,3 +164,5 @@ A benchmark suite directory has the following layout.  The
       corresponding to ``itertools.product`` iteration over the
       parameter combinations, similarly as in the result files. For
       non-parameterized benchmarks, it is directly the result.
+      Missing values (eg. failed and skipped benchmarks) are
+      represented by ``null``.

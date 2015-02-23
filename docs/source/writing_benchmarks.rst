@@ -105,6 +105,9 @@ clean up any changes made to the filesystem.  Generally, however, it
 is not required: each benchmark runs in its own process, so any
 tearing down of in-memory state happens automatically.
 
+If ``setup`` raises a ``NotImplementedError``, the benchmark is marked
+as skipped.
+
 .. _benchmark-attributes:
 
 Benchmark attributes
@@ -160,8 +163,8 @@ This will also make the setup and teardown functions parameterized::
             for i in self.obj:
                 pass
 
-If ``setup`` raises a ``NotImplementedError``, the test is skipped
-for the parameter values in question.
+If ``setup`` raises a ``NotImplementedError``, the benchmark is marked
+as skipped for the parameter values in question.
 
 The parameter values can be any Python objects. However, it is often
 best to use only strings or numbers, because these have simple

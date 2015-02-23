@@ -153,12 +153,17 @@ def human_value(value, unit):
         The unit the value is in.  Currently understands `seconds` and `bytes`.
     """
     if isinstance(value, (int, float)):
-        if unit == 'seconds':
+        if value != value:
+            # nan
+            display = "n/a"
+        elif unit == 'seconds':
             display = human_time(value)
         elif unit == 'bytes':
             display = human_file_size(value)
         else:
             display = json.dumps(value)
+    elif value is None:
+        display = "failed"
     else:
         display = json.dumps(value)
 
