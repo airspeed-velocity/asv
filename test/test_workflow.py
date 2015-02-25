@@ -87,7 +87,7 @@ def test_run_publish(basic_conf):
     assert isfile(join(tmpdir, 'html', 'asv.css'))
 
     # Check parameterized test json data format
-    filename = glob.glob(join(tmpdir, 'html', 'graphs', 'arch-x86_64',
+    filename = glob.glob(join(tmpdir, 'html', 'graphs', 'arch-x86_64', 'branch-master',
                               'cpu-Blazingly fast', 'machine-orangutan', 'os-GNU',
                               'Linux', 'psutil-2.1', 'python-*', 'ram-128GB',
                               'six', 'params_examples.time_skip.json'))[0]

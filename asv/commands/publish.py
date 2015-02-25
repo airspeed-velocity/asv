@@ -18,6 +18,7 @@ from ..graph import Graph
 from ..machine import iter_machine_files
 from ..repo import get_repo
 from ..results import iter_results
+from ..branch_cache import BranchCache
 from .. import util
 
 
@@ -128,6 +129,21 @@ class Publish(Command):
                 machines[d['machine']] = d
 
         log.step()
+        log.info("Getting tags and branches")
+        with log.indent():
+            repo = get_repo(conf)
+            repo.pull()
+            tags = {}
+            for tag in repo.get_tags():
+                log.dot()
+                tags[tag] = repo.get_date_from_name(tag)
+
+            branch_cache = BranchCache(conf, repo)
+
+            for branch in conf.branches:
+                params.setdefault('branch', set()).add(branch)
+
+        log.step()
         log.info("Loading results")
         with log.indent():
             for results in iter_results(conf.results_dir):
@@ -144,12 +160,17 @@ class Publish(Command):
                     result = compatible_results(val, b)
 
                     benchmark_names.add(key)
-                    graph = Graph(key, results.params, params)
-                    if graph.path in graphs:
-                        graph = graphs[graph.path]
-                    else:
-                        graphs[graph.path] = graph
-                    graph.add_data_point(results.date, result)
+
+                    for branch in branch_cache.get_branches(results.commit_hash):
+                        cur_params = dict(results.params)
+                        cur_params['branch'] = branch if branch is not None else "master"
+
+                        graph = Graph(key, cur_params, params)
+                        if graph.path in graphs:
+                            graph = graphs[graph.path]
+                        else:
+                            graphs[graph.path] = graph
+                        graph.add_data_point(results.date, result)
 
                     graph = Graph(key, {'summary': None}, {}, summary=True)
                     if graph.path in graphs:
@@ -164,16 +185,6 @@ class Publish(Command):
             for graph in six.itervalues(graphs):
                 log.dot()
                 graph.save(conf.html_dir)
-
-        log.step()
-        log.info("Getting tags")
-        with log.indent():
-            repo = get_repo(conf)
-            repo.pull()
-            tags = {}
-            for tag in repo.get_tags():
-                log.dot()
-                tags[tag] = repo.get_date_from_name(tag)
 
         log.step()
         log.info("Writing index")

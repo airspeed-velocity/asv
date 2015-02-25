@@ -59,8 +59,17 @@ class Git(Repo):
         return util.check_output(
             [self._git] + args, **kwargs)
 
-    def get_new_range_spec(self, latest_result):
-        return '{0}..master'.format(latest_result)
+    def get_new_range_spec(self, latest_result, branch=None):
+        if branch is None:
+            return '{0}..master'.format(latest_result)
+        else:
+            return '{0}..{1}'.format(latest_result, branch)
+
+    def get_branch_range_spec(self, branch):
+        if branch is None:
+            return 'master'
+        else:
+            return branch
 
     def pull(self):
         # We assume the remote isn't updated during the run of asv
@@ -87,8 +96,6 @@ class Git(Repo):
             valid_return_codes=(0, 1), dots=False).strip().split()[0]) * 1000
 
     def get_hashes_from_range(self, range_spec):
-        if range_spec == 'master':
-            range_spec = 'master^!'
         args = ['log', '--quiet', '--first-parent', '--format=format:%H']
         if range_spec != "":
             args += [range_spec]

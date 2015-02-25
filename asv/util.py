@@ -450,6 +450,20 @@ def iter_chunks(s, n):
         yield chunk
 
 
+def pick_n(items, n):
+    """Pick n items, attempting to get equal index spacing.
+    """
+    if not (n > 0):
+        raise ValueError("Invalid number of items to pick")
+    spacing = max(float(len(items)) / n, 1)
+    spaced = []
+    i = 0
+    while int(i) < len(items) and len(spaced) < n:
+        spaced.append(items[int(i)])
+        i += spacing
+    return spaced
+
+
 def get_multiprocessing(parallel):
     """
     If parallel indicates that we want to do multiprocessing,
