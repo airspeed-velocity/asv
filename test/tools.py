@@ -67,6 +67,10 @@ class Git(object):
     def get_hash(self, name):
         return self._run_git(['rev-parse', name]).strip()
 
+    def get_branch_hashes(self, branch):
+        return [x.strip() for x in self._run_git(['rev-list', branch]).splitlines()
+                if x.strip()]
+
 
 _hg_config = """
 [ui]
@@ -114,6 +118,10 @@ class Hg(object):
         if log:
             return log[0][1]
         return None
+
+    def get_branch_hashes(self, branch):
+        log = self._repo.log('ancestors({0})'.format(branch))
+        return [entry[1] for entry in log]
 
 
 def copy_template(src, dst, dvcs, values):
