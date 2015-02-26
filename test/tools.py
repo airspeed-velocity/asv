@@ -199,7 +199,7 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
             dvcs.create_branch(start_commit, branch_name)
             for i, value in enumerate(values):
                 mapping = {
-                    'version': "{0}.{1}".format(branch_name, i),
+                    'version': "{0}".format(i),
                     'dummy_value': value
                 }
                 copy_template(template_path, dvcs_path, dvcs, mapping)
