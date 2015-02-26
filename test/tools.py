@@ -27,13 +27,13 @@ from asv import util
 
 class Git(object):
     def __init__(self, path):
+        self.path = abspath(path)
         self._git = util.which('git')
-        self._path = abspath(path)
         self._fake_date = datetime.datetime.now()
 
     def _run_git(self, args, chdir=True, **kwargs):
         if chdir:
-            cwd = self._path
+            cwd = self.path
         else:
             cwd = None
         kwargs['cwd'] = cwd
@@ -59,7 +59,13 @@ class Git(object):
                        'tag{0}'.format(number)])
 
     def add(self, filename):
-        self._run_git(['add', relpath(filename, self._path)])
+        self._run_git(['add', relpath(filename, self.path)])
+
+    def create_branch(self, start_commit, branch_name):
+        self._run_git(['checkout', '-b', branch_name, start_commit])
+
+    def get_hash(self, name):
+        return self._run_git(['rev-parse', name]).strip()
 
 
 _hg_config = """
@@ -71,13 +77,13 @@ username = Robotic Swallow <robot@asv>
 class Hg(object):
     def __init__(self, path):
         self._fake_date = datetime.datetime.now()
-        self._path = abspath(path)
+        self.path = abspath(path)
 
     def init(self):
-        hglib.init(self._path)
-        with io.open(join(self._path, '.hg', 'hgrc'), 'w', encoding="utf-8") as fd:
+        hglib.init(self.path)
+        with io.open(join(self.path, '.hg', 'hgrc'), 'w', encoding="utf-8") as fd:
             fd.write(_hg_config)
-        self._repo = hglib.open(self._path)
+        self._repo = hglib.open(self.path)
 
     def commit(self, message):
         # We explicitly override the date here, or the commits
@@ -98,6 +104,16 @@ class Hg(object):
 
     def add(self, filename):
         self._repo.add([filename])
+
+    def create_branch(self, start_commit, branch_name):
+        self._repo.update(start_commit)
+        self._repo.branch(branch_name)
+
+    def get_hash(self, name):
+        log = self._repo.log(name, limit=1)
+        if log:
+            return log[0][1]
+        return None
 
 
 def copy_template(src, dst, dvcs, values):
@@ -121,7 +137,30 @@ def copy_template(src, dst, dvcs, values):
             dvcs.add(dst_path)
 
 
-def generate_test_repo(tmpdir, values=[0], dvcs_type='git'):
+def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
+                       extra_branches=()):
+    """
+    Generate a test repository
+    
+    Parameters
+    ----------
+    tmpdir
+        Repository directory
+    values : list
+        List of values to substitute in the template
+    dvcs_type : {'git', 'hg'}
+        What dvcs to use
+    extra_branches : list of (start_commit, branch_name, values)
+        Additional branches to generate in the repository.
+        For branch start commits, use relative references, e.g.,
+        the format 'master~10' or 'default~10' works both for Hg
+        and Git.
+
+    Returns
+    -------
+    dvcs : Git or Hg
+
+    """
     if dvcs_type == 'git':
         dvcs_cls = Git
     elif dvcs_type == 'hg':
@@ -147,4 +186,15 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git'):
         dvcs.commit("Revision {0}".format(i))
         dvcs.tag(i)
 
-    return dvcs_path
+    if extra_branches:
+        for start_commit, branch_name, values in extra_branches:
+            dvcs.create_branch(start_commit, branch_name)
+            for i, value in enumerate(values):
+                mapping = {
+                    'version': "{0}.{1}".format(branch_name, i),
+                    'dummy_value': value
+                }
+                copy_template(template_path, dvcs_path, dvcs, mapping)
+                dvcs.commit("Revision {0}.{1}".format(branch_name, i))
+
+    return dvcs

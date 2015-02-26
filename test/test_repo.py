@@ -11,6 +11,7 @@ import pytest
 
 from asv import config
 from asv import repo
+from asv.branch_cache import BranchCache
 
 try:
     import hglib
@@ -40,14 +41,44 @@ def _test_generic_repo(conf, tmpdir, hash_range, master, branch):
         r.get_date_from_name(tag)
 
 
+def _test_branches(conf, branch_commits):
+    r = repo.get_repo(conf)
+    branch_cache = BranchCache(conf, r)
+
+    assert len(conf.branches) == 2
+
+    commit_branches = {}
+
+    for branch in conf.branches:
+        commits = branch_cache.get_branch_commits(branch)
+
+        for commit in branch_commits[branch]:
+            assert commit in commits
+            commit_branches[commit] = branch
+
+
+    for commit, branch in commit_branches.items():
+        assert branch in branch_cache.get_branches(commit)
+
+
 def test_repo_git(tmpdir):
     tmpdir = six.text_type(tmpdir)
 
     conf = config.Config()
 
+    dvcs = tools.generate_test_repo(tmpdir, list(range(10)), dvcs_type='git',
+                                    extra_branches=[('master~4', 'some-branch',[11, 12, 13])])
+
     conf.project = join(tmpdir, "repo")
-    conf.repo = tools.generate_test_repo(tmpdir, list(range(10)))
+    conf.repo = dvcs.path
     _test_generic_repo(conf, tmpdir, 'master~4..master', 'master', 'tag5')
+
+    conf.branches = ['master', 'some-branch']
+    branch_commits = {
+        'master': [dvcs.get_hash('master'), dvcs.get_hash('master~6')],
+        'some-branch': [dvcs.get_hash('some-branch'), dvcs.get_hash('some-branch~6')]
+    }
+    _test_branches(conf, branch_commits)
 
 
 @pytest.mark.xfail(hglib is None,
@@ -57,8 +88,17 @@ def test_repo_hg(tmpdir):
 
     conf = config.Config()
 
+    dvcs = tools.generate_test_repo(tmpdir, list(range(10)), dvcs_type='hg', 
+                                    extra_branches=[('default~4', 'some-branch',[11, 12, 13])])
+
     conf.project = join(tmpdir, "repo")
-    conf.repo = tools.generate_test_repo(tmpdir, list(range(10)),
-                                             dvcs_type='hg')
+    conf.repo = dvcs.path
     _test_generic_repo(conf, tmpdir, hash_range="tip:-4",
                        master="tip", branch="tag5")
+
+    conf.branches = ['default', 'some-branch']
+    branch_commits = {
+        'default': [dvcs.get_hash('default'), dvcs.get_hash('default~6')],
+        'some-branch': [dvcs.get_hash('some-branch'), dvcs.get_hash('some-branch~6')]
+    }
+    _test_branches(conf, branch_commits)

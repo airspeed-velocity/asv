@@ -26,7 +26,7 @@ def test_publish(tmpdir):
         {'benchmark_dir': BENCHMARK_DIR,
          'results_dir': RESULT_DIR,
          'html_dir': join(tmpdir, 'html'),
-         'repo': tools.generate_test_repo(tmpdir, list(range(10))),
+         'repo': tools.generate_test_repo(tmpdir, list(range(10))).path,
          'project': 'asv'})
 
     Publish.run(conf)

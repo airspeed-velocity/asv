@@ -50,7 +50,7 @@ def test_compare(tmpdir):
 
     conf = config.Config.from_json(
         {'results_dir': RESULT_DIR,
-         'repo': tools.generate_test_repo(tmpdir),
+         'repo': tools.generate_test_repo(tmpdir).path,
          'project': 'asv'})
 
     s = StringIO()

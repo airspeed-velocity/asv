@@ -50,7 +50,7 @@ def basic_conf(tmpdir):
     shutil.copyfile(join(local, 'asv-machine.json'),
                     machine_file)
 
-    repo_path = tools.generate_test_repo(tmpdir, dummy_values)
+    repo_path = tools.generate_test_repo(tmpdir, dummy_values).path
 
     conf = config.Config.from_json({
         'env_dir': join(tmpdir, 'env'),
