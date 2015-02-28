@@ -40,6 +40,15 @@ The repository may be readonly.
    Mercurial used in ``asv`` (``python-hglib``) is being ported to Python 3.
    At the present time, Mercurial support will only function on Python 2.
 
+``branches``
+------------
+Branches to generate benchmark results for.
+
+This controls how the benchmark results are displayed, and what
+benchmarks ``asv run ALL`` and ``asv run NEW`` run.
+
+If not provided, "master" (Git) or "tip" (Mercurial) is chosen.
+
 ``show_commit_url``
 -------------------
 The base URL to show information about a particular commit.  The
