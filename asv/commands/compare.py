@@ -57,15 +57,15 @@ class Compare(Command):
             description="Compare two sets of results")
 
         parser.add_argument(
-            'revision1', nargs=1,
+            'revision1',
             help="""The reference revision.""")
 
         parser.add_argument(
-            'revision2', nargs=1,
+            'revision2',
             help="""The revision being compared""")
 
         parser.add_argument(
-            '--threshold', '-t', nargs='?', type=float, default=2,
+            '--threshold', '-t', type=float, default=2,
             help="""The threshold to use to color-code divergent results. This
                     is a factor, so for example setting this to 2 will
                     highlight all results differing by more than a factor of
@@ -77,7 +77,7 @@ class Compare(Command):
            improved, stayed the same, and gotten worse""")
 
         parser.add_argument(
-            '--machine', '-m', nargs='?', type=str, default=None,
+            '--machine', '-m', type=str, default=None,
             help="""The machine to compare the revisions for""")
 
 

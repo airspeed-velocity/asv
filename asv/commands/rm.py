@@ -26,7 +26,7 @@ class Rm(Command):
             """)
 
         parser.add_argument(
-            'patterns', nargs='*',
+            'patterns', nargs='+',
             help="""Pattern(s) to match, each of the form X=Y.  X may
             be one of "benchmark", "commit_hash", "python" or any of
             the machine or environment params.  Y is a case-sensitive
