@@ -45,6 +45,10 @@ def test_find_benchmarks(tmpdir):
     b = benchmarks.Benchmarks(conf, regex='time_example_benchmark_1')
     assert len(b) == 2
 
+    b = benchmarks.Benchmarks(conf, regex=['time_example_benchmark_1',
+                                           'some regexp that does not match anything'])
+    assert len(b) == 2
+
     b = benchmarks.Benchmarks(conf)
     assert len(b) == 16
 

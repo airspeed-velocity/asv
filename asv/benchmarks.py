@@ -279,10 +279,7 @@ class Benchmarks(dict):
         self._all_benchmarks = {}
         for benchmark in benchmarks:
             self._all_benchmarks[benchmark['name']] = benchmark
-            for reg in regex:
-                if not re.search(reg, benchmark['name']):
-                    break
-            else:
+            if not regex or any(re.search(reg, benchmark['name']) for reg in regex):
                 self[benchmark['name']] = benchmark
 
     @classmethod
