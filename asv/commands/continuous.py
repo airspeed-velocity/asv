@@ -34,7 +34,7 @@ class Continuous(Command):
             'branch', default=None,
             help="""The commit/branch to test. By default, the master branch.""")
         parser.add_argument(
-            '--factor', "-f", nargs='?', type=float, default=2.0,
+            '--factor', "-f", type=float, default=2.0,
             help="""The factor above or below which a result is
             considered problematic.  For example, with a factor of 2,
             if a benchmark gets twice as slow or twice as fast, it
@@ -43,11 +43,11 @@ class Continuous(Command):
             "--show-stderr", "-e", action="store_true",
             help="""Display the stderr output from the benchmarks.""")
         parser.add_argument(
-            "--bench", "-b", type=str, nargs="*",
+            "--bench", "-b", type=str, action="append",
             help="""Regular expression(s) for benchmark to run.  When
             not provided, all benchmarks are run.""")
         parser.add_argument(
-            "--machine", "-m", nargs='?', type=str, default=None,
+            "--machine", "-m", type=str, default=None,
             help="""Use the given name to retrieve machine
             information.  If not provided, the hostname is used.  If
             no entry with that name is found, and there is only one

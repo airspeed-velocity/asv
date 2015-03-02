@@ -18,11 +18,11 @@ class Dev(Run):
                 --quick --show-stderr --python=same``""")
 
         parser.add_argument(
-            "--bench", "-b", type=str, nargs="*",
+            "--bench", "-b", type=str, action="append",
             help="""Regular expression(s) for benchmark to run.  When
             not provided, all benchmarks are run.""")
         parser.add_argument(
-            "--python", nargs='?', type=str,
+            "--python", type=str,
             default="same",
             help="""Specify a Python interpreter in which to run the
             benchmarks.  By default, uses the same Python interpreter
@@ -34,7 +34,7 @@ class Dev(Run):
             dependencies.  A specific revision may not be provided
             when --python is provided.""")
         parser.add_argument(
-            "--machine", "-m", nargs='?', type=str, default=None,
+            "--machine", "-m", type=str, default=None,
             help="""Use the given name to retrieve machine
             information.  If not provided, the hostname is used.  If
             that is not found, and there is only one entry in

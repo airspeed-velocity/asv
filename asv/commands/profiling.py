@@ -45,7 +45,7 @@ class Profile(Command):
             description="Profile a benchmark")
 
         parser.add_argument(
-            'benchmark', nargs='?',
+            'benchmark',
             help="""The benchmark to profile.  Must be a
             fully-specified benchmark name.""")
         parser.add_argument(
@@ -53,11 +53,11 @@ class Profile(Command):
             help="""The revision of the project to profile.  May be a
             commit hash, or a tag or branch name.""")
         parser.add_argument(
-            '--gui', '-g', nargs='?',
+            '--gui', '-g',
             help="""Display the profile in the given gui.  Use
             --gui=list to list available guis.""")
         parser.add_argument(
-            '--output', '-o', nargs='?',
+            '--output', '-o',
             help="""Save the profiling information to the given file.
             This file is in the format written by the `cProfile`
             standard library module.  If not provided, prints a simple
@@ -67,7 +67,7 @@ class Profile(Command):
             help="""Forcibly re-run the profile, even if the data
             already exists in the results database.""")
         parser.add_argument(
-            '--environment', '-e', nargs='?',
+            '--environment', '-e',
             help="""Which environment to use.  Your benchmarking
             project may have multiple environments if it has a
             dependency matrix or multiple versions of Python
@@ -75,7 +75,7 @@ class Profile(Command):
             directory as already created by the run command. If `None`
             is specified, one will be chosen at random.""")
         parser.add_argument(
-            "--python", nargs='?', type=str, default=None,
+            "--python", type=str, default=None,
             help="""Specify a Python interpreter in which to run the
             benchmarks.  It may be an executable to be searched for on
             the $PATH, an absolute path, or the special value "same"

@@ -67,7 +67,7 @@ class Run(Command):
             used to subsample the commits determined by range to a
             reasonable number.""")
         parser.add_argument(
-            "--bench", "-b", type=str, nargs="?",
+            "--bench", "-b", type=str, action="append",
             help="""Regular expression(s) for benchmark to run.  When
             not provided, all benchmarks are run.""")
         parser.add_argument(
@@ -89,7 +89,7 @@ class Run(Command):
             benchmark functions faster.  The results are unlikely to
             be useful, and thus are not saved.""")
         parser.add_argument(
-            "--python", nargs='?', type=str,
+            "--python", type=str,
             default=None,
             help="""Specify a Python interpreter in which to run the
             benchmarks.  It may be an executable to be searched for on
@@ -108,7 +108,7 @@ class Run(Command):
             default=None,
             help="""Do not save any results to disk.""")
         parser.add_argument(
-            "--machine", "-m", nargs='?', type=str, default=None,
+            "--machine", "-m", type=str, default=None,
             help="""Use the given name to retrieve machine
             information.  If not provided, the hostname is used.  If
             that is not found, and there is only one entry in

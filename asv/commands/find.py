@@ -37,13 +37,13 @@ class Find(Command):
             when the regression in the range is mostly monotonic.""")
 
         parser.add_argument(
-            'range', type=str, nargs=1, metavar=('from..to',),
+            'range', type=str, metavar=('from..to',),
             help="""Range of commits to search.  For a git
             repository, this is passed as the first argument to ``git
             log``.  See 'specifying ranges' section of the
             `gitrevisions` manpage for more info.""")
         parser.add_argument(
-            "bench", type=str, nargs=1, metavar=('benchmark_name',),
+            "bench", type=str, metavar=('benchmark_name',),
             help="""Name of benchmark to use in search.""")
         parser.add_argument(
             "--invert", "-i", action="store_true",
@@ -54,7 +54,7 @@ class Find(Command):
             help="""Display the stderr output from the benchmarks when
             they fail.""")
         parser.add_argument(
-            "--machine", "-m", nargs='?', type=str, default=None,
+            "--machine", "-m", type=str, default=None,
             help="""Use the given name to retrieve machine
             information.  If not provided, the hostname is used.  If
             that is not found, and there is only one entry in
