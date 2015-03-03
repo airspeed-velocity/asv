@@ -19,6 +19,7 @@ from ..machine import iter_machine_files
 from ..repo import get_repo
 from ..results import iter_results
 from ..branch_cache import BranchCache
+from ..publishing import OutputPublisher
 from .. import util
 
 
@@ -122,7 +123,7 @@ class Publish(Command):
         machines = {}
         benchmark_names = set()
 
-        log.set_nitems(5)
+        log.set_nitems(5 + len(list(util.iter_subclasses(OutputPublisher))))
 
         if os.path.exists(conf.html_dir):
             util.long_path_rmtree(conf.html_dir)
@@ -196,6 +197,17 @@ class Publish(Command):
                 graph.save(conf.html_dir)
 
         log.step()
+
+        extra_pages = []
+        for cls in util.iter_subclasses(OutputPublisher):
+            log.step()
+            log.info("Generating output for {0}".format(cls.name))
+            with log.indent():
+                output_dir = os.path.join(conf.html_dir, cls.name)
+                cls.publish(conf, graphs)
+                extra_pages.append([cls.name, cls.button_label, cls.description])
+
+        log.step()
         log.info("Writing index")
         benchmark_map = dict(benchmarks)
         for key in six.iterkeys(benchmark_map):
@@ -213,5 +225,6 @@ class Publish(Command):
             'params': params,
             'benchmarks': benchmark_map,
             'machines': machines,
-            'tags': tags
+            'tags': tags,
+            'extra_pages': extra_pages,
         })

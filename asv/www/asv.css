@@ -135,3 +135,11 @@
     width: 292px;
     overflow: hidden;
 }
+
+#extra-buttons {
+    margin: 1em;
+}
+
+#extra-buttons a {
+    border: solid 1px #ccc;
+}

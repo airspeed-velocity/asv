@@ -1,4 +1,4 @@
-$(function() {
+$(document).ready(function() {
     var colors = [
         '#247AAD',
         '#E24A33',
@@ -125,6 +125,8 @@ $(function() {
     /* List of lists of value combinations to plot (apart from x-axis)
        in parameterized tests. */
     var benchmark_param_selection = [[null]];
+    /* Extra pages: {name: show_function} */
+    var loaded_pages = {};
 
     function display_benchmark(bm_name) {
         $('#graph-display').show();
@@ -480,7 +482,11 @@ $(function() {
 
             if (hash === '') {
                 show_summary();
-            } else {
+            } 
+            else if (hash[0] == '/') {
+                show_page(hash.replace('/', ''));
+            }
+            else {
                 display_benchmark(hash);
             }
         }
@@ -498,6 +504,22 @@ $(function() {
     });
 
     function make_summary() {
+        var summary_display = $('#summary-display');
+
+        if (master_json.extra_pages) {
+            var pages_container = $('<div id="extra-buttons" class="btn-group" role="group" />');
+
+            $.each(master_json.extra_pages, function(j, item) {
+                var button = $('<a class="btn btn-default" role="button"/>');
+                button.attr('href', '#/' + item[0]);
+                button.text(item[1]);
+                button.tooltip({title: item[2], html: true});
+                pages_container.append(button);
+            });
+            pages_container.show();
+            summary_display.append(pages_container);
+        }
+
         $.each(master_json.benchmarks, function(bm_name, bm) {
             var container = $(
                 '<a class="btn benchmark-container" href="#' + bm_name +
@@ -523,7 +545,7 @@ $(function() {
 
             container.append(name);
             container.append(plot_div);
-            $('#summary-display').append(container);
+            summary_display.append(container);
 
             callback_in_view(plot_div, function() {
                 $.ajax({
@@ -570,6 +592,7 @@ $(function() {
 
     function show_summary() {
         $('#graph-display').hide();
+        $('#regressions-display').hide();
         $('#summary-display').show();
         $("#title").text("All benchmarks");
         $('.tooltip').remove();
@@ -1422,4 +1445,21 @@ $(function() {
     }
 
     show_summary();
+
+
+    /*
+      Dealing with sub-pages
+     */
+
+    function show_page(name) {
+        $("#graph-display").hide();
+        $("#summary-display").hide();
+        loaded_pages[name]();
+    }
+
+    this.register_page = function(name, show_function) {
+        loaded_pages[name] = show_function;
+    }
+
+    $.asv = this;
 });
