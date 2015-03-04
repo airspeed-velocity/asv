@@ -28,7 +28,10 @@ $(document).ready(function() {
 
         $.each(regressions, function (benchmark_name, item) {
             var parameter_idx = item[0];
-            var benchmark_url = '#' + benchmark_name.replace(/\(.*/, '') + '-' + parameter_idx;
+            var benchmark_url = '#' + benchmark_name.replace(/\(.*/, '');
+            if (parameter_idx !== null) {
+                benchmark_url += '-' + parameter_idx;
+            }
             $.each(item[1], function (idx, regression_item) {
                 var date = regression_item[0];
                 var old_value = regression_item[1];
