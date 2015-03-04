@@ -14,7 +14,7 @@ import six
 
 def detect_regressions(y, size_limit=20000):
     """
-    Detect newest upward steps in a (noisy) signal.
+    Detect regressions in a (noisy) signal.
 
     Parameters
     ----------
@@ -25,11 +25,16 @@ def detect_regressions(y, size_limit=20000):
 
     Returns
     -------
-    regressions : list of 3-tuples (pos, old_value, new_value)
-        List of positions of upward steps in the data since the
-        global minimum. For each step, old and new values are
-        included. This is an empty list, if the most recent
-        values are also the smallest ones.
+    last_value
+        Last value
+    last_err
+        Last value error estimate
+    best_pos
+        Last 'good' position
+    best_value
+        Best value
+    best_err
+        Best value error estimate
 
     """
 
@@ -42,25 +47,30 @@ def detect_regressions(y, size_limit=20000):
         index_map[len(y_filtered)] = j
         y_filtered.append(x)
 
-    right, values, dists, gamma = solve_potts_autogamma(y_filtered)
+    # Find piecewise segments
+    p = 2
+    right, values, dists, gamma = solve_potts_autogamma(y_filtered, p=p, min_size=5)
 
-    prev_r = None
-    prev_v = None
-    prev_min = None
+    # Find best value and compare to the most recent one
+    best_r = None
+    best_v = None
+    best_err = None
+    err = None
+    v = None
+    prev_r = 0
 
-    regressions = []
-    for r, v in zip(right, values):
-        if prev_min is None:
-            prev_min = v
+    for r, v, d in zip(right, values, dists):
+        err = abs(d / (r - prev_r))**(1/p)
+        prev_r = r
+        if best_v is None or v <= best_v:
+            best_r = index_map[r-1]
+            best_v = v
+            best_err = err
 
-        if prev_v is not None:
-            if v > prev_v:
-                regressions.append((index_map[prev_r], prev_v, v))
-            elif v < prev_min:
-                del regressions[:]
-        prev_r, prev_v = r, v
-
-    return regressions
+    if v is None or v <= best_v + max(err, best_err):
+        return None, None, None, None, None
+    else:
+        return (v, err, best_r, best_v, best_err)
 
 
 #
@@ -202,7 +212,7 @@ def solve_potts(y, gamma, p=2, min_size=2, max_size=1e99,
     return segmentation_from_partition(n, p, mu, dist)
 
 
-def solve_potts_autogamma(y, beta=0.025, **kw):
+def solve_potts_autogamma(y, beta=None, **kw):
     """Solve Potts problem with automatically determined gamma.
 
     The optimal value is determined by minimizing the information measure::
@@ -212,6 +222,13 @@ def solve_potts_autogamma(y, beta=0.025, **kw):
     where x(gamma) is the solution to the Potts problem for a fixed
     gamma. The minimization is only performed rather roughly.
 
+    Parameters
+    ----------
+    beta : float or 'bic'
+         Penalty parameter. Default is 3*ln(n)/n, similar to Bayesian
+         information criterion for gaussian model with unknown variance
+         assuming 3 DOF per breakpoint.
+
     """
     n = len(y)
 
@@ -220,6 +237,9 @@ def solve_potts_autogamma(y, beta=0.025, **kw):
 
     mu_dist = MuDist(y, kw.get('p', 2))
     mu, dist = mu_dist.get_funcs()
+
+    if beta is None:
+        beta = 3 * math.log(n) / n
 
     gamma_0 = dist(0, n-1)
 

@@ -74,7 +74,7 @@ def test_solve_potts():
     # Appending noisy data to weakly noisy data should retain the
     # steps in the former
     y = y0 + 0.05 * np.random.rand(y.size)
-    ypad = 0.02 * np.random.randn(100000 - 3000)
+    ypad = 0.05 * np.random.randn(100000 - 3000)
     right, values, dists, gamma = solve_potts_autogamma(y.tolist() + ypad.tolist())
     assert right == [10, 30, 200, 600, 2500, 2990, 3000, 100000]
 
@@ -92,11 +92,9 @@ def test_detect_regressions():
         y = y.tolist()
         y[123] = None
         y[1234] = np.nan
-        regressions = detect_regressions(y)
+        new_value, err, pos, old_value, best_err = detect_regressions(y)
 
-        assert len(regressions) == 1
-        pos, old_value, new_value = regressions[0]
-        assert pos == 3234 + (seed % 123)
+        assert pos == 3233 + (seed % 123)
         assert np.allclose(old_value, 0.7/2 - 0.3, rtol=0.1, atol=0)
         assert np.allclose(new_value, 0.7/2 - 0.3 + 1, rtol=0.1, atol=0)
 

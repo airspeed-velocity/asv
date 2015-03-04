@@ -58,11 +58,10 @@ class Regressions(OutputPublisher):
         """
         Analyze a single time series
         """
-        regressions = detect_regressions(values)
-        results = []
-        for pos, old_value, new_value in regressions:
-            results.append((times[pos], old_value, new_value))
-        return results
+        v, err, best_r, best_v, best_err = detect_regressions(values)
+        if v is None:
+            return None
+        return times[best_r+1], v, best_v
 
     @classmethod
     def _save(cls, conf, data):
