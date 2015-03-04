@@ -1,5 +1,6 @@
 table.tablesorter thead tr .header {
     cursor: pointer;
+    white-space: nowrap;
 }
 
 table.tablesorter thead th.headerSortUp:after {

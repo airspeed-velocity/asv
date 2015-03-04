@@ -1505,5 +1505,8 @@ $(document).ready(function() {
 
     this.master_json = master_json; /* Updated after index.json loads */
 
+    this.pretty_second = pretty_second;
+    this.time_units = time_units;
+
     $.asv = this;
 });

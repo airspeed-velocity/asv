@@ -13,13 +13,13 @@ $(document).ready(function() {
 
     function display_data(data) {
         var body = $('#regressions-body');
-        var display_table = $('<table class="table tablesorter"><thead><tr>' +
+        var display_table = $('<table class="table table-hover tablesorter"><thead><tr>' +
                               '<th>Benchmark</th>' +
                               '<th>Date</th>' +
                               '<th>Commit</th>' +
                               '<th>Factor</th>' +
-                              '<th>Old value</th>' +
-                              '<th>New value</th>' +
+                              '<th>Best</th>' +
+                              '<th>Current</th>' +
                               '</tr></thead></table>');
         var table_body = $('<tbody/>');
 
@@ -29,39 +29,86 @@ $(document).ready(function() {
         $.each(regressions, function (benchmark_name, item) {
             var parameter_idx = item[0];
             var benchmark_url = '#' + benchmark_name.replace(/\(.*/, '');
+            var regression = item[1];
+
             if (parameter_idx !== null) {
                 benchmark_url += '-' + parameter_idx;
             }
-            $.each(item[1], function (idx, regression_item) {
-                var date = regression_item[0];
-                var old_value = regression_item[1];
-                var new_value = regression_item[2];
-                var factor = new_value / old_value;
-                var commit = $.asv.master_json.date_to_hash[date];
-                var date_fmt = new Date(date);
-                var commit_url = $.asv.master_json.show_commit_url + commit;
 
-                var row = $('<tr/>');
-                var item;
+            if (regression === null) {
+                return;
+            }
 
-                item = $('<td/>');
-                item.text(benchmark_name);
-                row.append($('<td/>').append(
-                        $('<a/>').attr('href', benchmark_url + '@' + date).text(benchmark_name)));
-                row.append($('<td/>').text(date_fmt.toUTCString()));
-                row.append($('<td/>').append(
-                        $('<a/>').attr('href', commit_url).text(commit)));
-                row.append($('<td/>').text(factor.toFixed(2)));
-                row.append($('<td/>').text(old_value.toFixed(4)));
-                row.append($('<td/>').text(new_value.toFixed(4)));
+            var date = regression[0];
+            var new_value = regression[1];
+            var old_value = regression[2];
+            var factor = new_value / old_value;
+            var commit = $.asv.master_json.date_to_hash[date];
+            var date_fmt = new Date(date);
+            var commit_url = $.asv.master_json.show_commit_url + commit;
 
-                table_body.append(row);
-            });
+            var row = $('<tr/>');
+            var item;
+
+            var benchmark_basename = benchmark_name.replace(/\(.*/, '');
+
+            if ($.asv.master_json.benchmarks[benchmark_basename].unit == "seconds") {
+                new_value = $.asv.pretty_second(new_value);
+                old_value = $.asv.pretty_second(old_value);
+            }
+            else {
+                new_value = new_value.toPrecision(3);
+                old_value = old_value.toPrecision(3);
+            }
+
+            item = $('<td/>');
+            item.text(benchmark_name);
+            row.append($('<td/>').append(
+                $('<a/>').attr('href', benchmark_url + '@' + date).text(benchmark_name)));
+            row.append($('<td/>').text(date_fmt.toISOString()));
+            row.append($('<td/>').append(
+                $('<a/>').attr('href', commit_url).text(commit)));
+            row.append($('<td/>').text(factor.toFixed(2) + 'x'));
+            row.append($('<td/>').text(old_value));
+            row.append($('<td/>').text(new_value));
+
+            table_body.append(row);
         });
 
         display_table.append(table_body);
         body.append(display_table);
-        display_table.tablesorter();
+
+        $.tablesorter.addParser({
+            id: 'factorSorter',
+            is: function(s) { return false; },
+            format: function(s) {  return s.replace(/x/, ''); },
+            type: 'numeric'
+        });
+
+        $.tablesorter.addParser({
+            id: 'benchmarkValueSorter',
+            is: function(s) { return false; },
+            format: function(s) {
+                for (var k = 0; k < $.asv.time_units.length; ++k) {
+                    var entry = $.asv.time_units[k];
+                    m = s.match('^([0-9.]+)'+entry[0]+'$');
+                    if (m) {
+                        return parseFloat(m[1]) * entry[2] * 1e-30;
+                    }
+                }
+                return s;
+            },
+            type: 'numeric'
+        });
+
+        display_table.tablesorter({
+            headers: {
+                1: { sorter: 'text' },
+                3: { sorter: 'factorSorter' },
+                4: { sorter: 'benchmarkValueSorter' },
+                5: { sorter: 'benchmarkValueSorter' },
+            }
+        });
     }
 
     /*
