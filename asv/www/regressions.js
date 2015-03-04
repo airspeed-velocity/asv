@@ -61,18 +61,74 @@ $(document).ready(function() {
                 old_value = old_value.toPrecision(3);
             }
 
-            item = $('<td/>');
-            item.text(benchmark_name);
             row.append($('<td/>').append(
                 $('<a/>').attr('href', benchmark_url + '@' + date).text(benchmark_name)));
             row.append($('<td/>').text(date_fmt.toISOString()));
             row.append($('<td/>').append(
                 $('<a/>').attr('href', commit_url).text(commit)));
-            row.append($('<td/>').text(factor.toFixed(2) + 'x'));
+            var factor_link = $('<a/>').text(factor.toFixed(2) + 'x');
+            row.append($('<td/>').append(factor_link));
             row.append($('<td/>').text(old_value));
             row.append($('<td/>').text(new_value));
-
             table_body.append(row);
+
+            /* Show the summary graph as a popup */
+            var plot_div = $('<div/>');
+            plot_div.css('width', '11.8em');
+            plot_div.css('height', '7em');
+            plot_div.css('border', '2px solid black');
+            plot_div.css('background-color', 'white');
+
+            function update_plot() {
+                $.ajax({
+                    url: 'graphs/summary/' + benchmark_basename + '.json',
+                    cache: false
+                }).done(function(data) {
+                    var options = {
+                        colors: ['#000'],
+                        series: {
+                            lines: {
+                                show: true,
+                                lineWidth: 2
+                            },
+                            shadowSize: 0
+                        },
+                        grid: {
+                            borderWidth: 1,
+                            margin: 0,
+                            labelMargin: 0,
+                            axisMargin: 0,
+                            minBorderMargin: 0,
+                            markings: [
+                                { color: '#d00', lineWidth: 2, xaxis: { from: date, to: date }}
+                            ],
+                        },
+                        xaxis: {
+                            ticks: [],
+                        },
+                        yaxis: {
+                            ticks: [],
+                            min: 0
+                        },
+                        legend: {
+                            show: false
+                        }
+                    };
+                    var plot = $.plot(plot_div, [{data: data}], options);
+                }).fail(function() {
+                    // TODO: Handle failure
+                })
+                return plot_div;
+            }
+
+            factor_link.popover({
+                placement: 'right auto',
+                trigger: 'hover',
+                html: true,
+                delay: 50,
+                content: $('<div/>').append(plot_div)
+            });
+            factor_link.on('show.bs.popover', update_plot);
         });
 
         display_table.append(table_body);
