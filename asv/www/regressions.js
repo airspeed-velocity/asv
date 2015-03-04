@@ -48,7 +48,7 @@ $(document).ready(function() {
                 row.append($('<td/>').text(date_fmt.toUTCString()));
                 row.append($('<td/>').append(
                         $('<a/>').attr('href', commit_url).text(commit)));
-                row.append($('<td/>').text(factor.toFixed(2) + "x"));
+                row.append($('<td/>').text(factor.toFixed(2)));
                 row.append($('<td/>').text(old_value.toFixed(4)));
                 row.append($('<td/>').text(new_value.toFixed(4)));
 
