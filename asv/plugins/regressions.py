@@ -33,7 +33,9 @@ class Regressions(OutputPublisher):
             log.add('.')
 
             benchmark_name = os.path.basename(file_name)
-            benchmark = benchmarks[benchmark_name]
+            benchmark = benchmarks.get(benchmark_name)
+            if not benchmark:
+                continue
             graph_data = graph.get_data()
 
             if benchmark.get('params'):
