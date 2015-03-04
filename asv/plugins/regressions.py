@@ -36,17 +36,31 @@ class Regressions(OutputPublisher):
             benchmark = benchmarks[benchmark_name]
             graph_data = graph.get_data()
 
-            if benchmark['params']:
-                for j, param in enumerate(itertools.product(*benchmark['params'])):
-                    times = [item[0] for item in graph_data]
-                    values = [item[1][j] for item in graph_data]
-                    result = cls._analyze_data(times, values)
-                    regressions[benchmark_name + '({0})'.format(', '.join(param))] = [j, result]
+            if benchmark.get('params'):
+                def iter_data():
+                    for j, param in enumerate(itertools.product(*benchmark['params'])):
+                        times = [item[0] for item in graph_data]
+                        values = [item[1][j] for item in graph_data]
+                        entry_name = benchmark_name + '({0})'.format(', '.join(param))
+                        yield j, entry_name, times, values
             else:
-                times = [item[0] for item in graph_data]
-                values = [item[1] for item in graph_data]
+                def iter_data():
+                    times = [item[0] for item in graph_data]
+                    values = [item[1] for item in graph_data]
+                    yield None, benchmark_name, times, values
+
+            for j, entry_name, times, values in iter_data():
                 result = cls._analyze_data(times, values)
-                regressions[benchmark_name] = [None, result]
+                if result is None:
+                    continue
+
+                if entry_name not in regressions:
+                    regressions[entry_name] = [j, result]
+                else:
+                    # Pick the worse regression
+                    prev_j, prev_result = regressions[entry_name]
+                    if abs(prev_result[1]*result[2]) < abs(result[1]*prev_result[2]):
+                        regressions[entry_name] = [j, result]
 
         cls._save(conf, {
             'date_to_hash': date_to_hash,

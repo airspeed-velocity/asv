@@ -62,7 +62,10 @@ def detect_regressions(y, size_limit=20000):
     for r, v, d in zip(right, values, dists):
         err = abs(d / (r - prev_r))**(1/p)
         prev_r = r
-        if best_v is None or v <= best_v:
+        if best_v is None or v <= best_v + best_err:
+            # Prefer showing newer regressions, so if the minimum
+            # position is uncertain due to errors in test results,
+            # bias it toward newer results
             best_r = index_map[r-1]
             best_v = v
             best_err = err
