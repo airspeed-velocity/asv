@@ -9,7 +9,6 @@ import shutil
 import itertools
 
 import six
-from six.moves import zip as izip
 
 from . import Command
 from ..benchmarks import Benchmarks
@@ -17,48 +16,10 @@ from ..console import log
 from ..graph import Graph
 from ..machine import iter_machine_files
 from ..repo import get_repo
-from ..results import iter_results
+from ..results import iter_results, compatible_results
 from ..branch_cache import BranchCache
 from ..publishing import OutputPublisher
 from .. import util
-
-
-def compatible_results(result, benchmark):
-    """
-    Obtain values from *result* that are compatible with
-    parameters of *benchmark*
-    """
-    if not benchmark or not benchmark.get('params'):
-        # Not a parameterized benchmark, or a benchmark that is not
-        # currently there. The javascript side doesn't know how to
-        # visualize benchmarks unless the params are the same as those
-        # of the current benchmark. Single floating point values are
-        # OK, but not parameterized ones.
-        if isinstance(result, dict):
-            return None
-        else:
-            return result
-
-    if result is None:
-        # All results missing, eg. build failure
-        return result
-
-    if not isinstance(result, dict) or 'params' not in result:
-        # Not a parameterized result -- test probably was once
-        # non-parameterized
-        return None
-
-    # Pick results for those parameters that also appear in the
-    # current benchmark
-    old_results = {}
-    for param, value in izip(itertools.product(*result['params']),
-                             result['result']):
-        old_results[param] = value
-
-    new_results = []
-    for param in itertools.product(*benchmark['params']):
-        new_results.append(old_results.get(param))
-    return new_results
 
 
 def check_benchmark_params(name, benchmark):
@@ -204,7 +165,7 @@ class Publish(Command):
             log.info("Generating output for {0}".format(cls.name))
             with log.indent():
                 output_dir = os.path.join(conf.html_dir, cls.name)
-                cls.publish(conf, graphs)
+                cls.publish(conf, benchmarks, graphs, date_to_hash)
                 extra_pages.append([cls.name, cls.button_label, cls.description])
 
         log.step()

@@ -7,8 +7,10 @@ from __future__ import (absolute_import, division, print_function,
 import base64
 import os
 import zlib
+import itertools
 
 import six
+from six.moves import zip as izip
 
 from . import environment
 from .console import log
@@ -104,6 +106,44 @@ def get_filename(machine, commit_hash, env_name):
         "{0}-{1}.json".format(
             commit_hash[:8],
             env_name))
+
+
+def compatible_results(result, benchmark):
+    """
+    For parameterized benchmarks, obtain values from *result* that
+    are compatible with parameters of *benchmark*
+    """
+    if not benchmark or not benchmark.get('params'):
+        # Not a parameterized benchmark, or a benchmark that is not
+        # currently there. The javascript side doesn't know how to
+        # visualize benchmarks unless the params are the same as those
+        # of the current benchmark. Single floating point values are
+        # OK, but not parameterized ones.
+        if isinstance(result, dict):
+            return None
+        else:
+            return result
+
+    if result is None:
+        # All results missing, eg. build failure
+        return result
+
+    if not isinstance(result, dict) or 'params' not in result:
+        # Not a parameterized result -- test probably was once
+        # non-parameterized
+        return None
+
+    # Pick results for those parameters that also appear in the
+    # current benchmark
+    old_results = {}
+    for param, value in izip(itertools.product(*result['params']),
+                             result['result']):
+        old_results[param] = value
+
+    new_results = []
+    for param in itertools.product(*benchmark['params']):
+        new_results.append(old_results.get(param))
+    return new_results
 
 
 class Results(object):

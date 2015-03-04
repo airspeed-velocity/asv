@@ -127,10 +127,13 @@ $(document).ready(function() {
     var benchmark_param_selection = [[null]];
     /* Extra pages: {name: show_function} */
     var loaded_pages = {};
+    /* Highlighted timestamp */
+    var highlighted_date = null;
 
-    function display_benchmark(bm_name) {
+    function display_benchmark(bm_name, sub_benchmark_idx, highlight_timestamp) {
         $('#graph-display').show();
         $('#summary-display').hide();
+        $('#regressions-display').hide();
         $('.tooltip').remove();
 
         if (reference_scale) {
@@ -139,8 +142,9 @@ $(document).ready(function() {
             reference = 1.0;
         }
         current_benchmark = bm_name;
+        highlighted_date = highlight_timestamp;
         $("#title").text(bm_name);
-        setup_benchmark_params();
+        setup_benchmark_params(sub_benchmark_idx);
         replace_graphs();
     }
 
@@ -214,6 +218,7 @@ $(document).ready(function() {
         cache: false
     }).done(function (index) {
         master_json = index;
+        $.asv.master_json = index;
 
         var nav = $("#navigation");
 
@@ -487,7 +492,22 @@ $(document).ready(function() {
                 show_page(hash.replace('/', ''));
             }
             else {
-                display_benchmark(hash);
+                var sub_benchmark_idx = null;
+                var highlight_timestamp = null;
+
+                match = hash.match(/^(.*)@([0-9]+)$/);
+                if (match) {
+                    hash = match[1];
+                    highlight_timestamp = parseInt(match[2]);
+                }
+
+                match = hash.match(/^(.*)-([0-9]+)$/);
+                if (match) {
+                    hash = match[1];
+                    sub_benchmark_idx = parseInt(match[2]);
+                }
+
+                display_benchmark(hash, sub_benchmark_idx, highlight_timestamp);
             }
         }
 
@@ -598,7 +618,7 @@ $(document).ready(function() {
         $('.tooltip').remove();
     }
 
-    function setup_benchmark_params() {
+    function setup_benchmark_params(sub_benchmark_idx) {
         if (!current_benchmark) {
             x_coordinate_axis = 0;
             x_coordinate_is_category = false;
@@ -612,19 +632,35 @@ $(document).ready(function() {
         /* Default plot: time series */
         x_coordinate_axis = 0;
 
-        /* Default plot: up to 8 lines */
-        benchmark_param_selection = [[null]];
-        if (params.length >= 1) {
-            var count = 1;
-            var max_curves = 8;
+        if (sub_benchmark_idx !== null) {
+            /* Only a single parameter set */
+            var idx = sub_benchmark_idx;
+            if (idx < 0) {
+                idx = 0;
+            }
+            benchmark_param_selection = [];
+            for (var k = params.length-1; k >= 0; --k) {
+                var j = idx % params[k].length;
+                benchmark_param_selection.unshift([j]);
+                idx = (idx - j) / params[k].length;
+            }
+            benchmark_param_selection.unshift([null]);
+        }
+        else {
+            /* Default plot: up to 8 lines */
+            benchmark_param_selection = [[null]];
+            if (params.length >= 1) {
+                var count = 1;
+                var max_curves = 8;
 
-            for (var k = 0; k < params.length; ++k) {
-                var item = [];
-                for (var j = 0; j < params[k].length && (j+1)*count <= max_curves; ++j) {
-                    item.push(j);
+                for (var k = 0; k < params.length; ++k) {
+                    var item = [];
+                    for (var j = 0; j < params[k].length && (j+1)*count <= max_curves; ++j) {
+                        item.push(j);
+                    }
+                    count = count * item.length;
+                    benchmark_param_selection.push(item);
                 }
-                count = count * item.length;
-                benchmark_param_selection.push(item);
             }
         }
 
@@ -1256,6 +1292,12 @@ $(document).ready(function() {
             );
         });
 
+        if (highlighted_date !== null) {
+            markings.push(
+                { color: '#d00', lineWidth: 2, xaxis: { from: highlighted_date, to: highlighted_date } }
+            );
+        }
+
         var unit;
         if (reference_scale) {
             unit = 'relative';
@@ -1460,6 +1502,8 @@ $(document).ready(function() {
     this.register_page = function(name, show_function) {
         loaded_pages[name] = show_function;
     }
+
+    this.master_json = master_json; /* Updated after index.json loads */
 
     $.asv = this;
 });
