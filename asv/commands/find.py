@@ -5,7 +5,6 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import math
-import six
 
 from . import Command
 from ..benchmarks import Benchmarks
@@ -15,6 +14,8 @@ from ..repo import get_repo
 from .. import util
 
 from .setup import Setup
+
+from . import common_args
 
 
 def draw_graph(lo, mid, hi, total):
@@ -49,16 +50,8 @@ class Find(Command):
             "--invert", "-i", action="store_true",
             help="""Search for a decrease in the benchmark value,
             rather than an increase.""")
-        parser.add_argument(
-            "--show-stderr", "-e", action="store_true",
-            help="""Display the stderr output from the benchmarks when
-            they fail.""")
-        parser.add_argument(
-            "--machine", "-m", type=str, default=None,
-            help="""Use the given name to retrieve machine
-            information.  If not provided, the hostname is used.  If
-            that is not found, and there is only one entry in
-            ~/.asv-machine.json, that one entry will be used.""")
+        common_args.add_show_stderr(parser)
+        common_args.add_machine(parser)
 
         parser.set_defaults(func=cls.run_from_args)
 

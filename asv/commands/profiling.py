@@ -22,6 +22,8 @@ from ..results import iter_results_for_machine
 from ..util import hash_equal, iter_subclasses
 from .. import util
 
+from . import common_args
+
 
 @contextlib.contextmanager
 def temp_profile(profile_data):
@@ -74,20 +76,7 @@ class Profile(Command):
             specified.  This should the name of an environment
             directory as already created by the run command. If `None`
             is specified, one will be chosen at random.""")
-        parser.add_argument(
-            "--python", type=str, default=None,
-            help="""Specify a Python interpreter in which to run the
-            benchmarks.  It may be an executable to be searched for on
-            the $PATH, an absolute path, or the special value "same"
-            which will use the same Python interpreter that asv is
-            using.  This interpreter must have the benchmarked project
-            already installed, including its dependencies, and a specific
-            revision of the benchmarked project may not be provided.
-
-            It may also be any string accepted by any of the
-            environment plugins.  For example, the conda plugin
-            accepts "2.7" to mean create a new Conda environment with
-            Python version 2.7.""")
+        common_args.add_python(parser)
 
         parser.set_defaults(func=cls.run_from_args)
 

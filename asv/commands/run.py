@@ -13,10 +13,13 @@ from ..benchmarks import Benchmarks
 from ..console import log
 from ..machine import Machine
 from ..repo import get_repo
-from ..results import Results, find_latest_result_hash, get_existing_hashes, iter_results_for_machine_and_hash
+from ..results import (Results, find_latest_result_hash, get_existing_hashes,
+                       iter_results_for_machine_and_hash)
 from .. import util
 
 from .setup import Setup
+
+from . import common_args
 
 
 def _do_build(args):
@@ -66,53 +69,25 @@ class Run(Command):
             help="""Maximum number of steps to benchmark.  This is
             used to subsample the commits determined by range to a
             reasonable number.""")
-        parser.add_argument(
-            "--bench", "-b", type=str, action="append",
-            help="""Regular expression(s) for benchmark to run.  When
-            not provided, all benchmarks are run.""")
+        common_args.add_bench(parser)
         parser.add_argument(
             "--profile", "-p", action="store_true",
             help="""In addition to timing, run the benchmarks through
             the `cProfile` profiler and store the results.""")
-        parser.add_argument(
-            "--parallel", "-j", nargs='?', type=int, default=1, const=-1,
-            help="""Build (but don't benchmark) in parallel.  The
-            value is the number of CPUs to use, or if no number
-            provided, use the number of cores on this machine.""")
-        parser.add_argument(
-            "--show-stderr", "-e", action="store_true",
-            help="""Display the stderr output from the benchmarks.""")
+        common_args.add_parallel(parser)
+        common_args.add_show_stderr(parser)
         parser.add_argument(
             "--quick", "-q", action="store_true",
             help="""Do a "quick" run, where each benchmark function is
             run only once.  This is useful to find basic errors in the
             benchmark functions faster.  The results are unlikely to
             be useful, and thus are not saved.""")
-        parser.add_argument(
-            "--python", type=str,
-            default=None,
-            help="""Specify a Python interpreter in which to run the
-            benchmarks.  It may be an executable to be searched for on
-            the $PATH, an absolute path, or the special value "same"
-            which will use the same Python interpreter that asv is
-            using.  This interpreter must have the benchmarked project
-            already installed, including its dependencies, and a specific
-            revision of the benchmarked project may not be provided.
-
-            It may also be any string accepted by any of the
-            environment plugins.  For example, the conda plugin
-            accepts "2.7" to mean create a new Conda environment with
-            Python version 2.7.""")
+        common_args.add_python(parser)
         parser.add_argument(
             "--dry-run", "-n", action="store_true",
             default=None,
             help="""Do not save any results to disk.""")
-        parser.add_argument(
-            "--machine", "-m", type=str, default=None,
-            help="""Use the given name to retrieve machine
-            information.  If not provided, the hostname is used.  If
-            that is not found, and there is only one entry in
-            ~/.asv-machine.json, that one entry will be used.""")
+        common_args.add_machine(parser)
         parser.add_argument(
             "--skip-existing-successful", action="store_true",
             help="""Skip running benchmarks that have previous successful

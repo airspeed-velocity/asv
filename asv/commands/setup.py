@@ -9,8 +9,9 @@ import logging
 from . import Command
 from ..console import log
 from .. import environment
-from ..repo import get_repo
 from .. import util
+
+from . import common_args
 
 
 def _install_requirements(env):
@@ -43,11 +44,7 @@ class Setup(Command):
             isn't generally required to be run on its own."""
         )
 
-        parser.add_argument(
-            "--parallel", "-j", nargs='?', type=int, default=1, const=-1,
-            help="""Build (but don't benchmark) in parallel.  The
-            value is the number of CPUs to use, or if no number
-            provided, use the number of cores on this machine.""")
+        common_args.add_parallel(parser)
 
         parser.set_defaults(func=cls.run_from_args)
 

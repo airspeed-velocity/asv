@@ -13,6 +13,8 @@ from ..util import human_time, load_json
 from ..console import color_print
 from .. import util
 
+from . import common_args
+
 
 def mean(values):
     if all([value is None for value in values]):
@@ -62,24 +64,18 @@ class Compare(Command):
 
         parser.add_argument(
             'revision2',
-            help="""The revision being compared""")
+            help="""The revision being compared.""")
 
-        parser.add_argument(
-            '--threshold', '-t', type=float, default=2,
-            help="""The threshold to use to color-code divergent results. This
-                    is a factor, so for example setting this to 2 will
-                    highlight all results differing by more than a factor of
-                    2.""")
+        common_args.add_factor(parser)
 
         parser.add_argument(
            '--split', '-s', action='store_true',
            help="""Split the output into a table of benchmarks that have
-           improved, stayed the same, and gotten worse""")
+           improved, stayed the same, and gotten worse.""")
 
         parser.add_argument(
             '--machine', '-m', type=str, default=None,
-            help="""The machine to compare the revisions for""")
-
+            help="""The machine to compare the revisions for.""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -90,11 +86,11 @@ class Compare(Command):
         return cls.run(conf=conf,
                        hash_1=args.revision1[0],
                        hash_2=args.revision2[0],
-                       threshold=args.threshold, split=args.split,
+                       factor=args.factor, split=args.split,
                        machine=args.machine)
 
     @classmethod
-    def run(cls, conf, hash_1, hash_2, threshold=2, split=False, machine=None):
+    def run(cls, conf, hash_1, hash_2, factor=2, split=False, machine=None):
 
         machines = []
         for path in iter_machine_files(conf.results_dir):
@@ -174,10 +170,10 @@ class Compare(Command):
             elif time_1 is not None and time_2 is None:
                 color = 'red'
                 mark = '!'
-            elif time_2 < time_1 / threshold:
+            elif time_2 < time_1 / factor:
                 color = 'green'
                 mark = '-'
-            elif time_2 > time_1 * threshold:
+            elif time_2 > time_1 * factor:
                 color = 'red'
                 mark = '+'
             else:
