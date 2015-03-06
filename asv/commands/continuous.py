@@ -17,6 +17,8 @@ from ..repo import get_repo
 from .. import results
 from .. import util
 
+from . import common_args
+
 
 class Continuous(Command):
     @classmethod
@@ -33,27 +35,10 @@ class Continuous(Command):
         parser.add_argument(
             'branch', default=None,
             help="""The commit/branch to test. By default, the master branch.""")
-        parser.add_argument(
-            '--factor', "-f", type=float, default=2.0,
-            help="""The factor above or below which a result is
-            considered problematic.  For example, with a factor of 2,
-            if a benchmark gets twice as slow or twice as fast, it
-            will be displayed in the results list.""")
-        parser.add_argument(
-            "--show-stderr", "-e", action="store_true",
-            help="""Display the stderr output from the benchmarks.""")
-        parser.add_argument(
-            "--bench", "-b", type=str, action="append",
-            help="""Regular expression(s) for benchmark to run.  When
-            not provided, all benchmarks are run.""")
-        parser.add_argument(
-            "--machine", "-m", type=str, default=None,
-            help="""Use the given name to retrieve machine
-            information.  If not provided, the hostname is used.  If
-            no entry with that name is found, and there is only one
-            entry in ~/.asv-machine.json, that one entry will be
-            used.""")
-
+        common_args.add_factor(parser)
+        common_args.add_show_stderr(parser)
+        common_args.add_bench(parser)
+        common_args.add_machine(parser)
         parser.set_defaults(func=cls.run_from_args)
 
         return parser
