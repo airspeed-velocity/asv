@@ -39,18 +39,18 @@ def add_python(parser):
     parser.add_argument(
         "--python", type=str,
         default="same",
-        help="""Specify a Python interpreter in which to run the benchmarks.  By
-        default, uses the same Python interpreter that asv is using.
-        It may be an executable to be searched for on the $PATH, an
-        absolute path, or the special value "same" which will use the
-        same Python interpreter that asv is using.  This "same"
-        interpreter must have the benchmarked project already
+        help="""Specify a Python interpreter in which to run the
+        benchmarks.  By default, uses the same Python interpreter that
+        asv is using.  It may be an executable to be searched for on
+        the $PATH, an absolute path, or the special value "same" which
+        will use the same Python interpreter that asv is using.  This
+        "same" interpreter must have the benchmarked project already
         installed, including its dependencies.  A specific revision
         may not be provided when --python is provided.
 
         It may also be any string accepted by any of the environment
         plugins.  For example, the conda plugin accepts "2.7" to mean
-        create a new Conda environment with Python version 2.7.  """)
+        create a new Conda environment with Python version 2.7.""")
 
 
 def add_parallel(parser):
