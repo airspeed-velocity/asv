@@ -4,9 +4,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import imp
-import os
 import sys
+import pkgutil
 
 from . import commands
 from . import plugins
@@ -25,23 +24,13 @@ class PluginManager(object):
     def __init__(self):
         self._plugins = []
 
-    def load_plugins_in_path(self, namespace, path):
-        if not os.path.isdir(path):
-            return
-
-        for root, dirs, files in os.walk(path):
-            for filename in files:
-                if (filename.endswith('.py') and filename != '__init__.py' and
-                    not filename.startswith('.')):
-                    filebase = os.path.splitext(filename)[0]
-                    filepath = os.path.join(root, filename)
-                    with open(filepath, 'rb') as fd:
-                        mod = imp.load_module(
-                            '{0}.{1}'.format(namespace, filebase), fd,
-                            filepath, ('.py', 'U', 1))
-
-                    self.init_plugin(mod)
-                    self._plugins.append(mod)
+    def load_plugins(self, package):
+        prefix = package.__name__ + '.'
+        for module_finder, name, ispkg in pkgutil.iter_modules(package.__path__, prefix):
+            __import__(name)
+            mod = sys.modules[name]
+            self.init_plugin(mod)
+            self._plugins.append(mod)
 
     def import_plugin(self, name):
         extended = False
@@ -68,10 +57,7 @@ class PluginManager(object):
 
 
 plugin_manager = PluginManager()
-plugin_manager.load_plugins_in_path(
-    'asv.commands',
-    os.path.dirname(commands.__file__))
-plugin_manager.load_plugins_in_path(
-    'asv.plugins', os.path.dirname(plugins.__file__))
+plugin_manager.load_plugins(commands)
+plugin_manager.load_plugins(plugins)
 
 commands.__doc__ = commands._make_docstring()
