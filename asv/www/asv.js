@@ -158,7 +158,6 @@ $(function() {
         var vertical = false;
         var buttons = $('<div class="btn-group" ' +
                         'data-toggle="buttons"/>');
-        var width = 0;
 
         panel_body.append(buttons);
 
@@ -169,24 +168,40 @@ $(function() {
             buttons.append(button);
         });
 
-        $.each(buttons.children(), function(idx, value) {
-            width += value.scrollWidth;
-        });
-
-        vertical = (width >= nav[0].clientWidth &&
-                    nav[0].clientWidth > 0);
-
-        if (vertical) {
-            buttons.addClass("btn-group-vertical");
-            buttons.css("width", "100%");
-            buttons.css("max-height", "20ex");
-            buttons.css("overflow-y", "auto");
-        }
-        else {
-            buttons.addClass("btn-group-justified");
-        }
-
         return panel_body;
+    }
+
+    function reflow_value_selector_panels() {
+        $('.panel').each(function (i, panel_obj) {
+            var panel = $(panel_obj);
+            panel.find('.btn-group').each(function (i, buttons_obj) {
+                var buttons = $(buttons_obj);
+                var width = 0;
+
+                if (buttons.hasClass('btn-group-vertical') ||
+                    buttons.hasClass('btn-group-justified')) {
+                    /* already processed */
+                    return;
+                }
+
+                $.each(buttons.children(), function(idx, value) {
+                    width += value.scrollWidth;
+                });
+
+                vertical = (width >= panel_obj.clientWidth &&
+                            panel_obj.clientWidth > 0);
+
+                if (vertical) {
+                    buttons.addClass("btn-group-vertical");
+                    buttons.css("width", "100%");
+                    buttons.css("max-height", "20ex");
+                    buttons.css("overflow-y", "auto");
+                }
+                else {
+                    buttons.addClass("btn-group-justified");
+                }
+            });
+        });
     }
 
     /* Fetch the master index.json and then set up the page elements
@@ -595,6 +610,7 @@ $(function() {
 
         if (params.length == 0) {
             /* Simple time series: no need for parameter selection UI */
+            reflow_value_selector_panels();
             return;
         }
 
@@ -713,6 +729,8 @@ $(function() {
                 });
             });
         });
+
+        reflow_value_selector_panels();
     }
 
     /* Convert a benchmark parameter value from their native Python
