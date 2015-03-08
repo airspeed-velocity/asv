@@ -140,9 +140,6 @@ class Publish(Command):
 
             branch_cache = BranchCache(conf, repo)
 
-            for branch in conf.branches:
-                params.setdefault('branch', set()).add(branch)
-
         log.step()
         log.info("Loading results")
         with log.indent():
@@ -195,6 +192,7 @@ class Publish(Command):
             val = list(val)
             val.sort(key=lambda x: x or '')
             params[key] = val
+        params['branch'] = conf.branches  # maintain same order as in conf file
         util.write_json(os.path.join(conf.html_dir, "index.json"), {
             'project': conf.project,
             'project_url': conf.project_url,
