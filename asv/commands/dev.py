@@ -21,7 +21,7 @@ class Dev(Run):
 
         common_args.add_bench(parser)
         common_args.add_machine(parser)
-        common_args.add_python(parser)
+        common_args.add_python(parser, default="same")
         parser.set_defaults(func=cls.run_from_args)
 
         return parser
