@@ -34,7 +34,7 @@ def main():
 
     try:
         result = args.func(args)
-    except (RuntimeError, util.UserError) as e:
+    except util.UserError as e:
         log.error(six.text_type(e))
         sys.stdout.write('\n')
         sys.exit(1)
