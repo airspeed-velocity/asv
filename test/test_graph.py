@@ -106,7 +106,6 @@ def test_empty_graph():
     data = g.get_data()
     assert data == []
 
-
     g = Graph('foo', {}, {})
     g.add_data_point(1, None)
     g.add_data_point(1, [None, None])
@@ -125,8 +124,7 @@ def test_nan():
     g.add_data_point(3, 3)
     g.add_data_point(4, float('nan'))
     data = g.get_data()
-    assert data == [(1, 1), (2, 2), (3,3)]
-
+    assert data == [(1, 1), (2, 2), (3, 3)]
 
     g = Graph('foo', {}, {})
     g.add_data_point(1, None)

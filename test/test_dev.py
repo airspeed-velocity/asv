@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function,
 import os
 import sys
 import re
-from os.path import abspath, dirname, exists, join, isfile
+from os.path import abspath, dirname, join
 import shutil
 import pytest
 from io import StringIO
@@ -18,6 +18,8 @@ from asv import config
 from asv.commands.dev import Dev
 from asv.commands.profiling import Profile
 from asv.commands.run import Run
+
+from . import test_util
 
 
 @pytest.fixture
@@ -34,7 +36,7 @@ def basic_conf(tmpdir):
         'benchmark_dir': join(local, 'benchmark'),
         'results_dir': join(tmpdir, 'results_workflow'),
         'html_dir': join(tmpdir, 'html'),
-        'repo': 'https://github.com/spacetelescope/asv.git',
+        'repo': test_util.generate_test_repo(tmpdir),
         'project': 'asv',
         'matrix': {
             "six": [None],

@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
+from os.path import abspath, dirname, join
 import sys
 
 import six
@@ -14,8 +15,10 @@ from asv import config
 from asv.commands.compare import Compare
 from io import StringIO
 
-RESULT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'example_results'))
-MACHINE_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), 'asv-machine.json'))
+from . import test_util
+
+RESULT_DIR = abspath(join(dirname(__file__), 'example_results'))
+MACHINE_FILE = abspath(join(dirname(__file__), 'asv-machine.json'))
 
 REFERENCE = """
 All benchmarks:
@@ -39,6 +42,7 @@ All benchmarks:
     11.87μs    13.10μs      1.10  time_units.time_very_simple_unit_parse
 """
 
+
 def test_compare(tmpdir):
 
     tmpdir = six.text_type(tmpdir)
@@ -46,7 +50,7 @@ def test_compare(tmpdir):
 
     conf = config.Config.from_json(
         {'results_dir': RESULT_DIR,
-         'repo': 'https://github.com/spacetelescope/asv.git',
+         'repo': test_util.generate_test_repo(tmpdir),
          'project': 'asv'})
 
     s = StringIO()

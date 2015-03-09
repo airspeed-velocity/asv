@@ -4,6 +4,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+from os.path import join
+
 import six
 import pytest
 
@@ -15,13 +17,11 @@ try:
 except ImportError:
     hglib = None
 
-def _test_generic_repo(conf,
-                       tmpdir,
-                       hash_range="ae0c27b65741..e6f382a704f7",
-                       master="master",
-                       branch="gh-pages"):
+from . import test_util
 
-    workcopy_dir = six.text_type(tmpdir.join("workcopy"))
+
+def _test_generic_repo(conf, tmpdir, hash_range, master, branch):
+    workcopy_dir = join(tmpdir, "workcopy")
 
     r = repo.get_repo(conf)
 
@@ -41,19 +41,24 @@ def _test_generic_repo(conf,
 
 
 def test_repo_git(tmpdir):
+    tmpdir = six.text_type(tmpdir)
+
     conf = config.Config()
 
-    conf.project = six.text_type(tmpdir.join("repo"))
-    conf.repo = "https://github.com/spacetelescope/asv.git"
-    _test_generic_repo(conf, tmpdir)
+    conf.project = join(tmpdir, "repo")
+    conf.repo = test_util.generate_test_repo(tmpdir, list(range(10)))
+    _test_generic_repo(conf, tmpdir, 'master~4..master', 'master', 'tag5')
 
 
 @pytest.mark.xfail(hglib is None,
                    reason="needs hglib")
 def test_repo_hg(tmpdir):
+    tmpdir = six.text_type(tmpdir)
+
     conf = config.Config()
 
-    conf.project = six.text_type(tmpdir.join("repo"))
-    conf.repo = "hg+https://bitbucket.org/nds-org/nds-labs"
-    _test_generic_repo(conf, tmpdir, hash_range="a8ca24ac6b77:9dc758deba8",
-                       master="tip", branch="dev")
+    conf.project = join(tmpdir, "repo")
+    conf.repo = test_util.generate_test_repo(tmpdir, list(range(10)),
+                                             dvcs_type='hg')
+    _test_generic_repo(conf, tmpdir, hash_range="tip:-4",
+                       master="tip", branch="tag5")

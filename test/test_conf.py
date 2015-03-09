@@ -25,6 +25,7 @@ def test_config():
     }
     assert conf.benchmark_dir == 'benchmark'
 
+
 class CustomCommand(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
@@ -42,7 +43,7 @@ class CustomCommand(Command):
 
 
 def test_load_plugin():
-    os.chdir(os.path.dirname(__file__))
+    os.chdir(dirname(__file__))
 
     parser, subparsers = commands.make_argparser()
     args = parser.parse_args(['custom'])

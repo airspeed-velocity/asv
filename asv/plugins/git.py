@@ -83,7 +83,7 @@ class Git(Repo):
     def get_date(self, hash):
         # TODO: This works on Linux, but should be extended for other platforms
         return int(self._run_git(
-            ['show', hash, '--quiet', '--format=format:%ct'],
+            ['show', hash, '--quiet', '--format=format:%at'],
             valid_return_codes=(0, 1), dots=False).strip().split()[0]) * 1000
 
     def get_hashes_from_range(self, range_spec):

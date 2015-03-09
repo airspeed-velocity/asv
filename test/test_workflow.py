@@ -4,23 +4,39 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import os
-import sys
-from os.path import abspath, dirname, exists, join, isfile
-import shutil
 import glob
 from io import StringIO
+import os
+from os.path import abspath, dirname, join, isfile
+import shutil
+import sys
 
 import six
 import json
 import pytest
-from io import StringIO
 
 from asv import config
 from asv.commands.run import Run
 from asv.commands.publish import Publish
 from asv.commands.find import Find
 from asv.commands.continuous import Continuous
+from asv.util import check_output, which
+
+from . import test_util
+
+
+dummy_values = [
+    (None, None),
+    (1, 1),
+    (3, 1),
+    (None, 1),
+    (6, None),
+    (5, 1),
+    (6, 1),
+    (6, 1),
+    (6, 6),
+    (6, 6),
+]
 
 
 @pytest.fixture
@@ -34,12 +50,14 @@ def basic_conf(tmpdir):
     shutil.copyfile(join(local, 'asv-machine.json'),
                     machine_file)
 
+    repo_path = test_util.generate_test_repo(tmpdir, dummy_values)
+
     conf = config.Config.from_json({
         'env_dir': join(tmpdir, 'env'),
         'benchmark_dir': join(local, 'benchmark'),
         'results_dir': join(tmpdir, 'results_workflow'),
         'html_dir': join(tmpdir, 'html'),
-        'repo': 'https://github.com/spacetelescope/asv.git',
+        'repo': repo_path,
         'dvcs': 'git',
         'project': 'asv',
         'matrix': {
@@ -55,7 +73,7 @@ def test_run_publish(basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
     # Tests a typical complete run/publish workflow
-    Run.run(conf, range_spec="6b1fb9b04f..2927a27ec", steps=2,
+    Run.run(conf, range_spec="master~5..master", steps=2,
             _machine_file=machine_file, quick=True)
 
     assert len(os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))) == 5
@@ -69,10 +87,10 @@ def test_run_publish(basic_conf):
     assert isfile(join(tmpdir, 'html', 'asv.css'))
 
     # Check parameterized test json data format
-    filename = glob.glob(os.path.join(tmpdir, 'html', 'graphs', 'arch-x86_64',
-                                      'cpu-Blazingly fast', 'machine-orangutan', 'os-GNU',
-                                      'Linux', 'psutil-2.1', 'python-*', 'ram-128GB',
-                                      'six', 'params_examples.time_skip.json'))[0]
+    filename = glob.glob(join(tmpdir, 'html', 'graphs', 'arch-x86_64',
+                              'cpu-Blazingly fast', 'machine-orangutan', 'os-GNU',
+                              'Linux', 'psutil-2.1', 'python-*', 'ram-128GB',
+                              'six', 'params_examples.time_skip.json'))[0]
     with open(filename, 'r') as fp:
         data = json.load(fp)
         assert len(data) == 2
@@ -88,10 +106,10 @@ def test_run_publish(basic_conf):
     stdout = sys.stdout
     try:
         sys.stdout = s
-        Run.run(conf, range_spec="6b1fb9b04f..2927a27ec", steps=2,
+        Run.run(conf, range_spec="master~5..master", steps=2,
                 _machine_file=join(tmpdir, 'asv-machine.json'), quick=True,
                 skip_successful=True, skip_failed=True)
-        Run.run(conf, range_spec="6b1fb9b04f..2927a27ec", steps=2,
+        Run.run(conf, range_spec="master~5..master", steps=2,
                 _machine_file=join(tmpdir, 'asv-machine.json'), quick=True,
                 skip_existing_commits=True)
     finally:
@@ -118,13 +136,11 @@ def test_continuous(basic_conf):
     # Check that asv continuous runs
     s = StringIO()
     stdout = sys.stdout
-    os.environ['_ASV_TEST_TRACK_FILE'] = join(tmpdir, 'track-file')
     try:
         sys.stdout = s
-        Continuous.run(conf, _machine_file=machine_file, show_stderr=True)
+        Continuous.run(conf, branch="master^", _machine_file=machine_file, show_stderr=True)
     finally:
         sys.stdout = stdout
-        del os.environ['_ASV_TEST_TRACK_FILE']
 
     s.seek(0)
     text = s.read()
@@ -139,19 +155,21 @@ def test_find(basic_conf):
     # Test find at least runs
     s = StringIO()
     stdout = sys.stdout
-    os.environ['_ASV_TEST_TRACK_FILE'] = join(tmpdir, 'track-file')
     try:
         sys.stdout = s
-        Find.run(conf, "6b1fb9b04f..2927a27ec", "params_examples.track_find_test",
+        Find.run(conf, "master~5..master", "params_examples.track_find_test",
                  _machine_file=machine_file)
     finally:
         sys.stdout = stdout
-        del os.environ['_ASV_TEST_TRACK_FILE']
 
     # Check it found the first commit after the initially tested one
     s.seek(0)
     output = s.read()
-    assert "Greatest regression found: 85172e6d" in output
+
+    regression_hash = check_output(
+        [which('git'), 'rev-parse', 'master^'], cwd=conf.repo)
+
+    assert "Greatest regression found: {0}".format(regression_hash[:8]) in output
 
 
 if __name__ == '__main__':
