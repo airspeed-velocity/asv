@@ -628,9 +628,15 @@ def datetime_to_timestamp(dt):
     """
     Convert a Python datetime object to a UNIX timestamp.
     """
-    return int(
-        (dt - datetime.datetime(1970, 1, 1))
-        .total_seconds())
+    if sys.version_info[:2] < (2, 7):
+        def total_seconds(td):
+            return (td.microseconds +
+                    (td.seconds + td.days * 24 * 3600) * 1e6) / 1e6
+    else:
+        def total_seconds(td):
+            return td.total_seconds()
+
+    return int(total_seconds(dt - datetime.datetime(1970, 1, 1)))
 
 
 def is_nan(x):
