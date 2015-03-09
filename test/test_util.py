@@ -62,6 +62,12 @@ class Git(object):
         self._run_git(['add', relpath(filename, self._path)])
 
 
+_hg_config = """
+[ui]
+username = Robotic Swallow <robot@asv>
+"""
+
+
 class Hg(object):
     def __init__(self, path):
         self._fake_date = datetime.datetime.now()
@@ -69,6 +75,8 @@ class Hg(object):
 
     def init(self):
         hglib.init(self._path)
+        with io.open(join(self._path, '.hg', 'hgrc'), 'w', encoding="utf-8") as fd:
+            fd.write(_hg_config)
         self._repo = hglib.open(self._path)
 
     def commit(self, message):
