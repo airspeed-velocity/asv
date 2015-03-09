@@ -17,7 +17,7 @@ try:
 except ImportError:
     hglib = None
 
-from . import test_util
+from . import tools
 
 
 def _test_generic_repo(conf, tmpdir, hash_range, master, branch):
@@ -46,7 +46,7 @@ def test_repo_git(tmpdir):
     conf = config.Config()
 
     conf.project = join(tmpdir, "repo")
-    conf.repo = test_util.generate_test_repo(tmpdir, list(range(10)))
+    conf.repo = tools.generate_test_repo(tmpdir, list(range(10)))
     _test_generic_repo(conf, tmpdir, 'master~4..master', 'master', 'tag5')
 
 
@@ -58,7 +58,7 @@ def test_repo_hg(tmpdir):
     conf = config.Config()
 
     conf.project = join(tmpdir, "repo")
-    conf.repo = test_util.generate_test_repo(tmpdir, list(range(10)),
+    conf.repo = tools.generate_test_repo(tmpdir, list(range(10)),
                                              dvcs_type='hg')
     _test_generic_repo(conf, tmpdir, hash_range="tip:-4",
                        master="tip", branch="tag5")

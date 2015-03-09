@@ -22,7 +22,7 @@ from asv.commands.find import Find
 from asv.commands.continuous import Continuous
 from asv.util import check_output, which
 
-from . import test_util
+from . import tools
 
 
 dummy_values = [
@@ -50,7 +50,7 @@ def basic_conf(tmpdir):
     shutil.copyfile(join(local, 'asv-machine.json'),
                     machine_file)
 
-    repo_path = test_util.generate_test_repo(tmpdir, dummy_values)
+    repo_path = tools.generate_test_repo(tmpdir, dummy_values)
 
     conf = config.Config.from_json({
         'env_dir': join(tmpdir, 'env'),

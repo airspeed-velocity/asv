@@ -15,7 +15,7 @@ from asv import config
 from asv.commands.compare import Compare
 from io import StringIO
 
-from . import test_util
+from . import tools
 
 RESULT_DIR = abspath(join(dirname(__file__), 'example_results'))
 MACHINE_FILE = abspath(join(dirname(__file__), 'asv-machine.json'))
@@ -50,7 +50,7 @@ def test_compare(tmpdir):
 
     conf = config.Config.from_json(
         {'results_dir': RESULT_DIR,
-         'repo': test_util.generate_test_repo(tmpdir),
+         'repo': tools.generate_test_repo(tmpdir),
          'project': 'asv'})
 
     s = StringIO()

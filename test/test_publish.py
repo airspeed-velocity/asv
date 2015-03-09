@@ -12,7 +12,7 @@ import six
 from asv import config
 from asv.commands.publish import Publish
 
-from . import test_util
+from . import tools
 
 RESULT_DIR = abspath(join(dirname(__file__), 'example_results'))
 BENCHMARK_DIR = abspath(join(dirname(__file__), 'benchmark'))
@@ -26,7 +26,7 @@ def test_publish(tmpdir):
         {'benchmark_dir': BENCHMARK_DIR,
          'results_dir': RESULT_DIR,
          'html_dir': join(tmpdir, 'html'),
-         'repo': test_util.generate_test_repo(tmpdir, list(range(10))),
+         'repo': tools.generate_test_repo(tmpdir, list(range(10))),
          'project': 'asv'})
 
     Publish.run(conf)
