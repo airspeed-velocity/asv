@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
+from os.path import join, dirname
 
 import pstats
 import pytest
@@ -15,14 +16,15 @@ from asv import config
 from asv import environment
 from asv import util
 
-BENCHMARK_DIR = os.path.join(os.path.dirname(__file__), 'benchmark')
+from . import tools
 
-INVALID_BENCHMARK_DIR = os.path.join(
-    os.path.dirname(__file__), 'benchmark.invalid')
+BENCHMARK_DIR = join(dirname(__file__), 'benchmark')
+
+INVALID_BENCHMARK_DIR = join(
+    dirname(__file__), 'benchmark.invalid')
 
 ASV_CONF_JSON = {
     'benchmark_dir': BENCHMARK_DIR,
-    'repo': 'https://github.com/spacetelescope/asv.git',
     'project': 'asv'
     }
 
@@ -33,7 +35,8 @@ def test_find_benchmarks(tmpdir):
 
     d = {}
     d.update(ASV_CONF_JSON)
-    d['env_dir'] = os.path.join(tmpdir, "env")
+    d['env_dir'] = join(tmpdir, "env")
+    d['repo'] = tools.generate_test_repo(tmpdir, [0])
     conf = config.Config.from_json(d)
 
     b = benchmarks.Benchmarks(conf, regex='secondary')
@@ -88,9 +91,9 @@ def test_find_benchmarks(tmpdir):
 
     assert isinstance(times['params_examples.time_skip']['result']['result'][0], float)
     assert isinstance(times['params_examples.time_skip']['result']['result'][1], float)
-    assert _isnan(times['params_examples.time_skip']['result']['result'][2])
+    assert util.is_nan(times['params_examples.time_skip']['result']['result'][2])
 
-    profile_path = os.path.join(tmpdir, 'test.profile')
+    profile_path = join(tmpdir, 'test.profile')
     with open(profile_path, 'wb') as fd:
         fd.write(times['time_secondary.track_value']['profile'])
     pstats.Stats(profile_path)
@@ -103,7 +106,8 @@ def test_invalid_benchmark_tree(tmpdir):
     d = {}
     d.update(ASV_CONF_JSON)
     d['benchmark_dir'] = INVALID_BENCHMARK_DIR
-    d['env_dir'] = os.path.join(tmpdir, "env")
+    d['env_dir'] = join(tmpdir, "env")
+    d['repo'] = tools.generate_test_repo(tmpdir, [0])
     conf = config.Config.from_json(d)
 
     with pytest.raises(util.UserError):
@@ -154,9 +158,3 @@ def test_table_formatting():
                 "======== ======== ========")
     table = "\n".join(benchmarks._format_benchmark_result(result, benchmark, max_width=0))
     assert table == expected
-
-
-def _isnan(x):
-    if isinstance(x, float):
-        return x != x
-    return False

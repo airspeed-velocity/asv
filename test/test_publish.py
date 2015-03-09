@@ -5,17 +5,17 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
-from os.path import join, isfile
+from os.path import abspath, dirname, join, isfile
 
 import six
 
 from asv import config
 from asv.commands.publish import Publish
 
-RESULT_DIR = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), 'example_results'))
-BENCHMARK_DIR = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), 'benchmark'))
+from . import tools
+
+RESULT_DIR = abspath(join(dirname(__file__), 'example_results'))
+BENCHMARK_DIR = abspath(join(dirname(__file__), 'benchmark'))
 
 
 def test_publish(tmpdir):
@@ -26,7 +26,7 @@ def test_publish(tmpdir):
         {'benchmark_dir': BENCHMARK_DIR,
          'results_dir': RESULT_DIR,
          'html_dir': join(tmpdir, 'html'),
-         'repo': 'https://github.com/spacetelescope/asv.git',
+         'repo': tools.generate_test_repo(tmpdir, list(range(10))),
          'project': 'asv'})
 
     Publish.run(conf)

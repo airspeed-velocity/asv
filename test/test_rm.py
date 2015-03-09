@@ -4,7 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from os.path import abspath, dirname, join
+from os.path import dirname, join
 import shutil
 
 import six
@@ -23,7 +23,7 @@ def test_rm(tmpdir):
 
     conf = config.Config.from_json({
         'results_dir': join(tmpdir, 'example_results'),
-        'repo': "https://github.com/astropy/astropy.git"
+        'repo': "### IGNORED, BUT REQUIRED ###"
         })
 
     Rm.run(conf, ['benchmark=time_quantity*'])

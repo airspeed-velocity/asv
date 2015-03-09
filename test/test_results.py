@@ -4,8 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import os
-import sys
+from os.path import join
 
 import six
 
@@ -13,10 +12,9 @@ from asv import results
 
 
 def test_results(tmpdir):
-    envdir = six.text_type(tmpdir.join("env"))
-    version = "{0[0]}.{0[1]}".format(sys.version_info)
+    tmpdir = six.text_type(tmpdir)
 
-    resultsdir = six.text_type(tmpdir.join("results"))
+    resultsdir = join(tmpdir, "results")
     for i in six.moves.xrange(10):
         r = results.Results(
             {'machine': 'foo',
@@ -32,8 +30,7 @@ def test_results(tmpdir):
             r.add_time(key, val)
         r.save(resultsdir)
 
-        r2 = results.Results.load(
-            os.path.join(resultsdir, r._filename))
+        r2 = results.Results.load(join(resultsdir, r._filename))
 
         assert r2._results == r._results
         assert r2.date == r.date

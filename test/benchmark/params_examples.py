@@ -74,49 +74,8 @@ time_skip.goal_time = 0.01
 
 
 def track_find_test(n):
-    track_file = os.environ.get('_ASV_TEST_TRACK_FILE')
-    if track_file is None:
-        return 42
+    import asv_test_repo
 
-    if not os.path.isfile(track_file):
-        count = 0
-    else:
-        with open(track_file, 'r') as f:
-            text = f.read()
-        count = int(text)
-
-    # Values simulating regression after the first commit (assumes
-    # knowledge on how asv find evaluates the first three commits)
-    values = {
-        # lo
-        0: (3, 6),
-
-        # mid
-        1: (6, None),
-
-        # hi
-        2: (6, 1),
-
-        # some of the rest
-        3: (None, 1),
-        4: (6, None),
-    }
-
-
-    if count in values:
-        value = values[count][n-1]
-    else:
-        if n == 1:
-            value = 6
-        else:
-            value = 1
-
-    if n == 2:
-        count += 1
-
-    with open(track_file, 'w') as f:
-        f.write(str(count))
-
-    return value
+    return asv_test_repo.dummy_value[n - 1]
 
 track_find_test.params = [1, 2]
