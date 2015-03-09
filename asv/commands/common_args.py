@@ -35,10 +35,10 @@ def add_machine(parser):
         ~/.asv-machine.json, that one entry will be used.""")
 
 
-def add_python(parser):
+def add_python(parser, default=None):
     parser.add_argument(
         "--python", type=str,
-        default="same",
+        default=default,
         help="""Specify a Python interpreter in which to run the
         benchmarks.  By default, uses the same Python interpreter that
         asv is using.  It may be an executable to be searched for on

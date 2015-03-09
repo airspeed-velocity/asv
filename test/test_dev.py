@@ -18,6 +18,7 @@ from asv import config
 from asv.commands.dev import Dev
 from asv.commands.profiling import Profile
 from asv.commands.run import Run
+from asv.commands import make_argparser
 
 
 @pytest.fixture
@@ -121,6 +122,22 @@ def test_profile_python_same(basic_conf):
     # Check that it did not clone or install
     assert "Cloning" not in text
     assert "Installing" not in text
+
+
+def test_dev_python_arg():
+    parser, subparsers = make_argparser()
+
+    argv = ['dev']
+    args = parser.parse_args(argv)
+    assert args.python == 'same'
+
+    argv = ['dev', '--python=foo']
+    args = parser.parse_args(argv)
+    assert args.python == 'foo'
+
+    argv = ['run', 'ALL']
+    args = parser.parse_args(argv)
+    assert args.python is None
 
 
 if __name__ == '__main__':
