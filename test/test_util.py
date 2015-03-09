@@ -42,6 +42,8 @@ class Git(object):
 
     def init(self):
         self._run_git(['init'])
+        self._run_git(['config', 'user.email', 'robot@asv'])
+        self._run_git(['config', 'user.name', 'Robotic Swallow'])
 
     def commit(self, message):
         # We explicitly override the date here, or the commits
