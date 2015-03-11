@@ -7,7 +7,6 @@ from __future__ import (absolute_import, division, print_function,
 import six
 
 import logging
-import argparse
 
 from . import Command
 from ..benchmarks import Benchmarks
@@ -54,14 +53,6 @@ class Run(Command):
             "run", help="Run a benchmark suite",
             description="Run a benchmark suite.")
 
-        def positive_int(string):
-            try:
-                value = int(string)
-                if not value > 0:
-                    raise argparse.ArgumentTypeError("%r is not a positive integer" % (string,))
-            except ValueError:
-                raise argparse.ArgumentTypeError("%r is not an integer" % (string,))
-
         parser.add_argument(
             'range', nargs='?', default=None,
             help="""Range of commits to benchmark.  For a git
@@ -75,7 +66,7 @@ class Run(Command):
             there are existing benchmarks on any machine. By default,
             will benchmark the head of the current master branch.""")
         parser.add_argument(
-            "--steps", "-s", type=positive_int, default=None,
+            "--steps", "-s", type=common_args.positive_int, default=None,
             help="""Maximum number of steps to benchmark.  This is
             used to subsample the commits determined by range to a
             reasonable number.""")
