@@ -49,10 +49,18 @@ class Repo(object):
         """
         raise NotImplementedError()
 
-    def get_new_range_spec(self, latest_result):
+    def get_new_range_spec(self, latest_result, branch=None):
         """
         Returns a formatted string giving the results between the 
-        latest result and the newest hash.
+        latest result and the newest hash in a given branch.
+        If no branch given, use the 'master' branch.
+        """
+        raise NotImplementedError()
+
+    def get_branch_range_spec(self, branch):
+        """
+        Returns a formatted string giving the results in a given branch.
+        If branch is None, use the 'master' branch.
         """
         raise NotImplementedError()
 

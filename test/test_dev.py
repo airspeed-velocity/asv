@@ -37,7 +37,7 @@ def basic_conf(tmpdir):
         'benchmark_dir': join(local, 'benchmark'),
         'results_dir': join(tmpdir, 'results_workflow'),
         'html_dir': join(tmpdir, 'html'),
-        'repo': tools.generate_test_repo(tmpdir),
+        'repo': tools.generate_test_repo(tmpdir).path,
         'project': 'asv',
         'matrix': {
             "six": [None],

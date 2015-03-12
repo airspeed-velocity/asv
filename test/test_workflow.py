@@ -50,7 +50,7 @@ def basic_conf(tmpdir):
     shutil.copyfile(join(local, 'asv-machine.json'),
                     machine_file)
 
-    repo_path = tools.generate_test_repo(tmpdir, dummy_values)
+    repo_path = tools.generate_test_repo(tmpdir, dummy_values).path
 
     conf = config.Config.from_json({
         'env_dir': join(tmpdir, 'env'),
@@ -87,7 +87,7 @@ def test_run_publish(basic_conf):
     assert isfile(join(tmpdir, 'html', 'asv.css'))
 
     # Check parameterized test json data format
-    filename = glob.glob(join(tmpdir, 'html', 'graphs', 'arch-x86_64',
+    filename = glob.glob(join(tmpdir, 'html', 'graphs', 'arch-x86_64', 'branch-master',
                               'cpu-Blazingly fast', 'machine-orangutan', 'os-GNU',
                               'Linux', 'psutil-2.1', 'python-*', 'ram-128GB',
                               'six', 'params_examples.time_skip.json'))[0]
@@ -170,6 +170,76 @@ def test_find(basic_conf):
         [which('git'), 'rev-parse', 'master^'], cwd=conf.repo)
 
     assert "Greatest regression found: {0}".format(regression_hash[:8]) in output
+
+
+def _test_run_branches(tmpdir, dvcs, conf, machine_file, range_spec,
+                       branches, initial_commit):
+    # Find the current head commits for each branch
+    commits = [initial_commit]
+    for branch in branches:
+        commits.append(dvcs.get_hash(branch))
+
+    # Run tests
+    Run.run(conf, range_spec=range_spec,
+            _machine_file=machine_file, quick=True)
+
+    # Check that files for all commits expected were generated
+    expected = set(['machine.json'])
+    for commit in commits:
+        for psver in ['1.2', '2.1']:
+            expected.add('{0}-py{1[0]}.{1[1]}-psutil{2}-six.json'.format(
+                commit[:8], sys.version_info, psver))
+
+    result_files = os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))
+
+    if range_spec == 'NEW':
+        assert set(result_files) == expected
+    elif range_spec == 'ALL':
+        assert set(expected).difference(result_files) == set([])
+    else:
+        raise ValueError()
+
+
+def test_run_new_all(basic_conf):
+    tmpdir, local, conf, machine_file = basic_conf
+    conf.wheel_cache_size = 5
+
+    extra_branches = [('master~1', 'some-branch', [12])]
+    dvcs_path = os.path.join(tmpdir, 'test_repo2')
+    dvcs = tools.generate_test_repo(dvcs_path, [1, 2],
+                                    extra_branches=extra_branches)
+    conf.repo = dvcs.path
+
+    initial_commit = dvcs.get_hash("master~1")
+
+    def init_results():
+        results_dir = os.path.join(tmpdir, 'results_workflow')
+        if os.path.isdir(results_dir):
+            shutil.rmtree(results_dir)
+        Run.run(conf, range_spec=initial_commit+"^!",
+                bench=["time_secondary.track_value"],
+                _machine_file=join(tmpdir, 'asv-machine.json'), quick=True,
+                skip_successful=True, skip_failed=True)
+
+    # Without branches in config, should just use master
+    init_results()
+    _test_run_branches(tmpdir, dvcs, conf, machine_file, 'NEW',
+                       branches=['master'], initial_commit=initial_commit)
+
+    init_results()
+    _test_run_branches(tmpdir, dvcs, conf, machine_file, 'ALL',
+                       branches=['master'], initial_commit=initial_commit)
+
+    # With branches in config
+    conf.branches = ['master', 'some-branch']
+
+    init_results()
+    _test_run_branches(tmpdir, dvcs, conf, machine_file, 'NEW',
+                       branches=['master', 'some-branch'], initial_commit=initial_commit)
+
+    init_results()
+    _test_run_branches(tmpdir, dvcs, conf, machine_file, 'ALL',
+                       branches=['master', 'some-branch'], initial_commit=initial_commit)
 
 
 if __name__ == '__main__':

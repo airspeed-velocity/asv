@@ -78,7 +78,7 @@ def get_existing_hashes(results):
     return hashes
 
 
-def find_latest_result_hash(machine, root):
+def find_latest_result_hash(machine, root, hashes=None):
     """
     Find the latest result for the given machine.
     """
@@ -87,7 +87,7 @@ def find_latest_result_hash(machine, root):
     latest_date = 0
     latest_hash = ''
     for commit_hash, date in iter_existing_hashes(root):
-        if date > latest_date:
+        if date > latest_date and (hashes is None or commit_hash in hashes):
             latest_date = date
             latest_hash = commit_hash
 

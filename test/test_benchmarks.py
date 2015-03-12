@@ -36,7 +36,7 @@ def test_find_benchmarks(tmpdir):
     d = {}
     d.update(ASV_CONF_JSON)
     d['env_dir'] = join(tmpdir, "env")
-    d['repo'] = tools.generate_test_repo(tmpdir, [0])
+    d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
     conf = config.Config.from_json(d)
 
     b = benchmarks.Benchmarks(conf, regex='secondary')
@@ -107,7 +107,7 @@ def test_invalid_benchmark_tree(tmpdir):
     d.update(ASV_CONF_JSON)
     d['benchmark_dir'] = INVALID_BENCHMARK_DIR
     d['env_dir'] = join(tmpdir, "env")
-    d['repo'] = tools.generate_test_repo(tmpdir, [0])
+    d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
     conf = config.Config.from_json(d)
 
     with pytest.raises(util.UserError):

@@ -15,6 +15,7 @@ from ..machine import Machine
 from ..repo import get_repo
 from ..results import (Results, find_latest_result_hash, get_existing_hashes,
                        iter_results_for_machine_and_hash)
+from ..branch_cache import BranchCache
 from .. import util
 
 from .setup import Setup
@@ -65,7 +66,7 @@ class Run(Command):
             there are existing benchmarks on any machine. By default,
             will benchmark the head of the current master branch.""")
         parser.add_argument(
-            "--steps", "-s", type=int, default=0,
+            "--steps", "-s", type=common_args.positive_int, default=None,
             help="""Maximum number of steps to benchmark.  This is
             used to subsample the commits determined by range to a
             reasonable number.""")
@@ -123,7 +124,7 @@ class Run(Command):
         )
 
     @classmethod
-    def run(cls, conf, range_spec=None, steps=0, bench=None, parallel=1,
+    def run(cls, conf, range_spec=None, steps=None, bench=None, parallel=1,
             show_stderr=False, quick=False, profile=False, python=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
             skip_failed=False, skip_existing_commits=False, _returns={}):
@@ -151,13 +152,26 @@ class Run(Command):
         elif range_spec == 'EXISTING':
             commit_hashes = [h for h, d in get_existing_hashes(
                 conf.results_dir)]
-        elif range_spec == 'NEW':
-            latest_result = find_latest_result_hash(
-                machine_params.machine, conf.results_dir)
-            commit_hashes = repo.get_hashes_from_range(
-                repo.get_new_range_spec(latest_result))
-        elif range_spec == "ALL":
-            commit_hashes = repo.get_hashes_from_range("")
+        elif range_spec in ('NEW', 'ALL'):
+            branch_cache = BranchCache(conf, repo)
+            commit_hashes = []
+            seen = set()
+            for branch in conf.branches:
+                if range_spec == 'NEW':
+                    branch_hashes = branch_cache.get_branch_commits(branch)
+                    latest_result = find_latest_result_hash(
+                        machine_params.machine, conf.results_dir,
+                        hashes=branch_hashes)
+                    spec = repo.get_new_range_spec(latest_result, branch)
+                else:
+                    spec = repo.get_branch_range_spec(branch)
+
+                new_hashes = repo.get_hashes_from_range(spec)
+
+                for commit_hash in new_hashes:
+                    if commit_hash not in seen:
+                        seen.add(commit_hash)
+                        commit_hashes.append(commit_hash)
         elif isinstance(range_spec, list):
             commit_hashes = range_spec
         else:
@@ -167,14 +181,8 @@ class Run(Command):
             log.error("No commit hashes selected")
             return 1
 
-        if steps > 0:
-            spacing = max(float(len(commit_hashes)) / steps, 1)
-            spaced = []
-            i = 0
-            while int(i) < len(commit_hashes) and len(spaced) < steps:
-                spaced.append(commit_hashes[int(i)])
-                i += spacing
-            commit_hashes = spaced
+        if steps is not None:
+            commit_hashes = util.pick_n(commit_hashes, steps)
 
         environments = Setup.run(conf=conf, parallel=parallel)
         if len(environments) == 0:

@@ -13,6 +13,11 @@
     // project being benchmarked
     "repo": "",
 
+    // List of branches to benchmark. If not provided, defaults to "master"
+    // (for git) or "tip" (for mercurial).
+    // "branches": ["master"], // for git
+    // "branches": ["tip"],    // for mercurial
+
     // The DVCS being used.  If not set, it will be automatically
     // determined from "repo" by looking at the protocol in the URL
     // (if remote), or by looking for special directories, such as

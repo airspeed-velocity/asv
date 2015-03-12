@@ -3,6 +3,8 @@
 
 from __future__ import absolute_import, division, unicode_literals, print_function
 
+import argparse
+
 
 def add_factor(parser):
     parser.add_argument(
@@ -59,3 +61,12 @@ def add_parallel(parser):
         help="""Build (but don't benchmark) in parallel.  The value is
         the number of CPUs to use, or if no number provided, use the
         number of cores on this machine.""")
+
+
+def positive_int(string):
+    try:
+        value = int(string)
+        if not value > 0:
+            raise argparse.ArgumentTypeError("%r is not a positive integer" % (string,))
+    except ValueError:
+        raise argparse.ArgumentTypeError("%r is not an integer" % (string,))
