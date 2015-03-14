@@ -34,11 +34,12 @@ $(document).ready(function() {
         var date_to_hash = data['date_to_hash'];
         var regressions = data['regressions'];
 
-        $.each(regressions, function (benchmark_name, item) {
-            var graph_url = item[0];
-            var param_dict = item[1];
-            var parameter_idx = item[2];
-            var regression = item[3];
+        $.each(regressions, function (i, item) {
+            var benchmark_name = item[0];
+            var graph_url = item[1];
+            var param_dict = item[2];
+            var parameter_idx = item[3];
+            var regression = item[4];
 
             if (regression === null) {
                 return;
@@ -89,14 +90,18 @@ $(document).ready(function() {
             row.append($('<td/>').append(benchmark_link));
             row.append($('<td/>').text(date_fmt.toISOString()));
             if (commit_a) {
+                var td = $('<td/>');
                 if ($.asv.master_json.show_commit_url.match(/.*\/\/github.com\//)) {
                     var commit_url = ($.asv.master_json.show_commit_url + '../compare/'
                                       + commit_a + '...' + commit_b);
-                    row.append($('<td/>').append(
+                    row.append(td.append(
                         $('<a/>').attr('href', commit_url).text(commit_a + '..' + commit_b)));
                 }
                 else {
-                    row.append($('<td/>').text(commit_a + '..' + commit_b));
+                    row.append(td.text(commit_a + '..' + commit_b));
+                }
+                if (param_dict.branch) {
+                    td.prepend($('<span/>').text(param_dict.branch + ' '));
                 }
             }
             else {
@@ -122,6 +127,7 @@ $(document).ready(function() {
                 ];
                 if (date_a !== null) {
                     markings.push({ color: '#d00', lineWidth: 2, xaxis: { from: date_a, to: date_a }});
+                    markings.push({ color: "rgba(255,0,0,0.1)", xaxis: { from: date_a, to: date_b }});
                 }
 
                 $.ajax({

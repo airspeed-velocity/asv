@@ -25,7 +25,8 @@ class Regressions(OutputPublisher):
         # Analyze the data in the graphs --- it's been cleaned up and
         # it's easier to work with than the results directly
 
-        regressions = {}
+        regressions = []
+        seen = {}
 
         all_params = {}
         for graph in six.itervalues(graphs):
@@ -79,14 +80,19 @@ class Regressions(OutputPublisher):
 
                 graph_path = graph.path + '.json'
 
-                # Produce output
-                if entry_name not in regressions:
-                    regressions[entry_name] = [graph_path, graph_params, j, result]
+                # Produce output -- report only one result for each
+                # benchmark for each branch
+                regression = [entry_name, graph_path, graph_params, j, result]
+                key = (entry_name, graph_params.get('branch'))
+                if key not in seen:
+                    regressions.append(regression)
+                    seen[key] = regression
                 else:
                     # Pick the worse regression
-                    prev_url, prev_params, prev_j, prev_result = regressions[entry_name]
+                    old_regression = seen[key]
+                    prev_result = old_regression[-1]
                     if abs(prev_result[1]*result[2]) < abs(result[1]*prev_result[2]):
-                        regressions[entry_name] = [graph_path, graph_params, j, result]
+                        old_regression[:] = regression
 
         cls._save(conf, {'regressions': regressions})
 
