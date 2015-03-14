@@ -27,8 +27,9 @@ $(document).ready(function() {
         var regressions = data['regressions'];
 
         $.each(regressions, function (benchmark_name, item) {
-            var parameter_idx = item[0];
-            var regression = item[1];
+            var param_dict = item[0];
+            var parameter_idx = item[1];
+            var regression = item[2];
 
             if (regression === null) {
                 return;
@@ -47,8 +48,13 @@ $(document).ready(function() {
             var item;
 
             var benchmark_basename = benchmark_name.replace(/\(.*/, '');
-            var url_params = {time: [date_b]};;
+            var url_params = {};
 
+            $.each(param_dict, function (key, value) {
+                url_params[key] = [value];
+            });
+
+            url_params.time = [date_b];
             if (date_a) {
                 url_params.time.push(date_a);
             }

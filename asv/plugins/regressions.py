@@ -27,6 +27,13 @@ class Regressions(OutputPublisher):
 
         regressions = {}
 
+        all_params = {}
+        for graph in six.itervalues(graphs):
+            for key, value in six.iteritems(graph.params):
+                all_params.setdefault(key, set())
+                if value:
+                    all_params[key].add(value)
+
         for file_name, graph in six.iteritems(graphs):
             if 'summary' in graph.params:
                 continue
@@ -64,14 +71,20 @@ class Regressions(OutputPublisher):
                 if len(commits) == 1:
                     commit_a = None
 
+                # Select unique graph params
+                graph_params = {}
+                for name, value in six.iteritems(graph.params):
+                    if len(all_params[name]) > 1:
+                        graph_params[name] = value
+
                 # Produce output
                 if entry_name not in regressions:
-                    regressions[entry_name] = [j, result]
+                    regressions[entry_name] = [graph_params, j, result]
                 else:
                     # Pick the worse regression
-                    prev_j, prev_result = regressions[entry_name]
+                    prev_params, prev_j, prev_result = regressions[entry_name]
                     if abs(prev_result[1]*result[2]) < abs(result[1]*prev_result[2]):
-                        regressions[entry_name] = [j, result]
+                        regressions[entry_name] = [graph_params, j, result]
 
         cls._save(conf, {'regressions': regressions})
 
