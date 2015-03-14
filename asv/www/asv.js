@@ -158,7 +158,7 @@ $(document).ready(function() {
     /* GLOBAL STATE */
     /* The state of the parameters in the sidebar.  Dictionary mapping
        strings to arrays containing the "enabled" configurations. */
-    var state = {};
+    var state = null;
     /* The name of the current benchmark being displayed. */
     var current_benchmark = null;
     /* An array of graphs being displayed. */
@@ -193,7 +193,7 @@ $(document).ready(function() {
     /* Highlighted timestamp */
     var highlighted_dates = null;
 
-    function display_benchmark(bm_name, sub_benchmark_idx, highlight_timestamps) {
+    function display_benchmark(bm_name, state_selection, sub_benchmark_idx, highlight_timestamps) {
         $('#graph-display').show();
         $('#summary-display').hide();
         $('#regressions-display').hide();
@@ -207,7 +207,7 @@ $(document).ready(function() {
         current_benchmark = bm_name;
         highlighted_dates = highlight_timestamps;
         $("#title").text(bm_name);
-        setup_benchmark_params(sub_benchmark_idx);
+        setup_benchmark_params(state_selection, sub_benchmark_idx);
         replace_graphs();
     }
 
@@ -292,78 +292,12 @@ $(document).ready(function() {
         $("#project-name").textContent = index.project;
         document.title = "airspeed velocity of an unladen " + index.project;
 
-        /* Machine selection */
-        state.machine = index.params.machine;
-
         /* Make the static tooltips look correct */
         $('[data-toggle="tooltip"]').tooltip({container: 'body'});
 
-        make_value_selector_panel(nav, 'machine', index.params.machine,  function(i, machine, button) {
-            button.text(machine);
-
-            if (index.params.machine.length > 1) {
-                button.on('click', function(evt) {
-                    if (!evt.target.classList.contains("active")) {
-                        state.machine.push(machine);
-                    } else {
-                        state.machine = arr_remove_from(
-                            state.machine, machine);
-                    }
-                    replace_graphs();
-                });
-            }
-
-            /* Create tooltips for each machine */
-            var details = [];
-            $.each(index.machines[machine], function(key, val) {
-                details.push(key + ': ' + val);
-            });
-            details = details.join('<br/>');
-
-            button.tooltip({
-                title: details,
-                html: true,
-                placement: 'right',
-                container: 'body',
-                animation: false
-            });
-        });
-
-        /* Generic parameter selectors */
-        $.each(index.params, function(param, values) {
-            state[param] = values;
-
-            if (values.length > 1 && param !== 'machine') {
-                if (param == 'branch') {
-                    state[param] = [values[0]];
-                }
-                make_value_selector_panel(nav, param, values, function(i, value, button) {
-                    var value_display;
-                    if (!value)
-                        value_display = '[none]';
-                    else
-                        value_display = value;
-
-                    button.text(value_display);
-
-                    if (param == 'branch' && i > 0) {
-                        button.removeClass('active');
-                    }
-
-                    if (values.length > 1) {
-                        button.on('click', function(evt) {
-                            if (!evt.target.classList.contains("active")) {
-                                state[param].push(value);
-                            } else {
-                                state[param] = arr_remove_from(
-                                    state[param], value);
-                            }
-                            replace_graphs();
-                        });
-                    }
-                });
-            }
-        });
+        /* Add insertion point for benchmark parameters */
+        state_params_nav = $("<div id='state-params'/>");
+        nav.append(state_params_nav);
 
         /* Add insertion point for benchmark parameters */
         bench_params_nav = $("<div id='navigation-params'/>");
@@ -559,9 +493,11 @@ $(document).ready(function() {
                 var benchmark = info.location[0];
                 var sub_benchmark_idx = null;
                 var highlight_timestamps = null;
+                var state_selection = null;
 
                 if (info.params['idx']) {
                     sub_benchmark_idx = parseInt(info.params['idx'][0]);
+                    delete info.params['idx'];
                 }
 
                 if (info.params['time']) {
@@ -569,9 +505,13 @@ $(document).ready(function() {
                     $.each(info.params['time'], function(i, value) {
                         highlight_timestamps.push(parseInt(value));
                     });
+                    delete info.params['time'];
                 }
 
-                display_benchmark(benchmark, sub_benchmark_idx, highlight_timestamps);
+                if (Object.keys(info.params).length > 0) {
+                    state_selection = info.params;
+                }
+                display_benchmark(benchmark, state_selection, sub_benchmark_idx, highlight_timestamps);
             }
         }
 
@@ -682,7 +622,7 @@ $(document).ready(function() {
         $('.tooltip').remove();
     }
 
-    function setup_benchmark_params(sub_benchmark_idx) {
+    function setup_benchmark_params(state_selection, sub_benchmark_idx) {
         if (!current_benchmark) {
             x_coordinate_axis = 0;
             x_coordinate_is_category = false;
@@ -690,6 +630,42 @@ $(document).ready(function() {
             return
         }
 
+        /*
+          Generic parameter selections
+        */
+        var index = master_json;
+        if (!state || state_selection !== null) {
+            /*
+               Setup the default configuration on first load,
+               or when state selector is present 
+            */
+            state = {};
+            state.machine = index.params.machine;
+
+            $.each(index.params, function(param, values) {
+                state[param] = values;
+                if (values.length > 1 && param !== 'machine') {
+                    if (param == 'branch') {
+                        state[param] = [values[0]];
+                    }
+                }
+            });
+        }
+
+        if (state_selection !== null) {
+            /* Select a specific generic parameter state */
+            $.each(index.params, function(param, values) {
+                if (state_selection[param]) {
+                    state[param] = state_selection[param];
+                }
+            });
+        }
+
+        /*
+          Benchmark-specific parameter selections
+        */
+
+        var index = master_json;
         var params = master_json.benchmarks[current_benchmark].params;
         var param_names = master_json.benchmarks[current_benchmark].param_names;
 
@@ -729,7 +705,82 @@ $(document).ready(function() {
         }
 
         check_x_coordinate_axis();
+        replace_params_ui();
         replace_benchmark_params_ui();
+    }
+
+    function replace_params_ui() {
+        var index = master_json;
+
+        var nav = $('#state-params');
+        nav.empty();
+
+        /* Machine selection */
+        make_value_selector_panel(nav, 'machine', index.params.machine,  function(i, machine, button) {
+            button.text(machine);
+
+            if (index.params.machine.length > 1) {
+                button.on('click', function(evt) {
+                    if (!evt.target.classList.contains("active")) {
+                        state.machine.push(machine);
+                    } else {
+                        state.machine = arr_remove_from(
+                            state.machine, machine);
+                    }
+                    replace_graphs();
+                });
+            }
+
+            if ($.inArray(machine, state.machine) == -1) {
+                button.removeClass('active');
+            }
+
+            /* Create tooltips for each machine */
+            var details = [];
+            $.each(index.machines[machine], function(key, val) {
+                details.push(key + ': ' + val);
+            });
+            details = details.join('<br/>');
+
+            button.tooltip({
+                title: details,
+                html: true,
+                placement: 'right',
+                container: 'body',
+                animation: false
+            });
+        });
+
+        /* Generic parameter selectors */
+        $.each(index.params, function(param, values) {
+            if (values.length > 1 && param !== 'machine') {
+                make_value_selector_panel(nav, param, values, function(i, value, button) {
+                    var value_display;
+                    if (!value)
+                        value_display = '[none]';
+                    else
+                        value_display = value;
+
+                    button.text(value_display);
+
+                    if ($.inArray(value, state[param]) == -1) {
+                        button.removeClass('active');
+                    }
+
+                    if (values.length > 1) {
+                        button.on('click', function(evt) {
+                            if (!evt.target.classList.contains("active")) {
+                                state[param].push(value);
+                            } else {
+                                state[param] = arr_remove_from(
+                                    state[param], value);
+                            }
+                            replace_graphs();
+                        });
+                    }
+                });
+            }
+        });
     }
 
     function replace_benchmark_params_ui() {
