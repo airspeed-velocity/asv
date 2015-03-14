@@ -715,6 +715,21 @@ $(document).ready(function() {
         var nav = $('#state-params');
         nav.empty();
 
+        function update_state_url() {
+            var info = parse_hash_string(window.location.hash);
+            $.each(index.params, function(param, values) {
+                if (values.length > 1) {
+                    if (state[param].length != values.length) {
+                        info.params[param] = state[param];
+                    }
+                    else if (info.params[param]) {
+                        delete info.params[param];
+                    }
+                }
+            });
+            window.location.hash = format_hash_string(info);
+        }
+
         /* Machine selection */
         make_value_selector_panel(nav, 'machine', index.params.machine,  function(i, machine, button) {
             button.text(machine);
@@ -727,7 +742,7 @@ $(document).ready(function() {
                         state.machine = arr_remove_from(
                             state.machine, machine);
                     }
-                    replace_graphs();
+                    update_state_url();
                 });
             }
 
@@ -775,7 +790,7 @@ $(document).ready(function() {
                                 state[param] = arr_remove_from(
                                     state[param], value);
                             }
-                            replace_graphs();
+                            update_state_url();
                         });
                     }
                 });
