@@ -6,6 +6,7 @@ $(document).ready(function() {
             // already displayed
         }
         else {
+            $("#title").text("Regressions");
             var message = $('<div>Loading...</div>');
             $('#regressions-body').append(message);
             $.ajax({
@@ -13,15 +14,59 @@ $(document).ready(function() {
                 cache: false
             }).done(function (data) {
                 regression_data = data;
+                var main_div = display_data(data, params);
                 $('#regressions-body').empty();
-                display_data(data, params);
+                $('#regressions-body').append(main_div);
             });
         }
     }
 
     function display_data(data, params) {
-        var body = $('#regressions-body');
-        var display_table = $('<table id="#regressions-table" class="table table-hover tablesorter"><thead><tr>' +
+        var main_div = $('<div/>');
+        var branches = $.asv.master_json.params['branch'];
+
+        if (branches && branches.length > 1) {
+            /* Add a branch selector */
+            var dropdown_menu = $('<ul class="dropdown-menu" role="menu"/>');
+            var dropdown_div = $('<div class="dropdown">');
+
+            dropdown_div.append($('<button class="btn btn-default dropdown-toggle" data-toggle="dropdown">Branches ' + 
+                                  '<span class="caret"/></button>'));
+            dropdown_div.append(dropdown_menu);
+
+            main_div.append(dropdown_div);
+
+            $.each(branches, function(i, branch) {
+                var branch_link = $('<a/>')
+                branch_link.text(branch);
+                dropdown_menu.append($('<li role="presentation"/>').append(branch_link));
+                branch_link.on('click', function(evt) {
+                    $("#title").text("Regressions (" + branch + " branch)");
+                    $(".regression-table").hide();
+                    $("#regression-table-" + i).show();
+                });
+
+                var display_table = create_data_table(data, params, branch);
+                display_table.attr('id', 'regression-table-' + i);
+                display_table.addClass('regression-table');
+                display_table.hide();
+                console.log(display_table.attr('id'));
+                main_div.append(display_table);
+            });
+
+            $("#title").text("Regressions (" + branches[0] + " branch)");
+            main_div.find("#regression-table-0").show();
+        }
+        else {
+            var display_table = create_data_table(data, params, null);
+            main_div.append(display_table);
+        }
+        main_div.show();
+        return main_div;
+    }
+
+    function create_data_table(data, params, branch) {
+        var display_table = $('<table class="table table-hover tablesorter"><thead><tr>' +
                               '<th data-sort="string">Benchmark</th>' +
                               '<th data-sort="string">Date</th>' +
                               '<th data-sort="string">Commit(s)</th>' +
@@ -42,6 +87,10 @@ $(document).ready(function() {
             var regression = item[4];
 
             if (regression === null) {
+                return;
+            }
+
+            if (branch !== null && param_dict['branch'] != branch) {
                 return;
             }
 
@@ -99,9 +148,6 @@ $(document).ready(function() {
                 }
                 else {
                     row.append(td.text(commit_a + '..' + commit_b));
-                }
-                if (param_dict.branch) {
-                    td.prepend($('<span/>').text(param_dict.branch + ' '));
                 }
             }
             else {
@@ -181,7 +227,6 @@ $(document).ready(function() {
         });
 
         display_table.append(table_body);
-        body.append(display_table);
 
         display_table.stupidtable({
             'value': function(a, b) {
@@ -225,13 +270,14 @@ $(document).ready(function() {
             var th_to_sort = display_table.find("thead th").eq(0);
             th_to_sort.stupidsort();
         }
+
+        return display_table;
     }
 
     /*
       Setup display hooks
     */
     $.asv.register_page('regressions', function(params) {
-        $("#title").text("Regressions");
         $('#regressions-display').show()
         load_data(params);
     });
