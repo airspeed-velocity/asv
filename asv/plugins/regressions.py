@@ -94,7 +94,15 @@ class Regressions(OutputPublisher):
         v, err, best_r, best_v, best_err = detect_regressions(values)
         if v is None:
             return None
-        return times[best_r], times[best_r+1], v, best_v
+
+        for r in range(best_r + 1, len(values)):
+            if values[r] is not None:
+                bad_r = r
+                break
+        else:
+            bad_r = best_r + 1
+
+        return times[best_r], times[bad_r], v, best_v
 
     @classmethod
     def _save(cls, conf, data):
