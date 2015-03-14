@@ -63,6 +63,9 @@ class Hg(Repo):
 
         return False
 
+    def get_range_spec(self, commit_a, commit_b):
+        return '{0}::{1}'.format(commit_a, commit_b)
+
     def get_new_range_spec(self, latest_result, branch=None):
         if branch is None:
             return '{0}::tip'.format(latest_result)

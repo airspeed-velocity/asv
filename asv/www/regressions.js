@@ -16,7 +16,7 @@ $(document).ready(function() {
         var display_table = $('<table class="table table-hover tablesorter"><thead><tr>' +
                               '<th>Benchmark</th>' +
                               '<th>Date</th>' +
-                              '<th>Commit</th>' +
+                              '<th>Commit(s)</th>' +
                               '<th>Factor</th>' +
                               '<th>Best</th>' +
                               '<th>Current</th>' +
@@ -34,22 +34,27 @@ $(document).ready(function() {
                 return;
             }
 
-            var date = regression[0];
-            var new_value = regression[1];
-            var old_value = regression[2];
+            var date_a = regression[0];
+            var date_b = regression[1];
+            var new_value = regression[2];
+            var old_value = regression[3];
             var factor = new_value / old_value;
-            var commit = $.asv.master_json.date_to_hash[date];
-            var date_fmt = new Date(date);
-            var commit_url = $.asv.master_json.show_commit_url + commit;
+            var commit_a = $.asv.master_json.date_to_hash[date_a];
+            var commit_b = $.asv.master_json.date_to_hash[date_b];
+            var date_fmt = new Date(date_b);
 
             var row = $('<tr/>');
             var item;
 
             var benchmark_basename = benchmark_name.replace(/\(.*/, '');
-            var url_params = {time: [date]};
+            var url_params = {time: [date_b]};;
+
+            if (date_a) {
+                url_params.time.push(date_a);
+            }
 
             if (parameter_idx !== null) {
-                url_params['idx'] = [parameter_idx];
+                url_params.idx = [parameter_idx];
             }
             var benchmark_url = $.asv.format_hash_string({
                 location: [benchmark_basename],
@@ -68,8 +73,22 @@ $(document).ready(function() {
             row.append($('<td/>').append(
                 $('<a/>').attr('href', benchmark_url).text(benchmark_name)));
             row.append($('<td/>').text(date_fmt.toISOString()));
-            row.append($('<td/>').append(
-                $('<a/>').attr('href', commit_url).text(commit)));
+            if (commit_a) {
+                if ($.asv.master_json.show_commit_url.match(/.*\/\/github.com\//)) {
+                    var commit_url = ($.asv.master_json.show_commit_url + '../compare/'
+                                      + commit_a + '...' + commit_b);
+                    row.append($('<td/>').append(
+                        $('<a/>').attr('href', commit_url).text(commit_a + '..' + commit_b)));
+                }
+                else {
+                    row.append($('<td/>').text(commit_a + '..' + commit_b));
+                }
+            }
+            else {
+                var commit_url = $.asv.master_json.show_commit_url + commit_b;
+                row.append($('<td/>').append(
+                    $('<a/>').attr('href', commit_url).text(commit_b)));
+            }
             var factor_link = $('<a/>').text(factor.toFixed(2) + 'x');
             row.append($('<td/>').append(factor_link));
             row.append($('<td/>').text(old_value));

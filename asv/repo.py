@@ -49,6 +49,13 @@ class Repo(object):
         """
         raise NotImplementedError()
 
+    def get_range_spec(self, commit_a, commit_b):
+        """
+        Returns a formatted string giving the results between
+        commit_a (exclusive) and commit_b (inclusive).
+        """
+        raise NotImplementedError()
+
     def get_new_range_spec(self, latest_result, branch=None):
         """
         Returns a formatted string giving the results between the 

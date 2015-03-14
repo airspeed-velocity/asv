@@ -21,7 +21,7 @@ class Regressions(OutputPublisher):
     description = "Display information about recent regressions"
 
     @classmethod
-    def publish(cls, conf, benchmarks, graphs, date_to_hash):
+    def publish(cls, conf, repo, benchmarks, graphs, date_to_hash):
         # Analyze the data in the graphs --- it's been cleaned up and
         # it's easier to work with than the results directly
 
@@ -56,6 +56,15 @@ class Regressions(OutputPublisher):
                 if result is None:
                     continue
 
+                # Check if range is a single commit
+                commit_a = date_to_hash[result[0]]
+                commit_b = date_to_hash[result[1]]
+                spec = repo.get_range_spec(commit_a, commit_b)
+                commits = repo.get_hashes_from_range(spec)
+                if len(commits) == 1:
+                    commit_a = None
+
+                # Produce output
                 if entry_name not in regressions:
                     regressions[entry_name] = [j, result]
                 else:
@@ -64,20 +73,28 @@ class Regressions(OutputPublisher):
                     if abs(prev_result[1]*result[2]) < abs(result[1]*prev_result[2]):
                         regressions[entry_name] = [j, result]
 
-        cls._save(conf, {
-            'date_to_hash': date_to_hash,
-            'regressions': regressions
-        })
+        cls._save(conf, {'regressions': regressions})
 
     @classmethod
     def _analyze_data(cls, times, values):
         """
         Analyze a single time series
+
+        Returns
+        -------
+        time_a : int
+             Timestamp of last 'good' commit
+        time_b : int
+             Timestamp of first 'bad' commit
+        cur_value : int
+             Most recent value
+        best_value : int
+             Best value
         """
         v, err, best_r, best_v, best_err = detect_regressions(values)
         if v is None:
             return None
-        return times[best_r+1], v, best_v
+        return times[best_r], times[best_r+1], v, best_v
 
     @classmethod
     def _save(cls, conf, data):

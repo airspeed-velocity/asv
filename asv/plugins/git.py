@@ -71,6 +71,9 @@ class Git(Repo):
         else:
             return branch
 
+    def get_range_spec(self, commit_a, commit_b):
+        return '{0}..{1}'.format(commit_a, commit_b)
+
     def pull(self):
         # We assume the remote isn't updated during the run of asv
         # itself.

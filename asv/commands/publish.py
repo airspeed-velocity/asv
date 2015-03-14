@@ -165,7 +165,7 @@ class Publish(Command):
             log.info("Generating output for {0}".format(cls.name))
             with log.indent():
                 output_dir = os.path.join(conf.html_dir, cls.name)
-                cls.publish(conf, benchmarks, graphs, date_to_hash)
+                cls.publish(conf, repo, benchmarks, graphs, date_to_hash)
                 extra_pages.append([cls.name, cls.button_label, cls.description])
 
         log.step()
