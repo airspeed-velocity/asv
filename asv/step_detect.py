@@ -12,7 +12,7 @@ import six
 # Detecting regressions
 #
 
-def detect_regressions(y, size_limit=20000):
+def detect_regressions(y):
     """
     Detect regressions in a (noisy) signal.
 
@@ -20,8 +20,6 @@ def detect_regressions(y, size_limit=20000):
     ----------
     y : list of float, none or nan
         Single benchmark result series, with possible missing data
-    size_limit : int, optional
-        Consider only this many recent commits (default: 20000)
 
     Returns
     -------
@@ -38,6 +36,8 @@ def detect_regressions(y, size_limit=20000):
 
     """
 
+    y = filter_outliers(y)
+
     index_map = {}
     y_filtered = []
     for j, x in enumerate(y):
@@ -49,7 +49,7 @@ def detect_regressions(y, size_limit=20000):
 
     # Find piecewise segments
     p = 2
-    right, values, dists, gamma = solve_potts_autogamma(y_filtered, p=p, min_size=5)
+    right, values, dists, gamma = solve_potts_autogamma(y_filtered, p=p, min_size=1)
 
     # Find best value and compare to the most recent one
     best_r = None
@@ -60,6 +60,11 @@ def detect_regressions(y, size_limit=20000):
     prev_r = 0
 
     for r, v, d in zip(right, values, dists):
+        if r - prev_r < 3:
+            # disregard too short segments
+            prev_r = r
+            continue
+
         err = abs(d / (r - prev_r))**(1/p)
         prev_r = r
         if best_v is None or v <= best_v + best_err:
@@ -70,10 +75,41 @@ def detect_regressions(y, size_limit=20000):
             best_v = v
             best_err = err
 
-    if v is None or v <= best_v + max(err, best_err):
+    if v is None or best_v is None or v <= best_v + max(err, best_err):
         return None, None, None, None, None
     else:
         return (v, err, best_r, best_v, best_err)
+
+
+def filter_outliers(y):
+    """
+    Remove 1-3 points lying outside 2*sigma range, if they are between
+    points inside the 2*sigma range
+    """
+
+    sum_y = 0
+    sum_y2 = 0
+    n = 0
+
+    for p in y:
+        if p is not None:
+            sum_y += p
+            sum_y2 += p**2
+            n += 1
+
+    if n < 5:
+        return y
+
+    mean = sum_y/n
+    std = math.sqrt(abs(sum_y2/n - mean**2))
+
+    for j, p in enumerate(y):
+        if p is not None and abs(p - mean) > 2*std:
+            if ((j < 3 or min(abs(x - mean) for x in y[j-3:j+1] if x is not None) < 2*std) and
+                (j > len(y)-3 or min(abs(x - mean) for x in y[j:j+4] if x is not None) < 2*std)):
+                y[j] = None
+    return y
+
 
 
 #
