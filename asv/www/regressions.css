@@ -1,12 +1,22 @@
-table.tablesorter thead th {
+#regressions-body table thead th {
     cursor: pointer;
     white-space: nowrap;
 }
 
-table.tablesorter thead th.desc:after {
+#regressions-body table thead th.desc:after {
     content: ' \2191';
 }
 
-table.tablesorter thead th.asc:after {
+#regressions-body table thead th.asc:after {
     content: ' \2193';
+}
+
+#regressions-body table.ignored {
+    padding-top: 1em;
+    color: #ccc;
+    background-color: #eee;
+}
+
+#regressions-body table.ignored a {
+    color: #82abda;
 }

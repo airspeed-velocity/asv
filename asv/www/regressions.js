@@ -1,12 +1,24 @@
+'use strict';
+
 $(document).ready(function() {
     var regression_data = null;
+    var current_title = "Regressions";
+    var local_storage_available = false;
+    var ignored_regressions = {};
+    var ignore_key_prefix = null;
 
     function load_data(params) {
+        $("#title").text(current_title);
+
+        if (typeof(Storage) !== "undefined") {
+            /* html5 local storage available */
+            local_storage_available = true;
+        }
+
         if (regression_data) {
             // already displayed
         }
         else {
-            $("#title").text("Regressions");
             var message = $('<div>Loading...</div>');
             $('#regressions-body').append(message);
             $.ajax({
@@ -24,6 +36,9 @@ $(document).ready(function() {
     function display_data(data, params) {
         var main_div = $('<div/>');
         var branches = $.asv.master_json.params['branch'];
+        var all_ignored_keys = {};
+
+        ignore_key_prefix = 'asv-r-' + $.asv.master_json.project;
 
         if (branches && branches.length > 1) {
             /* Add a branch selector */
@@ -35,46 +50,87 @@ $(document).ready(function() {
             dropdown_div.append(dropdown_menu);
 
             main_div.append(dropdown_div);
+        }
 
-            $.each(branches, function(i, branch) {
+        $.each(branches, function(i, branch) {
+            var branch_div = $('<div class="regression-div"/>')
+
+            var display_table = $('<table class="table table-hover"/>');
+            var ignored_table = $('<table class="table table-hover ignored"/>');
+            var ignored_button = $('<button class="btn btn-default">Show ignored regressions...</button>');
+
+            if (branches && branches.length > 1) {
                 var branch_link = $('<a/>')
                 branch_link.text(branch);
+
                 dropdown_menu.append($('<li role="presentation"/>').append(branch_link));
                 branch_link.on('click', function(evt) {
-                    $("#title").text("Regressions (" + branch + " branch)");
-                    $(".regression-table").hide();
-                    $("#regression-table-" + i).show();
+                    current_title = "Regressions (" + branch + " branch)";
+                    $("#title").text(current_title);
+                    $(".regression-div").hide();
+                    $("table.ignored").hide();
+                    ignored_button.show();
+                    $("#regression-div-" + i).show();
+                    $("#regression-div-" + i + '-ignored').show();
                 });
+            }
 
-                var display_table = create_data_table(data, params, branch);
-                display_table.attr('id', 'regression-table-' + i);
-                display_table.addClass('regression-table');
-                display_table.hide();
-                console.log(display_table.attr('id'));
-                main_div.append(display_table);
-            });
+            branch_div.attr('id', 'regression-div-' + i);
+            branch_div.hide();
+            main_div.append(branch_div);
 
-            $("#title").text("Regressions (" + branches[0] + " branch)");
-            main_div.find("#regression-table-0").show();
+            create_data_table(display_table, ignored_table, data, params, branch, all_ignored_keys);
+            branch_div.append(display_table);
+            ignored_table.hide();
+
+            if (local_storage_available) {
+                branch_div.append(ignored_table);
+
+                branch_div.append(ignored_button);
+                ignored_button.on('click', function(evt) {
+                    ignored_button.hide();
+                    $("table.ignored").show();
+                });
+            }
+        });
+
+        if (branches && branches.length > 1) {
+            current_title = "Regressions (" + branches[0] + " branch)";
         }
-        else {
-            var display_table = create_data_table(data, params, null);
-            main_div.append(display_table);
-        }
+        $("#title").text(current_title);
+        main_div.find("#regression-div-0").show();
         main_div.show();
+
+        if (local_storage_available) {
+            /* Clear out local storage space */
+            var keys = Object.keys(localStorage);
+            $.each(keys, function(i, key) {
+                if (key.slice(0, ignore_key_prefix.length) == ignore_key_prefix &&
+                        !all_ignored_keys[key]) {
+                    delete localStorage[key];
+                }
+            });
+        }
+
         return main_div;
     }
 
-    function create_data_table(data, params, branch) {
-        var display_table = $('<table class="table table-hover tablesorter"><thead><tr>' +
-                              '<th data-sort="string">Benchmark</th>' +
-                              '<th data-sort="string">Date</th>' +
-                              '<th data-sort="string">Commit(s)</th>' +
-                              '<th data-sort="factor">Factor</th>' +
-                              '<th data-sort="value">Best</th>' +
-                              '<th data-sort="value">Current</th>' +
-                              '</tr></thead></table>');
+    function create_data_table(display_table, ignored_table, data, params, branch, all_ignored_keys) {
+        var table_head = $('<thead><tr>' +
+                           '<th data-sort="string">Benchmark</th>' +
+                           '<th data-sort="string">Date</th>' +
+                           '<th data-sort="string">Commit(s)</th>' +
+                           '<th data-sort="factor">Factor</th>' +
+                           '<th data-sort="value">Best</th>' +
+                           '<th data-sort="value">Current</th>' +
+                           '<th></th>' +
+                           '</tr></thead>');
+
+        display_table.append(table_head);
+        ignored_table.append(table_head.clone());
+
         var table_body = $('<tbody/>');
+        var ignored_table_body = $('<tbody/>');
 
         var date_to_hash = data['date_to_hash'];
         var regressions = data['regressions'];
@@ -93,11 +149,11 @@ $(document).ready(function() {
             if (branch !== null && param_dict['branch'] != branch) {
                 return;
             }
-
             var date_a = regression[0];
             var date_b = regression[1];
             var new_value = regression[2];
             var old_value = regression[3];
+
             var factor = new_value / old_value;
             var commit_a = $.asv.master_json.date_to_hash[date_a];
             var commit_b = $.asv.master_json.date_to_hash[date_b];
@@ -158,7 +214,53 @@ $(document).ready(function() {
             row.append($('<td/>').text(factor.toFixed(2) + 'x'));
             row.append($('<td/>').text(old_value));
             row.append($('<td/>').text(new_value));
-            table_body.append(row);
+
+            if (local_storage_available) {
+                /* html5 local storage has limited size, so store hashes
+                   rather than potentially long strings */
+                var ignore_key = ignore_key_prefix + $.md5(benchmark_name + '' + date_a + '' + date_b);
+                all_ignored_keys[ignore_key] = 1;
+
+                var is_ignored = (ignore_key in localStorage) || (ignore_key in ignored_regressions);
+                var ignore_button = $('<button class="btn btn-small"/>');
+
+                row.attr('id', ignore_key);
+
+                ignore_button.on('click', function(evt) {
+                    if (ignore_key in localStorage || ignore_key in ignored_regressions) {
+                        delete localStorage[ignore_key];
+                        delete ignored_regressions[ignore_key];
+                        var item = ignored_table_body.find('#' + ignore_key).detach();
+                        ignore_button.text('Ignore');
+                        table_body.append(item);
+                    }
+                    else {
+                        try {
+                            localStorage[ignore_key] = 1;
+                        } catch (err) {
+                            /* Out of quota -- we're just going to ignore that */
+                        }
+                        ignored_regressions[ignore_key] = 1;
+                        var item = table_body.find('#' + ignore_key).detach();
+                        ignore_button.text('Unignore');
+                        ignored_table_body.append(item);
+                    }
+                });
+
+                row.append($('<td/>').append(ignore_button));
+
+                if (!is_ignored) {
+                    ignore_button.text('Ignore');
+                    table_body.append(row);
+                }
+                else {
+                    ignore_button.text('Unignore');
+                    ignored_table_body.append(row);
+                }
+            }
+            else {
+                table_body.append(row);
+            }
 
             /* Show the summary graph as a popup */
             var plot_div = $('<div/>');
@@ -168,7 +270,7 @@ $(document).ready(function() {
             plot_div.css('background-color', 'white');
 
             function update_plot() {
-                markings = [
+                var markings = [
                     { color: '#d00', lineWidth: 2, xaxis: { from: date_b, to: date_b }}
                 ];
                 if (date_a !== null) {
@@ -227,51 +329,55 @@ $(document).ready(function() {
         });
 
         display_table.append(table_body);
+        ignored_table.append(ignored_table_body);
 
-        display_table.stupidtable({
-            'value': function(a, b) {
-                function key(s) {
-                    for (var k = 0; k < $.asv.time_units.length; ++k) {
-                        var entry = $.asv.time_units[k];
-                        m = s.match('^([0-9.]+)'+entry[0]+'$');
-                        if (m) {
-                            return parseFloat(m[1]) * entry[2] * 1e-30;
+        function setup_sort(table) {
+            table.stupidtable({
+                'value': function(a, b) {
+                    function key(s) {
+                        for (var k = 0; k < $.asv.time_units.length; ++k) {
+                            var entry = $.asv.time_units[k];
+                            m = s.match('^([0-9.]+)'+entry[0]+'$');
+                            if (m) {
+                                return parseFloat(m[1]) * entry[2] * 1e-30;
+                            }
                         }
+                        return 0;
                     }
-                    return 0;
+                    return key(a) - key(b)
+                },
+                'factor': function(a, b) {
+                    return parseFloat(a.replace(/x/, '')) - parseFloat(b.replace(/x/, ''));
                 }
-                return key(a) - key(b)
-            },
-            'factor': function(a, b) {
-                return parseFloat(a.replace(/x/, '')) - parseFloat(b.replace(/x/, ''));
+            });
+
+            table.bind('aftertablesort', function (event, data) {
+                var info = $.asv.parse_hash_string(window.location.hash);
+                info.params['sort'] = [data.column];
+                info.params['dir'] = [data.direction];
+                window.location.hash = $.asv.format_hash_string(info);
+
+                /* Update appearance */
+                table.find('thead th').removeClass('asc');
+                table.find('thead th').removeClass('desc');
+                var th_to_sort = table.find("thead th").eq(parseInt(data.column));
+                if (th_to_sort) {
+                    th_to_sort.addClass(data.direction);
+                }
+            });
+
+            if (params.sort && params.dir) {
+                var th_to_sort = table.find("thead th").eq(parseInt(params.sort[0]));
+                th_to_sort.stupidsort(params.dir[0]);
             }
-        });
-
-        display_table.bind('aftertablesort', function (event, data) {
-            var info = $.asv.parse_hash_string(window.location.hash);
-            info.params['sort'] = [data.column];
-            info.params['dir'] = [data.direction];
-            window.location.hash = $.asv.format_hash_string(info);
-
-            /* Update appearance */
-            display_table.find('thead th').removeClass('asc');
-            display_table.find('thead th').removeClass('desc');
-            var th_to_sort = display_table.find("thead th").eq(parseInt(data.column));
-            if (th_to_sort) {
-                th_to_sort.addClass(data.direction);
+            else {
+                var th_to_sort = table.find("thead th").eq(0);
+                th_to_sort.stupidsort();
             }
-        });
-
-        if (params.sort && params.dir) {
-            var th_to_sort = display_table.find("thead th").eq(parseInt(params.sort[0]));
-            th_to_sort.stupidsort(params.dir[0]);
-        }
-        else {
-            var th_to_sort = display_table.find("thead th").eq(0);
-            th_to_sort.stupidsort();
         }
 
-        return display_table;
+        setup_sort(display_table);
+        setup_sort(ignored_table);
     }
 
     /*
