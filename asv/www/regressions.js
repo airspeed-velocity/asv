@@ -1,25 +1,33 @@
 $(document).ready(function() {
-    function load_data() {
-        var message = $('<div>Loading...</div>');
-        $('#regressions-body').append(message);
-        $.ajax({
-            url: 'regressions.json',
-            cache: false
-        }).done(function (data) {
-            $('#regressions-body').empty();
-            display_data(data);
-        });
+    var regression_data = null;
+
+    function load_data(params) {
+        if (regression_data) {
+            // already displayed
+        }
+        else {
+            var message = $('<div>Loading...</div>');
+            $('#regressions-body').append(message);
+            $.ajax({
+                url: 'regressions.json',
+                cache: false
+            }).done(function (data) {
+                regression_data = data;
+                $('#regressions-body').empty();
+                display_data(data, params);
+            });
+        }
     }
 
-    function display_data(data) {
+    function display_data(data, params) {
         var body = $('#regressions-body');
-        var display_table = $('<table class="table table-hover tablesorter"><thead><tr>' +
-                              '<th>Benchmark</th>' +
-                              '<th>Date</th>' +
-                              '<th>Commit(s)</th>' +
-                              '<th>Factor</th>' +
-                              '<th>Best</th>' +
-                              '<th>Current</th>' +
+        var display_table = $('<table id="#regressions-table" class="table table-hover tablesorter"><thead><tr>' +
+                              '<th data-sort="string">Benchmark</th>' +
+                              '<th data-sort="string">Date</th>' +
+                              '<th data-sort="string">Commit(s)</th>' +
+                              '<th data-sort="factor">Factor</th>' +
+                              '<th data-sort="value">Best</th>' +
+                              '<th data-sort="value">Current</th>' +
                               '</tr></thead></table>');
         var table_body = $('<tbody/>');
 
@@ -163,37 +171,48 @@ $(document).ready(function() {
         display_table.append(table_body);
         body.append(display_table);
 
-        $.tablesorter.addParser({
-            id: 'factorSorter',
-            is: function(s) { return false; },
-            format: function(s) {  return s.replace(/x/, ''); },
-            type: 'numeric'
-        });
-
-        $.tablesorter.addParser({
-            id: 'benchmarkValueSorter',
-            is: function(s) { return false; },
-            format: function(s) {
-                for (var k = 0; k < $.asv.time_units.length; ++k) {
-                    var entry = $.asv.time_units[k];
-                    m = s.match('^([0-9.]+)'+entry[0]+'$');
-                    if (m) {
-                        return parseFloat(m[1]) * entry[2] * 1e-30;
+        display_table.stupidtable({
+            'value': function(a, b) {
+                function key(s) {
+                    for (var k = 0; k < $.asv.time_units.length; ++k) {
+                        var entry = $.asv.time_units[k];
+                        m = s.match('^([0-9.]+)'+entry[0]+'$');
+                        if (m) {
+                            return parseFloat(m[1]) * entry[2] * 1e-30;
+                        }
                     }
+                    return 0;
                 }
-                return s;
+                return key(a) - key(b)
             },
-            type: 'numeric'
-        });
-
-        display_table.tablesorter({
-            headers: {
-                1: { sorter: 'text' },
-                3: { sorter: 'factorSorter' },
-                4: { sorter: 'benchmarkValueSorter' },
-                5: { sorter: 'benchmarkValueSorter' },
+            'factor': function(a, b) {
+                return parseFloat(a.replace(/x/, '')) - parseFloat(b.replace(/x/, ''));
             }
         });
+
+        display_table.bind('aftertablesort', function (event, data) {
+            var info = $.asv.parse_hash_string(window.location.hash);
+            info.params['sort'] = [data.column];
+            info.params['dir'] = [data.direction];
+            window.location.hash = $.asv.format_hash_string(info);
+
+            /* Update appearance */
+            display_table.find('thead th').removeClass('asc');
+            display_table.find('thead th').removeClass('desc');
+            var th_to_sort = display_table.find("thead th").eq(parseInt(data.column));
+            if (th_to_sort) {
+                th_to_sort.addClass(data.direction);
+            }
+        });
+
+        if (params.sort && params.dir) {
+            var th_to_sort = display_table.find("thead th").eq(parseInt(params.sort[0]));
+            th_to_sort.stupidsort(params.dir[0]);
+        }
+        else {
+            var th_to_sort = display_table.find("thead th").eq(0);
+            th_to_sort.stupidsort();
+        }
     }
 
     /*
@@ -202,6 +221,6 @@ $(document).ready(function() {
     $.asv.register_page('regressions', function(params) {
         $("#title").text("Regressions");
         $('#regressions-display').show()
-        load_data();
+        load_data(params);
     });
 });

@@ -1,12 +1,12 @@
-table.tablesorter thead tr .header {
+table.tablesorter thead th {
     cursor: pointer;
     white-space: nowrap;
 }
 
-table.tablesorter thead th.headerSortUp:after {
+table.tablesorter thead th.desc:after {
     content: ' \2191';
 }
 
-table.tablesorter thead th.headerSortDown:after {
+table.tablesorter thead th.asc:after {
     content: ' \2193';
 }
