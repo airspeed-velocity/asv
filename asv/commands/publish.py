@@ -157,8 +157,6 @@ class Publish(Command):
                 log.dot()
                 graph.save(conf.html_dir)
 
-        log.step()
-
         extra_pages = []
         for cls in util.iter_subclasses(OutputPublisher):
             log.step()
