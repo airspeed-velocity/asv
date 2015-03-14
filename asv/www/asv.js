@@ -55,6 +55,69 @@ $(document).ready(function() {
         $(window).scroll();
     }
 
+    /*
+      Parse hash string, assuming format similar to standard URL
+      query strings
+    */
+    function parse_hash_string(str) {
+        var info = {location: [''], params: {}};
+
+        if (str && str[0] == '#') {
+            str = str.slice(1);
+        }
+        if (str && str[0] == '/') {
+            str = str.slice(1);
+        }
+
+        var match = str.match(/^([^?]*?)\?/);
+        if (match) {
+            info['location'] = match[1].replace(/\/+/, '/').split('/');
+            var rest = str.slice(match[1].length+1);
+            var parts = rest.split('&');
+            for (var i = 0; i < parts.length; ++i) {
+                var part = parts[i].split('=');
+                if (part.length != 2) {
+                    continue;
+                }
+                var key = part[0];
+                var value = decodeURIComponent(part[1].replace(/\+/g, " "));
+                if (info['params'][key] === undefined) {
+                    info['params'][key] = [value];
+                }
+                else {
+                    info['params'][key].push(value);
+                }
+            }
+        }
+        else {
+            info['location'] = str.replace(/\/+/, '/').split('/');
+        }
+        return info;
+    }
+
+    /*
+      Generate a hash string, inverse of parse_hash_string
+    */
+    function format_hash_string(info) {
+        var parts = info['params'];
+        var str = '#' + info['location'];
+
+        if (parts) {
+            str = str + '?';
+            var first = true;
+            $.each(parts, function (key, values) {
+                $.each(values, function (idx, value) {
+                    if (!first) {
+                        str = str + '&';
+                    }
+                    str = str + key + '=' + encodeURIComponent(value);
+                    first = false;
+                });
+            });
+        }
+        return str;
+    }
+
     time_units = [
         ['ps', 'picoseconds', 0.000000000001],
         ['ns', 'nanoseconds', 0.000000001],
@@ -128,9 +191,9 @@ $(document).ready(function() {
     /* Extra pages: {name: show_function} */
     var loaded_pages = {};
     /* Highlighted timestamp */
-    var highlighted_date = null;
+    var highlighted_dates = null;
 
-    function display_benchmark(bm_name, sub_benchmark_idx, highlight_timestamp) {
+    function display_benchmark(bm_name, sub_benchmark_idx, highlight_timestamps) {
         $('#graph-display').show();
         $('#summary-display').hide();
         $('#regressions-display').hide();
@@ -142,7 +205,7 @@ $(document).ready(function() {
             reference = 1.0;
         }
         current_benchmark = bm_name;
-        highlighted_date = highlight_timestamp;
+        highlighted_dates = highlight_timestamps;
         $("#title").text(bm_name);
         setup_benchmark_params(sub_benchmark_idx);
         replace_graphs();
@@ -483,31 +546,32 @@ $(document).ready(function() {
         });
 
         function hashchange() {
-            var hash = window.location.hash.replace('#', '');
+            var info = parse_hash_string(window.location.hash);
 
-            if (hash === '') {
+            if (info.location[0] == ['']) {
                 show_summary();
             } 
-            else if (hash[0] == '/') {
-                show_page(hash.replace('/', ''));
-            }
             else {
+                if (show_page(info.location, info.params)) {
+                    return;
+                }
+
+                var benchmark = info.location[0];
                 var sub_benchmark_idx = null;
-                var highlight_timestamp = null;
+                var highlight_timestamps = null;
 
-                match = hash.match(/^(.*)@([0-9]+)$/);
-                if (match) {
-                    hash = match[1];
-                    highlight_timestamp = parseInt(match[2]);
+                if (info.params['idx']) {
+                    sub_benchmark_idx = parseInt(info.params['idx'][0]);
                 }
 
-                match = hash.match(/^(.*)-([0-9]+)$/);
-                if (match) {
-                    hash = match[1];
-                    sub_benchmark_idx = parseInt(match[2]);
+                if (info.params['time']) {
+                    highlight_timestamps = [];
+                    $.each(info.params['time'], function(i, value) {
+                        highlight_timestamps.push(parseInt(value));
+                    });
                 }
 
-                display_benchmark(hash, sub_benchmark_idx, highlight_timestamp);
+                display_benchmark(benchmark, sub_benchmark_idx, highlight_timestamps);
             }
         }
 
@@ -1292,10 +1356,12 @@ $(document).ready(function() {
             );
         });
 
-        if (highlighted_date !== null) {
-            markings.push(
-                { color: '#d00', lineWidth: 2, xaxis: { from: highlighted_date, to: highlighted_date } }
-            );
+        if (highlighted_dates) {
+            $.each(highlighted_dates, function(i, date) {
+                markings.push(
+                    { color: '#d00', lineWidth: 2, xaxis: { from: date, to: date } }
+                );
+            });
         }
 
         var unit;
@@ -1493,15 +1559,22 @@ $(document).ready(function() {
       Dealing with sub-pages
      */
 
-    function show_page(name) {
-        $("#graph-display").hide();
-        $("#summary-display").hide();
-        loaded_pages[name]();
+    function show_page(name, params) {
+        if (loaded_pages[name] !== undefined) {
+            $("#graph-display").hide();
+            $("#summary-display").hide();
+            loaded_pages[name](params);
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     this.register_page = function(name, show_function) {
         loaded_pages[name] = show_function;
     }
+    this.format_hash_string = format_hash_string;
 
     this.master_json = master_json; /* Updated after index.json loads */
 

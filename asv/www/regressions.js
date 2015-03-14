@@ -28,12 +28,7 @@ $(document).ready(function() {
 
         $.each(regressions, function (benchmark_name, item) {
             var parameter_idx = item[0];
-            var benchmark_url = '#' + benchmark_name.replace(/\(.*/, '');
             var regression = item[1];
-
-            if (parameter_idx !== null) {
-                benchmark_url += '-' + parameter_idx;
-            }
 
             if (regression === null) {
                 return;
@@ -51,6 +46,15 @@ $(document).ready(function() {
             var item;
 
             var benchmark_basename = benchmark_name.replace(/\(.*/, '');
+            var url_params = {time: [date]};
+
+            if (parameter_idx !== null) {
+                url_params['idx'] = [parameter_idx];
+            }
+            var benchmark_url = $.asv.format_hash_string({
+                location: [benchmark_basename],
+                params: url_params
+            });
 
             if ($.asv.master_json.benchmarks[benchmark_basename].unit == "seconds") {
                 new_value = $.asv.pretty_second(new_value);
@@ -62,7 +66,7 @@ $(document).ready(function() {
             }
 
             row.append($('<td/>').append(
-                $('<a/>').attr('href', benchmark_url + '@' + date).text(benchmark_name)));
+                $('<a/>').attr('href', benchmark_url).text(benchmark_name)));
             row.append($('<td/>').text(date_fmt.toISOString()));
             row.append($('<td/>').append(
                 $('<a/>').attr('href', commit_url).text(commit)));
@@ -170,7 +174,7 @@ $(document).ready(function() {
     /*
       Setup display hooks
     */
-    $.asv.register_page('regressions', function() {
+    $.asv.register_page('regressions', function(params) {
         $("#title").text("Regressions");
         $('#regressions-display').show()
         load_data();
