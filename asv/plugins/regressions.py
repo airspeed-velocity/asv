@@ -77,14 +77,16 @@ class Regressions(OutputPublisher):
                     if len(all_params[name]) > 1:
                         graph_params[name] = value
 
+                graph_path = graph.path + '.json'
+
                 # Produce output
                 if entry_name not in regressions:
-                    regressions[entry_name] = [graph_params, j, result]
+                    regressions[entry_name] = [graph_path, graph_params, j, result]
                 else:
                     # Pick the worse regression
-                    prev_params, prev_j, prev_result = regressions[entry_name]
+                    prev_url, prev_params, prev_j, prev_result = regressions[entry_name]
                     if abs(prev_result[1]*result[2]) < abs(result[1]*prev_result[2]):
-                        regressions[entry_name] = [graph_params, j, result]
+                        regressions[entry_name] = [graph_path, graph_params, j, result]
 
         cls._save(conf, {'regressions': regressions})
 

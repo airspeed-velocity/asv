@@ -665,7 +665,6 @@ $(document).ready(function() {
           Benchmark-specific parameter selections
         */
 
-        var index = master_json;
         var params = master_json.benchmarks[current_benchmark].params;
         var param_names = master_json.benchmarks[current_benchmark].param_names;
 
@@ -674,17 +673,7 @@ $(document).ready(function() {
 
         if (sub_benchmark_idx !== null) {
             /* Only a single parameter set */
-            var idx = sub_benchmark_idx;
-            if (idx < 0) {
-                idx = 0;
-            }
-            benchmark_param_selection = [];
-            for (var k = params.length-1; k >= 0; --k) {
-                var j = idx % params[k].length;
-                benchmark_param_selection.unshift([j]);
-                idx = (idx - j) / params[k].length;
-            }
-            benchmark_param_selection.unshift([null]);
+            benchmark_param_selection = param_selection_from_flat_idx(params, sub_benchmark_idx);
         }
         else {
             /* Default plot: up to 8 lines */
@@ -1132,82 +1121,6 @@ $(document).ready(function() {
             }
         }
 
-        /* Convert loaded graph data to a format flot understands, by
-           treating either time or one of the parameters as x-axis,
-           and selecting only one value of the remaining axes */
-        function filter_graph_data(raw_series, x_axis, other_indices) {
-            var params = master_json.benchmarks[current_benchmark].params;
-
-            if (params.length == 0) {
-                /* Simple time series */
-                return raw_series;
-            }
-
-            /* Compute position of data entry in the results list,
-               and stride corresponding to plot x-axis parameter */
-            var stride = 1;
-            var param_stride = 0;
-            var param_idx = 0;
-            for (var k = params.length - 1; k >= 0; --k) {
-                if (k == x_axis - 1) {
-                    param_stride = stride;
-                }
-                else {
-                    param_idx += other_indices[k + 1] * stride;
-                }
-                stride *= params[k].length;
-            }
-
-            if (x_axis == 0) {
-                /* x-axis is time axis */
-                var series = new Array(raw_series.length);
-                for (var k = 0; k < raw_series.length; ++k) {
-                    if (raw_series[k][1] === null) {
-                        series[k] = [raw_series[k][0], null];
-                    } else {
-                        series[k] = [raw_series[k][0],
-                                     raw_series[k][1][param_idx]];
-                    }
-                }
-                return series;
-            }
-            else {
-                /* x-axis is some parameter axis */
-                var time_idx = null;
-                if (other_indices[0] === null) {
-                    time_idx = raw_series.length - 1;
-                }
-                else {
-                    /* Need to search for the correct time value */
-                    for (var k = 0; k < raw_series.length; ++k) {
-                        if (raw_series[k][0] == other_indices[0]) {
-                            time_idx = k;
-                            break;
-                        }
-                    }
-                    if (time_idx === null) {
-                        /* No data points */
-                        return [];
-                    }
-                }
-
-                var x_values = params[x_axis - 1];
-                var series = new Array(x_values.length);
-                for (var k = 0; k < x_values.length; ++k) {
-                    if (raw_series[time_idx][1] === null) {
-                        series[k] = [convert_benchmark_param_value(x_values[k]),
-                                     null];
-                    }
-                    else {
-                        series[k] = [convert_benchmark_param_value(x_values[k]),
-                                     raw_series[time_idx][1][param_idx]];
-                    }
-                    param_idx += param_stride;
-                }
-                return series;
-            }
-        }
-
         /* Before loading graphs, remove any that are currently
            active. */
         graphs = [];
@@ -1226,7 +1139,8 @@ $(document).ready(function() {
                     var series;
                     series = filter_graph_data(data,
                                                x_coordinate_axis,
-                                               graph_content[0]);
+                                               graph_content[0],
+                                               master_json.benchmarks[current_benchmark].params);
                     graphs.push({
                         data: series,
                         label: graph_content[1],
@@ -1255,6 +1169,104 @@ $(document).ready(function() {
                 }
             });
         });
+    }
+
+    /* Convert a flat index to permutation to the corresponding value */
+    function param_selection_from_flat_idx(params, idx) {
+        var selection = [];
+        if (idx < 0) {
+            idx = 0;
+        }
+        for (var k = params.length-1; k >= 0; --k) {
+            var j = idx % params[k].length;
+            selection.unshift([j]);
+            idx = (idx - j) / params[k].length;
+        }
+        selection.unshift([null]);
+        return selection;
+    }
+
+    /* Convert loaded graph data to a format flot understands, by
+       treating either time or one of the parameters as x-axis,
+       and selecting only one value of the remaining axes */
+    function filter_graph_data(raw_series, x_axis, other_indices, params) {
+        if (params.length == 0) {
+            /* Simple time series */
+            return raw_series;
+        }
+
+        /* Compute position of data entry in the results list,
+           and stride corresponding to plot x-axis parameter */
+        var stride = 1;
+        var param_stride = 0;
+        var param_idx = 0;
+        for (var k = params.length - 1; k >= 0; --k) {
+            if (k == x_axis - 1) {
+                param_stride = stride;
+            }
+            else {
+                param_idx += other_indices[k + 1] * stride;
+            }
+            stride *= params[k].length;
+        }
+
+        if (x_axis == 0) {
+            /* x-axis is time axis */
+            var series = new Array(raw_series.length);
+            for (var k = 0; k < raw_series.length; ++k) {
+                if (raw_series[k][1] === null) {
+                    series[k] = [raw_series[k][0], null];
+                } else {
+                    series[k] = [raw_series[k][0],
+                                 raw_series[k][1][param_idx]];
+                }
+            }
+            return series;
+        }
+        else {
+            /* x-axis is some parameter axis */
+            var time_idx = null;
+            if (other_indices[0] === null) {
+                time_idx = raw_series.length - 1;
+            }
+            else {
+                /* Need to search for the correct time value */
+                for (var k = 0; k < raw_series.length; ++k) {
+                    if (raw_series[k][0] == other_indices[0]) {
+                        time_idx = k;
+                        break;
+                    }
+                }
+                if (time_idx === null) {
+                    /* No data points */
+                    return [];
+                }
+            }
+
+            var x_values = params[x_axis - 1];
+            var series = new Array(x_values.length);
+            for (var k = 0; k < x_values.length; ++k) {
+                if (raw_series[time_idx][1] === null) {
+                    series[k] = [convert_benchmark_param_value(x_values[k]),
+                                 null];
+                }
+                else {
+                    series[k] = [convert_benchmark_param_value(x_values[k]),
+                                 raw_series[time_idx][1][param_idx]];
+                }
+                param_idx += param_stride;
+            }
+            return series;
+        }
+    }
+
+    function filter_graph_data_idx(raw_series, x_axis, flat_idx, params) {
+        var selection = param_selection_from_flat_idx(params, flat_idx);
+        var flat_selection = [];
+        $.each(selection, function(i, v) {
+            flat_selection.push(v[0]);
+        });
+        return filter_graph_data(raw_series, x_axis, flat_selection, params);
     }
 
     /* Handle log scaling the plot */
@@ -1428,6 +1440,13 @@ $(document).ready(function() {
                     { color: '#d00', lineWidth: 2, xaxis: { from: date, to: date } }
                 );
             });
+            if (highlighted_dates.length == 2) {
+                markings.push(
+                    { color: "rgba(200, 0, 0, 0.2)", alpha: 0.5, lineWidth: 2, 
+                      xaxis: { from: Math.min.apply(null, highlighted_dates), 
+                               to: Math.max.apply(null, highlighted_dates) }}
+                );
+            }
         }
 
         var unit;
@@ -1640,7 +1659,10 @@ $(document).ready(function() {
     this.register_page = function(name, show_function) {
         loaded_pages[name] = show_function;
     }
+    this.parse_hash_string = parse_hash_string;
     this.format_hash_string = format_hash_string;
+
+    this.filter_graph_data_idx = filter_graph_data_idx;
 
     this.master_json = master_json; /* Updated after index.json loads */
 

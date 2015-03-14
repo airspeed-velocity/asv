@@ -35,9 +35,10 @@ $(document).ready(function() {
         var regressions = data['regressions'];
 
         $.each(regressions, function (benchmark_name, item) {
-            var param_dict = item[0];
-            var parameter_idx = item[1];
-            var regression = item[2];
+            var graph_url = item[0];
+            var param_dict = item[1];
+            var parameter_idx = item[2];
+            var regression = item[3];
 
             if (regression === null) {
                 return;
@@ -84,8 +85,8 @@ $(document).ready(function() {
                 old_value = old_value.toPrecision(3);
             }
 
-            row.append($('<td/>').append(
-                $('<a/>').attr('href', benchmark_url).text(benchmark_name)));
+            var benchmark_link = $('<a/>').attr('href', benchmark_url).text(benchmark_name);
+            row.append($('<td/>').append(benchmark_link));
             row.append($('<td/>').text(date_fmt.toISOString()));
             if (commit_a) {
                 if ($.asv.master_json.show_commit_url.match(/.*\/\/github.com\//)) {
@@ -103,8 +104,7 @@ $(document).ready(function() {
                 row.append($('<td/>').append(
                     $('<a/>').attr('href', commit_url).text(commit_b)));
             }
-            var factor_link = $('<a/>').text(factor.toFixed(2) + 'x');
-            row.append($('<td/>').append(factor_link));
+            row.append($('<td/>').text(factor.toFixed(2) + 'x'));
             row.append($('<td/>').text(old_value));
             row.append($('<td/>').text(new_value));
             table_body.append(row);
@@ -117,10 +117,19 @@ $(document).ready(function() {
             plot_div.css('background-color', 'white');
 
             function update_plot() {
+                markings = [
+                    { color: '#d00', lineWidth: 2, xaxis: { from: date_b, to: date_b }}
+                ];
+                if (date_a !== null) {
+                    markings.push({ color: '#d00', lineWidth: 2, xaxis: { from: date_a, to: date_a }});
+                }
+
                 $.ajax({
-                    url: 'graphs/summary/' + benchmark_basename + '.json',
+                    url: graph_url,
                     cache: false
                 }).done(function(data) {
+                    var params = $.asv.master_json.benchmarks[benchmark_basename].params;
+                    data = $.asv.filter_graph_data_idx(data, 0, parameter_idx, params);
                     var options = {
                         colors: ['#000'],
                         series: {
@@ -136,9 +145,7 @@ $(document).ready(function() {
                             labelMargin: 0,
                             axisMargin: 0,
                             minBorderMargin: 0,
-                            markings: [
-                                { color: '#d00', lineWidth: 2, xaxis: { from: date, to: date }}
-                            ],
+                            markings: markings,
                         },
                         xaxis: {
                             ticks: [],
@@ -157,15 +164,14 @@ $(document).ready(function() {
                 })
                 return plot_div;
             }
-
-            factor_link.popover({
+            benchmark_link.popover({
                 placement: 'right auto',
                 trigger: 'hover',
                 html: true,
                 delay: 50,
                 content: $('<div/>').append(plot_div)
             });
-            factor_link.on('show.bs.popover', update_plot);
+            benchmark_link.on('show.bs.popover', update_plot);
         });
 
         display_table.append(table_body);
