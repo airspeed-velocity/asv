@@ -74,6 +74,9 @@ $(document).ready(function() {
                     $("#regression-div-" + i + '-ignored').show();
                 });
             }
+            else {
+                branch = null;
+            }
 
             branch_div.attr('id', 'regression-div-' + i);
             branch_div.hide();
