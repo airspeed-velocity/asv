@@ -81,6 +81,7 @@ class Publish(Command):
         params = {}
         graphs = {}
         date_to_hash = {}
+        hash_to_date = {}
         machines = {}
         benchmark_names = set()
 
@@ -119,8 +120,9 @@ class Publish(Command):
         with log.indent():
             for results in iter_results(conf.results_dir):
                 log.dot()
-                date_to_hash[results.date] = results.commit_hash[
-                    :conf.hash_length]
+                commit_hash = results.commit_hash[:conf.hash_length]
+                date_to_hash[results.date] = commit_hash
+                hash_to_date[commit_hash] = results.date
 
                 for key, val in six.iteritems(results.params):
                     params.setdefault(key, set())
@@ -163,7 +165,7 @@ class Publish(Command):
             log.info("Generating output for {0}".format(cls.name))
             with log.indent():
                 output_dir = os.path.join(conf.html_dir, cls.name)
-                cls.publish(conf, repo, benchmarks, graphs, date_to_hash)
+                cls.publish(conf, repo, benchmarks, graphs, hash_to_date)
                 extra_pages.append([cls.name, cls.button_label, cls.description])
 
         log.step()

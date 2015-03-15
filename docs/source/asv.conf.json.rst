@@ -164,3 +164,27 @@ A list of modules to import containing asv plugins.
 ``wheel_cache_size``
 --------------------
 The number of wheels (builds) to cache for each environment.
+
+``regressions_first_commits``
+-----------------------------
+
+The commits after which the regression search in `asv publish`
+should start looking for regressions.
+
+The value is a dictionary mapping benchmark regexps to commit
+identifiers.  If the commit identifier is `null`, regression detection
+for the matching benchmark is skipped.  The default is to start from
+the first commit with results.
+
+Example::
+
+    "regressions_first_commits": {
+        ".*": "v0.1.0",
+        "benchmark_1": "80fca08d",
+        "benchmark_2": null,
+    }
+
+In this case, regressions are detected only for commits after tag
+``v0.1.0`` for all benchmarks. For ``benchmark_1``, regressions are
+detected only after the commit given, and for ``benchmark_2``
+regression detection is skipped completely.

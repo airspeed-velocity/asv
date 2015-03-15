@@ -4,8 +4,9 @@
 from __future__ import absolute_import, division, unicode_literals, print_function
 
 import os
-import six
+import re
 import itertools
+import six
 
 from ..console import log
 from ..publishing import OutputPublisher
@@ -21,12 +22,15 @@ class Regressions(OutputPublisher):
     description = "Display information about recent regressions"
 
     @classmethod
-    def publish(cls, conf, repo, benchmarks, graphs, date_to_hash):
+    def publish(cls, conf, repo, benchmarks, graphs, hash_to_date):
         # Analyze the data in the graphs --- it's been cleaned up and
         # it's easier to work with than the results directly
 
         regressions = []
         seen = {}
+        date_to_hash = dict((d, h) for h, d in six.iteritems(hash_to_date))
+
+        data_filter = _GraphDataFilter(conf, repo, hash_to_date)
 
         all_params = {}
         for graph in six.itervalues(graphs):
@@ -44,22 +48,10 @@ class Regressions(OutputPublisher):
             benchmark = benchmarks.get(benchmark_name)
             if not benchmark:
                 continue
-            graph_data = graph.get_data()
 
-            if benchmark.get('params'):
-                def iter_data():
-                    for j, param in enumerate(itertools.product(*benchmark['params'])):
-                        times = [item[0] for item in graph_data]
-                        values = [item[1][j] for item in graph_data]
-                        entry_name = benchmark_name + '({0})'.format(', '.join(param))
-                        yield j, entry_name, times, values
-            else:
-                def iter_data():
-                    times = [item[0] for item in graph_data]
-                    values = [item[1] for item in graph_data]
-                    yield None, benchmark_name, times, values
+            graph_data = data_filter.get_graph_data(graph, benchmark)
 
-            for j, entry_name, times, values in iter_data():
+            for j, entry_name, times, values in graph_data:
                 result = cls._analyze_data(times, values)
                 if result is None:
                     continue
@@ -129,3 +121,89 @@ class Regressions(OutputPublisher):
     def _save(cls, conf, data):
         fn = os.path.join(conf.html_dir, 'regressions.json')
         util.write_json(fn, data)
+
+
+class _GraphDataFilter(object):
+    """
+    Obtain data sets from graphs, following configuration settings.
+    """
+
+    def __init__(self, conf, repo, hash_to_date):
+        self.conf = conf
+        self.repo = repo
+        self.hash_to_date = hash_to_date
+        self.time_sets = {}
+
+    def get_graph_data(self, graph, benchmark):
+        """
+        Iterator over graph data sets
+
+        Yields
+        ------
+        param_idx
+            Flat index to parameter permutations for parameterized benchmarks.
+            None if benchmark is not parameterized.
+        entry_name
+            Name for the data set. If benchmark is non-parameterized, this is the
+            benchmark name.
+        times
+            List of times (ints)
+        values
+            List of benchmark values (floats or Nones)
+
+        """
+        series = graph.get_data()
+
+        if benchmark.get('params'):
+            param_iter = enumerate(itertools.product(*benchmark['params']))
+        else:
+            param_iter = [(None, None)]
+
+        for j, param in param_iter:
+            if param is None:
+                entry_name = benchmark['name']
+            else:
+                entry_name = benchmark['name'] + '({0})'.format(', '.join(param))
+
+            time_set = self._get_allowed_times(graph, benchmark, entry_name)
+
+            times = [item[0] for item in series if item[0] in time_set]
+            if param is None:
+                values = [item[1] for item in series if item[0] in time_set]
+            else:
+                values = [item[1][j] for item in series if item[0] in time_set]
+
+            yield j, entry_name, times, values
+
+    def _get_allowed_times(self, graph, benchmark, entry_name):
+        """
+        Compute the set of times allowed by asv.conf.json.
+
+        The decision which commits to include is based on commit
+        order, not on commit authoring date
+        """
+        time_set = set(self.hash_to_date.values())
+
+        for regex, start_commit in six.iteritems(self.conf.regressions_first_commits):
+            if re.match(regex, benchmark['name']) or re.match(regex, entry_name):
+                if start_commit is None:
+                    # Disable regression detection completely
+                    return set()
+
+                if self.conf.branches == [None]:
+                    key = (start_commit, None)
+                else:
+                    key = (start_commit, graph.params.get('branch'))
+
+                if key not in self.time_sets:
+                    times = set()
+                    spec = self.repo.get_new_range_spec(*key)
+                    for commit in self.repo.get_hashes_from_range(spec):
+                        time = self.hash_to_date.get(commit[:self.conf.hash_length])
+                        if time is not None:
+                            times.add(time)
+                    self.time_sets[key] = times
+
+                time_set = time_set.intersection(self.time_sets[key])
+
+        return time_set
