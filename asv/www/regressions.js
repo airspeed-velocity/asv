@@ -1,11 +1,20 @@
 'use strict';
 
 $(document).ready(function() {
+    /* Cached contents of downloaded regressions.json */
     var regression_data = null;
+    /* Current page title */
     var current_title = "Regressions";
+    /* Whether HTML5 local storage is available */
     var local_storage_available = false;
-    var ignored_regressions = {};
+    /* Key prefix for ignored regressions. For each ignored regression,
+       a key "ignore_key_prefix + md5(benchmark_name + date_a + date_b)"
+       is added to HTML5 local storage.
+     */
     var ignore_key_prefix = null;
+    /* Set of ignored regressions, same information as in HTML5 local storage.
+       Useful if local storage runs out of space. */
+    var ignored_regressions = {};
 
     function load_data(params) {
         $("#title").text(current_title);
