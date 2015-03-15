@@ -55,8 +55,8 @@ def detect_regressions(y):
     best_r = None
     best_v = None
     best_err = None
-    err = None
-    v = None
+    cur_err = None
+    cur_v = None
     prev_r = 0
 
     for r, v, d in zip(right, values, dists):
@@ -65,20 +65,22 @@ def detect_regressions(y):
             prev_r = r
             continue
 
-        err = abs(d / (r - prev_r))**(1/p)
+        cur_v = v
+        cur_err = abs(d / (r - prev_r))**(1/p)
         prev_r = r
-        if best_v is None or v <= best_v + best_err:
+
+        if best_v is None or cur_v <= best_v + best_err:
             # Prefer showing newer regressions, so if the minimum
             # position is uncertain due to errors in test results,
             # bias it toward newer results
             best_r = index_map[r-1]
-            best_v = v
-            best_err = err
+            best_v = cur_v
+            best_err = cur_err
 
-    if v is None or best_v is None or v <= best_v + max(err, best_err):
+    if cur_v is None or best_v is None or cur_v <= best_v + max(cur_err, best_err):
         return None, None, None, None, None
     else:
-        return (v, err, best_r, best_v, best_err)
+        return (cur_v, cur_err, best_r, best_v, best_err)
 
 
 def filter_outliers(y):
