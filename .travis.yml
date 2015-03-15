@@ -21,16 +21,21 @@ matrix:
 
 install:
   - |
+    set -ev
+    export TRAVIS_PYTHON=`which python`
+    export TRAVIS_PIP=`which pip`
     if [[ $USE_CONDA == true ]]; then
       wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
       chmod +x miniconda.sh;
       ./miniconda.sh -b;
       export PATH=/home/travis/miniconda/bin:$PATH;
       conda update --yes conda;
+      if $TRAVIS_PYTHON -c 'import virtualenv'; then echo "ERROR: virtualenv package is installed"; exit 1; fi;
+    else
+      $TRAVIS_PIP install virtualenv;
     fi
+    if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install "mercurial>=3.3" ; fi;
+    if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install python-hglib==1.5 ; fi;
 
 script:
-    - pip install virtualenv
-    - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then pip install "mercurial>=3.3" ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then pip install python-hglib==1.5 ; fi
-    - python setup.py test
+  - $TRAVIS_PYTHON setup.py test
