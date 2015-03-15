@@ -142,5 +142,13 @@ def test_dev_python_arg():
     assert args.python is None
 
 
+def test_run_steps_arg():
+    parser, subparsers = make_argparser()
+
+    argv = ['run', '--steps=20', 'ALL']
+    args = parser.parse_args(argv)
+    assert args.steps == 20
+
+
 if __name__ == '__main__':
     test_dev('/tmp')

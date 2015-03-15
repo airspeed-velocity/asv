@@ -68,5 +68,6 @@ def positive_int(string):
         value = int(string)
         if not value > 0:
             raise argparse.ArgumentTypeError("%r is not a positive integer" % (string,))
+        return value
     except ValueError:
         raise argparse.ArgumentTypeError("%r is not an integer" % (string,))
