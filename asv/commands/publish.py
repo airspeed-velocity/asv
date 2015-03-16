@@ -83,6 +83,18 @@ def check_benchmark_params(name, benchmark):
             raise ValueError(msg)
 
 
+def safe_branch_name(branch):
+    """
+    Convert a branch name to a string, dealing with the None default value
+    """
+    if branch is None:
+        # Occurs only if no branch is set in the configuration, and is
+        # not visible to the user.
+        return "master"
+    else:
+        return branch
+
+
 class Publish(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
@@ -160,7 +172,7 @@ class Publish(Command):
 
                     for branch in branch_cache.get_branches(results.commit_hash):
                         cur_params = dict(results.params)
-                        cur_params['branch'] = branch if branch is not None else "master"
+                        cur_params['branch'] = safe_branch_name(branch)
 
                         graph = Graph(key, cur_params, params)
                         if graph.path in graphs:
@@ -192,7 +204,7 @@ class Publish(Command):
             val = list(val)
             val.sort(key=lambda x: x or '')
             params[key] = val
-        params['branch'] = conf.branches  # maintain same order as in conf file
+        params['branch'] = [safe_branch_name(branch) for branch in conf.branches]
         util.write_json(os.path.join(conf.html_dir, "index.json"), {
             'project': conf.project,
             'project_url': conf.project_url,

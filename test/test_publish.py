@@ -78,6 +78,8 @@ def test_publish(tmpdir):
     assert isfile(join(tmpdir, 'html', 'asv.css'))
     assert not isdir(join(tmpdir, 'html', 'graphs', 'Cython', 'arch-x86_64',
                           'branch-some-branch'))
+    index = util.load_json(join(tmpdir, 'html', 'index.json'))
+    assert index['params']['branch'] == ['master']
 
     def check_file(branch):
         fn = join(tmpdir, 'html', 'graphs', 'Cython', 'arch-x86_64', 'branch-' + branch,
