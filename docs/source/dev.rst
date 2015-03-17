@@ -166,3 +166,32 @@ A benchmark suite directory has the following layout.  The
       non-parameterized benchmarks, it is directly the result.
       Missing values (eg. failed and skipped benchmarks) are
       represented by ``null``.
+
+
+Full-stack testing
+------------------
+
+For full-stack testing, we use `Selenium WebDriver
+<http://seleniumhq.org/>`__ and its `Python bindings
+<https://pypi.python.org/pypi/selenium>`__.
+Additional documentation for Selenium Python bindings is `here
+<https://selenium-python.readthedocs.org/index.html>`__.
+
+The browser back-end can be selected via::
+
+    python setup.py test -a "--webdriver=PhantomJS"
+    py.test --webdriver=PhantomJS
+
+The allowed values include ``PhantomJS`` (default) and ``Chrome``,
+corresponding to:
+
+* `PhantomJS <http://phantomjs.org/>`__:
+  Headless web browser. Runs without requiring a display.  On
+  Ubuntu, install via ``apt-get install phantomjs``.
+
+* `ChromeDriver <https://code.google.com/p/selenium/wiki/ChromeDriver>`__:
+  Chrome-based controllable browser. Cannot run without a display,
+  and will pop up a window when running. On Ubuntu, install via
+  ``apt-get install chromium-chromedriver``.
+
+For other options regarding the webdriver to use, see ``py.test --help``.

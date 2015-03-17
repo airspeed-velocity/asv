@@ -32,6 +32,28 @@ def random_ports(port, n):
             yield max(1, port + random.randint(-2*n, 2*n))
 
 
+def create_httpd(handler_cls, port=0):
+    # Create a server that allows address reuse
+    class MyTCPServer(socketserver.TCPServer):
+        allow_reuse_address = True
+
+    for port in random_ports(port, 5):
+        try:
+            httpd = MyTCPServer(("", port), handler_cls)
+            base_url = "http://127.0.0.1:{0}/".format(port)
+            break
+        except socket.error as e:
+            if e.errno == errno.EADDRINUSE:
+                continue
+            else:
+                raise
+    else:
+        raise util.UserError("Failed to find an unused port for "
+                             "serving web pages")
+
+    return httpd, base_url
+
+
 class Preview(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
@@ -59,28 +81,13 @@ class Preview(Command):
         os.chdir(conf.html_dir)
 
         Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+        httpd, base_url = create_httpd(Handler, port=port)
 
-        # Create a server that allows address reuse
-        class MyTCPServer(socketserver.TCPServer):
-            allow_reuse_address = True
-
-        for port in random_ports(port, 5):
-            try:
-                httpd = MyTCPServer(("", port), Handler)
-            except socket.error as e:
-                if e.errno == errno.EADDRINUSE:
-                    continue
-                else:
-                    raise
-            else:
-                break
-
-        log.info(
-            "Serving at http://127.0.0.1:{0}/".format(port))
+        log.info("Serving at {0}".format(base_url))
 
         if browser:
             import webbrowser
-            webbrowser.open("http://127.0.0.1:{0}/".format(port))
+            webbrowser.open(base_url)
 
         log.info("Press ^C to abort")
         httpd.serve_forever()
