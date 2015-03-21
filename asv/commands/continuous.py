@@ -122,8 +122,6 @@ class Continuous(Command):
 
         table.sort(reverse=True)
 
-        color_print("SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY.\n", 'red')
-        print("")
         color_print(
             "{0:40s}   {1:>8}   {2:>8}   {3:>8}\n".format("BENCHMARK", "BEFORE", "AFTER", "FACTOR"),
             'blue')
@@ -135,6 +133,7 @@ class Continuous(Command):
                 truncate_left(name, 40),
                 before_display, after_display, change))
 
+        print("")
         color_print(
             "SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY.\n", 'red')
 
