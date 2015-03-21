@@ -169,7 +169,6 @@ class Environment(object):
             self._env_dir, self.hashname))
 
         self._is_setup = False
-        self._requirements_installed = False
 
         self._repo = get_repo(conf)
         self._cache = wheel_cache.WheelCache(conf, self._path)
@@ -238,7 +237,7 @@ class Environment(object):
 
         try:
             info = self.load_info_file(self._path)
-        except (util.UserError, OSError, KeyError):
+        except (util.UserError, IOError):
             return False
 
         expected_info = {
@@ -252,22 +251,21 @@ class Environment(object):
 
     def create(self):
         """
-        Create the outer layers of the environment, including an
-        information file and a local clone of the project repository.
-        Calls `setup` internally to setup a specific kind of
-        environment.
+        Create the environment on disk.  If it doesn't exist, it is
+        created.  Then, all of the requirements are installed into it.
         """
         if self._is_setup:
             return
 
         if not self.check_presence():
-            if os.path.exists(self._env_dir):
-                shutil.rmtree(self._env_dir)
+            if os.path.exists(self._path):
+                shutil.rmtree(self._path)
 
-            os.makedirs(self._env_dir)
+            if not os.path.exists(self._env_dir):
+                os.makedirs(self._env_dir)
 
             try:
-                self.setup()
+                self._setup()
             except:
                 log.error("Failure creating environment for {0}".format(self.name))
                 if os.path.exists(self._path):
@@ -278,14 +276,10 @@ class Environment(object):
 
         self._is_setup = True
 
-    def setup(self):
+    def _setup(self):
         """
-        Setup the environment on disk.  If it doesn't exist, it is
-        created.  Then, all of the requirements are installed into it.
+        Implementation for setting up the environment.
         """
-        raise NotImplementedError()
-
-    def install_requirements(self):
         raise NotImplementedError()
 
     def install(self, package):
@@ -332,7 +326,6 @@ class Environment(object):
             if commit_hash is None:
                 commit_hash = self.repo.get_hash_from_master()
 
-        self.install_requirements()
         self.uninstall(conf.project)
 
         build_root = self._cache.build_project_cached(
@@ -411,10 +404,7 @@ class ExistingEnvironment(Environment):
     def create(self):
         pass
 
-    def setup(self):
-        pass
-
-    def install_requirements(self):
+    def _setup(self):
         pass
 
     def install_project(self, conf, commit_hash=None):

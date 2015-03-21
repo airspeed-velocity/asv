@@ -46,8 +46,7 @@ def test_matrix_environments(tmpdir):
     # Only test the first two environments, since this is so time
     # consuming
     for env in environments[:2]:
-        env.setup()
-        env.install_requirements()
+        env.create()
 
         output = env.run(
             ['-c', 'import six, sys; sys.stdout.write(six.__version__)'])
@@ -80,7 +79,8 @@ def test_large_environment_matrix(tmpdir):
         # this test run a long time, we only set up the environment,
         # but don't actually install dependencies into it.  This is
         # enough to trigger the bug in #169.
-        env.setup()
+        env._install_requirements = lambda: None
+        env.create()
 
 
 @pytest.mark.xfail(not HAS_PYTHON_27,

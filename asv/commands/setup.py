@@ -14,19 +14,19 @@ from .. import util
 from . import common_args
 
 
-def _install_requirements(env):
+def _create(env):
     try:
         with log.set_level(logging.WARN):
-            env.install_requirements()
+            env.create()
     except:
         import traceback
         traceback.print_exc()
         raise
 
 
-def _install_requirements_multiprocess(env):
+def _create_multiprocess(env):
     try:
-        return _install_requirements(env)
+        return _create(env)
     except:
         import traceback
         traceback.print_exc()
@@ -66,16 +66,11 @@ class Setup(Command):
 
         log.info("Creating environments")
         with log.indent():
-            for env in environments:
-                env.create()
-
-        log.info("Installing dependencies")
-        with log.indent():
             if parallel != 1:
                 pool = multiprocessing.Pool(parallel)
-                pool.map(_install_requirements_multiprocess, environments)
+                pool.map(_create, environments)
                 pool.close()
             else:
-                list(map(_install_requirements, environments))
+                list(map(_create, environments))
 
         return environments
