@@ -13,6 +13,7 @@ import json
 import math
 import os
 import select
+import signal
 import subprocess
 import struct
 import sys
@@ -285,6 +286,15 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
 
     log.debug("Running '{0}'".format(' '.join(args)))
 
+    posix = getattr(os, 'setpgid', None)
+    if posix:
+        # Run the subprocess in a separate process group, so that we
+        # can kill it and all child processes it spawns e.g. on
+        # timeouts
+        preexec_fn = lambda: os.setpgid(0, 0)
+    else:
+        preexec_fn = None
+
     proc = subprocess.Popen(
         args,
         close_fds=True,
@@ -292,6 +302,7 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         shell=shell,
+        preexec_fn=preexec_fn,
         cwd=cwd)
 
     last_dot_time = time.time()
@@ -308,7 +319,6 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
                 list(fds.keys()), [], [], timeout)
             if len(rlist) == 0:
                 # We got a timeout
-                proc.terminate()
                 break
             for f in rlist:
                 output = os.read(f, PIPE_BUF)
@@ -319,9 +329,23 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
                 elif dots:
                     dots()
                 last_dot_time = time.time()
-    except KeyboardInterrupt:
-        proc.terminate()
-        raise
+    finally:
+        if proc.returncode is None:
+            # Timeout or another exceptional condition occurred, and
+            # the program is still running.
+            if posix:
+                # Terminate the whole process group
+                os.killpg(proc.pid, signal.SIGTERM)
+                for j in range(10):
+                    time.sleep(0.1)
+                    if proc.poll() is not None:
+                        break
+                else:
+                    # Didn't terminate within 1 sec, so kill it
+                    os.killpg(proc.pid, signal.SIGTERM)
+            else:
+                proc.terminate()
+            proc.wait()
 
     proc.stdout.flush()
     proc.stderr.flush()
@@ -331,7 +355,7 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
     stdout = b''.join(stdout_chunks).decode('utf-8', 'replace')
     stderr = b''.join(stderr_chunks).decode('utf-8', 'replace')
 
-    retcode = proc.wait()
+    retcode = proc.returncode
     if valid_return_codes is not None and retcode not in valid_return_codes:
         header = 'Error running {0}'.format(' '.join(args))
         if display_error:
