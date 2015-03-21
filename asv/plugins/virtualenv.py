@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 from distutils.version import LooseVersion
 import inspect
 import os
+import subprocess
 
 import six
 
@@ -84,6 +85,18 @@ class Virtualenv(environment.Environment):
             return False
         else:
             return True
+
+    def check_presence(self):
+        if not super(Virtualenv, self).check_presence():
+            return False
+        for fn in ['pip', 'python']:
+            if not os.path.isfile(os.path.join(self._path, 'bin', fn)):
+                return False
+        try:
+            self._run_executable('python', ['-c', 'pass'])
+        except (subprocess.CalledProcessError, OSError):
+            return False
+        return True
 
     def setup(self):
         """

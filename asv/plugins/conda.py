@@ -71,6 +71,18 @@ class Conda(environment.Environment):
         for configuration in environment.iter_configuration_matrix(conf.matrix):
             yield cls(conf, python, configuration)
 
+    def check_presence(self):
+        if not super(Conda, self).check_presence():
+            return False
+        for fn in ['pip', 'python']:
+            if not os.path.isfile(os.path.join(self._path, 'bin', fn)):
+                return False
+        try:
+            self._run_executable('python', ['-c', 'pass'])
+        except (subprocess.CalledProcessError, OSError):
+            return False
+        return True
+
     def setup(self):
         try:
             conda = util.which('conda')

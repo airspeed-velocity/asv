@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import os
 import six
 import pytest
 
@@ -80,3 +81,37 @@ def test_large_environment_matrix(tmpdir):
         # but don't actually install dependencies into it.  This is
         # enough to trigger the bug in #169.
         env.setup()
+
+
+@pytest.mark.xfail(not HAS_PYTHON_27,
+                   reason="Requires Python 2.7")
+def test_presence_checks(tmpdir):
+    conf = config.Config()
+
+    conf.env_dir = six.text_type(tmpdir.join("env"))
+
+    conf.pythons = ["2.7"]
+    conf.matrix = {}
+    environments = list(environment.get_environments(conf))
+
+    for env in environments:
+        env.create()
+
+        # Check env is recreated when info file is clobbered
+        info_fn = os.path.join(env._path, 'asv-env-info.json')
+        data = util.load_json(info_fn)
+        data['python'] = '3.4'
+        data = util.write_json(info_fn, data)
+        env._is_setup = False
+        env.create()
+        data = util.load_json(info_fn)
+        assert data['python'] == '2.7'
+        env.run(['-c', 'import os'])
+
+        # Check env is recreated if crucial things are missing
+        pip_fn = os.path.join(env._path, 'bin', 'pip')
+        os.remove(pip_fn)
+        env._is_setup = False
+        env.create()
+        assert os.path.isfile(pip_fn)
+        env.run(['-c', 'import os'])

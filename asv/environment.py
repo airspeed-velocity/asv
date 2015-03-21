@@ -229,6 +229,27 @@ class Environment(object):
             raise ValueError("No repo set up yet")
         return self._repo
 
+    def check_presence(self):
+        """
+        Check whether the environment already exists.
+        """
+        if not os.path.isdir(self._env_dir):
+            return False
+
+        try:
+            info = self.load_info_file(self._path)
+        except (util.UserError, OSError, KeyError):
+            return False
+
+        expected_info = {
+            'python': self._python,
+            'requirements': self._requirements
+        }
+        if info != expected_info:
+            return False
+
+        return True
+
     def create(self):
         """
         Create the outer layers of the environment, including an
@@ -239,10 +260,12 @@ class Environment(object):
         if self._is_setup:
             return
 
-        if not os.path.exists(self._env_dir):
+        if not self.check_presence():
+            if os.path.exists(self._env_dir):
+                shutil.rmtree(self._env_dir)
+
             os.makedirs(self._env_dir)
 
-        if not os.path.exists(self._path):
             try:
                 self.setup()
             except:
@@ -327,6 +350,10 @@ class Environment(object):
         """
         return True
 
+    def load_info_file(self, path):
+        path = os.path.join(path, 'asv-env-info.json')
+        return util.load_json(path)
+
     def save_info_file(self, path):
         """
         Save a file with information about the environment into
@@ -377,6 +404,9 @@ class ExistingEnvironment(Environment):
     @property
     def name(self):
         return self._executable
+
+    def check_presence(self):
+        return True
 
     def create(self):
         pass
