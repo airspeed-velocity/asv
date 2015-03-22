@@ -18,6 +18,7 @@ import subprocess
 import struct
 import sys
 import time
+import errno
 
 try:
     from select import PIPE_BUF
@@ -309,14 +310,31 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
     stdout_chunks = []
     stderr_chunks = []
     try:
+        if posix:
+            # Forward signals related to Ctrl-Z handling; the child
+            # process is in a separate process group so it won't receive
+            # these automatically from the terminal
+            def sig_forward(signum, frame):
+                os.killpg(proc.pid, signum)
+                if signum == signal.SIGTSTP:
+                    os.kill(os.getpid(), signal.SIGSTOP)
+            signal.signal(signal.SIGTSTP, sig_forward)
+            signal.signal(signal.SIGCONT, sig_forward)
+
         fds = {
             proc.stdout.fileno(): stdout_chunks,
             proc.stderr.fileno(): stderr_chunks
             }
 
         while proc.poll() is None:
-            rlist, wlist, xlist = select.select(
-                list(fds.keys()), [], [], timeout)
+            try:
+                rlist, wlist, xlist = select.select(
+                    list(fds.keys()), [], [], timeout)
+            except select.error as err:
+                if err.args[0] == errno.EINTR:
+                    # interrupted by signal handler; try again
+                    continue
+
             if len(rlist) == 0:
                 # We got a timeout
                 break
@@ -330,6 +348,11 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
                     dots()
                 last_dot_time = time.time()
     finally:
+        if posix:
+            # Restore signal handlers
+            signal.signal(signal.SIGTSTP, signal.SIG_DFL)
+            signal.signal(signal.SIGCONT, signal.SIG_DFL)
+
         if proc.returncode is None:
             # Timeout or another exceptional condition occurred, and
             # the program is still running.
