@@ -291,7 +291,9 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
     if posix:
         # Run the subprocess in a separate process group, so that we
         # can kill it and all child processes it spawns e.g. on
-        # timeouts
+        # timeouts. Note that subprocess.Popen will wait until exec()
+        # before returning in parent process, so there is no race
+        # condition in setting the process group vs. calls to os.killpg
         preexec_fn = lambda: os.setpgid(0, 0)
     else:
         preexec_fn = None
