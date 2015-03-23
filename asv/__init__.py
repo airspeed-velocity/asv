@@ -14,5 +14,13 @@ if sys.version_info >= (3, 3):
     if os.environ.get('__PYVENV_LAUNCHER__'):
         os.unsetenv('__PYVENV_LAUNCHER__')
 
+__version__ = "0.1.dev0"
+try:
+    from ._version import revision
+    if 'dev' in __version__:
+        __version__ += '+' + revision
+    del revision
+except ImportError:
+    pass
 
 from . import plugin_manager

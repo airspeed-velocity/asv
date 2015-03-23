@@ -11,6 +11,8 @@ import six
 
 from .. import config
 from .. import util
+from .. import __version__
+
 
 # This list is ordered in order of average workflow
 command_order = [
@@ -72,6 +74,10 @@ def make_argparser():
         "--config",
         help="Benchmark configuration file",
         default='asv.conf.json')
+
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__,
+        help="Print program version")
 
     subparsers = parser.add_subparsers(
         title='subcommands',
