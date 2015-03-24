@@ -1112,3 +1112,17 @@ def namedtuple_with_doc(name, slots, doc):
         return cls
     else:
         return type(str(name), (cls,), {'__doc__': doc})
+
+
+def recvall(sock, size):
+    """
+    Receive data of given size from a socket connection
+    """
+    data = b""
+    while len(data) < size:
+        s = sock.recv(size - len(data))
+        data += s
+        if not s:
+            raise RuntimeError("did not receive data from socket "
+                               "(size {}, got only {!r})".format(size, data))
+    return data
