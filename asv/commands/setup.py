@@ -24,15 +24,6 @@ def _create(env):
         raise
 
 
-def _create_multiprocess(env):
-    try:
-        return _create(env)
-    except:
-        import traceback
-        traceback.print_exc()
-        raise
-
-
 class Setup(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
