@@ -262,7 +262,17 @@ class Environment(object):
                 shutil.rmtree(self._path)
 
             if not os.path.exists(self._env_dir):
-                os.makedirs(self._env_dir)
+                try:
+                    os.makedirs(self._env_dir)
+                except OSError:
+                    # Environment.create may be called in parallel for
+                    # environments with different self._path, but same
+                    # self._env_dir. This causes a race condition for
+                    # the above makedirs() call --- but not for the
+                    # rest of the processing. Therefore, we will just
+                    # ignore the error here, as things will fail at a
+                    # later stage if there is really was a problem.
+                    pass
 
             try:
                 self._setup()
