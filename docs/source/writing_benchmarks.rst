@@ -210,6 +210,14 @@ which measures the CPU time used only by the current process.  This is
 available as ``time.process_time`` in Python 3.3 and later, but a
 backport is included with ``asv`` for earlier versions of Python.
 
+.. note::
+
+   One consequence of using ``CLOCK_PROCESS_CPUTIME`` is that the time
+   spent in child processes of the benchmark is not included.  If your
+   benchmark spawns other processes, you may get more accurate results
+   by setting the ``timer`` attribute on the benchmark to
+   `timeit.default_timer`.
+
 For best results, the benchmark function should contain as little as
 possible, with as much extraneous setup moved to a ``setup`` function::
 
