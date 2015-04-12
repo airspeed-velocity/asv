@@ -115,6 +115,65 @@ except ImportError:  # Python <3.3
         process_time = timeit.default_timer
 
 
+def get_maxrss():
+    # Fallback function, in case we don't have one that works on the
+    # current platform
+    return None
+
+if sys.platform.startswith('win'):
+    import ctypes
+    import ctypes.wintypes
+
+    SIZE_T = ctypes.c_size_t
+    class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
+        _fields_ = [
+            ('cb', ctypes.wintypes.DWORD),
+            ('PageFaultCount', ctypes.wintypes.DWORD),
+            ('PeakWorkingSetSize', SIZE_T),
+            ('WorkingSetSize', SIZE_T),
+            ('QuotaPeakPagedPoolUsage', SIZE_T),
+            ('QuotaPagedPoolUsage', SIZE_T),
+            ('QuotaPeakNonPagedPoolUsage', SIZE_T),
+            ('QuotaNonPagedPoolUsage', SIZE_T),
+            ('PagefileUsage', SIZE_T),
+            ('PeakPagefileUsage', SIZE_T),
+        ]
+
+    GetCurrentProcess = ctypes.windll.kernel32.GetCurrentProcess
+    GetCurrentProcess.argtypes = []
+    GetCurrentProcess.restype = ctypes.wintypes.HANDLE
+
+    GetProcessMemoryInfo = ctypes.windll.psapi.GetProcessMemoryInfo
+    GetProcessMemoryInfo.argtypes = (ctypes.wintypes.HANDLE,
+                                     ctypes.POINTER(PROCESS_MEMORY_COUNTERS),
+                                     ctypes.wintypes.DWORD)
+    GetProcessMemoryInfo.restype = ctypes.wintypes.BOOL
+
+    def get_maxrss():
+        proc_hnd = GetCurrentProcess()
+        counters = PROCESS_MEMORY_COUNTERS()
+        info = GetProcessMemoryInfo(proc_hnd, ctypes.byref(counters), ctypes.sizeof(counters))
+        if info == 0:
+            raise ctypes.WinError()
+        return counters.PeakWorkingSetSize
+else:
+    try:
+        import resource
+
+        # POSIX
+        if sys.platform == 'darwin':
+            def get_maxrss():
+                # OSX getrusage returns maxrss in bytes
+                # https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man2/getrusage.2.html
+                return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        else:
+            def get_maxrss():
+                # Linux, *BSD return maxrss in kilobytes
+                return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
+    except ImportError:
+        pass
+
+
 try:
     from importlib import import_module
 except ImportError:  # For Python 2.6
@@ -460,6 +519,24 @@ class MemBenchmark(Benchmark):
         return sizeofcopy - sizeof2
 
 
+class PeakMemBenchmark(Benchmark):
+    """
+    Represents a single benchmark for tracking the peak memory consumption
+    of the whole program.
+    """
+    name_regex = re.compile(
+        '^(PeakMem[A-Z_].+)|(peakmem_.+)$')
+
+    def __init__(self, name, func, attr_sources):
+        Benchmark.__init__(self, name, func, attr_sources)
+        self.type = "peakmemory"
+        self.unit = "bytes"
+
+    def run(self, *param):
+        self.func(*param)
+        return get_maxrss()
+
+
 class TrackBenchmark(Benchmark):
     """
     Represents a single benchmark for tracking an arbitrary value.
@@ -480,7 +557,7 @@ class TrackBenchmark(Benchmark):
 
 
 benchmark_types = [
-    TimeBenchmark, MemBenchmark, TrackBenchmark
+    TimeBenchmark, MemBenchmark, PeakMemBenchmark, TrackBenchmark
 ]
 
 

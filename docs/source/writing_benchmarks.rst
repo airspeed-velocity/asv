@@ -294,6 +294,32 @@ instead.
     The memory benchmarking feature is still experimental.
     ``asizeof`` may not be the most appropriate metric to use.
 
+
+.. _peak-memory:
+
+Peak Memory
+```````````
+
+Peak memory benchmarks have the prefix ``peakmem``.
+
+Peak memory benchmark tracks the maximum resident size (in bytes) of
+the process in memory. This does not necessarily count memory paged
+on-disk, or that used by memory-mapped files.  To write a peak memory
+benchmark, write a function that does the operation whose maximum
+memory usage you want to track::
+
+    def peakmem_list():
+        [0] * 165536
+
+
+.. note::
+
+   The peak memory benchmark also counts memory usage during the
+   ``setup`` routine, which may confound the benchmark results. One
+   way to avoid this is to spawn a separate subprocess for executing
+   memory-intensive setup tasks.
+
+
 .. _tracking:
 
 Tracking (Generic)
