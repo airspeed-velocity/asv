@@ -33,6 +33,9 @@ from .console import log
 from .extern import minify_json
 
 
+TIMEOUT_RETCODE = -256
+
+
 class UserError(Exception):
     pass
 
@@ -311,6 +314,7 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
     last_dot_time = time.time()
     stdout_chunks = []
     stderr_chunks = []
+    is_timeout = False
     try:
         if posix:
             # Forward signals related to Ctrl-Z handling; the child
@@ -339,6 +343,7 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
 
             if len(rlist) == 0:
                 # We got a timeout
+                is_timeout = True
                 break
             for f in rlist:
                 output = os.read(f, PIPE_BUF)
@@ -380,7 +385,11 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
     stdout = b''.join(stdout_chunks).decode('utf-8', 'replace')
     stderr = b''.join(stderr_chunks).decode('utf-8', 'replace')
 
-    retcode = proc.returncode
+    if is_timeout:
+        retcode = TIMEOUT_RETCODE
+    else:
+        retcode = proc.returncode
+
     if valid_return_codes is not None and retcode not in valid_return_codes:
         header = 'Error running {0}'.format(' '.join(args))
         if display_error:

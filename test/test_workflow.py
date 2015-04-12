@@ -73,11 +73,20 @@ def test_run_publish(basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
     # Tests a typical complete run/publish workflow
-    Run.run(conf, range_spec="master~5..master", steps=2,
-            _machine_file=machine_file, quick=True)
+    s = StringIO()
+    stdout = sys.stdout
+    try:
+        sys.stdout = s
+        Run.run(conf, range_spec="master~5..master", steps=2,
+                _machine_file=machine_file, quick=True, show_stderr=True)
+    finally:
+        sys.stdout = stdout
+    s.seek(0)
+    text = s.read()
 
     assert len(os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))) == 5
     assert len(os.listdir(join(tmpdir, 'results_workflow'))) == 2
+    assert 'asv: benchmark timed out (timeout 0.1s)' in text
 
     Publish.run(conf)
 
