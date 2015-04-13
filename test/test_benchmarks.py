@@ -43,7 +43,7 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 3
 
     b = benchmarks.Benchmarks(conf, regex='example')
-    assert len(b) == 12
+    assert len(b) == 13
 
     b = benchmarks.Benchmarks(conf, regex='time_example_benchmark_1')
     assert len(b) == 2
@@ -53,13 +53,13 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 2
 
     b = benchmarks.Benchmarks(conf)
-    assert len(b) == 16
+    assert len(b) == 17
 
     envs = list(environment.get_environments(conf))
     b = benchmarks.Benchmarks(conf)
     times = b.run_benchmarks(envs[0], profile=True, show_stderr=True)
 
-    assert len(times) == 16
+    assert len(times) == 17
     assert times[
         'time_examples.TimeSuite.time_example_benchmark_1']['result'] is not None
     # Benchmarks that raise exceptions should have a time of "None"
@@ -92,6 +92,8 @@ def test_find_benchmarks(tmpdir):
     assert isinstance(times['params_examples.time_skip']['result']['result'][0], float)
     assert isinstance(times['params_examples.time_skip']['result']['result'][1], float)
     assert util.is_nan(times['params_examples.time_skip']['result']['result'][2])
+
+    assert times['peakmem_examples.peakmem_list']['result'] >= 4 * 2**20
 
     profile_path = join(tmpdir, 'test.profile')
     with open(profile_path, 'wb') as fd:
