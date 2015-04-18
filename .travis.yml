@@ -52,7 +52,7 @@ install:
     fi
     if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install "mercurial>=3.3" ; fi;
     if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install python-hglib==1.5 ; fi;
-    $TRAVIS_PIP install selenium
+    $TRAVIS_PIP install selenium six pytest
 
 script:
   - $TRAVIS_PYTHON setup.py test
