@@ -213,8 +213,12 @@ class ProcessError(subprocess.CalledProcessError):
         self.stderr = stderr
 
     def __str__(self):
-        return "Command '{0}' returned non-zero exit status {1}".format(
-            ' '.join(self.args), self.retcode)
+        if self.retcode == TIMEOUT_RETCODE:
+            return "Command '{0}' timed out".format(
+                ' '.join(self.args))
+        else:
+            return "Command '{0}' returned non-zero exit status {1}".format(
+                ' '.join(self.args), self.retcode)
 
 
 def check_call(args, valid_return_codes=(0,), timeout=60, dots=True,
