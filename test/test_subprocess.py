@@ -55,6 +55,8 @@ sys.stderr.write("Stderr after waiting\n")
             print(e.stdout)
             assert e.stdout.strip() == "Stdout before waiting"
             assert e.stderr.strip() == "Stderr before waiting"
+            assert e.retcode == util.TIMEOUT_RETCODE
+            assert "timed out" in str(e)
         else:
             assert False, "Expected timeout exception"
         # Make sure the timeout is triggered in a sufficiently short amount of time
@@ -76,6 +78,8 @@ sys.exit(1)
         assert len(e.stderr.strip().split('\n')) == 1
         assert e.stdout.strip() == "Stdout before error"
         assert e.stderr.strip() == "Stderr before error"
+        assert e.retcode == 1
+        assert "returned non-zero exit status 1" in str(e)
     else:
         assert False, "Expected exception"
 
