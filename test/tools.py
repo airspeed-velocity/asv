@@ -10,7 +10,16 @@ This file contains utilities to generate test repositories.
 import datetime
 import io
 import os
+import threading
+import time
+import six
 from os.path import abspath, join, dirname, relpath, isdir
+from contextlib import contextmanager
+from distutils.spawn import find_executable
+from distutils.version import LooseVersion
+from six.moves import SimpleHTTPServer, socketserver
+
+import pytest
 
 try:
     import hglib
@@ -18,6 +27,26 @@ except ImportError as exc:
     hglib = None
 
 from asv import util
+from asv.commands.preview import create_httpd
+
+
+try:
+    import selenium
+    from selenium import webdriver
+    from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+    from selenium.webdriver.support.ui import WebDriverWait
+    HAVE_WEBDRIVER = True
+except ImportError:
+    HAVE_WEBDRIVER = False
+
+CHROMEDRIVER = [
+    'chromedriver',
+    '/usr/lib/chromium-browser/chromedriver'   # location on Ubuntu
+]
+
+PHANTOMJS = ['phantomjs']
+
+FIREFOX = ['firefox']
 
 
 # These classes are defined here, rather than using asv/plugins/git.py
@@ -206,3 +235,103 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
                 dvcs.commit("Revision {0}.{1}".format(branch_name, i))
 
     return dvcs
+
+
+@pytest.fixture
+def browser(request, pytestconfig, scope="session"):
+    """
+    Fixture for Selenium WebDriver browser interface
+    """
+    if not HAVE_WEBDRIVER:
+        pytest.skip("Selenium WebDriver Python bindings not found")
+
+    driver_str = pytestconfig.getoption('webdriver')
+    driver_options_str = pytestconfig.getoption('webdriver_options')
+
+    # Evaluate the options
+    ns = {}
+    six.exec_("import selenium.webdriver", ns)
+    six.exec_("from selenium.webdriver import *", ns)
+    driver_options = eval(driver_options_str, ns)
+    driver_cls = getattr(webdriver, driver_str)
+
+    # Find the executable (if applicable)
+    paths = []
+    if driver_cls is webdriver.Chrome:
+        paths += CHROMEDRIVER
+        exe_kw = 'executable_path'
+    elif driver_cls is webdriver.PhantomJS:
+        paths += PHANTOMJS
+        exe_kw = 'executable_path'
+    elif driver_cls is webdriver.Firefox:
+        paths += FIREFOX
+        exe_kw = 'firefox_binary'
+    else:
+        exe_kw = None
+
+    for exe in paths:
+        if exe is None:
+            continue
+        exe = find_executable(exe)
+        if exe:
+            break
+    else:
+        exe = None
+
+    if exe is not None and exe_kw is not None and exe_kw not in driver_options:
+        driver_options[exe_kw] = exe
+
+    # Create the browser
+    browser = driver_cls(**driver_options)
+
+    # Clean up on fixture finalization
+    def fin():
+        browser.close()
+        browser.service.process.kill()
+        browser.service.process.wait()
+        # There's also browser.quit(), but it doesn't appear to work
+        # correctly on Ubuntu 14.10 at least for Chrome
+    request.addfinalizer(fin)
+
+    # Set default time to wait for AJAX requests to complete
+    browser.implicitly_wait(5)
+
+    return browser
+
+
+@contextmanager
+def preview(base_path):
+    """
+    Context manager for ASV preview web server. Gives the base URL to use.
+
+    Parameters
+    ----------
+    base_path : str
+        Path to serve files from
+
+    """
+
+    class Handler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+        def translate_path(self, path):
+            # Don't serve from cwd, but from a different directory
+            path = SimpleHTTPServer.SimpleHTTPRequestHandler.translate_path(self, path)
+            path = os.path.join(base_path, os.path.relpath(path, os.getcwd()))
+            return path
+
+    httpd, base_url = create_httpd(Handler)
+
+    def run():
+        try:
+            httpd.serve_forever()
+        except:
+            import traceback
+            traceback.print_exc()
+            return
+
+    thread = threading.Thread(target=run)
+    thread.start()
+    try:
+        yield base_url
+    finally:
+        httpd.shutdown()
+        thread.join()

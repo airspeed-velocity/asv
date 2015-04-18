@@ -14,6 +14,12 @@ import subprocess
 
 # A py.test test command
 class PyTest(TestCommand):
+    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.pytest_args = []
+
     def finalize_options(self):
         TestCommand.finalize_options(self)
         self.test_args = ['test']
