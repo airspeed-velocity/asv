@@ -249,13 +249,3 @@ def test_run_new_all(basic_conf):
     init_results()
     _test_run_branches(tmpdir, dvcs, conf, machine_file, 'ALL',
                        branches=['master', 'some-branch'], initial_commit=initial_commit)
-
-
-if __name__ == '__main__':
-    from asv import console
-    console.log.enable()
-
-    from asv import machine
-    machine.Machine.hardcoded_machine_name = 'orangutan'
-
-    test_workflow('/tmp')
