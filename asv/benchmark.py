@@ -669,7 +669,7 @@ if __name__ == '__main__':
                 benchmark_id, param_idx = benchmark_id.split('-', 1)
                 param_idx = int(param_idx)
             except ValueError:
-                raise ValueError("Benchmark id %r is invalid" % (name,))
+                raise ValueError("Benchmark id %r is invalid" % (benchmark_id,))
         else:
             param_idx = None
 

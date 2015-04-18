@@ -14,6 +14,7 @@ import socket
 from . import Command
 
 from ..console import log
+from .. import util
 
 
 def random_ports(port, n):
