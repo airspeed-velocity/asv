@@ -7,6 +7,7 @@ from __future__ import (absolute_import, division, print_function,
 import six
 
 import logging
+import traceback
 
 from . import Command
 from ..benchmarks import Benchmarks
@@ -40,10 +41,8 @@ def _do_build_multiprocess(args):
     """
     try:
         return _do_build(args)
-    except:
-        import traceback
-        traceback.format_exc()
-        raise
+    except BaseException as exc:
+        raise util.ParallelFailure(str(exc), exc.__class__, traceback.format_exc())
 
 
 class Run(Command):
@@ -258,8 +257,12 @@ class Run(Command):
                         args = [(env, conf, commit_hash) for env in subenv]
                         if parallel != 1:
                             pool = multiprocessing.Pool(parallel)
-                            successes = pool.map(_do_build_multiprocess, args)
-                            pool.close()
+                            try:
+                                successes = pool.map(_do_build_multiprocess, args)
+                            except util.ParallelFailure as exc:
+                                exc.reraise()
+                            finally:
+                                pool.close()
                         else:
                             successes = map(_do_build, args)
 
