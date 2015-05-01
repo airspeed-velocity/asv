@@ -38,11 +38,30 @@ def get_git_hash():
     Get version from asv/__init__.py and generate asv/_version.py
     """
     # Obtain git revision
-    revision = ""
+    githash = ""
     if os.path.isdir(os.path.join(basedir, '.git')):
         try:
-            proc = subprocess.Popen(['git', '-C', basedir, 'rev-parse', 'HEAD'],
-                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            proc = subprocess.Popen(
+                ['git', '-C', basedir, 'rev-parse', 'HEAD'],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            rev, err = proc.communicate()
+            if proc.returncode == 0:
+                githash = rev.strip().decode('ascii')
+        except OSError:
+            pass
+    return githash
+
+
+def get_git_revision():
+    """
+    Get the number of revisions since the last tag.
+    """
+    revision = "0"
+    if os.path.isdir(os.path.join(basedir, '.git')):
+        try:
+            proc = subprocess.Popen(
+                ['git', '-C', basedir, 'rev-list', '--count', 'HEAD'],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             rev, err = proc.communicate()
             if proc.returncode == 0:
                 revision = rev.strip().decode('ascii')
@@ -76,7 +95,7 @@ git_hash = get_git_hash()
 release = 'dev' not in version
 
 if not release:
-    version += git_hash[:8]
+    version += get_git_revision()
 
 write_version_file(
     os.path.join(basedir, 'asv', '_version.py'), version, git_hash)
