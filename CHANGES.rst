@@ -1,17 +1,11 @@
-0.1 (unreleased)
-----------------
-
-New Features
-^^^^^^^^^^^^
-
-API Changes
-^^^^^^^^^^^
+0.1rc3 (unreleased)
+-------------------
 
 Bug Fixes
 ^^^^^^^^^
+Include pip_requirements.txt.
 
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Display version correctly in docs.
 
 0.1rc2 (2015-05-01)
 -------------------
