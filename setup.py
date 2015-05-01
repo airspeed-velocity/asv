@@ -104,8 +104,7 @@ write_version_file(
 
 # Install entry points for making releases with zest.releaser
 entry_points = {}
-for hook in [('releaser', 'middle'), ('postreleaser', 'before'),
-             ('postreleaser', 'middle')]:
+for hook in [('releaser', 'middle'), ('postreleaser', 'before')]:
     hook_ep = 'zest.releaser.' + '.'.join(hook)
     hook_name = 'asv.release.' + '.'.join(hook)
     hook_func = 'asv._release:' + '_'.join(hook)

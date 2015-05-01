@@ -7,9 +7,7 @@ of asv.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import io
 import os
-import re
 import sys
 
 
@@ -118,26 +116,3 @@ def postreleaser_before(data):
 
     data['dev_version_template'] = '%(new_version)s.dev'
     data['nothing_changed_yet'] = _NEW_CHANGELOG_TEMPLATE
-
-
-def postreleaser_middle(data):
-    """
-    postreleaser.middle hook to update the setup.py with the new version. See
-    prereleaser_middle for more details.
-    """
-
-    _update_setup_py_version(data['dev_version'])
-
-
-def _update_setup_py_version(version):
-    pattern = re.compile(r'^VERSION\s*=\s*[\'"]{1,3}')
-    output = io.StringIO()
-    with open('setup.py') as setup_py:
-        for line in setup_py:
-            if not pattern.match(line):
-                output.write(line.decode('utf-8'))
-            else:
-                output.write("VERSION = '{0}'\n".format(version))
-
-    with io.open('setup.py', 'w') as setup_py:
-        setup_py.write(output.getvalue())
