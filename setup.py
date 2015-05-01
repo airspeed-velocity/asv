@@ -7,9 +7,8 @@ from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
 import os
-import re
-import sys
 import subprocess
+import sys
 
 
 # A py.test test command
@@ -31,20 +30,13 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
-def get_version():
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+
+def get_git_hash():
     """
     Get version from asv/__init__.py and generate asv/_version.py
     """
-    basedir = os.path.abspath(os.path.dirname(__file__))
-
-    # Parse version
-    with open(os.path.join(basedir, 'asv', '__init__.py'), 'r') as f:
-        for line in f:
-            m = re.match('^\\s*__version__\\s*=\\s*["\'](.*)["\']\\s*$', line)
-            if m:
-                version = m.group(1)
-                break
-
     # Obtain git revision
     revision = ""
     if os.path.isdir(os.path.join(basedir, '.git')):
@@ -53,38 +45,64 @@ def get_version():
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             rev, err = proc.communicate()
             if proc.returncode == 0:
-                revision = rev.strip()[:8].decode('ascii')
+                revision = rev.strip().decode('ascii')
         except OSError:
             pass
+    return revision
 
+
+def write_version_file(filename, version, revision):
     # Write revision file (only if it needs to be changed)
-    content = 'revision = "{0}"\n'.format(revision)
+    content = '''
+__version__ = "{0}"
+__githash__ = "{1}"
+__release__ = {2}
+    '''.format(version, revision, 'dev' in version)
+
     old_content = None
-    fn = os.path.join(basedir, 'asv', '_version.py')
-    if os.path.isfile(fn):
-        with open(fn, 'r') as f:
+    if os.path.isfile(filename):
+        with open(filename, 'r') as f:
             old_content = f.read()
     if content != old_content:
-        with open(fn, 'w') as f:
+        with open(filename, 'w') as f:
             f.write(content)
 
-    # The revision is not added to the version given to setup(), since
-    # that disturbs 'setup.py develop'
-    return version
+
+version = '0.1dev'
+
+git_hash = get_git_hash()
+
+# Indicates if this version is a release version
+release = 'dev' not in version
+
+if not release:
+    version += git_hash[:8]
+
+write_version_file(
+    os.path.join(basedir, 'asv', '_version.py'), version, git_hash)
+
+
+# Install entry points for making releases with zest.releaser
+entry_points = {}
+for hook in [('releaser', 'middle'), ('postreleaser', 'before'),
+             ('postreleaser', 'middle')]:
+    hook_ep = 'zest.releaser.' + '.'.join(hook)
+    hook_name = 'asv.release.' + '.'.join(hook)
+    hook_func = 'asv._release:' + '_'.join(hook)
+    entry_points[hook_ep] = ['%s = %s' % (hook_name, hook_func)]
+
+entry_points['console_scripts'] = ['asv = asv.main:main']
 
 
 setup(
     name="asv",
-    version=get_version(),
+    version=version,
     packages=['asv',
               'asv.commands',
               'asv.plugins',
-              'asv.extern'],
-    entry_points={
-        'console_scripts': [
-            'asv = asv.main:main'
-        ]
-    },
+              'asv.extern',
+              'asv._release'],
+    entry_points=entry_points,
 
     install_requires=[
         str('six>=1.4')
