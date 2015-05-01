@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import logging
+import traceback
 
 from . import Command
 from ..console import log
@@ -15,13 +16,15 @@ from . import common_args
 
 
 def _create(env):
+    with log.set_level(logging.WARN):
+        env.create()
+
+
+def _create_parallel(env):
     try:
-        with log.set_level(logging.WARN):
-            env.create()
-    except:
-        import traceback
-        traceback.print_exc()
-        raise
+        _create(env)
+    except BaseException as exc:
+        raise util.ParallelFailure(str(exc), exc.__class__, traceback.format_exc())
 
 
 class Setup(Command):
@@ -59,8 +62,12 @@ class Setup(Command):
         with log.indent():
             if parallel != 1:
                 pool = multiprocessing.Pool(parallel)
-                pool.map(_create, environments)
-                pool.close()
+                try:
+                    pool.map(_create_parallel, environments)
+                except util.ParallelFailure as exc:
+                    exc.reraise()
+                finally:
+                    pool.close()
             else:
                 list(map(_create, environments))
 

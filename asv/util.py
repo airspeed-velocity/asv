@@ -40,6 +40,33 @@ class UserError(Exception):
     pass
 
 
+class ParallelFailure(Exception):
+    """
+    Custom exception to work around a multiprocessing bug
+    https://bugs.python.org/issue9400
+    """
+    def __new__(cls, message, exc_cls, traceback_str):
+        self = Exception.__new__(cls)
+        self.message = message
+        self.exc_cls = exc_cls
+        self.traceback_str = traceback_str
+        return self
+
+    def __reduce__(self):
+        return (ParallelFailure, (self.message, self.exc_cls, self.traceback_str))
+
+    def __str__(self):
+        return "{0}: {1}\n    {2}".format(self.exc_cls.__name__,
+                                          self.message,
+                                          self.traceback_str.replace("\n", "\n    "))
+
+    def reraise(self):
+        if self.exc_cls is UserError:
+            raise UserError(self.message)
+        else:
+            raise self
+
+
 def human_list(l):
     """
     Formats a list of strings in a human-friendly way.
