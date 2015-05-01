@@ -30,3 +30,12 @@ License: `BSD three-clause license
    writing_benchmarks.rst
    reference.rst
    dev.rst
+   changelog.rst
+
+Credits
+-------
+
+Michael Droettboom would like to thank the following contributors to
+asv:
+
+.. include:: credits.txt
