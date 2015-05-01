@@ -5,7 +5,6 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import glob
-from io import StringIO
 import os
 from os.path import abspath, dirname, join, isfile
 import shutil
@@ -69,20 +68,13 @@ def basic_conf(tmpdir):
     return tmpdir, local, conf, machine_file
 
 
-def test_run_publish(basic_conf):
+def test_run_publish(capfd, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
     # Tests a typical complete run/publish workflow
-    s = StringIO()
-    stdout = sys.stdout
-    try:
-        sys.stdout = s
-        Run.run(conf, range_spec="master~5..master", steps=2,
-                _machine_file=machine_file, quick=True, show_stderr=True)
-    finally:
-        sys.stdout = stdout
-    s.seek(0)
-    text = s.read()
+    Run.run(conf, range_spec="master~5..master", steps=2,
+            _machine_file=machine_file, quick=True, show_stderr=True)
+    text, err = capfd.readouterr()
 
     assert len(os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))) == 5
     assert len(os.listdir(join(tmpdir, 'results_workflow'))) == 2
@@ -111,20 +103,14 @@ def test_run_publish(basic_conf):
         assert data[0][1][2] is None
 
     # Check that the skip options work
-    s = StringIO()
-    stdout = sys.stdout
-    try:
-        sys.stdout = s
-        Run.run(conf, range_spec="master~5..master", steps=2,
-                _machine_file=join(tmpdir, 'asv-machine.json'), quick=True,
-                skip_successful=True, skip_failed=True)
-        Run.run(conf, range_spec="master~5..master", steps=2,
-                _machine_file=join(tmpdir, 'asv-machine.json'), quick=True,
-                skip_existing_commits=True)
-    finally:
-        sys.stdout = stdout
-    s.seek(0)
-    text = s.read()
+    capfd.readouterr()
+    Run.run(conf, range_spec="master~5..master", steps=2,
+            _machine_file=join(tmpdir, 'asv-machine.json'), quick=True,
+            skip_successful=True, skip_failed=True)
+    Run.run(conf, range_spec="master~5..master", steps=2,
+            _machine_file=join(tmpdir, 'asv-machine.json'), quick=True,
+            skip_existing_commits=True)
+    text, err = capfd.readouterr()
     assert 'Running benchmarks.' not in text
 
     # Check EXISTING works
@@ -139,41 +125,27 @@ def test_run_publish(basic_conf):
     Publish.run(conf)
 
 
-def test_continuous(basic_conf):
+def test_continuous(capfd, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
     # Check that asv continuous runs
-    s = StringIO()
-    stdout = sys.stdout
-    try:
-        sys.stdout = s
-        Continuous.run(conf, branch="master^", _machine_file=machine_file, show_stderr=True)
-    finally:
-        sys.stdout = stdout
+    Continuous.run(conf, branch="master^", _machine_file=machine_file, show_stderr=True)
 
-    s.seek(0)
-    text = s.read()
+    text, err = capfd.readouterr()
     assert "SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY" in text
     assert "params_examples.track_find_test(2)              1.0        6.0   6.00000000x" in text
     assert "params_examples.ClassOne" in text
 
 
-def test_find(basic_conf):
+def test_find(capfd, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
     # Test find at least runs
-    s = StringIO()
-    stdout = sys.stdout
-    try:
-        sys.stdout = s
-        Find.run(conf, "master~5..master", "params_examples.track_find_test",
-                 _machine_file=machine_file)
-    finally:
-        sys.stdout = stdout
+    Find.run(conf, "master~5..master", "params_examples.track_find_test",
+             _machine_file=machine_file)
 
     # Check it found the first commit after the initially tested one
-    s.seek(0)
-    output = s.read()
+    output, err = capfd.readouterr()
 
     regression_hash = check_output(
         [which('git'), 'rev-parse', 'master^'], cwd=conf.repo)
