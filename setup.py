@@ -95,7 +95,8 @@ git_hash = get_git_hash()
 release = 'dev' not in version
 
 if not release:
-    version += get_git_revision()
+    version = '{0}{1}+{2}'.format(
+        version, get_git_revision(), git_hash[:8])
 
 write_version_file(
     os.path.join(basedir, 'asv', '_version.py'), version, git_hash)
