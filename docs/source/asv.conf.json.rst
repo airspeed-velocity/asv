@@ -21,6 +21,12 @@ results page back to your project.
 --------
 The URL to the repository for the project.
 
+The value can also be a path, relative to the location of the
+configuration file. For example, if the benchmarks are stored in the
+same repository as the project itself, and the configuration file is
+located at ``benchmarks/asv.conf.json`` inside the repository, you can
+set ``"repo": ".."`` to use the local repository.
+
 Currently, only ``git`` and ``hg`` repositories are supported, so this must be
 a URL that ``git`` or ``hg`` know how to clone from, for example:
 
