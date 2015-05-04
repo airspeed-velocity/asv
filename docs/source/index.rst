@@ -17,11 +17,6 @@ See an `example airspeed velocity site <http://mdboom.github.io/astropy-benchmar
 License: `BSD three-clause license
 <http://opensource.org/licenses/BSD-3-Clause>`__.
 
-.. warning::
-
-   airspeed velocity is pre-release software.  It is most certainly
-   going to change without notice, and may eat kittens.
-
 .. toctree::
    :maxdepth: 1
 
