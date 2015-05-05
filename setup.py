@@ -87,7 +87,7 @@ __release__ = {2}
             f.write(content)
 
 
-version = '0.1'
+version = '0.1.1.dev'
 
 git_hash = get_git_hash()
 
