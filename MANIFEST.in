@@ -8,7 +8,7 @@ recursive-include asv *.html *.js *.css *.ico *.png
 
 include docs/make.bat
 include docs/Makefile
-recursive-include docs *.rst *.txt *.py *.ico *.html
+recursive-include docs *.rst *.txt *.py *.ico *.html *.png
 
 recursive-include test *.json *.py
 
