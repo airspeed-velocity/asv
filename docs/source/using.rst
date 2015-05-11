@@ -291,7 +291,7 @@ on this machine.  This is useful for running in nightly cron jobs::
 Finally, you can also benchmark all commits that have not yet been benchmarked
 for this machine::
 
-    asv run MISSING
+    asv run --skip-existing-commits ALL
 
 .. note::
 

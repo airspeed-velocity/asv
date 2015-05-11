@@ -17,6 +17,10 @@ See an `example airspeed velocity site <http://mdboom.github.io/astropy-benchmar
 License: `BSD three-clause license
 <http://opensource.org/licenses/BSD-3-Clause>`__.
 
+Releases: https://pypi.python.org/pypi/asv
+
+Development: https://github.com/spacetelescope/asv
+
 .. toctree::
    :maxdepth: 1
 
