@@ -305,8 +305,8 @@ def solve_potts_autogamma(y, beta=None, **kw):
     # Try to find best gamma (golden section search on log-scale); we
     # don't need an accurate value for it however
     a = math.log(0.1/n)
-    b = 0
-    golden_search(f, a, b, xatol=abs(a)*0.1, ftol=0.01)
+    b = 0.0
+    golden_search(f, a, b, xatol=abs(a)*0.1, ftol=0.01, expand_bounds=True)
     return best_r[0], best_v[0], best_d[0], best_gamma[0]
 
 
@@ -518,16 +518,24 @@ def rolling_median(items):
         return result
 
 
-def golden_search(f, a, b, xatol=1e-6, ftol=1e-8):
+def golden_search(f, a, b, xatol=1e-6, ftol=1e-8, expand_bounds=False):
     """
     Find minimum of a function on interval [a, b]
-    using golden section search
+    using golden section search.
+
+    If expand_bounds=True, expand the interval so that the function is
+    first evaluated at x=a and x=b.
     """
 
     ratio = 2 / (1 + math.sqrt(5))
 
-    x0 = a
-    x3 = b
+    if not expand_bounds:
+        x0 = a
+        x3 = b
+    else:
+        x0 = (ratio * a - (1 - ratio) * b) / (2*ratio - 1)
+        x3 = (ratio * b - (1 - ratio) * a) / (2*ratio - 1)
+
     x1 = ratio * x0 + (1 - ratio) * x3
     x2 = (1 - ratio) * x0 + ratio * x3
 
