@@ -371,9 +371,11 @@ def merge_pieces(gamma, right, values, dists, mu_dist):
             break
 
     l = 0
+    values = []
+    dists = []
     for j in range(len(right)):
-        dists[j] = dist(l, right[j]-1)
-        values[j] = mu(l, right[j]-1)
+        dists.append(dist(l, right[j]-1))
+        values.append(mu(l, right[j]-1))
         l = right[j]
 
     return right, values, dists
