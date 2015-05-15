@@ -48,8 +48,8 @@ def detect_regressions(y):
         y_filtered.append(x)
 
     # Find piecewise segments
-    p = 2
-    right, values, dists, gamma = solve_potts_autogamma(y_filtered, p=p, min_size=1)
+    p = 1
+    right, values, dists, gamma = solve_potts_autogamma(y_filtered, p=p, min_size=2)
 
     # Find best value and compare to the most recent one
     best_r = None
@@ -306,7 +306,7 @@ def solve_potts_autogamma(y, beta=None, **kw):
     # don't need an accurate value for it however
     a = math.log(0.1/n)
     b = 0.0
-    golden_search(f, a, b, xatol=abs(a)*0.1, ftol=0.01, expand_bounds=True)
+    golden_search(f, a, b, xatol=abs(a)*0.1, ftol=0, expand_bounds=True)
     return best_r[0], best_v[0], best_d[0], best_gamma[0]
 
 
@@ -333,7 +333,7 @@ def solve_potts_approx(y, gamma=None, p=2, **kw):
         mu, dist = mu_dist.get_funcs()
         gamma = 3 * dist(0,n-1) * math.log(n) / n
 
-    right, values, dists = solve_potts(y, gamma, p=p, max_size=20, **kw)
+    right, values, dists = solve_potts(y, gamma, p=p, max_size=23, **kw)
     return merge_pieces(gamma, right, values, dists, mu_dist)
 
 
