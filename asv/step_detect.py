@@ -36,8 +36,6 @@ def detect_regressions(y):
 
     """
 
-    y = filter_outliers(y)
-
     index_map = {}
     y_filtered = []
     for j, x in enumerate(y):
@@ -49,7 +47,7 @@ def detect_regressions(y):
 
     # Find piecewise segments
     p = 1
-    right, values, dists, gamma = solve_potts_autogamma(y_filtered, p=p, min_size=2)
+    right, values, dists, gamma = solve_potts_autogamma(y_filtered, p=p, min_size=5)
 
     # Find best value and compare to the most recent one
     best_r = None
@@ -81,37 +79,6 @@ def detect_regressions(y):
         return None, None, None, None, None
     else:
         return (cur_v, cur_err, best_r, best_v, best_err)
-
-
-def filter_outliers(y):
-    """
-    Remove 1-3 points lying outside 2*sigma range, if they are between
-    points inside the 2*sigma range
-    """
-
-    sum_y = 0
-    sum_y2 = 0
-    n = 0
-
-    for p in y:
-        if p is not None:
-            sum_y += p
-            sum_y2 += p**2
-            n += 1
-
-    if n < 5:
-        return y
-
-    mean = sum_y/n
-    std = math.sqrt(abs(sum_y2/n - mean**2))
-
-    for j, p in enumerate(y):
-        if p is not None and abs(p - mean) > 2*std:
-            if ((j < 3 or min(abs(x - mean) for x in y[j-3:j+1] if x is not None) < 2*std) and
-                (j > len(y)-3 or min(abs(x - mean) for x in y[j:j+4] if x is not None) < 2*std)):
-                y[j] = None
-    return y
-
 
 
 #
@@ -265,9 +232,9 @@ def solve_potts_autogamma(y, beta=None, **kw):
     Parameters
     ----------
     beta : float or 'bic'
-         Penalty parameter. Default is 3*ln(n)/n, similar to Bayesian
+         Penalty parameter. Default is 5*ln(n)/n, similar to Bayesian
          information criterion for gaussian model with unknown variance
-         assuming 3 DOF per breakpoint.
+         assuming 5 DOF per breakpoint.
 
     """
     n = len(y)
@@ -279,7 +246,7 @@ def solve_potts_autogamma(y, beta=None, **kw):
     mu, dist = mu_dist.mu, mu_dist.dist
 
     if beta is None:
-        beta = 3 * math.log(n) / n
+        beta = 5 * math.log(n) / n
 
     gamma_0 = dist(0, n-1)
 
