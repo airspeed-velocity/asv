@@ -143,7 +143,7 @@ def _analyze_data(graph_data):
     try:
         j, entry_name, times, values = graph_data
 
-        v, err, best_r, best_v, best_err = detect_regressions(values)
+        v, best_r, best_v = detect_regressions(values)
         if v is None:
             return j, entry_name, None
 

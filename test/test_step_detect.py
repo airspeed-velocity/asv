@@ -92,10 +92,10 @@ def test_detect_regressions():
         y = y.tolist()
         y[123] = None
         y[1234] = np.nan
-        new_value, err, pos, old_value, best_err = detect_regressions(y)
+        new_value, best_pos, best_value = detect_regressions(y)
 
-        assert pos == 3233 + (seed % 123)
-        assert np.allclose(old_value, 0.7/2 - 0.3, rtol=0.3, atol=0)
+        assert best_pos == 3233 + (seed % 123)
+        assert np.allclose(best_value, 0.7/2 - 0.3, rtol=0.3, atol=0)
         assert np.allclose(new_value, 0.7/2 - 0.3 + 1, rtol=0.3, atol=0)
 
 

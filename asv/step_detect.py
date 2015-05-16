@@ -23,16 +23,12 @@ def detect_regressions(y):
 
     Returns
     -------
-    last_value
-        Last value
-    last_err
-        Last value error estimate
+    latest_value
+        Latest value
     best_pos
-        Last 'good' position
+        Last position where best value is obtained
     best_value
         Best value
-    best_err
-        Best value error estimate
 
     """
 
@@ -55,7 +51,12 @@ def detect_regressions(y):
     best_err = None
     cur_err = None
     cur_v = None
+
     prev_r = 0
+    prev_v = None
+    prev_err = None
+
+    l = 0
 
     for r, v, d in zip(right, values, dists):
         if r - prev_r < 3:
@@ -64,21 +65,25 @@ def detect_regressions(y):
             continue
 
         cur_v = v
+        cur_min = min(y_filtered[l:r])
         cur_err = abs(d / (r - prev_r))**(1/p)
-        prev_r = r
 
-        if best_v is None or cur_v <= best_v + best_err:
-            # Prefer showing newer regressions, so if the minimum
-            # position is uncertain due to errors in test results,
-            # bias it toward newer results
+        if best_v is None or cur_min <= best_v + best_err:
+            # Prefer showing largest regressions
             best_r = index_map[r-1]
             best_v = cur_v
             best_err = cur_err
 
+        prev_r = r
+        prev_v = cur_v
+        prev_err = cur_err
+
+        l = r
+
     if cur_v is None or best_v is None or cur_v <= best_v + max(cur_err, best_err):
-        return None, None, None, None, None
+        return None, None, None
     else:
-        return (cur_v, cur_err, best_r, best_v, best_err)
+        return (cur_v, best_r, best_v)
 
 
 #
