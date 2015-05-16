@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 import os
 import re
 import itertools
+import time
 import six
 
 from ..console import log
@@ -39,10 +40,19 @@ class Regressions(OutputPublisher):
                 if value:
                     all_params[key].add(value)
 
-        for file_name, graph in six.iteritems(graphs):
+        last_percentage_time = time.time()
+        num_items = len(graphs)
+
+        for j, item in enumerate(six.iteritems(graphs)):
+            file_name, graph = item
             if 'summary' in graph.params:
                 continue
+
+            # Print progress information
             log.add('.')
+            if time.time() - last_percentage_time > 10:
+                log.add('{0:.0f}%'.format(100*j/num_items))
+                last_percentage_time = time.time()
 
             benchmark_name = os.path.basename(file_name)
             benchmark = benchmarks.get(benchmark_name)
