@@ -588,13 +588,16 @@ def golden_search(f, a, b, xatol=1e-6, ftol=1e-8, expand_bounds=False):
         return x1
 
 
-def memoize(memo):
-    def deco(func):
-        def wrapper(*a):
-            r = memo.get(a)
-            if r is None:
-                r = func(*a)
-                memo[a] = r
-            return r
-        return wrapper
-    return deco
+def _plot_potts(x, sol):
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    t = np.arange(len(x))
+
+    plt.clf()
+    plt.plot(t, x, 'k.')
+
+    l = 0
+    for r, v in zip(sol[0], sol[1]):
+        plt.plot([l, r-1], [v, v], 'b-o', hold=1)
+        l = r
