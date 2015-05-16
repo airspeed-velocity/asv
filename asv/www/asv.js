@@ -192,6 +192,10 @@ $(document).ready(function() {
     var loaded_pages = {};
     /* Highlighted timestamp */
     var highlighted_dates = null;
+    /* Previous window scroll positions */
+    var window_scroll_positions = {};
+    /* Previous window hash location */
+    var window_last_location = null;
 
     function display_benchmark(bm_name, state_selection, sub_benchmark_idx, highlight_timestamps) {
         $('#graph-display').show();
@@ -482,14 +486,20 @@ $(document).ready(function() {
         function hashchange() {
             var info = parse_hash_string(window.location.hash);
 
+            /* Keep track of window scroll position; makes the back-button work */
+            var old_scroll_pos = window_scroll_positions[info.location.join('/')];
+            window_scroll_positions[window_last_location] = $(window).scrollTop();
+            window_last_location = info.location.join('/');
+
+            /* Redirect to correct handler */
             if (info.location[0] == ['']) {
                 show_summary();
-            } 
+            }
+            else if (show_page(info.location, info.params)) {
+                /* show_page does the work */
+            }
             else {
-                if (show_page(info.location, info.params)) {
-                    return;
-                }
-
+                /* Display benchmark page */
                 var benchmark = info.location[0];
                 var sub_benchmark_idx = null;
                 var highlight_timestamps = null;
@@ -518,6 +528,11 @@ $(document).ready(function() {
                     state_selection = info.params;
                 }
                 display_benchmark(benchmark, state_selection, sub_benchmark_idx, highlight_timestamps);
+            }
+
+            /* Scroll back to previous position, if any */
+            if (old_scroll_pos !== undefined) {
+                $(window).scrollTop(old_scroll_pos);
             }
         }
 

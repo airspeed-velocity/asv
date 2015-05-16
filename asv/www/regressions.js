@@ -24,7 +24,7 @@ $(document).ready(function() {
             local_storage_available = true;
         }
 
-        if (regression_data) {
+        if (regression_data !== null) {
             // already displayed
         }
         else {
