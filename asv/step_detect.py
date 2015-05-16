@@ -333,11 +333,11 @@ def solve_potts_approx(y, gamma=None, p=2, **kw):
         mu, dist = mu_dist.get_funcs()
         gamma = 3 * dist(0,n-1) * math.log(n) / n
 
-    right, values, dists = solve_potts(y, gamma, p=p, max_size=23, **kw)
-    return merge_pieces(gamma, right, values, dists, mu_dist)
+    right, values, dists = solve_potts(y, gamma, p=p, max_size=20, **kw)
+    return merge_pieces(gamma, right, values, dists, mu_dist, max_size=20)
 
 
-def merge_pieces(gamma, right, values, dists, mu_dist):
+def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
     """
     Combine consecutive intervals in Potts model solution, if doing
     that reduces the cost function.
@@ -345,9 +345,9 @@ def merge_pieces(gamma, right, values, dists, mu_dist):
     mu, dist = mu_dist.get_funcs()
 
     right = list(right)
-    values = list(values)
-    dists = list(dists)
 
+    # Combine consecutive intervals, if it results to decrease of cost
+    # function
     while True:
         min_change = 0
         min_change_j = len(right)
@@ -370,6 +370,28 @@ def merge_pieces(gamma, right, values, dists, mu_dist):
         else:
             break
 
+    # Check whether perturbing boundary positions leads to improvement
+    # in the cost function. The restricted Potts minimization can
+    # return sub-optimal boundaries due to the interval maximum size
+    # restriction.
+    l = 0
+    for j in range(1, len(right)):
+        prev_score = dist(l, right[j-1]-1) + dist(right[j-1], right[j]-1)
+        new_off = 0
+        for off in range(-max_size, max_size+1):
+            if right[j-1] + off - 1 <= l or right[j-1] + off >= right[j] - 1 or off == 0:
+                continue
+            new_score = dist(l, right[j-1]+off-1) + dist(right[j-1]+off, right[j]-1)
+            if new_score < prev_score:
+                new_off = off
+                prev_score = new_score
+
+        if new_off != 0:
+            right[j-1] += new_off
+
+        l = right[j-1]
+
+    # Rebuild values and dists lists
     l = 0
     values = []
     dists = []
