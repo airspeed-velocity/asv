@@ -467,28 +467,10 @@ class MuDist(object):
             def mu(l, r):
                 return median(y[l:r+1])
 
-            def cached_cumsum(m, l, r):
-                # Cache cumulative sums for each median, starting
-                # midway.  Getting amortized O(1) here relies on the
-                # leftmost point being accessed first.
-                cum_l, cumsum = cum_absy.setdefault(m, (l, [0]))
-                if l < cum_l:
-                    cumsum = [0]
-                    cum_absy[m] = (l, cumsum)
-                    cum_l = l
-                p = cum_l + len(cumsum)
-                if p > r+1:
-                    return cum_l, cumsum
-                s = cumsum[-1]
-                for j in range(p-1, r+1):
-                    s += abs(y[j] - m)
-                    cumsum.append(s)
-                return cum_l, cumsum
-
+            @memoize(self.dist_memo)
             def dist(l, r):
                 m = mu(l, r)
-                cum_l, cumsum = cached_cumsum(m, l, r)
-                return cumsum[r+1-cum_l] - cumsum[l-cum_l]
+                return sum(abs(x - m) for x in y[l:r+1])
 
         elif self.p == 2:
             if not self._precomputed_2:
