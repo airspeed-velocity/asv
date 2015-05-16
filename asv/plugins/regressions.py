@@ -6,7 +6,9 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 import os
 import re
 import itertools
+import multiprocessing
 import time
+import traceback
 import six
 
 from ..console import log
@@ -43,80 +45,107 @@ class Regressions(OutputPublisher):
         last_percentage_time = time.time()
         num_items = len(graphs)
 
-        for j, item in enumerate(six.iteritems(graphs)):
-            file_name, graph = item
-            if 'summary' in graph.params:
-                continue
+        def insert_regression(result_item, graph):
+            j, entry_name, result = result_item
+            if result is None:
+                return
 
-            # Print progress information
-            log.add('.')
-            if time.time() - last_percentage_time > 10:
-                log.add('{0:.0f}%'.format(100*j/num_items))
-                last_percentage_time = time.time()
+            # Check if range is a single commit
+            commit_a = date_to_hash[result[0]]
+            commit_b = date_to_hash[result[1]]
+            spec = repo.get_range_spec(commit_a, commit_b)
+            commits = repo.get_hashes_from_range(spec)
+            if len(commits) == 1:
+                commit_a = None
 
-            benchmark_name = os.path.basename(file_name)
-            benchmark = benchmarks.get(benchmark_name)
-            if not benchmark:
-                continue
+            # Select unique graph params
+            graph_params = {}
+            for name, value in six.iteritems(graph.params):
+                if len(all_params[name]) > 1:
+                    graph_params[name] = value
 
-            graph_data = data_filter.get_graph_data(graph, benchmark)
+            graph_path = graph.path + '.json'
 
-            for j, entry_name, times, values in graph_data:
-                result = cls._analyze_data(times, values)
-                if result is None:
+            # Produce output -- report only one result for each
+            # benchmark for each branch
+            regression = [entry_name, graph_path, graph_params, j, result]
+            key = (entry_name, graph_params.get('branch'))
+            if key not in seen:
+                regressions.append(regression)
+                seen[key] = regression
+            else:
+                # Pick the worse regression
+                old_regression = seen[key]
+                prev_result = old_regression[-1]
+                if abs(prev_result[1]*result[2]) < abs(result[1]*prev_result[2]):
+                    old_regression[:] = regression
+
+
+        last_percentage_time = time.time()
+
+        n_processes = multiprocessing.cpu_count()
+        pool = multiprocessing.Pool(n_processes)
+        try:
+            results = []
+            for j, item in enumerate(six.iteritems(graphs)):
+                file_name, graph = item
+                if 'summary' in graph.params:
                     continue
 
-                # Check if range is a single commit
-                commit_a = date_to_hash[result[0]]
-                commit_b = date_to_hash[result[1]]
-                spec = repo.get_range_spec(commit_a, commit_b)
-                commits = repo.get_hashes_from_range(spec)
-                if len(commits) == 1:
-                    commit_a = None
+                # Print progress status
+                log.add('.')
+                if time.time() - last_percentage_time > 5:
+                    log.add('{0:.0f}%'.format(100*j/len(graphs)))
+                    last_percentage_time = time.time()
 
-                # Select unique graph params
-                graph_params = {}
-                for name, value in six.iteritems(graph.params):
-                    if len(all_params[name]) > 1:
-                        graph_params[name] = value
+                benchmark_name = os.path.basename(file_name)
+                benchmark = benchmarks.get(benchmark_name)
+                if not benchmark:
+                    continue
 
-                graph_path = graph.path + '.json'
+                graph_data = data_filter.get_graph_data(graph, benchmark)
+                for data in graph_data:
+                    results.append((pool.apply_async(_analyze_data, (data,), {}), graph))
 
-                # Produce output -- report only one result for each
-                # benchmark for each branch
-                regression = [entry_name, graph_path, graph_params, j, result]
-                key = (entry_name, graph_params.get('branch'))
-                if key not in seen:
-                    regressions.append(regression)
-                    seen[key] = regression
-                else:
-                    # Pick the worse regression
-                    old_regression = seen[key]
-                    prev_result = old_regression[-1]
-                    if abs(prev_result[1]*result[2]) < abs(result[1]*prev_result[2]):
-                        old_regression[:] = regression
+                while len(results) > n_processes:
+                    r, graph = results.pop(0)
+                    insert_regression(r.get(), graph)
+
+            while results:
+                r, graph = results.pop(0)
+                insert_regression(r.get(), graph)
+        finally:
+            pool.terminate()
 
         cls._save(conf, {'regressions': regressions})
 
     @classmethod
-    def _analyze_data(cls, times, values):
-        """
-        Analyze a single time series
+    def _save(cls, conf, data):
+        fn = os.path.join(conf.html_dir, 'regressions.json')
+        util.write_json(fn, data)
 
-        Returns
-        -------
-        time_a : int
-             Timestamp of last 'good' commit
-        time_b : int
-             Timestamp of first 'bad' commit
-        cur_value : int
-             Most recent value
-        best_value : int
-             Best value
-        """
+
+def _analyze_data(graph_data):
+    """
+    Analyze a single time series
+
+    Returns
+    -------
+    time_a : int
+         Timestamp of last 'good' commit
+    time_b : int
+         Timestamp of first 'bad' commit
+    cur_value : int
+         Most recent value
+    best_value : int
+         Best value
+    """
+    try:
+        j, entry_name, times, values = graph_data
+
         v, err, best_r, best_v, best_err = detect_regressions(values)
         if v is None:
-            return None
+            return j, entry_name, None
 
         for r in range(best_r + 1, len(values)):
             if values[r] is not None:
@@ -125,12 +154,9 @@ class Regressions(OutputPublisher):
         else:
             bad_r = best_r + 1
 
-        return times[best_r], times[bad_r], v, best_v
-
-    @classmethod
-    def _save(cls, conf, data):
-        fn = os.path.join(conf.html_dir, 'regressions.json')
-        util.write_json(fn, data)
+        return j, entry_name, (times[best_r], times[bad_r], v, best_v)
+    except BaseException as exc:
+        raise util.ParallelFailure(str(exc), exc.__class__, traceback.format_exc())
 
 
 class _GraphDataFilter(object):
