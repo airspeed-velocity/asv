@@ -503,7 +503,13 @@ $(document).ready(function() {
                 if (info.params['time']) {
                     highlight_timestamps = [];
                     $.each(info.params['time'], function(i, value) {
-                        highlight_timestamps.push(parseInt(value));
+                        var match = value.match(/^([0-9]+)-([0-9]+)$/);
+                        if (match) {
+                            highlight_timestamps.push([parseInt(match[1]), parseInt(match[2])]);
+                        }
+                        else {
+                            highlight_timestamps.push([parseInt(value)]);
+                        }
                     });
                     delete info.params['time'];
                 }
@@ -1436,17 +1442,25 @@ $(document).ready(function() {
 
         if (highlighted_dates) {
             $.each(highlighted_dates, function(i, date) {
-                markings.push(
-                    { color: '#d00', lineWidth: 2, xaxis: { from: date, to: date } }
-                );
+                if (date.length == 1) {
+                    markings.push(
+                        { color: '#d00', lineWidth: 2, xaxis: { from: date[0], to: date[0] } }
+                    );
+                }
+                else {
+                    markings.push(
+                        { color: '#d00', lineWidth: 2, xaxis: { from: date[0], to: date[0] } }
+                    );
+                    markings.push(
+                        { color: '#d00', lineWidth: 2, xaxis: { from: date[1], to: date[1] } }
+                    );
+                    markings.push(
+                        { color: "rgba(200, 0, 0, 0.2)", alpha: 0.5, lineWidth: 2, 
+                          xaxis: { from: Math.min.apply(null, date), 
+                                   to: Math.max.apply(null, date) }}
+                    );
+                }
             });
-            if (highlighted_dates.length == 2) {
-                markings.push(
-                    { color: "rgba(200, 0, 0, 0.2)", alpha: 0.5, lineWidth: 2, 
-                      xaxis: { from: Math.min.apply(null, highlighted_dates), 
-                               to: Math.max.apply(null, highlighted_dates) }}
-                );
-            }
         }
 
         var unit;

@@ -25,8 +25,9 @@ def detect_regressions(y):
     -------
     latest_value
         Latest value
-    best_pos
-        Last position where best value is obtained
+    jump_pos : list of integers
+        List of positions after which value increased. The first item corresponds
+        to the last position at which the best value was obtained.
     best_value
         Best value
 
@@ -57,6 +58,11 @@ def detect_regressions(y):
     prev_err = None
 
     l = 0
+    jumps = []
+    if values:
+        last_v = values[-1]
+    else:
+        last_v = None
 
     for r, v, d in zip(right, values, dists):
         if r - prev_r < 3:
@@ -69,10 +75,16 @@ def detect_regressions(y):
         cur_err = abs(d / (r - prev_r))**(1/p)
 
         if best_v is None or cur_min <= best_v + best_err:
-            # Prefer showing largest regressions
-            best_r = index_map[r-1]
+            # Found best value (modulo errors)
             best_v = cur_v
             best_err = cur_err
+            jumps = [index_map[r-1]]
+        elif (prev_v is not None and
+              cur_v > prev_v + max(cur_err, prev_err) and
+              prev_v < last_v - max(cur_err, prev_err)):
+            # Found an upward jump
+            if index_map[prev_r-1] != jumps[-1]:
+                jumps.append(index_map[prev_r-1])
 
         prev_r = r
         prev_v = cur_v
@@ -83,7 +95,7 @@ def detect_regressions(y):
     if cur_v is None or best_v is None or cur_v <= best_v + max(cur_err, best_err):
         return None, None, None
     else:
-        return (cur_v, best_r, best_v)
+        return (cur_v, jumps, best_v)
 
 
 #

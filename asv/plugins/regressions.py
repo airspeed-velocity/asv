@@ -13,7 +13,6 @@ import six
 
 from ..console import log
 from ..publishing import OutputPublisher
-from ..results import compatible_results
 from ..step_detect import detect_regressions
 
 from .. import util
@@ -43,45 +42,6 @@ class Regressions(OutputPublisher):
                     all_params[key].add(value)
 
         last_percentage_time = time.time()
-        num_items = len(graphs)
-
-        def insert_regression(result_item, graph):
-            j, entry_name, result = result_item
-            if result is None:
-                return
-
-            # Check if range is a single commit
-            commit_a = date_to_hash[result[0]]
-            commit_b = date_to_hash[result[1]]
-            spec = repo.get_range_spec(commit_a, commit_b)
-            commits = repo.get_hashes_from_range(spec)
-            if len(commits) == 1:
-                commit_a = None
-
-            # Select unique graph params
-            graph_params = {}
-            for name, value in six.iteritems(graph.params):
-                if len(all_params[name]) > 1:
-                    graph_params[name] = value
-
-            graph_path = graph.path + '.json'
-
-            # Produce output -- report only one result for each
-            # benchmark for each branch
-            regression = [entry_name, graph_path, graph_params, j, result]
-            key = (entry_name, graph_params.get('branch'))
-            if key not in seen:
-                regressions.append(regression)
-                seen[key] = regression
-            else:
-                # Pick the worse regression
-                old_regression = seen[key]
-                prev_result = old_regression[-1]
-                if abs(prev_result[1]*result[2]) < abs(result[1]*prev_result[2]):
-                    old_regression[:] = regression
-
-
-        last_percentage_time = time.time()
 
         n_processes = multiprocessing.cpu_count()
         pool = multiprocessing.Pool(n_processes)
@@ -109,15 +69,56 @@ class Regressions(OutputPublisher):
 
                 while len(results) > n_processes:
                     r, graph = results.pop(0)
-                    insert_regression(r.get(), graph)
+                    cls._insert_regression(regressions, seen, date_to_hash, repo, all_params,
+                                           r.get(), graph)
 
             while results:
                 r, graph = results.pop(0)
-                insert_regression(r.get(), graph)
+                cls._insert_regression(regressions, seen, date_to_hash, repo, all_params,
+                                       r.get(), graph)
         finally:
             pool.terminate()
 
         cls._save(conf, {'regressions': regressions})
+
+    @classmethod
+    def _insert_regression(cls, regressions, seen, date_to_hash, repo, all_params,
+                           result_item, graph):
+        j, entry_name, result = result_item
+        if result is None:
+            return
+
+        # Check which ranges are a single commit
+        jumps = result[0]
+        for k, jump in enumerate(jumps):
+            commit_a = date_to_hash[jump[0]]
+            commit_b = date_to_hash[jump[1]]
+            spec = repo.get_range_spec(commit_a, commit_b)
+            commits = repo.get_hashes_from_range(spec)
+            if len(commits) == 1:
+                jumps[k] = (None, jump[1])
+
+        # Select unique graph params
+        graph_params = {}
+        for name, value in six.iteritems(graph.params):
+            if len(all_params[name]) > 1:
+                graph_params[name] = value
+
+        graph_path = graph.path + '.json'
+
+        # Produce output -- report only one result for each
+        # benchmark for each branch
+        regression = [entry_name, graph_path, graph_params, j, result]
+        key = (entry_name, graph_params.get('branch'))
+        if key not in seen:
+            regressions.append(regression)
+            seen[key] = regression
+        else:
+            # Pick the worse regression
+            old_regression = seen[key]
+            prev_result = old_regression[-1]
+            if abs(prev_result[1]*result[2]) < abs(result[1]*prev_result[2]):
+                old_regression[:] = regression
 
     @classmethod
     def _save(cls, conf, data):
@@ -131,10 +132,9 @@ def _analyze_data(graph_data):
 
     Returns
     -------
-    time_a : int
-         Timestamp of last 'good' commit
-    time_b : int
-         Timestamp of first 'bad' commit
+    jumps : list of (time_a, time_b)
+         List of time pairs, between which there is an upward jump
+         in the value.
     cur_value : int
          Most recent value
     best_value : int
@@ -143,18 +143,21 @@ def _analyze_data(graph_data):
     try:
         j, entry_name, times, values = graph_data
 
-        v, best_r, best_v = detect_regressions(values)
+        v, jump_pos, best_v = detect_regressions(values)
         if v is None:
             return j, entry_name, None
 
-        for r in range(best_r + 1, len(values)):
-            if values[r] is not None:
-                bad_r = r
-                break
-        else:
-            bad_r = best_r + 1
+        jumps = []
+        for jump_r in jump_pos:
+            for r in range(jump_r + 1, len(values)):
+                if values[r] is not None:
+                    next_r = r
+                    break
+            else:
+                next_r = jump_r + 1
+            jumps.append((times[jump_r], times[next_r]))
 
-        return j, entry_name, (times[best_r], times[bad_r], v, best_v)
+        return j, entry_name, (jumps, v, best_v)
     except BaseException as exc:
         raise util.ParallelFailure(str(exc), exc.__class__, traceback.format_exc())
 

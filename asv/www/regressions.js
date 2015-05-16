@@ -161,15 +161,12 @@ $(document).ready(function() {
             if (branch !== null && param_dict['branch'] != branch) {
                 return;
             }
-            var date_a = regression[0];
-            var date_b = regression[1];
-            var new_value = regression[2];
-            var old_value = regression[3];
+            var dates = regression[0];
+            var new_value = regression[1];
+            var old_value = regression[2];
 
             var factor = new_value / old_value;
-            var commit_a = $.asv.master_json.date_to_hash[date_a];
-            var commit_b = $.asv.master_json.date_to_hash[date_b];
-            var date_fmt = new Date(date_b);
+            var date_fmt = new Date(dates[0][1]);
 
             var row = $('<tr/>');
             var item;
@@ -181,10 +178,15 @@ $(document).ready(function() {
                 url_params[key] = [value];
             });
 
-            url_params.time = [date_b];
-            if (date_a) {
-                url_params.time.push(date_a);
-            }
+            url_params.time = [];
+            $.each(dates, function(i, date) {
+                if (date[0]) {
+                    url_params.time.push(date[0] + '-' + date[1]);
+                }
+                else {
+                    url_params.time.push(date[1]);
+                }
+            });
 
             if (parameter_idx !== null) {
                 url_params.idx = [parameter_idx];
@@ -206,23 +208,33 @@ $(document).ready(function() {
             var benchmark_link = $('<a/>').attr('href', benchmark_url).text(benchmark_name);
             row.append($('<td/>').append(benchmark_link));
             row.append($('<td/>').text(date_fmt.toISOString()));
-            if (commit_a) {
-                var td = $('<td/>');
-                if ($.asv.master_json.show_commit_url.match(/.*\/\/github.com\//)) {
-                    var commit_url = ($.asv.master_json.show_commit_url + '../compare/'
-                                      + commit_a + '...' + commit_b);
-                    row.append(td.append(
-                        $('<a/>').attr('href', commit_url).text(commit_a + '..' + commit_b)));
+
+            var commit_td = $('<td/>');
+            $.each(dates, function(i, date) {
+                var commit_a = $.asv.master_json.date_to_hash[date[0]];
+                var commit_b = $.asv.master_json.date_to_hash[date[1]];
+                if (i > 0) {
+                    commit_td.append($('<span>, </span>'));
+                }
+                if (commit_a) {
+                    if ($.asv.master_json.show_commit_url.match(/.*\/\/github.com\//)) {
+                        var commit_url = ($.asv.master_json.show_commit_url + '../compare/'
+                                          + commit_a + '...' + commit_b);
+                        commit_td.append(
+                            $('<a/>').attr('href', commit_url).text(commit_a + '..' + commit_b));
+                    }
+                    else {
+                        commit_td.append($('<span/>').text(commit_a + '..' + commit_b));
+                    }
                 }
                 else {
-                    row.append(td.text(commit_a + '..' + commit_b));
+                    var commit_url = $.asv.master_json.show_commit_url + commit_b;
+                    commit_td.append(
+                        $('<a/>').attr('href', commit_url).text(commit_b));
                 }
-            }
-            else {
-                var commit_url = $.asv.master_json.show_commit_url + commit_b;
-                row.append($('<td/>').append(
-                    $('<a/>').attr('href', commit_url).text(commit_b)));
-            }
+            });
+            row.append(commit_td);
+
             row.append($('<td/>').text(factor.toFixed(2) + 'x'));
             row.append($('<td/>').text(old_value));
             row.append($('<td/>').text(new_value));
@@ -230,7 +242,7 @@ $(document).ready(function() {
             if (local_storage_available) {
                 /* html5 local storage has limited size, so store hashes
                    rather than potentially long strings */
-                var ignore_key = ignore_key_prefix + $.md5(benchmark_name + '' + date_a + '' + date_b);
+                var ignore_key = ignore_key_prefix + $.md5(benchmark_name + '' + dates[0][0] + '' + dates[0][1]);
                 all_ignored_keys[ignore_key] = 1;
 
                 var is_ignored = (ignore_key in localStorage) || (ignore_key in ignored_regressions);
@@ -282,13 +294,18 @@ $(document).ready(function() {
             plot_div.css('background-color', 'white');
 
             function update_plot() {
-                var markings = [
-                    { color: '#d00', lineWidth: 2, xaxis: { from: date_b, to: date_b }}
-                ];
-                if (date_a !== null) {
-                    markings.push({ color: '#d00', lineWidth: 2, xaxis: { from: date_a, to: date_a }});
-                    markings.push({ color: "rgba(255,0,0,0.1)", xaxis: { from: date_a, to: date_b }});
-                }
+                var markings = [];
+
+                $.each(dates, function(i, date) {
+                    var date_a = date[0];
+                    var date_b = date[1];
+                    
+                    if (date_a !== null) {
+                        markings.push({ color: '#d00', lineWidth: 2, xaxis: { from: date_a, to: date_a }});
+                        markings.push({ color: "rgba(255,0,0,0.1)", xaxis: { from: date_a, to: date_b }});
+                    }
+                    markings.push({ color: '#d00', lineWidth: 2, xaxis: { from: date_b, to: date_b }});
+                });
 
                 $.ajax({
                     url: graph_url,
