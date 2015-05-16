@@ -66,17 +66,17 @@ def test_solve_potts():
     assert right == [10, 30, 200, 600, 2500, 2990, 3000]
 
     # Large noise should prevent finding any steps
-    y = y0 + 3.0 * np.random.randn(y0.size)
+    y = y0 + 5.0 * np.random.randn(y0.size)
     right, values, dists, gamma = solve_potts_autogamma(y.tolist())
     assert right == [3000]
 
-    # The routine shouldn't choke on datasets with 100k+ points.
+    # The routine shouldn't choke on datasets with 50k+ points.
     # Appending noisy data to weakly noisy data should retain the
     # steps in the former
     y = y0 + 0.05 * np.random.rand(y.size)
-    ypad = 0.05 * np.random.randn(100000 - 3000)
+    ypad = 0.05 * np.random.randn(50000 - 3000)
     right, values, dists, gamma = solve_potts_autogamma(y.tolist() + ypad.tolist())
-    assert right == [10, 30, 200, 600, 2500, 2990, 3000, 100000]
+    assert right == [10, 30, 200, 600, 2500, 2990, 3000, 50000]
 
 
 @pytest.mark.skip(not HAVE_NUMPY, reason="test needs numpy")
@@ -95,8 +95,8 @@ def test_detect_regressions():
         new_value, err, pos, old_value, best_err = detect_regressions(y)
 
         assert pos == 3233 + (seed % 123)
-        assert np.allclose(old_value, 0.7/2 - 0.3, rtol=0.1, atol=0)
-        assert np.allclose(new_value, 0.7/2 - 0.3 + 1, rtol=0.1, atol=0)
+        assert np.allclose(old_value, 0.7/2 - 0.3, rtol=0.3, atol=0)
+        assert np.allclose(new_value, 0.7/2 - 0.3 + 1, rtol=0.3, atol=0)
 
 
 def test_golden_search():
