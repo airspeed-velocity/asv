@@ -150,7 +150,7 @@ def solve_potts(y, gamma, p=2, min_size=2, max_size=1e99,
         Minimum interval size to consider
     max_size : int, optional
         Maximum interval size to consider
-    mu_dist : MuDist, optional
+    mu_dist : *Dist, optional
         Precomputed interval means/medians and cost function values
     min_pos : int, optional
         Start point (inclusive) for the interval grid
@@ -165,7 +165,7 @@ def solve_potts(y, gamma, p=2, min_size=2, max_size=1e99,
         List of values of the intervals
     dist : list
         List of ``sum(|y - x|**p)`` for each interval.
-    mu_dist : MuDist
+    mu_dist : *Dist
         Precomputed interval means/medians and cost function values
 
     References
@@ -187,10 +187,10 @@ def solve_potts(y, gamma, p=2, min_size=2, max_size=1e99,
         max_pos = len(y)
 
     if mu_dist is None:
-        mu_dist = MuDist(y, p)
+        mu_dist = get_mu_dist(y, p)
 
     mu_dist.precompute(max_size, min_pos, max_pos)
-    mu, dist = mu_dist.get_funcs()
+    mu, dist = mu_dist.mu, mu_dist.dist
 
     if min_size >= max_pos - min_pos:
         return [len(y)], [mu(0,len(y)-1)], [dist(0,len(y)-1)]
@@ -247,7 +247,6 @@ def solve_potts(y, gamma, p=2, min_size=2, max_size=1e99,
         dists.reverse()
         return right, values, dists
 
-
     n = len(y)
     p = find_best_partition(n, gamma, dist)
     return segmentation_from_partition(n, p, mu, dist)
@@ -276,8 +275,8 @@ def solve_potts_autogamma(y, beta=None, **kw):
     if n == 0:
         return [], [], [], None
 
-    mu_dist = MuDist(y, kw.get('p', 2))
-    mu, dist = mu_dist.get_funcs()
+    mu_dist = get_mu_dist(y, kw.get('p', 2))
+    mu, dist = mu_dist.mu, mu_dist.dist
 
     if beta is None:
         beta = 3 * math.log(n) / n
@@ -326,11 +325,11 @@ def solve_potts_approx(y, gamma=None, p=2, **kw):
 
     mu_dist = kw.get('mu_dist')
     if mu_dist is None:
-        mu_dist = MuDist(y, p=p)
+        mu_dist = get_mu_dist(y, p=p)
         kw['mu_dist'] = mu_dist
 
     if gamma is None:
-        mu, dist = mu_dist.get_funcs()
+        mu, dist = mu_dist.mu, mu_dist.dist
         gamma = 3 * dist(0,n-1) * math.log(n) / n
 
     right, values, dists = solve_potts(y, gamma, p=p, max_size=20, **kw)
@@ -342,7 +341,7 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
     Combine consecutive intervals in Potts model solution, if doing
     that reduces the cost function.
     """
-    mu, dist = mu_dist.get_funcs()
+    mu, dist = mu_dist.mu, mu_dist.dist
 
     right = list(right)
 
@@ -403,96 +402,112 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
     return right, values, dists
 
 
-class MuDist(object):
+class L1Dist(object):
     """
-    Precomputed interval means, medians, 1-norms and 2-norms
+    Fast computations for::
+
+        mu(l, r) = median(y[l:r+1])
+        dist(l, r) = sum(abs(x - mu(l, r)) for x in y[l:r+1])
+
     """
-    def __init__(self, y, p):
+    def __init__(self, y):
         self.y = y
-        self.p = p
         self.mu_memo = {}
         self.dist_memo = {}
-        if p not in (1, 2):
-            raise ValueError("Invalid norm")
-        self._precomputed_2 = False
-        self.cum_absy = {}
 
     def precompute(self, max_size, min_pos, max_pos):
         y = self.y
-        if self.p == 1:
-            if (min_pos, min_pos+max_size) in self.mu_memo:
-                # not a full check, but most of the entries likely
-                # were already precalculated
-                return
 
-            # Precompute medians
-            for j in range(min_pos, max_pos):
-                medians = rolling_median(y[j:min(max_pos,(j+(max_size+1)))])
-                for p, m in enumerate(medians):
-                    if j+p > j+max_size:
-                        break
-                    self.mu_memo[j,j+p] = m
+        if (min_pos, min_pos+max_size) in self.mu_memo:
+            # not a full check, but most of the entries likely
+            # were already precalculated
+            return
 
-        elif self.p == 2:
-            if self._precomputed_2:
-                return
+        # Precompute interval medians
+        for j in range(min_pos, max_pos):
+            medians = rolling_median(y[j:min(max_pos,(j+(max_size+1)))])
+            for p, m in enumerate(medians):
+                if j+p > j+max_size:
+                    break
+                self.mu_memo[j,j+p] = m
 
-            cum_y = [0]
-            cum_y2 = [0]
-            s = 0
-            s2 = 0
-            for x in y:
-                s += x
-                s2 += x**2
-                cum_y.append(s)
-                cum_y2.append(s2)
-
-            self.cum_y = cum_y
-            self.cum_y2 = cum_y2
-            self._precomputed_2 = True
-
-    def get_funcs(self):
+    def mu(self, *a):
         """
-        Interval distance and value functions d(l, r), mu(l, r)
-
-        The total work involved in computing all values is O(n)
-        for p=2, and O(n^2 log n) for p=1.
-
+        median(y[l:r+1])
         """
-        if self.p == 1:
-            y = self.y
-            cum_absy = self.cum_absy
+        r = self.mu_memo.get(a)
+        if r is None:
+            l, r = a
+            r = median(self.y[l:r+1])
+            self.mu_memo[a] = r
+        return r
 
-            @memoize(self.mu_memo)
-            def mu(l, r):
-                return median(y[l:r+1])
+    def dist(self, *a):
+        """
+        sum(abs(x - median(y[l:r+1])) for x in y[l:r+1])
+        """
+        r = self.dist_memo.get(a)
+        if r is None:
+            l, r = a
+            m = self.mu(l, r)
+            r = sum(abs(x - m) for x in self.y[l:r+1])
+            self.dist_memo[a] = r
+        return r
 
-            @memoize(self.dist_memo)
-            def dist(l, r):
-                m = mu(l, r)
-                return sum(abs(x - m) for x in y[l:r+1])
 
-        elif self.p == 2:
-            if not self._precomputed_2:
-                self.precompute(None, None, None)
+class L2Dist(object):
+    """
+    Fast computations for::
 
-            cum_y = self.cum_y
-            cum_y2 = self.cum_y2
+        mu(l, r) = mean(y[l:r+1])
+        dist(l, r) = sum((x - mu(l, r))**2 for x in y[l:r+1])
 
-            def mu(l, r):
-                # mean(y[l:r+1])
-                return (cum_y[r+1] - cum_y[l]) / (r + 1 - l)
+    """
+    def __init__(self, y):
+        self.y = y
+        self.cum_y = None
+        self.cum_y2 = None
+        self.precompute(None, None, None)
 
-            def dist(l, r):
-                # sum((y[l:r+1] - mean(y[l:r+1]))**2)
-                #
-                # This way to compute it is in principle susceptible
-                # to rounding errors, but we have to be O(1) fast here
-                return abs(cum_y2[r+1] - cum_y2[l] - (cum_y[r+1] - cum_y[l])**2 / (r + 1 - l))
-        else:
-            raise ValueError("Invalid value for p")
+    def precompute(self, max_size, min_pos, max_pos):
+        if self.cum_y is not None:
+            return
 
-        return mu, dist
+        cum_y = [0]
+        cum_y2 = [0]
+        s = 0
+        s2 = 0
+        for x in self.y:
+            s += x
+            s2 += x**2
+            cum_y.append(s)
+            cum_y2.append(s2)
+
+        self.cum_y = cum_y
+        self.cum_y2 = cum_y2
+
+    def mu(self, l, r):
+        """
+        mean(y[l:r+1])
+        """
+        return (self.cum_y[r+1] - self.cum_y[l]) / (r + 1 - l)
+
+    def dist(self, l, r):
+        """
+        sum((y[l:r+1] - mean(y[l:r+1]))**2)
+        """
+        # This way to compute it is in principle susceptible
+        # to rounding errors, but we have to be O(1) fast here
+        return abs(self.cum_y2[r+1] - self.cum_y2[l] - (self.cum_y[r+1] - self.cum_y[l])**2 / (r + 1 - l))
+
+
+def get_mu_dist(y, p):
+    if p == 1:
+        return L1Dist(y)
+    elif p == 2:
+        return L2Dist(y)
+    else:
+        raise ValueError("invalid value for p")
 
 
 def median(items):
