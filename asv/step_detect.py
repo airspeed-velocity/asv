@@ -179,61 +179,51 @@ def solve_potts(y, gamma, p=2, min_size=2, max_size=1e99,
     if min_size >= max_pos - min_pos:
         return [len(y)], [mu(0,len(y)-1)], [dist(0,len(y)-1)]
 
-    def find_best_partition(n, gamma, dist):
-        """
-        Perform the Bellman recursion for the optimal partition.
-
-        Returns
-        -------
-        p : list, length n
-            Set of intervals, represented as follows:
-            For interval (inclusive) right edge r in {0, ..., n-1},
-            the best (exclusive) left edge is at l=p[r].
-            Where intervals overlap, the rightmost one has priority.
-
-        """
-        i0 = min_pos
-        i1 = max_pos
-
-        B = [-gamma]
-        p = [None]*i1
-        for r in range(i0, i1):
-            B.append(inf)
-            a = max(r + 1 - max_size, i0)
-            b = max(r + 1 - min_size + 1, i0)
-            for l in range(a, b):
-                b = B[l-i0] + gamma + dist(l, r)
-                if b <= B[r+1-i0]:
-                    B[r+1-i0] = b
-                    p[r] = l - 1
-        return p
-
-
-    def segmentation_from_partition(n, p, mu, dist):
-        """
-        Convert interval representation computed by find_best_partition
-        to a list of intervals and values.
-        """
-        i0 = min_pos
-        r = len(p) - 1
-        l = p[r]
-        right = []
-        values = []
-        dists = []
-        while r >= i0:
-            right.append(r + 1)
-            values.append(mu((l + 1), r))
-            dists.append(dist((l + 1), r))
-            r = l
-            l = p[r]
-        right.reverse()
-        values.reverse()
-        dists.reverse()
-        return right, values, dists
-
+    # Perform the Bellman recursion for the optimal partition.
+    # Routine "Find best partition" in [1]
+    #
+    # Computes:
+    #
+    # p : list, length n
+    #     Set of intervals, represented as follows:
+    #     For interval (inclusive) right edge r in {0, ..., n-1},
+    #     the best (exclusive) left edge is at l=p[r].
+    #     Where intervals overlap, the rightmost one has priority.
     n = len(y)
-    p = find_best_partition(n, gamma, dist)
-    return segmentation_from_partition(n, p, mu, dist)
+    i0 = min_pos
+    i1 = max_pos
+
+    B = [-gamma]
+    p = [None]*i1
+    for r in range(i0, i1):
+        B.append(inf)
+        a = max(r + 1 - max_size, i0)
+        b = max(r + 1 - min_size + 1, i0)
+        for l in range(a, b):
+            b = B[l-i0] + gamma + dist(l, r)
+            if b <= B[r+1-i0]:
+                B[r+1-i0] = b
+                p[r] = l - 1
+
+    # Routine "Segmentation from partition" in [1]
+    # Convert interval representation computed above
+    # to a list of intervals and values.
+    r = len(p) - 1
+    l = p[r]
+    right = []
+    values = []
+    dists = []
+    while r >= i0:
+        right.append(r + 1)
+        values.append(mu((l + 1), r))
+        dists.append(dist((l + 1), r))
+        r = l
+        l = p[r]
+    right.reverse()
+    values.reverse()
+    dists.reverse()
+
+    return right, values, dists
 
 
 def solve_potts_autogamma(y, beta=None, **kw):
@@ -393,6 +383,13 @@ class L1Dist(object):
         mu(l, r) = median(y[l:r+1])
         dist(l, r) = sum(abs(x - mu(l, r)) for x in y[l:r+1])
 
+    We do not use here an approach that has asymptotically optimal
+    performance; at least O(n**2 * log(n)) would be achievable, whereas
+    we have here O(n**3).  The asymptotic performance does not matter
+    for solve_potts_approx, which only looks at small windows of the
+    data. It is more important to try to optimize the constant
+    prefactors, which for Python means minimal code.
+
     """
     def __init__(self, y):
         self.y = y
@@ -403,11 +400,11 @@ class L1Dist(object):
         y = self.y
 
         if (min_pos, min_pos+max_size) in self.mu_memo:
-            # not a full check, but most of the entries likely
-            # were already precalculated
+            # The entries were likely already precomputed
             return
 
-        # Precompute interval medians
+        # Precompute interval medians. Does not matter much for
+        # solve_potts_approx, but doesn't hurt either.
         for j in range(min_pos, max_pos):
             medians = rolling_median(y[j:min(max_pos,(j+(max_size+1)))])
             for p, m in enumerate(medians):
