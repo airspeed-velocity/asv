@@ -62,12 +62,16 @@ def test_solve_potts():
 
     # Small amount of noise shouldn't disturb step finding
     y = y0 + 0.05 * np.random.randn(y0.size)
-    right, values, dists, gamma = solve_potts_autogamma(y.tolist())
+    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), p=1)
+    assert right == [10, 30, 200, 600, 2500, 2990, 3000]
+    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), p=2)
     assert right == [10, 30, 200, 600, 2500, 2990, 3000]
 
     # Large noise should prevent finding any steps
     y = y0 + 5.0 * np.random.randn(y0.size)
-    right, values, dists, gamma = solve_potts_autogamma(y.tolist())
+    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), p=1)
+    assert right == [3000]
+    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), p=2)
     assert right == [3000]
 
     # The routine shouldn't choke on datasets with 50k+ points.
@@ -75,7 +79,7 @@ def test_solve_potts():
     # steps in the former
     y = y0 + 0.05 * np.random.rand(y.size)
     ypad = 0.05 * np.random.randn(50000 - 3000)
-    right, values, dists, gamma = solve_potts_autogamma(y.tolist() + ypad.tolist())
+    right, values, dists, gamma = solve_potts_autogamma(y.tolist() + ypad.tolist(), p=2)
     assert right == [10, 30, 200, 600, 2500, 2990, 3000, 50000]
 
 
