@@ -387,7 +387,15 @@ Python 2.7 and the machine named ``giraffe``::
 Finding a commit that produces a large regression
 -------------------------------------------------
 
-Since benchmarking can be rather time consuming, it's likely that
+**airspeed velocity** detects statistically significant decreases of
+performance automatically when you run ``asv publish``. The results
+can be inspected via the web interface, clicking the "Show regression"
+button on the summary page.  The results include links to each
+benchmark graph deemed to contain a decrease in performance, the
+commits where the regressions were estimated to occur, and other
+potentially useful information.
+
+However, since benchmarking can be rather time consuming, it's likely that
 you're only benchmarking a subset of all commits in the repository.
 When you discover from the graph that the runtime between commit A and
 commit B suddenly doubles, you don't know which particular commit in
