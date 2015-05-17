@@ -91,17 +91,18 @@ def test_detect_regressions():
         y = 0.7 * np.random.rand(t.size)
 
         y -= 0.3 * (t >= 1000)
-        y += 1.0 * (t >= 3234 + (seed % 123))
-        y += 1.0 * ((t >= 3264 + (seed % 53)) & (t < 3700))
+        y += 2.0 * (t >= 3234 + (seed % 123))
+        y += 2.0 * ((t >= 3264 + (seed % 53)) & (t < 3700))
+        y -= 2.7 * ((t >= 3350) & (t < 3500 + (seed % 71)))
 
         y = y.tolist()
         y[123] = None
         y[1234] = np.nan
         new_value, jump_pos, best_value = detect_regressions(y)
 
-        assert jump_pos == [3233 + (seed % 123)]
+        assert jump_pos == [3233 + (seed % 123), 3499 + (seed % 71)]
         assert np.allclose(best_value, 0.7/2 - 0.3, rtol=0.3, atol=0)
-        assert np.allclose(new_value, 0.7/2 - 0.3 + 1, rtol=0.3, atol=0)
+        assert np.allclose(new_value, 0.7/2 - 0.3 + 2, rtol=0.3, atol=0)
 
 
 def test_golden_search():
