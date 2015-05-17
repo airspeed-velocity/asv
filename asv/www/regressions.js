@@ -405,8 +405,8 @@ $(document).ready(function() {
                 th_to_sort.stupidsort(params.dir[0]);
             }
             else {
-                var th_to_sort = table.find("thead th").eq(0);
-                th_to_sort.stupidsort();
+                var th_to_sort = table.find("thead th").eq(3);
+                th_to_sort.stupidsort("desc");
             }
         }
 
