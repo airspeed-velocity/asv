@@ -242,7 +242,12 @@ $(document).ready(function() {
             if (local_storage_available) {
                 /* html5 local storage has limited size, so store hashes
                    rather than potentially long strings */
-                var ignore_key = ignore_key_prefix + $.md5(benchmark_name + '' + dates[0][0] + '' + dates[0][1]);
+                var ignore_payload = benchmark_name;
+                $.each(dates, function (i, date) {
+                    ignore_payload = ignore_payload + ',' + date[0] + ',' + date[1];
+                });
+
+                var ignore_key = ignore_key_prefix + $.md5(ignore_payload);
                 all_ignored_keys[ignore_key] = 1;
 
                 var is_ignored = (ignore_key in localStorage) || (ignore_key in ignored_regressions);
