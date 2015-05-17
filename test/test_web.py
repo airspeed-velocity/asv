@@ -146,6 +146,12 @@ def test_web_regressions(browser, tmpdir):
         assert '/#params_examples.track_find_test?' in href
         assert 'time=' in href
 
+        # Sort the tables vs. benchmark name (PhantomJS doesn't allow doing it via actionchains)
+        browser.execute_script("$('thead th').eq(0).stupidsort('asc')")
+        WebDriverWait(browser, 5).until(EC.text_to_be_present_in_element(
+            ('xpath', '//table[1]/tbody/tr[1]/td[1]'), 'params_examples.track_find_test(1)'
+            ))
+
         # Check the contents of the table
         table_rows = browser.find_elements_by_xpath('//table[1]/tbody/tr')
         assert len(table_rows) == 2
