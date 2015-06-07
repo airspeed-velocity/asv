@@ -1,5 +1,236 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 # -*- coding: utf-8 -*-
+r"""
+Regression detection in ASV is based on detecting stepwise changes in
+the graphs. The assumptions on the data are as follows: the curves are
+piecewise constant plus random noise. We don't know the variance of
+the noise nor the scaling of the data, but we assume the noise
+amplitude is constant in time.
+
+Luckily, step detection is a well-studied problem. In this
+implementation, we mainly follow a variant of the approach outlined in
+[Friedrich2008]_. This provides a fast algorithm for solving the piecewise
+fitting problem
+
+.. math::
+   :label: gamma-opt
+
+   \mathop{\mathrm{argmin}}_{k,\{j\},\{\mu\}} \gamma k + \sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} |y_i - \mu_r|
+
+The differences are: as we do not need exact solutions, we add
+additional heuristics to work around the :math:`{\mathcal O}(n^2)`
+scaling, which is too harsh for pure-Python code. For details, see
+``asv.step_detect.solve_potts_approx``.  Moreover, we follow a
+slightly different approach on obtaining a suitable number of
+intervals, by selecting an optimal value for :math:`\gamma`, based on
+a variant of the information criterion problem mentioned in
+[Friedrich2008]_
+
+.. [Friedrich2008] F. Friedrich et al.,
+   ''Complexity Penalized M-Estimation: Fast Computation'',
+   Journal of Computational and Graphical Statistics 17.1, 201-224 (2008).
+   http://dx.doi.org/10.1198/106186008X285591
+   https://www.nativesystems.inf.ethz.ch/pub/Main/FelixFriedrichPublications/mestimation.pdf
+
+.. [Yao1988] Y.-C. Yao,
+   ''Estimating the number of change-points via Schwarz criterion'',
+   Statistics & Probability Letters 6, 181-189 (1988).
+   http://dx.doi.org/10.1016/0167-7152(88)90118-6
+
+
+Bayesian information
+--------------------
+
+To proceed, we need an argument by which to select a suitable
+:math:`\gamma` in :eq:`gamma-opt`. Some of the literature on step
+detection, e.g. [Yao1988]_, suggests results based on Schwarz information
+criteria,
+
+.. math::
+   :label: ic-form
+
+   \text{SC} = \frac{m}{2} \ln \sigma^2 + k \log m = \text{min!}
+
+where :math:`\sigma^2` is maximum likelihood variance estimator for
+gaussian noise. For the implementation, see
+``asv.step_detect.solve_potts_autogamma``.
+
+What follows is a handwaving plausibility argument why such an
+objective function makes sense, and how to end up with :math:`l_1`
+rather than gaussians. Better approaches are probably to be found in
+step detection literature.  If you have a better formulation,
+contributions/corrections are welcome!
+
+We assume a Bayesian model:
+
+.. math::
+   :label:
+
+   P(\{y_i\}_{i=1}^m|\sigma,k,\{\mu_i\}_{i=1}^k,\{j_i\}_{i=1}^{k-1})
+   =
+   N
+   \sigma^{-m}
+   \exp(
+   -\sigma^{-1}\sum_{r=1}^k\sum_{i=j_{r-1}+1}^{j_r} |y_i - \mu_r|
+   )
+
+Here, :math:`y_i` are the :math:`m` data points at hand, :math:`k` is
+the number of intervals, :math:`\mu_i` are the values of the function
+at the intervals, :math:`j_i` are the interval breakpoints;
+:math:`j_0=0`, :math:`j_k=m`, :math:`j_{r-1}<j_r`. The noise is
+assumed exponential rather than gaussian, which results to the more
+robust :math:`l_1` norm fitting rather than :math:`l_2`.  The noise
+amplitude :math:`\sigma` is not known.
+:math:`N` is a normalization constant that depends on :math:`m` but
+not on the other parameters.
+
+The optimal :math:`k` comes from Bayesian reasoning:
+:math:`\hat{k} = \mathop{\mathrm{argmax}}_k P(k|\{y\})`, where
+
+.. math::
+   :label:
+
+   P(k|\{y\}) = \frac{\pi(k)}{\pi(\{y\})}\int d\sigma (d\mu)^k \sum_{\{j\}}
+   P(\{y\}|\sigma,k,\{\mu\},\{j\}) \pi(\sigma, \{\mu\},\{j\}|k)
+
+The prior :math:`\pi(\{y\})` does not matter for :math:`\hat{k}`; the
+other priors are assumed flat. We would need to estimate the behavior
+of the integral in the limit :math:`m\to\infty`.  We do not succeed in
+doing this rigorously here, although it might be done in the literature.
+
+Consider first saddle-point integration over :math:`\{\mu\}`,
+expanding around the max-likelihood values :math:`\mu_r^*`.
+The max-likelihood estimates are medians of the data points in each interval.
+Change in the exponent when :math:`\mu` is perturbed is
+
+.. math::
+   :label:
+
+   \Delta = -\sigma^{-1}\sum_{r=1}^k \sum_{i=j_{r-1}+1}^{j_r}[|y_i-\mu^*_r - \delta\mu_r| - |y_i-\mu^*_r|]
+
+Note that :math:`\sum_{i=j_{r-1}+1}^{j_r}
+\mathrm{sgn}(y_i-\mu^*_r)=0`, so that response to small variations
+:math:`\delta\mu_r` is :math:`m`-independent. For larger variations, we have
+
+.. math::
+   :label:
+
+   \Delta = -\sigma^{-1}\sum_{r=1}^k N_r(\delta \mu_r) |\delta \mu_r|
+
+where :math:`N_r(\delta\mu)=|\#\text{above}-\#\text{below}|` is the
+difference in the number of points in the interval above vs. below the
+perturbed median. Let us assume that in a typical case,
+:math:`N_r(\delta\mu)\sim{}m_r\delta\mu/\sigma` where :math:`m_r` is
+the number of points in the interval. This recovers a result we would
+have obtained in the gaussian noise case
+
+.. math::
+   :label:
+
+   \Delta \sim -\sigma^{-2} \sum_r m_r |\delta \mu_r|^2
+
+For the gaussian case, this would not have required any questionable assumptions.
+After integration over :math:`\{\delta\mu\}` we are left with
+
+.. math::
+   :label:
+
+   \int(\ldots)
+   \propto
+   \int d\sigma \sum_{\{j\}}
+   (2\pi)^{k/2}\sigma^k [m_1\cdots m_k]^{-1/2}
+   P(\{y\}|\sigma,k,\{\mu_*\},\{j\})
+   \pi(\sigma, \{j\}|k)
+
+We now approximate the rest of the integrals/sums with only the
+max-likelihood terms, and assume :math:`m_j^*\sim{}m/k`. Then,
+
+.. math::
+   :label:
+
+   \ln P(k|\{y\})
+   &\simeq
+   C_1(m) + C_2(k)
+   +
+   \frac{k}{2}\ln(2\pi) + k \ln \sigma_* - \frac{k}{2}\ln(m/k)
+   +
+   \ln P(\{y\}|\sigma_*,k,\{\mu_*\},\{j_*\})
+   \\
+   &\approx
+   \tilde{C}_1(m) + \tilde{C}_2(k)
+   -
+   \frac{k}{2} \ln m
+   +
+   \ln P(\{y\}|\sigma_*,k,\{\mu_*\},\{j_*\})
+
+where we neglect terms that don't affect asymptotics for
+:math:`m\to\infty`, and :math:`C` are some constants not depending on
+both :math:`m, k`. The result is of course the Schwarz criterion for
+:math:`k` free model parameters. We can suspect that the factor
+:math:`k/2` should be replaced by a different number, since we have
+:math:`2k` parameters. If also the other integrals/sums can be 
+approximated in the same way as the :math:`\{\mu\}` ones, we should
+obtain the missing part.
+
+Substituting in the max-likelihood value
+
+.. math::
+   :label:
+
+    \sigma_* = \frac{1}{m} \sum_{r=1}^k\sum_{i=j_{r-1}^*+1}^{j_r^*} |y_i - \mu_r^*|
+
+we get
+
+.. math::
+   :label:
+
+   \ln P(k|\{y\})
+   \sim
+   C
+   -
+   \frac{k}{2} \log m
+   -
+   m \ln\sum_{r=1}^k\sum_{i=j_{r-1}^*}^{j_r^*} |y_i - \mu_r^*|
+
+This is now similar to :eq:`ic-form`, apart from numerical prefactors. The
+final fitting problem then becomes
+
+.. math::
+   :label: bic-form
+
+   \mathop{\mathrm{argmin}}_{k,\{j\},\{\mu\}} r(m) k + \ln\sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} |y_i - \mu_r|
+
+with :math:`r(m) = \frac{\log m}{2m}`. As we know this function
+:math:`r(m)` is not necessarily completely correct, and it seems doing
+the calculation rigorously requires more effort than can be justified
+by the requirements of the application, we now take a pragmatic view and
+fudge the function to :math:`r(m) = \beta \frac{\log m}{m}` with
+:math:`\beta` chosen so that things appear to work in practice
+for the problem at hand.
+
+According to [Friedrich2008]_, problem :eq:`bic-form` can be solved in
+:math:`{\cal O}(n^3)` time.  This is too slow, however. We can however
+approach this on the basis of the easier problem :eq:`gamma-opt`.  It
+produces a family of solutions :math:`[k^*(\gamma), \{\mu^*(\gamma)\},
+\{j^*(\gamma)\}]`.  We now evaluate :eq:`bic-form` restricted to the
+curve parameterized by :math:`\gamma`.  In particular,
+:math:`[\{\mu^*(\gamma)\}, \{j^*(\gamma)\}]` solves :eq:`bic-form`
+under the constraint :math:`k=k^*(\gamma)`. If :math:`k^*(\gamma)`
+obtains all values in the set :math:`\{1,\ldots,m\}` when
+:math:`\gamma` is varied, the original problem is solved
+completely. This probably is not a far-fetched assumption; in practice
+it appears such Bayesian information criterion provides a reasonable
+way for selecting a suitable :math:`\gamma`.
+
+
+Postprocessing
+--------------
+
+For the purposes of regression detection, we do not report all steps
+the above approach provides. For details, see
+``asv.step_detect.detect_regressions``.
+
+"""
 
 from __future__ import absolute_import, division, unicode_literals, print_function
 

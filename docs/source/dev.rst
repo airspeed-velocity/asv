@@ -4,6 +4,8 @@ Developer Docs
 This section describes some things that may be of interest to
 developers of ``asv``.
 
+.. contents::
+
 Benchmark suite layout
 ----------------------
 
@@ -195,3 +197,9 @@ corresponding to:
   ``apt-get install chromium-chromedriver``.
 
 For other options regarding the webdriver to use, see ``py.test --help``.
+
+
+Step detection
+--------------
+
+.. automodule:: asv.step_detect
