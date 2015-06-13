@@ -237,7 +237,8 @@ class _GraphDataFilter(object):
                 if key not in self.time_sets:
                     times = set()
                     spec = self.repo.get_new_range_spec(*key)
-                    for commit in self.repo.get_hashes_from_range(spec):
+                    start_hash = self.repo.get_hash_from_name(start_commit)
+                    for commit in [start_hash] + self.repo.get_hashes_from_range(spec):
                         time = self.hash_to_date.get(commit[:self.conf.hash_length])
                         if time is not None:
                             times.add(time)

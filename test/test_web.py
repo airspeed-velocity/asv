@@ -108,9 +108,14 @@ def test_web_regressions(browser, tmpdir):
         shutil.copyfile(join(local, 'asv-machine.json'),
                         machine_file)
 
-        values = [[x]*2 for x in [1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2]]
+        values = [[x]*2 for x in [0, 0, 0, 0, 0,
+                                  1, 1, 1, 1, 1,
+                                  3, 3, 3, 3, 3,
+                                  2, 2, 2, 2, 2]]
         dvcs = tools.generate_test_repo(tmpdir, values)
         repo_path = dvcs.path
+
+        first_tested_commit_hash = dvcs.get_hash('master~14')
 
         conf = config.Config.from_json({
             'env_dir': join(tmpdir, 'env'),
@@ -120,7 +125,10 @@ def test_web_regressions(browser, tmpdir):
             'repo': repo_path,
             'dvcs': 'git',
             'project': 'asv',
-            'matrix': {}
+            'matrix': {},
+            'regressions_first_commits': {
+                '.*': first_tested_commit_hash
+            },
         })
 
         Run.run(conf, range_spec="ALL", bench='params_examples.track_find_test',
