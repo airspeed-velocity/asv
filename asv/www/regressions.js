@@ -98,18 +98,16 @@ $(document).ready(function() {
             ignored_table.hide();
             ignored_conf_sample_div.hide();
 
-            if (local_storage_available) {
-                branch_div.append(ignored_table);
-                branch_div.append(ignored_conf_sample_div);
+            branch_div.append(ignored_table);
+            branch_div.append(ignored_conf_sample_div);
 
-                update_ignore_conf_sample(data, ignored_conf_sample_div);
+            update_ignore_conf_sample(data, ignored_conf_sample_div);
 
-                branch_div.append(ignored_button);
-                ignored_button.on('click', function(evt) {
-                    ignored_button.hide();
-                    $(".ignored").show();
-                });
-            }
+            branch_div.append(ignored_button);
+            ignored_button.on('click', function(evt) {
+                ignored_button.hide();
+                $(".ignored").show();
+            });
         });
 
         if (branches && branches.length > 1) {
@@ -244,52 +242,41 @@ $(document).ready(function() {
             row.append($('<td/>').text(old_value));
             row.append($('<td/>').text(new_value));
 
-            if (local_storage_available) {
-                /* html5 local storage has limited size, so store hashes
-                   rather than potentially long strings */
-                var ignore_key = get_ignore_key(item);
-                all_ignored_keys[ignore_key] = 1;
+            /* html5 local storage has limited size, so store hashes
+               rather than potentially long strings */
+            var ignore_key = get_ignore_key(item);
+            all_ignored_keys[ignore_key] = 1;
 
-                var is_ignored = is_key_ignored(ignore_key);
-                var ignore_button = $('<button class="btn btn-small"/>');
+            var is_ignored = is_key_ignored(ignore_key);
+            var ignore_button = $('<button class="btn btn-small"/>');
 
-                row.attr('id', ignore_key);
+            row.attr('id', ignore_key);
 
-                ignore_button.on('click', function(evt) {
-                    if (ignore_key in localStorage || ignore_key in ignored_regressions) {
-                        delete localStorage[ignore_key];
-                        delete ignored_regressions[ignore_key];
-                        var item = ignored_table_body.find('#' + ignore_key).detach();
-                        ignore_button.text('Ignore');
-                        table_body.append(item);
-                    }
-                    else {
-                        try {
-                            localStorage[ignore_key] = 1;
-                        } catch (err) {
-                            /* Out of quota -- we're just going to ignore that */
-                        }
-                        ignored_regressions[ignore_key] = 1;
-                        var item = table_body.find('#' + ignore_key).detach();
-                        ignore_button.text('Unignore');
-                        ignored_table_body.append(item);
-                    }
-                    update_ignore_conf_sample(data, ignored_conf_sample_div);
-                });
-
-                row.append($('<td/>').append(ignore_button));
-
-                if (!is_ignored) {
+            ignore_button.on('click', function(evt) {
+                if (is_key_ignored(ignore_key)) {
+                    set_key_ignore_status(ignore_key, false);
+                    var item = ignored_table_body.find('#' + ignore_key).detach();
                     ignore_button.text('Ignore');
-                    table_body.append(row);
+                    table_body.append(item);
                 }
                 else {
+                    set_key_ignore_status(ignore_key, true);
+                    var item = table_body.find('#' + ignore_key).detach();
                     ignore_button.text('Unignore');
-                    ignored_table_body.append(row);
+                    ignored_table_body.append(item);
                 }
+                update_ignore_conf_sample(data, ignored_conf_sample_div);
+            });
+
+            row.append($('<td/>').append(ignore_button));
+
+            if (!is_ignored) {
+                ignore_button.text('Ignore');
+                table_body.append(row);
             }
             else {
-                table_body.append(row);
+                ignore_button.text('Unignore');
+                ignored_table_body.append(row);
             }
 
             /* Show the summary graph as a popup */
@@ -388,7 +375,31 @@ $(document).ready(function() {
     }
 
     function is_key_ignored(ignore_key) {
-        return (ignore_key in localStorage) || (ignore_key in ignored_regressions);
+        if (local_storage_available) {
+            return (ignore_key in localStorage) || (ignore_key in ignored_regressions);
+        }
+        else {
+            return (ignore_key in ignored_regressions);
+        }
+    }
+
+    function set_key_ignore_status(ignore_key, is_ignored) {
+        if (is_ignored) {
+            if (local_storage_available) {
+                try {
+                    localStorage[ignore_key] = 1;
+                } catch (err) {
+                    /* Out of quota -- we're just going to ignore that */
+                }
+            }
+            ignored_regressions[ignore_key] = 1;
+        }
+        else {
+            if (local_storage_available) {
+                delete localStorage[ignore_key];
+            }
+            delete ignored_regressions[ignore_key];
+        }
     }
 
     function update_ignore_conf_sample(data, ignored_conf_sample_div) {
