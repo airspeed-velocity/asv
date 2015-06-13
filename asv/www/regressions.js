@@ -101,7 +101,7 @@ $(document).ready(function() {
             branch_div.append(ignored_table);
             branch_div.append(ignored_conf_sample_div);
 
-            update_ignore_conf_sample(data, ignored_conf_sample_div);
+            update_ignore_conf_sample(data, ignored_conf_sample_div, branch);
 
             branch_div.append(ignored_button);
             ignored_button.on('click', function(evt) {
@@ -265,7 +265,7 @@ $(document).ready(function() {
                     ignore_button.text('Unignore');
                     ignored_table_body.append(item);
                 }
-                update_ignore_conf_sample(data, ignored_conf_sample_div);
+                update_ignore_conf_sample(data, ignored_conf_sample_div, branch);
             });
 
             row.append($('<td/>').append(ignore_button));
@@ -402,11 +402,21 @@ $(document).ready(function() {
         }
     }
 
-    function update_ignore_conf_sample(data, ignored_conf_sample_div) {
+    function update_ignore_conf_sample(data, ignored_conf_sample_div, branch) {
         var regressions = data['regressions'];
         var entries = {};
+        var branch_suffix = "";
+
+        if (branch) {
+            branch_suffix = "@" + branch;
+        }
 
         $.each(regressions, function (i, item) {
+            var param_dict = item[2];
+            if (branch !== null && param_dict['branch'] != branch) {
+                return;
+            }
+
             var ignore_key = get_ignore_key(item);
             if (is_key_ignored(ignore_key)) {
                 var benchmark_name = item[0];
@@ -414,10 +424,10 @@ $(document).ready(function() {
                 if (regression === null) {
                     return;
                 }
-                var benchmark_name_re = benchmark_name.replace(/[.?*+^$[\]\\(){}|-]/g, "\\\\$&");
+                var benchmark_name_re = (benchmark_name + branch_suffix).replace(/[.?*+^$[\]\\(){}|-]/g, "\\\\$&");
                 var dates = regression[0];
                 var last_commit = $.asv.master_json.date_to_hash[dates[dates.length-1][1]];
-                var entry = "    \"^" + benchmark_name_re + "$\": \"" + last_commit + "\",\n";
+                var entry = "        \"^" + benchmark_name_re + "$\": \"" + last_commit + "\",\n";
                 entries[entry] = 1;
             }
         });
@@ -426,11 +436,11 @@ $(document).ready(function() {
         entries.sort();
 
         var text = "// asv.conf.json excerpt for ignoring the above permanently\n\n";
-        text += "\"regressions_first_commits\": {\n";
+        text += "    \"regressions_first_commits\": {\n";
         $.each(entries, function (i, entry) {
             text += entry;
         });
-        text += "}";
+        text += "    }";
 
         var pre = $('<pre/>');
         pre.text(text);

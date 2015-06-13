@@ -171,20 +171,24 @@ The number of wheels (builds) to cache for each environment.
 The commits after which the regression search in `asv publish`
 should start looking for regressions.
 
-The value is a dictionary mapping benchmark regexps to commit
-identifiers.  If the commit identifier is `null`, regression detection
-for the matching benchmark is skipped.  The default is to start from
-the first commit with results.
+The value is a dictionary mapping benchmark identifier regexps to
+commits after which to look for regressions. The benchmark identifiers
+are of the form ``benchmark_name(parameters)@branch``, where
+``(parameters)`` is present only for parameterized benchmarks. If the
+commit identifier is `null`, regression detection for the matching
+benchmark is skipped.  The default is to start from the first commit
+with results.
 
 Example::
 
     "regressions_first_commits": {
         ".*": "v0.1.0",
         "benchmark_1": "80fca08d",
-        "benchmark_2": null,
+        "benchmark_2@master": null,
     }
 
 In this case, regressions are detected only for commits after tag
-``v0.1.0`` for all benchmarks. For ``benchmark_1``, regressions are
-detected only after the commit given, and for ``benchmark_2``
-regression detection is skipped completely.
+``v0.1.0`` for all benchmarks. For ``benchmark_1``, regression
+detection is further limited to commits after the commit given, and
+for ``benchmark_2``, regression detection is skipped completely in the
+``master`` branch.

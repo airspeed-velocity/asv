@@ -223,8 +223,13 @@ class _GraphDataFilter(object):
         """
         time_set = set(self.hash_to_date.values())
 
+        if graph.params.get('branch'):
+            branch_suffix = '@' + graph.params.get('branch')
+        else:
+            branch_suffix = ''
+
         for regex, start_commit in six.iteritems(self.conf.regressions_first_commits):
-            if re.match(regex, benchmark['name']) or re.match(regex, entry_name):
+            if re.match(regex, entry_name + branch_suffix):
                 if start_commit is None:
                     # Disable regression detection completely
                     return set()
