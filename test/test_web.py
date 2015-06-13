@@ -191,6 +191,10 @@ def test_web_regressions(browser, tmpdir):
         table_rows = browser.find_elements_by_xpath('//table[2]/tbody/tr')
         assert len(table_rows) == 1
 
+        # There's a config sample element
+        pre_div = browser.find_element_by_xpath('//pre')
+        assert "params_examples\\\\.track_find_test\\\\(1\\\\)" in pre_div.text
+
         # There's an unignore button that moves the element back to the main table
         unignore_button = [button for button in browser.find_elements_by_xpath('//button')
                            if button.text == 'Unignore'][0]
@@ -201,8 +205,13 @@ def test_web_regressions(browser, tmpdir):
         table_rows = browser.find_elements_by_xpath('//table[1]/tbody/tr')
         assert len(table_rows) == 2
 
-        # Check that a plot of some sort appears on mouseover
+        # Check that a plot of some sort appears on mouseover.  The
+        # page needs to be scrolled first so that the mouseover popup
+        # has enough space to appear.
         regression_1 = browser.find_element_by_link_text('params_examples.track_find_test(1)')
+
+        y = regression_1.location['y']
+        browser.execute_script('window.scrollTo(0, {0})'.format(y - 200))
 
         chain = ActionChains(browser)
         chain.move_to_element(regression_1)
