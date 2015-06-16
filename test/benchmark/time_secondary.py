@@ -9,7 +9,18 @@ if sys.version_info[0] == 3:
     xrange = range
 
 
+# Test that local imports work
 from .shared import shared_function
+
+# Test that asv's internal modules aren't visible on top level
+if sys.version_info[0] < 3:
+    import commands
+try:
+    import commands.quickstart
+    assert False
+except ImportError:
+    # OK
+    pass
 
 
 class TimeSecondary:
