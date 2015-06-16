@@ -12,6 +12,12 @@ its runtime to a file.
 # the Python standard library.  This is the only bit of code from asv
 # that is imported into the benchmarking process.
 
+# Remove asv package directory from sys.path. This script file resides
+# there although it's not part of the package, and Python puts it to
+# sys.path[0] on start which can shadow other modules
+import sys
+sys.path.pop(0)
+
 import copy
 try:
     import cProfile as profile
@@ -25,7 +31,6 @@ import inspect
 import json
 import os
 import re
-import sys
 import textwrap
 import timeit
 import itertools
