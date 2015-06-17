@@ -346,8 +346,7 @@ memory usage you want to track::
 
    The peak memory benchmark also counts memory usage during the
    ``setup`` routine, which may confound the benchmark results. One
-   way to avoid this is to spawn a separate subprocess for executing
-   memory-intensive setup tasks.
+   way to avoid this is to use ``setup_cache`` instead.
 
 
 .. _tracking:
