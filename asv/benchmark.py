@@ -25,15 +25,17 @@ except:
     profile = None
 import ctypes
 from ctypes.util import find_library
+import dumbdbm
 import errno
 import imp
 import inspect
+import itertools
 import json
 import os
 import re
+import shelve
 import textwrap
 import timeit
-import itertools
 
 # The best timer we can use is time.process_time, but it is not
 # available in the Python stdlib until Python 3.3.  This is a ctypes
@@ -245,6 +247,12 @@ def get_benchmark_type_from_name(name):
     return None
 
 
+def get_class_path(klass):
+    module = inspect.getmodule(klass)
+    return('.'.join(
+        [module.__name__, klass.__name__]))
+
+
 class Benchmark(object):
     """
     Represents a single benchmark.
@@ -336,7 +344,7 @@ class Benchmark(object):
         return cls(name, func, [func, instance, module])
 
     @classmethod
-    def from_name(cls, root, name, quick=False):
+    def from_name(cls, root, name, setup_class_cache, quick=False):
         """
         Create a benchmark from a fully-qualified benchmark name.
 
@@ -373,6 +381,19 @@ class Benchmark(object):
                         if bm_type is not None:
                             return bm_type.from_function(attr)
                 elif inspect.isclass(attr):
+                    class_setup = _get_attr(attr, 'setupclass')
+                    if class_setup is not None:
+                        name = get_class_path(attr)
+                        if name in setup_class_cache:
+                            attr.__dict__.update(setup_class_cache[name])
+                        else:
+                            orig_members = set(attr.__dict__.keys())
+                            class_setup()
+                            setup_class_cache[name] = dict(
+                                [(key, val) for (key, val) in
+                                 attr.__dict__.items()
+                                 if key not in orig_members])
+
                     if len(parts) == 2:
                         bm_type = get_benchmark_type_from_name(parts[1])
                         if bm_type is not None:
@@ -664,7 +685,8 @@ if __name__ == '__main__':
         sys.exit(0)
 
     elif mode == 'run':
-        benchmark_dir, benchmark_id, quick, profile_path, result_file = args
+        (benchmark_dir, benchmark_id, quick, profile_path,
+         setup_class_cache_file, result_file) = args
         quick = (quick == 'True')
         if profile_path == 'None':
             profile_path = None
@@ -678,8 +700,18 @@ if __name__ == '__main__':
         else:
             param_idx = None
 
-        benchmark = Benchmark.from_name(
-            benchmark_dir, benchmark_id, quick=quick)
+        fd = dumbdbm.open(setup_class_cache_file, 'c')
+        try:
+            setup_class_cache = shelve.Shelf(dict=fd)
+            benchmark = Benchmark.from_name(
+                benchmark_dir, benchmark_id, setup_class_cache, quick=quick)
+        except:
+            raise
+        else:
+            setup_class_cache.sync()
+        finally:
+            fd.close()
+
         if param_idx is not None:
             benchmark.set_param_idx(param_idx)
         skip = benchmark.do_setup()

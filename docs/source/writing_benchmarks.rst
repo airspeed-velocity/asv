@@ -108,6 +108,21 @@ tearing down of in-memory state happens automatically.
 If ``setup`` raises a ``NotImplementedError``, the benchmark is marked
 as skipped.
 
+Additionally, if the ``setup`` method is computationally expensive,
+the ``setupClass`` ``classmethod`` may be used instead.  Any
+attributes this method sets on the class will be cached to disk and
+reused for all benchmarks in the class.  For example::
+
+    class Suite:
+        @classmethod
+        def setupClass(cls):
+            cls.fib = [1, 1]
+            for i in range(100):
+                cls.fib.append(cls.fib[-2] + cls.fib[-1])
+
+        def track_fib(self):
+            return self.fib[-1]
+
 .. _benchmark-attributes:
 
 Benchmark attributes

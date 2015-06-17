@@ -43,7 +43,7 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 3
 
     b = benchmarks.Benchmarks(conf, regex='example')
-    assert len(b) == 14
+    assert len(b) == 16
 
     b = benchmarks.Benchmarks(conf, regex='time_example_benchmark_1')
     assert len(b) == 2
@@ -53,7 +53,7 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 2
 
     b = benchmarks.Benchmarks(conf)
-    assert len(b) == 18
+    assert len(b) == 20
 
     envs = list(environment.get_environments(conf))
     b = benchmarks.Benchmarks(conf)
@@ -94,6 +94,9 @@ def test_find_benchmarks(tmpdir):
     assert util.is_nan(times['params_examples.time_skip']['result']['result'][2])
 
     assert times['peakmem_examples.peakmem_list']['result'] >= 4 * 2**20
+
+    assert times['track_examples.ClassLevelSetup.track_example']['result'] == 500
+    assert times['track_examples.ClassLevelSetup.track_example2']['result'] == 500
 
     profile_path = join(tmpdir, 'test.profile')
     with open(profile_path, 'wb') as fd:

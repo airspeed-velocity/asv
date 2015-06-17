@@ -29,7 +29,8 @@ BENCHMARK_RUN_SCRIPT = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "benchmark.py")
 
 
-def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
+def run_benchmark(benchmark, root, env, setup_class_cache_file,
+                  show_stderr=False, quick=False,
                   profile=False):
     """
     Run a benchmark in different process in the given environment.
@@ -42,6 +43,9 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
         Path to benchmark directory in which to find the benchmark
 
     env : Environment object
+
+    setup_class_cache_file : str
+        Path to class-level setup cache file.
 
     show_stderr : bool
         When `True`, write the stderr out to the console.
@@ -96,8 +100,10 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
 
         for param_idx, params in param_iter:
             success, data, profile_data, err, out, errcode = \
-                _run_benchmark_single(benchmark, root, env, param_idx,
-                                      quick=quick, profile=profile)
+                _run_benchmark_single(
+                    benchmark, root, env, param_idx,
+                    quick=quick, profile=profile,
+                    setup_class_cache_file=setup_class_cache_file)
 
             total_count += 1
             if success:
@@ -184,7 +190,8 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
         return result
 
 
-def _run_benchmark_single(benchmark, root, env, param_idx, profile, quick):
+def _run_benchmark_single(benchmark, root, env, param_idx, profile, quick,
+                          setup_class_cache_file):
     """
     Run a benchmark, for single parameter combination index in case it
     is parameterized
@@ -222,7 +229,7 @@ def _run_benchmark_single(benchmark, root, env, param_idx, profile, quick):
         result_file.close()
         out, err, errcode = env.run(
             [BENCHMARK_RUN_SCRIPT, 'run', root, name, str(quick),
-             profile_path, result_file.name],
+             profile_path, setup_class_cache_file, result_file.name],
             dots=False, timeout=benchmark['timeout'],
             display_error=False, return_stderr=True,
             valid_return_codes=None)
@@ -325,7 +332,7 @@ class Benchmarks(dict):
             result_file = tempfile.NamedTemporaryFile(delete=False)
             try:
                 result_file.close()
-                output = env.run(
+                env.run(
                     [BENCHMARK_RUN_SCRIPT, 'discover', root,
                      result_file.name],
                     dots=False)
@@ -335,8 +342,7 @@ class Benchmarks(dict):
             finally:
                 os.remove(result_file.name)
 
-            for benchmark in benchmarks:
-                yield benchmark
+        return benchmarks
 
     @classmethod
     def check_tree(cls, root):
@@ -468,26 +474,36 @@ class Benchmarks(dict):
 
             - `result`: The numeric value of the benchmark (usually
               the runtime in seconds for a timing benchmark), but may
-              be an arbitrary JSON data structure. For parameterized tests, 
+              be an arbitrary JSON data structure. For parameterized tests,
               this is a dictionary with keys 'params' and 'result', where
               the value of 'params' contains a list of lists of parameter values,
               and 'result' is a list of results, corresponding to itertools.product
-              iteration over parameters. 
+              iteration over parameters.
               Set to `None` if the benchmark failed.
 
             - `profile`: If `profile` is `True`, this key will exist,
               and be a byte string containing the cProfile data.
         """
         log.info("Benchmarking {0}".format(env.name))
-        with log.indent():
-            times = {}
-            benchmarks = sorted(list(six.iteritems(self)))
-            for name, benchmark in benchmarks:
-                if skip and name in skip:
-                    continue
-                times[name] = run_benchmark(
-                    benchmark, self._benchmark_dir, env, show_stderr=show_stderr,
-                    quick=quick, profile=profile)
+
+        class_setup_cache_file = tempfile.NamedTemporaryFile(delete=False)
+        class_setup_cache_file.close()
+        try:
+            with log.indent():
+                times = {}
+                benchmarks = sorted(list(six.iteritems(self)))
+                for name, benchmark in benchmarks:
+                    if skip and name in skip:
+                        continue
+                    times[name] = run_benchmark(
+                        benchmark, self._benchmark_dir, env,
+                        class_setup_cache_file.name,
+                        show_stderr=show_stderr,
+                        quick=quick, profile=profile)
+
+        finally:
+            os.remove(class_setup_cache_file.name)
+
         return times
 
     def skip_benchmarks(self, env):
