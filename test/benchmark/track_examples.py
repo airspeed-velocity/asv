@@ -5,13 +5,35 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 
 
 class ClassLevelSetup:
-    @classmethod
-    def setupclass(cls):
-        assert not hasattr(cls, 'big_list')
-        cls.big_list = [0] * 500
+    def setup_cache(self):
+        return [0] * 500
 
-    def track_example(self):
-        return len(self.big_list)
+    def teardown_cache(self):
+        pass
 
-    def track_example2(self):
-        return len(self.big_list)
+    def track_example(self, big_list):
+        return len(big_list)
+
+    def track_example2(self, big_list):
+        return len(big_list)
+
+
+def setup_cache():
+    return {'foo': 42, 'bar': 12}
+
+
+def track_cache_foo(d):
+    return d['foo']
+
+
+def track_cache_bar(d):
+    return d['bar']
+
+
+def my_setup_cache():
+    return {'foo': 0, 'bar': 1}
+
+
+def track_my_cache_foo(d):
+    return d['foo']
+track_my_cache_foo.setup_cache = my_setup_cache

@@ -70,7 +70,9 @@ Setup and teardown functions
 If initialization needs to be performed that should not be included in
 the timing of the benchmark, include that code in a ``setup`` method
 on the class, or set add an attribute called ``setup`` to a free
-function.  For example::
+function.
+
+For example::
 
     class Suite:
         def setup(self):
@@ -85,7 +87,7 @@ function.  For example::
     # or equivalently...
 
     words = []
-    def setup():
+    def my_setup():
         global words
         with open("/usr/share/words.txt", "r") as fd:
             words = fd.readlines()
@@ -93,7 +95,7 @@ function.  For example::
     def time_upper():
         for word in words:
             word.upper()
-    time_upper.setup = setup
+    time_upper.setup = my_setup
 
 You can also include a module-level ``setup`` function, which will be
 run for every benchmark within the module, prior to any ``setup``
@@ -108,20 +110,30 @@ tearing down of in-memory state happens automatically.
 If ``setup`` raises a ``NotImplementedError``, the benchmark is marked
 as skipped.
 
-Additionally, if the ``setup`` method is computationally expensive,
-the ``setupClass`` ``classmethod`` may be used instead.  Any
-attributes this method sets on the class will be cached to disk and
-reused for all benchmarks in the class.  For example::
+Since each benchmark is run in its own process, the ``setup`` method
+is run for each benchmark that it is associated with.  If the
+``setup`` is especially expensive, the ``setup_cache`` method may be
+used instead, which only performs the setup calculation once and then
+caches the result to disk.  The ``setup_cache`` should return the
+value it wishes to cache.  This would usually be a dictionary, but it
+is not required to be.  This value will then be passed into any
+benchmark that uses it.  Since such caches are not portable between
+different versions of Python or possibly other dependencies, a
+separate cache is used for each environment and each commit of the
+project begin tested and thrown out between benchmark runs.
+
+For example::
 
     class Suite:
-        @classmethod
-        def setupClass(cls):
-            cls.fib = [1, 1]
+        def setup_cache(self):
+            fib = [1, 1]
             for i in range(100):
-                cls.fib.append(cls.fib[-2] + cls.fib[-1])
+                fib.append(fib[-2] + fib[-1])
+            return fib
 
-        def track_fib(self):
-            return self.fib[-1]
+        def track_fib(self, fib):
+            return fib[-1]
+
 
 .. _benchmark-attributes:
 
@@ -204,6 +216,9 @@ You can also provide informative names for the parameters::
 
 These will appear in the test output; if not provided you get default
 names such as "param1", "param2".
+
+Note that ``setup_cache`` and ``teardown_cache`` are not
+parameterized.
 
 Benchmark types
 ---------------

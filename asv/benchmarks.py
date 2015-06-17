@@ -29,7 +29,7 @@ BENCHMARK_RUN_SCRIPT = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "benchmark.py")
 
 
-def run_benchmark(benchmark, root, env, setup_class_cache_file,
+def run_benchmark(benchmark, root, env, cache_file,
                   show_stderr=False, quick=False,
                   profile=False):
     """
@@ -44,8 +44,8 @@ def run_benchmark(benchmark, root, env, setup_class_cache_file,
 
     env : Environment object
 
-    setup_class_cache_file : str
-        Path to class-level setup cache file.
+    cache_file : str
+        Path to persistent setup cache file.
 
     show_stderr : bool
         When `True`, write the stderr out to the console.
@@ -103,7 +103,7 @@ def run_benchmark(benchmark, root, env, setup_class_cache_file,
                 _run_benchmark_single(
                     benchmark, root, env, param_idx,
                     quick=quick, profile=profile,
-                    setup_class_cache_file=setup_class_cache_file)
+                    cache_file=cache_file)
 
             total_count += 1
             if success:
@@ -191,7 +191,7 @@ def run_benchmark(benchmark, root, env, setup_class_cache_file,
 
 
 def _run_benchmark_single(benchmark, root, env, param_idx, profile, quick,
-                          setup_class_cache_file):
+                          cache_file):
     """
     Run a benchmark, for single parameter combination index in case it
     is parameterized
@@ -229,7 +229,7 @@ def _run_benchmark_single(benchmark, root, env, param_idx, profile, quick,
         result_file.close()
         out, err, errcode = env.run(
             [BENCHMARK_RUN_SCRIPT, 'run', root, name, str(quick),
-             profile_path, setup_class_cache_file, result_file.name],
+             profile_path, cache_file, result_file.name],
             dots=False, timeout=benchmark['timeout'],
             display_error=False, return_stderr=True,
             valid_return_codes=None)
@@ -486,23 +486,54 @@ class Benchmarks(dict):
         """
         log.info("Benchmarking {0}".format(env.name))
 
-        class_setup_cache_file = tempfile.NamedTemporaryFile(delete=False)
-        class_setup_cache_file.close()
+        cache_file = tempfile.NamedTemporaryFile(suffix='dbm', delete=False)
+        cache_file.close()
+        # We have to actually delete the file here, since the database
+        # type can not be determined from a zero-length file.  We
+        # can't create the database in the master process, since the
+        # file formats available may vary between Python environments.
+        os.remove(cache_file.name)
         try:
             with log.indent():
-                times = {}
                 benchmarks = sorted(list(six.iteritems(self)))
+
+                setup_caches_done = set()
+                for name, benchmark in benchmarks:
+                    key = benchmark.get('setup_cache_key')
+                    if key is not None and key not in setup_caches_done:
+                        log.info('Caching {0}'.format(key))
+                        setup_caches_done.add(key)
+                        env.run(
+                            [BENCHMARK_RUN_SCRIPT, 'setup_cache',
+                             self._benchmark_dir, name,
+                             cache_file.name],
+                            dots=False, display_error=True,
+                            return_stderr=True)
+
+                times = {}
                 for name, benchmark in benchmarks:
                     if skip and name in skip:
                         continue
                     times[name] = run_benchmark(
                         benchmark, self._benchmark_dir, env,
-                        class_setup_cache_file.name,
-                        show_stderr=show_stderr,
+                        cache_file.name, show_stderr=show_stderr,
                         quick=quick, profile=profile)
 
+                teardown_caches_done = set()
+                for name, benchmark in benchmarks:
+                    key = benchmark.get('teardown_cache_key')
+                    if key is not None and key not in teardown_caches_done:
+                        log.info('Tearing down {0}'.format(key))
+                        teardown_caches_done.add(key)
+                        env.run(
+                            [BENCHMARK_RUN_SCRIPT, 'teardown_cache',
+                             self._benchmark_dir, name],
+                            dots=False, display_error=True,
+                            return_stderr=True)
+
         finally:
-            os.remove(class_setup_cache_file.name)
+            if os.path.isfile(cache_file.name):
+                os.remove(cache_file.name)
 
         return times
 

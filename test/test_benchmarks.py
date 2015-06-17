@@ -43,7 +43,7 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 3
 
     b = benchmarks.Benchmarks(conf, regex='example')
-    assert len(b) == 16
+    assert len(b) == 19
 
     b = benchmarks.Benchmarks(conf, regex='time_example_benchmark_1')
     assert len(b) == 2
@@ -53,7 +53,7 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 2
 
     b = benchmarks.Benchmarks(conf)
-    assert len(b) == 20
+    assert len(b) == 23
 
     envs = list(environment.get_environments(conf))
     b = benchmarks.Benchmarks(conf)
@@ -97,6 +97,10 @@ def test_find_benchmarks(tmpdir):
 
     assert times['track_examples.ClassLevelSetup.track_example']['result'] == 500
     assert times['track_examples.ClassLevelSetup.track_example2']['result'] == 500
+
+    assert times['track_examples.track_cache_foo']['result'] == 42
+    assert times['track_examples.track_cache_bar']['result'] == 12
+    assert times['track_examples.track_my_cache_foo']['result'] == 0
 
     profile_path = join(tmpdir, 'test.profile')
     with open(profile_path, 'wb') as fd:
