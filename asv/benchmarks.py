@@ -497,23 +497,26 @@ class Benchmarks(dict):
             with log.indent():
                 benchmarks = sorted(list(six.iteritems(self)))
 
+                if skip:
+                    benchmarks = [
+                        (name, benchmark) for (name, benchmark) in
+                        benchmarks if name not in skip]
+
                 setup_caches_done = set()
                 for name, benchmark in benchmarks:
                     key = benchmark.get('setup_cache_key')
                     if key is not None and key not in setup_caches_done:
                         log.info('Caching {0}'.format(key))
                         setup_caches_done.add(key)
-                        env.run(
+                        out, err, errcode = env.run(
                             [BENCHMARK_RUN_SCRIPT, 'setup_cache',
                              self._benchmark_dir, name,
                              cache_file.name],
-                            dots=False, display_error=True,
-                            return_stderr=True)
+                            dots=False, display_error=False,
+                            return_stderr=True, valid_return_codes=None)
 
                 times = {}
                 for name, benchmark in benchmarks:
-                    if skip and name in skip:
-                        continue
                     times[name] = run_benchmark(
                         benchmark, self._benchmark_dir, env,
                         cache_file.name, show_stderr=show_stderr,
@@ -529,7 +532,7 @@ class Benchmarks(dict):
                             [BENCHMARK_RUN_SCRIPT, 'teardown_cache',
                              self._benchmark_dir, name],
                             dots=False, display_error=True,
-                            return_stderr=True)
+                            return_stderr=True, valid_return_codes=None)
 
         finally:
             if os.path.isfile(cache_file.name):

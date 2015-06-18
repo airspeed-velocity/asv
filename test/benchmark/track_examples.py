@@ -37,3 +37,11 @@ def my_setup_cache():
 def track_my_cache_foo(d):
     return d['foo']
 track_my_cache_foo.setup_cache = my_setup_cache
+
+
+class ClassLevelSetupFail:
+    def setup_cache(self):
+        raise RuntimeError()
+
+    def track_fail(self):
+        return -1
