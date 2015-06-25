@@ -14,5 +14,6 @@ if sys.version_info >= (3, 3):
     if os.environ.get('__PYVENV_LAUNCHER__'):
         os.unsetenv('__PYVENV_LAUNCHER__')
 
+from ._version import __version__, __githash__, __release__
 
 from . import plugin_manager

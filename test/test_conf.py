@@ -24,6 +24,7 @@ def test_config():
         "jinja2": [],
     }
     assert conf.benchmark_dir == 'benchmark'
+    assert conf.branches == [None]
 
 
 class CustomCommand(Command):

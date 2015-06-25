@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 
 import os
 import tempfile
+import subprocess
 
 import six
 
@@ -71,7 +72,19 @@ class Conda(environment.Environment):
         for configuration in environment.iter_configuration_matrix(conf.matrix):
             yield cls(conf, python, configuration)
 
-    def setup(self):
+    def check_presence(self):
+        if not super(Conda, self).check_presence():
+            return False
+        for fn in ['pip', 'python']:
+            if not os.path.isfile(os.path.join(self._path, 'bin', fn)):
+                return False
+        try:
+            self._run_executable('python', ['-c', 'pass'])
+        except (subprocess.CalledProcessError, OSError):
+            return False
+        return True
+
+    def _setup(self):
         try:
             conda = util.which('conda')
         except IOError as e:
@@ -88,12 +101,10 @@ class Conda(environment.Environment):
             'python={0}'.format(self._python),
             'pip'])
 
-    def install_requirements(self):
-        if self._requirements_installed:
-            return
+        log.info("Installing requirements for {0}".format(self.name))
+        self._install_requirements()
 
-        self.create()
-
+    def _install_requirements(self):
         self.install('wheel')
 
         if self._requirements:
@@ -107,8 +118,6 @@ class Conda(environment.Environment):
                 else:
                     args.append(key)
             self._run_executable('conda', args)
-
-        self._requirements_installed = True
 
     def _run_executable(self, executable, args, **kwargs):
         return util.check_output([
@@ -125,5 +134,4 @@ class Conda(environment.Environment):
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
-        self.install_requirements()
         return self._run_executable('python', args, **kwargs)

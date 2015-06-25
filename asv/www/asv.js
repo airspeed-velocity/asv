@@ -263,6 +263,9 @@ $(function() {
             state[param] = values;
 
             if (values.length > 1 && param !== 'machine') {
+                if (param == 'branch') {
+                    state[param] = [values[0]];
+                }
                 make_value_selector_panel(nav, param, values, function(i, value, button) {
                     var value_display;
                     if (!value)
@@ -271,6 +274,10 @@ $(function() {
                         value_display = value;
 
                     button.text(value_display);
+
+                    if (param == 'branch' && i > 0) {
+                        button.removeClass('active');
+                    }
 
                     if (values.length > 1) {
                         button.on('click', function(evt) {

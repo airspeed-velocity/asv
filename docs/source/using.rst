@@ -45,11 +45,17 @@ suite are:
 
 - ``project_url``: The project's homepage.
 
-- ``repo``: The URL to the DVCS repository for the project.  This
+- ``repo``: The URL or path to the DVCS repository for the project.  This
   should be a read-only URL so that anyone, even those without commit
   rights to the repository, can run the benchmarks.  For a project on
   github, for example, the URL would look like:
   ``https://github.com/spacetelescope/asv.git``
+
+  The value can also be a path, relative to the location of the
+  configuration file. For example, if the benchmarks are stored
+  in the same repository as the project itself, and the configuration
+  file is located at ``benchmarks/asv.conf.json`` inside the repository,
+  you can set ``"repo": ".."`` to use the local repository.
 
 - ``show_commit_url``: The base of URLs used to display commits for
   the project.  This allows users to click on a commit in the web
@@ -285,7 +291,7 @@ on this machine.  This is useful for running in nightly cron jobs::
 Finally, you can also benchmark all commits that have not yet been benchmarked
 for this machine::
 
-    asv run MISSING
+    asv run --skip-existing-commits ALL
 
 .. note::
 

@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 from distutils.version import LooseVersion
 import inspect
 import os
+import subprocess
 
 import six
 
@@ -85,11 +86,23 @@ class Virtualenv(environment.Environment):
         else:
             return True
 
-    def setup(self):
+    def check_presence(self):
+        if not super(Virtualenv, self).check_presence():
+            return False
+        for fn in ['pip', 'python']:
+            if not os.path.isfile(os.path.join(self._path, 'bin', fn)):
+                return False
+        try:
+            self._run_executable('python', ['-c', 'pass'])
+        except (subprocess.CalledProcessError, OSError):
+            return False
+        return True
+
+    def _setup(self):
         """
-        Setup the environment on disk.  If it doesn't exist, it is
-        created using virtualenv.  Then, all of the requirements are
-        installed into it using `pip install`.
+        Setup the environment on disk using virtualenv.
+        Then, all of the requirements are installed into
+        it using `pip install`.
         """
         log.info("Creating virtualenv for {0}".format(self.name))
         util.check_call([
@@ -98,12 +111,10 @@ class Virtualenv(environment.Environment):
             '--no-site-packages',
             self._path])
 
-    def install_requirements(self):
-        if self._requirements_installed:
-            return
+        log.info("Installing requirements for {0}".format(self.name))
+        self._install_requirements()
 
-        self.create()
-
+    def _install_requirements(self):
         self._run_executable('pip', ['install', 'wheel'])
 
         if self._requirements:
@@ -114,8 +125,6 @@ class Virtualenv(environment.Environment):
                 else:
                     args.append(key)
             self._run_executable('pip', args)
-
-        self._requirements_installed = True
 
     def _run_executable(self, executable, args, **kwargs):
         return util.check_output([
@@ -132,5 +141,4 @@ class Virtualenv(environment.Environment):
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
-        self.install_requirements()
         return self._run_executable('python', args, **kwargs)

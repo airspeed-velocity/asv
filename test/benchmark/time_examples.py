@@ -40,3 +40,10 @@ def time_with_warnings():
     warnings.warn('after')
 
 time_with_warnings.goal_time = 0.1
+
+
+def time_with_timeout():
+    while True:
+        pass
+
+time_with_timeout.timeout = 0.1

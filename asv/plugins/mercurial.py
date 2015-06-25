@@ -63,8 +63,16 @@ class Hg(Repo):
 
         return False
 
-    def get_new_range_spec(self, latest_result):
-        return '{0}::tip'.format(latest_result)
+    def get_new_range_spec(self, latest_result, branch=None):
+        if branch is None:
+            return '{0}::tip'.format(latest_result)
+        else:
+            return '{0}::{1}'.format(latest_result, branch)
+
+    def get_branch_range_spec(self, branch):
+        if branch is None:
+            branch = 'tip'
+        return 'ancestors({0})'.format(branch)
 
     def pull(self):
         # We assume the remote isn't updated during the run of asv

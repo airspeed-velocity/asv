@@ -13,7 +13,6 @@ import six
 from asv import config
 
 from asv.commands.compare import Compare
-from io import StringIO
 
 from . import tools
 
@@ -43,24 +42,16 @@ All benchmarks:
 """
 
 
-def test_compare(tmpdir):
-
+def test_compare(capsys, tmpdir):
     tmpdir = six.text_type(tmpdir)
     os.chdir(tmpdir)
 
     conf = config.Config.from_json(
         {'results_dir': RESULT_DIR,
-         'repo': tools.generate_test_repo(tmpdir),
+         'repo': tools.generate_test_repo(tmpdir).path,
          'project': 'asv'})
 
-    s = StringIO()
-    stdout = sys.stdout
+    Compare.run(conf, '22b920c6', 'fcf8c079', machine='cheetah')
 
-    try:
-        sys.stdout = s
-        Compare.run(conf, '22b920c6', 'fcf8c079', machine='cheetah')
-    finally:
-        sys.stdout = stdout
-
-    s.seek(0)
-    assert s.read().strip() == REFERENCE.strip()
+    text, err = capsys.readouterr()
+    assert text.strip() == REFERENCE.strip()

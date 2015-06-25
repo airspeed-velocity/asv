@@ -21,6 +21,7 @@ class Config(object):
         self.project = "project"
         self.project_url = "#"
         self.repo = None
+        self.branches = [None]
         self.pythons = ["{0[0]}.{0[1]}".format(sys.version_info)]
         self.matrix = {}
         self.env_dir = "env"
@@ -60,6 +61,12 @@ class Config(object):
         if not getattr(conf, "repo", None):
             raise util.UserError(
                 "No repo specified in config file.")
+
+        if not getattr(conf, "branches", [None]):
+            # If 'branches' attribute is present, at least some must
+            # be listed.
+            raise util.UserError(
+                "No branches specified in config file.")
 
         return conf
 

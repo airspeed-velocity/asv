@@ -107,6 +107,14 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
 
             err = err.strip()
             out = out.strip()
+
+            if errcode:
+                if errcode == util.TIMEOUT_RETCODE:
+                    if err:
+                        err += "\n\n"
+                    err += "asv: benchmark timed out (timeout {0}s)\n".format(benchmark['timeout'])
+                result['errcode'] = errcode
+
             if err or out:
                 err += out
                 if benchmark['params']:
@@ -117,9 +125,6 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
                 result.setdefault('stderr', '')
                 result['stderr'] += head_msg
                 result['stderr'] += err
-
-            if errcode:
-                result['errcode'] = errcode
 
         # Display status
         if failure_count > 0:

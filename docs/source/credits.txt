@@ -1,0 +1,12 @@
+- Pauli Virtanen
+- Thomas Robitaille
+- Richard Hattersley
+- Matthew Turk
+- Antoine Pitrou
+- Christoph Deil
+- Chris Beaumont
+- Kacper Kowalik
+- Erik M. Bray
+- Nathan Goldbaum
+- MinRK
+- Christopher Whelan

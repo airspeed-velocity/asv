@@ -8,6 +8,7 @@ __pycache__
 
 # Other generated files
 MANIFEST
+asv/_version.py
 
 # Sphinx
 _build

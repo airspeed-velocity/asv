@@ -169,7 +169,6 @@ class Environment(object):
             self._env_dir, self.hashname))
 
         self._is_setup = False
-        self._requirements_installed = False
 
         self._repo = get_repo(conf)
         self._cache = wheel_cache.WheelCache(conf, self._path)
@@ -229,22 +228,54 @@ class Environment(object):
             raise ValueError("No repo set up yet")
         return self._repo
 
+    def check_presence(self):
+        """
+        Check whether the environment already exists.
+        """
+        if not os.path.isdir(self._env_dir):
+            return False
+
+        try:
+            info = self.load_info_file(self._path)
+        except (util.UserError, IOError):
+            return False
+
+        expected_info = {
+            'python': self._python,
+            'requirements': self._requirements
+        }
+        if info != expected_info:
+            return False
+
+        return True
+
     def create(self):
         """
-        Create the outer layers of the environment, including an
-        information file and a local clone of the project repository.
-        Calls `setup` internally to setup a specific kind of
-        environment.
+        Create the environment on disk.  If it doesn't exist, it is
+        created.  Then, all of the requirements are installed into it.
         """
         if self._is_setup:
             return
 
-        if not os.path.exists(self._env_dir):
-            os.makedirs(self._env_dir)
+        if not self.check_presence():
+            if os.path.exists(self._path):
+                shutil.rmtree(self._path)
 
-        if not os.path.exists(self._path):
+            if not os.path.exists(self._env_dir):
+                try:
+                    os.makedirs(self._env_dir)
+                except OSError:
+                    # Environment.create may be called in parallel for
+                    # environments with different self._path, but same
+                    # self._env_dir. This causes a race condition for
+                    # the above makedirs() call --- but not for the
+                    # rest of the processing. Therefore, we will just
+                    # ignore the error here, as things will fail at a
+                    # later stage if there is really was a problem.
+                    pass
+
             try:
-                self.setup()
+                self._setup()
             except:
                 log.error("Failure creating environment for {0}".format(self.name))
                 if os.path.exists(self._path):
@@ -255,14 +286,10 @@ class Environment(object):
 
         self._is_setup = True
 
-    def setup(self):
+    def _setup(self):
         """
-        Setup the environment on disk.  If it doesn't exist, it is
-        created.  Then, all of the requirements are installed into it.
+        Implementation for setting up the environment.
         """
-        raise NotImplementedError()
-
-    def install_requirements(self):
         raise NotImplementedError()
 
     def install(self, package):
@@ -309,7 +336,6 @@ class Environment(object):
             if commit_hash is None:
                 commit_hash = self.repo.get_hash_from_master()
 
-        self.install_requirements()
         self.uninstall(conf.project)
 
         build_root = self._cache.build_project_cached(
@@ -326,6 +352,10 @@ class Environment(object):
         can be installed into this environment.
         """
         return True
+
+    def load_info_file(self, path):
+        path = os.path.join(path, 'asv-env-info.json')
+        return util.load_json(path)
 
     def save_info_file(self, path):
         """
@@ -378,13 +408,13 @@ class ExistingEnvironment(Environment):
     def name(self):
         return self._executable
 
+    def check_presence(self):
+        return True
+
     def create(self):
         pass
 
-    def setup(self):
-        pass
-
-    def install_requirements(self):
+    def _setup(self):
         pass
 
     def install_project(self, conf, commit_hash=None):
