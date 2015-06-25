@@ -3,6 +3,8 @@
 
 from __future__ import absolute_import, division, unicode_literals, print_function
 
+import os
+
 
 class ClassLevelSetup:
     def setup_cache(self):
@@ -19,10 +21,15 @@ class ClassLevelSetup:
 
 
 def setup_cache():
+    with open("data.txt", "wb") as fd:
+        fd.write("42\n")
     return {'foo': 42, 'bar': 12}
 
 
 def track_cache_foo(d):
+    assert os.path.isfile("data.txt")
+    with open("data.txt", "rb") as fd:
+        assert fd.read().strip() == '42'
     return d['foo']
 
 
@@ -35,6 +42,7 @@ def my_setup_cache():
 
 
 def track_my_cache_foo(d):
+    assert not os.path.isfile("data.txt")
     return d['foo']
 track_my_cache_foo.setup_cache = my_setup_cache
 

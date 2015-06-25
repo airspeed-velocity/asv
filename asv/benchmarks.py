@@ -4,10 +4,12 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import hashlib
 import io
 import json
 import os
 import re
+import shutil
 import sys
 import tempfile
 import itertools
@@ -29,9 +31,8 @@ BENCHMARK_RUN_SCRIPT = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "benchmark.py")
 
 
-def run_benchmark(benchmark, root, env, cache_file,
-                  show_stderr=False, quick=False,
-                  profile=False):
+def run_benchmark(benchmark, root, env, show_stderr=False,
+                  quick=False, profile=False, cwd=None):
     """
     Run a benchmark in different process in the given environment.
 
@@ -44,9 +45,6 @@ def run_benchmark(benchmark, root, env, cache_file,
 
     env : Environment object
 
-    cache_file : str
-        Path to persistent setup cache file.
-
     show_stderr : bool
         When `True`, write the stderr out to the console.
 
@@ -56,6 +54,10 @@ def run_benchmark(benchmark, root, env, cache_file,
     profile : bool, optional
         When `True`, run the benchmark through the `cProfile` profiler
         and save the results.
+
+    cwd : str, optional
+        The path to the current working directory to use when running
+        the benchmark process.
 
     Returns
     -------
@@ -103,7 +105,7 @@ def run_benchmark(benchmark, root, env, cache_file,
                 _run_benchmark_single(
                     benchmark, root, env, param_idx,
                     quick=quick, profile=profile,
-                    cache_file=cache_file)
+                    cwd=cwd)
 
             total_count += 1
             if success:
@@ -190,8 +192,7 @@ def run_benchmark(benchmark, root, env, cache_file,
         return result
 
 
-def _run_benchmark_single(benchmark, root, env, param_idx, profile, quick,
-                          cache_file):
+def _run_benchmark_single(benchmark, root, env, param_idx, profile, quick, cwd):
     """
     Run a benchmark, for single parameter combination index in case it
     is parameterized
@@ -229,10 +230,10 @@ def _run_benchmark_single(benchmark, root, env, param_idx, profile, quick,
         result_file.close()
         out, err, errcode = env.run(
             [BENCHMARK_RUN_SCRIPT, 'run', root, name, str(quick),
-             profile_path, cache_file, result_file.name],
+             profile_path, result_file.name],
             dots=False, timeout=benchmark['timeout'],
             display_error=False, return_stderr=True,
-            valid_return_codes=None)
+            valid_return_codes=None, cwd=cwd)
 
         if errcode:
             success = False
@@ -486,57 +487,48 @@ class Benchmarks(dict):
         """
         log.info("Benchmarking {0}".format(env.name))
 
-        cache_file = tempfile.NamedTemporaryFile(suffix='dbm', delete=False)
-        cache_file.close()
-        # We have to actually delete the file here, since the database
-        # type can not be determined from a zero-length file.  We
-        # can't create the database in the master process, since the
-        # file formats available may vary between Python environments.
-        os.remove(cache_file.name)
-        try:
-            with log.indent():
-                benchmarks = sorted(list(six.iteritems(self)))
+        with log.indent():
+            benchmarks = sorted(list(six.iteritems(self)))
 
-                if skip:
-                    benchmarks = [
-                        (name, benchmark) for (name, benchmark) in
-                        benchmarks if name not in skip]
+            # Remove skipped benchmarks
+            if skip:
+                benchmarks = [
+                    (name, benchmark) for (name, benchmark) in
+                    benchmarks if name not in skip]
 
-                setup_caches_done = set()
-                for name, benchmark in benchmarks:
-                    key = benchmark.get('setup_cache_key')
-                    if key is not None and key not in setup_caches_done:
-                        log.info('Caching {0}'.format(key))
-                        setup_caches_done.add(key)
+            # Organize benchmarks by the setup_cache_key
+            benchmark_order = {}
+            for name, benchmark in benchmarks:
+                key = benchmark.get('setup_cache_key')
+                benchmark_order.setdefault(key, []).append((name, benchmark))
+
+            times = {}
+            for setup_cache_key, benchmark_set in six.iteritems(benchmark_order):
+                tmpdir = tempfile.mkdtemp()
+                try:
+                    if setup_cache_key is not None:
+                        log.info("Setting up {0}".format(setup_cache_key))
                         out, err, errcode = env.run(
                             [BENCHMARK_RUN_SCRIPT, 'setup_cache',
-                             self._benchmark_dir, name,
-                             cache_file.name],
+                             self._benchmark_dir, benchmark_set[0][0]],
                             dots=False, display_error=False,
-                            return_stderr=True, valid_return_codes=None)
+                            return_stderr=True, valid_return_codes=None,
+                            cwd=tmpdir)
+                        if errcode:
+                            for name, benchmark in benchmark_set:
+                                # TODO: Store more information about failure
+                                times[name] = {'result': None}
+                            continue
+                        assert os.path.isfile(os.path.join(tmpdir, 'cache.pickle'))
 
-                times = {}
-                for name, benchmark in benchmarks:
-                    times[name] = run_benchmark(
-                        benchmark, self._benchmark_dir, env,
-                        cache_file.name, show_stderr=show_stderr,
-                        quick=quick, profile=profile)
-
-                teardown_caches_done = set()
-                for name, benchmark in benchmarks:
-                    key = benchmark.get('teardown_cache_key')
-                    if key is not None and key not in teardown_caches_done:
-                        log.info('Tearing down {0}'.format(key))
-                        teardown_caches_done.add(key)
-                        env.run(
-                            [BENCHMARK_RUN_SCRIPT, 'teardown_cache',
-                             self._benchmark_dir, name],
-                            dots=False, display_error=True,
-                            return_stderr=True, valid_return_codes=None)
-
-        finally:
-            if os.path.isfile(cache_file.name):
-                os.remove(cache_file.name)
+                    for name, benchmark in benchmark_set:
+                        times[name] = run_benchmark(
+                            benchmark, self._benchmark_dir, env,
+                            show_stderr=show_stderr,
+                            quick=quick, profile=profile,
+                            cwd=tmpdir)
+                finally:
+                    shutil.rmtree(tmpdir, True)
 
         return times
 

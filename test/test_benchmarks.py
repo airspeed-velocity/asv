@@ -95,14 +95,14 @@ def test_find_benchmarks(tmpdir):
 
     assert times['peakmem_examples.peakmem_list']['result'] >= 4 * 2**20
 
-    assert times['track_examples.ClassLevelSetup.track_example']['result'] == 500
-    assert times['track_examples.ClassLevelSetup.track_example2']['result'] == 500
+    assert times['cache_examples.ClassLevelSetup.track_example']['result'] == 500
+    assert times['cache_examples.ClassLevelSetup.track_example2']['result'] == 500
 
-    assert times['track_examples.track_cache_foo']['result'] == 42
-    assert times['track_examples.track_cache_bar']['result'] == 12
-    assert times['track_examples.track_my_cache_foo']['result'] == 0
+    assert times['cache_examples.track_cache_foo']['result'] == 42
+    assert times['cache_examples.track_cache_bar']['result'] == 12
+    assert times['cache_examples.track_my_cache_foo']['result'] == 0
 
-    assert times['track_examples.ClassLevelSetupFail.track_fail']['result'] == None
+    assert times['cache_examples.ClassLevelSetupFail.track_fail']['result'] == None
 
     profile_path = join(tmpdir, 'test.profile')
     with open(profile_path, 'wb') as fd:

@@ -31,8 +31,8 @@ import inspect
 import itertools
 import json
 import os
+import pickle
 import re
-import shelve
 import textwrap
 import timeit
 
@@ -271,8 +271,6 @@ class Benchmark(object):
         self._teardowns = list(_get_all_attrs(attr_sources, 'teardown', True))
         self._setup_cache = _get_first_attr(attr_sources, 'setup_cache', None)
         self.setup_cache_key = get_setup_cache_key(self._setup_cache)
-        self._teardown_cache = _get_first_attr(attr_sources, 'teardown_cache', None)
-        self.teardown_cache_key = get_setup_cache_key(self._teardown_cache)
         self.timeout = _get_first_attr(attr_sources, "timeout", 60.0)
         self.code = textwrap.dedent(inspect.getsource(self.func))
         self.type = "base"
@@ -440,10 +438,6 @@ class Benchmark(object):
     def do_setup_cache(self):
         if self._setup_cache is not None:
             return self._setup_cache()
-
-    def do_teardown_cache(self):
-        if self._teardown_cache is not None:
-            return self._teardown_cache()
 
     def do_run(self):
         return self.run(*self._current_params)
@@ -699,26 +693,15 @@ def main_discover(args):
 
 
 def main_setup_cache(args):
-    (benchmark_dir, benchmark_id, cache_file) = args
-    benchmark = Benchmark.from_name(benchmark_dir, benchmark_id)
-    cache = benchmark.do_setup_cache()
-    db = shelve.open(cache_file, 'c')
-    try:
-        db[benchmark.setup_cache_key] = cache
-        db.sync()
-    finally:
-        db.close()
-
-
-def main_teardown_cache(args):
     (benchmark_dir, benchmark_id) = args
     benchmark = Benchmark.from_name(benchmark_dir, benchmark_id)
-    benchmark.do_teardown_cache()
+    cache = benchmark.do_setup_cache()
+    with open("cache.pickle", "wb") as fd:
+        pickle.dump(cache, fd)
 
 
 def main_run(args):
-    (benchmark_dir, benchmark_id, quick, profile_path,
-     cache_file, result_file) = args
+    (benchmark_dir, benchmark_id, quick, profile_path, result_file) = args
     quick = (quick == 'True')
     if profile_path == 'None':
         profile_path = None
@@ -727,12 +710,10 @@ def main_run(args):
         benchmark_dir, benchmark_id, quick=quick)
 
     if benchmark.setup_cache_key is not None:
-        db = shelve.open(cache_file, 'r')
-        try:
-            cache = db[benchmark.setup_cache_key]
-        finally:
-            db.close()
-        benchmark.insert_param(cache)
+        with open("cache.pickle", "rb") as fd:
+            cache = pickle.load(fd)
+        if cache is not None:
+            benchmark.insert_param(cache)
 
     skip = benchmark.do_setup()
 
@@ -754,7 +735,6 @@ def main_run(args):
 commands = {
     'discover': main_discover,
     'setup_cache': main_setup_cache,
-    'teardown_cache': main_teardown_cache,
     'run': main_run
 }
 

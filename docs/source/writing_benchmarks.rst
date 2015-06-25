@@ -114,15 +114,22 @@ Since each benchmark is run in its own process, the ``setup`` method
 is run for each benchmark that it is associated with.  If the
 ``setup`` is especially expensive, the ``setup_cache`` method may be
 used instead, which only performs the setup calculation once and then
-caches the result to disk.  The ``setup_cache`` should return the
-value it wishes to cache.  This would usually be a dictionary, but it
-is not required to be.  This value will then be passed into any
-benchmark that uses it.  Since such caches are not portable between
-different versions of Python or possibly other dependencies, a
-separate cache is used for each environment and each commit of the
-project begin tested and thrown out between benchmark runs.
+caches the result to disk.  ``setup_cache`` can persist the data for
+the benchmarks it applies to in two ways:
 
-For example::
+   - Returning a data structure, which ``asv`` pickles to disk, and
+     then loads and passes it as the first argument to each benchmark.
+
+   - Saving files to the current working directory (which is a
+     temporary directory managed by ``asv``) which are then explicitly
+     loaded in each benchmark process.  It is probably best to load
+     the data in a ``setup`` method so the loading time is not
+     included in the timing of the benchmark.
+
+A separate cache is used for each environment and each commit of the
+project begin tested and is thrown out between benchmark runs.
+
+For example, caching data in a pickle::
 
     class Suite:
         def setup_cache(self):
@@ -134,6 +141,20 @@ For example::
         def track_fib(self, fib):
             return fib[-1]
 
+As another example, explicitly saving data in a file::
+
+    class Suite:
+        def setup_cache(self):
+            with open("test.dat", "wb") as fd:
+                for i in range(100):
+                    fd.write('{0}\n'.format(i))
+
+        def setup(self):
+            with open("test.dat", "rb") as fd:
+                self.data = [int(x) for x in fd.readlines()]
+
+        def track_numbers(self):
+            return len(self.data)
 
 .. _benchmark-attributes:
 
