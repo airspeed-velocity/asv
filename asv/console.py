@@ -99,6 +99,7 @@ def _color_text(text, color):
         'lightmagenta': '1;35',
         'lightcyan': '1;36',
         'white': '1;37'}
+
     color_code = color_mapping.get(color, '0;39')
     return '\033[{0}m{1}\033[0m'.format(color_code, text)
 
