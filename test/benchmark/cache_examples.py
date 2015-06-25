@@ -22,14 +22,14 @@ class ClassLevelSetup:
 
 def setup_cache():
     with open("data.txt", "wb") as fd:
-        fd.write("42\n")
+        fd.write(b"42\n")
     return {'foo': 42, 'bar': 12}
 
 
 def track_cache_foo(d):
     assert os.path.isfile("data.txt")
     with open("data.txt", "rb") as fd:
-        assert fd.read().strip() == '42'
+        assert fd.read().strip() == b'42'
     return d['foo']
 
 
