@@ -7,7 +7,8 @@ A set of utilities for writing output to the console.
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-
+import os
+import warnings
 import codecs
 import contextlib
 import locale
@@ -17,6 +18,14 @@ import textwrap
 
 import six
 from six.moves import xrange, input
+
+if os.name == 'nt':
+    try:
+        #from colorama import init
+        #init()
+        pass
+    except ImportError:
+        warnings.warn('the colorama package is required for terminal color on Windows')
 
 
 def isatty(file):
@@ -94,6 +103,12 @@ def _color_text(text, color):
 
     color_code = color_mapping.get(color, '0;39')
     return '\033[{0}m{1}\033[0m'.format(color_code, text)
+
+
+if os.name == 'nt' and 'colorama' not in sys.modules:
+    # :(
+    def _color_text(text, color):
+        return text
 
 
 def _write_with_fallback(s, write, fileobj):

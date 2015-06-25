@@ -98,7 +98,7 @@ class Git(Repo):
     def get_hashes_from_range(self, range_spec):
         args = ['log', '--quiet', '--first-parent', '--format=format:%H']
         if range_spec != "":
-            args += [range_spec]
+            args += range_spec.split()
         output = self._run_git(args, valid_return_codes=(0, 1), dots=False)
         return output.strip().split()
 
