@@ -13,16 +13,26 @@ import json
 import math
 import os
 import select
+import signal
 import subprocess
 import struct
 import sys
 import time
+import errno
 
-try:
-    from select import PIPE_BUF
-except ImportError:
-    # PIPE_BUF is not available on Python 2.6
-    PIPE_BUF = os.pathconf('.', os.pathconf_names['PC_PIPE_BUF'])
+UNIX = (os.name != 'nt')
+WIN = (os.name == 'nt')
+
+if UNIX:
+    try:
+        from select import PIPE_BUF
+    except ImportError:
+        # PIPE_BUF is not available on Python 2.6
+        PIPE_BUF = os.pathconf('.', os.pathconf_names['PC_PIPE_BUF'])
+else:
+    # No PIPE_BUF on windows
+    pass
+
 
 import six
 from six.moves import xrange
@@ -31,8 +41,38 @@ from .console import log
 from .extern import minify_json
 
 
+TIMEOUT_RETCODE = -256
+
+
 class UserError(Exception):
     pass
+
+
+class ParallelFailure(Exception):
+    """
+    Custom exception to work around a multiprocessing bug
+    https://bugs.python.org/issue9400
+    """
+    def __new__(cls, message, exc_cls, traceback_str):
+        self = Exception.__new__(cls)
+        self.message = message
+        self.exc_cls = exc_cls
+        self.traceback_str = traceback_str
+        return self
+
+    def __reduce__(self):
+        return (ParallelFailure, (self.message, self.exc_cls, self.traceback_str))
+
+    def __str__(self):
+        return "{0}: {1}\n    {2}".format(self.exc_cls.__name__,
+                                          self.message,
+                                          self.traceback_str.replace("\n", "\n    "))
+
+    def reraise(self):
+        if self.exc_cls is UserError:
+            raise UserError(self.message)
+        else:
+            raise self
 
 
 def human_list(l):
@@ -177,6 +217,10 @@ def which(filename):
 
     Raises an IOError if no result is found.
     """
+    if WIN:
+        if not filename.endswith('.exe'):
+            filename = filename + '.exe'
+
     locations = os.environ.get("PATH").split(os.pathsep)
     candidates = []
     for location in locations:
@@ -208,8 +252,12 @@ class ProcessError(subprocess.CalledProcessError):
         self.stderr = stderr
 
     def __str__(self):
-        return "Command '{0}' returned non-zero exit status {1}".format(
-            ' '.join(self.args), self.retcode)
+        if self.retcode == TIMEOUT_RETCODE:
+            return "Command '{0}' timed out".format(
+                ' '.join(self.args))
+        else:
+            return "Command '{0}' returned non-zero exit status {1}".format(
+                ' '.join(self.args), self.retcode)
 
 
 def check_call(args, valid_return_codes=(0,), timeout=60, dots=True,
@@ -285,53 +333,116 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
 
     log.debug("Running '{0}'".format(' '.join(args)))
 
+    posix = getattr(os, 'setpgid', None)
+    if posix:
+        # Run the subprocess in a separate process group, so that we
+        # can kill it and all child processes it spawns e.g. on
+        # timeouts. Note that subprocess.Popen will wait until exec()
+        # before returning in parent process, so there is no race
+        # condition in setting the process group vs. calls to os.killpg
+        preexec_fn = lambda: os.setpgid(0, 0)
+    else:
+        preexec_fn = None
+
     proc = subprocess.Popen(
         args,
-        close_fds=True,
+        close_fds=UNIX,  # not supported not Win
         env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         shell=shell,
+        preexec_fn=preexec_fn,
         cwd=cwd)
 
     last_dot_time = time.time()
     stdout_chunks = []
     stderr_chunks = []
+    is_timeout = False
     try:
-        fds = {
-            proc.stdout.fileno(): stdout_chunks,
-            proc.stderr.fileno(): stderr_chunks
-            }
+        if posix:
+            # Forward signals related to Ctrl-Z handling; the child
+            # process is in a separate process group so it won't receive
+            # these automatically from the terminal
+            def sig_forward(signum, frame):
+                os.killpg(proc.pid, signum)
+                if signum == signal.SIGTSTP:
+                    os.kill(os.getpid(), signal.SIGSTOP)
+            signal.signal(signal.SIGTSTP, sig_forward)
+            signal.signal(signal.SIGCONT, sig_forward)
 
-        while proc.poll() is None:
-            rlist, wlist, xlist = select.select(
-                list(fds.keys()), [], [], timeout)
-            if len(rlist) == 0:
-                # We got a timeout
+            fds = {
+                proc.stdout.fileno(): stdout_chunks,
+                proc.stderr.fileno(): stderr_chunks
+                }
+
+            while proc.poll() is None:
+                try:
+                    rlist, wlist, xlist = select.select(
+                        list(fds.keys()), [], [], timeout)
+                except select.error as err:
+                    if err.args[0] == errno.EINTR:
+                        # interrupted by signal handler; try again
+                        continue
+
+                if len(rlist) == 0:
+                    # We got a timeout
+                    is_timeout = True
+                    break
+                for f in rlist:
+                    output = os.read(f, PIPE_BUF)
+                    fds[f].append(output)
+                if dots and time.time() - last_dot_time > 0.5:
+                    if dots is True:
+                        log.dot()
+                    elif dots:
+                        dots()
+                    last_dot_time = time.time()
+        else:
+            try:
+                stdout, stderr = proc.communicate(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                is_timeout = True
+
+    finally:
+        if posix:
+            # Restore signal handlers
+            signal.signal(signal.SIGTSTP, signal.SIG_DFL)
+            signal.signal(signal.SIGCONT, signal.SIG_DFL)
+
+        if proc.returncode is None:
+            # Timeout or another exceptional condition occurred, and
+            # the program is still running.
+            if posix:
+                # Terminate the whole process group
+                os.killpg(proc.pid, signal.SIGTERM)
+                for j in range(10):
+                    time.sleep(0.1)
+                    if proc.poll() is not None:
+                        break
+                else:
+                    # Didn't terminate within 1 sec, so kill it
+                    os.killpg(proc.pid, signal.SIGTERM)
+            else:
                 proc.terminate()
-                break
-            for f in rlist:
-                output = os.read(f, PIPE_BUF)
-                fds[f].append(output)
-            if dots and time.time() - last_dot_time > 0.5:
-                if dots is True:
-                    log.dot()
-                elif dots:
-                    dots()
-                last_dot_time = time.time()
-    except KeyboardInterrupt:
-        proc.terminate()
-        raise
+            proc.wait()
 
-    proc.stdout.flush()
-    proc.stderr.flush()
-    stdout_chunks.append(proc.stdout.read())
-    stderr_chunks.append(proc.stderr.read())
+    if posix:
+        proc.stdout.flush()
+        proc.stderr.flush()
+        stdout_chunks.append(proc.stdout.read())
+        stderr_chunks.append(proc.stderr.read())
+        stdout = b''.join(stdout_chunks)
+        stderr = b''.join(stderr_chunks)
 
-    stdout = b''.join(stdout_chunks).decode('utf-8', 'replace')
-    stderr = b''.join(stderr_chunks).decode('utf-8', 'replace')
+    stdout = stdout.decode('utf-8', 'replace')
+    stderr = stderr.decode('utf-8', 'replace')
 
-    retcode = proc.wait()
+    if is_timeout:
+        retcode = TIMEOUT_RETCODE
+    else:
+        retcode = proc.returncode
+
     if valid_return_codes is not None and retcode not in valid_return_codes:
         header = 'Error running {0}'.format(' '.join(args))
         if display_error:
@@ -448,6 +559,20 @@ def iter_chunks(s, n):
             chunk = []
     if len(chunk):
         yield chunk
+
+
+def pick_n(items, n):
+    """Pick n items, attempting to get equal index spacing.
+    """
+    if not (n > 0):
+        raise ValueError("Invalid number of items to pick")
+    spacing = max(float(len(items)) / n, 1)
+    spaced = []
+    i = 0
+    while int(i) < len(items) and len(spaced) < n:
+        spaced.append(items[int(i)])
+        i += spacing
+    return spaced
 
 
 def get_multiprocessing(parallel):
