@@ -238,8 +238,7 @@ You can also provide informative names for the parameters::
 These will appear in the test output; if not provided you get default
 names such as "param1", "param2".
 
-Note that ``setup_cache`` and ``teardown_cache`` are not
-parameterized.
+Note that ``setup_cache`` is not parameterized.
 
 Benchmark types
 ---------------
