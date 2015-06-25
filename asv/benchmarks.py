@@ -519,7 +519,6 @@ class Benchmarks(dict):
                                 # TODO: Store more information about failure
                                 times[name] = {'result': None}
                             continue
-                        assert os.path.isfile(os.path.join(tmpdir, 'cache.pickle'))
 
                     for name, benchmark in benchmark_set:
                         times[name] = run_benchmark(
