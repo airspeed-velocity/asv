@@ -20,18 +20,14 @@ import sys
 import time
 import errno
 
-UNIX = (os.name != 'nt')
 WIN = (os.name == 'nt')
 
-if UNIX:
+if not WIN:
     try:
         from select import PIPE_BUF
     except ImportError:
         # PIPE_BUF is not available on Python 2.6
         PIPE_BUF = os.pathconf('.', os.pathconf_names['PC_PIPE_BUF'])
-else:
-    # No PIPE_BUF on windows
-    pass
 
 
 import six
@@ -346,7 +342,7 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
 
     proc = subprocess.Popen(
         args,
-        close_fds=UNIX,  # not supported not Win
+        close_fds=(not WIN),
         env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -358,78 +354,78 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
     stdout_chunks = []
     stderr_chunks = []
     is_timeout = False
-    try:
-        if posix:
-            # Forward signals related to Ctrl-Z handling; the child
-            # process is in a separate process group so it won't receive
-            # these automatically from the terminal
-            def sig_forward(signum, frame):
-                os.killpg(proc.pid, signum)
-                if signum == signal.SIGTSTP:
-                    os.kill(os.getpid(), signal.SIGSTOP)
-            signal.signal(signal.SIGTSTP, sig_forward)
-            signal.signal(signal.SIGCONT, sig_forward)
-
-            fds = {
-                proc.stdout.fileno(): stdout_chunks,
-                proc.stderr.fileno(): stderr_chunks
-                }
-
-            while proc.poll() is None:
-                try:
-                    rlist, wlist, xlist = select.select(
-                        list(fds.keys()), [], [], timeout)
-                except select.error as err:
-                    if err.args[0] == errno.EINTR:
-                        # interrupted by signal handler; try again
-                        continue
-
-                if len(rlist) == 0:
-                    # We got a timeout
-                    is_timeout = True
-                    break
-                for f in rlist:
-                    output = os.read(f, PIPE_BUF)
-                    fds[f].append(output)
-                if dots and time.time() - last_dot_time > 0.5:
-                    if dots is True:
-                        log.dot()
-                    elif dots:
-                        dots()
-                    last_dot_time = time.time()
-        else:
-            try:
-                stdout, stderr = proc.communicate(timeout=timeout)
-            except subprocess.TimeoutExpired:
-                proc.kill()
-                is_timeout = True
-
-    finally:
-        if posix:
-            # Restore signal handlers
-            signal.signal(signal.SIGTSTP, signal.SIG_DFL)
-            signal.signal(signal.SIGCONT, signal.SIG_DFL)
-
-        if proc.returncode is None:
-            # Timeout or another exceptional condition occurred, and
-            # the program is still running.
+    if WIN:
+        try:
+            stdout, stderr = proc.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            is_timeout = True
+    else:
+        try:
             if posix:
-                # Terminate the whole process group
-                os.killpg(proc.pid, signal.SIGTERM)
-                for j in range(10):
-                    time.sleep(0.1)
-                    if proc.poll() is not None:
-                        break
-                else:
-                    # Didn't terminate within 1 sec, so kill it
-                    os.killpg(proc.pid, signal.SIGTERM)
-            else:
-                proc.terminate()
-            proc.wait()
+                # Forward signals related to Ctrl-Z handling; the child
+                # process is in a separate process group so it won't receive
+                # these automatically from the terminal
+                def sig_forward(signum, frame):
+                    os.killpg(proc.pid, signum)
+                    if signum == signal.SIGTSTP:
+                        os.kill(os.getpid(), signal.SIGSTOP)
+                signal.signal(signal.SIGTSTP, sig_forward)
+                signal.signal(signal.SIGCONT, sig_forward)
 
-    if posix:
+                fds = {
+                    proc.stdout.fileno(): stdout_chunks,
+                    proc.stderr.fileno(): stderr_chunks
+                    }
+
+                while proc.poll() is None:
+                    try:
+                        rlist, wlist, xlist = select.select(
+                            list(fds.keys()), [], [], timeout)
+                    except select.error as err:
+                        if err.args[0] == errno.EINTR:
+                            # interrupted by signal handler; try again
+                            continue
+
+                    if len(rlist) == 0:
+                        # We got a timeout
+                        is_timeout = True
+                        break
+                    for f in rlist:
+                        output = os.read(f, PIPE_BUF)
+                        fds[f].append(output)
+                    if dots and time.time() - last_dot_time > 0.5:
+                        if dots is True:
+                            log.dot()
+                        elif dots:
+                            dots()
+                        last_dot_time = time.time()
+        finally:
+            if posix:
+                # Restore signal handlers
+                signal.signal(signal.SIGTSTP, signal.SIG_DFL)
+                signal.signal(signal.SIGCONT, signal.SIG_DFL)
+
+            if proc.returncode is None:
+                # Timeout or another exceptional condition occurred, and
+                # the program is still running.
+                if posix:
+                    # Terminate the whole process group
+                    os.killpg(proc.pid, signal.SIGTERM)
+                    for j in range(10):
+                        time.sleep(0.1)
+                        if proc.poll() is not None:
+                            break
+                    else:
+                        # Didn't terminate within 1 sec, so kill it
+                        os.killpg(proc.pid, signal.SIGTERM)
+                else:
+                    proc.terminate()
+                proc.wait()
+
         proc.stdout.flush()
         proc.stderr.flush()
+
         stdout_chunks.append(proc.stdout.read())
         stderr_chunks.append(proc.stderr.read())
         stdout = b''.join(stdout_chunks)

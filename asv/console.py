@@ -21,8 +21,9 @@ from six.moves import xrange, input
 
 if os.name == 'nt':
     try:
-        from colorama import init
-        init()
+        #from colorama import init
+        #init()
+        pass
     except ImportError:
         warnings.warn('the colorama package is required for terminal color on Windows')
 
