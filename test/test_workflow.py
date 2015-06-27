@@ -95,7 +95,7 @@ def test_run_publish(capfd, basic_conf):
     with open(filename, 'r') as fp:
         data = json.load(fp)
         assert len(data) == 2
-        assert isinstance(data[0][0], int)  # date
+        assert isinstance(data[0][0], six.integer_types)  # date
         assert len(data[0][1]) == 3
         assert len(data[1][1]) == 3
         assert isinstance(data[0][1][0], float)
