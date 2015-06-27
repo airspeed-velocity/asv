@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, unicode_literals, print_function
 
 from distutils.version import LooseVersion
+import sys
 import inspect
 import os
 import subprocess
@@ -13,6 +14,9 @@ import six
 from .. import environment
 from ..console import log
 from .. import util
+
+
+WIN = (os.name == "nt")
 
 
 class Virtualenv(environment.Environment):
@@ -54,11 +58,25 @@ class Virtualenv(environment.Environment):
         self._virtualenv_path = os.path.abspath(
             inspect.getsourcefile(virtualenv))
 
+    @staticmethod
+    def _find_python(python):
+        """Find Python executable for the given Python version"""
+        # Find Python executable on path
+        try:
+            return util.which('python{0}'.format(python))
+        except IOError:
+            pass
+
+        # Maybe the current one is correct
+        if '{0[0]}.{0[1]}'.format(sys.version_info) == python:
+            return sys.executable
+
+        return None
+
     @classmethod
     def get_environments(cls, conf, python):
-        try:
-            executable = util.which('python{0}'.format(python))
-        except IOError:
+        executable = Virtualenv._find_python(python)
+        if executable is None:
             log.warn("No executable found for python {0}".format(python))
         else:
             for configuration in environment.iter_configuration_matrix(conf.matrix):
@@ -79,18 +97,15 @@ class Virtualenv(environment.Environment):
                 log.warn(
                     "If using virtualenv, it much be at least version 1.10")
 
-        try:
-            util.which('python{0}'.format(python))
-        except IOError:
-            return False
-        else:
-            return True
+        executable = Virtualenv._find_python(python)
+        return executable is not None
 
     def check_presence(self):
         if not super(Virtualenv, self).check_presence():
             return False
-        for fn in ['pip', 'python']:
-            if not os.path.isfile(os.path.join(self._path, 'bin', fn)):
+        for executable in ['pip', 'python']:
+            exe = self._find_executable(executable)
+            if not os.path.isfile(exe):
                 return False
         try:
             self._run_executable('python', ['-c', 'pass'])
@@ -126,9 +141,23 @@ class Virtualenv(environment.Environment):
                     args.append(key)
             self._run_executable('pip', args)
 
+    def _find_executable(self, executable):
+        """Find an executable in the environment"""
+        if WIN:
+            executable += ".exe"
+
+            exe = os.path.join(self._path, 'Scripts', executable)
+            if os.path.isfile(exe):
+                return exe
+            exe = os.path.join(self._path, executable)
+            if os.path.isfile(exe):
+                return exe
+
+        return os.path.join(self._path, 'bin', executable)
+
     def _run_executable(self, executable, args, **kwargs):
-        return util.check_output([
-            os.path.join(self._path, 'bin', executable)] + args, **kwargs)
+        exe = self._find_executable(executable)
+        return util.check_output([exe] + args, **kwargs)
 
     def install(self, package):
         log.info("Installing into {0}".format(self.name))

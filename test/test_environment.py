@@ -79,7 +79,7 @@ def test_large_environment_matrix(tmpdir):
         # this test run a long time, we only set up the environment,
         # but don't actually install dependencies into it.  This is
         # enough to trigger the bug in #169.
-        env._install_requirements = lambda: None
+        env._install_requirements = lambda *a: None
         env.create()
 
 

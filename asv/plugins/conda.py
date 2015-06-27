@@ -14,6 +14,9 @@ from ..console import log
 from .. import util
 
 
+WIN = (os.name == "nt")
+
+
 class Conda(environment.Environment):
     """
     Manage an environment using conda.
@@ -75,8 +78,9 @@ class Conda(environment.Environment):
     def check_presence(self):
         if not super(Conda, self).check_presence():
             return False
-        for fn in ['pip', 'python']:
-            if not os.path.isfile(os.path.join(self._path, 'bin', fn)):
+        for executable in ['pip', 'python']:
+            exe = self._find_executable(executable)
+            if not os.path.isfile(exe):
                 return False
         try:
             self._run_executable('python', ['-c', 'pass'])
@@ -102,9 +106,9 @@ class Conda(environment.Environment):
             'pip'])
 
         log.info("Installing requirements for {0}".format(self.name))
-        self._install_requirements()
+        self._install_requirements(conda)
 
-    def _install_requirements(self):
+    def _install_requirements(self, conda):
         self.install('wheel')
 
         if self._requirements:
@@ -117,11 +121,26 @@ class Conda(environment.Environment):
                     args.append("{0}={1}".format(key, val))
                 else:
                     args.append(key)
-            self._run_executable('conda', args)
+
+            util.check_output([conda] + args)
+
+    def _find_executable(self, executable):
+        """Find an executable in the environment"""
+        if WIN:
+            executable += ".exe"
+
+            exe = os.path.join(self._path, 'Scripts', executable)
+            if os.path.isfile(exe):
+                return exe
+            exe = os.path.join(self._path, executable)
+            if os.path.isfile(exe):
+                return exe
+
+        return os.path.join(self._path, 'bin', executable)
 
     def _run_executable(self, executable, args, **kwargs):
-        return util.check_output([
-            os.path.join(self._path, 'bin', executable)] + args, **kwargs)
+        exe = self._find_executable(executable)
+        return util.check_output([exe] + args, **kwargs)
 
     def install(self, package):
         log.info("Installing into {0}".format(self.name))
