@@ -89,71 +89,73 @@ __release__ = {2}
 
 version = '0.2.dev'
 
-git_hash = get_git_hash()
 
-# Indicates if this version is a release version
-release = 'dev' not in version
+if __name__ == "__main__":
+    git_hash = get_git_hash()
 
-if not release:
-    version = '{0}{1}+{2}'.format(
-        version, get_git_revision(), git_hash[:8])
+    # Indicates if this version is a release version
+    release = 'dev' not in version
 
-write_version_file(
-    os.path.join(basedir, 'asv', '_version.py'), version, git_hash)
+    if not release:
+        version = '{0}{1}+{2}'.format(
+            version, get_git_revision(), git_hash[:8])
 
-
-# Install entry points for making releases with zest.releaser
-entry_points = {}
-for hook in [('releaser', 'middle'), ('postreleaser', 'before')]:
-    hook_ep = 'zest.releaser.' + '.'.join(hook)
-    hook_name = 'asv.release.' + '.'.join(hook)
-    hook_func = 'asv._release:' + '_'.join(hook)
-    entry_points[hook_ep] = ['%s = %s' % (hook_name, hook_func)]
-
-entry_points['console_scripts'] = ['asv = asv.main:main']
+    write_version_file(
+        os.path.join(basedir, 'asv', '_version.py'), version, git_hash)
 
 
-setup(
-    name="asv",
-    version=version,
-    packages=['asv',
-              'asv.commands',
-              'asv.plugins',
-              'asv.extern',
-              'asv._release'],
-    entry_points=entry_points,
+    # Install entry points for making releases with zest.releaser
+    entry_points = {}
+    for hook in [('releaser', 'middle'), ('postreleaser', 'before')]:
+        hook_ep = 'zest.releaser.' + '.'.join(hook)
+        hook_name = 'asv.release.' + '.'.join(hook)
+        hook_func = 'asv._release:' + '_'.join(hook)
+        entry_points[hook_ep] = ['%s = %s' % (hook_name, hook_func)]
 
-    install_requires=[
-        str('six>=1.4')
-    ],
+    entry_points['console_scripts'] = ['asv = asv.main:main']
 
-    extras_require={
-        str('hg'): ["python-hglib>=1.5"]
-    },
 
-    package_data={
-        str('asv'): [
-            'www/*.html',
-            'www/*.js',
-            'www/*.css',
-            'www/*.png',
-            'www/*.ico',
-            'www/flot/*.js',
-            'template/__init__.py',
-            'template/asv.conf.json',
-            'template/benchmarks/*.py'
-        ]
-    },
+    setup(
+        name="asv",
+        version=version,
+        packages=['asv',
+                  'asv.commands',
+                  'asv.plugins',
+                  'asv.extern',
+                  'asv._release'],
+        entry_points=entry_points,
 
-    zip_safe=False,
+        install_requires=[
+            str('six>=1.4')
+        ],
 
-    # py.test testing
-    tests_require=['pytest'],
-    cmdclass={'test': PyTest},
+        extras_require={
+            str('hg'): ["python-hglib>=1.5"]
+        },
 
-    author="Michael Droettboom",
-    author_email="mdroe@stsci.edu",
-    description="Airspeed Velocity: A simple Python history benchmarking tool",
-    license="BSD",
-    url="http://github.com/spacetelescope/asv"
-)
+        package_data={
+            str('asv'): [
+                'www/*.html',
+                'www/*.js',
+                'www/*.css',
+                'www/*.png',
+                'www/*.ico',
+                'www/flot/*.js',
+                'template/__init__.py',
+                'template/asv.conf.json',
+                'template/benchmarks/*.py'
+            ]
+        },
+
+        zip_safe=False,
+
+        # py.test testing
+        tests_require=['pytest'],
+        cmdclass={'test': PyTest},
+
+        author="Michael Droettboom",
+        author_email="mdroe@stsci.edu",
+        description="Airspeed Velocity: A simple Python history benchmarking tool",
+        license="BSD",
+        url="http://github.com/spacetelescope/asv"
+    )
