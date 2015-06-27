@@ -23,14 +23,6 @@ from six.moves import xrange, input
 WIN = (os.name == "nt")
 
 
-if WIN:
-    try:
-        import colorama
-    except ImportError:
-        colorama = None
-        warnings.warn('the colorama package is required for terminal color on Windows')
-
-
 def isatty(file):
     """
     Returns `True` if `file` is a tty.
@@ -183,11 +175,7 @@ def color_print(*args, **kwargs):
     end = kwargs.get('end', '')
 
     write = file.write
-    if isatty(file) and (not WIN or colorama):
-        if WIN:
-            file = colorama.AnsiToWin32(file).stream
-            write = file.write
-
+    if isatty(file) and not WIN:
         for i in xrange(0, len(args), 2):
             msg = args[i]
             if i + 1 == len(args):
