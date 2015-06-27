@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
+import sys
 import six
 import pytest
 
@@ -13,18 +14,21 @@ from asv import environment
 from asv import util
 
 
+WIN = (os.name == "nt")
+
+
 try:
     util.which('python2.7')
     HAS_PYTHON_27 = True
-except RuntimeError:
-    HAS_PYTHON_27 = False
+except (RuntimeError, IOError):
+    HAS_PYTHON_27 = (sys.version_info[:2] == (2, 7))
 
 
 try:
     util.which('python3.4')
     HAS_PYTHON_34 = True
-except RuntimeError:
-    HAS_PYTHON_34 = False
+except (RuntimeError, IOError):
+    HAS_PYTHON_34 = (sys.version_info[:2] == (3, 4))
 
 
 @pytest.mark.xfail(not HAS_PYTHON_27 or not HAS_PYTHON_34,
@@ -109,8 +113,23 @@ def test_presence_checks(tmpdir):
         env.run(['-c', 'import os'])
 
         # Check env is recreated if crucial things are missing
-        pip_fn = os.path.join(env._path, 'bin', 'pip')
-        os.remove(pip_fn)
+        pip_fns = [
+            os.path.join(env._path, 'bin', 'pip')
+        ]
+        if WIN:
+            pip_fns += [
+                os.path.join(env._path, 'bin', 'pip.exe'),
+                os.path.join(env._path, 'Scripts', 'pip'),
+                os.path.join(env._path, 'Scripts', 'pip.exe')
+            ]
+
+        some_removed = False
+        for pip_fn in pip_fns:
+            if os.path.isfile(pip_fn):
+                some_removed = True
+                os.remove(pip_fn)
+        assert some_removed
+
         env._is_setup = False
         env.create()
         assert os.path.isfile(pip_fn)
