@@ -61,7 +61,7 @@ def basic_conf(tmpdir):
         'project': 'asv',
         'matrix': {
             "six": [None],
-            "psutil": ["1.2", "2.1"]
+            "colorama": ["0.3.1", "0.3.3"]
         }
     })
 
@@ -89,8 +89,8 @@ def test_run_publish(capfd, basic_conf):
 
     # Check parameterized test json data format
     filename = glob.glob(join(tmpdir, 'html', 'graphs', 'arch-x86_64', 'branch-master',
-                              'cpu-Blazingly fast', 'machine-orangutan', 'os-GNU',
-                              'Linux', 'psutil-2.1', 'python-*', 'ram-128GB',
+                              'colorama-0.3.3',  'cpu-Blazingly fast', 'machine-orangutan',
+                              'os-GNU', 'Linux', 'python-*', 'ram-128GB',
                               'six', 'params_examples.time_skip.json'))[0]
     with open(filename, 'r') as fp:
         data = json.load(fp)
@@ -167,8 +167,8 @@ def _test_run_branches(tmpdir, dvcs, conf, machine_file, range_spec,
     # Check that files for all commits expected were generated
     expected = set(['machine.json'])
     for commit in commits:
-        for psver in ['1.2', '2.1']:
-            expected.add('{0}-py{1[0]}.{1[1]}-psutil{2}-six.json'.format(
+        for psver in ['0.3.1', '0.3.3']:
+            expected.add('{0}-py{1[0]}.{1[1]}-colorama{2}-six.json'.format(
                 commit[:8], sys.version_info, psver))
 
     result_files = os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))

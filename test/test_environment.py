@@ -41,7 +41,7 @@ def test_matrix_environments(tmpdir):
     conf.pythons = ["2.7", "3.4"]
     conf.matrix = {
         "six": ["1.4", None],
-        "psutil": ["1.2", "2.1"]
+        "colorama": ["0.3.1", "0.3.3"]
     }
     environments = list(environment.get_environments(conf))
 
@@ -58,8 +58,8 @@ def test_matrix_environments(tmpdir):
             assert output.startswith(six.text_type(env._requirements['six']))
 
         output = env.run(
-            ['-c', 'import psutil, sys; sys.stdout.write(psutil.__version__)'])
-        assert output.startswith(six.text_type(env._requirements['psutil']))
+            ['-c', 'import colorama, sys; sys.stdout.write(colorama.__version__)'])
+        assert output.startswith(six.text_type(env._requirements['colorama']))
 
 
 @pytest.mark.xfail(not HAS_PYTHON_27,
