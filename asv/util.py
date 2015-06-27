@@ -20,6 +20,7 @@ import sys
 import time
 import errno
 import threading
+import shutil
 
 import six
 from six.moves import xrange
@@ -486,7 +487,7 @@ def write_json(path, data, api_version=None):
     if api_version is not None:
         data['version'] = api_version
 
-    with open(path, 'w') as fd:
+    with long_path_open(path, 'w') as fd:
         json.dump(data, fd, indent=4, sort_keys=True)
 
 
@@ -496,7 +497,7 @@ def load_json(path, api_version=None, cleanup=True):
     """
     path = os.path.abspath(path)
 
-    with open(path, 'r') as fd:
+    with long_path_open(path, 'r') as fd:
         content = fd.read()
 
     if cleanup:
@@ -786,3 +787,19 @@ def is_nan(x):
     if isinstance(x, float):
         return x != x
     return False
+
+
+if not WIN:
+    long_path_open = open
+    long_path_rmtree = shutil.rmtree
+else:
+    def _long_path_prefix(path):
+        if path.startswith("\\\\"):
+            return path
+        return "\\\\?\\" + os.path.abspath(path)
+
+    def long_path_open(filename, *a, **kw):
+        return open(_long_path_prefix(filename), *a, **kw)
+
+    def long_path_rmtree(path, *a, **kw):
+        shutil.rmtree(_long_path_prefix(path), *a, **kw)
