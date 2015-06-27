@@ -259,7 +259,7 @@ class Environment(object):
 
         if not self.check_presence():
             if os.path.exists(self._path):
-                shutil.rmtree(self._path)
+                util.long_path_rmtree(self._path)
 
             if not os.path.exists(self._env_dir):
                 try:
@@ -279,7 +279,7 @@ class Environment(object):
             except:
                 log.error("Failure creating environment for {0}".format(self.name))
                 if os.path.exists(self._path):
-                    shutil.rmtree(self._path)
+                    util.long_path_rmtree(self._path)
                 raise
 
         self.save_info_file(self._path)

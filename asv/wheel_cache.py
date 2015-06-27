@@ -69,7 +69,7 @@ class WheelCache(object):
         for name in names[self._wheel_cache_size:]:
             path = os.path.join(self._path, name)
             if os.path.isdir(path):
-                shutil.rmtree(path)
+                util.long_path_rmtree(path)
 
     def build_project_cached(self, env, package, commit_hash):
         if self._wheel_cache_size == 0:
@@ -90,7 +90,7 @@ class WheelCache(object):
                         '--no-deps', '--no-index', build_root])
         except util.ProcessError:
             # failed -- clean up
-            shutil.rmtree(cache_path)
+            util.long_path_rmtree(cache_path)
             raise
 
         return self._get_wheel(commit_hash)

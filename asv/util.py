@@ -21,6 +21,7 @@ import time
 import errno
 import threading
 import shutil
+import stat
 
 import six
 from six.moves import xrange
@@ -798,8 +799,20 @@ else:
             return path
         return "\\\\?\\" + os.path.abspath(path)
 
+    def _remove_readonly(func, path, exc_info):
+        """Clear the readonly bit and reattempt the removal;
+        Windows rmtree doesn't do this by default"""
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+
     def long_path_open(filename, *a, **kw):
         return open(_long_path_prefix(filename), *a, **kw)
 
-    def long_path_rmtree(path, *a, **kw):
-        shutil.rmtree(_long_path_prefix(path), *a, **kw)
+    def long_path_rmtree(path, ignore_errors=False):
+        if ignore_errors:
+            onerror = None
+        else:
+            onerror = _remove_readonly
+        shutil.rmtree(_long_path_prefix(path),
+                      ignore_errors=ignore_errors,
+                      onerror=onerror)
