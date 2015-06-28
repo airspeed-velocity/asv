@@ -31,8 +31,16 @@ except (RuntimeError, IOError):
     HAS_PYTHON_34 = (sys.version_info[:2] == (3, 4))
 
 
-@pytest.mark.xfail(not HAS_PYTHON_27 or not HAS_PYTHON_34,
-                   reason="Requires Python 2.7 and 3.4")
+try:
+    # Conda can install Python 2.7 and 3.4 on demand
+    util.which('conda')
+    HAS_CONDA = True
+except (RuntimeError, IOError):
+    HAS_CONDA = False
+
+
+@pytest.mark.skipif(not ((HAS_PYTHON_27 and HAS_PYTHON_34) or HAS_CONDA),
+                    reason="Requires Python 2.7 and 3.4")
 def test_matrix_environments(tmpdir):
     conf = config.Config()
 
@@ -62,8 +70,8 @@ def test_matrix_environments(tmpdir):
         assert output.startswith(six.text_type(env._requirements['colorama']))
 
 
-@pytest.mark.xfail(not HAS_PYTHON_27,
-                   reason="Requires Python 2.7")
+@pytest.mark.skipif(not (HAS_PYTHON_27 or HAS_CONDA),
+                    reason="Requires Python 2.7")
 def test_large_environment_matrix(tmpdir):
     # As seen in issue #169, conda can't handle using really long
     # directory names in its environment.  This creates an environment
@@ -87,8 +95,8 @@ def test_large_environment_matrix(tmpdir):
         env.create()
 
 
-@pytest.mark.xfail(not HAS_PYTHON_27,
-                   reason="Requires Python 2.7")
+@pytest.mark.skipif(not (HAS_PYTHON_27 or HAS_CONDA),
+                    reason="Requires Python 2.7")
 @pytest.mark.xfail(WIN,
                    reason=("Fails on some Windows installations; the Python DLLs "
                            "in the created environments are apparently not unloaded "
