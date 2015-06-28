@@ -89,6 +89,11 @@ def test_large_environment_matrix(tmpdir):
 
 @pytest.mark.xfail(not HAS_PYTHON_27,
                    reason="Requires Python 2.7")
+@pytest.mark.xfail(WIN,
+                   reason=("Fails on some Windows installations; the Python DLLs "
+                           "in the created environments are apparently not unloaded "
+                           "properly so that removing the environments fails. This is "
+                           "likely not a very common occurrence in real use cases."))
 def test_presence_checks(tmpdir):
     conf = config.Config()
 
