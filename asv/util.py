@@ -793,8 +793,10 @@ def is_nan(x):
 if not WIN:
     long_path_open = open
     long_path_rmtree = shutil.rmtree
+    def long_path(path):
+        return path
 else:
-    def _long_path_prefix(path):
+    def long_path(path):
         if path.startswith("\\\\"):
             return path
         return "\\\\?\\" + os.path.abspath(path)
@@ -806,13 +808,13 @@ else:
         func(path)
 
     def long_path_open(filename, *a, **kw):
-        return open(_long_path_prefix(filename), *a, **kw)
+        return open(long_path(filename), *a, **kw)
 
     def long_path_rmtree(path, ignore_errors=False):
         if ignore_errors:
             onerror = None
         else:
             onerror = _remove_readonly
-        shutil.rmtree(_long_path_prefix(path),
+        shutil.rmtree(long_path(path),
                       ignore_errors=ignore_errors,
                       onerror=onerror)

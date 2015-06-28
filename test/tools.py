@@ -316,7 +316,7 @@ def preview(base_path):
             # Don't serve from cwd, but from a different directory
             path = SimpleHTTPServer.SimpleHTTPRequestHandler.translate_path(self, path)
             path = os.path.join(base_path, os.path.relpath(path, os.getcwd()))
-            return path
+            return util.long_path(path)
 
     httpd, base_url = create_httpd(Handler)
 
