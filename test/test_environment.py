@@ -113,6 +113,7 @@ def test_presence_checks(tmpdir):
 
     for env in environments:
         env.create()
+        assert env.check_presence()
 
         # Check env is recreated when info file is clobbered
         info_fn = os.path.join(env._path, 'asv-env-info.json')
