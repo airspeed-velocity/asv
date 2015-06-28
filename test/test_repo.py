@@ -81,8 +81,8 @@ def test_repo_git(tmpdir):
     _test_branches(conf, branch_commits)
 
 
-@pytest.mark.xfail(hglib is None,
-                   reason="needs hglib")
+@pytest.mark.skipif(hglib is None,
+                    reason="needs hglib")
 def test_repo_hg(tmpdir):
     tmpdir = six.text_type(tmpdir)
 
