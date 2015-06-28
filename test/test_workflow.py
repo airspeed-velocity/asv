@@ -24,6 +24,9 @@ from asv.util import check_output, which
 from . import tools
 
 
+WIN = (os.name == 'nt')
+
+
 dummy_values = [
     (None, None),
     (1, 1),
@@ -139,6 +142,12 @@ def test_continuous(capfd, basic_conf):
 
 def test_find(capfd, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
+
+    if WIN and os.path.basename(sys.argv[0]).lower().startswith('py.test'):
+        # Multiprocessing in spawn mode can result to problems with py.test
+        # Find.run calls Setup.run in parallel mode by default
+        pytest.skip("Multiprocessing spawn mode on Windows not safe to run "
+                    "from py.test runner.")
 
     # Test find at least runs
     Find.run(conf, "master~5..master", "params_examples.track_find_test",
