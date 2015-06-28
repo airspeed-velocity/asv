@@ -100,20 +100,7 @@ class Virtualenv(environment.Environment):
         executable = Virtualenv._find_python(python)
         return executable is not None
 
-    def check_presence(self):
-        if not super(Virtualenv, self).check_presence():
-            return False
-        for executable in ['pip', 'python']:
-            exe = self._find_executable(executable)
-            if not os.path.isfile(exe):
-                return False
-        try:
-            self._run_executable('python', ['-c', 'pass'])
-        except (subprocess.CalledProcessError, OSError):
-            return False
-        return True
-
-    def _setup(self):
+    def setup(self):
         """
         Setup the environment on disk using virtualenv.
         Then, all of the requirements are installed into
@@ -130,7 +117,7 @@ class Virtualenv(environment.Environment):
         self._install_requirements()
 
     def _install_requirements(self):
-        self._run_executable('pip', ['install', 'wheel'])
+        self.run_executable('pip', ['install', 'wheel'])
 
         if self._requirements:
             args = ['install', '--upgrade']
@@ -139,35 +126,17 @@ class Virtualenv(environment.Environment):
                     args.append("{0}=={1}".format(key, val))
                 else:
                     args.append(key)
-            self._run_executable('pip', args)
-
-    def _find_executable(self, executable):
-        """Find an executable in the environment"""
-        if WIN:
-            executable += ".exe"
-
-            exe = os.path.join(self._path, 'Scripts', executable)
-            if os.path.isfile(exe):
-                return exe
-            exe = os.path.join(self._path, executable)
-            if os.path.isfile(exe):
-                return exe
-
-        return os.path.join(self._path, 'bin', executable)
-
-    def _run_executable(self, executable, args, **kwargs):
-        exe = self._find_executable(executable)
-        return util.check_output([exe] + args, **kwargs)
+            self.run_executable('pip', args)
 
     def install(self, package):
         log.info("Installing into {0}".format(self.name))
-        self._run_executable('pip', ['install', package])
+        self.run_executable('pip', ['install', package])
 
     def uninstall(self, package):
         log.info("Uninstalling from {0}".format(self.name))
-        self._run_executable('pip', ['uninstall', '-y', package],
+        self.run_executable('pip', ['uninstall', '-y', package],
                              valid_return_codes=None)
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
-        return self._run_executable('python', args, **kwargs)
+        return self.run_executable('python', args, **kwargs)

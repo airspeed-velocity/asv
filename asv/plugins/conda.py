@@ -75,20 +75,7 @@ class Conda(environment.Environment):
         for configuration in environment.iter_configuration_matrix(conf.matrix):
             yield cls(conf, python, configuration)
 
-    def check_presence(self):
-        if not super(Conda, self).check_presence():
-            return False
-        for executable in ['pip', 'python']:
-            exe = self._find_executable(executable)
-            if not os.path.isfile(exe):
-                return False
-        try:
-            self._run_executable('python', ['-c', 'pass'])
-        except (subprocess.CalledProcessError, OSError):
-            return False
-        return True
-
-    def _setup(self):
+    def setup(self):
         try:
             conda = util.which('conda')
         except IOError as e:
@@ -124,33 +111,15 @@ class Conda(environment.Environment):
 
             util.check_output([conda] + args)
 
-    def _find_executable(self, executable):
-        """Find an executable in the environment"""
-        if WIN:
-            executable += ".exe"
-
-            exe = os.path.join(self._path, 'Scripts', executable)
-            if os.path.isfile(exe):
-                return exe
-            exe = os.path.join(self._path, executable)
-            if os.path.isfile(exe):
-                return exe
-
-        return os.path.join(self._path, 'bin', executable)
-
-    def _run_executable(self, executable, args, **kwargs):
-        exe = self._find_executable(executable)
-        return util.check_output([exe] + args, **kwargs)
-
     def install(self, package):
         log.info("Installing into {0}".format(self.name))
-        self._run_executable('pip', ['install', package])
+        self.run_executable('pip', ['install', package])
 
     def uninstall(self, package):
         log.info("Uninstalling from {0}".format(self.name))
-        self._run_executable('pip', ['uninstall', '-y', package],
-                             valid_return_codes=None)
+        self.run_executable('pip', ['uninstall', '-y', package],
+                            valid_return_codes=None)
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
-        return self._run_executable('python', args, **kwargs)
+        return self.run_executable('python', args, **kwargs)

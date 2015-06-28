@@ -85,7 +85,7 @@ class WheelCache(object):
         cache_path = self._create_wheel_cache_path(commit_hash)
 
         try:
-            env._run_executable(
+            env.run_executable(
                 'pip', ['wheel', '--wheel-dir', cache_path,
                         '--no-deps', '--no-index', build_root])
         except util.ProcessError:
