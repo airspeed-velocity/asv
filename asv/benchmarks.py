@@ -4,10 +4,12 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import hashlib
 import io
 import json
 import os
 import re
+import shutil
 import sys
 import tempfile
 import itertools
@@ -29,8 +31,8 @@ BENCHMARK_RUN_SCRIPT = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "benchmark.py")
 
 
-def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
-                  profile=False):
+def run_benchmark(benchmark, root, env, show_stderr=False,
+                  quick=False, profile=False, cwd=None):
     """
     Run a benchmark in different process in the given environment.
 
@@ -52,6 +54,10 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
     profile : bool, optional
         When `True`, run the benchmark through the `cProfile` profiler
         and save the results.
+
+    cwd : str, optional
+        The path to the current working directory to use when running
+        the benchmark process.
 
     Returns
     -------
@@ -96,8 +102,10 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
 
         for param_idx, params in param_iter:
             success, data, profile_data, err, out, errcode = \
-                _run_benchmark_single(benchmark, root, env, param_idx,
-                                      quick=quick, profile=profile)
+                _run_benchmark_single(
+                    benchmark, root, env, param_idx,
+                    quick=quick, profile=profile,
+                    cwd=cwd)
 
             total_count += 1
             if success:
@@ -184,7 +192,7 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
         return result
 
 
-def _run_benchmark_single(benchmark, root, env, param_idx, profile, quick):
+def _run_benchmark_single(benchmark, root, env, param_idx, profile, quick, cwd):
     """
     Run a benchmark, for single parameter combination index in case it
     is parameterized
@@ -225,7 +233,7 @@ def _run_benchmark_single(benchmark, root, env, param_idx, profile, quick):
              profile_path, result_file.name],
             dots=False, timeout=benchmark['timeout'],
             display_error=False, return_stderr=True,
-            valid_return_codes=None)
+            valid_return_codes=None, cwd=cwd)
 
         if errcode:
             success = False
@@ -325,7 +333,7 @@ class Benchmarks(dict):
             result_file = tempfile.NamedTemporaryFile(delete=False)
             try:
                 result_file.close()
-                output = env.run(
+                env.run(
                     [BENCHMARK_RUN_SCRIPT, 'discover', root,
                      result_file.name],
                     dots=False)
@@ -335,8 +343,7 @@ class Benchmarks(dict):
             finally:
                 os.remove(result_file.name)
 
-            for benchmark in benchmarks:
-                yield benchmark
+        return benchmarks
 
     @classmethod
     def check_tree(cls, root):
@@ -468,26 +475,60 @@ class Benchmarks(dict):
 
             - `result`: The numeric value of the benchmark (usually
               the runtime in seconds for a timing benchmark), but may
-              be an arbitrary JSON data structure. For parameterized tests, 
+              be an arbitrary JSON data structure. For parameterized tests,
               this is a dictionary with keys 'params' and 'result', where
               the value of 'params' contains a list of lists of parameter values,
               and 'result' is a list of results, corresponding to itertools.product
-              iteration over parameters. 
+              iteration over parameters.
               Set to `None` if the benchmark failed.
 
             - `profile`: If `profile` is `True`, this key will exist,
               and be a byte string containing the cProfile data.
         """
         log.info("Benchmarking {0}".format(env.name))
+
         with log.indent():
-            times = {}
             benchmarks = sorted(list(six.iteritems(self)))
+
+            # Remove skipped benchmarks
+            if skip:
+                benchmarks = [
+                    (name, benchmark) for (name, benchmark) in
+                    benchmarks if name not in skip]
+
+            # Organize benchmarks by the setup_cache_key
+            benchmark_order = {}
             for name, benchmark in benchmarks:
-                if skip and name in skip:
-                    continue
-                times[name] = run_benchmark(
-                    benchmark, self._benchmark_dir, env, show_stderr=show_stderr,
-                    quick=quick, profile=profile)
+                key = benchmark.get('setup_cache_key')
+                benchmark_order.setdefault(key, []).append((name, benchmark))
+
+            times = {}
+            for setup_cache_key, benchmark_set in six.iteritems(benchmark_order):
+                tmpdir = tempfile.mkdtemp()
+                try:
+                    if setup_cache_key is not None:
+                        log.info("Setting up {0}".format(setup_cache_key))
+                        out, err, errcode = env.run(
+                            [BENCHMARK_RUN_SCRIPT, 'setup_cache',
+                             self._benchmark_dir, benchmark_set[0][0]],
+                            dots=False, display_error=False,
+                            return_stderr=True, valid_return_codes=None,
+                            cwd=tmpdir)
+                        if errcode:
+                            for name, benchmark in benchmark_set:
+                                # TODO: Store more information about failure
+                                times[name] = {'result': None}
+                            continue
+
+                    for name, benchmark in benchmark_set:
+                        times[name] = run_benchmark(
+                            benchmark, self._benchmark_dir, env,
+                            show_stderr=show_stderr,
+                            quick=quick, profile=profile,
+                            cwd=tmpdir)
+                finally:
+                    shutil.rmtree(tmpdir, True)
+
         return times
 
     def skip_benchmarks(self, env):

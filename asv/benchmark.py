@@ -28,12 +28,13 @@ from ctypes.util import find_library
 import errno
 import imp
 import inspect
+import itertools
 import json
 import os
+import pickle
 import re
 import textwrap
 import timeit
-import itertools
 
 # The best timer we can use is time.process_time, but it is not
 # available in the Python stdlib until Python 3.3.  This is a ctypes
@@ -245,6 +246,13 @@ def get_benchmark_type_from_name(name):
     return None
 
 
+def get_setup_cache_key(func):
+    if func is None:
+        return None
+    return '{0}:{1}'.format(inspect.getsourcefile(func),
+                            inspect.getsourcelines(func)[1])
+
+
 class Benchmark(object):
     """
     Represents a single benchmark.
@@ -261,6 +269,8 @@ class Benchmark(object):
         self._attr_sources = attr_sources
         self._setups = list(_get_all_attrs(attr_sources, 'setup', True))[::-1]
         self._teardowns = list(_get_all_attrs(attr_sources, 'teardown', True))
+        self._setup_cache = _get_first_attr(attr_sources, 'setup_cache', None)
+        self.setup_cache_key = get_setup_cache_key(self._setup_cache)
         self.timeout = _get_first_attr(attr_sources, "timeout", 60.0)
         self.code = textwrap.dedent(inspect.getsource(self.func))
         self.type = "base"
@@ -297,10 +307,18 @@ class Benchmark(object):
 
     def set_param_idx(self, param_idx):
         try:
-            self._current_params, = itertools.islice(itertools.product(*self._params),
-                                                     param_idx, param_idx + 1)
+            self._current_params, = itertools.islice(
+                itertools.product(*self._params),
+                param_idx, param_idx + 1)
         except ValueError:
-            raise ValueError("Invalid benchmark parameter permutation index: %r" % (param_idx,))
+            raise ValueError(
+                "Invalid benchmark parameter permutation index: %r" % (param_idx,))
+
+    def insert_param(self, param):
+        """
+        Insert a parameter at the front of the parameter list.
+        """
+        self._current_params = tuple([param] + list(self._current_params))
 
     def __repr__(self):
         return '<{0} {1}>'.format(self.__class__.__name__, self.name)
@@ -381,11 +399,22 @@ class Benchmark(object):
             raise ValueError(
                 "Could not find benchmark '{0}'".format(name))
 
+        if '-' in name:
+            try:
+                name, param_idx = name.split('-', 1)
+                param_idx = int(param_idx)
+            except ValueError:
+                raise ValueError("Benchmark id %r is invalid" % (name,))
+        else:
+            param_idx = None
+
         parts = name.split('.')
 
         benchmark = find_on_filesystem(
             root, parts, os.path.basename(root))
-        benchmark._param_idx = param_idx
+
+        if param_idx is not None:
+            benchmark.set_param_idx(param_idx)
 
         if quick:
             benchmark.repeat = 1
@@ -405,6 +434,10 @@ class Benchmark(object):
     def do_teardown(self):
         for teardown in self._teardowns:
             teardown(*self._current_params)
+
+    def do_setup_cache(self):
+        if self._setup_cache is not None:
+            return self._setup_cache()
 
     def do_run(self):
         return self.run(*self._current_params)
@@ -653,53 +686,66 @@ def list_benchmarks(root, fp):
     fp.write(']')
 
 
+def main_discover(args):
+    benchmark_dir, result_file = args
+    with open(result_file, 'w') as fp:
+        list_benchmarks(benchmark_dir, fp)
+
+
+def main_setup_cache(args):
+    (benchmark_dir, benchmark_id) = args
+    benchmark = Benchmark.from_name(benchmark_dir, benchmark_id)
+    cache = benchmark.do_setup_cache()
+    with open("cache.pickle", "wb") as fd:
+        pickle.dump(cache, fd)
+
+
+def main_run(args):
+    (benchmark_dir, benchmark_id, quick, profile_path, result_file) = args
+    quick = (quick == 'True')
+    if profile_path == 'None':
+        profile_path = None
+
+    benchmark = Benchmark.from_name(
+        benchmark_dir, benchmark_id, quick=quick)
+
+    if benchmark.setup_cache_key is not None:
+        with open("cache.pickle", "rb") as fd:
+            cache = pickle.load(fd)
+        if cache is not None:
+            benchmark.insert_param(cache)
+
+    skip = benchmark.do_setup()
+
+    try:
+        if skip:
+            result = float('nan')
+        else:
+            result = benchmark.do_run()
+            if profile_path is not None:
+                benchmark.do_profile(profile_path)
+    finally:
+        benchmark.do_teardown()
+
+    # Write the output value
+    with open(result_file, 'w') as fp:
+        json.dump(result, fp)
+
+
+commands = {
+    'discover': main_discover,
+    'setup_cache': main_setup_cache,
+    'run': main_run
+}
+
+
 if __name__ == '__main__':
     mode = sys.argv[1]
     args = sys.argv[2:]
 
-    if mode == 'discover':
-        benchmark_dir, result_file = args
-        with open(result_file, 'w') as fp:
-            list_benchmarks(benchmark_dir, fp)
+    if mode in commands:
+        commands[mode](args)
         sys.exit(0)
-
-    elif mode == 'run':
-        benchmark_dir, benchmark_id, quick, profile_path, result_file = args
-        quick = (quick == 'True')
-        if profile_path == 'None':
-            profile_path = None
-
-        if '-' in benchmark_id:
-            try:
-                benchmark_id, param_idx = benchmark_id.split('-', 1)
-                param_idx = int(param_idx)
-            except ValueError:
-                raise ValueError("Benchmark id %r is invalid" % (benchmark_id,))
-        else:
-            param_idx = None
-
-        benchmark = Benchmark.from_name(
-            benchmark_dir, benchmark_id, quick=quick)
-        if param_idx is not None:
-            benchmark.set_param_idx(param_idx)
-        skip = benchmark.do_setup()
-        try:
-            if skip:
-                result = float('nan')
-            else:
-                result = benchmark.do_run()
-                if profile_path is not None:
-                    benchmark.do_profile(profile_path)
-        finally:
-            benchmark.do_teardown()
-
-        # Write the output value
-        with open(result_file, 'w') as fp:
-            json.dump(result, fp)
-
-        # Not strictly necessary, but it's explicit about the successful
-        # exit code that we want.
-        sys.exit(0)
-
-    sys.stderr.write("Unknown mode {0}\n".format(mode))
-    sys.exit(1)
+    else:
+        sys.stderr.write("Unknown mode {0}\n".format(mode))
+        sys.exit(1)
