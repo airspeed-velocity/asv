@@ -17,7 +17,7 @@ except ImportError:
     HAVE_NUMPY = False
 
 
-@pytest.mark.skip(not HAVE_NUMPY, reason="test needs numpy")
+@pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
 def test_solve_potts():
     np.random.seed(1234)
 
@@ -83,7 +83,7 @@ def test_solve_potts():
     assert right == [10, 30, 200, 600, 2500, 2990, 3000, 50000]
 
 
-@pytest.mark.skip(not HAVE_NUMPY, reason="test needs numpy")
+@pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
 def test_detect_regressions():
     for seed in [1234, 5678, 8901, 2345]:
         np.random.seed(seed)
