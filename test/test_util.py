@@ -11,8 +11,12 @@ import pickle
 import multiprocessing
 import subprocess
 import traceback
+import pytest
 
 from asv import util
+
+
+WIN = (os.name == 'nt')
 
 
 def _multiprocessing_raise_processerror(arg):
@@ -33,6 +37,11 @@ def _multiprocessing_raise_usererror(arg):
 
 def test_parallelfailure():
     # Check the workaround for https://bugs.python.org/issue9400 works
+
+    if WIN and os.path.basename(sys.argv[0]).lower().startswith('py.test'):
+        # Multiprocessing in spawn mode can result to problems with py.test
+        pytest.skip("Multiprocessing spawn mode on Windows not safe to run "
+                    "from py.test runner.")
 
     # The exception class must be pickleable
     exc = util.ParallelFailure("test", Exception, "something")

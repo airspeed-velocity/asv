@@ -208,6 +208,7 @@ $(function() {
        based on it. */
     $.ajax({
         url: "index.json",
+        dataType: "json",
         cache: false
     }).done(function (index) {
         master_json = index;
@@ -527,6 +528,7 @@ $(function() {
             callback_in_view(plot_div, function() {
                 $.ajax({
                     url: 'graphs/summary/' + bm_name + '.json',
+                    dataType: "json",
                     cache: false
                 }).done(function(data) {
                     var options = {
@@ -1028,6 +1030,7 @@ $(function() {
         $.each(to_load, function(i, item) {
             $.ajax({
                 url: item[0],
+                dataType: "json",
                 cache: false
             }).done(function(data) {
                 $.each(item[1], function(j, graph_content) {
@@ -1052,6 +1055,7 @@ $(function() {
                     is probably down. */
                     $.ajax({
                         url: "swallow.ico",
+                        dataType: "text",
                         cache: false
                     }).done(function (index) {
                         update_graphs();

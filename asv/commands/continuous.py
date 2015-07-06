@@ -107,7 +107,14 @@ class Continuous(Command):
         table = []
         slowed_down = False
         for name, benchmark in six.iteritems(all_benchmarks):
-            change = after[name] / before[name]
+            if before[name] == 0:
+                if after[name] == 0:
+                    change = 1.0
+                else:
+                    change = float('inf')
+            else:
+                change = after[name] / before[name]
+
             if change > factor or change < 1.0 / factor:
                 table.append(
                     (change, before[name], after[name], name, benchmark))

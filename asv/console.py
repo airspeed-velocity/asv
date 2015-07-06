@@ -8,6 +8,8 @@ A set of utilities for writing output to the console.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import os
+import warnings
 import codecs
 import contextlib
 import locale
@@ -17,6 +19,8 @@ import textwrap
 
 import six
 from six.moves import xrange, input
+
+WIN = (os.name == "nt")
 
 
 def isatty(file):
@@ -168,11 +172,10 @@ def color_print(*args, **kwargs):
     """
 
     file = kwargs.get('file', sys.stdout)
-
     end = kwargs.get('end', '')
 
     write = file.write
-    if isatty(file):
+    if isatty(file) and not WIN:
         for i in xrange(0, len(args), 2):
             msg = args[i]
             if i + 1 == len(args):

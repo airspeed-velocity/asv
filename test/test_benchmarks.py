@@ -68,7 +68,7 @@ def test_find_benchmarks(tmpdir):
     assert times[
         'subdir.time_subdir.time_foo']['result'] is not None
     assert times[
-        'mem_examples.mem_list']['result'] > 2000
+        'mem_examples.mem_list']['result'] > 1000
     assert times[
         'time_secondary.track_value']['result'] == 42.0
     assert 'profile' in times[

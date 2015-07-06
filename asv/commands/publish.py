@@ -125,7 +125,7 @@ class Publish(Command):
         log.set_nitems(5)
 
         if os.path.exists(conf.html_dir):
-            shutil.rmtree(conf.html_dir)
+            util.long_path_rmtree(conf.html_dir)
 
         benchmarks = Benchmarks.load(conf)
 

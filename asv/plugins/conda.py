@@ -14,6 +14,9 @@ from ..console import log
 from .. import util
 
 
+WIN = (os.name == "nt")
+
+
 class Conda(environment.Environment):
     """
     Manage an environment using conda.
@@ -72,18 +75,6 @@ class Conda(environment.Environment):
         for configuration in environment.iter_configuration_matrix(conf.matrix):
             yield cls(conf, python, configuration)
 
-    def check_presence(self):
-        if not super(Conda, self).check_presence():
-            return False
-        for fn in ['pip', 'python']:
-            if not os.path.isfile(os.path.join(self._path, 'bin', fn)):
-                return False
-        try:
-            self._run_executable('python', ['-c', 'pass'])
-        except (subprocess.CalledProcessError, OSError):
-            return False
-        return True
-
     def _setup(self):
         try:
             conda = util.which('conda')
@@ -102,9 +93,9 @@ class Conda(environment.Environment):
             'pip'])
 
         log.info("Installing requirements for {0}".format(self.name))
-        self._install_requirements()
+        self._install_requirements(conda)
 
-    def _install_requirements(self):
+    def _install_requirements(self, conda):
         self.install('wheel')
 
         if self._requirements:
@@ -117,21 +108,18 @@ class Conda(environment.Environment):
                     args.append("{0}={1}".format(key, val))
                 else:
                     args.append(key)
-            self._run_executable('conda', args)
 
-    def _run_executable(self, executable, args, **kwargs):
-        return util.check_output([
-            os.path.join(self._path, 'bin', executable)] + args, **kwargs)
+            util.check_output([conda] + args)
 
     def install(self, package):
         log.info("Installing into {0}".format(self.name))
-        self._run_executable('pip', ['install', package])
+        self.run_executable('pip', ['install', package])
 
     def uninstall(self, package):
         log.info("Uninstalling from {0}".format(self.name))
-        self._run_executable('pip', ['uninstall', '-y', package],
-                             valid_return_codes=None)
+        self.run_executable('pip', ['uninstall', '-y', package],
+                            valid_return_codes=None)
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
-        return self._run_executable('python', args, **kwargs)
+        return self.run_executable('python', args, **kwargs)

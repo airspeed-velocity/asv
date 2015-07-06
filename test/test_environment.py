@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
+import sys
 import six
 import pytest
 
@@ -13,22 +14,33 @@ from asv import environment
 from asv import util
 
 
+WIN = (os.name == "nt")
+
+
 try:
     util.which('python2.7')
     HAS_PYTHON_27 = True
-except RuntimeError:
-    HAS_PYTHON_27 = False
+except (RuntimeError, IOError):
+    HAS_PYTHON_27 = (sys.version_info[:2] == (2, 7))
 
 
 try:
     util.which('python3.4')
     HAS_PYTHON_34 = True
-except RuntimeError:
-    HAS_PYTHON_34 = False
+except (RuntimeError, IOError):
+    HAS_PYTHON_34 = (sys.version_info[:2] == (3, 4))
 
 
-@pytest.mark.xfail(not HAS_PYTHON_27 or not HAS_PYTHON_34,
-                   reason="Requires Python 2.7 and 3.4")
+try:
+    # Conda can install Python 2.7 and 3.4 on demand
+    util.which('conda')
+    HAS_CONDA = True
+except (RuntimeError, IOError):
+    HAS_CONDA = False
+
+
+@pytest.mark.skipif(not ((HAS_PYTHON_27 and HAS_PYTHON_34) or HAS_CONDA),
+                    reason="Requires Python 2.7 and 3.4")
 def test_matrix_environments(tmpdir):
     conf = config.Config()
 
@@ -37,7 +49,7 @@ def test_matrix_environments(tmpdir):
     conf.pythons = ["2.7", "3.4"]
     conf.matrix = {
         "six": ["1.4", None],
-        "psutil": ["1.2", "2.1"]
+        "colorama": ["0.3.1", "0.3.3"]
     }
     environments = list(environment.get_environments(conf))
 
@@ -54,12 +66,12 @@ def test_matrix_environments(tmpdir):
             assert output.startswith(six.text_type(env._requirements['six']))
 
         output = env.run(
-            ['-c', 'import psutil, sys; sys.stdout.write(psutil.__version__)'])
-        assert output.startswith(six.text_type(env._requirements['psutil']))
+            ['-c', 'import colorama, sys; sys.stdout.write(colorama.__version__)'])
+        assert output.startswith(six.text_type(env._requirements['colorama']))
 
 
-@pytest.mark.xfail(not HAS_PYTHON_27,
-                   reason="Requires Python 2.7")
+@pytest.mark.skipif(not (HAS_PYTHON_27 or HAS_CONDA),
+                    reason="Requires Python 2.7")
 def test_large_environment_matrix(tmpdir):
     # As seen in issue #169, conda can't handle using really long
     # directory names in its environment.  This creates an environment
@@ -79,12 +91,17 @@ def test_large_environment_matrix(tmpdir):
         # this test run a long time, we only set up the environment,
         # but don't actually install dependencies into it.  This is
         # enough to trigger the bug in #169.
-        env._install_requirements = lambda: None
+        env._install_requirements = lambda *a: None
         env.create()
 
 
-@pytest.mark.xfail(not HAS_PYTHON_27,
-                   reason="Requires Python 2.7")
+@pytest.mark.skipif(not (HAS_PYTHON_27 or HAS_CONDA),
+                    reason="Requires Python 2.7")
+@pytest.mark.xfail(WIN,
+                   reason=("Fails on some Windows installations; the Python DLLs "
+                           "in the created environments are apparently not unloaded "
+                           "properly so that removing the environments fails. This is "
+                           "likely not a very common occurrence in real use cases."))
 def test_presence_checks(tmpdir):
     conf = config.Config()
 
@@ -96,6 +113,7 @@ def test_presence_checks(tmpdir):
 
     for env in environments:
         env.create()
+        assert env.check_presence()
 
         # Check env is recreated when info file is clobbered
         info_fn = os.path.join(env._path, 'asv-env-info.json')
@@ -109,8 +127,23 @@ def test_presence_checks(tmpdir):
         env.run(['-c', 'import os'])
 
         # Check env is recreated if crucial things are missing
-        pip_fn = os.path.join(env._path, 'bin', 'pip')
-        os.remove(pip_fn)
+        pip_fns = [
+            os.path.join(env._path, 'bin', 'pip')
+        ]
+        if WIN:
+            pip_fns += [
+                os.path.join(env._path, 'bin', 'pip.exe'),
+                os.path.join(env._path, 'Scripts', 'pip'),
+                os.path.join(env._path, 'Scripts', 'pip.exe')
+            ]
+
+        some_removed = False
+        for pip_fn in pip_fns:
+            if os.path.isfile(pip_fn):
+                some_removed = True
+                os.remove(pip_fn)
+        assert some_removed
+
         env._is_setup = False
         env.create()
         assert os.path.isfile(pip_fn)

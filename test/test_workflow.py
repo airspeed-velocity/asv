@@ -24,6 +24,9 @@ from asv.util import check_output, which
 from . import tools
 
 
+WIN = (os.name == 'nt')
+
+
 dummy_values = [
     (None, None),
     (1, 1),
@@ -61,7 +64,7 @@ def basic_conf(tmpdir):
         'project': 'asv',
         'matrix': {
             "six": [None],
-            "psutil": ["1.2", "2.1"]
+            "colorama": ["0.3.1", "0.3.3"]
         }
     })
 
@@ -89,13 +92,13 @@ def test_run_publish(capfd, basic_conf):
 
     # Check parameterized test json data format
     filename = glob.glob(join(tmpdir, 'html', 'graphs', 'arch-x86_64', 'branch-master',
-                              'cpu-Blazingly fast', 'machine-orangutan', 'os-GNU',
-                              'Linux', 'psutil-2.1', 'python-*', 'ram-128GB',
+                              'colorama-0.3.3',  'cpu-Blazingly fast', 'machine-orangutan',
+                              'os-GNU', 'Linux', 'python-*', 'ram-128GB',
                               'six', 'params_examples.time_skip.json'))[0]
     with open(filename, 'r') as fp:
         data = json.load(fp)
         assert len(data) == 2
-        assert isinstance(data[0][0], int)  # date
+        assert isinstance(data[0][0], six.integer_types)  # date
         assert len(data[0][1]) == 3
         assert len(data[1][1]) == 3
         assert isinstance(data[0][1][0], float)
@@ -140,6 +143,12 @@ def test_continuous(capfd, basic_conf):
 def test_find(capfd, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
+    if WIN and os.path.basename(sys.argv[0]).lower().startswith('py.test'):
+        # Multiprocessing in spawn mode can result to problems with py.test
+        # Find.run calls Setup.run in parallel mode by default
+        pytest.skip("Multiprocessing spawn mode on Windows not safe to run "
+                    "from py.test runner.")
+
     # Test find at least runs
     Find.run(conf, "master~5..master", "params_examples.track_find_test",
              _machine_file=machine_file)
@@ -167,8 +176,8 @@ def _test_run_branches(tmpdir, dvcs, conf, machine_file, range_spec,
     # Check that files for all commits expected were generated
     expected = set(['machine.json'])
     for commit in commits:
-        for psver in ['1.2', '2.1']:
-            expected.add('{0}-py{1[0]}.{1[1]}-psutil{2}-six.json'.format(
+        for psver in ['0.3.1', '0.3.3']:
+            expected.add('{0}-py{1[0]}.{1[1]}-colorama{2}-six.json'.format(
                 commit[:8], sys.version_info, psver))
 
     result_files = os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))

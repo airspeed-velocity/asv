@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, unicode_literals, print_function
 
 from distutils.version import LooseVersion
+import sys
 import inspect
 import os
 import subprocess
@@ -13,6 +14,9 @@ import six
 from .. import environment
 from ..console import log
 from .. import util
+
+
+WIN = (os.name == "nt")
 
 
 class Virtualenv(environment.Environment):
@@ -54,11 +58,25 @@ class Virtualenv(environment.Environment):
         self._virtualenv_path = os.path.abspath(
             inspect.getsourcefile(virtualenv))
 
+    @staticmethod
+    def _find_python(python):
+        """Find Python executable for the given Python version"""
+        # Find Python executable on path
+        try:
+            return util.which('python{0}'.format(python))
+        except IOError:
+            pass
+
+        # Maybe the current one is correct
+        if '{0[0]}.{0[1]}'.format(sys.version_info) == python:
+            return sys.executable
+
+        return None
+
     @classmethod
     def get_environments(cls, conf, python):
-        try:
-            executable = util.which('python{0}'.format(python))
-        except IOError:
+        executable = Virtualenv._find_python(python)
+        if executable is None:
             log.warn("No executable found for python {0}".format(python))
         else:
             for configuration in environment.iter_configuration_matrix(conf.matrix):
@@ -79,24 +97,8 @@ class Virtualenv(environment.Environment):
                 log.warn(
                     "If using virtualenv, it much be at least version 1.10")
 
-        try:
-            util.which('python{0}'.format(python))
-        except IOError:
-            return False
-        else:
-            return True
-
-    def check_presence(self):
-        if not super(Virtualenv, self).check_presence():
-            return False
-        for fn in ['pip', 'python']:
-            if not os.path.isfile(os.path.join(self._path, 'bin', fn)):
-                return False
-        try:
-            self._run_executable('python', ['-c', 'pass'])
-        except (subprocess.CalledProcessError, OSError):
-            return False
-        return True
+        executable = Virtualenv._find_python(python)
+        return executable is not None
 
     def _setup(self):
         """
@@ -115,7 +117,7 @@ class Virtualenv(environment.Environment):
         self._install_requirements()
 
     def _install_requirements(self):
-        self._run_executable('pip', ['install', 'wheel'])
+        self.run_executable('pip', ['install', 'wheel'])
 
         if self._requirements:
             args = ['install', '--upgrade']
@@ -124,21 +126,17 @@ class Virtualenv(environment.Environment):
                     args.append("{0}=={1}".format(key, val))
                 else:
                     args.append(key)
-            self._run_executable('pip', args)
-
-    def _run_executable(self, executable, args, **kwargs):
-        return util.check_output([
-            os.path.join(self._path, 'bin', executable)] + args, **kwargs)
+            self.run_executable('pip', args)
 
     def install(self, package):
         log.info("Installing into {0}".format(self.name))
-        self._run_executable('pip', ['install', package])
+        self.run_executable('pip', ['install', package])
 
     def uninstall(self, package):
         log.info("Uninstalling from {0}".format(self.name))
-        self._run_executable('pip', ['uninstall', '-y', package],
+        self.run_executable('pip', ['uninstall', '-y', package],
                              valid_return_codes=None)
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
-        return self._run_executable('python', args, **kwargs)
+        return self.run_executable('python', args, **kwargs)

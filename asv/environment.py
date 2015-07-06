@@ -13,6 +13,7 @@ import hashlib
 import os
 import shutil
 import sys
+import subprocess
 
 import six
 
@@ -20,6 +21,9 @@ from .console import log
 from .repo import get_repo
 from . import util
 from . import wheel_cache
+
+
+WIN = (os.name == "nt")
 
 
 def iter_configuration_matrix(matrix):
@@ -244,7 +248,18 @@ class Environment(object):
             'python': self._python,
             'requirements': self._requirements
         }
+
         if info != expected_info:
+            return False
+
+        for executable in ['pip', 'python']:
+            exe = self.find_executable(executable)
+            if not os.path.isfile(exe):
+                return False
+
+        try:
+            self.run_executable('python', ['-c', 'pass'])
+        except (subprocess.CalledProcessError, OSError):
             return False
 
         return True
@@ -259,7 +274,7 @@ class Environment(object):
 
         if not self.check_presence():
             if os.path.exists(self._path):
-                shutil.rmtree(self._path)
+                util.long_path_rmtree(self._path)
 
             if not os.path.exists(self._env_dir):
                 try:
@@ -279,7 +294,7 @@ class Environment(object):
             except:
                 log.error("Failure creating environment for {0}".format(self.name))
                 if os.path.exists(self._path):
-                    shutil.rmtree(self._path)
+                    util.long_path_rmtree(self._path)
                 raise
 
         self.save_info_file(self._path)
@@ -352,6 +367,31 @@ class Environment(object):
         can be installed into this environment.
         """
         return True
+
+    def find_executable(self, executable):
+        """
+        Find an executable (eg. python, pip) in the environment.
+        """
+
+        # Assume standard virtualenv/Conda layout
+        if WIN:
+            executable += ".exe"
+
+            exe = os.path.join(self._path, 'Scripts', executable)
+            if os.path.isfile(exe):
+                return exe
+            exe = os.path.join(self._path, executable)
+            if os.path.isfile(exe):
+                return exe
+
+        return os.path.join(self._path, 'bin', executable)
+
+    def run_executable(self, executable, args, **kwargs):
+        """
+        Run a given executable (eg. python, pip) in the environment.
+        """
+        exe = self.find_executable(executable)
+        return util.check_output([exe] + args, **kwargs)
 
     def load_info_file(self, path):
         path = os.path.join(path, 'asv-env-info.json')

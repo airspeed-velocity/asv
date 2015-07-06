@@ -81,7 +81,12 @@ class Preview(Command):
     def run(cls, conf, port=0, browser=False):
         os.chdir(conf.html_dir)
 
-        Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+        class Handler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+            def translate_path(self, path):
+                path = SimpleHTTPServer.SimpleHTTPRequestHandler.translate_path(
+                    self, path)
+                return util.long_path(path)
+
         httpd, base_url = create_httpd(Handler, port=port)
 
         log.info("Serving at {0}".format(base_url))

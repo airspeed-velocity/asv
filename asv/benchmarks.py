@@ -20,6 +20,9 @@ from .environment import get_environments
 from . import util
 
 
+WIN = (os.name == "nt")
+
+
 # Can't use benchmark.__file__, because that points to the compiled
 # file, so it can't be run by another version of Python.
 BENCHMARK_RUN_SCRIPT = os.path.join(
@@ -75,7 +78,10 @@ def run_benchmark(benchmark, root, env, show_stderr=False, quick=False,
     log.info(initial_message)
 
     def log_result(msg):
-        padding = " "*(util.get_terminal_width() - len(initial_message) - 14 - 1 - len(msg))
+        padding_length = util.get_terminal_width() - len(initial_message) - 14 - 1 - len(msg)
+        if WIN:
+            padding_length -= 1
+        padding = " "*padding_length
         log.add(" {0}{1}".format(padding, msg))
 
     with log.indent():

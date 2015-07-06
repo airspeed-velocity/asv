@@ -19,18 +19,25 @@ import struct
 import sys
 import time
 import errno
-
-try:
-    from select import PIPE_BUF
-except ImportError:
-    # PIPE_BUF is not available on Python 2.6
-    PIPE_BUF = os.pathconf('.', os.pathconf_names['PC_PIPE_BUF'])
+import threading
+import shutil
+import stat
 
 import six
 from six.moves import xrange
 
 from .console import log
 from .extern import minify_json
+
+
+WIN = (os.name == 'nt')
+
+if not WIN:
+    try:
+        from select import PIPE_BUF
+    except ImportError:
+        # PIPE_BUF is not available on Python 2.6
+        PIPE_BUF = os.pathconf('.', os.pathconf_names['PC_PIPE_BUF'])
 
 
 TIMEOUT_RETCODE = -256
@@ -209,6 +216,10 @@ def which(filename):
 
     Raises an IOError if no result is found.
     """
+    if WIN:
+        if not filename.endswith('.exe'):
+            filename = filename + '.exe'
+
     locations = os.environ.get("PATH").split(os.pathsep)
     candidates = []
     for location in locations:
@@ -334,7 +345,7 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
 
     proc = subprocess.Popen(
         args,
-        close_fds=True,
+        close_fds=(not WIN),
         env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -346,75 +357,103 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
     stdout_chunks = []
     stderr_chunks = []
     is_timeout = False
-    try:
-        if posix:
-            # Forward signals related to Ctrl-Z handling; the child
-            # process is in a separate process group so it won't receive
-            # these automatically from the terminal
-            def sig_forward(signum, frame):
-                os.killpg(proc.pid, signum)
-                if signum == signal.SIGTSTP:
-                    os.kill(os.getpid(), signal.SIGSTOP)
-            signal.signal(signal.SIGTSTP, sig_forward)
-            signal.signal(signal.SIGCONT, sig_forward)
 
-        fds = {
-            proc.stdout.fileno(): stdout_chunks,
-            proc.stderr.fileno(): stderr_chunks
-            }
+    if WIN:
+        start_time = time.time()
+        was_timeout = [False]
 
-        while proc.poll() is None:
-            try:
-                rlist, wlist, xlist = select.select(
-                    list(fds.keys()), [], [], timeout)
-            except select.error as err:
-                if err.args[0] == errno.EINTR:
-                    # interrupted by signal handler; try again
-                    continue
+        def watcher_run():
+            while proc.returncode is None:
+                time.sleep(0.1)
+                if time.time() - start_time > timeout:
+                    was_timeout[0] = True
+                    proc.terminate()
 
-            if len(rlist) == 0:
-                # We got a timeout
-                is_timeout = True
-                break
-            for f in rlist:
-                output = os.read(f, PIPE_BUF)
-                fds[f].append(output)
-            if dots and time.time() - last_dot_time > 0.5:
-                if dots is True:
-                    log.dot()
-                elif dots:
-                    dots()
-                last_dot_time = time.time()
-    finally:
-        if posix:
-            # Restore signal handlers
-            signal.signal(signal.SIGTSTP, signal.SIG_DFL)
-            signal.signal(signal.SIGCONT, signal.SIG_DFL)
-
-        if proc.returncode is None:
-            # Timeout or another exceptional condition occurred, and
-            # the program is still running.
-            if posix:
-                # Terminate the whole process group
-                os.killpg(proc.pid, signal.SIGTERM)
-                for j in range(10):
-                    time.sleep(0.1)
-                    if proc.poll() is not None:
-                        break
-                else:
-                    # Didn't terminate within 1 sec, so kill it
-                    os.killpg(proc.pid, signal.SIGTERM)
-            else:
+        watcher = threading.Thread(target=watcher_run)
+        watcher.start()
+        try:
+            stdout, stderr = proc.communicate()
+        finally:
+            if proc.returncode is None:
                 proc.terminate()
-            proc.wait()
+                proc.wait()
+            watcher.join()
 
-    proc.stdout.flush()
-    proc.stderr.flush()
-    stdout_chunks.append(proc.stdout.read())
-    stderr_chunks.append(proc.stderr.read())
+        is_timeout = was_timeout[0]
+    else:
+        try:
+            if posix:
+                # Forward signals related to Ctrl-Z handling; the child
+                # process is in a separate process group so it won't receive
+                # these automatically from the terminal
+                def sig_forward(signum, frame):
+                    os.killpg(proc.pid, signum)
+                    if signum == signal.SIGTSTP:
+                        os.kill(os.getpid(), signal.SIGSTOP)
+                signal.signal(signal.SIGTSTP, sig_forward)
+                signal.signal(signal.SIGCONT, sig_forward)
 
-    stdout = b''.join(stdout_chunks).decode('utf-8', 'replace')
-    stderr = b''.join(stderr_chunks).decode('utf-8', 'replace')
+            fds = {
+                proc.stdout.fileno(): stdout_chunks,
+                proc.stderr.fileno(): stderr_chunks
+                }
+
+            while proc.poll() is None:
+                try:
+                    rlist, wlist, xlist = select.select(
+                        list(fds.keys()), [], [], timeout)
+                except select.error as err:
+                    if err.args[0] == errno.EINTR:
+                        # interrupted by signal handler; try again
+                        continue
+                    raise
+
+                if len(rlist) == 0:
+                    # We got a timeout
+                    is_timeout = True
+                    break
+                for f in rlist:
+                    output = os.read(f, PIPE_BUF)
+                    fds[f].append(output)
+                if dots and time.time() - last_dot_time > 0.5:
+                    if dots is True:
+                        log.dot()
+                    elif dots:
+                        dots()
+                    last_dot_time = time.time()
+        finally:
+            if posix:
+                # Restore signal handlers
+                signal.signal(signal.SIGTSTP, signal.SIG_DFL)
+                signal.signal(signal.SIGCONT, signal.SIG_DFL)
+
+            if proc.returncode is None:
+                # Timeout or another exceptional condition occurred, and
+                # the program is still running.
+                if posix:
+                    # Terminate the whole process group
+                    os.killpg(proc.pid, signal.SIGTERM)
+                    for j in range(10):
+                        time.sleep(0.1)
+                        if proc.poll() is not None:
+                            break
+                    else:
+                        # Didn't terminate within 1 sec, so kill it
+                        os.killpg(proc.pid, signal.SIGTERM)
+                else:
+                    proc.terminate()
+                proc.wait()
+
+        proc.stdout.flush()
+        proc.stderr.flush()
+
+        stdout_chunks.append(proc.stdout.read())
+        stderr_chunks.append(proc.stderr.read())
+        stdout = b''.join(stdout_chunks)
+        stderr = b''.join(stderr_chunks)
+
+    stdout = stdout.decode('utf-8', 'replace')
+    stderr = stderr.decode('utf-8', 'replace')
 
     if is_timeout:
         retcode = TIMEOUT_RETCODE
@@ -449,7 +488,7 @@ def write_json(path, data, api_version=None):
     if api_version is not None:
         data['version'] = api_version
 
-    with open(path, 'w') as fd:
+    with long_path_open(path, 'w') as fd:
         json.dump(data, fd, indent=4, sort_keys=True)
 
 
@@ -459,7 +498,7 @@ def load_json(path, api_version=None, cleanup=True):
     """
     path = os.path.abspath(path)
 
-    with open(path, 'r') as fd:
+    with long_path_open(path, 'r') as fd:
         content = fd.read()
 
     if cleanup:
@@ -749,3 +788,33 @@ def is_nan(x):
     if isinstance(x, float):
         return x != x
     return False
+
+
+if not WIN:
+    long_path_open = open
+    long_path_rmtree = shutil.rmtree
+    def long_path(path):
+        return path
+else:
+    def long_path(path):
+        if path.startswith("\\\\"):
+            return path
+        return "\\\\?\\" + os.path.abspath(path)
+
+    def _remove_readonly(func, path, exc_info):
+        """Clear the readonly bit and reattempt the removal;
+        Windows rmtree doesn't do this by default"""
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+
+    def long_path_open(filename, *a, **kw):
+        return open(long_path(filename), *a, **kw)
+
+    def long_path_rmtree(path, ignore_errors=False):
+        if ignore_errors:
+            onerror = None
+        else:
+            onerror = _remove_readonly
+        shutil.rmtree(long_path(path),
+                      ignore_errors=ignore_errors,
+                      onerror=onerror)
