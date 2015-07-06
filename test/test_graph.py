@@ -1,4 +1,4 @@
-from asv.graph import Graph
+from asv.graph import Graph, RESAMPLED_POINTS
 
 
 def test_graph_single():
@@ -134,6 +134,26 @@ def test_nan():
     g.add_data_point(4, [None, float('nan')])
     data = g.get_data()
     assert data == [(1, [1, None]), (2, [2, 2])]
+
+
+def test_summary_graph_loop():
+    n = int(RESAMPLED_POINTS)
+
+    # Resampling shouldn't get stuck in an infinite loop
+    g = Graph('foo', {}, {}, summary=True)
+    for j in range(n):
+        g.add_data_point(j, 0.1)
+    data = g.get_data()
+    assert len(data) == 1
+    assert data[0][0] == n
+    assert abs(data[0][1] - 0.1) < 1e-7
+
+    # Resampling should work with long integers
+    g = Graph('foo', {}, {}, summary=True)
+    k0 = 2**80
+    for j in range(2*int(RESAMPLED_POINTS)):
+        g.add_data_point(k0 + j, 0.1)
+    g.get_data()
 
 
 def _sgn(x):
