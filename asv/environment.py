@@ -290,7 +290,7 @@ class Environment(object):
                     pass
 
             try:
-                self.setup()
+                self._setup()
             except:
                 log.error("Failure creating environment for {0}".format(self.name))
                 if os.path.exists(self._path):
@@ -301,7 +301,7 @@ class Environment(object):
 
         self._is_setup = True
 
-    def setup(self):
+    def _setup(self):
         """
         Implementation for setting up the environment.
         """
@@ -454,7 +454,7 @@ class ExistingEnvironment(Environment):
     def create(self):
         pass
 
-    def setup(self):
+    def _setup(self):
         pass
 
     def install_project(self, conf, commit_hash=None):

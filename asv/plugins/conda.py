@@ -75,7 +75,7 @@ class Conda(environment.Environment):
         for configuration in environment.iter_configuration_matrix(conf.matrix):
             yield cls(conf, python, configuration)
 
-    def setup(self):
+    def _setup(self):
         try:
             conda = util.which('conda')
         except IOError as e:

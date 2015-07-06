@@ -100,7 +100,7 @@ class Virtualenv(environment.Environment):
         executable = Virtualenv._find_python(python)
         return executable is not None
 
-    def setup(self):
+    def _setup(self):
         """
         Setup the environment on disk using virtualenv.
         Then, all of the requirements are installed into

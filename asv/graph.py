@@ -116,6 +116,10 @@ class Graph(object):
         max_time = max(x[0] for x in val)
         step_size = int((max_time - min_time) / RESAMPLED_POINTS)
 
+        # This loop cannot use xrange, because xrange on Python2 on
+        # 32-bit systems can only deal with 32-bit integers, and
+        # Javascript timestamps (1000*unix_timestamp) handled here
+        # overflow this range
         new_val = []
         j = 0
         i = min_time + step_size
