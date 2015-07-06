@@ -10,3 +10,4 @@
 - Nathan Goldbaum
 - MinRK
 - Christopher Whelan
+- Robert T. McGibbon
