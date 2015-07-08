@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 import sys
+import six
 
 from . import util
 
@@ -32,6 +33,7 @@ class Config(object):
         self.hash_length = 8
         self.environment_type = None
         self.dvcs = None
+        self.regressions_first_commits = {}
         self.plugins = []
 
     @classmethod

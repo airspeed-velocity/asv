@@ -38,7 +38,7 @@ install:
     - "python --version"
 
     # Install specified version of dependencies
-    - "conda install -q --yes six pytest"
+    - "conda install -q --yes six pytest numpy"
 
 # Not a .NET project
 build: false

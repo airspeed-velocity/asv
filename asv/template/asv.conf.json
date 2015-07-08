@@ -70,4 +70,17 @@
     // environment, making them faster to install next time.  This is
     // number of builds to keep, per environment.
     // "wheel_cache_size": 0
+
+    // The commits after which the regression search in `asv publish`
+    // should start looking for regressions. Dictionary whose keys are
+    // regexps matching to benchmark names, and values corresponding to
+    // the commit (exclusive) after which to start looking for
+    // regressions.  The default is to start from the first commit
+    // with results. If the commit is `null`, regression detection is
+    // skipped for the matching benchmark.
+    //
+    // "regressions_first_commits": {
+    //    "some_benchmark": "352cdf",  // Consider regressions only after this commit
+    //    "another_benchmark": null,   // Skip regression detection altogether
+    // }
 }

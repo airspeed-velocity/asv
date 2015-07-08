@@ -35,6 +35,12 @@
             src="flot/jquery.flot.orderBars.js">
     </script>
     <script language="javascript" type="text/javascript"
+            src="stupidtable.js">
+    </script>
+    <script language="javascript" type="text/javascript"
+            src="jquery.md5.js">
+    </script>
+    <script language="javascript" type="text/javascript"
             src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"
             onerror="js_load_failure()">
     </script>
@@ -44,7 +50,11 @@
     <script language="javascript" type="text/javascript"
             src="asv.js">
     </script>
+    <script language="javascript" type="text/javascript"
+            src="regressions.js">
+    </script>
     <link href="asv.css" rel="stylesheet" type="text/css"/>
+    <link href="regressions.css" rel="stylesheet" type="text/css"/>
     <link rel="shortcut icon" href="swallow.ico"/>
   </head>
   <body>
@@ -124,6 +134,20 @@
             <div id="overview" style="width: 100%; height: 100%"></div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div id="regressions-display" style="width: 100%; height: 100%;">
+      <div id="navigation" class="asv-navigation" style="position: absolute; left: 0; top: 55px; bottom: 0; width: 200px; overflow-y: scroll">
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="btn-group-vertical" style="width: 100%">
+              <a href="#" id="regressions-summary-button" class="btn btn-default btn-xs" role="button">&lt;&lt; all benchmarks</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="regressions-body" style="position: absolute; left: 220px; top: 60px; bottom: 10px; right: 20px;">
       </div>
     </div>
 

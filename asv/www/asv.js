@@ -1,4 +1,4 @@
-$(function() {
+$(document).ready(function() {
     var colors = [
         '#247AAD',
         '#E24A33',
@@ -55,6 +55,69 @@ $(function() {
         $(window).scroll();
     }
 
+    /*
+      Parse hash string, assuming format similar to standard URL
+      query strings
+    */
+    function parse_hash_string(str) {
+        var info = {location: [''], params: {}};
+
+        if (str && str[0] == '#') {
+            str = str.slice(1);
+        }
+        if (str && str[0] == '/') {
+            str = str.slice(1);
+        }
+
+        var match = str.match(/^([^?]*?)\?/);
+        if (match) {
+            info['location'] = match[1].replace(/\/+/, '/').split('/');
+            var rest = str.slice(match[1].length+1);
+            var parts = rest.split('&');
+            for (var i = 0; i < parts.length; ++i) {
+                var part = parts[i].split('=');
+                if (part.length != 2) {
+                    continue;
+                }
+                var key = part[0];
+                var value = decodeURIComponent(part[1].replace(/\+/g, " "));
+                if (info['params'][key] === undefined) {
+                    info['params'][key] = [value];
+                }
+                else {
+                    info['params'][key].push(value);
+                }
+            }
+        }
+        else {
+            info['location'] = str.replace(/\/+/, '/').split('/');
+        }
+        return info;
+    }
+
+    /*
+      Generate a hash string, inverse of parse_hash_string
+    */
+    function format_hash_string(info) {
+        var parts = info['params'];
+        var str = '#' + info['location'];
+
+        if (parts) {
+            str = str + '?';
+            var first = true;
+            $.each(parts, function (key, values) {
+                $.each(values, function (idx, value) {
+                    if (!first) {
+                        str = str + '&';
+                    }
+                    str = str + key + '=' + encodeURIComponent(value);
+                    first = false;
+                });
+            });
+        }
+        return str;
+    }
+
     time_units = [
         ['ps', 'picoseconds', 0.000000000001],
         ['ns', 'nanoseconds', 0.000000001],
@@ -95,7 +158,7 @@ $(function() {
     /* GLOBAL STATE */
     /* The state of the parameters in the sidebar.  Dictionary mapping
        strings to arrays containing the "enabled" configurations. */
-    var state = {};
+    var state = null;
     /* The name of the current benchmark being displayed. */
     var current_benchmark = null;
     /* An array of graphs being displayed. */
@@ -125,10 +188,19 @@ $(function() {
     /* List of lists of value combinations to plot (apart from x-axis)
        in parameterized tests. */
     var benchmark_param_selection = [[null]];
+    /* Extra pages: {name: show_function} */
+    var loaded_pages = {};
+    /* Highlighted timestamp */
+    var highlighted_dates = null;
+    /* Previous window scroll positions */
+    var window_scroll_positions = {};
+    /* Previous window hash location */
+    var window_last_location = null;
 
-    function display_benchmark(bm_name) {
+    function display_benchmark(bm_name, state_selection, sub_benchmark_idx, highlight_timestamps) {
         $('#graph-display').show();
         $('#summary-display').hide();
+        $('#regressions-display').hide();
         $('.tooltip').remove();
 
         if (reference_scale) {
@@ -137,8 +209,9 @@ $(function() {
             reference = 1.0;
         }
         current_benchmark = bm_name;
+        highlighted_dates = highlight_timestamps;
         $("#title").text(bm_name);
-        setup_benchmark_params();
+        setup_benchmark_params(state_selection, sub_benchmark_idx);
         replace_graphs();
     }
 
@@ -212,6 +285,7 @@ $(function() {
         cache: false
     }).done(function (index) {
         master_json = index;
+        $.asv.master_json = index;
 
         var nav = $("#navigation");
 
@@ -222,78 +296,12 @@ $(function() {
         $("#project-name").textContent = index.project;
         document.title = "airspeed velocity of an unladen " + index.project;
 
-        /* Machine selection */
-        state.machine = index.params.machine;
-
         /* Make the static tooltips look correct */
         $('[data-toggle="tooltip"]').tooltip({container: 'body'});
 
-        make_value_selector_panel(nav, 'machine', index.params.machine,  function(i, machine, button) {
-            button.text(machine);
-
-            if (index.params.machine.length > 1) {
-                button.on('click', function(evt) {
-                    if (!evt.target.classList.contains("active")) {
-                        state.machine.push(machine);
-                    } else {
-                        state.machine = arr_remove_from(
-                            state.machine, machine);
-                    }
-                    replace_graphs();
-                });
-            }
-
-            /* Create tooltips for each machine */
-            var details = [];
-            $.each(index.machines[machine], function(key, val) {
-                details.push(key + ': ' + val);
-            });
-            details = details.join('<br/>');
-
-            button.tooltip({
-                title: details,
-                html: true,
-                placement: 'right',
-                container: 'body',
-                animation: false
-            });
-        });
-
-        /* Generic parameter selectors */
-        $.each(index.params, function(param, values) {
-            state[param] = values;
-
-            if (values.length > 1 && param !== 'machine') {
-                if (param == 'branch') {
-                    state[param] = [values[0]];
-                }
-                make_value_selector_panel(nav, param, values, function(i, value, button) {
-                    var value_display;
-                    if (!value)
-                        value_display = '[none]';
-                    else
-                        value_display = value;
-
-                    button.text(value_display);
-
-                    if (param == 'branch' && i > 0) {
-                        button.removeClass('active');
-                    }
-
-                    if (values.length > 1) {
-                        button.on('click', function(evt) {
-                            if (!evt.target.classList.contains("active")) {
-                                state[param].push(value);
-                            } else {
-                                state[param] = arr_remove_from(
-                                    state[param], value);
-                            }
-                            replace_graphs();
-                        });
-                    }
-                });
-            }
-        });
+        /* Add insertion point for benchmark parameters */
+        state_params_nav = $("<div id='state-params'/>");
+        nav.append(state_params_nav);
 
         /* Add insertion point for benchmark parameters */
         bench_params_nav = $("<div id='navigation-params'/>");
@@ -476,12 +484,55 @@ $(function() {
         });
 
         function hashchange() {
-            var hash = window.location.hash.replace('#', '');
+            var info = parse_hash_string(window.location.hash);
 
-            if (hash === '') {
+            /* Keep track of window scroll position; makes the back-button work */
+            var old_scroll_pos = window_scroll_positions[info.location.join('/')];
+            window_scroll_positions[window_last_location] = $(window).scrollTop();
+            window_last_location = info.location.join('/');
+
+            /* Redirect to correct handler */
+            if (info.location[0] == ['']) {
                 show_summary();
-            } else {
-                display_benchmark(hash);
+            }
+            else if (show_page(info.location, info.params)) {
+                /* show_page does the work */
+            }
+            else {
+                /* Display benchmark page */
+                var benchmark = info.location[0];
+                var sub_benchmark_idx = null;
+                var highlight_timestamps = null;
+                var state_selection = null;
+
+                if (info.params['idx']) {
+                    sub_benchmark_idx = parseInt(info.params['idx'][0]);
+                    delete info.params['idx'];
+                }
+
+                if (info.params['time']) {
+                    highlight_timestamps = [];
+                    $.each(info.params['time'], function(i, value) {
+                        var match = value.match(/^([0-9]+)-([0-9]+)$/);
+                        if (match) {
+                            highlight_timestamps.push([parseInt(match[1]), parseInt(match[2])]);
+                        }
+                        else {
+                            highlight_timestamps.push([parseInt(value)]);
+                        }
+                    });
+                    delete info.params['time'];
+                }
+
+                if (Object.keys(info.params).length > 0) {
+                    state_selection = info.params;
+                }
+                display_benchmark(benchmark, state_selection, sub_benchmark_idx, highlight_timestamps);
+            }
+
+            /* Scroll back to previous position, if any */
+            if (old_scroll_pos !== undefined) {
+                $(window).scrollTop(old_scroll_pos);
             }
         }
 
@@ -498,6 +549,22 @@ $(function() {
     });
 
     function make_summary() {
+        var summary_display = $('#summary-display');
+
+        if (master_json.extra_pages) {
+            var pages_container = $('<div id="extra-buttons" class="btn-group" role="group" />');
+
+            $.each(master_json.extra_pages, function(j, item) {
+                var button = $('<a class="btn btn-default" role="button"/>');
+                button.attr('href', '#/' + item[0]);
+                button.text(item[1]);
+                button.tooltip({title: item[2], html: true});
+                pages_container.append(button);
+            });
+            pages_container.show();
+            summary_display.append(pages_container);
+        }
+
         $.each(master_json.benchmarks, function(bm_name, bm) {
             var container = $(
                 '<a class="btn benchmark-container" href="#' + bm_name +
@@ -523,7 +590,7 @@ $(function() {
 
             container.append(name);
             container.append(plot_div);
-            $('#summary-display').append(container);
+            summary_display.append(container);
 
             callback_in_view(plot_div, function() {
                 $.ajax({
@@ -570,12 +637,13 @@ $(function() {
 
     function show_summary() {
         $('#graph-display').hide();
+        $('#regressions-display').hide();
         $('#summary-display').show();
         $("#title").text("All benchmarks");
         $('.tooltip').remove();
     }
 
-    function setup_benchmark_params() {
+    function setup_benchmark_params(state_selection, sub_benchmark_idx) {
         if (!current_benchmark) {
             x_coordinate_axis = 0;
             x_coordinate_is_category = false;
@@ -583,30 +651,161 @@ $(function() {
             return
         }
 
+        /*
+          Generic parameter selections
+        */
+        var index = master_json;
+        if (!state || state_selection !== null) {
+            /*
+               Setup the default configuration on first load,
+               or when state selector is present 
+            */
+            state = {};
+            state.machine = index.params.machine;
+
+            $.each(index.params, function(param, values) {
+                state[param] = values;
+                if (values.length > 1 && param !== 'machine') {
+                    if (param == 'branch') {
+                        state[param] = [values[0]];
+                    }
+                }
+            });
+        }
+
+        if (state_selection !== null) {
+            /* Select a specific generic parameter state */
+            $.each(index.params, function(param, values) {
+                if (state_selection[param]) {
+                    state[param] = state_selection[param];
+                }
+            });
+        }
+
+        /*
+          Benchmark-specific parameter selections
+        */
+
         var params = master_json.benchmarks[current_benchmark].params;
         var param_names = master_json.benchmarks[current_benchmark].param_names;
 
         /* Default plot: time series */
         x_coordinate_axis = 0;
 
-        /* Default plot: up to 8 lines */
-        benchmark_param_selection = [[null]];
-        if (params.length >= 1) {
-            var count = 1;
-            var max_curves = 8;
+        if (sub_benchmark_idx !== null) {
+            /* Only a single parameter set */
+            benchmark_param_selection = param_selection_from_flat_idx(params, sub_benchmark_idx);
+        }
+        else {
+            /* Default plot: up to 8 lines */
+            benchmark_param_selection = [[null]];
+            if (params.length >= 1) {
+                var count = 1;
+                var max_curves = 8;
 
-            for (var k = 0; k < params.length; ++k) {
-                var item = [];
-                for (var j = 0; j < params[k].length && (j+1)*count <= max_curves; ++j) {
-                    item.push(j);
+                for (var k = 0; k < params.length; ++k) {
+                    var item = [];
+                    for (var j = 0; j < params[k].length && (j+1)*count <= max_curves; ++j) {
+                        item.push(j);
+                    }
+                    count = count * item.length;
+                    benchmark_param_selection.push(item);
                 }
-                count = count * item.length;
-                benchmark_param_selection.push(item);
             }
         }
 
         check_x_coordinate_axis();
+        replace_params_ui();
         replace_benchmark_params_ui();
+    }
+
+    function replace_params_ui() {
+        var index = master_json;
+
+        var nav = $('#state-params');
+        nav.empty();
+
+        function update_state_url() {
+            var info = parse_hash_string(window.location.hash);
+            $.each(index.params, function(param, values) {
+                if (values.length > 1) {
+                    if (state[param].length != values.length) {
+                        info.params[param] = state[param];
+                    }
+                    else if (info.params[param]) {
+                        delete info.params[param];
+                    }
+                }
+            });
+            window.location.hash = format_hash_string(info);
+        }
+
+        /* Machine selection */
+        make_value_selector_panel(nav, 'machine', index.params.machine,  function(i, machine, button) {
+            button.text(machine);
+
+            if (index.params.machine.length > 1) {
+                button.on('click', function(evt) {
+                    if (!evt.target.classList.contains("active")) {
+                        state.machine.push(machine);
+                    } else {
+                        state.machine = arr_remove_from(
+                            state.machine, machine);
+                    }
+                    update_state_url();
+                });
+            }
+
+            if ($.inArray(machine, state.machine) == -1) {
+                button.removeClass('active');
+            }
+
+            /* Create tooltips for each machine */
+            var details = [];
+            $.each(index.machines[machine], function(key, val) {
+                details.push(key + ': ' + val);
+            });
+            details = details.join('<br/>');
+
+            button.tooltip({
+                title: details,
+                html: true,
+                placement: 'right',
+                container: 'body',
+                animation: false
+            });
+        });
+
+        /* Generic parameter selectors */
+        $.each(index.params, function(param, values) {
+            if (values.length > 1 && param !== 'machine') {
+                make_value_selector_panel(nav, param, values, function(i, value, button) {
+                    var value_display;
+                    if (!value)
+                        value_display = '[none]';
+                    else
+                        value_display = value;
+
+                    button.text(value_display);
+
+                    if ($.inArray(value, state[param]) == -1) {
+                        button.removeClass('active');
+                    }
+
+                    if (values.length > 1) {
+                        button.on('click', function(evt) {
+                            if (!evt.target.classList.contains("active")) {
+                                state[param].push(value);
+                            } else {
+                                state[param] = arr_remove_from(
+                                    state[param], value);
+                            }
+                            update_state_url();
+                        });
+                    }
+                });
+            }
+        });
     }
 
     function replace_benchmark_params_ui() {
@@ -943,82 +1142,6 @@ $(function() {
             }
         }
 
-        /* Convert loaded graph data to a format flot understands, by
-           treating either time or one of the parameters as x-axis,
-           and selecting only one value of the remaining axes */
-        function filter_graph_data(raw_series, x_axis, other_indices) {
-            var params = master_json.benchmarks[current_benchmark].params;
-
-            if (params.length == 0) {
-                /* Simple time series */
-                return raw_series;
-            }
-
-            /* Compute position of data entry in the results list,
-               and stride corresponding to plot x-axis parameter */
-            var stride = 1;
-            var param_stride = 0;
-            var param_idx = 0;
-            for (var k = params.length - 1; k >= 0; --k) {
-                if (k == x_axis - 1) {
-                    param_stride = stride;
-                }
-                else {
-                    param_idx += other_indices[k + 1] * stride;
-                }
-                stride *= params[k].length;
-            }
-
-            if (x_axis == 0) {
-                /* x-axis is time axis */
-                var series = new Array(raw_series.length);
-                for (var k = 0; k < raw_series.length; ++k) {
-                    if (raw_series[k][1] === null) {
-                        series[k] = [raw_series[k][0], null];
-                    } else {
-                        series[k] = [raw_series[k][0],
-                                     raw_series[k][1][param_idx]];
-                    }
-                }
-                return series;
-            }
-            else {
-                /* x-axis is some parameter axis */
-                var time_idx = null;
-                if (other_indices[0] === null) {
-                    time_idx = raw_series.length - 1;
-                }
-                else {
-                    /* Need to search for the correct time value */
-                    for (var k = 0; k < raw_series.length; ++k) {
-                        if (raw_series[k][0] == other_indices[0]) {
-                            time_idx = k;
-                            break;
-                        }
-                    }
-                    if (time_idx === null) {
-                        /* No data points */
-                        return [];
-                    }
-                }
-
-                var x_values = params[x_axis - 1];
-                var series = new Array(x_values.length);
-                for (var k = 0; k < x_values.length; ++k) {
-                    if (raw_series[time_idx][1] === null) {
-                        series[k] = [convert_benchmark_param_value(x_values[k]),
-                                     null];
-                    }
-                    else {
-                        series[k] = [convert_benchmark_param_value(x_values[k]),
-                                     raw_series[time_idx][1][param_idx]];
-                    }
-                    param_idx += param_stride;
-                }
-                return series;
-            }
-        }
-
         /* Before loading graphs, remove any that are currently
            active. */
         graphs = [];
@@ -1037,7 +1160,8 @@ $(function() {
                     var series;
                     series = filter_graph_data(data,
                                                x_coordinate_axis,
-                                               graph_content[0]);
+                                               graph_content[0],
+                                               master_json.benchmarks[current_benchmark].params);
                     graphs.push({
                         data: series,
                         label: graph_content[1],
@@ -1066,6 +1190,104 @@ $(function() {
                 }
             });
         });
+    }
+
+    /* Convert a flat index to permutation to the corresponding value */
+    function param_selection_from_flat_idx(params, idx) {
+        var selection = [];
+        if (idx < 0) {
+            idx = 0;
+        }
+        for (var k = params.length-1; k >= 0; --k) {
+            var j = idx % params[k].length;
+            selection.unshift([j]);
+            idx = (idx - j) / params[k].length;
+        }
+        selection.unshift([null]);
+        return selection;
+    }
+
+    /* Convert loaded graph data to a format flot understands, by
+       treating either time or one of the parameters as x-axis,
+       and selecting only one value of the remaining axes */
+    function filter_graph_data(raw_series, x_axis, other_indices, params) {
+        if (params.length == 0) {
+            /* Simple time series */
+            return raw_series;
+        }
+
+        /* Compute position of data entry in the results list,
+           and stride corresponding to plot x-axis parameter */
+        var stride = 1;
+        var param_stride = 0;
+        var param_idx = 0;
+        for (var k = params.length - 1; k >= 0; --k) {
+            if (k == x_axis - 1) {
+                param_stride = stride;
+            }
+            else {
+                param_idx += other_indices[k + 1] * stride;
+            }
+            stride *= params[k].length;
+        }
+
+        if (x_axis == 0) {
+            /* x-axis is time axis */
+            var series = new Array(raw_series.length);
+            for (var k = 0; k < raw_series.length; ++k) {
+                if (raw_series[k][1] === null) {
+                    series[k] = [raw_series[k][0], null];
+                } else {
+                    series[k] = [raw_series[k][0],
+                                 raw_series[k][1][param_idx]];
+                }
+            }
+            return series;
+        }
+        else {
+            /* x-axis is some parameter axis */
+            var time_idx = null;
+            if (other_indices[0] === null) {
+                time_idx = raw_series.length - 1;
+            }
+            else {
+                /* Need to search for the correct time value */
+                for (var k = 0; k < raw_series.length; ++k) {
+                    if (raw_series[k][0] == other_indices[0]) {
+                        time_idx = k;
+                        break;
+                    }
+                }
+                if (time_idx === null) {
+                    /* No data points */
+                    return [];
+                }
+            }
+
+            var x_values = params[x_axis - 1];
+            var series = new Array(x_values.length);
+            for (var k = 0; k < x_values.length; ++k) {
+                if (raw_series[time_idx][1] === null) {
+                    series[k] = [convert_benchmark_param_value(x_values[k]),
+                                 null];
+                }
+                else {
+                    series[k] = [convert_benchmark_param_value(x_values[k]),
+                                 raw_series[time_idx][1][param_idx]];
+                }
+                param_idx += param_stride;
+            }
+            return series;
+        }
+    }
+
+    function filter_graph_data_idx(raw_series, x_axis, flat_idx, params) {
+        var selection = param_selection_from_flat_idx(params, flat_idx);
+        var flat_selection = [];
+        $.each(selection, function(i, v) {
+            flat_selection.push(v[0]);
+        });
+        return filter_graph_data(raw_series, x_axis, flat_selection, params);
     }
 
     /* Handle log scaling the plot */
@@ -1232,6 +1454,29 @@ $(function() {
                 { color: "#ddd", lineWidth: 1, xaxis: { from: date, to: date } }
             );
         });
+
+        if (highlighted_dates) {
+            $.each(highlighted_dates, function(i, date) {
+                if (date.length == 1) {
+                    markings.push(
+                        { color: '#d00', lineWidth: 2, xaxis: { from: date[0], to: date[0] } }
+                    );
+                }
+                else {
+                    markings.push(
+                        { color: '#d00', lineWidth: 2, xaxis: { from: date[0], to: date[0] } }
+                    );
+                    markings.push(
+                        { color: '#d00', lineWidth: 2, xaxis: { from: date[1], to: date[1] } }
+                    );
+                    markings.push(
+                        { color: "rgba(200, 0, 0, 0.2)", alpha: 0.5, lineWidth: 2, 
+                          xaxis: { from: Math.min.apply(null, date), 
+                                   to: Math.max.apply(null, date) }}
+                    );
+                }
+            });
+        }
 
         var unit;
         if (reference_scale) {
@@ -1422,4 +1667,36 @@ $(function() {
     }
 
     show_summary();
+
+
+    /*
+      Dealing with sub-pages
+     */
+
+    function show_page(name, params) {
+        if (loaded_pages[name] !== undefined) {
+            $("#graph-display").hide();
+            $("#summary-display").hide();
+            loaded_pages[name](params);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    this.register_page = function(name, show_function) {
+        loaded_pages[name] = show_function;
+    }
+    this.parse_hash_string = parse_hash_string;
+    this.format_hash_string = format_hash_string;
+
+    this.filter_graph_data_idx = filter_graph_data_idx;
+
+    this.master_json = master_json; /* Updated after index.json loads */
+
+    this.pretty_second = pretty_second;
+    this.time_units = time_units;
+
+    $.asv = this;
 });
