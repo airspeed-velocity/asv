@@ -5,6 +5,7 @@ sudo: false
 env:
   global:
     - USE_CONDA=false
+    - COVERAGE=""
 
 python:
   - 2.6
@@ -16,7 +17,9 @@ python:
 matrix:
   include:
     - python: 2.7
-      env: USE_CONDA=true
+      env:
+        - USE_CONDA=true
+        - COVERAGE='-a="--cov asv"'
 
     - python: 3.4
       env: USE_CONDA=true
@@ -54,7 +57,11 @@ install:
     fi
     if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install "mercurial>=3.3" ; fi;
     if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install python-hglib==1.5 ; fi;
-    $TRAVIS_PIP install selenium six pytest
+    $TRAVIS_PIP install selenium six pytest;
+    if [[ $COVERAGE != '' ]]; then $TRAVIS_PIP install coverage pytest-coverage coveralls; fi;
 
 script:
-  - $TRAVIS_PYTHON setup.py test
+  - $TRAVIS_PYTHON setup.py test $COVERAGE
+
+after_success:
+  - if [[ $COVERAGE != '' ]]; then coveralls; fi

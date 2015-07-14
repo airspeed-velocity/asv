@@ -75,9 +75,11 @@ sys.exit(1)
             sys.executable, "-c", code])
     except util.ProcessError as e:
         assert len(e.stdout.strip().split('\n')) == 1
-        assert len(e.stderr.strip().split('\n')) == 1
+        err = [x for x in e.stderr.strip().split('\n')
+               if not x.startswith('Coverage')]
+        assert len(err) == 1
         assert e.stdout.strip() == "Stdout before error"
-        assert e.stderr.strip() == "Stderr before error"
+        assert err[0] == "Stderr before error"
         assert e.retcode == 1
         assert "returned non-zero exit status 1" in str(e)
     else:
