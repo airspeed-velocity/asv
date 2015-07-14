@@ -237,8 +237,8 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
     return dvcs
 
 
-@pytest.fixture
-def browser(request, pytestconfig, scope="session"):
+@pytest.fixture(scope="session")
+def browser(request, pytestconfig):
     """
     Fixture for Selenium WebDriver browser interface
     """
@@ -286,11 +286,7 @@ def browser(request, pytestconfig, scope="session"):
 
     # Clean up on fixture finalization
     def fin():
-        browser.close()
-        browser.service.process.kill()
-        browser.service.process.wait()
-        # There's also browser.quit(), but it doesn't appear to work
-        # correctly on Ubuntu 14.10 at least for Chrome
+        browser.quit()
     request.addfinalizer(fin)
 
     # Set default time to wait for AJAX requests to complete
