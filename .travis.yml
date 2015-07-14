@@ -19,7 +19,7 @@ matrix:
     - python: 2.7
       env:
         - USE_CONDA=true
-        - COVERAGE="-a='--cov asv'"
+        - COVERAGE=--coverage
 
     - python: 3.4
       env: USE_CONDA=true
