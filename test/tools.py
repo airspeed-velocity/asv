@@ -286,8 +286,8 @@ def browser(request, pytestconfig):
     browser = driver_cls(**driver_options)
 
     # Set timeouts
-    browser.set_page_load_timeout(30)
-    browser.set_script_timeout(30)
+    browser.set_page_load_timeout(10)
+    browser.set_script_timeout(10)
 
     # Clean up on fixture finalization
     def fin():
@@ -330,12 +330,19 @@ def preview(base_path):
             return
 
     thread = threading.Thread(target=run)
+    thread.daemon = True
     thread.start()
     try:
         yield base_url
     finally:
-        httpd.shutdown()
-        thread.join()
+        # Stop must be run in a separate thread, because
+        # httpd.shutdown blocks until serve_forever returns.  We don't
+        # want to block here --- it appears in some environments
+        # problems shutting down the server may arise.
+        stopper = threading.Thread(target=httpd.shutdown)
+        stopper.daemon = True
+        stopper.start()
+        stopper.join(5.0)
 
 
 def get_with_retry(browser, url):
