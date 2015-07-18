@@ -35,6 +35,7 @@ try:
     from selenium import webdriver
     from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
     from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.common.exceptions import TimeoutException
     HAVE_WEBDRIVER = True
 except ImportError:
     HAVE_WEBDRIVER = False
@@ -284,6 +285,10 @@ def browser(request, pytestconfig):
     # Create the browser
     browser = driver_cls(**driver_options)
 
+    # Set timeouts
+    browser.set_page_load_timeout(30)
+    browser.set_script_timeout(30)
+
     # Clean up on fixture finalization
     def fin():
         browser.quit()
@@ -331,3 +336,13 @@ def preview(base_path):
     finally:
         httpd.shutdown()
         thread.join()
+
+
+def get_with_retry(browser, url):
+    for j in range(2):
+        try:
+            return browser.get(url)
+        except TimeoutException:
+            pass
+    else:
+        raise TimeoutException

@@ -19,7 +19,7 @@ from asv.commands.run import Run
 from asv.commands.publish import Publish
 
 from . import tools
-from .tools import browser
+from .tools import browser, get_with_retry
 from .test_workflow import basic_conf
 
 
@@ -68,7 +68,7 @@ def test_web_smoketest(browser, basic_html):
     conf, dvcs = basic_html
 
     with tools.preview(conf.html_dir) as base_url:
-        browser.get(base_url)
+        get_with_retry(browser, base_url)
 
         assert browser.title == 'airspeed velocity of an unladen asv'
 
@@ -140,7 +140,7 @@ def test_web_regressions(browser, tmpdir):
     bad_commit_hash = dvcs.get_hash('master~9')
 
     with tools.preview(conf.html_dir) as base_url:
-        browser.get(base_url)
+        get_with_retry(browser, base_url)
 
         regressions_btn = browser.find_element_by_link_text('Show regressions')
         regressions_btn.click()
