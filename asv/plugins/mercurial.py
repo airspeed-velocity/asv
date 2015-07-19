@@ -104,7 +104,7 @@ class Hg(Repo):
     def get_date(self, hash):
         # TODO: This works on Linux, but should be extended for other platforms
         rev = self._repo.log(hash)[0]
-        return int(rev.date.strftime("%s"))
+        return int(rev.date.strftime("%s")) * 1000
 
     def get_hashes_from_range(self, range_spec):
         return [rev.node for rev in self._repo.log(range_spec)]
