@@ -6,7 +6,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import glob
 import os
-from os.path import abspath, dirname, join, isfile
+from os.path import abspath, dirname, join, isfile, relpath
 import shutil
 import sys
 
@@ -47,6 +47,11 @@ def basic_conf(tmpdir):
     local = abspath(dirname(__file__))
     os.chdir(tmpdir)
 
+    # Use relative paths on purpose since this is what will be in
+    # actual config files
+
+    shutil.copytree(os.path.join(local, 'benchmark'), 'benchmark')
+
     machine_file = join(tmpdir, 'asv-machine.json')
 
     shutil.copyfile(join(local, 'asv-machine.json'),
@@ -55,11 +60,11 @@ def basic_conf(tmpdir):
     repo_path = tools.generate_test_repo(tmpdir, dummy_values).path
 
     conf = config.Config.from_json({
-        'env_dir': join(tmpdir, 'env'),
-        'benchmark_dir': join(local, 'benchmark'),
-        'results_dir': join(tmpdir, 'results_workflow'),
-        'html_dir': join(tmpdir, 'html'),
-        'repo': repo_path,
+        'env_dir': 'env',
+        'benchmark_dir': 'benchmark',
+        'results_dir': 'results_workflow',
+        'html_dir': 'html',
+        'repo': relpath(repo_path),
         'dvcs': 'git',
         'project': 'asv',
         'matrix': {

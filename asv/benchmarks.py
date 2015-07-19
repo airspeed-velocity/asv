@@ -229,8 +229,8 @@ def _run_benchmark_single(benchmark, root, env, param_idx, profile, quick, cwd):
 
         result_file.close()
         out, err, errcode = env.run(
-            [BENCHMARK_RUN_SCRIPT, 'run', root, name, str(quick),
-             profile_path, result_file.name],
+            [BENCHMARK_RUN_SCRIPT, 'run', os.path.abspath(root),
+             name, str(quick), profile_path, result_file.name],
             dots=False, timeout=benchmark['timeout'],
             display_error=False, return_stderr=True,
             valid_return_codes=None, cwd=cwd)
@@ -334,8 +334,8 @@ class Benchmarks(dict):
             try:
                 result_file.close()
                 env.run(
-                    [BENCHMARK_RUN_SCRIPT, 'discover', root,
-                     result_file.name],
+                    [BENCHMARK_RUN_SCRIPT, 'discover',
+                     os.path.abspath(root), result_file.name],
                     dots=False)
 
                 with open(result_file.name, 'r') as fp:
@@ -510,7 +510,8 @@ class Benchmarks(dict):
                         log.info("Setting up {0}".format(setup_cache_key))
                         out, err, errcode = env.run(
                             [BENCHMARK_RUN_SCRIPT, 'setup_cache',
-                             self._benchmark_dir, benchmark_set[0][0]],
+                             os.path.abspath(self._benchmark_dir),
+                             benchmark_set[0][0]],
                             dots=False, display_error=False,
                             return_stderr=True, valid_return_codes=None,
                             cwd=tmpdir)

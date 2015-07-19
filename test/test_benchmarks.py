@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
+import shutil
 from os.path import join, dirname
 
 import pstats
@@ -24,7 +25,6 @@ INVALID_BENCHMARK_DIR = join(
     dirname(__file__), 'benchmark.invalid')
 
 ASV_CONF_JSON = {
-    'benchmark_dir': BENCHMARK_DIR,
     'project': 'asv'
     }
 
@@ -33,9 +33,12 @@ def test_find_benchmarks(tmpdir):
     tmpdir = six.text_type(tmpdir)
     os.chdir(tmpdir)
 
+    shutil.copytree(BENCHMARK_DIR, 'benchmark')
+
     d = {}
     d.update(ASV_CONF_JSON)
-    d['env_dir'] = join(tmpdir, "env")
+    d['env_dir'] = "env"
+    d['benchmark_dir'] = 'benchmark'
     d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
     conf = config.Config.from_json(d)
 
@@ -117,7 +120,7 @@ def test_invalid_benchmark_tree(tmpdir):
     d = {}
     d.update(ASV_CONF_JSON)
     d['benchmark_dir'] = INVALID_BENCHMARK_DIR
-    d['env_dir'] = join(tmpdir, "env")
+    d['env_dir'] = "env"
     d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
     conf = config.Config.from_json(d)
 

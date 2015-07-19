@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function,
 import os
 import sys
 import re
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname, join, relpath
 import shutil
 import pytest
 
@@ -28,15 +28,20 @@ def basic_conf(tmpdir):
     local = abspath(dirname(__file__))
     os.chdir(tmpdir)
 
+    # Use relative paths on purpose since this is what will be in
+    # actual config files
+
+    shutil.copytree(os.path.join(local, 'benchmark'), 'benchmark')
+
     shutil.copyfile(join(local, 'asv-machine.json'),
                     join(tmpdir, 'asv-machine.json'))
 
     conf = config.Config.from_json({
-        'env_dir': join(tmpdir, 'env'),
-        'benchmark_dir': join(local, 'benchmark'),
-        'results_dir': join(tmpdir, 'results_workflow'),
-        'html_dir': join(tmpdir, 'html'),
-        'repo': tools.generate_test_repo(tmpdir).path,
+        'env_dir': 'env',
+        'benchmark_dir': 'benchmark',
+        'results_dir': 'results_workflow',
+        'html_dir': 'html',
+        'repo': relpath(tools.generate_test_repo(tmpdir).path),
         'project': 'asv',
         'matrix': {
             "six": [None],
