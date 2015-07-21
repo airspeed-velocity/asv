@@ -11,7 +11,6 @@ import six
 
 from .. import config
 from .. import util
-from .. import __version__
 
 from . import common_args
 
@@ -67,6 +66,8 @@ def make_argparser():
     parser = argparse.ArgumentParser(
         "asv",
         description="Airspeed Velocity: Simple benchmarking tool for Python")
+
+    common_args.add_global_arguments(parser, suppress_defaults=False)
 
     subparsers = parser.add_subparsers(
         title='subcommands',
