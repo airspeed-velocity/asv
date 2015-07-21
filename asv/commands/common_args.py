@@ -6,6 +6,21 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 import argparse
 
 
+def add_global_arguments(parser):
+    parser.add_argument(
+        "--verbose", "-v", action="store_true",
+        help="Increase verbosity")
+
+    parser.add_argument(
+        "--config",
+        help="Benchmark configuration file",
+        default='asv.conf.json')
+
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__,
+        help="Print program version")
+
+
 def add_factor(parser):
     parser.add_argument(
         '--factor', "-f", type=float, default=2.0,
