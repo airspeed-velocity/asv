@@ -35,6 +35,7 @@ try:
     from selenium import webdriver
     from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
     from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.common.exceptions import TimeoutException
     HAVE_WEBDRIVER = True
 except ImportError:
     HAVE_WEBDRIVER = False
@@ -284,6 +285,10 @@ def browser(request, pytestconfig):
     # Create the browser
     browser = driver_cls(**driver_options)
 
+    # Set timeouts
+    browser.set_page_load_timeout(10)
+    browser.set_script_timeout(10)
+
     # Clean up on fixture finalization
     def fin():
         browser.quit()
@@ -325,9 +330,26 @@ def preview(base_path):
             return
 
     thread = threading.Thread(target=run)
+    thread.daemon = True
     thread.start()
     try:
         yield base_url
     finally:
-        httpd.shutdown()
-        thread.join()
+        # Stop must be run in a separate thread, because
+        # httpd.shutdown blocks until serve_forever returns.  We don't
+        # want to block here --- it appears in some environments
+        # problems shutting down the server may arise.
+        stopper = threading.Thread(target=httpd.shutdown)
+        stopper.daemon = True
+        stopper.start()
+        stopper.join(5.0)
+
+
+def get_with_retry(browser, url):
+    for j in range(2):
+        try:
+            return browser.get(url)
+        except TimeoutException:
+            pass
+    else:
+        raise TimeoutException
