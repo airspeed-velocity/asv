@@ -106,6 +106,7 @@ def test_dev_python_arg():
     argv = ['dev']
     args = parser.parse_args(argv)
     assert args.python == 'same'
+    assert not args.verbose
 
     argv = ['dev', '--python=foo']
     args = parser.parse_args(argv)
@@ -114,6 +115,16 @@ def test_dev_python_arg():
     argv = ['run', 'ALL']
     args = parser.parse_args(argv)
     assert args.python is None
+
+    argv = ['--verbose', '--config=foo', 'dev']
+    args = parser.parse_args(argv)
+    assert args.verbose
+    assert args.config == 'foo'
+
+    argv = ['dev', '--verbose', '--config=foo']
+    args = parser.parse_args(argv)
+    assert args.verbose
+    assert args.config == 'foo'
 
 
 def test_run_steps_arg():
