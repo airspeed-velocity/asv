@@ -13,6 +13,7 @@ import six
 from asv import config
 
 from asv.commands.compare import Compare
+from argparse import Namespace
 
 from . import tools
 
@@ -51,7 +52,9 @@ def test_compare(capsys, tmpdir):
          'repo': tools.generate_test_repo(tmpdir).path,
          'project': 'asv'})
 
-    Compare.run(conf, '22b920c6', 'fcf8c079', machine='cheetah')
+    mock_args = Namespace(revision1='22b920c6', revision2='fcf8c079', machine='cheetah',
+                          factor=2, split=False)
+    Compare.run_from_conf_args(conf, mock_args)
 
     text, err = capsys.readouterr()
     assert text.strip() == REFERENCE.strip()
