@@ -84,8 +84,8 @@ class Compare(Command):
     @classmethod
     def run_from_conf_args(cls, conf, args):
         return cls.run(conf=conf,
-                       hash_1=args.revision1[0],
-                       hash_2=args.revision2[0],
+                       hash_1=args.revision1,
+                       hash_2=args.revision2,
                        factor=args.factor, split=args.split,
                        machine=args.machine)
 
