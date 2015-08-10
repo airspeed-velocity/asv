@@ -17,6 +17,8 @@
         "numpy": "1.8"
     }, 
     "results": {
+    	"time_AAA_failure": null,
+    	"time_AAA_skip": NaN,
         "time_coordinates.time_latitude": null, 
         "time_quantity.time_quantity_array_conversion": 0.15283851623535155, 
         "time_quantity.time_quantity_init_array": 0.10822079181671143, 
