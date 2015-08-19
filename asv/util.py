@@ -387,7 +387,7 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
                 # process is in a separate process group so it won't receive
                 # these automatically from the terminal
                 def sig_forward(signum, frame):
-                    os.killpg(proc.pid, signum)
+                    _killpg_safe(proc.pid, signum)
                     if signum == signal.SIGTSTP:
                         os.kill(os.getpid(), signal.SIGSTOP)
                 signal.signal(signal.SIGTSTP, sig_forward)
@@ -432,14 +432,15 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
                 # the program is still running.
                 if posix:
                     # Terminate the whole process group
-                    os.killpg(proc.pid, signal.SIGTERM)
+                    _killpg_safe(proc.pid, signal.SIGTERM)
+
                     for j in range(10):
                         time.sleep(0.1)
                         if proc.poll() is not None:
                             break
                     else:
                         # Didn't terminate within 1 sec, so kill it
-                        os.killpg(proc.pid, signal.SIGTERM)
+                        _killpg_safe(proc.pid, signal.SIGKILL)
                 else:
                     proc.terminate()
                 proc.wait()
@@ -475,6 +476,21 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
         return (stdout, stderr, retcode)
     else:
         return stdout
+
+
+def _killpg_safe(pgid, signo):
+    """
+    Same as os.killpg, but deal with OSX/BSD
+    """
+    try:
+        os.killpg(pgid, signo)
+    except OSError as exc:
+        if exc.errno == errno.EPERM:
+            # OSX/BSD may raise EPERM on killpg if the process group
+            # already terminated
+            pass
+        else:
+            raise
 
 
 def write_json(path, data, api_version=None):
