@@ -13,11 +13,13 @@ import sys
 
 # A py.test test command
 class PyTest(TestCommand):
-    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
+    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test"),
+                    ('coverage', 'c', "Generate coverage report")]
 
     def initialize_options(self):
         TestCommand.initialize_options(self)
         self.pytest_args = ''
+        self.coverage = False
 
     def finalize_options(self):
         TestCommand.finalize_options(self)
@@ -28,6 +30,8 @@ class PyTest(TestCommand):
         import pytest
         if self.pytest_args:
             self.test_args += self.pytest_args.split()
+        if self.coverage:
+            self.test_args += ['--cov', 'asv']
         errno = pytest.main(self.test_args)
         sys.exit(errno)
 
