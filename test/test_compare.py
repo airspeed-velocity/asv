@@ -25,6 +25,8 @@ All benchmarks:
 
     before     after       ratio
   [22b920c6] [fcf8c079]
+     failed     failed       n/a  time_AAA_failure
+        n/a        n/a       n/a  time_AAA_skip
 !  454.03μs     failed       n/a  time_coordinates.time_latitude
       1.00s      1.00s      1.00  time_other.time_parameterized(1)
       2.00s      4.00s      2.00  time_other.time_parameterized(2)

@@ -9,7 +9,7 @@ import itertools
 from . import Command
 from ..machine import iter_machine_files
 from ..results import iter_results_for_machine_and_hash
-from ..util import human_time, load_json
+from ..util import human_value, load_json
 from ..console import color_print
 from .. import util
 
@@ -46,6 +46,11 @@ def unroll_result(benchmark_name, result):
                               result['result']):
         name = "%s(%s)" % (benchmark_name, ", ".join(params))
         yield name, result
+
+
+def _isna(value):
+    # None (failed) or NaN (skipped)
+    return value is None or value != value
 
 
 class Compare(Command):
@@ -157,17 +162,18 @@ class Compare(Command):
             time_1 = mean(results_1[benchmark])
             time_2 = mean(results_2[benchmark])
 
-            if time_1 is None or time_2 is None:
+            if _isna(time_1) or _isna(time_2):
                 ratio = 'n/a'
             else:
                 ratio = "{0:6.2f}".format(time_2 / time_1)
 
-            if time_1 is None and time_2 is None:
+            if _isna(time_1) and _isna(time_2):
                 color = 'red'
-            elif time_1 is None and time_2 is not None:
+                mark = ' '
+            elif _isna(time_1) and not _isna(time_2):
                 color = 'green'
                 mark = '-'
-            elif time_1 is not None and time_2 is None:
+            elif not _isna(time_1) and _isna(time_2):
                 color = 'red'
                 mark = '!'
             elif time_2 < time_1 / factor:
@@ -181,8 +187,8 @@ class Compare(Command):
                 mark = ' '
             details = "{0:1s} {1:>9s}  {2:>9s} {3:>9s}  ".format(
                 mark,
-                'failed' if time_1 is None else human_time(time_1),
-                'failed' if time_2 is None else human_time(time_2),
+                human_value(time_1, "seconds"),
+                human_value(time_2, "seconds"),
                 ratio)
 
             if split:
