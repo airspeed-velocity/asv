@@ -11,7 +11,8 @@ import six
 
 from .. import config
 from .. import util
-from .. import __version__
+
+from . import common_args
 
 
 # This list is ordered in order of average workflow
@@ -66,18 +67,7 @@ def make_argparser():
         "asv",
         description="Airspeed Velocity: Simple benchmarking tool for Python")
 
-    parser.add_argument(
-        "--verbose", "-v", action="store_true",
-        help="Increase verbosity")
-
-    parser.add_argument(
-        "--config",
-        help="Benchmark configuration file",
-        default='asv.conf.json')
-
-    parser.add_argument(
-        "--version", action="version", version="%(prog)s " + __version__,
-        help="Print program version")
+    common_args.add_global_arguments(parser, suppress_defaults=False)
 
     subparsers = parser.add_subparsers(
         title='subcommands',
@@ -90,11 +80,13 @@ def make_argparser():
     commands = dict((x.__name__, x) for x in util.iter_subclasses(Command))
 
     for command in command_order:
-        commands[str(command)].setup_arguments(subparsers)
+        subparser = commands[str(command)].setup_arguments(subparsers)
+        common_args.add_global_arguments(subparser)
         del commands[command]
 
     for name, command in sorted(six.iteritems(commands)):
-        command.setup_arguments(subparsers)
+        subparser = command.setup_arguments(subparsers)
+        common_args.add_global_arguments(subparser)
 
     return parser, subparsers
 
@@ -103,6 +95,7 @@ def _make_docstring():
     parser, subparsers = make_argparser()
 
     lines = []
+
     for p in six.itervalues(subparsers.choices):
         lines.append(p.prog)
         lines.append('-' * len(p.prog))

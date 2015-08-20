@@ -5,6 +5,34 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 
 import argparse
 
+from .. import __version__
+
+
+def add_global_arguments(parser, suppress_defaults=True):
+    # Suppressing defaults is needed in order to allow global
+    # arguments both before and after subcommand. Only the top-level
+    # parser should have suppress_defaults=False
+
+    if suppress_defaults:
+        suppressor = dict(default=argparse.SUPPRESS)
+    else:
+        suppressor = dict()
+
+    parser.add_argument(
+        "--verbose", "-v", action="store_true",
+        help="Increase verbosity",
+        **suppressor)
+
+    parser.add_argument(
+        "--config",
+        help="Benchmark configuration file",
+        default=(argparse.SUPPRESS if suppress_defaults else 'asv.conf.json'))
+
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__,
+        help="Print program version",
+        **suppressor)
+
 
 def add_factor(parser):
     parser.add_argument(
