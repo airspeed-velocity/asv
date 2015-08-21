@@ -183,7 +183,6 @@ $(document).ready(function() {
         var panel_body = make_panel(nav, 'benchmark');
 
         var tree = $('<ul class="nav nav-list" style="padding-left: 0px"/>');
-        panel_body.append(tree);
         var cursor = [];
         var stack = [tree];
 
@@ -209,11 +208,10 @@ $(document).ready(function() {
                 var top = $(
                     '<li class="dropdown">' +
                         '<label class="nav-header"><b class="caret-right"/> ' + parts[j] +
-                        '</label><ul class="nav nav-list tree"/></li>');
+                        '</label><ul class="nav nav-list tree" style="display: none;"/></li>');
                 stack[stack.length - 1].append(top);
                 stack.push($(top.children()[1]));
                 cursor.push(parts[j]);
-                top.children('ul.tree').toggle(0);
 
                 $(top.children()[0]).click(function () {
                     $(this).parent().children('ul.tree').toggle(150);
@@ -237,6 +235,8 @@ $(document).ready(function() {
                 animation: 'false'
             });
         });
+
+        panel_body.append(tree);
 
         $('#log-scale').on('click', function(evt) {
             log_scale = !evt.target.classList.contains("active");

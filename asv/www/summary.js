@@ -15,12 +15,12 @@ $(document).ready(function() {
             }
         }
         $(window).on('scroll', handler);
-        $(window).scroll();
     }
 
     function make_summary() {
         var summary_display = $('#summary-display');
         var master_json = $.asv.master_json;
+        var summary_container = $('<div/>');
 
         if (summary_loaded) {
             return;
@@ -65,7 +65,7 @@ $(document).ready(function() {
 
             container.append(name);
             container.append(plot_div);
-            summary_display.append(container);
+            summary_container.append(container);
 
             callback_in_view(plot_div, function() {
                 $.ajax({
@@ -108,6 +108,9 @@ $(document).ready(function() {
                 });
             });
         });
+
+        summary_display.append(summary_container);
+        $(window).scroll();
 
         summary_loaded = true;
     }
