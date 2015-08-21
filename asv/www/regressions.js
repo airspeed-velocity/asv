@@ -300,10 +300,9 @@ $(document).ready(function() {
                     markings.push({ color: '#d00', lineWidth: 2, xaxis: { from: date_b, to: date_b }});
                 });
 
-                $.ajax({
-                    url: graph_url,
-                    cache: false
-                }).done(function(data) {
+                $.asv.load_graph_data(
+                    graph_url
+                ).done(function (data) {
                     var params = $.asv.master_json.benchmarks[benchmark_basename].params;
                     data = $.asv.filter_graph_data_idx(data, 0, parameter_idx, params);
                     var options = {
@@ -335,9 +334,10 @@ $(document).ready(function() {
                         }
                     };
                     var plot = $.plot(plot_div, [{data: data}], options);
-                }).fail(function() {
+                }).fail(function () {
                     // TODO: Handle failure
-                })
+                });
+
                 return plot_div;
             }
             benchmark_link.popover({

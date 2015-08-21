@@ -835,11 +835,9 @@ $(document).ready(function() {
         var count = 1;
 
         $.each(to_load, function(i, item) {
-            $.ajax({
-                url: item[0],
-                dataType: "json",
-                cache: false
-            }).done(function(data) {
+            $.asv.load_graph_data(
+                item[0]
+            ).done(function (data) {
                 $.each(item[1], function(j, graph_content) {
                     var series;
                     series = $.asv.filter_graph_data(data,
@@ -854,7 +852,7 @@ $(document).ready(function() {
                     count += 1;
                 });
                 update_graphs();
-            }).fail(function() {
+            }).fail(function () {
                 failures += 1;
                 if (failures == to_load.length) {
                     /* If we don't get any results, we check that the

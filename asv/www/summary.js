@@ -68,11 +68,9 @@ $(document).ready(function() {
             summary_container.append(container);
 
             callback_in_view(plot_div, function() {
-                $.ajax({
-                    url: 'graphs/summary/' + bm_name + '.json',
-                    dataType: "json",
-                    cache: false
-                }).done(function(data) {
+                $.asv.load_graph_data(
+                    'graphs/summary/' + bm_name + '.json'
+                ).done(function(data) {
                     var options = {
                         colors: $.asv.colors,
                         series: {

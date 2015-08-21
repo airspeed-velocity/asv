@@ -10,6 +10,9 @@ $(document).ready(function() {
     var window_scroll_positions = {};
     /* Previous window hash location */
     var window_last_location = null;
+    /* Graph data cache */
+    var graph_cache = {};
+    var graph_cache_max_size = 5;
 
     var colors = [
         '#247AAD',
@@ -179,6 +182,35 @@ $(document).ready(function() {
         return filter_graph_data(raw_series, x_axis, flat_selection, params);
     }
 
+    /*
+      Load and cache graph data (on javascript side)
+     */
+    function load_graph_data(url, success, failure) {
+        var dfd = $.Deferred();
+        if (graph_cache[url]) {
+            setTimeout(function() {
+                dfd.resolve(graph_cache[url]);
+            }, 1);
+        }
+        else {
+            $.ajax({
+                url: url,
+                dataType: "json",
+                cache: false
+            }).done(function(data) {
+                if (Object.keys(graph_cache).length > graph_cache_max_size) {
+                    $.each(Object.keys(graph_cache), function (i, key) {
+                        delete graph_cache[key];
+                    });
+                }
+                graph_cache[url] = data;
+                dfd.resolve(data);
+            }).fail(function() {
+                dfd.reject();
+            });
+        }
+        return dfd.promise();
+    }
 
     /*
       Parse hash string, assuming format similar to standard URL
@@ -329,6 +361,7 @@ $(document).ready(function() {
     this.filter_graph_data_idx = filter_graph_data_idx;
     this.convert_benchmark_param_value = convert_benchmark_param_value;
     this.param_selection_from_flat_idx = param_selection_from_flat_idx;
+    this.load_graph_data = load_graph_data;
 
     this.network_error = network_error;
 
