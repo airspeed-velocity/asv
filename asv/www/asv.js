@@ -1,3 +1,5 @@
+'use strict';
+
 $(document).ready(function() {
     /* GLOBAL STATE */
     /* The index.json content as returned from the server */

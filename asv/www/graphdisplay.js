@@ -1,3 +1,5 @@
+'use strict';
+
 $(document).ready(function() {
     /* The state of the parameters in the sidebar.  Dictionary mapping
        strings to arrays containing the "enabled" configurations. */
