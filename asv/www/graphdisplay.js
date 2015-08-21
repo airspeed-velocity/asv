@@ -429,26 +429,26 @@ $(document).ready(function() {
         replace_benchmark_params_ui();
     }
 
+    function update_state_url() {
+        var info = $.asv.parse_hash_string(window.location.hash);
+        $.each($.asv.master_json.params, function(param, values) {
+            if (values.length > 1) {
+                if (state[param].length != values.length || param == 'branch') {
+                    info.params[param] = state[param];
+                }
+                else if (info.params[param]) {
+                    delete info.params[param];
+                }
+            }
+        });
+        window.location.hash = $.asv.format_hash_string(info);
+    }
+
     function replace_params_ui() {
         var index = $.asv.master_json;
 
         var nav = $('#state-params');
         nav.empty();
-
-        function update_state_url() {
-            var info = $.asv.parse_hash_string(window.location.hash);
-            $.each(index.params, function(param, values) {
-                if (values.length > 1) {
-                    if (state[param].length != values.length) {
-                        info.params[param] = state[param];
-                    }
-                    else if (info.params[param]) {
-                        delete info.params[param];
-                    }
-                }
-            });
-            window.location.hash = $.asv.format_hash_string(info);
-        }
 
         /* Machine selection */
         make_value_selector_panel(nav, 'machine', index.params.machine,  function(i, machine, button) {
