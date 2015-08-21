@@ -7,6 +7,7 @@ $(document).ready(function() {
     function callback_in_view(element, func) {
         function handler(evt) {
             var visible = (
+                $('#summary-display').css('display') != 'none' &&
                 (element.offset().top <= $(window).height() + $(window).scrollTop()) &&
                     (element.offset().top + element.height() >= $(window).scrollTop()));
             if (visible) {
