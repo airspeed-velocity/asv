@@ -181,8 +181,12 @@ $(document).ready(function() {
     var window_scroll_positions = {};
     /* Previous window hash location */
     var window_last_location = null;
+    /* Whether benchmark graph display was set up */
+    var benchmark_graph_display_ready = false;
 
     function display_benchmark(bm_name, state_selection, sub_benchmark_idx, highlight_timestamps) {
+        setup_benchmark_graph_display();
+
         $('#graph-display').show();
         $('#summary-display').hide();
         $('#regressions-display').hide();
@@ -262,24 +266,13 @@ $(document).ready(function() {
         });
     }
 
-    /* Fetch the master index.json and then set up the page elements
-       based on it. */
-    $.ajax({
-        url: "index.json",
-        dataType: "json",
-        cache: false
-    }).done(function (index) {
-        master_json = index;
-        $.asv.master_json = index;
+    function setup_benchmark_graph_display() {
+        if (benchmark_graph_display_ready) {
+            return;
+        }
+        benchmark_graph_display_ready = true;
 
         var nav = $("#navigation");
-
-        /* Page title */
-        var project_name = $("#project-name")[0];
-        project_name.textContent = index.project;
-        project_name.setAttribute("href", index.project_url);
-        $("#project-name").textContent = index.project;
-        document.title = "airspeed velocity of an unladen " + index.project;
 
         /* Make the static tooltips look correct */
         $('[data-toggle="tooltip"]').tooltip({container: 'body'});
@@ -302,7 +295,7 @@ $(document).ready(function() {
 
         /* Note: this relies on the fact that the benchmark names are
            sorted. */
-        $.each(index.benchmarks, function(bm_name, bm) {
+        $.each(master_json.benchmarks, function(bm_name, bm) {
             var parts = bm_name.split('.');
             var i = 0;
             var j;
@@ -465,72 +458,58 @@ $(document).ready(function() {
                 }
             }
         });
+    }
 
-        function hashchange() {
-            var info = parse_hash_string(window.location.hash);
 
-            /* Keep track of window scroll position; makes the back-button work */
-            var old_scroll_pos = window_scroll_positions[info.location.join('/')];
-            window_scroll_positions[window_last_location] = $(window).scrollTop();
-            window_last_location = info.location.join('/');
+    function hashchange() {
+        var info = parse_hash_string(window.location.hash);
 
-            /* Redirect to correct handler */
-            if (show_page(info.location, info.params)) {
-                /* show_page does the work */
-            }
-            else {
-                /* Display benchmark page */
-                var benchmark = info.location[0];
-                var sub_benchmark_idx = null;
-                var highlight_timestamps = null;
-                var state_selection = null;
+        /* Keep track of window scroll position; makes the back-button work */
+        var old_scroll_pos = window_scroll_positions[info.location.join('/')];
+        window_scroll_positions[window_last_location] = $(window).scrollTop();
+        window_last_location = info.location.join('/');
 
-                if (info.params['idx']) {
-                    sub_benchmark_idx = parseInt(info.params['idx'][0]);
-                    delete info.params['idx'];
-                }
+        /* Redirect to correct handler */
+        if (show_page(info.location, info.params)) {
+            /* show_page does the work */
+        }
+        else {
+            /* Display benchmark page */
+            var benchmark = info.location[0];
+            var sub_benchmark_idx = null;
+            var highlight_timestamps = null;
+            var state_selection = null;
 
-                if (info.params['time']) {
-                    highlight_timestamps = [];
-                    $.each(info.params['time'], function(i, value) {
-                        var match = value.match(/^([0-9]+)-([0-9]+)$/);
-                        if (match) {
-                            highlight_timestamps.push([parseInt(match[1]), parseInt(match[2])]);
-                        }
-                        else {
-                            highlight_timestamps.push([parseInt(value)]);
-                        }
-                    });
-                    delete info.params['time'];
-                }
-
-                if (Object.keys(info.params).length > 0) {
-                    state_selection = info.params;
-                }
-                display_benchmark(benchmark, state_selection, sub_benchmark_idx, highlight_timestamps);
+            if (info.params['idx']) {
+                sub_benchmark_idx = parseInt(info.params['idx'][0]);
+                delete info.params['idx'];
             }
 
-            /* Scroll back to previous position, if any */
-            if (old_scroll_pos !== undefined) {
-                $(window).scrollTop(old_scroll_pos);
+            if (info.params['time']) {
+                highlight_timestamps = [];
+                $.each(info.params['time'], function(i, value) {
+                    var match = value.match(/^([0-9]+)-([0-9]+)$/);
+                    if (match) {
+                        highlight_timestamps.push([parseInt(match[1]), parseInt(match[2])]);
+                    }
+                    else {
+                        highlight_timestamps.push([parseInt(value)]);
+                    }
+                });
+                delete info.params['time'];
             }
+
+            if (Object.keys(info.params).length > 0) {
+                state_selection = info.params;
+            }
+            display_benchmark(benchmark, state_selection, sub_benchmark_idx, highlight_timestamps);
         }
 
-        $(window).on('hashchange', hashchange);
-
-        $('#graph-display').hide();
-        $('#regressions-display').hide();
-        $('#summary-display').hide();
-
-        hashchange();
-    }).fail(function () {
-        network_error();
-    });
-
-    /* When the window resizes, redraw the graphs */
-    $(window).resize(function() {
-        update_graphs();
-    });
+        /* Scroll back to previous position, if any */
+        if (old_scroll_pos !== undefined) {
+            $(window).scrollTop(old_scroll_pos);
+        }
+    }
 
     function setup_benchmark_params(state_selection, sub_benchmark_idx) {
         if (!current_benchmark) {
@@ -1555,7 +1534,6 @@ $(document).ready(function() {
         update_range();
     }
 
-
     /*
       Dealing with sub-pages
      */
@@ -1564,6 +1542,7 @@ $(document).ready(function() {
         if (loaded_pages[name] !== undefined) {
             $("#graph-display").hide();
             $("#summary-display").hide();
+            $('#regressions-display').hide();
             loaded_pages[name](params);
             return true;
         }
@@ -1571,6 +1550,46 @@ $(document).ready(function() {
             return false;
         }
     }
+
+    function init() {
+        /* Fetch the master index.json and then set up the page elements
+           based on it. */
+        $.ajax({
+            url: "index.json",
+            dataType: "json",
+            cache: false
+        }).done(function (index) {
+            master_json = index;
+            $.asv.master_json = index;
+
+            /* Page title */
+            var project_name = $("#project-name")[0];
+            project_name.textContent = index.project;
+            project_name.setAttribute("href", index.project_url);
+            $("#project-name").textContent = index.project;
+            document.title = "airspeed velocity of an unladen " + index.project;
+
+            $(window).on('hashchange', hashchange);
+
+            $('#graph-display').hide();
+            $('#regressions-display').hide();
+            $('#summary-display').hide();
+
+            hashchange();
+        }).fail(function () {
+            network_error();
+        });
+
+        /* When the window resizes, redraw the graphs */
+        $(window).resize(function() {
+            update_graphs();
+        });
+    }
+
+
+    /*
+      Set up $.asv
+     */
 
     this.register_page = function(name, show_function) {
         loaded_pages[name] = show_function;
@@ -1588,4 +1607,11 @@ $(document).ready(function() {
     this.colors = colors;
 
     $.asv = this;
+
+
+    /*
+      Launch it
+     */
+
+    init();
 });
