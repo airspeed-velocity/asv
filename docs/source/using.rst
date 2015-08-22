@@ -30,7 +30,11 @@ benchmarking suite.  Change to the directory where you would like your
 new benchmarking suite to be created and run::
 
     $ asv quickstart
+    Is this the top level of your project repository? [y/n] n
     Edit asv.conf.json to get started.
+
+Answer 'y' if you want a default configuration more suitable for
+putting on the top level of your project's repository.
 
 Now that you have the bare bones of a benchmarking suite, let's edit
 the configuration file, ``asv.conf.json``.  Like most files that
