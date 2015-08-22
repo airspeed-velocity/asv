@@ -599,8 +599,35 @@ benchmark_types = [
 ]
 
 
+class SpecificImporter(object):
+    """
+    Module importer that only allows loading a given module from the
+    given path.
+
+    Using this enables importing the asv benchmark suite without
+    adding its parent directory to sys.path. The parent directory can
+    in principle contain anything, including some version of the
+    project module (common situtation if asv.conf.json is on project
+    repository top level).
+    """
+
+    def __init__(self, name, root):
+        self._name = name
+        self._root = root
+
+    def find_module(self, fullname, path=None):
+        if fullname == self._name:
+            return self
+        return None
+
+    def load_module(self, fullname):
+        file, pathname, desc = imp.find_module(fullname, [self._root])
+        return imp.load_module(fullname, file, pathname, desc)
+
+
 def update_sys_path(root):
-    sys.path.insert(0, os.path.dirname(root))
+    sys.meta_path.insert(0, SpecificImporter(os.path.basename(root),
+                                             os.path.dirname(root)))
 
 
 def disc_class(klass):
