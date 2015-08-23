@@ -20,6 +20,7 @@ from asv.commands.publish import Publish
 from asv.commands.find import Find
 from asv.commands.continuous import Continuous
 from asv.util import check_output, which
+from asv import results
 
 from . import tools
 
@@ -121,9 +122,21 @@ def test_run_publish(capfd, basic_conf):
     text, err = capfd.readouterr()
     assert 'Running benchmarks.' not in text
 
-    # Check EXISTING works
+    # Check EXISTING and take_minimum works
+
+    with open(join(tmpdir, 'benchmark', 'time_secondary.py'), 'r') as f:
+        text = f.read()
+    with open(join(tmpdir, 'benchmark', 'time_secondary.py'), 'w') as f:
+        text += "def track_value():\n    return 43.0\n"
+        text += "def track_value_new():\n    return 41.0\n"
+        f.write(text)
+
     Run.run(conf, range_spec="EXISTING",
-            _machine_file=machine_file, quick=True)
+            _machine_file=machine_file, quick=True, take_minimum=True)
+
+    for result in results.iter_results(conf.results_dir):
+        assert result.results['time_secondary.track_value'] == 42.0
+        assert result.results['time_secondary.track_value_new'] == 41.0
 
     # Remove the benchmarks.json file to make sure publish can
     # regenerate it

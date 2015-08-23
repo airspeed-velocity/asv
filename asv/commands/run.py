@@ -104,6 +104,10 @@ class Run(Command):
             "--skip-existing", "-k", action="store_true",
             help="""Skip running benchmarks that have previous successful
             or failed results""")
+        parser.add_argument(
+            "--take-minimum", action="store_true",
+            help="""Instead of replacing existing results, take minimum of
+            the new and old results""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -119,14 +123,16 @@ class Run(Command):
             dry_run=args.dry_run, machine=args.machine,
             skip_successful=args.skip_existing_successful or args.skip_existing,
             skip_failed=args.skip_existing_failed or args.skip_existing,
-            skip_existing_commits=args.skip_existing_commits
+            skip_existing_commits=args.skip_existing_commits,
+            take_minimum=args.take_minimum
         )
 
     @classmethod
     def run(cls, conf, range_spec=None, steps=None, bench=None, parallel=1,
             show_stderr=False, quick=False, profile=False, python=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
-            skip_failed=False, skip_existing_commits=False, _returns={}):
+            skip_failed=False, skip_existing_commits=False, take_minimum=False,
+            _returns={}):
         params = {}
         machine_params = Machine.load(
             machine_name=machine,
@@ -293,4 +299,5 @@ class Run(Command):
                                     benchmark_name,
                                     d['profile'])
 
-                        result.update_save(conf.results_dir)
+                        result.update_save(conf.results_dir,
+                                           take_minimum=take_minimum)
