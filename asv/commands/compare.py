@@ -48,11 +48,6 @@ def unroll_result(benchmark_name, result):
         yield name, result
 
 
-def _isna(value):
-    # None (failed) or NaN (skipped)
-    return value is None or value != value
-
-
 class Compare(Command):
 
     @classmethod
@@ -162,18 +157,18 @@ class Compare(Command):
             time_1 = mean(results_1[benchmark])
             time_2 = mean(results_2[benchmark])
 
-            if _isna(time_1) or _isna(time_2):
+            if util.is_na(time_1) or util.is_na(time_2):
                 ratio = 'n/a'
             else:
                 ratio = "{0:6.2f}".format(time_2 / time_1)
 
-            if _isna(time_1) and _isna(time_2):
+            if util.is_na(time_1) and util.is_na(time_2):
                 color = 'red'
                 mark = ' '
-            elif _isna(time_1) and not _isna(time_2):
+            elif util.is_na(time_1) and not util.is_na(time_2):
                 color = 'green'
                 mark = '-'
-            elif not _isna(time_1) and _isna(time_2):
+            elif not util.is_na(time_1) and util.is_na(time_2):
                 color = 'red'
                 mark = '!'
             elif time_2 < time_1 / factor:

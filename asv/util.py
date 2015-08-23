@@ -806,6 +806,13 @@ def is_nan(x):
     return False
 
 
+def is_na(x):
+    """
+    Return true if value is None or nan
+    """
+    return x is None or is_nan(x)
+
+
 if not WIN:
     long_path_open = open
     long_path_rmtree = shutil.rmtree
