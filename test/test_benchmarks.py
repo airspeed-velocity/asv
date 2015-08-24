@@ -172,3 +172,40 @@ def test_table_formatting():
                 "======== ======== ========")
     table = "\n".join(benchmarks._format_benchmark_result(result, benchmark, max_width=0))
     assert table == expected
+
+
+def test_find_benchmarks_cwd_imports(tmpdir):
+    # Test that files in the directory above the benchmark suite are
+    # not importable
+
+    tmpdir = six.text_type(tmpdir)
+    os.chdir(tmpdir)
+
+    os.makedirs('benchmark')
+    with open(os.path.join('benchmark', '__init__.py'), 'w') as f:
+        pass
+
+    with open(os.path.join('benchmark', 'test.py'), 'w') as f:
+        f.write("""
+try:
+    import this_should_really_not_be_here
+    raise AssertionError('This should not happen!')
+except ImportError:
+    pass
+
+def track_this():
+    return 0
+""")
+
+    with open(os.path.join('this_should_really_not_be_here.py'), 'w') as f:
+        f.write("raise AssertionError('Should not be imported!')")
+
+    d = {}
+    d.update(ASV_CONF_JSON)
+    d['env_dir'] = "env"
+    d['benchmark_dir'] = 'benchmark'
+    d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
+    conf = config.Config.from_json(d)
+
+    b = benchmarks.Benchmarks(conf, regex='track_this')
+    assert len(b) == 1
