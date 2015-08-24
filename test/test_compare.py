@@ -25,6 +25,7 @@ All benchmarks:
 
     before     after       ratio
   [22b920c6] [fcf8c079]
+!       n/a     failed       n/a  params_examples.ParamSuite.track_value
      failed     failed       n/a  time_AAA_failure
         n/a        n/a       n/a  time_AAA_skip
 !  454.03μs     failed       n/a  time_coordinates.time_latitude
@@ -40,10 +41,9 @@ All benchmarks:
 +  125.11μs     3.81ms     30.42  time_units.time_simple_unit_parse
      1.64ms     1.53ms      0.93  time_units.time_unit_compose
 +  372.11μs    11.47ms     30.81  time_units.time_unit_parse
-    69.09μs    48.32μs      0.70  time_units.time_unit_to
+-   69.09μs    18.32μs      0.27  time_units.time_unit_to
     11.87μs    13.10μs      1.10  time_units.time_very_simple_unit_parse
 """
-
 
 def test_compare(capsys, tmpdir):
     tmpdir = six.text_type(tmpdir)

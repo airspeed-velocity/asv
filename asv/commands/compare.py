@@ -146,7 +146,7 @@ class Compare(Command):
         benchmarks_1 = set(results_1.keys())
         benchmarks_2 = set(results_2.keys())
 
-        common_benchmarks = sorted(list(benchmarks_1 & benchmarks_2))
+        joint_benchmarks = sorted(list(benchmarks_1 | benchmarks_2))
 
         bench = {}
 
@@ -157,25 +157,41 @@ class Compare(Command):
         else:
             bench['all'] = []
 
-        for benchmark in common_benchmarks:
+        for benchmark in joint_benchmarks:
+            if benchmark in results_1:
+                time_1 = mean(results_1[benchmark])
+            else:
+                time_1 = float("nan")
 
-            time_1 = mean(results_1[benchmark])
-            time_2 = mean(results_2[benchmark])
+            if benchmark in results_2:
+                time_2 = mean(results_2[benchmark])
+            else:
+                time_2 = float("nan")
 
             if _isna(time_1) or _isna(time_2):
                 ratio = 'n/a'
             else:
-                ratio = "{0:6.2f}".format(time_2 / time_1)
+                try:
+                    ratio = "{0:6.2f}".format(time_2 / time_1)
+                except ZeroDivisionError:
+                    ratio = "n/a"
 
-            if _isna(time_1) and _isna(time_2):
-                color = 'red'
-                mark = ' '
-            elif _isna(time_1) and not _isna(time_2):
-                color = 'green'
-                mark = '-'
-            elif not _isna(time_1) and _isna(time_2):
+            if time_1 is not None and time_2 is None:
+                # introduced a failure
                 color = 'red'
                 mark = '!'
+            elif time_1 is None and time_2 is not None:
+                # fixed a failure
+                color = 'green'
+                mark = ' '
+            elif time_1 is None and time_2 is None:
+                # both failed
+                color = 'red'
+                mark = ' '
+            elif _isna(time_1) or _isna(time_2):
+                # either one was skipped
+                color = 'default'
+                mark = ' '
             elif time_2 < time_1 / factor:
                 color = 'green'
                 mark = '-'
@@ -185,6 +201,7 @@ class Compare(Command):
             else:
                 color = 'default'
                 mark = ' '
+
             details = "{0:1s} {1:>9s}  {2:>9s} {3:>9s}  ".format(
                 mark,
                 human_value(time_1, "seconds"),
