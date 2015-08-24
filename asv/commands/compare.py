@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import six
 import itertools
 
 from . import Command
@@ -116,24 +117,39 @@ class Compare(Command):
             raise util.UserError(
                 "Results for machine '{0} not found".format(machine))
 
+        cls.print_table(conf, hash_1, hash_2, factor=factor, machine=machine,
+                        split=split)
+
+    @classmethod
+    def print_table(cls, conf, hash_1, hash_2, factor, split,
+                    resultset_1=None, resultset_2=None, machine=None,
+                    sort_by_ratio=False, only_changed=False):
         results_1 = {}
         results_2 = {}
 
-        for result in iter_results_for_machine_and_hash(
-                conf.results_dir, machine, hash_1):
-            for key in result.results:
-                for name, value in unroll_result(key, result.results[key]):
-                    if name not in results_1:
-                        results_1[name] = []
-                    results_1[name].append(value)
+        def results_default_iter(commit_hash):
+            for result in iter_results_for_machine_and_hash(
+                    conf.results_dir, machine, commit_hash):
+                for key, value in six.iteritems(result.results):
+                    yield key, value
 
-        for result in iter_results_for_machine_and_hash(
-                conf.results_dir, machine, hash_2):
-            for key in result.results:
-                for name, value in unroll_result(key, result.results[key]):
-                    if name not in results_2:
-                        results_2[name] = []
-                    results_2[name].append(value)
+        if resultset_1 is None:
+            resultset_1 = results_default_iter(hash_1)
+
+        if resultset_2 is None:
+            resultset_2 = results_default_iter(hash_2)
+
+        for key, result in resultset_1:
+            for name, value in unroll_result(key, result):
+                if name not in results_1:
+                    results_1[name] = []
+                results_1[name].append(value)
+
+        for key, result in resultset_2:
+            for name, value in unroll_result(key, result):
+                if name not in results_2:
+                    results_2[name] = []
+                results_2[name].append(value)
 
         if len(results_1) == 0:
             raise util.UserError(
@@ -157,6 +173,9 @@ class Compare(Command):
         else:
             bench['all'] = []
 
+        worsened = False
+        improved = False
+
         for benchmark in joint_benchmarks:
             if benchmark in results_1:
                 time_1 = mean(results_1[benchmark])
@@ -170,20 +189,25 @@ class Compare(Command):
 
             if _isna(time_1) or _isna(time_2):
                 ratio = 'n/a'
+                ratio_num = 1e9
             else:
                 try:
-                    ratio = "{0:6.2f}".format(time_2 / time_1)
+                    ratio_num = time_2 / time_1
+                    ratio = "{0:6.2f}".format(ratio_num)
                 except ZeroDivisionError:
+                    ratio_num = 1e9
                     ratio = "n/a"
 
             if time_1 is not None and time_2 is None:
                 # introduced a failure
                 color = 'red'
                 mark = '!'
+                worsened = True
             elif time_1 is None and time_2 is not None:
                 # fixed a failure
                 color = 'green'
                 mark = ' '
+                improved = True
             elif time_1 is None and time_2 is None:
                 # both failed
                 color = 'red'
@@ -195,12 +219,17 @@ class Compare(Command):
             elif time_2 < time_1 / factor:
                 color = 'green'
                 mark = '-'
+                improved = True
             elif time_2 > time_1 * factor:
                 color = 'red'
                 mark = '+'
+                worsened = True
             else:
                 color = 'default'
                 mark = ' '
+
+            if only_changed and mark == ' ':
+                continue
 
             details = "{0:1s} {1:>9s}  {2:>9s} {3:>9s}  ".format(
                 mark,
@@ -209,9 +238,9 @@ class Compare(Command):
                 ratio)
 
             if split:
-                bench[color].append((color, details, benchmark))
+                bench[color].append((color, details, benchmark, ratio_num))
             else:
-                bench['all'].append((color, details, benchmark))
+                bench['all'].append((color, details, benchmark, ratio_num))
 
         if split:
             keys = ['green', 'default', 'red']
@@ -229,12 +258,18 @@ class Compare(Command):
             if len(bench[key]) == 0:
                 continue
 
-            print("")
-            print(titles[key])
-            print("")
+            if not only_changed:
+                print("")
+                print(titles[key])
+                print("")
             print("    before     after       ratio")
             print("  [{0:8s}] [{1:8s}]".format(hash_1[:8], hash_2[:8]))
 
-            for color, details, benchmark in bench[key]:
+            if sort_by_ratio:
+                bench[key].sort(key=lambda v: v[3], reverse=True)
+
+            for color, details, benchmark, ratio in bench[key]:
                 color_print(details, color, end='')
                 print(benchmark)
+
+        return worsened, improved
