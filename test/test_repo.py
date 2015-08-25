@@ -34,6 +34,13 @@ def _test_generic_repo(conf, tmpdir, hash_range, master, branch):
     r.checkout(workcopy_dir, branch)
     r.checkout(workcopy_dir, master)
 
+    # check recovering from corruption
+    for pth in ['.hg', '.git']:
+        pth = os.path.join(workcopy_dir, pth)
+        if os.path.isdir(pth):
+            shutil.rmtree(pth)
+    r.checkout(workcopy_dir, master)
+
     hashes = r.get_hashes_from_range(hash_range)
     assert len(hashes) == 4
 

@@ -88,12 +88,23 @@ class Git(Repo):
         self._pulled = True
 
     def checkout(self, path, commit_hash):
+        def checkout_existing(display_error):
+            self._run_git(['checkout', '-f', commit_hash], cwd=path,
+                          display_error=display_error)
+            self._run_git(['clean', '-fdx'], cwd=path,
+                          display_error=display_error)
+
+        if os.path.isdir(path):
+            try:
+                checkout_existing(display_error=False)
+            except util.ProcessError:
+                # Remove and try to re-clone
+                util.long_path_rmtree(path)
+
         if not os.path.isdir(path):
             self._run_git(['clone', '--shared', self._path, path],
                           cwd=None)
-
-        self._run_git(['checkout', '-f', commit_hash], cwd=path)
-        self._run_git(['clean', '-fdx'], cwd=path)
+            checkout_existing(display_error=True)
 
     def get_date(self, hash):
         # TODO: This works on Linux, but should be extended for other platforms

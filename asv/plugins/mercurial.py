@@ -17,6 +17,7 @@ except ImportError as exc:
 
 from ..console import log
 from ..repo import Repo
+from .. import util
 
 
 class Hg(Repo):
@@ -99,14 +100,22 @@ class Hg(Repo):
         # Need to pull -- the copy is not updated automatically, since
         # the repository data is not shared
 
+        def checkout_existing():
+            subrepo = hglib.open(path)
+            subrepo.pull()
+            subrepo.update(commit_hash, clean=True)
+            # TODO: Implement purge manually or call it on the command line
+
+        if os.path.isdir(path):
+            try:
+                checkout_existing()
+            except hglib.error.CommandError:
+                # Remove and re-clone
+                util.long_path_rmtree(path)
+
         if not os.path.isdir(path):
             hglib.clone(self._path, dest=path)
-
-        subrepo = hglib.open(path)
-        subrepo.pull()
-        subrepo.update(commit_hash, clean=True)
-
-        # TODO: Implement purge manually or call it on the command line
+            checkout_existing()
 
     def get_date(self, hash):
         # TODO: This works on Linux, but should be extended for other platforms
