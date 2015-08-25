@@ -11,8 +11,10 @@ from . import util
 class Repo(object):
     """
     Base class for repository handlers.
+
+    There are no commands that modify the source repository.
     """
-    def __init__(self, url, path):
+    def __init__(self, url, mirror_path):
         """
         Create a mirror of the repository at `url`, without a working tree.
 
@@ -21,8 +23,11 @@ class Repo(object):
         url : str
             The URL to the repository to clone
 
-        path : str
-            The local path to clone into
+        mirror_path : str
+            The local path into which to put a mirror of the repository.
+            Creating the local mirror is optional, and may be skipped if
+            the performance is adequate also without it.
+
         """
         raise NotImplementedError()
 
@@ -141,9 +146,6 @@ class NoRepository(Repo):
 
     def checkout(self, path, commit_hash):
         self._check_branch(commit_hash)
-
-    def clean(self):
-        return
 
     def get_date(self, hash):
         self._raise_error()

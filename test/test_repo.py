@@ -4,10 +4,13 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import os
 from os.path import join
 
 import six
 import pytest
+import tempfile
+import shutil
 
 from asv import config
 from asv import repo
@@ -22,7 +25,8 @@ from . import tools
 
 
 def _test_generic_repo(conf, tmpdir, hash_range, master, branch):
-    workcopy_dir = join(tmpdir, "workcopy")
+    workcopy_dir = tempfile.mkdtemp(dir=tmpdir, prefix="workcopy")
+    os.rmdir(workcopy_dir)
 
     r = repo.get_repo(conf)
 
@@ -64,21 +68,42 @@ def _test_branches(conf, branch_commits):
 def test_repo_git(tmpdir):
     tmpdir = six.text_type(tmpdir)
 
-    conf = config.Config()
-
     dvcs = tools.generate_test_repo(tmpdir, list(range(10)), dvcs_type='git',
                                     extra_branches=[('master~4', 'some-branch',[11, 12, 13])])
 
-    conf.project = join(tmpdir, "repo")
-    conf.repo = dvcs.path
-    _test_generic_repo(conf, tmpdir, 'master~4..master', 'master', 'tag5')
+    mirror_dir = join(tmpdir, "repo")
 
-    conf.branches = ['master', 'some-branch']
-    branch_commits = {
-        'master': [dvcs.get_hash('master'), dvcs.get_hash('master~6')],
-        'some-branch': [dvcs.get_hash('some-branch'), dvcs.get_hash('some-branch~6')]
-    }
-    _test_branches(conf, branch_commits)
+    def test_it():
+        conf = config.Config()
+
+        conf.project = mirror_dir
+        conf.repo = dvcs.path
+        _test_generic_repo(conf, tmpdir, 'master~4..master', 'master', 'tag5')
+
+        conf.branches = ['master', 'some-branch']
+        branch_commits = {
+            'master': [dvcs.get_hash('master'), dvcs.get_hash('master~6')],
+            'some-branch': [dvcs.get_hash('some-branch'), dvcs.get_hash('some-branch~6')]
+        }
+        _test_branches(conf, branch_commits)
+
+    test_it()
+
+    # local repo, so it should not not have cloned it
+    assert not os.path.isdir(mirror_dir)
+
+    # try again, pretending the repo is not local
+    from asv.plugins.git import Git
+    old_local_method = Git.is_local_repo
+    old_url_match = Git.url_match
+    try:
+        Git.is_local_repo = classmethod(lambda cls, path: False)
+        Git.url_match = classmethod(lambda cls, url: os.path.isdir(url))
+        test_it()
+        assert os.path.isdir(mirror_dir)
+    finally:
+        Git.is_local_repo = old_local_method
+        Git.url_match = old_url_match
 
 
 @pytest.mark.skipif(hglib is None,
@@ -91,14 +116,35 @@ def test_repo_hg(tmpdir):
     dvcs = tools.generate_test_repo(tmpdir, list(range(10)), dvcs_type='hg', 
                                     extra_branches=[('default~4', 'some-branch',[11, 12, 13])])
 
-    conf.project = join(tmpdir, "repo")
-    conf.repo = dvcs.path
-    _test_generic_repo(conf, tmpdir, hash_range="tip:-4",
-                       master="tip", branch="tag5")
+    mirror_dir = join(tmpdir, "repo")
 
-    conf.branches = ['default', 'some-branch']
-    branch_commits = {
-        'default': [dvcs.get_hash('default'), dvcs.get_hash('default~6')],
-        'some-branch': [dvcs.get_hash('some-branch'), dvcs.get_hash('some-branch~6')]
-    }
-    _test_branches(conf, branch_commits)
+    def test_it():
+        conf.project = mirror_dir
+        conf.repo = dvcs.path
+        _test_generic_repo(conf, tmpdir, hash_range="tip:-4",
+                           master="tip", branch="tag5")
+
+        conf.branches = ['default', 'some-branch']
+        branch_commits = {
+            'default': [dvcs.get_hash('default'), dvcs.get_hash('default~6')],
+            'some-branch': [dvcs.get_hash('some-branch'), dvcs.get_hash('some-branch~6')]
+        }
+        _test_branches(conf, branch_commits)
+
+    test_it()
+
+    # local repo, so it should not not have cloned it
+    assert not os.path.isdir(mirror_dir)
+
+    # try again, pretending the repo is not local
+    from asv.plugins.mercurial import Hg
+    old_local_method = Hg.is_local_repo
+    old_url_match = Hg.url_match
+    try:
+        Hg.is_local_repo = classmethod(lambda cls, path: False)
+        Hg.url_match = classmethod(lambda cls, url: os.path.isdir(url))
+        test_it()
+        assert os.path.isdir(mirror_dir)
+    finally:
+        Hg.is_local_repo = old_local_method
+        Hg.url_match = old_url_match
