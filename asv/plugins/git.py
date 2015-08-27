@@ -19,20 +19,26 @@ from .. import util
 class Git(Repo):
     dvcs = "git"
 
-    def __init__(self, url, path, _checkout_copy=False):
+    def __init__(self, url, mirror_path):
         self._git = util.which("git")
-        self._path = os.path.abspath(path)
+        self._path = os.path.abspath(mirror_path)
         self._pulled = False
 
-        if not os.path.isdir(self._path):
-            args = ['clone']
-            if _checkout_copy:
-                args.append('--shared')
-            else:
-                log.info("Cloning project")
-                args.append('--mirror')
-            args.extend([url, self._path])
-            self._run_git(args, chdir=False)
+        if self.is_local_repo(url):
+            # Local repository, no need for mirror
+            self._path = os.path.abspath(url)
+            self._pulled = True
+        elif not os.path.isdir(self._path):
+            # Clone is missing
+            log.info("Cloning project")
+            self._run_git(['clone', '--mirror', url, self._path],
+                           cwd=None)
+
+    @classmethod
+    def is_local_repo(cls, path):
+        return os.path.isdir(path) and (
+            os.path.isdir(os.path.join(path, '.git')) or
+            os.path.isdir(os.path.join(path, 'objects')))
 
     @classmethod
     def url_match(cls, url):
@@ -45,19 +51,16 @@ class Git(Repo):
                 return True
 
         # Check for a local path
-        if os.path.isdir(url) and os.path.isdir(os.path.join(url, '.git')):
+        if cls.is_local_repo(url):
             return True
 
         return False
 
-    def _run_git(self, args, chdir=True, **kwargs):
-        if chdir:
+    def _run_git(self, args, cwd=True, **kwargs):
+        if cwd is True:
             cwd = self._path
-        else:
-            cwd = None
         kwargs['cwd'] = cwd
-        return util.check_output(
-            [self._git] + args, **kwargs)
+        return util.check_output([self._git] + args, **kwargs)
 
     def get_new_range_spec(self, latest_result, branch=None):
         if branch is None:
@@ -77,7 +80,7 @@ class Git(Repo):
     def pull(self):
         # We assume the remote isn't updated during the run of asv
         # itself.
-        if self._pulled is True:
+        if self._pulled:
             return
 
         log.info("Fetching recent changes")
@@ -85,12 +88,23 @@ class Git(Repo):
         self._pulled = True
 
     def checkout(self, path, commit_hash):
-        subrepo = Git(self._path, path, _checkout_copy=True)
-        subrepo._run_git(['checkout', '-f', commit_hash])
-        subrepo.clean()
+        def checkout_existing(display_error):
+            self._run_git(['checkout', '-f', commit_hash], cwd=path,
+                          display_error=display_error)
+            self._run_git(['clean', '-fdx'], cwd=path,
+                          display_error=display_error)
 
-    def clean(self):
-        self._run_git(['clean', '-fxd'])
+        if os.path.isdir(path):
+            try:
+                checkout_existing(display_error=False)
+            except util.ProcessError:
+                # Remove and try to re-clone
+                util.long_path_rmtree(path)
+
+        if not os.path.isdir(path):
+            self._run_git(['clone', '--shared', self._path, path],
+                          cwd=None)
+            checkout_existing(display_error=True)
 
     def get_date(self, hash):
         # TODO: This works on Linux, but should be extended for other platforms
