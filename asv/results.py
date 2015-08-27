@@ -50,11 +50,12 @@ def iter_results_for_machine_and_hash(results, machine_name, commit):
     Iterate over all of the result files with a given hash for a
     particular machine.
     """
+    full_commit = get_result_hash_from_prefix(results, machine_name, commit)
+
     for (root, filename) in iter_results_paths(
             os.path.join(results, machine_name)):
         results_commit = filename.split('-')[0]
-        cmp_len = min(len(commit), len(results_commit))
-        if results_commit[:cmp_len] == commit[:cmp_len]:
+        if results_commit == full_commit:
             yield Results.load(os.path.join(root, filename))
 
 
@@ -78,6 +79,34 @@ def get_existing_hashes(results):
     log.info("Getting existing hashes")
     hashes = list(set(iter_existing_hashes(results)))
     return hashes
+
+
+def get_result_hash_from_prefix(results, machine_name, commit_prefix):
+    """
+    Get the 8-char result commit identifier from a potentially shorter
+    prefix. Only considers the set of commits that have had
+    results computed.
+
+    Returns None if there are no matches. Raises a UserError
+    if the prefix is non-unique.
+    """
+    commits = set([])
+
+    for (root, filename) in iter_results_paths(os.path.join(results,
+                                                            machine_name)):
+        results_commit = filename.split('-')[0]
+        cmp_len = min(len(commit_prefix), len(results_commit))
+        if results_commit[:cmp_len] == commit_prefix[:cmp_len]:
+            commits.add(results_commit)
+
+    if len(commits) > 1:
+        commit_list_str = ', '.join(sorted(commits))
+        raise util.UserError('Git hash prefix could represent one of ' +
+                             'multiple commits: {0}'.format(commit_list_str))
+    elif len(commits) == 1:
+        return list(commits)[0]
+    else:
+        return None
 
 
 def find_latest_result_hash(machine, root, hashes=None):
