@@ -96,5 +96,8 @@ class Preview(Command):
             import webbrowser
             webbrowser.open(base_url)
 
-        log.info("Press ^C to abort")
-        httpd.serve_forever()
+        log.info("Press ^C to abort\n")
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            return
