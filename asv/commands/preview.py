@@ -35,8 +35,9 @@ def random_ports(port, n):
 
 def create_httpd(handler_cls, port=0):
     # Create a server that allows address reuse
-    class MyTCPServer(socketserver.TCPServer):
+    class MyTCPServer(socketserver.ThreadingTCPServer):
         allow_reuse_address = True
+        daemon_threads = True
 
     for port in random_ports(port, 5):
         try:
