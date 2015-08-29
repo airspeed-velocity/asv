@@ -157,7 +157,8 @@ def compatible_results(result, benchmark):
         # All results missing, eg. build failure
         return result
 
-    if not isinstance(result, dict) or 'params' not in result:
+    if (not isinstance(result, dict) or 'params' not in result or
+            'result' not in result):
         # Not a parameterized result -- test probably was once
         # non-parameterized
         return None
@@ -173,6 +174,31 @@ def compatible_results(result, benchmark):
     for param in itertools.product(*benchmark['params']):
         new_results.append(old_results.get(param))
     return new_results
+
+
+def minimum_of_results(new, old):
+    """
+    Consider two results and take the minimum.
+
+    Do not update failed/skipped results in `new`.
+    """
+    if util.is_na(new) or util.is_na(old):
+        return new
+    elif isinstance(new, dict) and isinstance(new.get('result'), list):
+        # parameterized results
+        new_results = new['result']
+        old_results = compatible_results(old, new)
+        if isinstance(old_results, list) and len(old_results) == len(new_results):
+            result = [minimum_of_results(a, b) for a, b in zip(new_results,
+                                                               old_results)]
+            return dict(params=new['params'], result=result)
+        else:
+            return new
+    elif isinstance(new, (float, int)) and isinstance(old, (float, int)):
+        return min(new, old)
+    else:
+        # unknown data, maybe user-defined returned from track_*
+        return new
 
 
 class Results(object):
@@ -294,7 +320,7 @@ class Results(object):
             'profiles': self._profiles
         }, self.api_version)
 
-    def update_save(self, result_dir):
+    def update_save(self, result_dir, take_minimum=False):
         """
         Save the results to disk, adding to any existing results.
 
@@ -302,12 +328,15 @@ class Results(object):
         ----------
         result_dir : str
             Path to root of results tree.
+        take_minimum : bool, optional
+            Instead of replacing, take the minimum of the new and
+            the old result.
         """
         path = os.path.join(result_dir, self._filename)
 
         if os.path.isfile(path):
             old_results = self.load(path)
-            self.add_existing_results(old_results)
+            self.add_existing_results(old_results, take_minimum=take_minimum)
 
         self.save(result_dir)
 
@@ -336,7 +365,7 @@ class Results(object):
         obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
         return obj
 
-    def add_existing_results(self, old):
+    def add_existing_results(self, old, take_minimum=False):
         """
         Add any existing old results that aren't overridden by the
         current results.
@@ -344,6 +373,8 @@ class Results(object):
         for key, val in six.iteritems(old.results):
             if key not in self._results:
                 self._results[key] = val
+            elif take_minimum:
+                self._results[key] = minimum_of_results(self._results[key], val)
         for key, val in six.iteritems(old._profiles):
             if key not in self._profiles:
                 self._profiles[key] = val

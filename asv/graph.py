@@ -95,7 +95,7 @@ class Graph(object):
         """
         # Add simple time series
         self.data_points.setdefault(date, [])
-        if not _is_na(value):
+        if not util.is_na(value):
             if not hasattr(value, '__len__'):
                 value = [value]
             else:
@@ -159,14 +159,14 @@ class Graph(object):
         # Discard missing data at edges
         i = 0
         for i in xrange(len(val)):
-            if any(not _is_na(v) for v in val[i][1]):
+            if any(not util.is_na(v) for v in val[i][1]):
                 break
         else:
             i = len(val)
 
         j = i
         for j in xrange(len(val) - 1, i, -1):
-            if any(not _is_na(v) for v in val[j][1]):
+            if any(not util.is_na(v) for v in val[j][1]):
                 break
 
         val = val[i:j+1]
@@ -192,9 +192,9 @@ class Graph(object):
             first_values = [None]*self.n_series
             for k, v in val:
                 for j, x in enumerate(v):
-                    if first_values[j] is None and not _is_na(x):
+                    if first_values[j] is None and not util.is_na(x):
                         first_values[j] = x
-                if not any(_is_na(x) for x in first_values):
+                if not any(util.is_na(x) for x in first_values):
                     break
 
             first_values = [fv if fv is not None else 1.0 
@@ -207,9 +207,9 @@ class Graph(object):
                 # Fill missing data, unless it's missing from all
                 # parameter combinations
                 cur_vals = []
-                if any(not _is_na(x) for x in v):
+                if any(not util.is_na(x) for x in v):
                     for j, x in enumerate(v):
-                        if _is_na(x):
+                        if util.is_na(x):
                             if last_values[j] is not None:
                                 x = last_values[j]
                             else:
@@ -250,19 +250,12 @@ class Graph(object):
         util.write_json(filename, val)
 
 
-def _is_na(value):
-    """
-    Return true if value is None or nan
-    """
-    return value is None or value != value
-
-
 def _mean_with_none(values):
     """
     Take a mean, with the understanding that None and NaN stand for
     missing data.
     """
-    values = [x for x in values if not _is_na(x)]
+    values = [x for x in values if not util.is_na(x)]
     if values:
         return sum(values) / len(values)
     else:
@@ -274,7 +267,7 @@ def _geom_mean_with_none(values):
     Compute geometric mean, with the understanding that None and NaN
     stand for missing data.
     """
-    values = [x for x in values if not _is_na(x)]
+    values = [x for x in values if not util.is_na(x)]
     if values:
         exponent = 1/len(values)
         prod = 1.0
