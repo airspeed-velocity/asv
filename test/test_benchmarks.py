@@ -46,7 +46,7 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 3
 
     b = benchmarks.Benchmarks(conf, regex='example')
-    assert len(b) == 20
+    assert len(b) == 21
 
     b = benchmarks.Benchmarks(conf, regex='time_example_benchmark_1')
     assert len(b) == 2
@@ -56,7 +56,7 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 2
 
     b = benchmarks.Benchmarks(conf)
-    assert len(b) == 24
+    assert len(b) == 25
 
     envs = list(environment.get_environments(conf))
     b = benchmarks.Benchmarks(conf)
@@ -111,6 +111,11 @@ def test_find_benchmarks(tmpdir):
     with open(profile_path, 'wb') as fd:
         fd.write(times['time_secondary.track_value']['profile'])
     pstats.Stats(profile_path)
+
+    # Check for running setup on each repeat (one extra run from profile)
+    # The output would contain error messages if the asserts in the benchmark fail.
+    expected = ["<%d>" % j for j in range(1, 12)]
+    assert times['time_examples.TimeWithRepeat.time_it']['stderr'].split() == expected
 
 
 def test_invalid_benchmark_tree(tmpdir):
