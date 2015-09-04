@@ -188,12 +188,12 @@ def color_print(*args, **kwargs):
         exists), no coloring will be included.
 
     end : str, optional
-        The ending of the message.  Defaults to ``''``.  The end will
+        The ending of the message.  Defaults to ``\\n``.  The end will
         be printed after resetting any color or font state.
     """
 
     file = kwargs.get('file', sys.stdout)
-    end = kwargs.get('end', '')
+    end = kwargs.get('end', '\n')
 
     write = file.write
     if isatty(file) and not WIN:
@@ -219,7 +219,7 @@ def color_print(*args, **kwargs):
 
 
 def get_answer_default(prompt, default):
-    color_print("{0} [{1}]: ".format(prompt, default))
+    color_print("{0} [{1}]: ".format(prompt, default), end='')
     x = input()
     if x.strip() == '':
         return default
@@ -246,7 +246,7 @@ class Log(object):
         The formatter for standard output
         '''
         if self._needs_newline:
-            color_print('\n')
+            color_print('')
         parts = record.msg.split('\n', 1)
         first_line = parts[0]
         if len(parts) == 1:
@@ -256,10 +256,10 @@ class Log(object):
 
         if self._total:
             color_print('[{0:6.02f}%] '.format(
-                (float(self._count) / self._total) * 100.0))
+                (float(self._count) / self._total) * 100.0), end='')
 
-        color_print('·' * self._indent)
-        color_print(' ')
+        color_print('·' * self._indent, end='')
+        color_print(' ', end='')
 
         if record.levelno < logging.DEBUG:
             color = 'default'
@@ -279,14 +279,13 @@ class Log(object):
 
         indent = self._indent + 11
         spaces = ' ' * indent
-        color_print(first_line, color)
+        color_print(first_line, color, end='')
         if rest is not None:
-            color_print('\n')
+            color_print('')
             detail = textwrap.dedent(rest)
             for line in detail.split('\n'):
-                color_print(spaces)
+                color_print(spaces, end='')
                 color_print(line)
-                color_print('\n')
 
         self._needs_newline = True
         sys.stdout.flush()
@@ -302,7 +301,7 @@ class Log(object):
 
     def dot(self):
         if isatty(sys.stdout):
-            color_print('.', 'darkgrey')
+            color_print('.', 'darkgrey', end='')
             sys.stdout.flush()
 
     def set_nitems(self, n):

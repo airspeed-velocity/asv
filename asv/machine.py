@@ -155,7 +155,8 @@ class Machine(object):
 
         color_print(
             "I will now ask you some questions about this machine to "
-            "identify it in the benchmarks.\n\n")
+            "identify it in the benchmarks.")
+        color_print("")
 
         defaults = Machine.get_defaults()
         values = {}

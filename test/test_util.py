@@ -88,6 +88,6 @@ def test_write_unicode_to_ascii():
     try:
         buff = io.BytesIO()
         console.color_print("μs", file=buff)
-        assert buff.getvalue() == b'us'
+        assert buff.getvalue() == b'us\n'
     finally:
         locale.getpreferredencoding = original_getpreferredencoding
