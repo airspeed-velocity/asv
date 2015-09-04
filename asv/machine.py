@@ -12,6 +12,7 @@ import sys
 import textwrap
 
 from . import console
+from .console import color_print
 from . import util
 
 
@@ -152,9 +153,9 @@ class Machine(object):
                 "Run asv at the console the first time to generate "
                 "one.")
 
-        print("I will now ask you some questions about this machine to "
-              "identify it in the benchmarks.")
-        print()
+        color_print(
+            "I will now ask you some questions about this machine to "
+            "identify it in the benchmarks.\n\n")
 
         defaults = Machine.get_defaults()
         values = {}

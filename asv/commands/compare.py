@@ -259,17 +259,17 @@ class Compare(Command):
                 continue
 
             if not only_changed:
-                print("")
-                print(titles[key])
-                print("")
-            print("    before     after       ratio")
-            print("  [{0:8s}] [{1:8s}]".format(hash_1[:8], hash_2[:8]))
+                color_print("\n")
+                color_print(titles[key], end='\n')
+                color_print("\n")
+            color_print("    before     after       ratio\n")
+            color_print("  [{0:8s}] [{1:8s}]\n".format(hash_1[:8], hash_2[:8]))
 
             if sort_by_ratio:
                 bench[key].sort(key=lambda v: v[3], reverse=True)
 
             for color, details, benchmark, ratio in bench[key]:
-                color_print(details, color, end='')
-                print(benchmark)
+                color_print(details, color)
+                color_print(benchmark, end='\n')
 
         return worsened, improved

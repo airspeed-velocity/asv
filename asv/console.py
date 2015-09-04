@@ -167,7 +167,7 @@ def color_print(*args, **kwargs):
         exists), no coloring will be included.
 
     end : str, optional
-        The ending of the message.  Defaults to ``\\n``.  The end will
+        The ending of the message.  Defaults to ``''``.  The end will
         be printed after resetting any color or font state.
     """
 
@@ -198,7 +198,7 @@ def color_print(*args, **kwargs):
 
 
 def get_answer_default(prompt, default):
-    print("{0} [{1}]: ".format(prompt, default), end='')
+    color_print("{0} [{1}]: ".format(prompt, default))
     x = input()
     if x.strip() == '':
         return default
