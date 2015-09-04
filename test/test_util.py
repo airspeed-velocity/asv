@@ -4,15 +4,16 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import io
+import locale
 import os
 import sys
-import time
 import pickle
 import multiprocessing
-import subprocess
 import traceback
 import pytest
 
+from asv import console
 from asv import util
 
 
@@ -75,3 +76,18 @@ def test_parallelfailure():
     except util.UserError as exc:
         # OK
         pass
+
+
+def test_write_unicode_to_ascii():
+    def get_fake_encoding():
+        return 'ascii'
+
+    original_getpreferredencoding = locale.getpreferredencoding
+    locale.getpreferredencoding = get_fake_encoding
+
+    try:
+        buff = io.BytesIO()
+        console.color_print("μs", file=buff)
+        assert buff.getvalue() == b'us'
+    finally:
+        locale.getpreferredencoding = original_getpreferredencoding

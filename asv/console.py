@@ -8,12 +8,11 @@ A set of utilities for writing output to the console.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import os
-import warnings
 import codecs
 import contextlib
 import locale
 import logging
+import os
 import sys
 import textwrap
 
@@ -100,6 +99,22 @@ def _color_text(text, color):
     return '\033[{0}m{1}\033[0m'.format(color_code, text)
 
 
+# This is a table of Unicode characters that we want to have
+# reasonable representations in ascii so they aren't just replaced
+# with '?'.  A complete solution to this problem would involve a
+# third-party library such as "unidecode", but this handles the common
+# cases of stuff coming from asv.
+#
+# You can find the characters that need an entry using:
+#    grep -P  -n '[^\x00-\x7F]' -r *
+# in the `asv` source directory.
+
+_unicode_translations = {
+    ord('μ'): 'u',
+    ord('·'): '-'
+}
+
+
 def _write_with_fallback(s, write, fileobj):
     """
     Write the supplied string with the given write function like
@@ -110,7 +125,7 @@ def _write_with_fallback(s, write, fileobj):
     try:
         write(s)
         return write
-    except UnicodeEncodeError:
+    except (UnicodeEncodeError, TypeError):
         # Let's try the next approach...
         pass
 
@@ -130,6 +145,12 @@ def _write_with_fallback(s, write, fileobj):
         Writer = codecs.getwriter('latin-1')
         f = Writer(fileobj)
         write = f.write
+
+    if six.PY3:
+        s = s.translate(_unicode_translations)
+    else:
+        for key, val in _unicode_translations.iteritems():
+            s = s.replace(unichr(key), val)
 
     # If this doesn't work let the exception bubble up; I'm out of ideas
     try:
