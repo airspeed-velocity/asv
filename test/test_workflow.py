@@ -141,7 +141,7 @@ def test_continuous(capfd, basic_conf):
 
     text, err = capfd.readouterr()
     assert "SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY" in text
-    assert "params_examples.track_find_test(2)              1.0        6.0   6.00000000x" in text
+    assert "+     1.00s      6.00s      6.00  params_examples.track_find_test(2)" in text
     assert "params_examples.ClassOne" in text
 
 
