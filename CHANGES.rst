@@ -11,6 +11,10 @@ New Features
 
 API Changes
 ^^^^^^^^^^^
+Previously, the ``setup`` and ``teardown`` methods were run only once
+even when the benchmark had ``repeat > 1`` specified. This is now
+changed so that they are run on every repeat, and additionally before
+and after profiling runs.
 
 - Mirrors are no longer created for local repositories. (#314)
 - The parent directory of the benchmark suite is no longer inserted

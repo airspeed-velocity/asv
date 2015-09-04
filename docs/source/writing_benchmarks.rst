@@ -103,19 +103,23 @@ assigned specifically to each function.
 
 Similarly, benchmarks can also have a ``teardown`` function that is
 run after the benchmark.  This is useful if, for example, you need to
-clean up any changes made to the filesystem.  Generally, however, it
-is not required: each benchmark runs in its own process, so any
-tearing down of in-memory state happens automatically.
+clean up any changes made to the filesystem.
+
+Note that although different benchmarks run in separate processes, for
+a given benchmark repeated measurement (cf. ``repeat`` attribute) and
+profiling occur within the same process.  For these cases, the setup
+and teardown routines are run multiple times in the same process.
 
 If ``setup`` raises a ``NotImplementedError``, the benchmark is marked
 as skipped.
 
-Since each benchmark is run in its own process, the ``setup`` method
-is run for each benchmark that it is associated with.  If the
-``setup`` is especially expensive, the ``setup_cache`` method may be
-used instead, which only performs the setup calculation once and then
-caches the result to disk.  ``setup_cache`` can persist the data for
-the benchmarks it applies to in two ways:
+The ``setup`` method is run multiple times, for each benchmark and for
+each repeat.  If the ``setup`` is especially expensive, the
+``setup_cache`` method may be used instead, which only performs the
+setup calculation once and then caches the result to disk.  It is run
+only once also for repeated benchmarks and profiling, unlike
+``setup``.  ``setup_cache`` can persist the data for the benchmarks it
+applies to in two ways:
 
    - Returning a data structure, which ``asv`` pickles to disk, and
      then loads and passes it as the first argument to each benchmark.
