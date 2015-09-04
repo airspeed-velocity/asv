@@ -10,6 +10,8 @@ API Changes
 Bug Fixes
 ^^^^^^^^^
 
+- Output will display on non-Unicode consoles.
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
