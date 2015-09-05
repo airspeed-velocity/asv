@@ -86,6 +86,28 @@ sys.exit(1)
         assert False, "Expected exception"
 
 
+def test_output_timeout():
+    # Check that timeout is determined based on last output, not based
+    # on start time.
+    code = r"""
+import time
+import sys
+for j in range(3):
+    time.sleep(0.5)
+    sys.stdout.write('.')
+    sys.stdout.flush()
+"""
+    output = util.check_output([sys.executable, "-c", code], timeout=0.75)
+    assert output == '.'*3
+
+    try:
+        util.check_output([sys.executable, "-c", code], timeout=0.25)
+    except util.ProcessError as e:
+        assert e.retcode == util.TIMEOUT_RETCODE
+    else:
+        assert False, "Expected exception"
+
+
 # This *does* seem to work, only seems untestable somehow...
 # def test_dots(capsys):
 #     code = r"""

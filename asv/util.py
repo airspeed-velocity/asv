@@ -359,25 +359,50 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
     is_timeout = False
 
     if WIN:
-        start_time = time.time()
+        start_time = [time.time()]
         was_timeout = [False]
+
+        def stdout_reader_run():
+            while True:
+                c = proc.stdout.read(1)
+                if not c:
+                    break
+                start_time[0] = time.time()
+                stdout_chunks.append(c)
+
+        def stderr_reader_run():
+            while True:
+                c = proc.stderr.read(1)
+                if not c:
+                    break
+                start_time[0] = time.time()
+                stderr_chunks.append(c)
 
         def watcher_run():
             while proc.returncode is None:
                 time.sleep(0.1)
-                if time.time() - start_time > timeout:
+                if time.time() - start_time[0] > timeout:
                     was_timeout[0] = True
                     proc.terminate()
 
         watcher = threading.Thread(target=watcher_run)
         watcher.start()
+
+        stdout_reader = threading.Thread(target=stdout_reader_run)
+        stdout_reader.start()
+
+        stderr_reader = threading.Thread(target=stderr_reader_run)
+        stderr_reader.start()
+
         try:
-            stdout, stderr = proc.communicate()
+            proc.wait()
         finally:
             if proc.returncode is None:
                 proc.terminate()
                 proc.wait()
             watcher.join()
+            stderr_reader.join()
+            stdout_reader.join()
 
         is_timeout = was_timeout[0]
     else:
@@ -450,8 +475,9 @@ def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
 
         stdout_chunks.append(proc.stdout.read())
         stderr_chunks.append(proc.stderr.read())
-        stdout = b''.join(stdout_chunks)
-        stderr = b''.join(stderr_chunks)
+
+    stdout = b''.join(stdout_chunks)
+    stderr = b''.join(stderr_chunks)
 
     stdout = stdout.decode('utf-8', 'replace')
     stderr = stderr.decode('utf-8', 'replace')
