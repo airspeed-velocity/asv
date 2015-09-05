@@ -27,8 +27,7 @@ class Graph(object):
     Unlike "results", which contain the timings for a single commit,
     these contain the timings for a single benchmark.
     """
-    def __init__(self, benchmark_name, params, all_params,
-                 summary=False):
+    def __init__(self, benchmark_name, params, all_params):
         """
         Initially the graph contains no data.  It must be added using
         multiple calls to `add_data_point`.
@@ -47,10 +46,6 @@ class Graph(object):
             benchmark results.  This is used to fill in blanks for
             parameters that might not have been recorded for a
             particular result.
-
-        summary : bool, optional
-            Whether to generate summary graph, averaged over parameter
-            configurations (if test is parametric).
 
         """
         # Fill in missing parameters
@@ -74,7 +69,6 @@ class Graph(object):
                 parts.append('{0}-{1}'.format(key, val))
         parts.append(benchmark_name)
 
-        self.summary = summary
         self.path = os.path.join(*parts)
         self.n_series = None
         self.scalar_series = True
@@ -107,34 +101,6 @@ class Graph(object):
                 raise ValueError("Mismatching number of data series in graph")
 
             self.data_points[date].append(value)
-
-    def resample_data(self, val):
-        if len(val) < RESAMPLED_POINTS:
-            return val
-
-        min_time = min(x[0] for x in val)
-        max_time = max(x[0] for x in val)
-        step_size = int((max_time - min_time) / RESAMPLED_POINTS)
-
-        if step_size == 0:
-            step_size = max_time - min_time + 1
-
-        # This loop cannot use xrange, because xrange on Python2 on
-        # 32-bit systems can only deal with 32-bit integers, and
-        # Javascript timestamps (1000*unix_timestamp) handled here
-        # overflow this range
-        new_val = []
-        j = 0
-        i = min_time + step_size
-        while i < max_time + step_size:
-            chunk = []
-            while j < len(val) and val[j][0] < i:
-                chunk.append(val[j][1])
-                j += 1
-            if len(chunk):
-                new_val.append((i, _mean_with_none(chunk)))
-            i += step_size
-        return new_val
 
     def get_data(self):
         """
@@ -171,66 +137,9 @@ class Graph(object):
 
         val = val[i:j+1]
 
-        # Reduce data for summary
-        if self.summary and self.n_series > 1:
-            # Given multiple input series
-            #
-            #     val = [(x_0, (y[0,0], y[0,1], ..., y[0,n])), 
-            #            (x_1, (y[1,0], y[1,1], ..., y[1,n])),
-            #            ... ]
-            #
-            # calculate summary data series
-            #
-            #     z = geom_mean(y, axis=1)
-            #
-            # Missing data in y is filled by the previous non-null
-            # values (or the first non-null value, for nulls at the
-            # beginning), to avoid meaningless jumps in the result.
-            # Data points missing from all series are not filled.
-
-            # Find first non-null values
-            first_values = [None]*self.n_series
-            for k, v in val:
-                for j, x in enumerate(v):
-                    if first_values[j] is None and not _is_na(x):
-                        first_values[j] = x
-                if not any(_is_na(x) for x in first_values):
-                    break
-
-            first_values = [fv if fv is not None else 1.0 
-                            for fv in first_values]
-
-            # Compute geom mean of filled series
-            last_values = [None]*self.n_series
-            new_val = []
-            for k, v in val:
-                # Fill missing data, unless it's missing from all
-                # parameter combinations
-                cur_vals = []
-                if any(not _is_na(x) for x in v):
-                    for j, x in enumerate(v):
-                        if _is_na(x):
-                            if last_values[j] is not None:
-                                x = last_values[j]
-                            else:
-                                x = first_values[j]
-                        else:
-                            last_values[j] = x
-
-                        cur_vals.append(x)
-
-                # Mean of normalized values, on top of mean of means
-                v = _geom_mean_with_none(cur_vals)
-                new_val.append((k, v))
-
-            val = new_val
-        elif self.summary or self.scalar_series:
-            # Single-element series
+        # Single-element series
+        if self.scalar_series:
             val = [(k, v[0]) for k, v in val]
-
-        if self.summary:
-            # Resample
-            val = self.resample_data(val)
 
         return val
 
@@ -248,6 +157,140 @@ class Graph(object):
         val = self.get_data()
 
         util.write_json(filename, val)
+
+
+def make_summary_graph(graphs):
+    val, n_series = _combine_graph_data(graphs)
+
+    # Given multiple input series
+    #
+    #     val = [(x_0, (y[0,0], y[0,1], ..., y[0,n])),
+    #            (x_1, (y[1,0], y[1,1], ..., y[1,n])),
+    #            ... ]
+    #
+    # calculate summary data series
+    #
+    #     z = geom_mean(y, axis=1)
+    #
+    # Missing data in y is filled by the previous non-null
+    # values (or the first non-null value, for nulls at the
+    # beginning), to avoid meaningless jumps in the result.
+    # Data points missing from all series are not filled.
+
+    # Find first non-null values
+    first_values = [None]*n_series
+    for k, v in val:
+        for j, x in enumerate(v):
+            if first_values[j] is None and not _is_na(x):
+                first_values[j] = x
+        if not any(_is_na(x) for x in first_values):
+            break
+
+    first_values = [fv if fv is not None else 1.0
+                    for fv in first_values]
+
+    # Compute geom mean of filled series
+    last_values = [None]*n_series
+    new_val = []
+    for k, v in val:
+        # Fill missing data, unless it's missing from all
+        # parameter combinations
+        cur_vals = []
+        if any(not _is_na(x) for x in v):
+            for j, x in enumerate(v):
+                if _is_na(x):
+                    if last_values[j] is not None:
+                        x = last_values[j]
+                    else:
+                        x = first_values[j]
+                else:
+                    last_values[j] = x
+
+                cur_vals.append(x)
+
+        # Mean of normalized values, on top of mean of means
+        v = _geom_mean_with_none(cur_vals)
+        new_val.append((k, v))
+
+    val = new_val
+
+    # Resample
+    val = resample_data(val)
+
+    # Return as a graph
+    graph = Graph(graphs[0].benchmark_name, {'summary': None}, {})
+    for x, y in val:
+        graph.add_data_point(x, y)
+    return graph
+
+
+def _combine_graph_data(graphs):
+    """
+    Concatenate data series from multiple graphs into a single series
+
+    Returns
+    -------
+    val
+        List of the form [(x_0, [y_00, y_01, ...]), (x_1, ...)]
+        where the y-values are obtained by concatenating the data
+        series. When some of the graphs do not have data for a given x-value,
+        the missing data is indicated by None values.
+    n_series
+        Number of data series in output. Equal to the sum of n_series
+        of the input graphs.
+
+    """
+
+    all_data = {}
+    n_series = sum(graph.n_series if graph.n_series else 1
+                   for graph in graphs)
+
+    template = [None]*n_series
+    pos = 0
+
+    for graph in graphs:
+        series = graph.get_data()
+        for k, v in series:
+            prev = all_data.get(k, template)
+            if graph.scalar_series:
+                v = [v]
+            all_data[k] = prev[:pos] + v + prev[pos+graph.n_series:]
+        pos += graph.n_series
+
+    val = list(all_data.items())
+    val.sort()
+
+    return val, n_series
+
+
+def resample_data(val):
+    if len(val) < RESAMPLED_POINTS:
+        return val
+
+    min_time = min(x[0] for x in val)
+    max_time = max(x[0] for x in val)
+    step_size = int((max_time - min_time) / RESAMPLED_POINTS)
+
+    if step_size == 0:
+        step_size = max_time - min_time + 1
+
+    # This loop cannot use xrange, because xrange on Python2 on
+    # 32-bit systems can only deal with 32-bit integers, and
+    # Javascript timestamps (1000*unix_timestamp) handled here
+    # overflow this range
+    new_val = []
+    j = 0
+    i = min_time + step_size
+    while i < max_time + step_size:
+        chunk = []
+        while j < len(val) and val[j][0] < i:
+            chunk.append(val[j][1])
+            j += 1
+        if len(chunk):
+            new_val.append((i, _mean_with_none(chunk)))
+        i += step_size
+
+    return new_val
 
 
 def _is_na(value):

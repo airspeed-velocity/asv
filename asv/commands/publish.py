@@ -13,7 +13,7 @@ import six
 from . import Command
 from ..benchmarks import Benchmarks
 from ..console import log
-from ..graph import Graph
+from ..graph import Graph, make_summary_graph
 from ..machine import iter_machine_files
 from ..repo import get_repo
 from ..results import iter_results, compatible_results
@@ -118,6 +118,8 @@ class Publish(Command):
         log.step()
         log.info("Loading results")
         with log.indent():
+            graph_groups = {}
+
             for results in iter_results(conf.results_dir):
                 log.dot()
                 commit_hash = results.commit_hash[:conf.hash_length]
@@ -143,18 +145,19 @@ class Publish(Command):
                             graph = graphs[graph.path]
                         else:
                             graphs[graph.path] = graph
+                            graph_groups.setdefault(key, []).append(graph)
                         graph.add_data_point(results.date, result)
-
-                    graph = Graph(key, {'summary': None}, {}, summary=True)
-                    if graph.path in graphs:
-                        graph = graphs[graph.path]
-                    else:
-                        graphs[graph.path] = graph
-                    graph.add_data_point(results.date, result)
 
         log.step()
         log.info("Generating graphs")
         with log.indent():
+            # Generate summary graphs
+            for graph_set in six.itervalues(graph_groups):
+                log.dot()
+                graph = make_summary_graph(graph_set)
+                graphs[graph.path] = graph
+
+            # Save files
             for graph in six.itervalues(graphs):
                 log.dot()
                 graph.save(conf.html_dir)
