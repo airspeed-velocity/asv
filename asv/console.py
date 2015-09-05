@@ -8,12 +8,11 @@ A set of utilities for writing output to the console.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import os
-import warnings
 import codecs
 import contextlib
 import locale
 import logging
+import os
 import sys
 import textwrap
 
@@ -100,6 +99,22 @@ def _color_text(text, color):
     return '\033[{0}m{1}\033[0m'.format(color_code, text)
 
 
+# This is a table of Unicode characters that we want to have
+# reasonable representations in ascii so they aren't just replaced
+# with '?'.  A complete solution to this problem would involve a
+# third-party library such as "unidecode", but this handles the common
+# cases of stuff coming from asv.
+#
+# You can find the characters that need an entry using:
+#    grep -P  -n '[^\x00-\x7F]' -r *
+# in the `asv` source directory.
+
+_unicode_translations = {
+    ord('μ'): 'u',
+    ord('·'): '-'
+}
+
+
 def _write_with_fallback(s, write, fileobj):
     """
     Write the supplied string with the given write function like
@@ -110,7 +125,7 @@ def _write_with_fallback(s, write, fileobj):
     try:
         write(s)
         return write
-    except UnicodeEncodeError:
+    except (UnicodeEncodeError, TypeError):
         # Let's try the next approach...
         pass
 
@@ -130,6 +145,12 @@ def _write_with_fallback(s, write, fileobj):
         Writer = codecs.getwriter('latin-1')
         f = Writer(fileobj)
         write = f.write
+
+    if six.PY3:
+        s = s.translate(_unicode_translations)
+    else:
+        for key, val in _unicode_translations.iteritems():
+            s = s.replace(unichr(key), val)
 
     # If this doesn't work let the exception bubble up; I'm out of ideas
     try:
@@ -172,7 +193,7 @@ def color_print(*args, **kwargs):
     """
 
     file = kwargs.get('file', sys.stdout)
-    end = kwargs.get('end', '')
+    end = kwargs.get('end', '\n')
 
     write = file.write
     if isatty(file) and not WIN:
@@ -198,7 +219,7 @@ def color_print(*args, **kwargs):
 
 
 def get_answer_default(prompt, default):
-    print("{0} [{1}]: ".format(prompt, default), end='')
+    color_print("{0} [{1}]: ".format(prompt, default), end='')
     x = input()
     if x.strip() == '':
         return default
@@ -225,7 +246,7 @@ class Log(object):
         The formatter for standard output
         '''
         if self._needs_newline:
-            color_print('\n')
+            color_print('')
         parts = record.msg.split('\n', 1)
         first_line = parts[0]
         if len(parts) == 1:
@@ -235,10 +256,10 @@ class Log(object):
 
         if self._total:
             color_print('[{0:6.02f}%] '.format(
-                (float(self._count) / self._total) * 100.0))
+                (float(self._count) / self._total) * 100.0), end='')
 
-        color_print('·' * self._indent)
-        color_print(' ')
+        color_print('·' * self._indent, end='')
+        color_print(' ', end='')
 
         if record.levelno < logging.DEBUG:
             color = 'default'
@@ -258,14 +279,13 @@ class Log(object):
 
         indent = self._indent + 11
         spaces = ' ' * indent
-        color_print(first_line, color)
+        color_print(first_line, color, end='')
         if rest is not None:
-            color_print('\n')
+            color_print('')
             detail = textwrap.dedent(rest)
             for line in detail.split('\n'):
-                color_print(spaces)
+                color_print(spaces, end='')
                 color_print(line)
-                color_print('\n')
 
         self._needs_newline = True
         sys.stdout.flush()
@@ -281,7 +301,7 @@ class Log(object):
 
     def dot(self):
         if isatty(sys.stdout):
-            color_print('.', 'darkgrey')
+            color_print('.', 'darkgrey', end='')
             sys.stdout.flush()
 
     def set_nitems(self, n):

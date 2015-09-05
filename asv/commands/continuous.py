@@ -90,10 +90,10 @@ class Continuous(Command):
         worsened, improved = status
 
         if worsened:
-            color_print("SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY.\n", 'red')
+            color_print("SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY.", 'red')
         elif improved:
-            color_print("SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY.\n", 'green')
+            color_print("SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY.", 'green')
         else:
-            color_print("BENCHMARKS NOT SIGNIFICANTLY CHANGED.\n", 'green')
+            color_print("BENCHMARKS NOT SIGNIFICANTLY CHANGED.", 'green')
 
         return worsened
