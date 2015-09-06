@@ -1,4 +1,4 @@
-from asv.graph import Graph, RESAMPLED_POINTS
+from asv.graph import Graph, RESAMPLED_POINTS, make_summary_graph
 
 
 def test_graph_single():
@@ -30,9 +30,10 @@ def test_graph_single():
     assert abs(data[3][1] - (3 + 4 + 5)/3.) < 1e-10
 
     # Summary graph should be the same as the main graph
-    g = Graph('foo', {}, {}, summary=True)
+    g = Graph('foo', {}, {})
     for k, v in vals:
         g.add_data_point(k, v)
+    g = make_summary_graph([g])
     data = g.get_data()
     assert len(data) == len(vals) - 2
     for v, d in zip(vals, data):
@@ -83,9 +84,10 @@ def test_graph_multi():
     assert abs(data[3][1][2] - (3 + 2 + 1)/3.) < 1e-10
 
     # The summary graph is obtained by geometric mean of filled data
-    g = Graph('foo', {}, {}, summary=True)
+    g = Graph('foo', {}, {})
     for k, v in vals:
         g.add_data_point(k, v)
+    g = make_summary_graph([g])
     data = g.get_data()
 
     for v, d in zip(filled_vals, data):
@@ -96,6 +98,31 @@ def test_graph_multi():
         # geom mean, with some sign convention
         expected = _sgn(sum(xvs)) * (abs(xvs[0]*xvs[1]*xvs[2]))**(1./3)
         assert abs(xd - expected) < 1e-10
+
+    # Test summary over separate graphs -- should behave as if the
+    # data was in a single graph
+    g0 = Graph('foo', {}, {})
+    g1 = Graph('foo', {}, {})
+    g2 = Graph('foo', {}, {})
+    for k, v in vals:
+        g0.add_data_point(k, v)
+        g1.add_data_point(k, v[0])
+        g2.add_data_point(k, v[1:])
+
+    data0 = make_summary_graph([g0]).get_data()
+    data = make_summary_graph([g1, g2]).get_data()
+    assert data == data0
+
+    # Check the above is true regardless if some x-values are missing
+    g0.add_data_point(7, [None, 1, None])
+    g2.add_data_point(7, [1, None])
+
+    g0.add_data_point(4.5, [9, None, None])
+    g1.add_data_point(4.5, 9)
+
+    data0 = make_summary_graph([g0]).get_data()
+    data = make_summary_graph([g1, g2]).get_data()
+    assert data == data0
 
 
 def test_empty_graph():
@@ -140,19 +167,21 @@ def test_summary_graph_loop():
     n = int(RESAMPLED_POINTS)
 
     # Resampling shouldn't get stuck in an infinite loop
-    g = Graph('foo', {}, {}, summary=True)
+    g = Graph('foo', {}, {})
     for j in range(n):
         g.add_data_point(j, 0.1)
+    g = make_summary_graph([g])
     data = g.get_data()
     assert len(data) == 1
     assert data[0][0] == n
     assert abs(data[0][1] - 0.1) < 1e-7
 
     # Resampling should work with long integers
-    g = Graph('foo', {}, {}, summary=True)
+    g = Graph('foo', {}, {})
     k0 = 2**80
     for j in range(2*int(RESAMPLED_POINTS)):
         g.add_data_point(k0 + j, 0.1)
+    g = make_summary_graph([g])
     g.get_data()
 
 
