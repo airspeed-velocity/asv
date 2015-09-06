@@ -350,6 +350,6 @@ def get_with_retry(browser, url):
         try:
             return browser.get(url)
         except TimeoutException:
-            pass
-    else:
-        raise TimeoutException
+            time.sleep(2)
+
+    return browser.get(url)
