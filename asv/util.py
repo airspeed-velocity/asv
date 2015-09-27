@@ -524,8 +524,10 @@ def write_json(path, data, api_version=None):
     Writes JSON to the given path, including indentation and sorting.
     """
     path = os.path.abspath(path)
-    if not os.path.exists(os.path.dirname(path)):
-        os.makedirs(os.path.dirname(path))
+
+    dirname = long_path(os.path.dirname(path))
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
 
     if api_version is not None:
         data['version'] = api_version
