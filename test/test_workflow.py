@@ -15,10 +15,6 @@ import json
 import pytest
 
 from asv import config
-from asv.commands.run import Run
-from asv.commands.publish import Publish
-from asv.commands.find import Find
-from asv.commands.continuous import Continuous
 from asv.util import check_output, which
 
 from . import tools
@@ -80,15 +76,16 @@ def test_run_publish(capfd, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
     # Tests a typical complete run/publish workflow
-    Run.run(conf, range_spec="master~5..master", steps=2,
-            _machine_file=machine_file, quick=True, show_stderr=True)
+    tools.run_asv_with_conf(conf, 'run', "master~5..master", '--steps=2',
+                            '--quick', '--show-stderr',
+                            _machine_file=machine_file)
     text, err = capfd.readouterr()
 
     assert len(os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))) == 5
     assert len(os.listdir(join(tmpdir, 'results_workflow'))) == 2
     assert 'asv: benchmark timed out (timeout 0.1s)' in text
 
-    Publish.run(conf)
+    tools.run_asv_with_conf(conf, 'publish')
 
     assert isfile(join(tmpdir, 'html', 'index.html'))
     assert isfile(join(tmpdir, 'html', 'index.json'))
@@ -112,32 +109,34 @@ def test_run_publish(capfd, basic_conf):
 
     # Check that the skip options work
     capfd.readouterr()
-    Run.run(conf, range_spec="master~5..master", steps=2,
-            _machine_file=join(tmpdir, 'asv-machine.json'), quick=True,
-            skip_successful=True, skip_failed=True)
-    Run.run(conf, range_spec="master~5..master", steps=2,
-            _machine_file=join(tmpdir, 'asv-machine.json'), quick=True,
-            skip_existing_commits=True)
+    tools.run_asv_with_conf(conf, 'run', "master~5..master", '--steps=2',
+                            '--quick', '--skip-existing-successful',
+                            '--skip-existing-failed',
+                            _machine_file=join(tmpdir, 'asv-machine.json'))
+    tools.run_asv_with_conf(conf, 'run', "master~5..master", '--steps=2',
+                            '--quick', '--skip-existing-commits',
+                            _machine_file=join(tmpdir, 'asv-machine.json'))
     text, err = capfd.readouterr()
     assert 'Running benchmarks.' not in text
 
     # Check EXISTING works
-    Run.run(conf, range_spec="EXISTING",
-            _machine_file=machine_file, quick=True)
+    tools.run_asv_with_conf(conf, 'run', "EXISTING", '--quick',
+                            _machine_file=machine_file)
 
     # Remove the benchmarks.json file to make sure publish can
     # regenerate it
 
     os.remove(join(tmpdir, "results_workflow", "benchmarks.json"))
 
-    Publish.run(conf)
+    tools.run_asv_with_conf(conf, 'publish')
 
 
 def test_continuous(capfd, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
     # Check that asv continuous runs
-    Continuous.run(conf, branch="master^", _machine_file=machine_file, show_stderr=True)
+    tools.run_asv_with_conf(conf, 'continuous', "master^", '--show-stderr',
+                            _machine_file=machine_file)
 
     text, err = capfd.readouterr()
     assert "SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY" in text
@@ -155,8 +154,8 @@ def test_find(capfd, basic_conf):
                     "from py.test runner.")
 
     # Test find at least runs
-    Find.run(conf, "master~5..master", "params_examples.track_find_test",
-             _machine_file=machine_file)
+    tools.run_asv_with_conf(conf, 'find', "master~5..master", "params_examples.track_find_test",
+                            _machine_file=machine_file)
 
     # Check it found the first commit after the initially tested one
     output, err = capfd.readouterr()
@@ -175,8 +174,8 @@ def _test_run_branches(tmpdir, dvcs, conf, machine_file, range_spec,
         commits.append(dvcs.get_hash(branch))
 
     # Run tests
-    Run.run(conf, range_spec=range_spec,
-            _machine_file=machine_file, quick=True)
+    tools.run_asv_with_conf(conf, 'run', range_spec, '--quick',
+                            _machine_file=machine_file)
 
     # Check that files for all commits expected were generated
     expected = set(['machine.json'])
@@ -211,10 +210,11 @@ def test_run_new_all(basic_conf):
         results_dir = os.path.join(tmpdir, 'results_workflow')
         if os.path.isdir(results_dir):
             shutil.rmtree(results_dir)
-        Run.run(conf, range_spec=initial_commit+"^!",
-                bench=["time_secondary.track_value"],
-                _machine_file=join(tmpdir, 'asv-machine.json'), quick=True,
-                skip_successful=True, skip_failed=True)
+        tools.run_asv_with_conf(conf, 'run', initial_commit+"^!",
+                                '--bench=time_secondary.track_value',
+                                '--quick', '--skip-existing-successful',
+                                '--skip-existing-failed',
+                                _machine_file=join(tmpdir, 'asv-machine.json'))
 
     # Without branches in config, should just use master
     init_results()

@@ -6,15 +6,16 @@ from __future__ import (absolute_import, division, print_function,
 
 from os.path import isfile, join
 
+import os
 import six
 
-from asv.commands.quickstart import Quickstart
+from . import tools
 
 
 def test_quickstart(tmpdir):
     tmpdir = six.text_type(tmpdir)
 
-    Quickstart.run(tmpdir)
+    tools.run_asv('quickstart', '--dest', tmpdir)
 
     assert isfile(join(tmpdir, 'asv.conf.json'))
     assert isfile(join(tmpdir, 'benchmarks', 'benchmarks.py'))

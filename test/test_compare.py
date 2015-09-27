@@ -68,9 +68,8 @@ def test_compare(capsys, tmpdir):
          'repo': tools.generate_test_repo(tmpdir).path,
          'project': 'asv'})
 
-    mock_args = Namespace(revision1='22b920c6', revision2='fcf8c079', machine='cheetah',
-                          factor=2, split=False)
-    Compare.run_from_conf_args(conf, mock_args)
+    tools.run_asv_with_conf(conf, 'compare', '22b920c6', 'fcf8c079', '--machine=cheetah',
+                            '--factor=2')
 
     text, err = capsys.readouterr()
     assert text.strip() == REFERENCE.strip()

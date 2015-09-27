@@ -90,11 +90,11 @@ class Profile(Command):
                 cls.guis[x.name] = x
 
     @classmethod
-    def run_from_conf_args(cls, conf, args):
+    def run_from_conf_args(cls, conf, args, **kwargs):
         return cls.run(
             conf=conf, benchmark=args.benchmark, revision=args.revision,
             gui=args.gui, output=args.output, force=args.force,
-            environment=args.environment, python=args.python)
+            environment=args.environment, python=args.python, **kwargs)
 
     @classmethod
     def run(cls, conf, benchmark, revision=None, gui=None, output=None,

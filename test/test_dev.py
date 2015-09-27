@@ -14,9 +14,6 @@ import pytest
 import six
 
 from asv import config
-from asv.commands.dev import Dev
-from asv.commands.profiling import Profile
-from asv.commands.run import Run
 from asv.commands import make_argparser
 
 from . import tools
@@ -56,7 +53,7 @@ def test_dev(capsys, basic_conf):
     tmpdir, local, conf = basic_conf
 
     # Test Dev runs
-    Dev.run(conf, _machine_file=join(tmpdir, 'asv-machine.json'))
+    tools.run_asv_with_conf(conf, 'dev', _machine_file=join(tmpdir, 'asv-machine.json'))
     text, err = capsys.readouterr()
 
     # time_with_warnings failure case
@@ -72,7 +69,7 @@ def test_run_python_same(capsys, basic_conf):
     tmpdir, local, conf = basic_conf
 
     # Test Run runs with python=same
-    Run.run(conf, _machine_file=join(tmpdir, 'asv-machine.json'), python="same")
+    tools.run_asv_with_conf(conf, 'run', '--python=same', _machine_file=join(tmpdir, 'asv-machine.json'))
     text, err = capsys.readouterr()
 
     assert re.search("time_exception.*failed", text, re.S)
@@ -87,9 +84,8 @@ def test_profile_python_same(capsys, basic_conf):
     tmpdir, local, conf = basic_conf
 
     # Test Profile can run with python=same
-    Profile.run(conf, "time_secondary.track_value",
-                _machine_file=join(tmpdir, 'asv-machine.json'),
-                python="same")
+    tools.run_asv_with_conf(conf, 'profile', '--python=same', "time_secondary.track_value",
+                            _machine_file=join(tmpdir, 'asv-machine.json'))
     text, err = capsys.readouterr()
 
     # time_with_warnings failure case
