@@ -60,7 +60,7 @@ class Find(Command):
     @classmethod
     def run_from_conf_args(cls, conf, args):
         return cls.run(
-            conf, args.range[0], args.bench[0],
+            conf, args.range, args.bench,
             invert=args.invert, show_stderr=args.show_stderr,
             machine=args.machine
         )
