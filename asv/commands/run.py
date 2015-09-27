@@ -110,7 +110,7 @@ class Run(Command):
         return parser
 
     @classmethod
-    def run_from_conf_args(cls, conf, args):
+    def run_from_conf_args(cls, conf, args, **kwargs):
         return cls.run(
             conf=conf, range_spec=args.range, steps=args.steps,
             bench=args.bench, parallel=args.parallel,
@@ -119,7 +119,8 @@ class Run(Command):
             dry_run=args.dry_run, machine=args.machine,
             skip_successful=args.skip_existing_successful or args.skip_existing,
             skip_failed=args.skip_existing_failed or args.skip_existing,
-            skip_existing_commits=args.skip_existing_commits
+            skip_existing_commits=args.skip_existing_commits,
+            **kwargs
         )
 
     @classmethod

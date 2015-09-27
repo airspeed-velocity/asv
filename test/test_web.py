@@ -15,12 +15,9 @@ import six
 import pytest
 
 from asv import config
-from asv.commands.run import Run
-from asv.commands.publish import Publish
 
 from . import tools
 from .tools import browser, get_with_retry
-from .test_workflow import basic_conf
 
 
 @pytest.fixture(scope="session")
@@ -55,9 +52,9 @@ def basic_html(request):
             }
         })
 
-        Run.run(conf, range_spec="master~5..master", steps=3,
-                _machine_file=machine_file, quick=True)
-        Publish.run(conf)
+        tools.run_asv_with_conf(conf, 'run', "master~5..master", '--steps=3',
+                                '--quick', _machine_file=machine_file)
+        tools.run_asv_with_conf(conf, 'publish')
     finally:
         os.chdir(cwd)
 
@@ -131,9 +128,10 @@ def test_web_regressions(browser, tmpdir):
             },
         })
 
-        Run.run(conf, range_spec="ALL", bench='params_examples.track_find_test',
-                _machine_file=machine_file, show_stderr=True, quick=True)
-        Publish.run(conf)
+        tools.run_asv_with_conf(conf, 'run', 'ALL', '--bench=params_examples.track_find_test',
+                                '--show-stderr', '--quick',
+                                _machine_file=machine_file)
+        tools.run_asv_with_conf(conf, 'publish')
     finally:
         os.chdir(cwd)
 

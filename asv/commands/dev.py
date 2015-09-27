@@ -27,8 +27,9 @@ class Dev(Run):
         return parser
 
     @classmethod
-    def run_from_conf_args(cls, conf, args):
-        return cls.run(conf, bench=args.bench, machine=args.machine, python=args.python)
+    def run_from_conf_args(cls, conf, args, **kwargs):
+        return cls.run(conf, bench=args.bench, machine=args.machine, python=args.python,
+                       **kwargs)
 
     @classmethod
     def run(cls, conf, bench=None, python="same", machine=None, _machine_file=None):

@@ -69,7 +69,7 @@ def test_publish(tmpdir):
          'repo': dvcs.path,
          'project': 'asv'})
 
-    Publish.run(conf)
+    tools.run_asv_with_conf(conf, 'publish')
 
     # Check output
     assert isfile(join(tmpdir, 'html', 'index.html'))
@@ -98,7 +98,7 @@ def test_publish(tmpdir):
 
     # Publish with branches set in the config
     conf.branches = ['master', 'some-branch']
-    Publish.run(conf)
+    tools.run_asv_with_conf(conf, 'publish')
 
     # Check output
     check_file("master")

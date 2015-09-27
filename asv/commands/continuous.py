@@ -42,10 +42,11 @@ class Continuous(Command):
         return parser
 
     @classmethod
-    def run_from_conf_args(cls, conf, args):
+    def run_from_conf_args(cls, conf, args, **kwargs):
         return cls.run(
             conf=conf, branch=args.branch, base=args.base, factor=args.factor,
-            show_stderr=args.show_stderr, bench=args.bench, machine=args.machine
+            show_stderr=args.show_stderr, bench=args.bench, machine=args.machine,
+            **kwargs
         )
 
     @classmethod

@@ -58,11 +58,11 @@ class Find(Command):
         return parser
 
     @classmethod
-    def run_from_conf_args(cls, conf, args):
+    def run_from_conf_args(cls, conf, args, **kwargs):
         return cls.run(
             conf, args.range, args.bench,
             invert=args.invert, show_stderr=args.show_stderr,
-            machine=args.machine
+            machine=args.machine, **kwargs
         )
 
     @classmethod

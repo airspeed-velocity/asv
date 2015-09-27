@@ -11,7 +11,8 @@ import six
 
 from asv import config
 from asv import results
-from asv.commands.rm import Rm
+
+from . import tools
 
 
 def test_rm(tmpdir):
@@ -26,14 +27,14 @@ def test_rm(tmpdir):
         'repo': "### IGNORED, BUT REQUIRED ###"
         })
 
-    Rm.run(conf, ['benchmark=time_quantity*'])
+    tools.run_asv_with_conf(conf, 'rm', '-y', 'benchmark=time_quantity*')
 
     results_a = list(results.iter_results(tmpdir))
     for result in results_a:
         for key in six.iterkeys(result.results):
             assert not key.startswith('time_quantity')
 
-    Rm.run(conf, ['commit_hash=05d283b9'])
+    tools.run_asv_with_conf(conf, 'rm', '-y', 'commit_hash=05d283b9')
 
     results_b = list(results.iter_results(tmpdir))
     assert len(results_b) == len(results_a) - 1

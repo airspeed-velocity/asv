@@ -13,11 +13,11 @@ import os
 import threading
 import time
 import six
+import sys
 from os.path import abspath, join, dirname, relpath, isdir
 from contextlib import contextmanager
 from distutils.spawn import find_executable
-from distutils.version import LooseVersion
-from six.moves import SimpleHTTPServer, socketserver
+from six.moves import SimpleHTTPServer
 
 import pytest
 
@@ -27,6 +27,8 @@ except ImportError as exc:
     hglib = None
 
 from asv import util
+from asv import commands
+from asv import config
 from asv.commands.preview import create_httpd
 
 
@@ -48,6 +50,26 @@ CHROMEDRIVER = [
 PHANTOMJS = ['phantomjs']
 
 FIREFOX = ['firefox']
+
+
+def run_asv(*argv):
+    parser, subparsers = commands.make_argparser()
+    args = parser.parse_args(argv)
+    return args.func(args)
+
+
+def run_asv_with_conf(conf, *argv, **kwargs):
+    assert isinstance(conf, config.Config)
+
+    parser, subparsers = commands.make_argparser()
+    args = parser.parse_args(argv)
+
+    if sys.version_info[0] >= 3:
+        cls = args.func.__self__
+    else:
+        cls = args.func.im_self
+
+    return cls.run_from_conf_args(conf, args, **kwargs)
 
 
 # These classes are defined here, rather than using asv/plugins/git.py
