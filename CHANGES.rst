@@ -11,10 +11,6 @@ New Features
 
 API Changes
 ^^^^^^^^^^^
-Previously, the ``setup`` and ``teardown`` methods were run only once
-even when the benchmark had ``repeat > 1`` specified. This is now
-changed so that they are run on every repeat, and additionally before
-and after profiling runs.
 
 - Mirrors are no longer created for local repositories. (#314)
 - The parent directory of the benchmark suite is no longer inserted
@@ -22,6 +18,10 @@ and after profiling runs.
 - In asv.conf.json matrix, ``null`` previously meant (undocumented)
   the latest version. Now it means that the package is to not be
   installed. (#329)
+- Previously, the ``setup`` and ``teardown`` methods were run only once
+  even when the benchmark method was run multiple times, for example due
+  to ``repeat > 1`` being present in timing benchmarks. This is now
+  changed so that also they are run multiple times. (#316)
 
 Bug Fixes
 ^^^^^^^^^

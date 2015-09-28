@@ -285,6 +285,10 @@ possible, with as much extraneous setup moved to a ``setup`` function::
             for word in self.words:
                 word.upper()
 
+How ``setup`` and ``teardown`` behave for timing benchmarks
+is similar to the Python ``timeit`` module, and the behavior is controlled
+by the ``number`` and ``repeat`` attributes, as explained below.
+
 **Attributes**:
 
 - ``goal_time``: ``asv`` will automatically select the number of
@@ -294,6 +298,9 @@ possible, with as much extraneous setup moved to a ``setup`` function::
 
 - ``number``: Manually choose the number of iterations.  If ``number``
   is specified, ``goal_time`` is ignored.
+  Note that ``setup`` and ``teardown`` are not run between iterations:
+  ``setup`` runs first, then the timing routine is called ``number`` times,
+  and after that ``teardown`` runs.
 
 - ``repeat``: The number of times to repeat the benchmark, with each
   repetition running the benchmark ``number`` of times.  The minimum
