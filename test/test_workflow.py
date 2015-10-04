@@ -64,7 +64,7 @@ def basic_conf(tmpdir):
         'dvcs': 'git',
         'project': 'asv',
         'matrix': {
-            "six": [None],
+            "six": [""],
             "colorama": ["0.3.1", "0.3.3"]
         }
     })
