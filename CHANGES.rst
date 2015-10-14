@@ -7,6 +7,7 @@ New Features
 - Automatic detection and listing of performance regressions. (#236)
 - Support for Windows. (#282)
 - New ``setup_cache`` method. (#277)
+- Exclude/include rules in configuration matrix. (#329)
 
 API Changes
 ^^^^^^^^^^^
@@ -14,6 +15,9 @@ API Changes
 - Mirrors are no longer created for local repositories. (#314)
 - The parent directory of the benchmark suite is no longer inserted
   into ``sys.path``. (#307)
+- In asv.conf.json matrix, ``null`` previously meant (undocumented)
+  the latest version. Now it means that the package is to not be
+  installed. (#329)
 
 Bug Fixes
 ^^^^^^^^^

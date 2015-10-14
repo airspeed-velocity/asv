@@ -100,15 +100,21 @@ Defines a matrix of third-party dependencies to run the benchmarks with.
 
 If provided, it must be a dictionary, where the keys are the names of
 dependencies and the values are lists of versions (as strings) of that
-dependency.  If the list is empty, use the "latest" version of that
-dependency available on PyPI.
+dependency.  An empty string means the "latest" version of that
+dependency available on PyPI. Value of ``null`` means the package will
+not be installed.
+
+If the list is empty, it is equivalent to ``[""]``, in other words,
+the "latest" version.
 
 For example, the following will test with two different versions of
-Numpy, and the latest version of Cython::
+Numpy, the latest version of Cython, and six installed as the latest
+version and not installed at all::
 
     "matrix": {
         "numpy": ["1.7", "1.8"],
         "Cython": []
+        "six": ["", null]
     }
 
 The matrix dependencies are installed *before* any dependencies that
@@ -116,10 +122,76 @@ the project being benchmarked may specify in its ``setup.py`` file.
 
 .. note::
 
-    At present, this functionality is rather limited, as it only
-    supports dependencies that are installable from PyPI using
-    ``pip``, and there is no functionality for limiting the matrix to
-    specific combinations.
+    At present, this functionality only supports dependencies that are
+    installable via ``pip`` or ``conda`` (depending on which
+    environment is used).
+
+``exclude``
+-----------
+Combinations of libraries, Python versions, or platforms to be
+excluded from the combination matrix. If provided, must be a list of
+dictionaries, each specifying an exclude rule.
+
+An exclude rule consists of key-value pairs, specifying matching rules
+``matrix[key] ~ value``. The values are strings containing regular
+expressions that should match whole strings.  The exclude rule matches
+if all of the items in it match.
+
+In addition to entries in ``matrix``, the following special keys are
+available:
+
+- ``python``: Python version (from ``pythons``)
+
+- ``sys_platform``: Current platform, as in ``sys.platform``.
+  Common values are: ``linux2``, ``win32``, ``cygwin``, ``darwin``.
+
+- ``environment_type``: The environment type in use (from ``environment_type``).
+
+For example::
+
+    "pythons": ["2.6", "2.7"],
+    "matrix": {
+        "numpy": ["1.7", "1.8"],
+        "Cython": ["", null],
+        "colorama": [],
+    },
+    "exclude": [
+        {"python": "2.6", "numpy": "1.7"},
+        {"sys_platform": "(?!win32).*", "colorama": ""},
+    ]
+
+This will generate all combinations of Python version and items in the
+matrix, except those with Python 2.6 and Numpy 1.7. In other words,
+the combinations::
+
+    python==2.6 numpy==1.7 Cython==latest colorama==latest
+    python==2.6 numpy==1.7 colorama==latest
+    python==2.6 numpy==1.8 Cython==latest colorama==latest
+    python==2.6 numpy==1.8 colorama==latest
+    python==2.7 numpy==1.8 Cython==latest colorama==latest
+    python==2.7 numpy==1.8 colorama==latest
+
+The ``colorama`` package will be excluded, except if the current
+platform is Windows.
+
+``include``
+-----------
+Additional package combinations to be included as environments.
+
+If specified, must be a list of dictionaries, indicating
+the versions of packages to be installed. The dictionary must also
+include a ``python`` key specifying the Python version.
+
+The exclude rules are not applied to includes.
+
+For example::
+
+    "include": [
+        {'python': '2.7', 'numpy': '1.8.2'}
+    ]
+
+This corresponds to one additional environment running on Python 2.7
+and including the specified version of Numpy.
 
 ``benchmark_dir``
 -----------------
