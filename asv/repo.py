@@ -31,6 +31,18 @@ class Repo(object):
         """
         raise NotImplementedError()
 
+    def _raise_bad_mirror_error(self, path):
+        """
+        Internal routine for raising an error message if mirror directory already exists,
+        but appears incorrect.
+        """
+        raise util.UserError("Directory '{0}' already exists, but is not a mirror "
+                             "of the project repository. Please remove it and try again. "
+                             "If the benchmark suite is in the project repository, you can "
+                             "also adjust the configuration to use the current "
+                             "repository (e.g. \"repo\": \".\") instead of a remote URL "
+                             "as the source.".format(path))
+
     def checkout(self, path, commit_hash):
         """
         Check out a clean working tree from the current repository

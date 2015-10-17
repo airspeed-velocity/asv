@@ -11,9 +11,11 @@ import six
 import pytest
 import tempfile
 import shutil
+import pytest
 
 from asv import config
 from asv import repo
+from asv import util
 from asv.branch_cache import BranchCache
 
 try:
@@ -24,10 +26,21 @@ except ImportError:
 from . import tools
 
 
-def _test_generic_repo(conf, tmpdir, hash_range, master, branch):
+def _test_generic_repo(conf, tmpdir, hash_range, master, branch, is_remote=False):
     workcopy_dir = tempfile.mkdtemp(dir=tmpdir, prefix="workcopy")
     os.rmdir(workcopy_dir)
 
+    # check mirroring fails early if *mirror_dir* exists but is not
+    # a mirror
+    if is_remote:
+        if os.path.isdir(conf.project):
+            shutil.rmtree(conf.project)
+        os.makedirs(join(conf.project, 'hello'))
+        with pytest.raises(util.UserError):
+            r = repo.get_repo(conf)
+        shutil.rmtree(conf.project)
+
+    # basic checkouts
     r = repo.get_repo(conf)
 
     r.checkout(workcopy_dir, master)
@@ -80,12 +93,13 @@ def test_repo_git(tmpdir):
 
     mirror_dir = join(tmpdir, "repo")
 
-    def test_it():
+    def test_it(is_remote=False):
         conf = config.Config()
 
         conf.project = mirror_dir
         conf.repo = dvcs.path
-        _test_generic_repo(conf, tmpdir, 'master~4..master', 'master', 'tag5')
+        _test_generic_repo(conf, tmpdir, 'master~4..master', 'master', 'tag5',
+                           is_remote=is_remote)
 
         conf.branches = ['master', 'some-branch']
         branch_commits = {
@@ -104,9 +118,11 @@ def test_repo_git(tmpdir):
     old_local_method = Git.is_local_repo
     old_url_match = Git.url_match
     try:
-        Git.is_local_repo = classmethod(lambda cls, path: False)
+        Git.is_local_repo = classmethod(lambda cls, path:
+                                        path != dvcs.path and
+                                        old_local_method(path))
         Git.url_match = classmethod(lambda cls, url: os.path.isdir(url))
-        test_it()
+        test_it(is_remote=True)
         assert os.path.isdir(mirror_dir)
     finally:
         Git.is_local_repo = old_local_method
@@ -125,11 +141,12 @@ def test_repo_hg(tmpdir):
 
     mirror_dir = join(tmpdir, "repo")
 
-    def test_it():
+    def test_it(is_remote=False):
         conf.project = mirror_dir
         conf.repo = dvcs.path
         _test_generic_repo(conf, tmpdir, hash_range="tip:-4",
-                           master="tip", branch="tag5")
+                           master="tip", branch="tag5",
+                           is_remote=is_remote)
 
         conf.branches = ['default', 'some-branch']
         branch_commits = {
@@ -148,9 +165,11 @@ def test_repo_hg(tmpdir):
     old_local_method = Hg.is_local_repo
     old_url_match = Hg.url_match
     try:
-        Hg.is_local_repo = classmethod(lambda cls, path: False)
+        Hg.is_local_repo = classmethod(lambda cls, path:
+                                       path != dvcs.path and
+                                       old_local_method(path))
         Hg.url_match = classmethod(lambda cls, url: os.path.isdir(url))
-        test_it()
+        test_it(is_remote=True)
         assert os.path.isdir(mirror_dir)
     finally:
         Hg.is_local_repo = old_local_method
