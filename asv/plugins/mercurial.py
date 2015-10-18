@@ -38,7 +38,10 @@ class Hg(Repo):
             # Local repository, no need for mirror
             self._path = os.path.abspath(url)
             self._pulled = True
-        elif not os.path.exists(self._path):
+        elif not self.is_local_repo(self._path):
+            if os.path.exists(self._path):
+                self._raise_bad_mirror_error(self._path)
+
             # Clone is missing
             log.info("Cloning project")
             if url.startswith("hg+"):
