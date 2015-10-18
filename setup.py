@@ -23,16 +23,23 @@ class PyTest(TestCommand):
 
     def finalize_options(self):
         TestCommand.finalize_options(self)
-        self.test_args = ['test']
-        self.test_suite = True
+
+        # The following is required for setuptools<18.4
+        try:
+            self.test_args = []
+        except AttributeError:
+            # fails on setuptools>=18.4
+            pass
+        self.test_suite = 'unused'
 
     def run_tests(self):
         import pytest
+        test_args = ['test']
         if self.pytest_args:
-            self.test_args += self.pytest_args.split()
+            test_args += self.pytest_args.split()
         if self.coverage:
-            self.test_args += ['--cov', 'asv']
-        errno = pytest.main(self.test_args)
+            test_args += ['--cov', 'asv']
+        errno = pytest.main(test_args)
         sys.exit(errno)
 
 
