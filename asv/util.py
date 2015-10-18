@@ -259,7 +259,7 @@ class ProcessError(subprocess.CalledProcessError):
                 ' '.join(self.args), self.retcode)
 
 
-def check_call(args, valid_return_codes=(0,), timeout=60, dots=True,
+def check_call(args, valid_return_codes=(0,), timeout=600, dots=True,
                display_error=True, shell=False, env=None, cwd=None):
     """
     Runs the given command in a subprocess, raising ProcessError if it
@@ -273,7 +273,7 @@ def check_call(args, valid_return_codes=(0,), timeout=60, dots=True,
         cwd=cwd)
 
 
-def check_output(args, valid_return_codes=(0,), timeout=120, dots=True,
+def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                  display_error=True, shell=False, return_stderr=False,
                  env=None, cwd=None):
     """
