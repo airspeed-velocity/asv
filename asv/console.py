@@ -8,6 +8,7 @@ A set of utilities for writing output to the console.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import io
 import codecs
 import contextlib
 import locale
@@ -120,7 +121,8 @@ def _write_with_fallback(s, write, fileobj):
     Write the supplied string with the given write function like
     ``write(s)``, but use a writer for the locale's preferred encoding
     in case of a UnicodeEncodeError.  Failing that attempt to write
-    with 'utf-8' or 'latin-1'.
+    with 'utf-8' or 'latin-1'. *fileobj* can be text or byte stream,
+    *s* can be unicode or bytes.
     """
     try:
         write(s)
@@ -134,6 +136,14 @@ def _write_with_fallback(s, write, fileobj):
         Writer = codecs.getwriter(enc)
     except LookupError:
         Writer = codecs.getwriter('utf-8')
+
+    if isinstance(fileobj, io.TextIOBase):
+        # Get the byte stream
+        fileobj = fileobj.buffer
+
+    if six.PY3 and isinstance(s, bytes):
+        # Writers expect unicode input
+        s = _decode_preferred_encoding(s)
 
     f = Writer(fileobj)
     write = f.write
@@ -157,7 +167,7 @@ def _write_with_fallback(s, write, fileobj):
         write(s)
         return write
     except UnicodeEncodeError:
-        write(s.encode('ascii', 'replace'))
+        write(s.encode('ascii', 'replace').decode('ascii'))
         return write
 
 
