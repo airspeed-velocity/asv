@@ -6,16 +6,16 @@ from __future__ import (absolute_import, division, print_function,
 
 import six
 import io
+import os
 import sys
 import locale
 import itertools
-import pytest
-from contextlib import contextmanager
 
 from asv.console import _write_with_fallback, color_print
 
 
-def test_write_with_fallback(capfd):
+def test_write_with_fallback(tmpdir, capfd):
+    tmpdir = six.text_type(tmpdir)
 
     def check_write(value, expected, stream_encoding, preferred_encoding):
         old_getpreferredencoding = locale.getpreferredencoding
@@ -44,9 +44,10 @@ def test_write_with_fallback(capfd):
                 assert got == expected
 
             # Check writing to a file
-            with io.open('tmp.txt', 'w', encoding=stream_encoding) as stream:
+            fn = os.path.join(tmpdir, 'tmp.txt')
+            with io.open(fn, 'w', encoding=stream_encoding) as stream:
                 _write_with_fallback(value, stream.write, stream)
-            with open('tmp.txt', 'rb') as stream:
+            with open(fn, 'rb') as stream:
                 got = stream.read()
                 assert got == expected
 
@@ -55,9 +56,9 @@ def test_write_with_fallback(capfd):
                 if stream_encoding == preferred_encoding:
                     # No stream encoding: write in locale encoding
                     for mode in ['w', 'wb']:
-                        with open('tmp.txt', mode) as stream:
+                        with open(fn, mode) as stream:
                             _write_with_fallback(value, stream.write, stream)
-                        with open('tmp.txt', 'rb') as stream:
+                        with open(fn, 'rb') as stream:
                             got = stream.read()
                             assert got == expected
         finally:
