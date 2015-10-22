@@ -183,13 +183,19 @@ def test_matrix_expand_include():
     conf.pythons = ["2.6"]
     conf.matrix = {'a': '1'}
     conf.include = [
-        {'python': '3.4', 'b': '2'}
+        {'python': '3.4', 'b': '2'},
+        {'sys_platform': sys.platform, 'python': '2.7', 'b': '3'},
+        {'sys_platform': sys.platform + 'nope', 'python': '2.7', 'b': '3'},
+        {'environment_type': 'nope', 'python': '2.7', 'b': '4'},
+        {'environment_type': 'something', 'python': '2.7', 'b': '5'},
     ]
 
     combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
     expected = _sorted_dict_list([
         {'python': '2.6', 'a': '1'},
-        {'python': '3.4', 'b': '2'}
+        {'python': '3.4', 'b': '2'},
+        {'python': '2.7', 'b': '3'},
+        {'python': '2.7', 'b': '5'}
     ])
     assert combinations == expected
 

@@ -182,16 +182,23 @@ If specified, must be a list of dictionaries, indicating
 the versions of packages to be installed. The dictionary must also
 include a ``python`` key specifying the Python version.
 
+In addition, the following keys can be present: ``sys_platform``,
+``environment_type``.  If present, the include rule is active only if
+the values match, using same matching rules as explained for
+``exclude`` above.
+
 The exclude rules are not applied to includes.
 
 For example::
 
     "include": [
-        {'python': '2.7', 'numpy': '1.8.2'}
+        {'python': '2.7', 'numpy': '1.8.2'},
+        {'platform': 'win32', 'environment_type': 'conda', 'libpython': ''}
     ]
 
-This corresponds to one additional environment running on Python 2.7
-and including the specified version of Numpy.
+This corresponds to two additional environments. One runs on Python 2.7
+and including the specified version of Numpy. The second is active only
+for Conda on Windows, and installs the latest version of ``libpython``.
 
 ``benchmark_dir``
 -----------------

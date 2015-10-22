@@ -63,18 +63,7 @@ def iter_requirement_matrix(conf):
 
         for rule in conf.exclude:
             # check if all fields in the rule match
-            for key, value in rule.items():
-                if value is None:
-                    if key in target and target[key] is not None:
-                        break
-                elif key not in target or target[key] is None:
-                    break
-                else:
-                    w = str(target[key])
-                    m = re.match(str(value), w)
-                    if m is None or m.end() != len(w):
-                        break
-            else:
+            if match_rule(target, rule):
                 # rule matched
                 break
         else:
@@ -89,11 +78,64 @@ def iter_requirement_matrix(conf):
 
         include = dict(include)
 
-        for key in list(include.keys()):
-            if include[key] is None:
-                include.pop(key)
+        # Platform keys in include statement act as matching rules
+        target = dict(platform_keys)
 
-        yield include
+        if not conf.environment_type:
+            target['environment_type'] = env_classes[target['python']]
+
+        rule = {}
+
+        for key in platform_keys.keys():
+            if key in include:
+                rule[key] = include.pop(key)
+
+        if match_rule(target, rule):
+            # Prune empty keys
+            for key in list(include.keys()):
+                if include[key] is None:
+                    include.pop(key)
+
+            yield include
+
+
+def match_rule(target, rule):
+    """
+    Match rule to a target.
+
+    Parameters
+    ----------
+    target : dict
+        Dictionary containing [(key, value), ...].
+        Keys must be str, values must be str or None.
+    rule : dict
+        Dictionary containing [(key, match), ...], to be matched
+        to *target*. Match can be str specifying a regexp that must
+        match target[key], or None. None matches either None
+        or a missing key in *target*. If match is not None,
+        and the key is missing in *target*, the rule does not match.
+
+    Returns
+    -------
+    matched : bool
+        Whether the rule matched. The rule matches if
+        all keys match.
+
+    """
+    for key, value in rule.items():
+        if value is None:
+            if key in target and target[key] is not None:
+                return False
+        elif key not in target or target[key] is None:
+            return False
+        else:
+            w = str(target[key])
+            m = re.match(str(value), w)
+            if m is None or m.end() != len(w):
+                return False
+
+    # rule matched
+    return True
 
 
 def get_env_name(python, requirements):
