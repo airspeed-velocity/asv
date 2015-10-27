@@ -153,25 +153,26 @@ For example::
     "matrix": {
         "numpy": ["1.7", "1.8"],
         "Cython": ["", null],
-        "colorama": [],
+        "colorama": ["", null],
     },
     "exclude": [
         {"python": "2.6", "numpy": "1.7"},
         {"sys_platform": "(?!win32).*", "colorama": ""},
+        {"sys_platform": "win32", "colorama": null},
     ]
 
 This will generate all combinations of Python version and items in the
 matrix, except those with Python 2.6 and Numpy 1.7. In other words,
 the combinations::
 
-    python==2.6 numpy==1.7 Cython==latest colorama==latest
-    python==2.6 numpy==1.7 colorama==latest
-    python==2.6 numpy==1.8 Cython==latest colorama==latest
-    python==2.6 numpy==1.8 colorama==latest
-    python==2.7 numpy==1.8 Cython==latest colorama==latest
-    python==2.7 numpy==1.8 colorama==latest
+    python==2.6 numpy==1.8 Cython==latest (colorama==latest)
+    python==2.6 numpy==1.8 (colorama==latest)
+    python==2.7 numpy==1.7 Cython==latest (colorama==latest)
+    python==2.7 numpy==1.7 (colorama==latest)
+    python==2.7 numpy==1.8 Cython==latest (colorama==latest)
+    python==2.7 numpy==1.8 (colorama==latest)
 
-The ``colorama`` package will be excluded, except if the current
+The ``colorama`` package will be installed only if the current
 platform is Windows.
 
 ``include``
@@ -193,7 +194,8 @@ For example::
 
     "include": [
         {'python': '2.7', 'numpy': '1.8.2'},
-        {'platform': 'win32', 'environment_type': 'conda', 'libpython': ''}
+        {'platform': 'win32', 'environment_type': 'conda', 'python': '2.7',
+         'libpython': ''}
     ]
 
 This corresponds to two additional environments. One runs on Python 2.7

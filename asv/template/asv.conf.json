@@ -79,7 +79,7 @@
     //     // additional env for python2.7
     //     {"python": "2.7", "numpy": "1.8"},
     //     // additional env if run on windows+conda
-    //     {"platform": "win32", "environment_type": "conda", "libpython": ""},
+    //     {"platform": "win32", "environment_type": "conda", "python": "2.7", "libpython": ""},
     // ],
 
     // The directory (relative to the current directory) that benchmarks are
