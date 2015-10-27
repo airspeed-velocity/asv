@@ -63,10 +63,10 @@ class Graph(object):
         l = list(six.iteritems(self.params))
         l.sort()
         for key, val in l:
-            if val is None:
-                parts.append(key)
-            else:
+            if val:
                 parts.append('{0}-{1}'.format(key, val))
+            else:
+                parts.append(key)
         parts.append(benchmark_name)
 
         self.path = os.path.join(*parts)

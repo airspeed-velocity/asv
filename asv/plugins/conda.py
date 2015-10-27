@@ -42,7 +42,7 @@ class Conda(environment.Environment):
         """
         self._python = python
         self._requirements = requirements
-        super(Conda, self).__init__(conf)
+        super(Conda, self).__init__(conf, python, requirements)
 
     @classmethod
     def matches(self, python):
@@ -69,11 +69,6 @@ class Conda(environment.Environment):
                 return False
             else:
                 return True
-
-    @classmethod
-    def get_environments(cls, conf, python):
-        for configuration in environment.iter_configuration_matrix(conf.matrix):
-            yield cls(conf, python, configuration)
 
     def _setup(self):
         try:
@@ -104,7 +99,7 @@ class Conda(environment.Environment):
             # otherwise. It's also quicker than doing it one by one.
             args = ['install', '-p', self._path, '--yes']
             for key, val in six.iteritems(self._requirements):
-                if val is not None:
+                if val:
                     args.append("{0}={1}".format(key, val))
                 else:
                     args.append(key)

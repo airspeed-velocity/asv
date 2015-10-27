@@ -11,8 +11,10 @@ from __future__ import (absolute_import, division, print_function,
 
 import hashlib
 import os
+import re
 import shutil
 import sys
+import itertools
 import subprocess
 
 import six
@@ -26,31 +28,114 @@ from . import wheel_cache
 WIN = (os.name == "nt")
 
 
-def iter_configuration_matrix(matrix):
+def iter_requirement_matrix(conf):
     """
-    Iterate through all combinations of the given configuration
-    matrix.
+    Iterate through all combinations of the given requirement
+    matrix and python versions.
     """
-    if len(matrix) == 0:
-        yield dict()
-        return
 
-    # TODO: Deal with matrix exclusions
-    matrix = dict(matrix)
-    key = next(six.iterkeys(matrix))
-    entry = matrix[key]
-    del matrix[key]
+    if not conf.environment_type:
+        env_classes = get_environment_classes(conf)
 
-    for result in iter_configuration_matrix(matrix):
-        if len(entry):
-            for value in entry:
-                d = dict(result)
-                d[key] = value
-                yield d
+    platform_keys = {
+        'environment_type': conf.environment_type,
+        'sys_platform': sys.platform
+    }
+
+    # Parse input
+    keys = ['python'] + sorted(conf.matrix.keys())
+    values = [conf.pythons] + [conf.matrix[key] for key in keys[1:]]
+    values = [value if isinstance(value, list) else [value]
+              for value in values]
+    values = [[''] if value == [] else value
+              for value in values]
+
+    # Cartesian product of everything
+    all_combinations = itertools.product(*values)
+
+    # Process excludes
+    for combination in all_combinations:
+        target = dict(zip(keys, combination))
+        target.update(platform_keys)
+
+        if not conf.environment_type:
+            target['environment_type'] = env_classes[target['python']]
+
+        for rule in conf.exclude:
+            # check if all fields in the rule match
+            if match_rule(target, rule):
+                # rule matched
+                break
         else:
-            d = dict(result)
-            d[key] = None
-            yield d
+            # not excluded
+            yield dict(item for item in zip(keys, combination)
+                       if item[1] is not None)
+
+    # Process includes
+    for include in conf.include:
+        if 'python' not in include:
+            raise util.UserError("include rule '{0}' does not specify Python version".format(include))
+
+        include = dict(include)
+
+        # Platform keys in include statement act as matching rules
+        target = dict(platform_keys)
+
+        if not conf.environment_type:
+            target['environment_type'] = env_classes[target['python']]
+
+        rule = {}
+
+        for key in platform_keys.keys():
+            if key in include:
+                rule[key] = include.pop(key)
+
+        if match_rule(target, rule):
+            # Prune empty keys
+            for key in list(include.keys()):
+                if include[key] is None:
+                    include.pop(key)
+
+            yield include
+
+
+def match_rule(target, rule):
+    """
+    Match rule to a target.
+
+    Parameters
+    ----------
+    target : dict
+        Dictionary containing [(key, value), ...].
+        Keys must be str, values must be str or None.
+    rule : dict
+        Dictionary containing [(key, match), ...], to be matched
+        to *target*. Match can be str specifying a regexp that must
+        match target[key], or None. None matches either None
+        or a missing key in *target*. If match is not None,
+        and the key is missing in *target*, the rule does not match.
+
+    Returns
+    -------
+    matched : bool
+        Whether the rule matched. The rule matches if
+        all keys match.
+
+    """
+    for key, value in rule.items():
+        if value is None:
+            if key in target and target[key] is not None:
+                return False
+        elif key not in target or target[key] is None:
+            return False
+        else:
+            w = str(target[key])
+            m = re.match(str(value), w)
+            if m is None or m.end() != len(w):
+                return False
+
+    # rule matched
+    return True
 
 
 def get_env_name(python, requirements):
@@ -61,7 +146,7 @@ def get_env_name(python, requirements):
     reqs = list(six.iteritems(requirements))
     reqs.sort()
     for key, val in reqs:
-        if val is not None:
+        if val:
             name.append(''.join([key, val]))
         else:
             name.append(key)
@@ -79,9 +164,36 @@ def get_environments(conf):
     conf : dict
         asv configuration object
     """
+
+    for requirements in iter_requirement_matrix(conf):
+        python = requirements.pop('python')
+
+        if 'environment_type' in requirements:
+            cls = get_environment_class_by_name(requirements.pop('environment_type'))
+        else:
+            cls = get_environment_class(conf, python)
+
+        try:
+            yield cls(conf, python, requirements)
+        except EnvironmentUnavailable as err:
+            log.warn(str(err))
+
+
+def get_environment_classes(conf):
+    """
+    Get a matching environment type for each Python version required.
+    """
+    env_classes = {}
+
     for python in conf.pythons:
-        for env in get_environments_for_python(conf, python):
-            yield env
+        env_classes[python] = get_environment_class(conf, python)
+
+    for include in conf.include:
+        python = include.get('python')
+        if python is not None:
+            env_classes[python] = get_environment_class(conf, python)
+
+    return env_classes
 
 
 def get_environment_class(conf, python):
@@ -109,11 +221,7 @@ def get_environment_class(conf, python):
         conf.environment_type = 'existing'
 
     if conf.environment_type:
-        for cls in util.iter_subclasses(Environment):
-            if cls.tool_name == conf.environment_type:
-                return cls
-        raise ValueError(
-            "Unknown environment type '{0}'".format(conf.environment_type))
+        return get_environment_class_by_name(conf.environment_type)
     else:
         log.warn(
             "No `environment_type` specified in asv.conf.json. "
@@ -126,34 +234,18 @@ def get_environment_class(conf, python):
             "No way to create environment for '{0}'".format(python))
 
 
-def get_environments_for_python(conf, python):
+def get_environment_class_by_name(environment_type):
     """
-    Get an iterator of Environment subclasses for the given python
-    specifier and all combinations in the configuration matrix.
-
-    Parameters
-    ----------
-    conf : dict
-        asv configuration object
-
-    python : str
-        Python version specifier.  Acceptable values depend on the
-        Environment plugins installed but generally are:
-
-        - 'X.Y': A Python version, in which case conda or virtualenv
-          will be used to create a new environment.
-
-        - 'python' or '/usr/bin/python': Search for the given
-          executable on the search PATH, and use that.  It is assumed
-          that all dependencies and the benchmarked project itself are
-          already installed.
+    Find the environment class with the given name.
     """
-    cls = get_environment_class(conf, python)
-    for env in cls.get_environments(conf, python):
-        yield env
+    for cls in util.iter_subclasses(Environment):
+        if cls.tool_name == environment_type:
+            return cls
+    raise ValueError(
+        "Unknown environment type '{0}'".format(environment_type))
 
 
-class PythonMissingError(BaseException):
+class EnvironmentUnavailable(BaseException):
     pass
 
 
@@ -162,27 +254,13 @@ class Environment(object):
     Manage a single environment -- a combination of a particular
     version of Python and a set of dependencies for the benchmarked
     project.
-
-    Environments are created in the
     """
     tool_name = None
 
-    def __init__(self, conf):
-        self._env_dir = conf.env_dir
-        self._path = os.path.abspath(os.path.join(
-            self._env_dir, self.hashname))
-
-        self._is_setup = False
-
-        self._repo = get_repo(conf)
-        self._cache = wheel_cache.WheelCache(conf, self._path)
-        self._build_root = os.path.abspath(os.path.join(self._path, 'project'))
-
-    @classmethod
-    def get_environments(cls, conf, python):
+    def __init__(self, conf, python, requirements):
         """
-        Get all of the environments for the configuration matrix for
-        the given Python version specifier.
+        Get an environment for a given requirement matrix and
+        Python version specifier.
 
         Parameters
         ----------
@@ -193,8 +271,25 @@ class Environment(object):
             A Python version specifier.  This is the same as passed to
             the `matches` method, and its exact meaning depends on the
             environment.
+
+        requirements : dict (str -> str)
+            Mapping from package names to versions
+
+        Raises
+        ------
+        EnvironmentUnavailable
+            The environment for the given combination is not available.
+
         """
-        raise NotImplementedError()
+        self._env_dir = conf.env_dir
+        self._path = os.path.abspath(os.path.join(
+            self._env_dir, self.hashname))
+
+        self._is_setup = False
+
+        self._repo = get_repo(conf)
+        self._cache = wheel_cache.WheelCache(conf, self._path)
+        self._build_root = os.path.abspath(os.path.join(self._path, 'project'))
 
     @classmethod
     def matches(self, python):
@@ -413,24 +508,24 @@ class Environment(object):
 class ExistingEnvironment(Environment):
     tool_name = "existing"
 
-    def __init__(self, conf, executable):
+    def __init__(self, conf, executable, requirements):
+        if executable == 'same':
+            executable = sys.executable
+
         self._executable = executable
-        self._python = util.check_output(
-            [executable,
-             '-c',
-             'import sys; '
-             'print(str(sys.version_info[0]) + "." + str(sys.version_info[1]))'
-         ]).strip()
+        try:
+            self._python = util.check_output(
+                [executable,
+                 '-c',
+                 'import sys; '
+                 'print(str(sys.version_info[0]) + "." + str(sys.version_info[1]))'
+                 ]).strip()
+        except (util.ProcessError, OSError):
+            raise EnvironmentUnavailable()
+
         self._requirements = {}
 
-        super(ExistingEnvironment, self).__init__(conf)
-
-    @classmethod
-    def get_environments(cls, conf, python):
-        if python == 'same':
-            python = sys.executable
-
-        yield cls(conf, util.which(python))
+        super(ExistingEnvironment, self).__init__(conf, executable, requirements)
 
     @classmethod
     def matches(cls, python):

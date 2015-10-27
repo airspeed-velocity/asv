@@ -25,7 +25,7 @@ class Virtualenv(environment.Environment):
     """
     tool_name = "virtualenv"
 
-    def __init__(self, conf, python, executable, requirements):
+    def __init__(self, conf, python, requirements):
         """
         Parameters
         ----------
@@ -41,10 +41,14 @@ class Virtualenv(environment.Environment):
             Dictionary mapping a PyPI package name to a version
             identifier string.
         """
+        executable = Virtualenv._find_python(python)
+        if executable is None:
+            raise environment.EnvironmentUnavailable("No executable found for python {0}".format(python))
+
         self._executable = executable
         self._python = python
         self._requirements = requirements
-        super(Virtualenv, self).__init__(conf)
+        super(Virtualenv, self).__init__(conf, python, requirements)
 
         try:
             import virtualenv
@@ -72,15 +76,6 @@ class Virtualenv(environment.Environment):
             return sys.executable
 
         return None
-
-    @classmethod
-    def get_environments(cls, conf, python):
-        executable = Virtualenv._find_python(python)
-        if executable is None:
-            log.warn("No executable found for python {0}".format(python))
-        else:
-            for configuration in environment.iter_configuration_matrix(conf.matrix):
-                yield cls(conf, python, executable, configuration)
 
     @classmethod
     def matches(self, python):
@@ -122,7 +117,7 @@ class Virtualenv(environment.Environment):
         if self._requirements:
             args = ['install', '--upgrade']
             for key, val in six.iteritems(self._requirements):
-                if val is not None:
+                if val:
                     args.append("{0}=={1}".format(key, val))
                 else:
                     args.append(key)

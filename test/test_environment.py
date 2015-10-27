@@ -61,8 +61,9 @@ def test_matrix_environments(tmpdir):
         env.create()
 
         output = env.run(
-            ['-c', 'import six, sys; sys.stdout.write(six.__version__)'])
-        if env._requirements['six'] is not None:
+            ['-c', 'import six, sys; sys.stdout.write(six.__version__)'],
+            valid_return_codes=None)
+        if 'six' in env._requirements:
             assert output.startswith(six.text_type(env._requirements['six']))
 
         output = env.run(
@@ -148,3 +149,128 @@ def test_presence_checks(tmpdir):
         env.create()
         assert os.path.isfile(pip_fn)
         env.run(['-c', 'import os'])
+
+
+def _sorted_dict_list(lst):
+    return list(sorted(lst, key=lambda x: list(sorted(x.items()))))
+
+
+def test_matrix_expand_basic():
+    conf = config.Config()
+    conf.environment_type = 'something'
+    conf.pythons = ["2.6", "2.7"]
+    conf.matrix = {
+        'pkg1': None,
+        'pkg2': '',
+        'pkg3': [''],
+        'pkg4': ['1.2', '3.4'],
+        'pkg5': []
+    }
+
+    combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
+    expected = _sorted_dict_list([
+        {'python': '2.6', 'pkg2': '', 'pkg3': '', 'pkg4': '1.2', 'pkg5': ''},
+        {'python': '2.6', 'pkg2': '', 'pkg3': '', 'pkg4': '3.4', 'pkg5': ''},
+        {'python': '2.7', 'pkg2': '', 'pkg3': '', 'pkg4': '1.2', 'pkg5': ''},
+        {'python': '2.7', 'pkg2': '', 'pkg3': '', 'pkg4': '3.4', 'pkg5': ''},
+    ])
+    assert combinations == expected
+
+
+def test_matrix_expand_include():
+    conf = config.Config()
+    conf.environment_type = 'something'
+    conf.pythons = ["2.6"]
+    conf.matrix = {'a': '1'}
+    conf.include = [
+        {'python': '3.4', 'b': '2'},
+        {'sys_platform': sys.platform, 'python': '2.7', 'b': '3'},
+        {'sys_platform': sys.platform + 'nope', 'python': '2.7', 'b': '3'},
+        {'environment_type': 'nope', 'python': '2.7', 'b': '4'},
+        {'environment_type': 'something', 'python': '2.7', 'b': '5'},
+    ]
+
+    combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
+    expected = _sorted_dict_list([
+        {'python': '2.6', 'a': '1'},
+        {'python': '3.4', 'b': '2'},
+        {'python': '2.7', 'b': '3'},
+        {'python': '2.7', 'b': '5'}
+    ])
+    assert combinations == expected
+
+    conf.include = [
+        {'b': '2'}
+    ]
+    with pytest.raises(util.UserError):
+        list(environment.iter_requirement_matrix(conf))
+
+
+def test_matrix_expand_exclude():
+    conf = config.Config()
+    conf.environment_type = 'something'
+    conf.pythons = ["2.6", "2.7"]
+    conf.matrix = {
+        'a': '1',
+        'b': ['1', None]
+    }
+    conf.include = [
+        {'python': '2.7', 'b': '2', 'c': None}
+    ]
+
+    # check basics
+    conf.exclude = [
+        {'python': '2.7', 'b': '2'},
+        {'python': '2.7', 'b': None},
+        {'python': '2.6', 'a': '1'},
+    ]
+    combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
+    expected = _sorted_dict_list([
+        {'python': '2.7', 'a': '1', 'b': '1'},
+        {'python': '2.7', 'b': '2'}
+    ])
+    assert combinations == expected
+
+    # check regexp
+    conf.exclude = [
+        {'python': '.*', 'b': None},
+    ]
+    combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
+    expected = _sorted_dict_list([
+        {'python': '2.6', 'a': '1', 'b': '1'},
+        {'python': '2.7', 'a': '1', 'b': '1'},
+        {'python': '2.7', 'b': '2'}
+    ])
+    assert combinations == expected
+
+    # check environment_type as key
+    conf.exclude = [
+        {'environment_type': 'some.*'},
+    ]
+    combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
+    expected = [
+        {'python': '2.7', 'b': '2'}
+    ]
+    assert combinations == expected
+
+    # check sys_platform as key
+    conf.exclude = [
+        {'sys_platform': sys.platform},
+    ]
+    combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
+    expected = [
+        {'python': '2.7', 'b': '2'}
+    ]
+    assert combinations == expected
+
+    # check inverted regex
+    conf.exclude = [
+        {'python': '(?!2.6).*'}
+    ]
+    combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
+    expected = _sorted_dict_list([
+        {'python': '2.6', 'a': '1', 'b': '1'},
+        {'python': '2.6', 'a': '1'},
+        {'python': '2.7', 'b': '2'}
+    ])
+    assert combinations == expected
