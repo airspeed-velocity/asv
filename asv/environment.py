@@ -82,7 +82,7 @@ def iter_requirement_matrix(conf):
         target = dict(platform_keys)
 
         if not conf.environment_type:
-            target['environment_type'] = env_classes[target['python']]
+            target['environment_type'] = env_classes[include['python']]
 
         rule = {}
 

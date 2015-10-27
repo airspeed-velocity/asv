@@ -206,6 +206,25 @@ def test_matrix_expand_include():
         list(environment.iter_requirement_matrix(conf))
 
 
+@pytest.mark.skipif(not (HAS_PYTHON_27 or HAS_CONDA),
+                    reason="Requires Python 2.7")
+def test_matrix_expand_include_detect_env_type():
+    conf = config.Config()
+    conf.environment_type = None
+    conf.pythons = ["2.7"]
+    conf.matrix = {}
+    conf.exclude = [{}]
+    conf.include = [
+        {'sys_platform': sys.platform, 'python': '2.7'},
+    ]
+
+    combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
+    expected = _sorted_dict_list([
+        {'python': '2.7'},
+    ])
+    assert combinations == expected
+
+
 def test_matrix_expand_exclude():
     conf = config.Config()
     conf.environment_type = 'something'
