@@ -219,7 +219,7 @@ by looking for tools on the ``PATH`` environment variable.
 -----------
 The directory, relative to the current directory, to cache the Python
 environments in.  If not provided, defaults to ``"env"``.
-`
+
 ``results_dir``
 ---------------
 The directory, relative to the current directory, that the raw results
