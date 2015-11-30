@@ -65,7 +65,7 @@ install:
     fi
     if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install mercurial ; fi;
     if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install python-hglib ; fi;
-    if [[ $USE_DILL == true]]; then
+    if [[ $USE_DILL == true ]]; then
       pip install dill
     fi
     $TRAVIS_PIP install selenium six pytest;
