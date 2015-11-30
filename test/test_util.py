@@ -8,7 +8,10 @@ import io
 import locale
 import os
 import sys
-import pickle
+try:
+    import dill as pickle
+except ImportError:
+    import pickle
 import multiprocessing
 import traceback
 import pytest

@@ -31,7 +31,10 @@ import inspect
 import itertools
 import json
 import os
-import pickle
+try:
+    import dill as pickle
+except ImportError:
+    import pickle
 import re
 import textwrap
 import timeit

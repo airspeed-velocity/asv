@@ -38,6 +38,15 @@ One of the following:
    Using ``virtualenv``, these dependencies will have to be compiled
    every time the environments are set up.
 
+Optional requirements
+---------------------
+
+If using the :ref:`setup_cache functionality <setup-teardown>` and you
+need to pickle more exotic data structures, install `dill
+<http://pypi.python.org/pypi/dill>`__.  If ``dill`` is installed,
+``asv`` will automatically use it instead of the standard libary's
+`pickle module <http://docs.python.org/2/library/pickle.html>`__.
+
 Optional optimization
 ---------------------
 

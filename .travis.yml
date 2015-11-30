@@ -18,11 +18,14 @@ matrix:
   include:
     - python: 2.7
       env:
+        - USE_DILL=true
         - USE_CONDA=true
         - COVERAGE=--coverage
 
     - python: 3.4
-      env: USE_CONDA=true
+      env:
+        - USE_DILL=true
+        - USE_CONDA=true
 
     - python: 2.7
       env:
@@ -62,6 +65,9 @@ install:
     fi
     if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install mercurial ; fi;
     if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install python-hglib ; fi;
+    if [[ $USE_DILL == true]]; then
+      pip install dill
+    fi
     $TRAVIS_PIP install selenium six pytest;
     if [[ $COVERAGE != '' ]]; then $TRAVIS_PIP install coverage pytest-coverage coveralls; fi;
 

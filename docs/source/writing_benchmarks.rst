@@ -64,6 +64,8 @@ these features and is equivalent to::
 
        asv run --python=same --quick --show-stderr --dry-run
 
+.. _setup-teardown:
+
 Setup and teardown functions
 ----------------------------
 
@@ -140,6 +142,13 @@ For example, caching data in a pickle::
 
         def track_fib(self, fib):
             return fib[-1]
+
+.. note::
+
+   Python's standard library ``pickle`` can only handle a subset of
+   all data types.  For best results, install the ``dill`` module:
+   ``asv`` will automatically use it if available and can therefore
+   handle many more exotic data types.
 
 As another example, explicitly saving data in a file::
 
