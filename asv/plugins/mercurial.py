@@ -112,7 +112,7 @@ class Hg(Repo):
         if os.path.isdir(path):
             try:
                 checkout_existing()
-            except hglib.error.CommandError:
+            except (hglib.error.CommandError, hglib.error.ServerError):
                 # Remove and re-clone
                 util.long_path_rmtree(path)
 

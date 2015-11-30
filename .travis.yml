@@ -49,19 +49,19 @@ install:
       wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
       chmod +x miniconda.sh;
       ./miniconda.sh -b;
-      export PATH=$HOME/miniconda/bin:$PATH;
+      export PATH=$HOME/miniconda2/bin:$PATH;
       conda update --yes conda;
-      mv $HOME/miniconda/bin/conda $HOME/miniconda/bin/conda.real;
-      echo -e '#!/bin/bash\n' > $HOME/miniconda/bin/conda;
-      declare -f travis_retry >> $HOME/miniconda/bin/conda;
-      echo -e '\ntravis_retry "$HOME/miniconda/bin/conda.real" "$@"' >> $HOME/miniconda/bin/conda;
-      chmod +x $HOME/miniconda/bin/conda;
+      mv $HOME/miniconda2/bin/conda $HOME/miniconda2/bin/conda.real;
+      echo -e '#!/bin/bash\n' > $HOME/miniconda2/bin/conda;
+      declare -f travis_retry >> $HOME/miniconda2/bin/conda;
+      echo -e '\ntravis_retry "$HOME/miniconda2/bin/conda.real" "$@"' >> $HOME/miniconda2/bin/conda;
+      chmod +x $HOME/miniconda2/bin/conda;
       if $TRAVIS_PYTHON -c 'import virtualenv'; then echo "ERROR: virtualenv package is installed"; exit 1; fi;
     else
       $TRAVIS_PIP install virtualenv;
     fi
-    if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install "mercurial>=3.3" ; fi;
-    if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install python-hglib==1.5 ; fi;
+    if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install mercurial ; fi;
+    if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install python-hglib ; fi;
     $TRAVIS_PIP install selenium six pytest;
     if [[ $COVERAGE != '' ]]; then $TRAVIS_PIP install coverage pytest-coverage coveralls; fi;
 
