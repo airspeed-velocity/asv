@@ -60,8 +60,8 @@ install:
     else
       $TRAVIS_PIP install virtualenv;
     fi
-    if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install "mercurial>=3.3" ; fi;
-    if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install python-hglib==1.5 ; fi;
+    if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install mercurial ; fi;
+    if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install python-hglib ; fi;
     $TRAVIS_PIP install selenium six pytest;
     if [[ $COVERAGE != '' ]]; then $TRAVIS_PIP install coverage pytest-coverage coveralls; fi;
 
