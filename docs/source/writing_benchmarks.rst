@@ -103,19 +103,23 @@ assigned specifically to each function.
 
 Similarly, benchmarks can also have a ``teardown`` function that is
 run after the benchmark.  This is useful if, for example, you need to
-clean up any changes made to the filesystem.  Generally, however, it
-is not required: each benchmark runs in its own process, so any
-tearing down of in-memory state happens automatically.
+clean up any changes made to the filesystem.
+
+Note that although different benchmarks run in separate processes, for
+a given benchmark repeated measurement (cf. ``repeat`` attribute) and
+profiling occur within the same process.  For these cases, the setup
+and teardown routines are run multiple times in the same process.
 
 If ``setup`` raises a ``NotImplementedError``, the benchmark is marked
 as skipped.
 
-Since each benchmark is run in its own process, the ``setup`` method
-is run for each benchmark that it is associated with.  If the
-``setup`` is especially expensive, the ``setup_cache`` method may be
-used instead, which only performs the setup calculation once and then
-caches the result to disk.  ``setup_cache`` can persist the data for
-the benchmarks it applies to in two ways:
+The ``setup`` method is run multiple times, for each benchmark and for
+each repeat.  If the ``setup`` is especially expensive, the
+``setup_cache`` method may be used instead, which only performs the
+setup calculation once and then caches the result to disk.  It is run
+only once also for repeated benchmarks and profiling, unlike
+``setup``.  ``setup_cache`` can persist the data for the benchmarks it
+applies to in two ways:
 
    - Returning a data structure, which ``asv`` pickles to disk, and
      then loads and passes it as the first argument to each benchmark.
@@ -281,6 +285,10 @@ possible, with as much extraneous setup moved to a ``setup`` function::
             for word in self.words:
                 word.upper()
 
+How ``setup`` and ``teardown`` behave for timing benchmarks
+is similar to the Python ``timeit`` module, and the behavior is controlled
+by the ``number`` and ``repeat`` attributes, as explained below.
+
 **Attributes**:
 
 - ``goal_time``: ``asv`` will automatically select the number of
@@ -290,11 +298,15 @@ possible, with as much extraneous setup moved to a ``setup`` function::
 
 - ``number``: Manually choose the number of iterations.  If ``number``
   is specified, ``goal_time`` is ignored.
+  Note that ``setup`` and ``teardown`` are not run between iterations:
+  ``setup`` runs first, then the timing routine is called ``number`` times,
+  and after that ``teardown`` runs.
 
 - ``repeat``: The number of times to repeat the benchmark, with each
   repetition running the benchmark ``number`` of times.  The minimum
   time from all of these repetitions is used as the final result.
   When not provided, defaults to ``timeit.default_repeat`` (3).
+  Setup and teardown are run on each repeat.
 
 - ``timer``: The timing function to use, which can be any source of
   monotonically increasing numbers, such as `time.clock`, `time.time`

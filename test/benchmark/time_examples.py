@@ -47,3 +47,25 @@ def time_with_timeout():
         pass
 
 time_with_timeout.timeout = 0.1
+
+
+class TimeWithRepeat(object):
+    # Check that setup is re-run on each repeat
+    called = None
+    number = 1
+    repeat = 10
+    count = 0
+
+    def setup(self):
+        assert self.called is None
+        self.called = False
+
+    def teardown(self):
+        assert self.called is True
+        self.called = None
+        print("<%d>" % (self.count,))
+
+    def time_it(self):
+        assert self.called is False
+        self.called = True
+        self.count += 1

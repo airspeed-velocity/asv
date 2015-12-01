@@ -276,6 +276,8 @@ class Benchmark(object):
         self.type = "base"
         self.unit = "unit"
 
+        self.__redo_setup_first = True
+
         self._params = _get_first_attr(attr_sources, "params", [])
         self.param_names = _get_first_attr(attr_sources, "param_names", [])
         self._current_params = ()
@@ -431,6 +433,13 @@ class Benchmark(object):
             return True
         return False
 
+    def redo_setup(self):
+        if self.__redo_setup_first:
+            self.__redo_setup_first = False
+            return
+        self.do_teardown()
+        self.do_setup()
+
     def do_teardown(self):
         for teardown in self._teardowns:
             teardown(*self._current_params)
@@ -454,6 +463,8 @@ class Benchmark(object):
                 code = method_caller.func_code
             else:
                 code = method_caller.__code__
+
+            self.redo_setup()
 
             profile.runctx(
                 code, {'run': self.func, 'params': self._current_params},
@@ -500,6 +511,7 @@ class TimeBenchmark(Benchmark):
 
         timer = timeit.Timer(
             stmt=func,
+            setup=self.redo_setup,
             timer=self.timer)
 
         if number == 0:
