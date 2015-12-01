@@ -3,6 +3,7 @@
 
 from __future__ import absolute_import, division, unicode_literals, print_function
 
+import re
 import os
 import tempfile
 import subprocess
@@ -46,6 +47,10 @@ class Conda(environment.Environment):
 
     @classmethod
     def matches(self, python):
+        if not re.match(r'^[0-9].*$', python):
+            # The python name should be a version number
+            return False
+
         try:
             conda = util.which('conda')
         except IOError:
@@ -64,7 +69,7 @@ class Conda(environment.Environment):
                     '-p',
                     path,
                     'python={0}'.format(python),
-                    '--dry-run'], display_error=False)
+                    '--dry-run'], display_error=False, dots=False)
             except util.ProcessError:
                 return False
             else:

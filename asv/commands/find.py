@@ -52,6 +52,7 @@ class Find(Command):
             rather than an increase.""")
         common_args.add_show_stderr(parser)
         common_args.add_machine(parser)
+        common_args.add_environment(parser)
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -62,14 +63,12 @@ class Find(Command):
         return cls.run(
             conf, args.range, args.bench,
             invert=args.invert, show_stderr=args.show_stderr,
-            machine=args.machine, **kwargs
+            machine=args.machine, env_spec=args.env_spec, **kwargs
         )
 
     @classmethod
     def run(cls, conf, range_spec, bench, invert=False, show_stderr=False,
-            machine=None, _machine_file=None):
-        # TODO: Allow for choosing an environment
-
+            machine=None, env_spec=None, _machine_file=None):
         params = {}
         machine_params = Machine.load(
             machine_name=machine,
@@ -87,12 +86,12 @@ class Find(Command):
             log.error("No commit hashes selected")
             return 1
 
-        environments = Setup.run(conf=conf)
+        environments = Setup.run(conf=conf, env_spec=env_spec)
         if len(environments) == 0:
             log.error("No environments selected")
             return 1
 
-        benchmarks = Benchmarks(conf, regex=bench)
+        benchmarks = Benchmarks(conf, environments, regex=bench)
         if len(benchmarks) == 0:
             log.error("'{0}' benchmark not found".format(bench))
             return 1

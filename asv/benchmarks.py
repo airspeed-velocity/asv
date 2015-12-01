@@ -18,7 +18,6 @@ import pstats
 import six
 
 from .console import log, truncate_left
-from .environment import get_environments
 from . import util
 
 
@@ -268,7 +267,7 @@ class Benchmarks(dict):
     """
     api_version = 1
 
-    def __init__(self, conf, benchmarks=None, regex=None):
+    def __init__(self, conf, environments, benchmarks=None, regex=None):
         """
         Discover benchmarks in the given `benchmark_dir`.
 
@@ -276,6 +275,9 @@ class Benchmarks(dict):
         ----------
         conf : Config object
             The project's configuration
+
+        environments : list of Environment
+            List of environments available for benchmark discovery.
 
         regex : str or list of str, optional
             `regex` is a list of regular expressions matching the
@@ -286,7 +288,7 @@ class Benchmarks(dict):
         self._benchmark_dir = conf.benchmark_dir
 
         if benchmarks is None:
-            benchmarks = self.disc_benchmarks(conf)
+            benchmarks = self.disc_benchmarks(conf, environments)
         else:
             benchmarks = six.itervalues(benchmarks)
 
@@ -302,7 +304,7 @@ class Benchmarks(dict):
                 self[benchmark['name']] = benchmark
 
     @classmethod
-    def disc_benchmarks(cls, conf):
+    def disc_benchmarks(cls, conf, environments):
         """
         Discover all benchmarks in a directory tree.
         """
@@ -310,7 +312,6 @@ class Benchmarks(dict):
 
         cls.check_tree(root)
 
-        environments = list(get_environments(conf))
         if len(environments) == 0:
             raise util.UserError("No available environments")
 
@@ -403,7 +404,7 @@ class Benchmarks(dict):
         del self._all_benchmarks['version']
 
     @classmethod
-    def load(cls, conf):
+    def load(cls, conf, environments):
         """
         Load the benchmark descriptions from the `benchmarks.json` file.
         If the file is not found, one of the given `environments` will
@@ -419,7 +420,7 @@ class Benchmarks(dict):
         benchmarks : Benchmarks object
         """
         def regenerate():
-            self = cls(conf)
+            self = cls(conf, environments)
             self.save()
             return self
 
@@ -435,7 +436,7 @@ class Benchmarks(dict):
             # version
             return regenerate()
 
-        return cls(conf, benchmarks=d)
+        return cls(conf, environments, benchmarks=d)
 
     def run_benchmarks(self, env, show_stderr=False, quick=False, profile=False,
                        skip=None):

@@ -65,29 +65,54 @@ def add_machine(parser):
         ~/.asv-machine.json, that one entry will be used.""")
 
 
-def add_python(parser, default=None):
-    if default == 'same':
-        help = """Specify a Python interpreter in which to run the
-        benchmarks.  By default, uses the same Python interpreter that
-        asv is using. """
-    else:
-        help = """Specify a Python interpreter in which to run the
-        benchmarks.  By default, uses the Python interpreters specified
-        in the configuration file. """
+class PythonArgAction(argparse.Action):
+    """
+    Backward compatibility --python XYZ argument,
+    will be interpreted as --environment :XYZ
+    """
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        if nargs is not None:
+            raise ValueError("nargs not allowed")
+        super(PythonArgAction, self).__init__(option_strings, dest, nargs=1, **kwargs)
 
-    help += """It may be a string accepted by any of the environment
-        plugins. For example, the conda plugin accepts "2.7" to mean
-        create a new Conda environment with Python version 2.7.
-        In addition, there is a special value "same" which
-        will use the same Python interpreter that asv is using.  This
-        "same" interpreter must have the benchmarked project already
-        installed, including its dependencies.
+    def __call__(self, parser, namespace, values, option_string=None):
+        items = list(getattr(namespace, "env_spec", []))
+        if values == "same":
+            items.extend(["existing:same"])
+        else:
+            items.extend([":" + value for value in values])
+        setattr(namespace, "env_spec", items)
+
+
+def add_environment(parser, default_same=False):
+    help = """Specify the environment and Python versions for running the
+        benchmarks. String of the format 'environment_type:python_version',
+        for example 'conda:2.7'. If the Python version is not specified,
+        all those listed in the configuration file are run. The special
+        environment type 'existing:/path/to/python' runs the benchmarks
+        using the given Python interpreter; if the path is omitted,
+        the Python running asv is used. For 'existing', the benchmarked
+        project must be already installed, including all dependencies.
         """
 
+    if default_same:
+        help += "The default value is 'existing:same'"
+    else:
+        help += """By default, uses the values specified in the
+            configuration file."""
+
     parser.add_argument(
-        "--python", type=str,
-        default=default,
+        "-E", "--environment",
+        dest="env_spec",
+        action="append",
+        default=[],
         help=help)
+
+    # The --python argument exists for backward compatibility.  It
+    # will just set the part after ':' in the environment spec.
+    parser.add_argument(
+        "--python", action=PythonArgAction, metavar="PYTHON",
+        help="Same as --environment=:PYTHON")
 
 
 def add_parallel(parser):

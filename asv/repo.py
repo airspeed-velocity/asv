@@ -180,6 +180,9 @@ class NoRepository(Repo):
     def get_date_from_name(self, name):
         self._raise_error()
 
+    def pull(self):
+        # Nothing to do
+        pass
 
 def get_repo(conf):
     """

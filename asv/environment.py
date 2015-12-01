@@ -28,23 +28,30 @@ from . import wheel_cache
 WIN = (os.name == "nt")
 
 
-def iter_requirement_matrix(conf):
+def iter_requirement_matrix(environment_type, pythons, conf,
+                            process_includes=True):
     """
     Iterate through all combinations of the given requirement
     matrix and python versions.
     """
 
-    if not conf.environment_type:
-        env_classes = get_environment_classes(conf)
+    env_classes = {}
+
+    def get_env_type(python):
+        env_type = env_classes.get(python)
+        if env_type is None:
+            env_type = get_environment_class(conf, python)
+            env_classes[python] = env_type
+        return env_type
 
     platform_keys = {
-        'environment_type': conf.environment_type,
+        'environment_type': environment_type,
         'sys_platform': sys.platform
     }
 
     # Parse input
     keys = ['python'] + sorted(conf.matrix.keys())
-    values = [conf.pythons] + [conf.matrix[key] for key in keys[1:]]
+    values = [pythons] + [conf.matrix[key] for key in keys[1:]]
     values = [value if isinstance(value, list) else [value]
               for value in values]
     values = [[''] if value == [] else value
@@ -58,8 +65,12 @@ def iter_requirement_matrix(conf):
         target = dict(zip(keys, combination))
         target.update(platform_keys)
 
-        if not conf.environment_type:
-            target['environment_type'] = env_classes[target['python']]
+        if not environment_type:
+            try:
+                target['environment_type'] = get_env_type(target['python'])
+            except EnvironmentUnavailable as err:
+                log.warn(str(err))
+                continue
 
         for rule in conf.exclude:
             # check if all fields in the rule match
@@ -72,6 +83,8 @@ def iter_requirement_matrix(conf):
                        if item[1] is not None)
 
     # Process includes
+    if not process_includes:
+        return
     for include in conf.include:
         if 'python' not in include:
             raise util.UserError("include rule '{0}' does not specify Python version".format(include))
@@ -81,8 +94,12 @@ def iter_requirement_matrix(conf):
         # Platform keys in include statement act as matching rules
         target = dict(platform_keys)
 
-        if not conf.environment_type:
-            target['environment_type'] = env_classes[include['python']]
+        if not environment_type:
+            try:
+                target['environment_type'] = get_env_type(include['python'])
+            except EnvironmentUnavailable as err:
+                log.warn(str(err))
+                continue
 
         rule = {}
 
@@ -153,7 +170,7 @@ def get_env_name(python, requirements):
     return '-'.join(name)
 
 
-def get_environments(conf):
+def get_environments(conf, env_specifiers):
     """
     Iterator returning `Environment` objects for all of the
     permutations of the given versions of Python and a matrix of
@@ -163,37 +180,60 @@ def get_environments(conf):
     ----------
     conf : dict
         asv configuration object
+    env_specifiers : list of str
+        List of environment specifiers, in the format
+        'env_name:python_spec'. If *env_name* is empty, autodetect
+        it. If *python_spec* is missing, use those listed in the
+        configuration file. Alternatively, can be the name given
+        by *Environment.name* if the environment is in the matrix.
+
     """
 
-    for requirements in iter_requirement_matrix(conf):
-        python = requirements.pop('python')
+    if not env_specifiers:
+        all_environments = ()
+        env_specifiers = [conf.environment_type]
+        if not conf.environment_type:
+            log.warn(
+                "No `environment_type` specified in asv.conf.json. "
+                "This will be required in the future.")
+    else:
+        all_environments = list(get_environments(conf, None))
 
-        if 'environment_type' in requirements:
-            cls = get_environment_class_by_name(requirements.pop('environment_type'))
+    for env_spec in env_specifiers:
+        env_name_found = False
+        for env in all_environments:
+            if env_spec == env.name:
+                env_name_found = True
+                yield env
+                break
+        if env_name_found:
+            continue
+
+        process_includes = False
+
+        if env_spec and ':' in env_spec:
+            env_type, python_spec = env_spec.split(':', 1)
+            pythons = [python_spec]
         else:
-            cls = get_environment_class(conf, python)
+            env_type = env_spec
+            if env_type == "existing":
+                pythons = ["same"]
+            else:
+                process_includes = True
+                pythons = conf.pythons
 
-        try:
-            yield cls(conf, python, requirements)
-        except EnvironmentUnavailable as err:
-            log.warn(str(err))
+        for requirements in iter_requirement_matrix(env_type, pythons, conf, process_includes):
+            python = requirements.pop('python')
 
+            if env_type:
+                cls = get_environment_class_by_name(env_type)
+            else:
+                cls = get_environment_class(conf, python)
 
-def get_environment_classes(conf):
-    """
-    Get a matching environment type for each Python version required.
-    """
-    env_classes = {}
-
-    for python in conf.pythons:
-        env_classes[python] = get_environment_class(conf, python)
-
-    for include in conf.include:
-        python = include.get('python')
-        if python is not None:
-            env_classes[python] = get_environment_class(conf, python)
-
-    return env_classes
+            try:
+                yield cls(conf, python, requirements)
+            except EnvironmentUnavailable as err:
+                log.warn(str(err))
 
 
 def get_environment_class(conf, python):
@@ -218,20 +258,21 @@ def get_environment_class(conf, python):
           already installed.
     """
     if python == 'same':
-        conf.environment_type = 'existing'
+        return ExistingEnvironment
+
+    # Try the subclasses in reverse order so custom plugins come first
+    classes = list(util.iter_subclasses(Environment))[::-1]
 
     if conf.environment_type:
-        return get_environment_class_by_name(conf.environment_type)
-    else:
-        log.warn(
-            "No `environment_type` specified in asv.conf.json. "
-            "This will be required in the future.")
-        # Try the subclasses in reverse order so custom plugins come first
-        for cls in list(util.iter_subclasses(Environment))[::-1]:
-            if cls.matches(python):
-                return cls
-        raise ValueError(
-            "No way to create environment for '{0}'".format(python))
+        cls = get_environment_class_by_name(conf.environment_type)
+        classes.remove(cls)
+        classes.insert(0, cls)
+
+    for cls in classes:
+        if cls.matches(python):
+            return cls
+    raise util.UserError(
+        "No way to create environment for python='{0}'".format(python))
 
 
 def get_environment_class_by_name(environment_type):
@@ -243,6 +284,13 @@ def get_environment_class_by_name(environment_type):
             return cls
     raise ValueError(
         "Unknown environment type '{0}'".format(environment_type))
+
+
+def is_existing_only(environments):
+    """
+    Check if the list of environments only contains ExistingEnvironment
+    """
+    return all(isinstance(env, ExistingEnvironment) for env in environments)
 
 
 class EnvironmentUnavailable(BaseException):

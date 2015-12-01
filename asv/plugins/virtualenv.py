@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 
 from distutils.version import LooseVersion
 import sys
+import re
 import inspect
 import os
 import subprocess
@@ -79,6 +80,10 @@ class Virtualenv(environment.Environment):
 
     @classmethod
     def matches(self, python):
+        if not re.match(r'^[0-9].*$', python):
+            # The python name should be a version number
+            return False
+
         try:
             import virtualenv
         except ImportError:
