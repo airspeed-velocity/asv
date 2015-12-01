@@ -188,11 +188,20 @@ def copy_template(src, dst, dvcs, values):
             src_path = join(root, file)
             dst_path = join(dst, relpath(src_path, src))
 
-            with io.open(src_path, 'r', encoding='utf-8') as fd:
-                content = fd.read()
-            content = content.format(**values)
-            with io.open(dst_path, 'w', encoding='utf-8') as fd:
-                fd.write(content)
+            try:
+                with io.open(src_path, 'r', encoding='utf-8') as fd:
+                    content = fd.read()
+            except UnicodeDecodeError:
+                # File is some sort of binary file...  just copy it
+                # directly with no template substitution
+                with io.open(src_path, 'rb') as fd:
+                    content = fd.read()
+                with io.open(dst_path, 'wb') as fd:
+                    fd.write(content)
+            else:
+                content = content.format(**values)
+                with io.open(dst_path, 'w', encoding='utf-8') as fd:
+                    fd.write(content)
 
             dvcs.add(dst_path)
 
@@ -201,7 +210,7 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
                        extra_branches=()):
     """
     Generate a test repository
-    
+
     Parameters
     ----------
     tmpdir
