@@ -311,7 +311,8 @@ class Environment(object):
         """
         Get a hash to uniquely identify this environment.
         """
-        return hashlib.md5(self.name.encode('utf-8')).hexdigest()
+        full_name = "{0}-{1}".format(self.tool_name, self.name).encode('utf-8')
+        return hashlib.md5(full_name).hexdigest()
 
     @property
     def requirements(self):
