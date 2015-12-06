@@ -108,6 +108,10 @@ def test_dev_python_arg():
     args = parser.parse_args(argv)
     assert args.env_spec == [':foo']
 
+    argv = ['dev', '-E', 'existing:foo']
+    args = parser.parse_args(argv)
+    assert args.env_spec == ['existing:foo']
+
     argv = ['run', 'ALL']
     args = parser.parse_args(argv)
     assert args.env_spec == []

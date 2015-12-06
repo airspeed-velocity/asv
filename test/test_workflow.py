@@ -20,6 +20,13 @@ from asv.util import check_output, which
 from . import tools
 
 
+try:
+    which('conda')
+    HAS_CONDA = True
+except (RuntimeError, IOError):
+    HAS_CONDA = False
+
+
 WIN = (os.name == 'nt')
 
 
@@ -119,8 +126,12 @@ def test_run_publish(capfd, basic_conf):
     text, err = capfd.readouterr()
     assert 'Running benchmarks.' not in text
 
-    # Check EXISTING works
-    tools.run_asv_with_conf(conf, 'run', "EXISTING", '--quick',
+    # Check EXISTING and --environment work
+    if HAS_CONDA:
+        env_spec = ("-E", "conda:{0[0]}.{0[1]}".format(sys.version_info))
+    else:
+        env_spec = ("-E", "virtualenv:{0[0]}.{0[1]}".format(sys.version_info))
+    tools.run_asv_with_conf(conf, 'run', "EXISTING", '--quick', *env_spec,
                             _machine_file=machine_file)
 
     # Remove the benchmarks.json file to make sure publish can
@@ -134,9 +145,14 @@ def test_run_publish(capfd, basic_conf):
 def test_continuous(capfd, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
+    if HAS_CONDA:
+        env_spec = ("-E", "conda:{0[0]}.{0[1]}".format(sys.version_info))
+    else:
+        env_spec = ("-E", "virtualenv:{0[0]}.{0[1]}".format(sys.version_info))
+
     # Check that asv continuous runs
     tools.run_asv_with_conf(conf, 'continuous', "master^", '--show-stderr',
-                            _machine_file=machine_file)
+                            *env_spec, _machine_file=machine_file)
 
     text, err = capfd.readouterr()
     assert "SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY" in text
