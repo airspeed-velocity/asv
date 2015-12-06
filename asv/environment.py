@@ -225,12 +225,12 @@ def get_environments(conf, env_specifiers):
         for requirements in iter_requirement_matrix(env_type, pythons, conf, process_includes):
             python = requirements.pop('python')
 
-            if env_type:
-                cls = get_environment_class_by_name(env_type)
-            else:
-                cls = get_environment_class(conf, python)
-
             try:
+                if env_type:
+                    cls = get_environment_class_by_name(env_type)
+                else:
+                    cls = get_environment_class(conf, python)
+
                 yield cls(conf, python, requirements)
             except EnvironmentUnavailable as err:
                 log.warn(str(err))
@@ -271,7 +271,7 @@ def get_environment_class(conf, python):
     for cls in classes:
         if cls.matches(python):
             return cls
-    raise util.UserError(
+    raise EnvironmentUnavailable(
         "No way to create environment for python='{0}'".format(python))
 
 
@@ -282,7 +282,7 @@ def get_environment_class_by_name(environment_type):
     for cls in util.iter_subclasses(Environment):
         if cls.tool_name == environment_type:
             return cls
-    raise ValueError(
+    raise EnvironmentUnavailable(
         "Unknown environment type '{0}'".format(environment_type))
 
 
