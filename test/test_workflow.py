@@ -14,7 +14,7 @@ import six
 import json
 import pytest
 
-from asv import config
+from asv import config, environment
 from asv.util import check_output, which
 
 from . import tools
@@ -194,11 +194,14 @@ def _test_run_branches(tmpdir, dvcs, conf, machine_file, range_spec,
                             _machine_file=machine_file)
 
     # Check that files for all commits expected were generated
+    envs = list(environment.get_environments(conf, None))
+    tool_name = envs[0].tool_name
+
     expected = set(['machine.json'])
     for commit in commits:
         for psver in ['0.3.1', '0.3.3']:
-            expected.add('{0}-py{1[0]}.{1[1]}-colorama{2}-six.json'.format(
-                commit[:8], sys.version_info, psver))
+            expected.add('{0}-{1}-py{2[0]}.{2[1]}-colorama{3}-six.json'.format(
+                commit[:8], tool_name, sys.version_info, psver))
 
     result_files = os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))
 

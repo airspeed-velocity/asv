@@ -155,11 +155,17 @@ def match_rule(target, rule):
     return True
 
 
-def get_env_name(python, requirements):
+def get_env_name(tool_name, python, requirements):
     """
     Get a name to uniquely identify an environment.
     """
-    name = ["py{0}".format(python)]
+    if tool_name:
+        name = [tool_name]
+    else:
+        # Backward compatibility vs. result file names
+        name = []
+
+    name.append("py{0}".format(python))
     reqs = list(six.iteritems(requirements))
     reqs.sort()
     for key, val in reqs:
@@ -352,15 +358,14 @@ class Environment(object):
         """
         Get a name to uniquely identify this environment.
         """
-        return get_env_name(self._python, self._requirements)
+        return get_env_name(self.tool_name, self._python, self._requirements)
 
     @property
     def hashname(self):
         """
         Get a hash to uniquely identify this environment.
         """
-        full_name = "{0}-{1}".format(self.tool_name, self.name).encode('utf-8')
-        return hashlib.md5(full_name).hexdigest()
+        return hashlib.md5(self.name.encode('utf-8')).hexdigest()
 
     @property
     def requirements(self):
@@ -592,7 +597,9 @@ class ExistingEnvironment(Environment):
 
     @property
     def name(self):
-        return self._executable
+        return get_env_name(self.tool_name,
+                            self._executable.replace(os.path.sep, '_'),
+                            {})
 
     def check_presence(self):
         return True

@@ -284,7 +284,8 @@ class Run(Command):
                             env.requirements,
                             commit_hash,
                             repo.get_date(commit_hash),
-                            env.python)
+                            env.python,
+                            env.name)
 
                         for benchmark_name, d in six.iteritems(results):
                             result.add_time(benchmark_name, d['result'])
