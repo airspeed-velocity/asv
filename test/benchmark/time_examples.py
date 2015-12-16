@@ -69,3 +69,17 @@ class TimeWithRepeat(object):
         assert self.called is False
         self.called = True
         self.count += 1
+
+
+class TimeWithRepeatCalibrate(object):
+    # Check that setup is re-run on each repeat, apart from
+    # autodetection of suitable `number`
+    repeat = 1
+    number = 0
+    goal_time = 0.1
+
+    def setup(self):
+        print("setup")
+
+    def time_it(self):
+        pass
