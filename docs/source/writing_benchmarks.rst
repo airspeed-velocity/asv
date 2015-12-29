@@ -69,8 +69,7 @@ Setup and teardown functions
 
 If initialization needs to be performed that should not be included in
 the timing of the benchmark, include that code in a ``setup`` method
-on the class, or set add an attribute called ``setup`` to a free
-function.
+on the class, or add an attribute called ``setup`` to a free function.
 
 For example::
 
