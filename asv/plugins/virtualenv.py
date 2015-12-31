@@ -48,6 +48,7 @@ class Virtualenv(environment.Environment):
         self._executable = executable
         self._python = python
         self._requirements = requirements
+        self._requirements_file = getattr(conf, 'requirements_file', None)
         super(Virtualenv, self).__init__(conf, python, requirements)
 
         try:
@@ -122,6 +123,19 @@ class Virtualenv(environment.Environment):
                 else:
                     args.append(key)
             self.run_executable('pip', args)
+
+    def _install_requirements_file(self):
+        if self._requirements_file is not None:
+            log.info("Installing requirements file for {0}".format(self.name))
+            req_file = os.path.join(self._build_root, self._requirements_file)
+            self.run_executable('pip', ['install', '-r', req_file])
+
+    def build_project(self, commit_hash):
+        self.checkout_project(commit_hash)
+        self._install_requirements_file()
+        log.info("Building for {0}".format(self.name))
+        self.run(['setup.py', 'build'], cwd=self._build_root)
+        return self._build_root
 
     def install(self, package):
         log.info("Installing into {0}".format(self.name))
