@@ -682,7 +682,7 @@ $(document).ready(function() {
             function graph_to_path(benchmark_name, state) {
                 var parts = [];
                 $.each(state, function(key, value) {
-                    if (value !== null) {
+                    if (value) {
                         parts.push(key + "-" + value);
                     } else {
                         parts.push(key);

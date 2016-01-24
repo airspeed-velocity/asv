@@ -47,7 +47,8 @@ def basic_html(request):
             'dvcs': 'git',
             'project': 'asv',
             'matrix': {
-                "six": [None],
+                "six": [""],
+                "asv": [None],
                 "colorama": ["0.3.1", "0.3.3"]
             }
         })
