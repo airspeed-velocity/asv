@@ -112,10 +112,10 @@ class Virtualenv(environment.Environment):
         self._install_requirements()
 
     def _install_requirements(self):
-        self.run_executable('pip', ['install', 'wheel'])
+        self.run_executable('pip', ['install', '-v', 'wheel'])
 
         if self._requirements:
-            args = ['install', '--upgrade']
+            args = ['install', '-v', '--upgrade']
             for key, val in six.iteritems(self._requirements):
                 if val:
                     args.append("{0}=={1}".format(key, val))
