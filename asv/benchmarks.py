@@ -516,9 +516,14 @@ class Benchmarks(dict):
                             return_stderr=True, valid_return_codes=None,
                             cwd=tmpdir)
                         if errcode:
+                            # Dump program output
+                            if show_stderr and err:
+                                with log.indent():
+                                    log.error(err)
+
                             for name, benchmark in benchmark_set:
                                 # TODO: Store more information about failure
-                                times[name] = {'result': None}
+                                times[name] = {'result': None, 'stderr': err}
                             continue
 
                     for name, benchmark in benchmark_set:

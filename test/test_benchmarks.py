@@ -106,6 +106,7 @@ def test_find_benchmarks(tmpdir):
     assert times['cache_examples.track_my_cache_foo']['result'] == 0
 
     assert times['cache_examples.ClassLevelSetupFail.track_fail']['result'] == None
+    assert 'raise RuntimeError()' in times['cache_examples.ClassLevelSetupFail.track_fail']['stderr']
 
     profile_path = join(tmpdir, 'test.profile')
     with open(profile_path, 'wb') as fd:
