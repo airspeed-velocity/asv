@@ -92,19 +92,42 @@ class Conda(environment.Environment):
 
     def _install_requirements(self, conda):
         self.install('wheel')
-
         if self._requirements:
             # Install all the dependencies with a single conda command.
             # This ensures we get the versions requested, or an error
             # otherwise. It's also quicker than doing it one by one.
-            args = ['install', '-p', self._path, '--yes']
+            conda_args = []
+            pip_args = []
             for key, val in six.iteritems(self._requirements):
-                if val:
-                    args.append("{0}={1}".format(key, val))
+                if self.conda_package_exists(key):
+                    if val:
+                        conda_args.append("{0}={1}".format(key, val))
+                    else:
+                        conda_args.append(key)
+                # not on conda, try installing with pip
                 else:
-                    args.append(key)
+                    if val:
+                        pip_args.append("{0}=={1}".format(key, val))
+                    else:
+                        pip_args.append(key)
 
-            util.check_output([conda] + args)
+            conda_cmd = ['install', '-p', self._path, '--yes']
+            pip_cmd = ['install', '-v', '--upgrade']
+
+            # install conda packages
+            if len(conda_args):
+                util.check_output([conda] + conda_cmd + conda_args)
+            # install packages only available with pip
+            if len(pip_args):
+                self.run_executable('pip', pip_cmd + pip_args)
+
+    def conda_package_exists(self, package):
+        # see if a conda package exists
+        ret = util.check_output(["conda", "search", '--json', package])
+        if ret == '{}\n':
+            return False
+        else:
+            return True
 
     def install(self, package):
         log.info("Installing into {0}".format(self.name))
