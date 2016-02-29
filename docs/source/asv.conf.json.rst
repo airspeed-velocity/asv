@@ -124,7 +124,10 @@ the project being benchmarked may specify in its ``setup.py`` file.
 
     At present, this functionality only supports dependencies that are
     installable via ``pip`` or ``conda`` (depending on which
-    environment is used).
+    environment is used). If ``conda`` is specified as ``environment_type``
+    and you wish to install the package via ``pip``, then preface the package
+    name with ``pip+``. For example, ``emcee`` is only available from ``pip``,
+    so the package name to be used is ``pip+emcee``.
 
 ``exclude``
 -----------

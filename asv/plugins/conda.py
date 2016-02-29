@@ -12,6 +12,7 @@ import six
 from .. import environment
 from ..console import log
 from .. import util
+import re
 
 
 WIN = (os.name == "nt")
@@ -98,18 +99,18 @@ class Conda(environment.Environment):
             # otherwise. It's also quicker than doing it one by one.
             conda_args = []
             pip_args = []
+
             for key, val in six.iteritems(self._requirements):
-                if self.conda_package_exists(key):
+                if key.startswith('pip+'):
+                    if val:
+                        pip_args.append("{0}=={1}".format(key[4:], val))
+                    else:
+                        pip_args.append(key[4:])
+                else:
                     if val:
                         conda_args.append("{0}={1}".format(key, val))
                     else:
                         conda_args.append(key)
-                # not on conda, try installing with pip
-                else:
-                    if val:
-                        pip_args.append("{0}=={1}".format(key, val))
-                    else:
-                        pip_args.append(key)
 
             conda_cmd = ['install', '-p', self._path, '--yes']
             pip_cmd = ['install', '-v', '--upgrade']
@@ -120,14 +121,6 @@ class Conda(environment.Environment):
             # install packages only available with pip
             if len(pip_args):
                 self.run_executable('pip', pip_cmd + pip_args)
-
-    def conda_package_exists(self, package):
-        # see if a conda package exists
-        ret = util.check_output(["conda", "search", '--json', package])
-        if ret == '{}\n':
-            return False
-        else:
-            return True
 
     def install(self, package):
         log.info("Installing into {0}".format(self.name))

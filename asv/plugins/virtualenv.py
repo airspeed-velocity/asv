@@ -117,10 +117,14 @@ class Virtualenv(environment.Environment):
         if self._requirements:
             args = ['install', '-v', '--upgrade']
             for key, val in six.iteritems(self._requirements):
+                pkg = key
+                if key.startswith('pip+'):
+                    pkg = key[4:]
+
                 if val:
-                    args.append("{0}=={1}".format(key, val))
+                    args.append("{0}=={1}".format(pkg, val))
                 else:
-                    args.append(key)
+                    args.append(pkg)
             self.run_executable('pip', args)
 
     def install(self, package):
