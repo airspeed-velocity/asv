@@ -12,7 +12,6 @@ import six
 from .. import environment
 from ..console import log
 from .. import util
-import re
 
 
 WIN = (os.name == "nt")
@@ -116,10 +115,10 @@ class Conda(environment.Environment):
             pip_cmd = ['install', '-v', '--upgrade']
 
             # install conda packages
-            if len(conda_args):
+            if conda_args:
                 util.check_output([conda] + conda_cmd + conda_args)
             # install packages only available with pip
-            if len(pip_args):
+            if pip_args:
                 self.run_executable('pip', pip_cmd + pip_args)
 
     def install(self, package):
