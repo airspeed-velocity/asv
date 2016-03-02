@@ -58,7 +58,11 @@ install:
       chmod +x $HOME/miniconda2/bin/conda;
       if $TRAVIS_PYTHON -c 'import virtualenv'; then echo "ERROR: virtualenv package is installed"; exit 1; fi;
     else
-      $TRAVIS_PIP install virtualenv;
+      if [[ "$TRAVIS_PYTHON_VERSION" == "3.2" ]]; then
+        $TRAVIS_PIP install 'virtualenv<14';
+      else
+        $TRAVIS_PIP install virtualenv;
+      fi
     fi
     if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install mercurial ; fi;
     if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install python-hglib ; fi;

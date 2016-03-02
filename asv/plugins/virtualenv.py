@@ -112,7 +112,10 @@ class Virtualenv(environment.Environment):
         self._install_requirements()
 
     def _install_requirements(self):
-        self.run_executable('pip', ['install', '-v', 'wheel'])
+        if sys.version_info[:2] == (3, 2):
+            self.run_executable('pip', ['install', '-v', 'wheel<0.29.0', 'pip<8'])
+        else:
+            self.run_executable('pip', ['install', '-v', 'wheel', 'pip>=8'])
 
         if self._requirements:
             args = ['install', '-v', '--upgrade']
