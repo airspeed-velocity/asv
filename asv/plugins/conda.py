@@ -12,6 +12,7 @@ import six
 from .. import environment
 from ..console import log
 from .. import util
+import re
 
 
 WIN = (os.name == "nt")
@@ -92,19 +93,34 @@ class Conda(environment.Environment):
 
     def _install_requirements(self, conda):
         self.install('wheel')
-
         if self._requirements:
             # Install all the dependencies with a single conda command.
             # This ensures we get the versions requested, or an error
             # otherwise. It's also quicker than doing it one by one.
-            args = ['install', '-p', self._path, '--yes']
-            for key, val in six.iteritems(self._requirements):
-                if val:
-                    args.append("{0}={1}".format(key, val))
-                else:
-                    args.append(key)
+            conda_args = []
+            pip_args = []
 
-            util.check_output([conda] + args)
+            for key, val in six.iteritems(self._requirements):
+                if key.startswith('pip+'):
+                    if val:
+                        pip_args.append("{0}=={1}".format(key[4:], val))
+                    else:
+                        pip_args.append(key[4:])
+                else:
+                    if val:
+                        conda_args.append("{0}={1}".format(key, val))
+                    else:
+                        conda_args.append(key)
+
+            conda_cmd = ['install', '-p', self._path, '--yes']
+            pip_cmd = ['install', '-v', '--upgrade']
+
+            # install conda packages
+            if len(conda_args):
+                util.check_output([conda] + conda_cmd + conda_args)
+            # install packages only available with pip
+            if len(pip_args):
+                self.run_executable('pip', pip_cmd + pip_args)
 
     def install(self, package):
         log.info("Installing into {0}".format(self.name))

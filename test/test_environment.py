@@ -293,3 +293,27 @@ def test_matrix_expand_exclude():
         {'python': '2.7', 'b': '2'}
     ])
     assert combinations == expected
+
+
+@pytest.mark.skipif((not HAS_CONDA),
+                    reason="Requires conda")
+def test_conda_pip_install(tmpdir):
+    # test that we can install with pip into a conda environment.
+    conf = config.Config()
+
+    conf.env_dir = six.text_type(tmpdir.join("env"))
+
+    conf.pythons = ["3.4"]
+    conf.matrix = {
+        "pip+colorama": ["0.3.1"]
+    }
+    environments = list(environment.get_environments(conf))
+
+    assert len(environments) == 1 * 1 * 1
+
+    for env in environments:
+        env.create()
+
+        output = env.run(
+            ['-c', 'import colorama, sys; sys.stdout.write(colorama.__version__)'])
+        assert output.startswith(six.text_type(env._requirements['pip+colorama']))

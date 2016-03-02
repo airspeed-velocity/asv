@@ -42,11 +42,16 @@
     // package (in PyPI) and the values are version numbers.  An empty
     // list or empty string indicates to just test against the default
     // (latest) version. null indicates that the package is to not be
-    // installed.
+    // installed. If the package to be tested is only available from
+    // PyPi, and the 'environment_type' is conda, then you can preface
+    // the package name by 'pip+', and the package will be installed via
+    // pip (with all the conda available packages installed first,
+    // followed by the pip installed packages).
     //
     // "matrix": {
     //     "numpy": ["1.6", "1.7"],
     //     "six": ["", null],        // test with and without six installed
+    //     "pip+emcee": [""],   // emcee is only available for install with pip.
     // },
 
     // Combinations of libraries/python versions can be excluded/included
