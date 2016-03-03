@@ -220,7 +220,11 @@ def which(filename):
         if not filename.endswith('.exe'):
             filename = filename + '.exe'
 
-    locations = os.environ.get("PATH").split(os.pathsep)
+    if os.path.sep in filename:
+        locations = ['']
+    else:
+        locations = os.environ.get("PATH").split(os.pathsep)
+
     candidates = []
     for location in locations:
         candidate = os.path.join(location, filename)
