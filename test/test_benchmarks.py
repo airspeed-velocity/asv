@@ -46,7 +46,7 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 3
 
     b = benchmarks.Benchmarks(conf, regex='example')
-    assert len(b) == 21
+    assert len(b) == 22
 
     b = benchmarks.Benchmarks(conf, regex='time_example_benchmark_1')
     assert len(b) == 2
@@ -56,7 +56,7 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 2
 
     b = benchmarks.Benchmarks(conf)
-    assert len(b) == 25
+    assert len(b) == 26
 
     envs = list(environment.get_environments(conf))
     b = benchmarks.Benchmarks(conf)
@@ -117,6 +117,10 @@ def test_find_benchmarks(tmpdir):
     # The output would contain error messages if the asserts in the benchmark fail.
     expected = ["<%d>" % j for j in range(1, 12)]
     assert times['time_examples.TimeWithRepeat.time_it']['stderr'].split() == expected
+
+    # Calibration of iterations should not rerun setup
+    expected = ['setup']*2
+    assert times['time_examples.TimeWithRepeatCalibrate.time_it']['stderr'].split() == expected
 
 
 def test_invalid_benchmark_tree(tmpdir):

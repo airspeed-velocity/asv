@@ -276,7 +276,7 @@ class Benchmark(object):
         self.type = "base"
         self.unit = "unit"
 
-        self.__redo_setup_first = True
+        self._redo_setup_next = False
 
         self._params = _get_first_attr(attr_sources, "params", [])
         self.param_names = _get_first_attr(attr_sources, "param_names", [])
@@ -434,8 +434,8 @@ class Benchmark(object):
         return False
 
     def redo_setup(self):
-        if self.__redo_setup_first:
-            self.__redo_setup_first = False
+        if not self._redo_setup_next:
+            self._redo_setup_next = True
             return
         self.do_teardown()
         self.do_setup()
@@ -519,6 +519,11 @@ class TimeBenchmark(Benchmark):
             # goal_time / 10 <= total time < goal_time
             number = 1
             for i in range(1, 10):
+                if i > 1:
+                    # increase number (don't rerun setup)
+                    self._redo_setup_next = False
+                    number *= 10
+
                 timing = timer.timeit(number)
                 if timing >= 5*self.goal_time and number == 1 and self.repeat == 0:
                     # very slow benchmark: use a default repeat value of 1
@@ -526,7 +531,7 @@ class TimeBenchmark(Benchmark):
                     break
                 elif timing >= self.goal_time / 10.0:
                     break
-                number *= 10
+
             self.number = number
 
             # keep the timing from the run we already made
