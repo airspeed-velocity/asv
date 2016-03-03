@@ -561,17 +561,19 @@ class ExistingEnvironment(Environment):
         if executable == 'same':
             executable = sys.executable
 
-        self._executable = executable
         try:
+            executable = os.path.abspath(util.which(executable))
+
             self._python = util.check_output(
                 [executable,
                  '-c',
                  'import sys; '
                  'print(str(sys.version_info[0]) + "." + str(sys.version_info[1]))'
                  ]).strip()
-        except (util.ProcessError, OSError):
+        except (util.ProcessError, OSError, IOError):
             raise EnvironmentUnavailable()
 
+        self._executable = executable
         self._requirements = {}
 
         super(ExistingEnvironment, self).__init__(conf, executable, requirements)

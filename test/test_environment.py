@@ -372,9 +372,10 @@ def test_environment_select():
     assert items == ['existing', 'existing', 'existing']
 
     # Check autodetect existing
+    executable = os.path.relpath(os.path.abspath(sys.executable))
     environments = list(environment.get_environments(conf, ["existing",
                                                             ":same",
-                                                            ":" + os.path.abspath(sys.executable)]))
+                                                            ":" + executable]))
     assert len(environments) == 3
     for env in environments:
         assert env.tool_name == "existing"
