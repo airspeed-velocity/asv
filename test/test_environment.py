@@ -380,7 +380,7 @@ def test_environment_select():
     for env in environments:
         assert env.tool_name == "existing"
         assert env.python == "{0[0]}.{0[1]}".format(sys.version_info)
-        assert os.path.abspath(env._executable) == os.path.abspath(sys.executable)
+        assert os.path.normcase(os.path.abspath(env._executable)) == os.path.normcase(os.path.abspath(sys.executable))
 
     # Select by environment name
     environments = list(environment.get_environments(conf, ["conda-py2.7-six1.4"]))
