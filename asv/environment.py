@@ -394,6 +394,7 @@ class Environment(object):
             return False
 
         expected_info = {
+            'tool_name': self.tool_name,
             'python': self._python,
             'requirements': self._requirements
         }
@@ -553,6 +554,7 @@ class Environment(object):
         """
         path = os.path.join(path, 'asv-env-info.json')
         content = {
+            'tool_name': self.tool_name,
             'python': self._python,
             'requirements': self._requirements
         }
