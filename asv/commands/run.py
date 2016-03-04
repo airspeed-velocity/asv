@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import six
 
+import random
 import logging
 import traceback
 
@@ -104,6 +105,15 @@ class Run(Command):
             "--skip-existing", "-k", action="store_true",
             help="""Skip running benchmarks that have previous successful
             or failed results""")
+        parser.add_argument(
+            "--randomize-order", "-r", action="store_true",
+            default=False,
+            help="""Randomize the order of the hashes to check. This means that
+            for example when running the tests for all commits (ALL), one can
+            already start to see trends well before all the commits have been
+            run. Note that if also using the ``steps`` option, the steps are
+            sampled from the commit hashes *after* re-ordering, so they may not
+            end up being equally spaced.""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -120,6 +130,7 @@ class Run(Command):
             skip_successful=args.skip_existing_successful or args.skip_existing,
             skip_failed=args.skip_existing_failed or args.skip_existing,
             skip_existing_commits=args.skip_existing_commits,
+            randomize_order=args.randomize_order,
             **kwargs
         )
 
@@ -127,7 +138,8 @@ class Run(Command):
     def run(cls, conf, range_spec=None, steps=None, bench=None, parallel=1,
             show_stderr=False, quick=False, profile=False, env_spec=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
-            skip_failed=False, skip_existing_commits=False, _returns={}):
+            skip_failed=False, skip_existing_commits=False, randomize_order=False,
+            _returns={}):
         params = {}
         machine_params = Machine.load(
             machine_name=machine,
@@ -163,6 +175,9 @@ class Run(Command):
         if len(commit_hashes) == 0:
             log.error("No commit hashes selected")
             return 1
+
+        if randomize_order:
+            random.shuffle(commit_hashes)
 
         if steps is not None:
             commit_hashes = util.pick_n(commit_hashes, steps)
