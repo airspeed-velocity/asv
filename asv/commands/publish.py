@@ -177,8 +177,12 @@ class Publish(Command):
         for key in six.iterkeys(benchmark_map):
             check_benchmark_params(key, benchmark_map[key])
         for key, val in six.iteritems(params):
-            val = list(val)
-            val.sort(key=lambda x: x or '')
+            # Values can be stored as strings, integers, floating point values,
+            # or None, so we now convert to a list of strings. We also make 
+            # sure that we convert to a set to remove duplicate items (for 
+            # instance, some files might contain "" and some None, but we need 
+            # to treat them as one).
+            val = sorted(set(str(x) if x is not None else '' for x in val))
             params[key] = val
         params['branch'] = [safe_branch_name(branch) for branch in conf.branches]
         util.write_json(os.path.join(conf.html_dir, "index.json"), {
