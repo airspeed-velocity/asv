@@ -290,3 +290,14 @@ def test_run_build_failure(basic_conf):
     assert len(data_ok['results']) == 1
     assert data_broken['results'][bench_name] is None
     assert data_ok['results'][bench_name] == 42.0
+
+
+def test_randomize(capfd, basic_conf):
+
+    tmpdir, local, conf, machine_file = basic_conf
+
+    # Tests a typical complete run/publish workflow
+    tools.run_asv_with_conf(conf, 'run', "ALL", '--steps=3',
+                            '--quick', '--randomize-order',
+                            _machine_file=machine_file)
+
