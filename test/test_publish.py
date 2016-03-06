@@ -106,3 +106,5 @@ def test_publish(tmpdir):
 
     index = util.load_json(join(tmpdir, 'html', 'index.json'))
     assert index['params']['branch'] == ['master', 'some-branch']
+    assert index['params']['Cython'] == ['']
+    assert sorted(index['params']['ram']) == ['8.2G', '8804682956.8']
