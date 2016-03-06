@@ -2,7 +2,6 @@
     "commit_hash": "e8679b2e7660a137504094f99785665bbc38df98", 
     "date": 1360617029000, 
     "params": {
-        "Cython": null, 
         "arch": "x86_64", 
         "cpu": "Intel(R) Core(TM) i5-2520M CPU @ 2.50GHz (4 cores)", 
         "machine": "cheetah", 
@@ -13,11 +12,10 @@
     }, 
     "python": "2.7", 
     "requirements": {
-        "Cython": null, 
         "numpy": "1.8"
     }, 
     "results": {
-        "time_coordinates.time_latitude": null, 
+        "time_coordinates.time_latitude": 0.10822079181671143,
         "time_quantity.time_quantity_array_conversion": 0.0017406461238861084, 
         "time_quantity.time_quantity_init_array": 0.0008062648773193359, 
         "time_quantity.time_quantity_init_scalar": 3.75032901763916e-05, 
