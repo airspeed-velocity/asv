@@ -9,11 +9,11 @@
         "numpy": "1.8", 
         "os": "Linux (Fedora 20)", 
         "python": "2.7", 
-        "ram": "8.2G"
+        "ram": 8804682956.8
     }, 
     "python": "2.7", 
     "requirements": {
-        "Cython": null, 
+        "Cython": "", 
         "numpy": "1.8"
     }, 
     "results": {
