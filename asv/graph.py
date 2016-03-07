@@ -27,7 +27,7 @@ class Graph(object):
     Unlike "results", which contain the timings for a single commit,
     these contain the timings for a single benchmark.
     """
-    def __init__(self, benchmark_name, params, all_params):
+    def __init__(self, benchmark_name, params):
         """
         Initially the graph contains no data.  It must be added using
         multiple calls to `add_data_point`.
@@ -41,18 +41,7 @@ class Graph(object):
         params : dict of str -> str
             A dictionary of parameters describing the benchmark.
 
-        all_params : dict of str -> str
-            A dictionary of all parameters that were found amongst all
-            benchmark results.  This is used to fill in blanks for
-            parameters that might not have been recorded for a
-            particular result.
-
         """
-        # Fill in missing parameters
-        for key in six.iterkeys(all_params):
-            if key not in params:
-                params[key] = None
-
         self.benchmark_name = benchmark_name
         self.params = params
         self.data_points = {}
@@ -63,10 +52,12 @@ class Graph(object):
         l = list(six.iteritems(self.params))
         l.sort()
         for key, val in l:
-            if val:
+            if val is None:
+                parts.append('{0}-null'.format(key))
+            elif val:
                 parts.append('{0}-{1}'.format(key, val))
             else:
-                parts.append(key)
+                parts.append('{0}'.format(key))
         parts.append(benchmark_name)
 
         self.path = os.path.join(*parts)
@@ -218,7 +209,7 @@ def make_summary_graph(graphs):
     val = resample_data(val)
 
     # Return as a graph
-    graph = Graph(graphs[0].benchmark_name, {'summary': None}, {})
+    graph = Graph(graphs[0].benchmark_name, {'summary': ''})
     for x, y in val:
         graph.add_data_point(x, y)
     return graph

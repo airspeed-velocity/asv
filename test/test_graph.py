@@ -13,14 +13,14 @@ def test_graph_single():
     ]
 
     # Should give same data back, excluding missing values at edges
-    g = Graph('foo', {}, {})
+    g = Graph('foo', {})
     for k, v in vals:
         g.add_data_point(k, v)
     data = g.get_data()
     assert data == vals[:-2]
 
     # Should average duplicate values
-    g = Graph('foo', {}, {})
+    g = Graph('foo', {})
     g.add_data_point(4, 3)
     for k, v in vals:
         g.add_data_point(k, v)
@@ -30,7 +30,7 @@ def test_graph_single():
     assert abs(data[3][1] - (3 + 4 + 5)/3.) < 1e-10
 
     # Summary graph should be the same as the main graph
-    g = Graph('foo', {}, {})
+    g = Graph('foo', {})
     for k, v in vals:
         g.add_data_point(k, v)
     g = make_summary_graph([g])
@@ -64,7 +64,7 @@ def test_graph_multi():
     ]
 
     # Should give same data back, with missing data at edges removed
-    g = Graph('foo', {}, {})
+    g = Graph('foo', {})
     for k, v in vals:
         g.add_data_point(k, v)
     data = g.get_data()
@@ -72,7 +72,7 @@ def test_graph_multi():
     assert data[1:] == vals[2:]
 
     # Should average duplicate values
-    g = Graph('foo', {}, {})
+    g = Graph('foo', {})
     g.add_data_point(4, [1, 2, 3])
     for k, v in vals:
         g.add_data_point(k, v)
@@ -84,7 +84,7 @@ def test_graph_multi():
     assert abs(data[3][1][2] - (3 + 2 + 1)/3.) < 1e-10
 
     # The summary graph is obtained by geometric mean of filled data
-    g = Graph('foo', {}, {})
+    g = Graph('foo', {})
     for k, v in vals:
         g.add_data_point(k, v)
     g = make_summary_graph([g])
@@ -101,9 +101,9 @@ def test_graph_multi():
 
     # Test summary over separate graphs -- should behave as if the
     # data was in a single graph
-    g0 = Graph('foo', {}, {})
-    g1 = Graph('foo', {}, {})
-    g2 = Graph('foo', {}, {})
+    g0 = Graph('foo', {})
+    g1 = Graph('foo', {})
+    g2 = Graph('foo', {})
     for k, v in vals:
         g0.add_data_point(k, v)
         g1.add_data_point(k, v[0])
@@ -126,14 +126,14 @@ def test_graph_multi():
 
 
 def test_empty_graph():
-    g = Graph('foo', {}, {})
+    g = Graph('foo', {})
     g.add_data_point(1, None)
     g.add_data_point(2, None)
     g.add_data_point(3, None)
     data = g.get_data()
     assert data == []
 
-    g = Graph('foo', {}, {})
+    g = Graph('foo', {})
     g.add_data_point(1, None)
     g.add_data_point(1, [None, None])
     g.add_data_point(2, [None, None])
@@ -144,7 +144,7 @@ def test_empty_graph():
 
 
 def test_nan():
-    g = Graph('foo', {}, {})
+    g = Graph('foo', {})
     g.add_data_point(1, 1)
     g.add_data_point(2, 2)
     g.add_data_point(2, float('nan'))
@@ -153,7 +153,7 @@ def test_nan():
     data = g.get_data()
     assert data == [(1, 1), (2, 2), (3, 3)]
 
-    g = Graph('foo', {}, {})
+    g = Graph('foo', {})
     g.add_data_point(1, None)
     g.add_data_point(1, [1, float('nan')])
     g.add_data_point(2, [2, 2])
@@ -167,7 +167,7 @@ def test_summary_graph_loop():
     n = int(RESAMPLED_POINTS)
 
     # Resampling shouldn't get stuck in an infinite loop
-    g = Graph('foo', {}, {})
+    g = Graph('foo', {})
     for j in range(n):
         g.add_data_point(j, 0.1)
     g = make_summary_graph([g])
@@ -177,7 +177,7 @@ def test_summary_graph_loop():
     assert abs(data[0][1] - 0.1) < 1e-7
 
     # Resampling should work with long integers
-    g = Graph('foo', {}, {})
+    g = Graph('foo', {})
     k0 = 2**80
     for j in range(2*int(RESAMPLED_POINTS)):
         g.add_data_point(k0 + j, 0.1)
