@@ -211,6 +211,10 @@ versions of Python installed -- your package manager, ``apt-get``,
 ``yum``, ``MacPorts`` or ``homebrew`` probably has them, or you
 can also use `pyenv <https://github.com/yyuu/pyenv>`__.
 
+Additionally, a ``requirements_file`` key, if present, will cause
+``asv`` to run ``pip install -r <file>`` in the newly-created
+environment.
+
 Benchmarking
 ````````````
 
