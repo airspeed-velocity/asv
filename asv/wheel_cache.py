@@ -71,6 +71,9 @@ class WheelCache(object):
             if os.path.isdir(path):
                 util.long_path_rmtree(path)
 
+    def disable(self):
+        self._wheel_cache_size = 0
+
     def build_project_cached(self, env, package, commit_hash):
         if self._wheel_cache_size == 0:
             return None

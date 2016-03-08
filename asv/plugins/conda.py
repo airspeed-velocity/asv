@@ -91,35 +91,41 @@ class Conda(environment.Environment):
         self._install_requirements(conda)
 
     def _install_requirements(self, conda):
-        self.install('wheel')
-        if self._requirements:
-            # Install all the dependencies with a single conda command.
-            # This ensures we get the versions requested, or an error
-            # otherwise. It's also quicker than doing it one by one.
-            conda_args = []
-            pip_args = []
+        # Try to install the wheel package
+        _, _, retcode = util.check_output([conda, 'install', '-p', self._path, '--yes', 'wheel'],
+                                          valid_return_codes=None, return_stderr=True)
+        if retcode != 0:
+            # Not available: disable wheel cache
+            log.debug("Failed to install 'wheel' package. Disabling wheel cache.")
+            self._cache.disable()
 
-            for key, val in six.iteritems(self._requirements):
-                if key.startswith('pip+'):
-                    if val:
-                        pip_args.append("{0}=={1}".format(key[4:], val))
-                    else:
-                        pip_args.append(key[4:])
+        # Install all the dependencies with a single conda command.
+        # This ensures we get the versions requested, or an error
+        # otherwise. It's also quicker than doing it one by one.
+        conda_args = []
+        pip_args = []
+
+        for key, val in six.iteritems(self._requirements):
+            if key.startswith('pip+'):
+                if val:
+                    pip_args.append("{0}=={1}".format(key[4:], val))
                 else:
-                    if val:
-                        conda_args.append("{0}={1}".format(key, val))
-                    else:
-                        conda_args.append(key)
+                    pip_args.append(key[4:])
+            else:
+                if val:
+                    conda_args.append("{0}={1}".format(key, val))
+                else:
+                    conda_args.append(key)
 
+        # install conda packages
+        if conda_args:
             conda_cmd = ['install', '-p', self._path, '--yes']
-            pip_cmd = ['install', '-v', '--upgrade']
+            util.check_output([conda] + conda_cmd + conda_args)
 
-            # install conda packages
-            if conda_args:
-                util.check_output([conda] + conda_cmd + conda_args)
-            # install packages only available with pip
-            if pip_args:
-                self.run_executable('pip', pip_cmd + pip_args)
+        # install packages only available with pip
+        if pip_args:
+            pip_cmd = ['install', '-v', '--upgrade']
+            self.run_executable('pip', pip_cmd + pip_args)
 
     def install(self, package):
         log.info("Installing into {0}".format(self.name))
