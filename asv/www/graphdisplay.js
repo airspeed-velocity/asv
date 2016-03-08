@@ -490,11 +490,13 @@ $(document).ready(function() {
 
         /* Generic parameter selectors */
         $.each(index.params, function(param, values) {
-            if (values.length > 1 && param !== 'machine') {
+            if (values.length > 1 && param != 'machine') {
                 make_value_selector_panel(nav, param, values, function(i, value, button) {
                     var value_display;
-                    if (!value)
+                    if (value === null)
                         value_display = '[none]';
+                    else if (!value)
+                        value_display = '[default]';
                     else
                         value_display = value;
 
@@ -682,7 +684,9 @@ $(document).ready(function() {
             function graph_to_path(benchmark_name, state) {
                 var parts = [];
                 $.each(state, function(key, value) {
-                    if (value) {
+                    if (value === null) {
+                        parts.push(key + "-null");
+                    } else if (value) {
                         parts.push(key + "-" + value);
                     } else {
                         parts.push(key);
@@ -709,7 +713,9 @@ $(document).ready(function() {
                 $.each(state, function(key, value) {
                     if (!ignore.hasOwnProperty(key) &&
                         differences.hasOwnProperty(key)) {
-                        if (value) {
+                        if (value === null) {
+                            // missing key, skip
+                        } else if (value) {
                             parts.push(key + "-" + value);
                         } else {
                             parts.push(key);

@@ -32,6 +32,7 @@ def test_publish(tmpdir):
     # Synthesize history with two branches that both have commits
     result_files = [fn for fn in os.listdir(join(RESULT_DIR, 'cheetah'))
                     if fn.endswith('.json') and fn != 'machine.json']
+    result_files.sort()
     master_values = list(range(len(result_files)*2//3))
     branch_values = list(range(len(master_values), len(result_files)))
     dvcs = tools.generate_test_repo(tmpdir, master_values, 'git',
@@ -78,11 +79,13 @@ def test_publish(tmpdir):
     assert isfile(join(tmpdir, 'html', 'asv.css'))
     assert not isdir(join(tmpdir, 'html', 'graphs', 'Cython', 'arch-x86_64',
                           'branch-some-branch'))
+    assert not isdir(join(tmpdir, 'html', 'graphs', 'Cython-null', 'arch-x86_64',
+                          'branch-some-branch'))
     index = util.load_json(join(tmpdir, 'html', 'index.json'))
     assert index['params']['branch'] == ['master']
 
-    def check_file(branch):
-        fn = join(tmpdir, 'html', 'graphs', 'Cython', 'arch-x86_64', 'branch-' + branch,
+    def check_file(branch, cython):
+        fn = join(tmpdir, 'html', 'graphs', cython, 'arch-x86_64', 'branch-' + branch,
                   'cpu-Intel(R) Core(TM) i5-2520M CPU @ 2.50GHz (4 cores)',
                   'machine-cheetah', 'numpy-1.8', 'os-Linux (Fedora 20)', 'python-2.7', 'ram-8.2G',
                   'time_coordinates.time_latitude.json')
@@ -94,15 +97,20 @@ def test_publish(tmpdir):
             # we set some dates negative for some-branch above
             assert any(x[0] < 0 for x in data) and any(x[0] >= 0 for x in data)
 
-    check_file("master")
+    check_file("master", "Cython")
+    check_file("master", "Cython-null")
 
     # Publish with branches set in the config
     conf.branches = ['master', 'some-branch']
     tools.run_asv_with_conf(conf, 'publish')
 
     # Check output
-    check_file("master")
-    check_file("some-branch")
+    check_file("master", "Cython")
+    check_file("master", "Cython-null")
+    check_file("some-branch", "Cython")
+    check_file("some-branch", "Cython-null")
 
     index = util.load_json(join(tmpdir, 'html', 'index.json'))
     assert index['params']['branch'] == ['master', 'some-branch']
+    assert index['params']['Cython'] == ['', None]
+    assert index['params']['ram'] == ['8.2G', 8804682956.8]

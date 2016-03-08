@@ -120,15 +120,22 @@ class Publish(Command):
         with log.indent():
             graph_groups = {}
 
+            # Determine first the set of all parameters
+            for results in iter_results(conf.results_dir):
+                for key, val in six.iteritems(results.params):
+                    if val is None:
+                        # Backward compatibility -- null means ''
+                        val = ''
+
+                    params.setdefault(key, set())
+                    params[key].add(val)
+
+            # Generate all graphs
             for results in iter_results(conf.results_dir):
                 log.dot()
                 commit_hash = results.commit_hash[:conf.hash_length]
                 date_to_hash[results.date] = commit_hash
                 hash_to_date[commit_hash] = results.date
-
-                for key, val in six.iteritems(results.params):
-                    params.setdefault(key, set())
-                    params[key].add(val)
 
                 for key, val in six.iteritems(results.results):
                     b = benchmarks.get(key)
@@ -140,7 +147,19 @@ class Publish(Command):
                         cur_params = dict(results.params)
                         cur_params['branch'] = safe_branch_name(branch)
 
-                        graph = Graph(key, cur_params, params)
+                        # Backward compatibility, see above
+                        for param_key, param_value in list(cur_params.items()):
+                            if param_value is None:
+                                cur_params[param_key] = ''
+
+                        # Fill in missing params
+                        for param_key in params.keys():
+                            if param_key not in cur_params:
+                                cur_params[param_key] = None
+                                params[param_key].add(None)
+
+                        # Create graph
+                        graph = Graph(key, cur_params)
                         if graph.path in graphs:
                             graph = graphs[graph.path]
                         else:
@@ -167,7 +186,6 @@ class Publish(Command):
             log.step()
             log.info("Generating output for {0}".format(cls.name))
             with log.indent():
-                output_dir = os.path.join(conf.html_dir, cls.name)
                 cls.publish(conf, repo, benchmarks, graphs, hash_to_date)
                 extra_pages.append([cls.name, cls.button_label, cls.description])
 
@@ -178,7 +196,7 @@ class Publish(Command):
             check_benchmark_params(key, benchmark_map[key])
         for key, val in six.iteritems(params):
             val = list(val)
-            val.sort(key=lambda x: x or '')
+            val.sort(key=lambda x: '[none]' if x is None else str(x))
             params[key] = val
         params['branch'] = [safe_branch_name(branch) for branch in conf.branches]
         util.write_json(os.path.join(conf.html_dir, "index.json"), {

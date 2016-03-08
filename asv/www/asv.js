@@ -238,6 +238,9 @@ $(document).ready(function() {
                 }
                 var key = part[0];
                 var value = decodeURIComponent(part[1].replace(/\+/g, " "));
+                if (value == '[none]') {
+                    value = null;
+                }
                 if (info['params'][key] === undefined) {
                     info['params'][key] = [value];
                 }
@@ -266,6 +269,9 @@ $(document).ready(function() {
                 $.each(values, function (idx, value) {
                     if (!first) {
                         str = str + '&';
+                    }
+                    if (value === null) {
+                        value = '[none]';
                     }
                     str = str + key + '=' + encodeURIComponent(value);
                     first = false;
