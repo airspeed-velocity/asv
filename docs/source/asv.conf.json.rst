@@ -215,6 +215,11 @@ Specifies the tool to use to create environments.  May be "conda",
 missing or the empty string, the tool will be automatically determined
 by looking for tools on the ``PATH`` environment variable.
 
+``requirements_file``
+---------------------
+When using ``virtualenv``, this specifies the path to a requirements file
+to be installed using ``pip install -r``. This key is optional.
+
 ``env_dir``
 -----------
 The directory, relative to the current directory, to cache the Python

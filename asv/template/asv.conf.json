@@ -31,6 +31,11 @@
     // variable.
     "environment_type": "virtualenv",
 
+    // An optional pip requirements file to be installed into the
+    // environment. If not set, `pip install -r` will not be run. This
+    // option is ignored if environment_type is not "virtualenv".
+    // requirements_file: "requirements.txt",
+
     // the base URL to show a commit for the project.
     // "show_commit_url": "http://github.com/owner/project/commit/",
 
