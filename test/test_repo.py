@@ -129,6 +129,21 @@ def test_repo_git(tmpdir):
         Git.url_match = old_url_match
 
 
+def test_repo_git_annotated_tag_date(tmpdir):
+    tmpdir = six.text_type(tmpdir)
+
+    dvcs = tools.generate_test_repo(tmpdir, list(range(5)), dvcs_type='git')
+
+    conf = config.Config()
+    conf.project = 'sometest'
+    conf.repo = dvcs.path
+
+    r = repo.get_repo(conf)
+    d1 = r.get_date('tag1')
+    d2 = r.get_date(r.get_hash_from_name('tag1'))
+    assert d1 == d2
+
+
 @pytest.mark.skipif(hglib is None,
                     reason="needs hglib")
 def test_repo_hg(tmpdir):
