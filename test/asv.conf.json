@@ -2,6 +2,9 @@
     // The versions of Python to test against
     "pythons": ["2.7"],
 
+    // timeout in seconds for installing dependencies
+    "install_timeout": 3142,
+
     // The matrix of dependencies to test.  Each key is the name of a
     // package (in PyPI) and the values are version numbers.  An empty
     // list indicates to just test against the default (latest)

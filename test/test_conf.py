@@ -25,6 +25,12 @@ def test_config():
     }
     assert conf.benchmark_dir == 'benchmark'
     assert conf.branches == [None]
+    assert conf.install_timeout == 3142
+
+
+def test_config_default_install_timeout():
+    conf = config.Config()
+    assert conf.install_timeout == 120
 
 
 class CustomCommand(Command):
