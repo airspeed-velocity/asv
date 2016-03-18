@@ -282,6 +282,7 @@ class Environment(object):
 
         """
         self._env_dir = conf.env_dir
+        self._install_timeout = conf.install_timeout  # GH391
         self._path = os.path.abspath(os.path.join(
             self._env_dir, self.hashname))
 
