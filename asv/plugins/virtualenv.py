@@ -43,7 +43,8 @@ class Virtualenv(environment.Environment):
         """
         executable = Virtualenv._find_python(python)
         if executable is None:
-            raise environment.EnvironmentUnavailable("No executable found for python {0}".format(python))
+            raise environment.EnvironmentUnavailable(
+                "No executable found for python {0}".format(python))
 
         self._executable = executable
         self._python = python
@@ -113,7 +114,8 @@ class Virtualenv(environment.Environment):
 
     def _install_requirements(self):
         if sys.version_info[:2] == (3, 2):
-            self.run_executable('pip', ['install', '-v', 'wheel<0.29.0', 'pip<8'])
+            self.run_executable(
+                'pip', ['install', '-v', 'wheel<0.29.0', 'pip<8'])
         else:
             self.run_executable('pip', ['install', '-v', 'wheel', 'pip>=8'])
 
@@ -128,16 +130,17 @@ class Virtualenv(environment.Environment):
                     args.append("{0}=={1}".format(pkg, val))
                 else:
                     args.append(pkg)
-            self.run_executable('pip', args)
+            self.run_executable('pip', args, timeout=self._install_timeout)
 
     def install(self, package):
         log.info("Installing into {0}".format(self.name))
-        self.run_executable('pip', ['install', package])
+        self.run_executable('pip', ['install', package],
+                            timeout=self._install_timeout)
 
     def uninstall(self, package):
         log.info("Uninstalling from {0}".format(self.name))
         self.run_executable('pip', ['uninstall', '-y', package],
-                             valid_return_codes=None)
+                            valid_return_codes=None)
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
