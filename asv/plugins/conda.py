@@ -119,7 +119,8 @@ class Conda(environment.Environment):
                 util.check_output([conda] + conda_cmd + conda_args)
             # install packages only available with pip
             if pip_args:
-                self.run_executable('pip', pip_cmd + pip_args)
+                self.run_executable('pip', pip_cmd + pip_args,
+                                    timeout=self._install_timeout)
 
     def install(self, package):
         log.info("Installing into {0}".format(self.name))
@@ -128,7 +129,8 @@ class Conda(environment.Environment):
     def uninstall(self, package):
         log.info("Uninstalling from {0}".format(self.name))
         self.run_executable('pip', ['uninstall', '-y', package],
-                            valid_return_codes=None)
+                            valid_return_codes=None,
+                            timeout=self._install_timeout)
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
