@@ -129,7 +129,7 @@ class Hg(Repo):
         return [rev.node for rev in self._repo.log(range_spec)]
 
     def get_hash_from_name(self, name):
-        return self._repo.log(name)[0].rev
+        return self._repo.log(name)[0].node
 
     def get_hash_from_master(self):
         return self.get_hash_from_name('tip')
