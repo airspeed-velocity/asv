@@ -113,8 +113,17 @@ class Git(object):
     def add(self, filename):
         self._run_git(['add', relpath(filename, self.path)])
 
-    def create_branch(self, start_commit, branch_name):
-        self._run_git(['checkout', '-b', branch_name, start_commit])
+    def checkout(self, branch_name, start_commit=None):
+        args = ["checkout"]
+        if start_commit is not None:
+            args.extend(["-b", branch_name, start_commit])
+        else:
+            args.append(branch_name)
+        self._run_git(args)
+
+    def merge(self, branch_name):
+        self._run_git(["merge", "--no-ff", "--no-commit", "-X", "theirs", branch_name])
+        self.commit("Merge {0}".format(branch_name))
 
     def get_hash(self, name):
         return self._run_git(['rev-parse', name]).strip()
@@ -122,6 +131,9 @@ class Git(object):
     def get_branch_hashes(self, branch):
         return [x.strip() for x in self._run_git(['rev-list', branch]).splitlines()
                 if x.strip()]
+
+    def get_commit_message(self, commit_hash):
+        return self._run_git(["log", "-n", "1", "--format=%s", commit_hash]).strip()
 
 
 _hg_config = """
@@ -161,9 +173,16 @@ class Hg(object):
     def add(self, filename):
         self._repo.add([filename])
 
-    def create_branch(self, start_commit, branch_name):
-        self._repo.update(start_commit)
-        self._repo.branch(branch_name)
+    def checkout(self, branch_name, start_commit=None):
+        if start_commit is not None:
+            self._repo.update(start_commit)
+            self._repo.branch(branch_name)
+        else:
+            self._repo.update(branch_name)
+
+    def merge(self, branch_name):
+        self._repo.merge(branch_name, tool="internal:other")
+        self.commit("Merge {0}".format(branch_name))
 
     def get_hash(self, name):
         log = self._repo.log(name, limit=1)
@@ -174,6 +193,9 @@ class Hg(object):
     def get_branch_hashes(self, branch):
         log = self._repo.log('ancestors({0})'.format(branch))
         return [entry[1] for entry in log]
+
+    def get_commit_message(self, commit_hash):
+        return self._repo.log(commit_hash)[0].desc
 
 
 def copy_template(src, dst, dvcs, values):
@@ -257,7 +279,7 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
 
     if extra_branches:
         for start_commit, branch_name, values in extra_branches:
-            dvcs.create_branch(start_commit, branch_name)
+            dvcs.checkout(branch_name, start_commit)
             for i, value in enumerate(values):
                 mapping = {
                     'version': "{0}".format(i),
@@ -265,6 +287,39 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
                 }
                 copy_template(template_path, dvcs_path, dvcs, mapping)
                 dvcs.commit("Revision {0}.{1}".format(branch_name, i))
+
+    return dvcs
+
+
+def make_test_repo(tmpdir, dvcs_type, operations):
+    if dvcs_type == 'git':
+        dvcs_cls = Git
+    elif dvcs_type == 'hg':
+        dvcs_cls = Hg
+    else:
+        raise ValueError("Unknown dvcs type {0}".format(dvcs_type))
+
+    template_path = join(dirname(__file__), 'test_repo_template')
+    dvcs_path = join(tmpdir, 'test_repo')
+    os.makedirs(dvcs_path)
+    dvcs = dvcs_cls(dvcs_path)
+    dvcs.init()
+
+    version = 0
+    for op in operations:
+        if op[0] == "commit":
+            copy_template(template_path, dvcs_path, dvcs, {
+                "version": version,
+                "dummy_value": op[1],
+            })
+            version += 1
+            dvcs.commit("Revision {0}".format(version))
+        elif op[0] == "checkout":
+            dvcs.checkout(*op[1:])
+        elif op[0] == "merge":
+            dvcs.merge(*op[1:])
+        else:
+            raise ValueError("Unknown dvcs operation {0}".format(op))
 
     return dvcs
 

@@ -174,3 +174,76 @@ def test_repo_hg(tmpdir):
     finally:
         Hg.is_local_repo = old_local_method
         Hg.url_match = old_url_match
+
+
+@pytest.mark.parametrize("dvcs_type", [
+    "git",
+    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg"),
+])
+def test_follow_first_parent(tmpdir, dvcs_type):
+    """
+    This test ensure we follow the first parent in case of merges
+
+    The revision graph looks like this:
+
+        o  Revision 5 (stable)
+        |
+        o    Merge default
+        |\
+        | o  Revision 4 (default)
+        | |
+        | o  Merge stable
+        |/|
+        | o  Revision 3
+        | |
+        o |  Revision 2
+        |/
+        o  Revision 1
+
+
+    """
+    tmpdir = six.text_type(tmpdir)
+    if dvcs_type == "git":
+        master = "master"
+    elif dvcs_type == "hg":
+        master = "default"
+    dvcs = tools.make_test_repo(tmpdir, dvcs_type, [
+        ("commit", 1),
+        ("checkout", "stable", master),
+        ("commit", 2),
+        ("checkout", master),
+        ("commit", 3),
+        ("merge", "stable"),
+        ("commit", 4),
+        ("checkout", "stable"),
+        ("merge", master),
+        ("commit", 5),
+        ("checkout", master),
+    ])
+
+    conf = config.Config()
+    conf.branches = [master, "stable"]
+    conf.repo = dvcs.path
+    conf.project = join(tmpdir, "repo")
+    r = repo.get_repo(conf)
+    branch_cache = BranchCache(conf, r)
+    expected = {
+        master: set([
+            "Revision 4",
+            "Merge stable",
+            "Revision 3",
+            "Revision 1",
+        ]),
+        "stable": set([
+            "Revision 5",
+            "Merge {0}".format(master),
+            "Revision 2",
+            "Revision 1",
+        ]),
+    }
+    for branch in conf.branches:
+        commits = set([
+            dvcs.get_commit_message(commit_hash)
+            for commit_hash in branch_cache.get_branch_commits(branch)
+        ])
+        assert commits == expected[branch]

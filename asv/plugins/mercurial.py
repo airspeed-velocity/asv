@@ -125,7 +125,9 @@ class Hg(Repo):
         return int(rev.date.strftime("%s")) * 1000
 
     def get_hashes_from_range(self, range_spec):
-        return [rev.node for rev in self._repo.log(range_spec)]
+        range_spec = "sort({0}, -rev)".format(range_spec)
+        return [rev.node for rev in self._repo.log(range_spec,
+                                                   followfirst=True)]
 
     def get_hash_from_name(self, name):
         return self._repo.log(name)[0].node
