@@ -53,7 +53,7 @@ Branches to generate benchmark results for.
 This controls how the benchmark results are displayed, and what
 benchmarks ``asv run ALL`` and ``asv run NEW`` run.
 
-If not provided, "master" (Git) or "tip" (Mercurial) is chosen.
+If not provided, "master" (Git) or "default" (Mercurial) is chosen.
 
 ``show_commit_url``
 -------------------

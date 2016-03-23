@@ -80,13 +80,12 @@ class Hg(Repo):
 
     def get_new_range_spec(self, latest_result, branch=None):
         if branch is None:
-            return '{0}::tip'.format(latest_result)
-        else:
-            return '{0}::{1}'.format(latest_result, branch)
+            branch = "default"
+        return '{0}::{1}'.format(latest_result, branch)
 
     def get_branch_range_spec(self, branch):
         if branch is None:
-            branch = 'tip'
+            branch = 'default'
         return 'ancestors({0})'.format(branch)
 
     def pull(self):
@@ -132,7 +131,7 @@ class Hg(Repo):
         return self._repo.log(name)[0].node
 
     def get_hash_from_master(self):
-        return self.get_hash_from_name('tip')
+        return self.get_hash_from_name('default')
 
     def get_hash_from_parent(self, name):
         return self.get_hash_from_name('p1({0})'.format(name))

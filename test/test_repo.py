@@ -144,8 +144,8 @@ def test_repo_hg(tmpdir):
     def test_it(is_remote=False):
         conf.project = mirror_dir
         conf.repo = dvcs.path
-        _test_generic_repo(conf, tmpdir, hash_range="tip:-4",
-                           master="tip", branch="tag5",
+        _test_generic_repo(conf, tmpdir, hash_range="reverse(default~3::default)",
+                           master="default", branch="tag5",
                            is_remote=is_remote)
 
         conf.branches = ['default', 'some-branch']
