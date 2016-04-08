@@ -104,9 +104,9 @@ class Hg(Repo):
         # the repository data is not shared
 
         def checkout_existing():
-            subrepo = hglib.open(path)
-            subrepo.pull()
-            subrepo.update(commit_hash, clean=True)
+            with hglib.open(path) as subrepo:
+                subrepo.pull()
+                subrepo.update(commit_hash, clean=True)
             # TODO: Implement purge manually or call it on the command line
 
         if os.path.isdir(path):
