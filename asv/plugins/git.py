@@ -110,13 +110,12 @@ class Git(Repo):
             checkout_existing(display_error=True)
 
     def get_date(self, hash):
-        # TODO: This works on Linux, but should be extended for other platforms
         return int(self._run_git(
-            ['show', hash, '--quiet', '--format=format:%at'],
-            valid_return_codes=(0, 1), dots=False).strip().split()[0]) * 1000
+            ['rev-list', '-n', '1', '--format=%at', hash],
+            valid_return_codes=(0, 1), dots=False).strip().split()[-1]) * 1000
 
     def get_hashes_from_range(self, range_spec):
-        args = ['log', '--quiet', '--first-parent', '--format=format:%H']
+        args = ['rev-list', '--first-parent']
         if range_spec != "":
             args += range_spec.split()
         output = self._run_git(args, valid_return_codes=(0, 1), dots=False)
