@@ -137,3 +137,6 @@ class Git(Repo):
 
     def get_date_from_name(self, name):
         return self.get_date(name + "^{commit}")
+
+    def get_branch_commits(self, branch):
+        return self.get_hashes_from_range(self.get_branch_range_spec(branch))

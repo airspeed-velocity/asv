@@ -15,7 +15,6 @@ import shutil
 from asv import config
 from asv import repo
 from asv import util
-from asv.branch_cache import BranchCache
 
 try:
     import hglib
@@ -79,22 +78,14 @@ def _test_generic_repo(conf, tmpdir, hash_range, master, branch, is_remote=False
 
 def _test_branches(conf, branch_commits):
     r = repo.get_repo(conf)
-    branch_cache = BranchCache(conf, r)
 
     assert len(conf.branches) == 2
 
-    commit_branches = {}
-
     for branch in conf.branches:
-        commits = branch_cache.get_branch_commits(branch)
+        commits = r.get_branch_commits(branch)
 
         for commit in branch_commits[branch]:
             assert commit in commits
-            commit_branches[commit] = branch
-
-
-    for commit, branch in commit_branches.items():
-        assert branch in branch_cache.get_branches(commit)
 
 
 def test_repo_git(tmpdir):
@@ -253,24 +244,26 @@ def test_follow_first_parent(tmpdir, dvcs_type):
     conf.repo = dvcs.path
     conf.project = join(tmpdir, "repo")
     r = repo.get_repo(conf)
-    branch_cache = BranchCache(conf, r)
+
+    # Test that get_branch_commits() return an ordered list of commits (last
+    # first) and follow first parent in case of merge
     expected = {
-        master: set([
+        master: [
             "Revision 4",
             "Merge stable",
             "Revision 3",
             "Revision 1",
-        ]),
-        "stable": set([
+        ],
+        "stable": [
             "Revision 5",
             "Merge {0}".format(master),
             "Revision 2",
             "Revision 1",
-        ]),
+        ],
     }
     for branch in conf.branches:
-        commits = set([
+        commits = [
             dvcs.get_commit_message(commit_hash)
-            for commit_hash in branch_cache.get_branch_commits(branch)
-        ])
+            for commit_hash in r.get_branch_commits(branch)
+        ]
         assert commits == expected[branch]

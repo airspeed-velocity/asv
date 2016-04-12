@@ -16,7 +16,6 @@ from ..machine import Machine
 from ..repo import get_repo
 from ..results import (Results, find_latest_result_hash, get_existing_hashes,
                        iter_results_for_machine_and_hash)
-from ..branch_cache import BranchCache
 from .. import environment
 from .. import util
 
@@ -151,12 +150,11 @@ class Run(Command):
             commit_hashes = [h for h, d in get_existing_hashes(
                 conf.results_dir)]
         elif range_spec in ('NEW', 'ALL'):
-            branch_cache = BranchCache(conf, repo)
             commit_hashes = []
             seen = set()
             for branch in conf.branches:
                 if range_spec == 'NEW':
-                    branch_hashes = branch_cache.get_branch_commits(branch)
+                    branch_hashes = repo.get_branch_commits(branch)
                     latest_result = find_latest_result_hash(
                         machine_params.machine, conf.results_dir,
                         hashes=branch_hashes)

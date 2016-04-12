@@ -132,6 +132,13 @@ class Repo(object):
         """
         raise NotImplementedError()
 
+    def get_branch_commits(self, branch):
+        """
+        Returns the ordered list (last commit first) of all commits in
+        `branch` following first parent in case of merge
+        """
+        raise NotImplementedError()
+
 
 class NoRepository(Repo):
     """
@@ -183,6 +190,10 @@ class NoRepository(Repo):
     def pull(self):
         # Nothing to do
         pass
+
+    def get_branch_commits(self, branch):
+        self._raise_error()
+
 
 def get_repo(conf):
     """
