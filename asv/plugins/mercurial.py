@@ -83,11 +83,6 @@ class Hg(Repo):
             branch = "default"
         return '{0}::{1}'.format(latest_result, branch)
 
-    def get_branch_range_spec(self, branch):
-        if branch is None:
-            branch = 'default'
-        return 'ancestors({0})'.format(branch)
-
     def pull(self):
         # We assume the remote isn't updated during the run of asv
         # itself.
@@ -146,4 +141,6 @@ class Hg(Repo):
         return self.get_date(name)
 
     def get_branch_commits(self, branch):
-        return self.get_hashes_from_range(self.get_branch_range_spec(branch))
+        if branch is None:
+            branch = "default"
+        return self.get_hashes_from_range("ancestors({0})".format(branch))

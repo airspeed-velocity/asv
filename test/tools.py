@@ -121,9 +121,11 @@ class Git(object):
             args.append(branch_name)
         self._run_git(args)
 
-    def merge(self, branch_name):
+    def merge(self, branch_name, commit_message=None):
         self._run_git(["merge", "--no-ff", "--no-commit", "-X", "theirs", branch_name])
-        self.commit("Merge {0}".format(branch_name))
+        if commit_message is None:
+            commit_message = "Merge {0}".format(branch_name)
+        self.commit(commit_message)
 
     def get_hash(self, name):
         return self._run_git(['rev-parse', name]).strip()
@@ -180,9 +182,11 @@ class Hg(object):
         else:
             self._repo.update(branch_name)
 
-    def merge(self, branch_name):
+    def merge(self, branch_name, commit_message=None):
         self._repo.merge(branch_name, tool="internal:other")
-        self.commit("Merge {0}".format(branch_name))
+        if commit_message is None:
+            commit_message = "Merge {0}".format(branch_name)
+        self.commit(commit_message)
 
     def get_hash(self, name):
         log = self._repo.log(name, limit=1)
