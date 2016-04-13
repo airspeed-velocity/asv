@@ -34,6 +34,7 @@ class Config(object):
         self.show_commit_url = "#"
         self.hash_length = 8
         self.environment_type = None
+        self.install_timeout = 120
         self.dvcs = None
         self.regressions_first_commits = {}
         self.plugins = []
