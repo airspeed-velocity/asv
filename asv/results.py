@@ -182,7 +182,7 @@ class Results(object):
     """
     api_version = 1
 
-    def __init__(self, params, requirements, commit_hash, date, python):
+    def __init__(self, params, requirements, commit_hash, date, python, env_name):
         """
         Parameters
         ----------
@@ -202,6 +202,9 @@ class Results(object):
 
         python : str
             A Python version specifier.
+
+        env_name : str
+            Environment name
         """
         self._params = params
         self._requirements = requirements
@@ -210,10 +213,10 @@ class Results(object):
         self._results = {}
         self._profiles = {}
         self._python = python
+        self._env_name = env_name
 
         self._filename = get_filename(
-            params['machine'], self._commit_hash,
-            environment.get_env_name(python, requirements))
+            params['machine'], self._commit_hash, env_name)
 
     @property
     def commit_hash(self):
@@ -290,6 +293,7 @@ class Results(object):
             'requirements': self._requirements,
             'commit_hash': self._commit_hash,
             'date': self._date,
+            'env_name': self._env_name,
             'python': self._python,
             'profiles': self._profiles
         }, self.api_version)
@@ -328,7 +332,9 @@ class Results(object):
             d['requirements'],
             d['commit_hash'],
             d['date'],
-            d['python']
+            d['python'],
+            d.get('env_name',
+                  environment.get_env_name('', d['python'], d['requirements']))
         )
         obj._results = d['results']
         if 'profiles' in d:

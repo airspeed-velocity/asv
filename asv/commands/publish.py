@@ -19,7 +19,10 @@ from ..repo import get_repo
 from ..results import iter_results, compatible_results
 from ..branch_cache import BranchCache
 from ..publishing import OutputPublisher
+from .. import environment
 from .. import util
+
+from . import common_args
 
 
 def check_benchmark_params(name, benchmark):
@@ -68,16 +71,18 @@ class Publish(Command):
             written to the ``html_dir`` given in the ``asv.conf.json``
             file, and may be served using any static web server.""")
 
+        common_args.add_environment(parser)
+
         parser.set_defaults(func=cls.run_from_args)
 
         return parser
 
     @classmethod
     def run_from_conf_args(cls, conf, args):
-        return cls.run(conf=conf)
+        return cls.run(conf=conf, env_spec=args.env_spec)
 
     @classmethod
-    def run(cls, conf):
+    def run(cls, conf, env_spec=None):
         params = {}
         graphs = {}
         date_to_hash = {}
@@ -90,7 +95,8 @@ class Publish(Command):
         if os.path.exists(conf.html_dir):
             util.long_path_rmtree(conf.html_dir)
 
-        benchmarks = Benchmarks.load(conf)
+        environments = list(environment.get_environments(conf, env_spec))
+        benchmarks = Benchmarks.load(conf, environments)
 
         template_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), '..', 'www')

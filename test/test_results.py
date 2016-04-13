@@ -24,7 +24,8 @@ def test_results(tmpdir):
             {},
             hex(i),
             i * 1000000,
-            '2.7')
+            '2.7',
+            'some-environment-name')
         for key, val in {
             'suite1.benchmark1': float(i * 0.001),
             'suite1.benchmark2': float(i * i * 0.001),
@@ -37,6 +38,7 @@ def test_results(tmpdir):
         assert r2._results == r._results
         assert r2.date == r.date
         assert r2.commit_hash == r.commit_hash
+        assert r2._filename == r._filename
 
 
 def test_get_result_hash_from_prefix(tmpdir):
@@ -59,3 +61,12 @@ def test_get_result_hash_from_prefix(tmpdir):
         results.get_result_hash_from_prefix(str(results_dir), 'machine', 'e')
 
     assert 'one of multiple commits' in str(excinfo.value)
+
+
+def test_backward_compat_load():
+    resultsdir = join(os.path.dirname(__file__), 'example_results')
+    filename = join('cheetah', '624da0aa-py2.7-Cython-numpy1.8.json')
+
+    r = results.Results.load(join(resultsdir, filename))
+    assert r._filename == filename
+    assert r._env_name == 'py2.7-Cython-numpy1.8'

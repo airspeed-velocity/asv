@@ -40,19 +40,25 @@ class Setup(Command):
 
         common_args.add_parallel(parser)
 
+        common_args.add_environment(parser)
+
         parser.set_defaults(func=cls.run_from_args)
 
         return parser
 
     @classmethod
     def run_from_conf_args(cls, conf, args):
-        return cls.run(conf=conf, parallel=args.parallel)
+        return cls.run(conf=conf, parallel=args.parallel, env_spec=args.env_spec)
 
     @classmethod
-    def run(cls, conf, parallel=-1):
-        environments = list(environment.get_environments(conf))
+    def run(cls, conf, parallel=-1, env_spec=None):
+        environments = list(environment.get_environments(conf, env_spec))
+        cls.perform_setup(environments)
+        return environments
 
-        if all(isinstance(env, environment.ExistingEnvironment) for env in environments):
+    @classmethod
+    def perform_setup(cls, environments, parallel=-1):
+        if environment.is_existing_only(environments):
             # Nothing to do, so don't print anything
             return environments
 
@@ -70,5 +76,3 @@ class Setup(Command):
                     pool.close()
             else:
                 list(map(_create, environments))
-
-        return environments

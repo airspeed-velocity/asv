@@ -37,6 +37,7 @@ class Continuous(Command):
         common_args.add_show_stderr(parser)
         common_args.add_bench(parser)
         common_args.add_machine(parser)
+        common_args.add_environment(parser)
         parser.set_defaults(func=cls.run_from_args)
 
         return parser
@@ -46,12 +47,12 @@ class Continuous(Command):
         return cls.run(
             conf=conf, branch=args.branch, base=args.base, factor=args.factor,
             show_stderr=args.show_stderr, bench=args.bench, machine=args.machine,
-            **kwargs
+            env_spec=args.env_spec, **kwargs
         )
 
     @classmethod
     def run(cls, conf, branch=None, base=None, factor=2.0, show_stderr=False, bench=None,
-            machine=None, _machine_file=None):
+            machine=None, env_spec=None, _machine_file=None):
         repo = get_repo(conf)
         repo.pull()
 
@@ -69,8 +70,8 @@ class Continuous(Command):
 
         result = Run.run(
             conf, range_spec=commit_hashes, bench=bench,
-            show_stderr=show_stderr, machine=machine, _returns=run_objs,
-            _machine_file=_machine_file)
+            show_stderr=show_stderr, machine=machine, env_spec=env_spec,
+            _returns=run_objs, _machine_file=_machine_file)
         if result:
             return result
 

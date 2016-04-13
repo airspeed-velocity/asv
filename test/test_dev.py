@@ -101,16 +101,20 @@ def test_dev_python_arg():
 
     argv = ['dev']
     args = parser.parse_args(argv)
-    assert args.python == 'same'
+    assert args.env_spec == []
     assert not args.verbose
 
     argv = ['dev', '--python=foo']
     args = parser.parse_args(argv)
-    assert args.python == 'foo'
+    assert args.env_spec == [':foo']
+
+    argv = ['dev', '-E', 'existing:foo']
+    args = parser.parse_args(argv)
+    assert args.env_spec == ['existing:foo']
 
     argv = ['run', 'ALL']
     args = parser.parse_args(argv)
-    assert args.python is None
+    assert args.env_spec == []
 
     argv = ['--verbose', '--config=foo', 'dev']
     args = parser.parse_args(argv)

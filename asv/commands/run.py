@@ -17,6 +17,7 @@ from ..repo import get_repo
 from ..results import (Results, find_latest_result_hash, get_existing_hashes,
                        iter_results_for_machine_and_hash)
 from ..branch_cache import BranchCache
+from .. import environment
 from .. import util
 
 from .setup import Setup
@@ -82,7 +83,7 @@ class Run(Command):
             run only once.  This is useful to find basic errors in the
             benchmark functions faster.  The results are unlikely to
             be useful, and thus are not saved.""")
-        common_args.add_python(parser)
+        common_args.add_environment(parser)
         parser.add_argument(
             "--dry-run", "-n", action="store_true",
             default=None,
@@ -115,7 +116,7 @@ class Run(Command):
             conf=conf, range_spec=args.range, steps=args.steps,
             bench=args.bench, parallel=args.parallel,
             show_stderr=args.show_stderr, quick=args.quick,
-            profile=args.profile, python=args.python,
+            profile=args.profile, env_spec=args.env_spec,
             dry_run=args.dry_run, machine=args.machine,
             skip_successful=args.skip_existing_successful or args.skip_existing,
             skip_failed=args.skip_existing_failed or args.skip_existing,
@@ -125,7 +126,7 @@ class Run(Command):
 
     @classmethod
     def run(cls, conf, range_spec=None, steps=None, bench=None, parallel=1,
-            show_stderr=False, quick=False, profile=False, python=None,
+            show_stderr=False, quick=False, profile=False, env_spec=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
             skip_failed=False, skip_existing_commits=False, _returns={}):
         params = {}
@@ -135,17 +136,14 @@ class Run(Command):
         params.update(machine_params.__dict__)
         machine_params.save(conf.results_dir)
 
-        if python == "same":
+        environments = list(environment.get_environments(conf, env_spec))
+
+        if environment.is_existing_only(environments):
+            # No repository required, so skip using it
             conf.dvcs = "none"
-            conf.repo = ""
-            dry_run = True
 
         repo = get_repo(conf)
-
-        if python is not None:
-            conf.pythons = [python]
-        else:
-            repo.pull()
+        repo.pull()
 
         if range_spec is None:
             commit_hashes = [repo.get_hash_from_master()]
@@ -184,10 +182,11 @@ class Run(Command):
         if steps is not None:
             commit_hashes = util.pick_n(commit_hashes, steps)
 
-        environments = Setup.run(conf=conf, parallel=parallel)
+        Setup.perform_setup(environments, parallel=parallel)
         if len(environments) == 0:
             log.error("No environments selected")
             return 1
+
         if range_spec is not None:
             for env in environments:
                 if not env.can_install_project():
@@ -195,7 +194,7 @@ class Run(Command):
                         "No range spec may be specified if benchmarking in "
                         "an existing environment")
 
-        benchmarks = Benchmarks(conf, regex=bench)
+        benchmarks = Benchmarks(conf, environments, regex=bench)
         if len(benchmarks) == 0:
             log.error("No benchmarks selected")
             return 1
@@ -277,7 +276,7 @@ class Run(Command):
                         else:
                             results = benchmarks.skip_benchmarks(env)
 
-                        if dry_run:
+                        if dry_run or isinstance(env, environment.ExistingEnvironment):
                             continue
 
                         result = Results(
@@ -285,7 +284,8 @@ class Run(Command):
                             env.requirements,
                             commit_hash,
                             repo.get_date(commit_hash),
-                            env.python)
+                            env.python,
+                            env.name)
 
                         for benchmark_name, d in six.iteritems(results):
                             result.add_time(benchmark_name, d['result'])

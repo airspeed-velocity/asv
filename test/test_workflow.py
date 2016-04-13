@@ -14,10 +14,17 @@ import six
 import json
 import pytest
 
-from asv import config
+from asv import config, environment
 from asv.util import check_output, which
 
 from . import tools
+
+
+try:
+    which('conda')
+    HAS_CONDA = True
+except (RuntimeError, IOError):
+    HAS_CONDA = False
 
 
 WIN = (os.name == 'nt')
@@ -119,8 +126,12 @@ def test_run_publish(capfd, basic_conf):
     text, err = capfd.readouterr()
     assert 'Running benchmarks.' not in text
 
-    # Check EXISTING works
-    tools.run_asv_with_conf(conf, 'run', "EXISTING", '--quick',
+    # Check EXISTING and --environment work
+    if HAS_CONDA:
+        env_spec = ("-E", "conda:{0[0]}.{0[1]}".format(sys.version_info))
+    else:
+        env_spec = ("-E", "virtualenv:{0[0]}.{0[1]}".format(sys.version_info))
+    tools.run_asv_with_conf(conf, 'run', "EXISTING", '--quick', *env_spec,
                             _machine_file=machine_file)
 
     # Remove the benchmarks.json file to make sure publish can
@@ -134,9 +145,14 @@ def test_run_publish(capfd, basic_conf):
 def test_continuous(capfd, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
+    if HAS_CONDA:
+        env_spec = ("-E", "conda:{0[0]}.{0[1]}".format(sys.version_info))
+    else:
+        env_spec = ("-E", "virtualenv:{0[0]}.{0[1]}".format(sys.version_info))
+
     # Check that asv continuous runs
     tools.run_asv_with_conf(conf, 'continuous', "master^", '--show-stderr',
-                            _machine_file=machine_file)
+                            *env_spec, _machine_file=machine_file)
 
     text, err = capfd.readouterr()
     assert "SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY" in text
@@ -178,11 +194,14 @@ def _test_run_branches(tmpdir, dvcs, conf, machine_file, range_spec,
                             _machine_file=machine_file)
 
     # Check that files for all commits expected were generated
+    envs = list(environment.get_environments(conf, None))
+    tool_name = envs[0].tool_name
+
     expected = set(['machine.json'])
     for commit in commits:
         for psver in ['0.3.1', '0.3.3']:
-            expected.add('{0}-py{1[0]}.{1[1]}-colorama{2}-six.json'.format(
-                commit[:8], sys.version_info, psver))
+            expected.add('{0}-{1}-py{2[0]}.{2[1]}-colorama{3}-six.json'.format(
+                commit[:8], tool_name, sys.version_info, psver))
 
     result_files = os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))
 

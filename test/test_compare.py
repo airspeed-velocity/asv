@@ -66,7 +66,8 @@ def test_compare(capsys, tmpdir):
     conf = config.Config.from_json(
         {'results_dir': RESULT_DIR,
          'repo': tools.generate_test_repo(tmpdir).path,
-         'project': 'asv'})
+         'project': 'asv',
+         'environment_type': "shouldn't matter what"})
 
     tools.run_asv_with_conf(conf, 'compare', '22b920c6', 'fcf8c079', '--machine=cheetah',
                             '--factor=2')

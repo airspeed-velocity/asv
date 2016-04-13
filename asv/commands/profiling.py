@@ -14,7 +14,7 @@ import tempfile
 from . import Command
 from ..benchmarks import Benchmarks
 from ..console import log
-from ..environment import get_environments
+from ..environment import get_environments, is_existing_only
 from ..machine import Machine
 from ..profiling import ProfilerGui
 from ..repo import get_repo
@@ -68,15 +68,7 @@ class Profile(Command):
             '--force', '-f', action='store_true',
             help="""Forcibly re-run the profile, even if the data
             already exists in the results database.""")
-        parser.add_argument(
-            '--environment', '-e',
-            help="""Which environment to use.  Your benchmarking
-            project may have multiple environments if it has a
-            dependency matrix or multiple versions of Python
-            specified.  This should the name of an environment
-            directory as already created by the run command. If `None`
-            is specified, one will be chosen at random.""")
-        common_args.add_python(parser)
+        common_args.add_environment(parser)
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -94,11 +86,11 @@ class Profile(Command):
         return cls.run(
             conf=conf, benchmark=args.benchmark, revision=args.revision,
             gui=args.gui, output=args.output, force=args.force,
-            environment=args.environment, python=args.python, **kwargs)
+            env_spec=args.env_spec, **kwargs)
 
     @classmethod
     def run(cls, conf, benchmark, revision=None, gui=None, output=None,
-            force=False, environment=None, python=None,
+            force=False, env_spec=None,
             _machine_file=None):
         cls.find_guis()
 
@@ -117,18 +109,14 @@ class Profile(Command):
             raise util.UserError(
                 "Must specify benchmark to run")
 
-        if python == "same":
+        environments = list(get_environments(conf, env_spec))
+
+        if is_existing_only(environments):
+            # No repository required, so skip using it
             conf.dvcs = "none"
 
         repo = get_repo(conf)
-
-        if python is not None:
-            conf.pythons = [python]
-            if environment is not None:
-                raise util.UserError(
-                    "--python and --environment may not both be provided.")
-        else:
-            repo.pull()
+        repo.pull()
 
         machine_name = Machine.get_unique_machine_name()
         if revision is None:
@@ -146,8 +134,9 @@ class Profile(Command):
                     conf.results_dir, machine_name):
                 if hash_equal(commit_hash, result.commit_hash):
                     if result.has_profile(benchmark):
-                        if (environment is None or
-                            result.env.name == environment):
+                        env_matched = any(result.env.name == env.name
+                                          for env in environments)
+                        if env_matched:
                             if result.env.name not in checked_out:
                                 # We need to checkout the correct commit so that
                                 # the line numbers in the profile data match up with
@@ -158,8 +147,6 @@ class Profile(Command):
                             break
 
         if profile_data is None:
-            environments = list(get_environments(conf))
-
             if len(environments) == 0:
                 log.error("No environments selected")
                 return
@@ -171,22 +158,14 @@ class Profile(Command):
                             "An explicit revision may not be specified when "
                             "using an existing environment.")
 
-            if environment is None:
-                env = environments[0]
-            else:
-                for env in environments:
-                    if env.name == environment:
-                        break
-                else:
-                    raise util.UserError(
-                        "Environment {0} not found.".format(environment))
+            env = environments[0]
 
             if env.python != "{0}.{1}".format(*sys.version_info[:2]):
                 raise util.UserError(
                     "Profiles must be run in the same version of Python as the "
                     "asv master process")
 
-            benchmarks = Benchmarks(conf, regex='^{0}$'.format(benchmark))
+            benchmarks = Benchmarks(conf, environments, regex='^{0}$'.format(benchmark))
             if len(benchmarks) != 1:
                 raise util.UserError(
                     "Could not find benchmark {0}".format(benchmark))

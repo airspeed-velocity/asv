@@ -42,24 +42,25 @@ def test_find_benchmarks(tmpdir):
     d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
     conf = config.Config.from_json(d)
 
-    b = benchmarks.Benchmarks(conf, regex='secondary')
+    envs = list(environment.get_environments(conf, None))
+
+    b = benchmarks.Benchmarks(conf, envs, regex='secondary')
     assert len(b) == 3
 
-    b = benchmarks.Benchmarks(conf, regex='example')
+    b = benchmarks.Benchmarks(conf, envs, regex='example')
     assert len(b) == 22
 
-    b = benchmarks.Benchmarks(conf, regex='time_example_benchmark_1')
+    b = benchmarks.Benchmarks(conf, envs, regex='time_example_benchmark_1')
     assert len(b) == 2
 
-    b = benchmarks.Benchmarks(conf, regex=['time_example_benchmark_1',
-                                           'some regexp that does not match anything'])
+    b = benchmarks.Benchmarks(conf, envs, regex=['time_example_benchmark_1',
+                                                 'some regexp that does not match anything'])
     assert len(b) == 2
 
-    b = benchmarks.Benchmarks(conf)
+    b = benchmarks.Benchmarks(conf, envs)
     assert len(b) == 26
 
-    envs = list(environment.get_environments(conf))
-    b = benchmarks.Benchmarks(conf)
+    b = benchmarks.Benchmarks(conf, envs)
     times = b.run_benchmarks(envs[0], profile=True, show_stderr=True)
 
     assert len(times) == len(b)
@@ -134,8 +135,10 @@ def test_invalid_benchmark_tree(tmpdir):
     d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
     conf = config.Config.from_json(d)
 
+    envs = list(environment.get_environments(conf, None))
+
     with pytest.raises(util.UserError):
-        b = benchmarks.Benchmarks(conf)
+        b = benchmarks.Benchmarks(conf, envs)
 
 
 def test_table_formatting():
@@ -217,5 +220,7 @@ def track_this():
     d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
     conf = config.Config.from_json(d)
 
-    b = benchmarks.Benchmarks(conf, regex='track_this')
+    envs = list(environment.get_environments(conf, None))
+
+    b = benchmarks.Benchmarks(conf, envs, regex='track_this')
     assert len(b) == 1

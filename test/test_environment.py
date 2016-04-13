@@ -39,6 +39,13 @@ except (RuntimeError, IOError):
     HAS_CONDA = False
 
 
+try:
+    import virtualenv
+    HAS_VIRTUALENV = True
+except ImportError:
+    HAS_VIRTUALENV = False
+
+
 @pytest.mark.skipif(not ((HAS_PYTHON_27 and HAS_PYTHON_34) or HAS_CONDA),
                     reason="Requires Python 2.7 and 3.4")
 def test_matrix_environments(tmpdir):
@@ -51,7 +58,7 @@ def test_matrix_environments(tmpdir):
         "six": ["1.4", None],
         "colorama": ["0.3.1", "0.3.3"]
     }
-    environments = list(environment.get_environments(conf))
+    environments = list(environment.get_environments(conf, None))
 
     assert len(environments) == 2 * 2 * 2
 
@@ -85,7 +92,7 @@ def test_large_environment_matrix(tmpdir):
     for i in range(25):
         conf.matrix['foo{0}'.format(i)] = []
 
-    environments = list(environment.get_environments(conf))
+    environments = list(environment.get_environments(conf, None))
 
     for env in environments:
         # Since *actually* installing all the dependencies would make
@@ -110,7 +117,7 @@ def test_presence_checks(tmpdir):
 
     conf.pythons = ["2.7"]
     conf.matrix = {}
-    environments = list(environment.get_environments(conf))
+    environments = list(environment.get_environments(conf, None))
 
     for env in environments:
         env.create()
@@ -167,7 +174,8 @@ def test_matrix_expand_basic():
         'pkg5': []
     }
 
-    combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
+    combinations = _sorted_dict_list(environment.iter_requirement_matrix(
+        conf.environment_type, conf.pythons, conf))
     expected = _sorted_dict_list([
         {'python': '2.6', 'pkg2': '', 'pkg3': '', 'pkg4': '1.2', 'pkg5': ''},
         {'python': '2.6', 'pkg2': '', 'pkg3': '', 'pkg4': '3.4', 'pkg5': ''},
@@ -190,7 +198,8 @@ def test_matrix_expand_include():
         {'environment_type': 'something', 'python': '2.7', 'b': '5'},
     ]
 
-    combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
+    combinations = _sorted_dict_list(environment.iter_requirement_matrix(
+        conf.environment_type, conf.pythons, conf))
     expected = _sorted_dict_list([
         {'python': '2.6', 'a': '1'},
         {'python': '3.4', 'b': '2'},
@@ -203,7 +212,7 @@ def test_matrix_expand_include():
         {'b': '2'}
     ]
     with pytest.raises(util.UserError):
-        list(environment.iter_requirement_matrix(conf))
+        list(environment.iter_requirement_matrix(conf.environment_type, conf.pythons, conf))
 
 
 @pytest.mark.skipif(not (HAS_PYTHON_27 or HAS_CONDA),
@@ -218,7 +227,8 @@ def test_matrix_expand_include_detect_env_type():
         {'sys_platform': sys.platform, 'python': '2.7'},
     ]
 
-    combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
+    combinations = _sorted_dict_list(environment.iter_requirement_matrix(
+        conf.environment_type, conf.pythons, conf))
     expected = _sorted_dict_list([
         {'python': '2.7'},
     ])
@@ -243,7 +253,8 @@ def test_matrix_expand_exclude():
         {'python': '2.7', 'b': None},
         {'python': '2.6', 'a': '1'},
     ]
-    combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
+    combinations = _sorted_dict_list(environment.iter_requirement_matrix(
+        conf.environment_type, conf.pythons, conf))
     expected = _sorted_dict_list([
         {'python': '2.7', 'a': '1', 'b': '1'},
         {'python': '2.7', 'b': '2'}
@@ -254,7 +265,8 @@ def test_matrix_expand_exclude():
     conf.exclude = [
         {'python': '.*', 'b': None},
     ]
-    combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
+    combinations = _sorted_dict_list(environment.iter_requirement_matrix(
+        conf.environment_type, conf.pythons, conf))
     expected = _sorted_dict_list([
         {'python': '2.6', 'a': '1', 'b': '1'},
         {'python': '2.7', 'a': '1', 'b': '1'},
@@ -266,7 +278,8 @@ def test_matrix_expand_exclude():
     conf.exclude = [
         {'environment_type': 'some.*'},
     ]
-    combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
+    combinations = _sorted_dict_list(environment.iter_requirement_matrix(
+        conf.environment_type, conf.pythons, conf))
     expected = [
         {'python': '2.7', 'b': '2'}
     ]
@@ -276,7 +289,8 @@ def test_matrix_expand_exclude():
     conf.exclude = [
         {'sys_platform': sys.platform},
     ]
-    combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
+    combinations = _sorted_dict_list(environment.iter_requirement_matrix(
+        conf.environment_type, conf.pythons, conf))
     expected = [
         {'python': '2.7', 'b': '2'}
     ]
@@ -286,7 +300,8 @@ def test_matrix_expand_exclude():
     conf.exclude = [
         {'python': '(?!2.6).*'}
     ]
-    combinations = _sorted_dict_list(environment.iter_requirement_matrix(conf))
+    combinations = _sorted_dict_list(environment.iter_requirement_matrix(
+        conf.environment_type, conf.pythons, conf))
     expected = _sorted_dict_list([
         {'python': '2.6', 'a': '1', 'b': '1'},
         {'python': '2.6', 'a': '1'},
@@ -307,7 +322,7 @@ def test_conda_pip_install(tmpdir):
     conf.matrix = {
         "pip+colorama": ["0.3.1"]
     }
-    environments = list(environment.get_environments(conf))
+    environments = list(environment.get_environments(conf, None))
 
     assert len(environments) == 1 * 1 * 1
 
@@ -317,3 +332,76 @@ def test_conda_pip_install(tmpdir):
         output = env.run(
             ['-c', 'import colorama, sys; sys.stdout.write(colorama.__version__)'])
         assert output.startswith(six.text_type(env._requirements['pip+colorama']))
+
+
+def test_environment_select():
+    conf = config.Config()
+    conf.environment_type = "conda"
+    conf.pythons = ["2.7", "3.4"]
+    conf.matrix = {
+        "six": ["1.4"],
+    }
+    conf.include = [
+        {'environment_type': 'conda', 'python': '1.9'}
+    ]
+
+    # Check default environment config
+    environments = list(environment.get_environments(conf, None))
+    items = set((env.tool_name, env.python) for env in environments)
+    assert items == set([('conda', '2.7'), ('conda', '3.4'), ('conda', '1.9')])
+
+    if HAS_PYTHON_27 and HAS_VIRTUALENV:
+        # Virtualenv plugin fails on initialization if not available,
+        # so these tests pass only if virtualenv is present
+
+        conf.pythons = ["2.7"]
+
+        # Check default python specifiers
+        environments = list(environment.get_environments(conf, ["conda", "virtualenv"]))
+        items = set((env.tool_name, env.python) for env in environments)
+        assert items == set([('conda', '1.9'), ('conda', '2.7'), ('virtualenv', '2.7')])
+
+        # Check specific python specifiers
+        environments = list(environment.get_environments(conf, ["conda:3.4", "virtualenv:2.7"]))
+        items = set((env.tool_name, env.python) for env in environments)
+        assert items == set([('conda', '3.4'), ('virtualenv', '2.7')])
+
+    # Check same specifier
+    environments = list(environment.get_environments(conf, ["existing:same", ":same", "existing"]))
+    items = [env.tool_name for env in environments]
+    assert items == ['existing', 'existing', 'existing']
+
+    # Check autodetect existing
+    executable = os.path.relpath(os.path.abspath(sys.executable))
+    environments = list(environment.get_environments(conf, ["existing",
+                                                            ":same",
+                                                            ":" + executable]))
+    assert len(environments) == 3
+    for env in environments:
+        assert env.tool_name == "existing"
+        assert env.python == "{0[0]}.{0[1]}".format(sys.version_info)
+        assert os.path.normcase(os.path.abspath(env._executable)) == os.path.normcase(os.path.abspath(sys.executable))
+
+    # Select by environment name
+    environments = list(environment.get_environments(conf, ["conda-py2.7-six1.4"]))
+    assert len(environments) == 1
+    assert environments[0].python == "2.7"
+    assert environments[0].tool_name == "conda"
+    assert environments[0].requirements == {'six': '1.4'}
+
+
+@pytest.mark.skipif(not ((HAS_PYTHON_27 and HAS_VIRTUALENV) or HAS_CONDA),
+                    reason="Requires Python 2.7")
+def test_environment_select_autodetect():
+    conf = config.Config()
+    conf.environment_type = "conda"
+    conf.pythons = ["3.4"]
+    conf.matrix = {
+        "six": ["1.4"],
+    }
+
+    # Check autodetect
+    environments = list(environment.get_environments(conf, [":2.7"]))
+    assert len(environments) == 1
+    assert environments[0].python == "2.7"
+    assert environments[0].tool_name in ("virtualenv", "conda")
