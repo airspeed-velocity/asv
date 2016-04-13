@@ -72,7 +72,7 @@ def basic_conf(tmpdir):
         'project': 'asv',
         'matrix': {
             "six": [""],
-            "colorama": ["0.3.1", "0.3.3"]
+            "colorama": ["0.3.6", "0.3.7"]
         }
     })
 
@@ -101,7 +101,7 @@ def test_run_publish(capfd, basic_conf):
 
     # Check parameterized test json data format
     filename = glob.glob(join(tmpdir, 'html', 'graphs', 'arch-x86_64', 'branch-master',
-                              'colorama-0.3.3',  'cpu-Blazingly fast', 'machine-orangutan',
+                              'colorama-0.3.7',  'cpu-Blazingly fast', 'machine-orangutan',
                               'os-GNU', 'Linux', 'python-*', 'ram-128GB',
                               'six', 'params_examples.time_skip.json'))[0]
     with open(filename, 'r') as fp:
@@ -199,7 +199,7 @@ def _test_run_branches(tmpdir, dvcs, conf, machine_file, range_spec,
 
     expected = set(['machine.json'])
     for commit in commits:
-        for psver in ['0.3.1', '0.3.3']:
+        for psver in ['0.3.6', '0.3.7']:
             expected.add('{0}-{1}-py{2[0]}.{2[1]}-colorama{3}-six.json'.format(
                 commit[:8], tool_name, sys.version_info, psver))
 

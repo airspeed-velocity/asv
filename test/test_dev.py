@@ -42,7 +42,7 @@ def basic_conf(tmpdir):
         'project': 'asv',
         'matrix': {
             "six": [None],
-            "colorama": ["0.3.1", "0.3.3"]
+            "colorama": ["0.3.6", "0.3.7"]
         }
     })
 

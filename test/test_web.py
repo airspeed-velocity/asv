@@ -49,7 +49,7 @@ def basic_html(request):
             'matrix': {
                 "six": [""],
                 "asv": [None],
-                "colorama": ["0.3.1", "0.3.3"]
+                "colorama": ["0.3.6", "0.3.7"]
             }
         })
 
