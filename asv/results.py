@@ -182,7 +182,8 @@ class Results(object):
     """
     api_version = 1
 
-    def __init__(self, params, requirements, commit_hash, date, python, env_name):
+    def __init__(self, params, requirements, commit_hash, date, python,
+                 env_name, start_time=None, end_time=None):
         """
         Parameters
         ----------
@@ -205,6 +206,12 @@ class Results(object):
 
         env_name : str
             Environment name
+
+        start_time : datetime
+            The start time that the benchmarks were collected.
+
+        end_time : datetime
+            The end time that the benchmarks were collected.
         """
         self._params = params
         self._requirements = requirements
@@ -214,6 +221,8 @@ class Results(object):
         self._profiles = {}
         self._python = python
         self._env_name = env_name
+        self._start_time = start_time
+        self._end_time = end_time
 
         self._filename = get_filename(
             params['machine'], self._commit_hash, env_name)
@@ -287,7 +296,7 @@ class Results(object):
         """
         path = os.path.join(result_dir, self._filename)
 
-        util.write_json(path, {
+        data = {
             'results': self._results,
             'params': self._params,
             'requirements': self._requirements,
@@ -296,7 +305,13 @@ class Results(object):
             'env_name': self._env_name,
             'python': self._python,
             'profiles': self._profiles
-        }, self.api_version)
+        }
+
+        if self._start_time is not None and self._end_time is not None:
+            data['start_time'] = util.datetime_to_timestamp(self._start_time)
+            data['end_time'] = util.datetime_to_timestamp(self._end_time)
+
+        util.write_json(path, data, self.api_version)
 
     def update_save(self, result_dir):
         """
