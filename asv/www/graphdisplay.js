@@ -20,8 +20,7 @@ $(document).ready(function() {
     var reference = 1.0;
     /* Is even commit spacing being used? */
     var even_spacing = false;
-    var even_dates = {};
-    var even_dates_inv = {};
+    var even_spacing_dates = [];
     /* A little div to handle tooltip placement on the graph */
     var tooltip = null;
     /* X-axis coordinate axis in the data set; always 0 for
@@ -970,43 +969,45 @@ $(document).ready(function() {
         }
     }
 
+    function even_spacing_transform(value) {
+        /* Map timestamp value to commit index */
+        for (var i = 0; i < even_spacing_dates.length; i++) {
+            if (value <= even_spacing_dates[i]) {
+                return i;
+            }
+        }
+    }
+
+    function even_spacing_inverseTransform(value) {
+        /* Map commit index to timestamp value */
+        for (var i = 0; i < even_spacing_dates.length; i++) {
+            if (value <= i) {
+                return even_spacing_dates[i];
+            }
+        }
+    }
+
     function handle_x_scale(options) {
         if (!graphs.length)
             return;
 
         if (x_coordinate_axis == 0) {
             if (even_spacing) {
-                var all_dates = {};
+                even_spacing_dates = [];
                 $.each(graphs, function(i, graph) {
                     var data = graph.data;
                     for (var j = 0; j < data.length; ++j) {
-                        all_dates[data[j][0]] = null;
+                        if (even_spacing_dates.indexOf(data[j][0]) === -1) {
+                            even_spacing_dates.push(data[j][0]);
+                        }
                     }
                 });
-                all_dates = Object.keys(all_dates);
-                all_dates.sort();
-
-                even_dates = {};
-                even_dates_inv = {};
-                var last_date = null;
-                var j = 0;
-                for (var i = 0; i < all_dates.length; ++i) {
-                    if (all_dates[i] != last_date) {
-                        even_dates[all_dates[i]] = j;
-                        even_dates_inv[j] = all_dates[i];
-                        ++j;
-                        last_date = all_dates[i];
-                    }
-                }
+                even_spacing_dates.sort(function(a, b) { return a - b; });
 
                 options.xaxis.axisLabel = 'commits';
-                options.xaxis.transform = function(v) {
-                    return even_dates[v];
-                };
+                options.xaxis.transform = even_spacing_transform;
                 /* inverseTransform is required for plothover to work */
-                options.xaxis.inverseTransform = function (v) {
-                    return even_dates_inv[v];
-                };
+                options.xaxis.inverseTransform = even_spacing_inverseTransform;
                 options.xaxis.tickFormatter = function (v, axis) {
                     return "";
                 };
@@ -1128,7 +1129,7 @@ $(document).ready(function() {
             /* Overview is useful mostly for the time axis */
             overview_div.empty();
         }  else {
-            overview = $.plot(overview_div, graphs, {
+            var overview_options = {
                 colors: $.asv.colors,
                 series: {
                     lines: {
@@ -1152,7 +1153,12 @@ $(document).ready(function() {
                 legend: {
                     show: false
                 }
-            });
+            };
+            if (even_spacing) {
+                overview_options.xaxis.transform = even_spacing_transform;
+                overview_options.xaxis.inverseTransform = even_spacing_inverseTransform;
+            }
+            overview = $.plot(overview_div, graphs, overview_options);
         }
 
         graph_div.unbind("plotselected");
