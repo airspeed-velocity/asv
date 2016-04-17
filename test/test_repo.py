@@ -11,7 +11,6 @@ import six
 import pytest
 import tempfile
 import shutil
-import pytest
 
 from asv import config
 from asv import repo
@@ -43,8 +42,21 @@ def _test_generic_repo(conf, tmpdir, hash_range, master, branch, is_remote=False
     # basic checkouts
     r = repo.get_repo(conf)
 
+    # Subrepo creation
     r.checkout(workcopy_dir, master)
+    assert os.path.exists(join(workcopy_dir, "setup.py"))
+
+    for filename in ("README", "untracked"):
+        with open(join(workcopy_dir, filename), "wb") as fd:
+            fd.write(b"foo")
+
+    # After checkout the subrepo has been cleaned
     r.checkout(workcopy_dir, branch)
+    assert not os.path.exists(join(workcopy_dir, "untracked"))
+    with open(join(workcopy_dir, "README"), "rb") as fd:
+        data = fd.read(33)
+        assert data == b"This is the asv_test_repo project"
+
     r.checkout(workcopy_dir, master)
 
     # check recovering from corruption

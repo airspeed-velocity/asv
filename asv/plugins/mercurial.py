@@ -106,7 +106,8 @@ class Hg(Repo):
             with hglib.open(path) as subrepo:
                 subrepo.pull()
                 subrepo.update(commit_hash, clean=True)
-            # TODO: Implement purge manually or call it on the command line
+                subrepo.rawcommand(["--config", "extensions.purge=",
+                                    "purge", "--all"])
 
         if os.path.isdir(path):
             try:
