@@ -82,7 +82,8 @@ class Publish(Command):
             util.long_path_rmtree(conf.html_dir)
 
         environments = list(environment.get_environments(conf, env_spec))
-        benchmarks = Benchmarks.load(conf, environments)
+        repo = get_repo(conf)
+        benchmarks = Benchmarks.load(conf, repo, environments)
 
         template_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), '..', 'www')
@@ -98,7 +99,6 @@ class Publish(Command):
         log.step()
         log.info("Getting tags and branches")
         with log.indent():
-            repo = get_repo(conf)
             repo.pull()
             tags = {}
             for tag in repo.get_tags():

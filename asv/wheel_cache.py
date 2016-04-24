@@ -71,7 +71,7 @@ class WheelCache(object):
             if os.path.isdir(path):
                 util.long_path_rmtree(path)
 
-    def build_project_cached(self, env, package, commit_hash):
+    def build_project_cached(self, env, package, repo, commit_hash):
         if self._wheel_cache_size == 0:
             return None
 
@@ -81,7 +81,7 @@ class WheelCache(object):
 
         self._cleanup_wheel_cache()
 
-        build_root = env.build_project(commit_hash)
+        build_root = env.build_project(repo, commit_hash)
         cache_path = self._create_wheel_cache_path(commit_hash)
 
         try:
