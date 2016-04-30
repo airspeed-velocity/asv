@@ -887,9 +887,22 @@ $(document).ready(function() {
         /* Find the minimum and maximum values */
         var min = Infinity;
         var max = -Infinity;
+        var left = options.xaxis.min || 0;
+        var right = options.xaxis.max || Infinity;
         $.each(graphs, function(i, graph) {
             var data = graph.data;
-            for (var j = 0; j < data.length; ++j) {
+            var j;
+            for (j = 0; j < data.length; ++j) {
+                var x = data[j][0];
+                if (x >= left) {
+                    break;
+                }
+            }
+            for (; j < data.length; ++j) {
+                var x = data[j][0];
+                if (x >= right) {
+                    break;
+                }
                 var p = data[j][1];
                 if (p !== null && (!log_scale || p > 0)) {
                     if (p < min) {
@@ -908,6 +921,9 @@ $(document).ready(function() {
 
         min /= reference;
         max /= reference;
+
+        options.yaxis.min = min;
+        options.yaxis.max = max;
 
         if (log_scale || reference_scale) {
             min = Math.floor(Math.log(min) / Math.LN10);
@@ -1114,8 +1130,8 @@ $(document).ready(function() {
             }
         };
 
-        handle_y_scale(options);
         handle_x_scale(options);
+        handle_y_scale(options);
 
         var graph_div = $('#main-graph');
         var overview_div = $('#overview');
@@ -1164,12 +1180,16 @@ $(document).ready(function() {
         graph_div.unbind("plotselected");
         graph_div.bind("plotselected", function (event, ranges) {
             // do the zooming
-            plot = $.plot(graph_div, graphs, $.extend(true, {}, options, {
+            var new_options = $.extend(true, {}, options, {
                 xaxis: {
                     min: ranges.xaxis.from,
                     max: ranges.xaxis.to
                 }
-            }));
+            });
+
+            handle_y_scale(new_options);
+
+            plot = $.plot(graph_div, graphs, new_options);
 
             // Update things that depend on the range
             update_tags();
