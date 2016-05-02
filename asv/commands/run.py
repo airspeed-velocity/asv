@@ -64,7 +64,7 @@ class Run(Command):
             machine.  'ALL' will benchmark all commits in the project.
             'EXISTING' will benchmark against all commits for which
             there are existing benchmarks on any machine. By default,
-            will benchmark the head of the current master branch.""")
+            will benchmark the head of each of conf.branches.""")
         parser.add_argument(
             "--steps", "-s", type=common_args.positive_int, default=None,
             help="""Maximum number of steps to benchmark.  This is
@@ -145,12 +145,10 @@ class Run(Command):
         repo = get_repo(conf)
         repo.pull()
 
-        if range_spec is None:
-            commit_hashes = [repo.get_hash_from_master()]
-        elif range_spec == 'EXISTING':
+        if range_spec == 'EXISTING':
             commit_hashes = [h for h, d in get_existing_hashes(
                 conf.results_dir)]
-        elif range_spec in ('NEW', 'ALL'):
+        elif range_spec in (None, 'NEW', 'ALL'):
             branch_cache = BranchCache(conf, repo)
             commit_hashes = []
             seen = set()

@@ -500,7 +500,9 @@ class Environment(object):
         if commit_hash is None:
             commit_hash = self._cache.get_existing_commit_hash()
             if commit_hash is None:
-                commit_hash = self.repo.get_hash_from_master()
+                commit_hash = self.repo.get_hash_from_name(
+                    self.repo.get_branch_range_spec(conf.branches[0])
+                )
 
         self.uninstall(conf.project)
 
