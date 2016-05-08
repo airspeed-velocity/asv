@@ -31,7 +31,7 @@ def test_config():
 def test_config_default_install_timeout():
     # GH391
     conf = config.Config()
-    assert conf.install_timeout == 120
+    assert conf.install_timeout == 600
 
 
 class CustomCommand(Command):
