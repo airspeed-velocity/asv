@@ -223,7 +223,12 @@ def which(filename):
     if os.path.sep in filename:
         locations = ['']
     else:
-        locations = os.environ.get("PATH").split(os.pathsep)
+        locations = os.environ.get("PATH", "").split(os.pathsep)
+
+        if WIN:
+            # On windows, an entry in %PATH% may be quoted
+            locations = [path[1:-1] if len(path) > 2 and path[0] == path[-1] == '"' else path
+                         for path in locations]
 
     candidates = []
     for location in locations:

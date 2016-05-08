@@ -8,6 +8,7 @@ import io
 import locale
 import os
 import sys
+import shutil
 import pickle
 import multiprocessing
 import traceback
@@ -91,3 +92,25 @@ def test_write_unicode_to_ascii():
         assert buff.getvalue() == b'us\n'
     finally:
         locale.getpreferredencoding = original_getpreferredencoding
+
+
+def test_which_path(tmpdir):
+    dirname = os.path.abspath(os.path.join(str(tmpdir), 'name with spaces'))
+    fn = 'asv_test_exe_1234.exe'
+
+    os.makedirs(dirname)
+    shutil.copyfile(sys.executable, os.path.join(dirname, fn))
+
+    old_path = os.environ.get('PATH', '')
+    try:
+        if WIN:
+            os.environ['PATH'] = old_path + os.pathsep + '"' + dirname + '"'
+            util.which('asv_test_exe_1234')
+            util.which('asv_test_exe_1234.exe')
+
+        os.environ['PATH'] = old_path + os.pathsep + dirname
+        util.which('asv_test_exe_1234.exe')
+        if WIN:
+            util.which('asv_test_exe_1234')
+    finally:
+        os.environ['PATH'] = old_path
