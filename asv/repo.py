@@ -81,13 +81,6 @@ class Repo(object):
         """
         raise NotImplementedError()
 
-    def get_branch_range_spec(self, branch):
-        """
-        Returns a formatted string giving the results in a given branch.
-        If branch is None, use the 'master' branch.
-        """
-        raise NotImplementedError()
-
     def get_date(self, hash):
         """
         Get a Javascript timestamp for a particular commit.
@@ -131,6 +124,26 @@ class Repo(object):
         Get a Javascript timestamp for a particular name.
         """
         raise NotImplementedError()
+
+    def get_branch_commits(self, branch):
+        """
+        Returns the ordered list (last commit first) of all commits in
+        `branch` following first parent in case of merge
+        """
+        raise NotImplementedError()
+
+    def get_new_branch_commits(self, branches, existing):
+        """
+        Return a set of new commits on `branches` that are successors of all
+        `existing` commits
+        """
+        new = set()
+        for branch in branches:
+            for commit in self.get_branch_commits(branch):
+                if commit in existing:
+                    break
+                new.add(commit)
+        return new
 
 
 class NoRepository(Repo):
@@ -183,6 +196,13 @@ class NoRepository(Repo):
     def pull(self):
         # Nothing to do
         pass
+
+    def get_branch_commits(self, branch):
+        self._raise_error()
+
+    def get_new_branch_commits(self, branches, existing):
+        self._raise_error()
+
 
 def get_repo(conf):
     """

@@ -6,7 +6,6 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 import shutil
-import itertools
 
 import six
 
@@ -17,7 +16,6 @@ from ..graph import Graph, make_summary_graph
 from ..machine import iter_machine_files
 from ..repo import get_repo
 from ..results import iter_results, compatible_results
-from ..branch_cache import BranchCache
 from ..publishing import OutputPublisher
 from .. import environment
 from .. import util
@@ -119,7 +117,9 @@ class Publish(Command):
                 log.dot()
                 tags[tag] = repo.get_date_from_name(tag)
 
-            branch_cache = BranchCache(conf, repo)
+            branches = dict(
+                (branch, repo.get_branch_commits(branch))
+                for branch in conf.branches)
 
         log.step()
         log.info("Loading results")
@@ -149,7 +149,10 @@ class Publish(Command):
 
                     benchmark_names.add(key)
 
-                    for branch in branch_cache.get_branches(results.commit_hash):
+                    for branch in [
+                        branch for branch, commits in branches.items()
+                        if results.commit_hash in commits
+                    ]:
                         cur_params = dict(results.params)
                         cur_params['branch'] = safe_branch_name(branch)
 

@@ -15,7 +15,6 @@ import shutil
 from asv import config
 from asv import repo
 from asv import util
-from asv.branch_cache import BranchCache
 
 try:
     import hglib
@@ -79,22 +78,14 @@ def _test_generic_repo(conf, tmpdir, hash_range, master, branch, is_remote=False
 
 def _test_branches(conf, branch_commits):
     r = repo.get_repo(conf)
-    branch_cache = BranchCache(conf, r)
 
     assert len(conf.branches) == 2
 
-    commit_branches = {}
-
     for branch in conf.branches:
-        commits = branch_cache.get_branch_commits(branch)
+        commits = r.get_branch_commits(branch)
 
         for commit in branch_commits[branch]:
             assert commit in commits
-            commit_branches[commit] = branch
-
-
-    for commit, branch in commit_branches.items():
-        assert branch in branch_cache.get_branches(commit)
 
 
 def test_repo_git(tmpdir):
@@ -203,32 +194,34 @@ def test_repo_hg(tmpdir):
         Hg.url_match = old_url_match
 
 
-@pytest.mark.parametrize("dvcs_type", [
+@pytest.fixture(params=[
     "git",
     pytest.mark.skipif(hglib is None, reason="needs hglib")("hg"),
 ])
-def test_follow_first_parent(tmpdir, dvcs_type):
+def two_branch_repo_case(request, tmpdir):
     """
     This test ensure we follow the first parent in case of merges
 
     The revision graph looks like this:
 
-        o  Revision 5 (stable)
+        @  Revision 6 (default)
         |
-        o    Merge default
-        |\
-        | o  Revision 4 (default)
+        | o  Revision 5 (stable)
         | |
-        | o  Merge stable
+        | o  Merge default
         |/|
-        | o  Revision 3
+        o |  Revision 4
         | |
-        o |  Revision 2
+        o |  Merge stable
+        |\|
+        o |  Revision 3
+        | |
+        | o  Revision 2
         |/
         o  Revision 1
 
-
     """
+    dvcs_type = request.param
     tmpdir = six.text_type(tmpdir)
     if dvcs_type == "git":
         master = "master"
@@ -243,9 +236,10 @@ def test_follow_first_parent(tmpdir, dvcs_type):
         ("merge", "stable"),
         ("commit", 4),
         ("checkout", "stable"),
-        ("merge", master),
+        ("merge", master, "Merge master"),
         ("commit", 5),
         ("checkout", master),
+        ("commit", 6),
     ])
 
     conf = config.Config()
@@ -253,24 +247,65 @@ def test_follow_first_parent(tmpdir, dvcs_type):
     conf.repo = dvcs.path
     conf.project = join(tmpdir, "repo")
     r = repo.get_repo(conf)
-    branch_cache = BranchCache(conf, r)
+    return dvcs, master, r, conf
+
+
+def test_get_branch_commits(two_branch_repo_case):
+    # Test that get_branch_commits() return an ordered list of commits (last
+    # first) and follow first parent in case of merge
+    dvcs, master, r, conf = two_branch_repo_case
     expected = {
-        master: set([
+        master: [
+            "Revision 6",
             "Revision 4",
             "Merge stable",
             "Revision 3",
             "Revision 1",
-        ]),
-        "stable": set([
+        ],
+        "stable": [
             "Revision 5",
-            "Merge {0}".format(master),
+            "Merge master",
             "Revision 2",
             "Revision 1",
-        ]),
+        ],
     }
     for branch in conf.branches:
-        commits = set([
+        commits = [
             dvcs.get_commit_message(commit_hash)
-            for commit_hash in branch_cache.get_branch_commits(branch)
-        ])
+            for commit_hash in r.get_branch_commits(branch)
+        ]
         assert commits == expected[branch]
+
+
+@pytest.mark.parametrize("existing, expected", [
+    # No existing commit, we expect all commits
+    ([], set(["Revision {0}".format(x) for x in range(1, 7)] + [
+        "Merge stable", "Merge master"])),
+
+    # New commits on each branch
+    (["Revision 4", "Merge master"], set(["Revision 6", "Revision 5"])),
+
+    # No new commits
+    (["Revision 6", "Revision 5"], set()),
+
+    # Missing all commits on one branch (case of new branch added in config)
+    (["Revision 6"], set([
+        "Revision 5", "Merge master", "Revision 2", "Revision 1"])),
+], ids=["all", "new", "no-new", "new-branch-added-in-config"])
+def test_get_new_branch_commits(two_branch_repo_case, existing, expected):
+    dvcs, master, r, conf = two_branch_repo_case
+
+    existing_commits = set()
+    for branch in conf.branches:
+        for commit in r.get_branch_commits(branch):
+            message = dvcs.get_commit_message(commit)
+            if message in existing:
+                existing_commits.add(commit)
+
+    assert len(existing_commits) == len(existing)
+
+    commits = set([
+        dvcs.get_commit_message(commit)
+        for commit in r.get_new_branch_commits(conf.branches, existing_commits)
+    ])
+    assert commits == expected

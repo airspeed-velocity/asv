@@ -14,9 +14,8 @@ from ..benchmarks import Benchmarks
 from ..console import log
 from ..machine import Machine
 from ..repo import get_repo
-from ..results import (Results, find_latest_result_hash, get_existing_hashes,
+from ..results import (Results, get_existing_hashes,
                        iter_results_for_machine_and_hash)
-from ..branch_cache import BranchCache
 from .. import environment
 from .. import util
 
@@ -148,28 +147,14 @@ class Run(Command):
         if range_spec is None:
             commit_hashes = [repo.get_hash_from_master()]
         elif range_spec == 'EXISTING':
-            commit_hashes = [h for h, d in get_existing_hashes(
-                conf.results_dir)]
-        elif range_spec in ('NEW', 'ALL'):
-            branch_cache = BranchCache(conf, repo)
-            commit_hashes = []
-            seen = set()
-            for branch in conf.branches:
-                if range_spec == 'NEW':
-                    branch_hashes = branch_cache.get_branch_commits(branch)
-                    latest_result = find_latest_result_hash(
-                        machine_params.machine, conf.results_dir,
-                        hashes=branch_hashes)
-                    spec = repo.get_new_range_spec(latest_result, branch)
-                else:
-                    spec = repo.get_branch_range_spec(branch)
-
-                new_hashes = repo.get_hashes_from_range(spec)
-
-                for commit_hash in new_hashes:
-                    if commit_hash not in seen:
-                        seen.add(commit_hash)
-                        commit_hashes.append(commit_hash)
+            commit_hashes = get_existing_hashes(conf.results_dir)
+        elif range_spec == "NEW":
+            # New commits on each configured branches
+            commit_hashes = repo.get_new_branch_commits(
+                conf.branches, get_existing_hashes(conf.results_dir))
+        elif range_spec == "ALL":
+            # All commits on each configured branches
+            commit_hashes = repo.get_new_branch_commits(conf.branches, [])
         elif isinstance(range_spec, list):
             commit_hashes = range_spec
         else:

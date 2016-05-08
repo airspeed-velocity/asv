@@ -61,20 +61,18 @@ def iter_results_for_machine_and_hash(results, machine_name, commit):
 
 def iter_existing_hashes(results):
     """
-    Iterate over all of the result commit hashes and dates.  Each
-    element yielded is the pair (hash, date).
+    Iterate over all of the result commit hashes and dates and yields
+    commit_hash.
 
     May return duplicates.  Use `get_existing_hashes` if that matters.
     """
     for result in iter_results(results):
-        yield result.commit_hash, result.date
+        yield result.commit_hash
 
 
 def get_existing_hashes(results):
     """
-    Get all of the commit hashes that have already been tested.
-
-    Each element yielded is the pair (hash, date).
+    Get a list of the commit hashes that have already been tested.
     """
     log.info("Getting existing hashes")
     hashes = list(set(iter_existing_hashes(results)))
@@ -107,22 +105,6 @@ def get_result_hash_from_prefix(results, machine_name, commit_prefix):
         return list(commits)[0]
     else:
         return None
-
-
-def find_latest_result_hash(machine, root, hashes=None):
-    """
-    Find the latest result for the given machine.
-    """
-    root = os.path.join(root, machine)
-
-    latest_date = 0
-    latest_hash = ''
-    for commit_hash, date in iter_existing_hashes(root):
-        if date > latest_date and (hashes is None or commit_hash in hashes):
-            latest_date = date
-            latest_hash = commit_hash
-
-    return latest_hash
 
 
 def get_filename(machine, commit_hash, env_name):

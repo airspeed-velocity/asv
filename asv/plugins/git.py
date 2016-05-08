@@ -71,12 +71,6 @@ class Git(Repo):
         else:
             return '{0}..{1}'.format(latest_result, branch)
 
-    def get_branch_range_spec(self, branch):
-        if branch is None:
-            return 'master'
-        else:
-            return branch
-
     def get_range_spec(self, commit_a, commit_b):
         return '{0}..{1}'.format(commit_a, commit_b)
 
@@ -137,3 +131,8 @@ class Git(Repo):
 
     def get_date_from_name(self, name):
         return self.get_date(name + "^{commit}")
+
+    def get_branch_commits(self, branch):
+        if branch is None:
+            branch = "master"
+        return self.get_hashes_from_range(branch)
