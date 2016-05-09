@@ -11,7 +11,6 @@ import shutil
 import six
 
 from asv import config
-from asv.commands.publish import Publish
 from asv import util
 
 
@@ -60,7 +59,6 @@ def test_publish(tmpdir):
                     join(result_dir, 'benchmarks.json'))
     shutil.copyfile(join(RESULT_DIR, 'cheetah', 'machine.json'),
                     join(result_dir, 'cheetah', 'machine.json'))
-
 
     # Publish the synthesized data
     conf = config.Config.from_json(
