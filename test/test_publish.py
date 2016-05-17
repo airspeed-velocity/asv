@@ -10,6 +10,11 @@ import shutil
 
 import six
 import pytest
+try:
+    import hglib
+except ImportError:
+    hglib = None
+
 
 from asv import config
 from asv import util
@@ -116,7 +121,10 @@ def test_publish(tmpdir):
     assert index['params']['ram'] == ['8.2G', 8804682956.8]
 
 
-@pytest.fixture(params=["git"])
+@pytest.fixture(params=[
+    "git",
+    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg"),
+])
 def generate_result_dir(request, tmpdir):
     tmpdir = six.text_type(tmpdir)
     dvcs_type = request.param
@@ -222,10 +230,16 @@ def test_regression_parameterized(generate_result_dir):
     assert regressions == expected
 
 
-def test_regression_multiple_branches(tmpdir):
+@pytest.mark.parametrize("dvcs_type", [
+    "git",
+    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg"),
+])
+def test_regression_multiple_branches(dvcs_type, tmpdir):
     tmpdir = six.text_type(tmpdir)
-    dvcs_type = "git"
-    master = "master"
+    if dvcs_type == "git":
+        master = "master"
+    elif dvcs_type == "hg":
+        master = "default"
     dvcs = tools.generate_repo_from_ops(
         tmpdir, dvcs_type, [
             ("commit", 1),

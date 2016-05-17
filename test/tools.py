@@ -201,7 +201,7 @@ class Hg(object):
     def get_branch_hashes(self, branch=None):
         if branch is None:
             branch = "default"
-        log = self._repo.log('ancestors({0})'.format(branch))
+        log = self._repo.log('sort(ancestors({0}), -rev)'.format(branch))
         return [entry[1] for entry in log]
 
     def get_commit_message(self, commit_hash):
