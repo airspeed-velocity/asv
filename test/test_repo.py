@@ -227,7 +227,7 @@ def two_branch_repo_case(request, tmpdir):
         master = "master"
     elif dvcs_type == "hg":
         master = "default"
-    dvcs = tools.make_test_repo(tmpdir, dvcs_type, [
+    dvcs = tools.generate_repo_from_ops(tmpdir, dvcs_type, [
         ("commit", 1),
         ("checkout", "stable", master),
         ("commit", 2),

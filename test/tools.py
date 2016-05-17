@@ -295,7 +295,7 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
     return dvcs
 
 
-def make_test_repo(tmpdir, dvcs_type, operations):
+def generate_repo_from_ops(tmpdir, dvcs_type, operations):
     if dvcs_type == 'git':
         dvcs_cls = Git
     elif dvcs_type == 'hg':
