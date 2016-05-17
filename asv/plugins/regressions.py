@@ -34,21 +34,14 @@ class Regressions(OutputPublisher):
 
         data_filter = _GraphDataFilter(conf, repo, hash_to_date)
 
-        all_params = {}
-        for graph in six.itervalues(graphs):
-            for key, value in six.iteritems(graph.params):
-                all_params.setdefault(key, set())
-                if value:
-                    all_params[key].add(value)
-
+        all_params = graphs.get_params()
         last_percentage_time = time.time()
 
         n_processes = multiprocessing.cpu_count()
         pool = multiprocessing.Pool(n_processes)
         try:
             results = []
-            for j, item in enumerate(six.iteritems(graphs)):
-                file_name, graph = item
+            for j, (file_name, graph) in enumerate(graphs):
                 if 'summary' in graph.params:
                     continue
 

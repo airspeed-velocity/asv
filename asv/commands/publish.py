@@ -12,7 +12,7 @@ import six
 from . import Command
 from ..benchmarks import Benchmarks
 from ..console import log
-from ..graph import Graph, make_summary_graph
+from ..graph import GraphSet
 from ..machine import iter_machine_files
 from ..repo import get_repo
 from ..results import iter_results, compatible_results
@@ -82,7 +82,7 @@ class Publish(Command):
     @classmethod
     def run(cls, conf, env_spec=None):
         params = {}
-        graphs = {}
+        graphs = GraphSet()
         date_to_hash = {}
         hash_to_date = {}
         machines = {}
@@ -124,8 +124,6 @@ class Publish(Command):
         log.step()
         log.info("Loading results")
         with log.indent():
-            graph_groups = {}
-
             # Determine first the set of all parameters
             for results in iter_results(conf.results_dir):
                 for key, val in six.iteritems(results.params):
@@ -168,27 +166,16 @@ class Publish(Command):
                                 params[param_key].add(None)
 
                         # Create graph
-                        graph = Graph(key, cur_params)
-                        if graph.path in graphs:
-                            graph = graphs[graph.path]
-                        else:
-                            graphs[graph.path] = graph
-                            graph_groups.setdefault(key, []).append(graph)
+                        graph = graphs.get_graph(key, cur_params)
                         graph.add_data_point(results.date, result)
 
         log.step()
         log.info("Generating graphs")
         with log.indent():
-            # Generate summary graphs
-            for graph_set in six.itervalues(graph_groups):
-                log.dot()
-                graph = make_summary_graph(graph_set)
-                graphs[graph.path] = graph
-
+            # Add summary graphs
+            graphs.make_summary_graphs(dots=log.dot)
             # Save files
-            for graph in six.itervalues(graphs):
-                log.dot()
-                graph.save(conf.html_dir)
+            graphs.save(conf.html_dir, dots=log.dot)
 
         extra_pages = []
         for cls in util.iter_subclasses(OutputPublisher):
