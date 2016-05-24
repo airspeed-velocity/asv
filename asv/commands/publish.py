@@ -137,9 +137,8 @@ class Publish(Command):
             # Generate all graphs
             for results in iter_results(conf.results_dir):
                 log.dot()
-                commit_hash = results.commit_hash[:conf.hash_length]
-                date_to_hash[results.date] = commit_hash
-                hash_to_date[commit_hash] = results.date
+                date_to_hash[results.date] = results.commit_hash
+                hash_to_date[results.commit_hash] = results.date
 
                 for key, val in six.iteritems(results.results):
                     b = benchmarks.get(key)
@@ -199,6 +198,7 @@ class Publish(Command):
             'project': conf.project,
             'project_url': conf.project_url,
             'show_commit_url': conf.show_commit_url,
+            'hash_length': conf.hash_length,
             'date_to_hash': date_to_hash,
             'params': params,
             'benchmarks': benchmark_map,

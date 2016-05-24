@@ -323,7 +323,12 @@ $(document).ready(function() {
     }
 
     function get_commit_hash(date) {
-        return master_json.date_to_hash[date];
+        var commit_hash = master_json.date_to_hash[date];
+        if (commit_hash) {
+            // Return printable commit hash
+            commit_hash = commit_hash.slice(0, master_json.hash_length);
+        }
+        return commit_hash;
     }
 
     function init() {
