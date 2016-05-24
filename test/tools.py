@@ -30,6 +30,8 @@ from asv import util
 from asv import commands
 from asv import config
 from asv.commands.preview import create_httpd
+from asv.repo import get_repo
+from asv.results import Results
 
 
 try:
@@ -130,7 +132,9 @@ class Git(object):
     def get_hash(self, name):
         return self._run_git(['rev-parse', name]).strip()
 
-    def get_branch_hashes(self, branch):
+    def get_branch_hashes(self, branch=None):
+        if branch is None:
+            branch = "master"
         return [x.strip() for x in self._run_git(['rev-list', branch]).splitlines()
                 if x.strip()]
 
@@ -194,8 +198,10 @@ class Hg(object):
             return log[0][1]
         return None
 
-    def get_branch_hashes(self, branch):
-        log = self._repo.log('ancestors({0})'.format(branch))
+    def get_branch_hashes(self, branch=None):
+        if branch is None:
+            branch = "default"
+        log = self._repo.log('sort(ancestors({0}), -rev)'.format(branch))
         return [entry[1] for entry in log]
 
     def get_commit_message(self, commit_hash):
@@ -295,7 +301,7 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
     return dvcs
 
 
-def make_test_repo(tmpdir, dvcs_type, operations):
+def generate_repo_from_ops(tmpdir, dvcs_type, operations):
     if dvcs_type == 'git':
         dvcs_cls = Git
     elif dvcs_type == 'hg':
@@ -326,6 +332,48 @@ def make_test_repo(tmpdir, dvcs_type, operations):
             raise ValueError("Unknown dvcs operation {0}".format(op))
 
     return dvcs
+
+
+def generate_result_dir(tmpdir, dvcs, values, branches=None):
+    result_dir = join(tmpdir, "results")
+    os.makedirs(result_dir)
+    html_dir = join(tmpdir, "html")
+    machine_dir = join(result_dir, "tarzan")
+    os.makedirs(machine_dir)
+
+    if branches is None:
+        branches = [None]
+
+    conf = config.Config.from_json({
+        'results_dir': result_dir,
+        'html_dir': html_dir,
+        'repo': dvcs.path,
+        'project': 'asv',
+        'branches': branches or [None],
+    })
+    repo = get_repo(conf)
+
+    util.write_json(join(machine_dir, "machine.json"), {
+        'machine': 'tarzan',
+    })
+
+    params = None
+    for commit, value in values.items():
+        if isinstance(value, dict):
+            params = value["params"]
+        result = Results({"machine": "tarzan"}, {}, commit,
+                         repo.get_date_from_name(commit), "2.7", None)
+        result.add_time("time_func", value)
+        result.save(result_dir)
+
+    util.write_json(join(result_dir, "benchmarks.json"), {
+        "time_func": {
+            "name": "time_func",
+            "params": params or [],
+            "param_names": params or [],
+        }
+    }, api_version=1)
+    return conf
 
 
 @pytest.fixture(scope="session")

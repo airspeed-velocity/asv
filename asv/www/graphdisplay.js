@@ -315,7 +315,7 @@ $(document).ready(function() {
                 if (previous_hover != item.datapoint) {
                     previous_hover = item.datapoint;
                     var y = item.datapoint[1];
-                    var commit_hash = $.asv.master_json.date_to_hash[item.datapoint[0]];
+                    var commit_hash = $.asv.get_commit_hash(item.datapoint[0]);
                     if (commit_hash) {
                         showTooltip(
                             item.pageX, item.pageY,
@@ -341,7 +341,7 @@ $(document).ready(function() {
                         reference = item.datapoint[1];
                         update_graphs();
                     } else {
-                        var commit_hash = $.asv.master_json.date_to_hash[item.datapoint[0]];
+                        var commit_hash = $.asv.get_commit_hash(item.datapoint[0]);
                         if (previous_hash !== commit_hash) {
                             previous_hash = commit_hash;
                             window.open(
@@ -580,7 +580,7 @@ $(document).ready(function() {
                     button.text("last");
                 } else {
                     var date_fmt = new Date(date);
-                    button.text($.asv.master_json.date_to_hash[date]
+                    button.text($.asv.get_commit_hash(date)
                                 + " "
                                 + date_fmt.toUTCString());
                 }
@@ -805,7 +805,7 @@ $(document).ready(function() {
                                         labels["commit"] = "last";
                                     }
                                     else {
-                                        labels["commit"] = ""+$.asv.master_json.date_to_hash[timestamp];
+                                        labels["commit"] = ""+$.asv.get_commit_hash(timestamp);
                                     }
                                 }
                                 else if (params[axis-1].length > 1) {
@@ -1250,10 +1250,10 @@ $(document).ready(function() {
             if (min === null || max === null || min > max) {
                 result = '';
             } else if (min == max) {
-                result = $.asv.master_json.date_to_hash[min] + '^!';
+                result = $.asv.get_commit_hash(min) + '^!';
             } else {
-                var first_commit = $.asv.master_json.date_to_hash[min];
-                var last_commit = $.asv.master_json.date_to_hash[max];
+                var first_commit = $.asv.get_commit_hash(min);
+                var last_commit = $.asv.get_commit_hash(max);
                 result = first_commit + ".." + last_commit;
             }
             $("#range")[0].value = result;

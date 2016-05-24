@@ -20,6 +20,51 @@ from . import util
 RESAMPLED_POINTS = (3840 / 5 / 2)
 
 
+class GraphSet(object):
+    """Manage multiple `Graph`"""
+
+    def __init__(self):
+        self._graphs = {}
+        self._groups = {}
+        super(GraphSet, self).__init__()
+
+    def get_graph(self, benchmark_name, params):
+        graph = Graph(benchmark_name, params)
+        if graph.path not in self._graphs:
+            self._graphs[graph.path] = graph
+            self._groups.setdefault(benchmark_name, []).append(graph)
+        return self._graphs[graph.path]
+
+    def get_params(self):
+        """Return all params used in graphs and their corresponding values set"""
+        params = {}
+        for graph in six.itervalues(self._graphs):
+            for key, value in six.iteritems(graph.params):
+                params.setdefault(key, set())
+                if value:
+                    params[key].add(value)
+        return params
+
+    def make_summary_graphs(self, dots=None):
+        for graphs in six.itervalues(self._groups):
+            graph = make_summary_graph(graphs)
+            self._graphs[graph.path] = graph
+            if dots is not None:
+                dots()
+
+    def save(self, html_dir, dots=None):
+        for graph in six.itervalues(self._graphs):
+            graph.save(html_dir)
+            if dots is not None:
+                dots()
+
+    def __iter__(self):
+        return six.iteritems(self._graphs)
+
+    def __len__(self):
+        return len(self._graphs)
+
+
 class Graph(object):
     """
     Manages a single "line" in the resulting plots for the front end.

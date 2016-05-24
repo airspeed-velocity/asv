@@ -9,10 +9,16 @@ from os.path import abspath, dirname, join, isfile, isdir
 import shutil
 
 import six
+import pytest
+try:
+    import hglib
+except ImportError:
+    hglib = None
+
 
 from asv import config
-from asv.commands.publish import Publish
 from asv import util
+from asv.repo import get_repo
 
 
 from . import tools
@@ -60,7 +66,6 @@ def test_publish(tmpdir):
                     join(result_dir, 'benchmarks.json'))
     shutil.copyfile(join(RESULT_DIR, 'cheetah', 'machine.json'),
                     join(result_dir, 'cheetah', 'machine.json'))
-
 
     # Publish the synthesized data
     conf = config.Config.from_json(
@@ -114,3 +119,164 @@ def test_publish(tmpdir):
     assert index['params']['branch'] == ['master', 'some-branch']
     assert index['params']['Cython'] == ['', None]
     assert index['params']['ram'] == ['8.2G', 8804682956.8]
+
+
+@pytest.fixture(params=[
+    "git",
+    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg"),
+])
+def generate_result_dir(request, tmpdir):
+    tmpdir = six.text_type(tmpdir)
+    dvcs_type = request.param
+
+    def _generate_result_dir(values, commits_without_result=None):
+        dvcs = tools.generate_repo_from_ops(
+            tmpdir, dvcs_type, [("commit", i) for i in range(len(values))])
+        commits = list(reversed(dvcs.get_branch_hashes()))
+        commit_values = {}
+        commits_without_result = [commits[i] for i in commits_without_result or []]
+        for commit, value in zip(commits, values):
+            if commit not in commits_without_result:
+                commit_values[commit] = value
+        conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
+        repo = get_repo(conf)
+        return conf, repo, commits
+    return _generate_result_dir
+
+GRAPH_PATH = join("graphs", "branch-master", "machine-tarzan", "time_func.json")
+
+
+def test_regression_simple(generate_result_dir):
+    conf, repo, commits = generate_result_dir(5 * [1] + 5 * [10])
+    tools.run_asv_with_conf(conf, "publish")
+    regressions = util.load_json(join(conf.html_dir, "regressions.json"))
+    expected = {"regressions": [["time_func", GRAPH_PATH, {}, None, [
+        [[None, repo.get_date_from_name(commits[5])]], 10.0, 1.0,
+    ]]]}
+    assert regressions == expected
+
+
+def test_regression_range(generate_result_dir):
+    conf, repo, commits = generate_result_dir(5 * [1] + 6 * [10], commits_without_result=[5])
+    tools.run_asv_with_conf(conf, "publish")
+    regressions = util.load_json(join(conf.html_dir, "regressions.json"))
+    expected = {"regressions": [["time_func", GRAPH_PATH, {}, None, [
+        [[repo.get_date_from_name(commits[4]), repo.get_date_from_name(commits[6])]], 10.0, 1.0,
+    ]]]}
+    assert regressions == expected
+
+
+def test_regression_fixed(generate_result_dir):
+    conf, repo, commits = generate_result_dir(5 * [1] + 5 * [10] + [1])
+    tools.run_asv_with_conf(conf, "publish")
+    regressions = util.load_json(join(conf.html_dir, "regressions.json"))
+    expected = {"regressions": []}
+    assert regressions == expected
+
+
+def test_regression_double(generate_result_dir):
+    conf, repo, commits = generate_result_dir(5 * [1] + 5 * [10] + 5 * [15])
+    tools.run_asv_with_conf(conf, "publish")
+    regressions = util.load_json(join(conf.html_dir, "regressions.json"))
+    expected = {"regressions": [["time_func", GRAPH_PATH, {}, None, [
+        [[None, repo.get_date_from_name(commits[5])], [None, repo.get_date_from_name(commits[10])]], 15.0, 1.0,
+    ]]]}
+    assert regressions == expected
+
+
+def test_regression_first_commits(generate_result_dir):
+    conf, repo, commits = generate_result_dir(5 * [1] + 10 * [10])
+    # Ignore before 5th commit
+    conf.regressions_first_commits = {"^time_*": commits[5]}
+    tools.run_asv_with_conf(conf, "publish")
+    regressions = util.load_json(join(conf.html_dir, "regressions.json"))
+    assert regressions == {"regressions": []}
+
+    # Ignore all
+    conf.regressions_first_commits = {"^time_*": None}
+    tools.run_asv_with_conf(conf, "publish")
+    regressions = util.load_json(join(conf.html_dir, "regressions.json"))
+    assert regressions == {"regressions": []}
+
+    # Ignore before 2th commit (-> regression not ignored)
+    conf.regressions_first_commits = {"^time_*": commits[2]}
+    tools.run_asv_with_conf(conf, "publish")
+    regressions = util.load_json(join(conf.html_dir, "regressions.json"))
+    expected = {"regressions": [["time_func", GRAPH_PATH, {}, None, [
+        [[None, repo.get_date_from_name(commits[5])]], 10.0, 1.0,
+    ]]]}
+    assert regressions == expected
+
+
+def test_regression_parameterized(generate_result_dir):
+    before = {"params": [["a", "b", "c", "d"]], "result": [5, 1, 1, 10]}
+    after = {"params": [["a", "b", "c", "d"]], "result": [6, 1, 10, 1]}
+    conf, repo, commits = generate_result_dir(5 * [before] + 5 * [after])
+    tools.run_asv_with_conf(conf, "publish")
+    regressions = util.load_json(join(conf.html_dir, "regressions.json"))
+    expected = {'regressions': [[
+        'time_func(a)',
+        GRAPH_PATH,
+        {},
+        0,
+        [[[None, repo.get_date_from_name(commits[5])]], 6.0, 5.0],
+    ], [
+        'time_func(c)',
+        GRAPH_PATH,
+        {},
+        2,
+        [[[None, repo.get_date_from_name(commits[5])]], 10.0, 1.0],
+    ]]}
+    assert regressions == expected
+
+
+@pytest.mark.parametrize("dvcs_type", [
+    "git",
+    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg"),
+])
+def test_regression_multiple_branches(dvcs_type, tmpdir):
+    tmpdir = six.text_type(tmpdir)
+    if dvcs_type == "git":
+        master = "master"
+    elif dvcs_type == "hg":
+        master = "default"
+    dvcs = tools.generate_repo_from_ops(
+        tmpdir, dvcs_type, [
+            ("commit", 1),
+            ("checkout", "stable", master),
+            ("commit", 1),
+            ("checkout", master),
+        ] + 4 * [
+            ("commit", 1),
+            ("checkout", "stable"),
+            ("commit", 1),
+            ("checkout", master),
+        ] + 5 * [
+            ("commit", 1),
+            ("checkout", "stable"),
+            ("commit", 2),
+            ("checkout", master),
+        ],
+    )
+    commit_values = {}
+    branches = dict(
+        (branch, list(reversed(dvcs.get_branch_hashes(branch))))
+        for branch in (master, "stable")
+    )
+    for branch, values in (
+        (master, 10 * [1]),
+        ("stable", 5 * [1] + 5 * [2]),
+    ):
+        for commit, value in zip(branches[branch], values):
+            commit_values[commit] = value
+    conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
+    conf.branches = [master, "stable"]
+    tools.run_asv_with_conf(conf, "publish")
+    repo = get_repo(conf)
+    regressions = util.load_json(join(conf.html_dir, "regressions.json"))
+    graph_path = join('graphs', 'branch-stable', 'machine-tarzan', 'time_func.json')
+    # Regression occur on 5th commit of stable branch
+    date = repo.get_date_from_name(branches["stable"][5])
+    expected = {'regressions': [['time_func', graph_path, {'branch': 'stable'}, None,
+                                 [[[None, date]], 2.0, 1.0]]]}
+    assert regressions == expected

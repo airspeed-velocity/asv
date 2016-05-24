@@ -322,6 +322,15 @@ $(document).ready(function() {
         }
     }
 
+    function get_commit_hash(date) {
+        var commit_hash = master_json.date_to_hash[date];
+        if (commit_hash) {
+            // Return printable commit hash
+            commit_hash = commit_hash.slice(0, master_json.hash_length);
+        }
+        return commit_hash;
+    }
+
     function init() {
         /* Fetch the master index.json and then set up the page elements
            based on it. */
@@ -368,6 +377,7 @@ $(document).ready(function() {
     this.convert_benchmark_param_value = convert_benchmark_param_value;
     this.param_selection_from_flat_idx = param_selection_from_flat_idx;
     this.load_graph_data = load_graph_data;
+    this.get_commit_hash = get_commit_hash;
 
     this.network_error = network_error;
 
