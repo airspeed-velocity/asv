@@ -322,6 +322,10 @@ $(document).ready(function() {
         }
     }
 
+    function get_commit_hash(date) {
+        return master_json.date_to_hash[date];
+    }
+
     function init() {
         /* Fetch the master index.json and then set up the page elements
            based on it. */
@@ -368,6 +372,7 @@ $(document).ready(function() {
     this.convert_benchmark_param_value = convert_benchmark_param_value;
     this.param_selection_from_flat_idx = param_selection_from_flat_idx;
     this.load_graph_data = load_graph_data;
+    this.get_commit_hash = get_commit_hash;
 
     this.network_error = network_error;
 

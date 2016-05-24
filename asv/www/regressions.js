@@ -214,8 +214,8 @@ $(document).ready(function() {
 
             var commit_td = $('<td/>');
             $.each(dates, function(i, date) {
-                var commit_a = $.asv.master_json.date_to_hash[date[0]];
-                var commit_b = $.asv.master_json.date_to_hash[date[1]];
+                var commit_a = $.asv.get_commit_hash(date[0]);
+                var commit_b = $.asv.get_commit_hash(date[1]);
                 if (i > 0) {
                     commit_td.append($('<span>, </span>'));
                 }
@@ -426,7 +426,7 @@ $(document).ready(function() {
                 }
                 var benchmark_name_re = (benchmark_name + branch_suffix).replace(/[.?*+^$[\]\\(){}|-]/g, "\\\\$&");
                 var dates = regression[0];
-                var last_commit = $.asv.master_json.date_to_hash[dates[dates.length-1][1]];
+                var last_commit = $.asv.get_commit_hash(dates[dates.length-1][1]);
                 var entry = "        \"^" + benchmark_name_re + "$\": \"" + last_commit + "\",\n";
                 entries[entry] = 1;
             }
