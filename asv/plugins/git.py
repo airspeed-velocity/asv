@@ -18,6 +18,7 @@ from .. import util
 
 class Git(Repo):
     dvcs = "git"
+    _default_branch = "master"
 
     def __init__(self, url, mirror_path):
         self._git = util.which("git")
@@ -66,10 +67,7 @@ class Git(Repo):
         return util.check_output([self._git] + args, **kwargs)
 
     def get_new_range_spec(self, latest_result, branch=None):
-        if branch is None:
-            return '{0}..master'.format(latest_result)
-        else:
-            return '{0}..{1}'.format(latest_result, branch)
+        return '{0}..{1}'.format(latest_result, self.get_branch_name(branch))
 
     def get_range_spec(self, commit_a, commit_b):
         return '{0}..{1}'.format(commit_a, commit_b)
@@ -119,9 +117,6 @@ class Git(Repo):
         return self._run_git(['rev-parse', name],
                              dots=False).strip().split()[0]
 
-    def get_hash_from_master(self):
-        return self.get_hash_from_name('master')
-
     def get_hash_from_parent(self, name):
         return self.get_hash_from_name(name + '^')
 
@@ -133,6 +128,4 @@ class Git(Repo):
         return self.get_date(name + "^{commit}")
 
     def get_branch_commits(self, branch):
-        if branch is None:
-            branch = "master"
-        return self.get_hashes_from_range(branch)
+        return self.get_hashes_from_range(self.get_branch_name(branch))

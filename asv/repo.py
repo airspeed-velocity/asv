@@ -14,6 +14,10 @@ class Repo(object):
 
     There are no commands that modify the source repository.
     """
+
+    # The default branch name when no branch is configured in asv.conf.json
+    _default_branch = None
+
     def __init__(self, url, mirror_path):
         """
         Create a mirror of the repository at `url`, without a working tree.
@@ -66,6 +70,16 @@ class Repo(object):
         """
         raise NotImplementedError()
 
+    def get_branch_name(self, branch=None):
+        """
+        Returns the given branch name or the default branch name if branch is
+        None or not specified.
+        """
+        if branch is None:
+            return self._default_branch
+        else:
+            return branch
+
     def get_range_spec(self, commit_a, commit_b):
         """
         Returns a formatted string giving the results between
@@ -105,7 +119,7 @@ class Repo(object):
         """
         Get the hash of the current master branch commit.
         """
-        raise NotImplementedError()
+        return self.get_hash_from_name(self.get_branch_name())
 
     def get_hash_from_parent(self, name):
         """
@@ -152,6 +166,7 @@ class NoRepository(Repo):
     """
 
     dvcs = "none"
+    _default_branch = "master"
 
     def __init__(self, url=None, path=None):
         self.url = None
@@ -177,9 +192,6 @@ class NoRepository(Repo):
 
     def get_hashes_from_range(self, range):
         return [None]
-
-    def get_hash_from_master(self):
-        return None
 
     def get_hash_from_name(self, name):
         return None
