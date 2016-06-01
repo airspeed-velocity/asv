@@ -71,8 +71,6 @@ class Publish(Command):
     def run(cls, conf, env_spec=None):
         params = {}
         graphs = GraphSet()
-        date_to_hash = {}
-        hash_to_date = {}
         machines = {}
         benchmark_names = set()
 
@@ -97,23 +95,12 @@ class Publish(Command):
                 machines[d['machine']] = d
 
         log.step()
-        log.info("Getting tags and branches")
+        log.info("Getting params, commits, tags and branches")
         with log.indent():
-            repo.pull()
-            tags = {}
-            for tag in repo.get_tags():
-                log.dot()
-                tags[tag] = repo.get_date_from_name(tag)
-
-            branches = dict(
-                (branch, repo.get_branch_commits(branch))
-                for branch in conf.branches)
-
-        log.step()
-        log.info("Loading results")
-        with log.indent():
-            # Determine first the set of all parameters
+            # Determine first the set of all parameters and all commits
+            hash_to_date = {}
             for results in iter_results(conf.results_dir):
+                hash_to_date[results.commit_hash] = results.date
                 for key, val in six.iteritems(results.params):
                     if val is None:
                         # Backward compatibility -- null means ''
@@ -122,11 +109,27 @@ class Publish(Command):
                     params.setdefault(key, set())
                     params[key].add(val)
 
+            repo.pull()
+            tags = repo.get_tags()
+            revisions = repo.get_revisions(set(hash_to_date.keys()) | set(tags.values()))
+
+            for tag, commit_hash in list(tags.items()):
+                # Map to revision number instead of commit hash and add tags to hash_to_date
+                tags[tag] = revisions[tags[tag]]
+                hash_to_date[commit_hash] = repo.get_date_from_name(commit_hash)
+
+            revision_to_date = dict((r, hash_to_date[h]) for h, r in six.iteritems(revisions))
+
+            branches = dict(
+                (branch, repo.get_branch_commits(branch))
+                for branch in conf.branches)
+
+        log.step()
+        log.info("Loading results")
+        with log.indent():
             # Generate all graphs
             for results in iter_results(conf.results_dir):
                 log.dot()
-                date_to_hash[results.date] = results.commit_hash
-                hash_to_date[results.commit_hash] = results.date
 
                 for key, val in six.iteritems(results.results):
                     b = benchmarks.get(key)
@@ -154,7 +157,7 @@ class Publish(Command):
 
                         # Create graph
                         graph = graphs.get_graph(key, cur_params)
-                        graph.add_data_point(results.date, result)
+                        graph.add_data_point(revisions[results.commit_hash], result)
 
         log.step()
         log.info("Generating graphs")
@@ -169,7 +172,7 @@ class Publish(Command):
             log.step()
             log.info("Generating output for {0}".format(cls.name))
             with log.indent():
-                cls.publish(conf, repo, benchmarks, graphs, hash_to_date)
+                cls.publish(conf, repo, benchmarks, graphs, revisions)
                 extra_pages.append([cls.name, cls.button_label, cls.description])
 
         log.step()
@@ -182,12 +185,14 @@ class Publish(Command):
             val.sort(key=lambda x: '[none]' if x is None else str(x))
             params[key] = val
         params['branch'] = [repo.get_branch_name(branch) for branch in conf.branches]
+        revision_to_hash = dict((r, h) for h, r in six.iteritems(revisions))
         util.write_json(os.path.join(conf.html_dir, "index.json"), {
             'project': conf.project,
             'project_url': conf.project_url,
             'show_commit_url': conf.show_commit_url,
             'hash_length': conf.hash_length,
-            'date_to_hash': date_to_hash,
+            'revision_to_hash': revision_to_hash,
+            'revision_to_date': revision_to_date,
             'params': params,
             'benchmarks': benchmark_map,
             'machines': machines,

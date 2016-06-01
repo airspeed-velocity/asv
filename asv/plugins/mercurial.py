@@ -133,10 +133,20 @@ class Hg(Repo):
         return self.get_hash_from_name('p1({0})'.format(name))
 
     def get_tags(self):
-        return [item[0] for item in self._repo.tags()]
+        tags = {}
+        for item in self._repo.log("tag()"):
+            tags[item.tags] = item.node
+        return tags
 
     def get_date_from_name(self, name):
         return self.get_date(name)
 
     def get_branch_commits(self, branch):
         return self.get_hashes_from_range("ancestors({0})".format(self.get_branch_name(branch)))
+
+    def get_revisions(self, commits):
+        revisions = {}
+        for i, item in enumerate(self._repo.log("all()")):
+            if item.node in commits:
+                revisions[item.node] = i
+        return revisions

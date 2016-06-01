@@ -123,7 +123,8 @@ class Repo(object):
 
     def get_tags(self):
         """
-        Get a list of all of the tags defined in the repo.
+        Get a dict of all of the tags defined in the repo and their
+        corresponding commit hash
         """
         raise NotImplementedError()
 
@@ -194,7 +195,7 @@ class NoRepository(Repo):
         self._raise_error()
 
     def get_tags(self):
-        return []
+        return {}
 
     def get_date_from_name(self, name):
         self._raise_error()

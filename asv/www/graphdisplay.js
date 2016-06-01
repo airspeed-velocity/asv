@@ -8,8 +8,9 @@ $(document).ready(function() {
     var current_benchmark = null;
     /* An array of graphs being displayed. */
     var graphs = [];
-    /* An array of commit dates being displayed */
-    var current_dates = [];
+    var orig_graphs = [];
+    /* An array of commit revisions being displayed */
+    var current_revisions = [];
     /* True when log scaling is enabled. */
     var log_scale = false;
     /* True when zooming in on the y-axis. */
@@ -22,18 +23,21 @@ $(document).ready(function() {
     var reference = 1.0;
     /* Is even commit spacing being used? */
     var even_spacing = false;
-    var even_spacing_dates = [];
+    var even_spacing_revisions = [];
+    /* Is date scale being used ? */
+    var date_scale = false;
+    var date_to_revision = {};
     /* A little div to handle tooltip placement on the graph */
     var tooltip = null;
     /* X-axis coordinate axis in the data set; always 0 for
-       non-parameterized tests where time is the only potential x-axis */
+       non-parameterized tests where revision and date are the only potential x-axis */
     var x_coordinate_axis = 0;
     var x_coordinate_is_category = false;
     /* List of lists of value combinations to plot (apart from x-axis)
        in parameterized tests. */
     var benchmark_param_selection = [[null]];
-    /* Highlighted timestamp */
-    var highlighted_dates = null;
+    /* Highlighted revisions */
+    var highlighted_revisions = null;
     /* Whether benchmark graph display was set up */
     var benchmark_graph_display_ready = false;
 
@@ -75,8 +79,24 @@ $(document).ready(function() {
         $("#error").modal('show');
     }
 
+    function get_x_from_revision(rev) {
+        if (date_scale) {
+            return $.asv.master_json.revision_to_date[rev];
+        } else {
+            return rev;
+        }
+    }
 
-    function display_benchmark(bm_name, state_selection, sub_benchmark_idx, highlight_timestamps) {
+    function get_commit_hash(x) {
+        // Return the commit hash in the current graph located at position x
+        if (date_scale) {
+            x = date_to_revision[x];
+        }
+        return $.asv.get_commit_hash(x);
+    }
+
+
+    function display_benchmark(bm_name, state_selection, sub_benchmark_idx, highlight_revisions) {
         setup_benchmark_graph_display();
 
         $('#graph-display').show();
@@ -90,7 +110,7 @@ $(document).ready(function() {
             reference = 1.0;
         }
         current_benchmark = bm_name;
-        highlighted_dates = highlight_timestamps;
+        highlighted_revisions = highlight_revisions;
         $("#title").text(bm_name);
         setup_benchmark_params(state_selection, sub_benchmark_idx);
         replace_graphs();
@@ -283,6 +303,15 @@ $(document).ready(function() {
 
         $('#even-spacing').on('click', function(evt) {
             even_spacing = !evt.target.classList.contains("active");
+            date_scale = false;
+            $('#date-scale').removeClass('active');
+            update_graphs();
+        });
+
+        $('#date-scale').on('click', function(evt) {
+            date_scale = !evt.target.classList.contains("active");
+            even_spacing = false;
+            $('#even-spacing').removeClass('active');
             update_graphs();
         });
 
@@ -318,7 +347,7 @@ $(document).ready(function() {
                 if (previous_hover != item.datapoint) {
                     previous_hover = item.datapoint;
                     var y = item.datapoint[1];
-                    var commit_hash = $.asv.get_commit_hash(item.datapoint[0]);
+                    var commit_hash = get_commit_hash(item.datapoint[0]);
                     if (commit_hash) {
                         showTooltip(
                             item.pageX, item.pageY,
@@ -344,7 +373,7 @@ $(document).ready(function() {
                         reference = item.datapoint[1];
                         update_graphs();
                     } else {
-                        var commit_hash = $.asv.get_commit_hash(item.datapoint[0]);
+                        var commit_hash = get_commit_hash(item.datapoint[0]);
                         if (previous_hash !== commit_hash) {
                             previous_hash = commit_hash;
                             window.open(
@@ -569,34 +598,34 @@ $(document).ready(function() {
             });
         }
 
-        /* Time/commit value selector */
+        /* Revision/commit value selector */
         if (x_coordinate_axis != 0) {
-            /* Generate list of all commits+dates */
-            var dates = current_dates.slice();
-            dates.sort();
-            dates.push(null);
-            dates.reverse();
+            /* Generate list of all revisions */
+            var revisions = current_revisions.slice();
+            revisions.sort();
+            revisions.push(null);
+            revisions.reverse();
 
             /* Add buttons */
-            make_value_selector_panel(nav, "commit", dates, function(idx, date, button) {
-                if (date === null) {
+            make_value_selector_panel(nav, "commit", revisions, function(idx, rev, button) {
+                if (rev === null) {
                     button.text("last");
                 } else {
-                    var date_fmt = new Date(date);
-                    button.text($.asv.get_commit_hash(date)
+                    var date_fmt = new Date($.asv.master_json.revision_to_date[rev]);
+                    button.text($.asv.get_commit_hash(rev)
                                 + " "
                                 + date_fmt.toUTCString());
                 }
 
-                if ($.inArray(date, benchmark_param_selection[0]) == -1) {
+                if ($.inArray(rev, benchmark_param_selection[0]) == -1) {
                     button.removeClass('active');
                 }
 
                 button.on('click', function(evt) {
-                    var idx = $.inArray(date, benchmark_param_selection[0]);
+                    var idx = $.inArray(rev, benchmark_param_selection[0]);
                     if (!evt.target.classList.contains("active")) {
                         if (idx == -1) {
-                            benchmark_param_selection[0].push(date);
+                            benchmark_param_selection[0].push(rev);
                             benchmark_param_selection[0].sort();
                         }
                     } else {
@@ -842,14 +871,14 @@ $(document).ready(function() {
         var failures = 0;
         var count = 1;
 
-        current_dates = [];
+        current_revisions = [];
         $.each(to_load, function(i, item) {
             $.asv.load_graph_data(
                 item[0]
             ).done(function (data) {
                 $.each(data, function(i, point) {
-                    if (current_dates.indexOf(point[0]) === -1) {
-                        current_dates.push(point[0]);
+                    if (current_revisions.indexOf(point[0]) === -1) {
+                        current_revisions.push(point[0]);
                     }
                 });
                 $.each(item[1], function(j, graph_content) {
@@ -865,6 +894,7 @@ $(document).ready(function() {
                     });
                     count += 1;
                 });
+                orig_graphs = graphs;
                 update_graphs();
             }).fail(function () {
                 failures += 1;
@@ -996,8 +1026,8 @@ $(document).ready(function() {
 
     function even_spacing_transform(value) {
         /* Map timestamp value to commit index */
-        for (var i = 0; i < even_spacing_dates.length; i++) {
-            if (value <= even_spacing_dates[i]) {
+        for (var i = 0; i < even_spacing_revisions.length; i++) {
+            if (value <= even_spacing_revisions[i]) {
                 return i;
             }
         }
@@ -1005,9 +1035,9 @@ $(document).ready(function() {
 
     function even_spacing_inverseTransform(value) {
         /* Map commit index to timestamp value */
-        for (var i = 0; i < even_spacing_dates.length; i++) {
+        for (var i = 0; i < even_spacing_revisions.length; i++) {
             if (value <= i) {
-                return even_spacing_dates[i];
+                return even_spacing_revisions[i];
             }
         }
     }
@@ -1017,28 +1047,43 @@ $(document).ready(function() {
             return;
 
         if (x_coordinate_axis == 0) {
+            if (!date_scale) {
+                // restore original graphs
+                graphs = orig_graphs;
+                options.xaxis.mode = null;
+                options.xaxis.axisLabel = 'commits';
+                options.xaxis.tickFormatter = function (v, axis) { return ""; };
+            }
             if (even_spacing) {
-                even_spacing_dates = [];
+                even_spacing_revisions = [];
                 $.each(graphs, function(i, graph) {
                     var data = graph.data;
                     for (var j = 0; j < data.length; ++j) {
-                        if (even_spacing_dates.indexOf(data[j][0]) === -1) {
-                            even_spacing_dates.push(data[j][0]);
+                        if (even_spacing_revisions.indexOf(data[j][0]) === -1) {
+                            even_spacing_revisions.push(data[j][0]);
                         }
                     }
                 });
-                even_spacing_dates.sort(function(a, b) { return a - b; });
-
-                options.xaxis.axisLabel = 'commits';
+                even_spacing_revisions.sort(function(a, b) { return a - b; });
                 options.xaxis.transform = even_spacing_transform;
                 /* inverseTransform is required for plothover to work */
                 options.xaxis.inverseTransform = even_spacing_inverseTransform;
-                options.xaxis.tickFormatter = function (v, axis) {
-                    return "";
-                };
-            } else {
+            } else if (date_scale) {
                 options.xaxis.mode = 'time';
                 options.xaxis.axisLabel = 'commit date';
+                options.xaxis.tickFormatter = null;
+
+                // deep copy graphs and transform into time series data
+                graphs = $.extend(true, [], orig_graphs);
+                date_to_revision = {};
+                $.each(graphs, function(i, graph) {
+                    $.each(graph.data, function(j, point) {
+                        var date = $.asv.master_json.revision_to_date[point[0]];
+                        date_to_revision[date] = point[0];
+                        point[0] = date;
+                    });
+                    graph.data.sort(function(a, b) { return a[0] - b[0]; });
+                });
             }
         } else {
             if (x_coordinate_is_category) {
@@ -1065,30 +1110,28 @@ $(document).ready(function() {
         }
 
         var markings = [];
-        $.each($.asv.master_json.tags, function(tag, date) {
+        $.each($.asv.master_json.tags, function(tag, revision) {
+            var x = get_x_from_revision(revision);
             markings.push(
-                { color: "#ddd", lineWidth: 1, xaxis: { from: date, to: date } }
+                { color: "#ddd", lineWidth: 1, xaxis: { from: x, to: x } }
             );
         });
 
-        if (highlighted_dates) {
-            $.each(highlighted_dates, function(i, date) {
-                if (date.length == 1) {
+        if (highlighted_revisions) {
+            $.each(highlighted_revisions, function(i, revs) {
+                var x_values = [];
+                $.each(revs, function(i, rev) {
+                    var x = get_x_from_revision(rev);
                     markings.push(
-                        { color: '#d00', lineWidth: 2, xaxis: { from: date[0], to: date[0] } }
+                        { color: '#d00', lineWidth: 2, xaxis: { from: x, to: x } }
                     );
-                }
-                else {
-                    markings.push(
-                        { color: '#d00', lineWidth: 2, xaxis: { from: date[0], to: date[0] } }
-                    );
-                    markings.push(
-                        { color: '#d00', lineWidth: 2, xaxis: { from: date[1], to: date[1] } }
-                    );
+                    x_values.push(x);
+                });
+                if (revs.length > 1) {
                     markings.push(
                         { color: "rgba(200, 0, 0, 0.2)", alpha: 0.5, lineWidth: 2, 
-                          xaxis: { from: Math.min.apply(null, date), 
-                                   to: Math.max.apply(null, date) }}
+                          xaxis: { from: Math.min.apply(null, x_values),
+                                   to: Math.max.apply(null, x_values) }}
                     );
                 }
             });
@@ -1259,10 +1302,10 @@ $(document).ready(function() {
             if (min === null || max === null || min > max) {
                 result = '';
             } else if (min == max) {
-                result = $.asv.get_commit_hash(min) + '^!';
+                result = get_commit_hash(min) + '^!';
             } else {
-                var first_commit = $.asv.get_commit_hash(min);
-                var last_commit = $.asv.get_commit_hash(max);
+                var first_commit = get_commit_hash(min);
+                var last_commit = get_commit_hash(max);
                 result = first_commit + ".." + last_commit;
             }
             $("#range")[0].value = result;
@@ -1273,9 +1316,10 @@ $(document).ready(function() {
             var canvas = plot.getCanvas();
             var xmin = plot.getAxes().xaxis.min;
             var xmax = plot.getAxes().xaxis.max;
-            $.each($.asv.master_json.tags, function(tag, date) {
-                if (date >= xmin && date <= xmax) {
-                    var p = plot.pointOffset({x: date, y: 0});
+            $.each($.asv.master_json.tags, function(tag, revision) {
+                var x = get_x_from_revision(revision);
+                if (x >= xmin && x <= xmax) {
+                    var p = plot.pointOffset({x: x, y: 0});
                     var o = plot.getPlotOffset();
 
                     graph_div.append(
@@ -1295,7 +1339,7 @@ $(document).ready(function() {
     $.asv.register_page('graphdisplay', function(params) {
         var benchmark = params['benchmark'];
         var sub_benchmark_idx = null;
-        var highlight_timestamps = null;
+        var highlight_revisions = null;
         var state_selection = null;
 
         if (params['idx']) {
@@ -1303,24 +1347,24 @@ $(document).ready(function() {
             delete params['idx'];
         }
 
-        if (params['time']) {
-            highlight_timestamps = [];
-            $.each(params['time'], function(i, value) {
-                var match = value.match(/^([0-9]+)-([0-9]+)$/);
+        if (params['commits']) {
+            highlight_revisions = [];
+            $.each(params['commits'], function(i, value) {
+                var match = value.match(/^([a-z0-9]+)-([a-z0-9]+)$/);
                 if (match) {
-                    highlight_timestamps.push([parseInt(match[1]), parseInt(match[2])]);
+                    highlight_revisions.push([$.asv.get_revision(match[1]), $.asv.get_revision(match[2])]);
                 }
                 else {
-                    highlight_timestamps.push([parseInt(value)]);
+                    highlight_revisions.push([$.asv.get_revision(value)]);
                 }
             });
-            delete params['time'];
+            delete params['commits'];
         }
 
         if (Object.keys(params).length > 0) {
             state_selection = params;
         }
 
-        display_benchmark(benchmark, state_selection, sub_benchmark_idx, highlight_timestamps);
+        display_benchmark(benchmark, state_selection, sub_benchmark_idx, highlight_revisions);
     });
 });

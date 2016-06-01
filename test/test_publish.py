@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import datetime
 import os
 from os.path import abspath, dirname, join, isfile, isdir
 import shutil
@@ -56,10 +57,6 @@ def test_publish(tmpdir):
         dst = join(result_dir, 'cheetah', commit[:8] + fn[8:])
         data = util.load_json(src, cleanup=False)
         data['commit_hash'] = commit
-        if commit in only_branch:
-            data['date'] = -k
-        else:
-            data['date'] = k
         util.write_json(dst, data)
 
     shutil.copyfile(join(RESULT_DIR, 'benchmarks.json'),
@@ -89,18 +86,26 @@ def test_publish(tmpdir):
     index = util.load_json(join(tmpdir, 'html', 'index.json'))
     assert index['params']['branch'] == ['master']
 
+    repo = get_repo(conf)
+    revision_to_hash = dict((r, h) for h, r in six.iteritems(repo.get_revisions(commits)))
+
     def check_file(branch, cython):
         fn = join(tmpdir, 'html', 'graphs', cython, 'arch-x86_64', 'branch-' + branch,
                   'cpu-Intel(R) Core(TM) i5-2520M CPU @ 2.50GHz (4 cores)',
                   'machine-cheetah', 'numpy-1.8', 'os-Linux (Fedora 20)', 'python-2.7', 'ram-8.2G',
                   'time_coordinates.time_latitude.json')
         data = util.load_json(fn, cleanup=False)
-        if branch == 'master':
-            # we set all dates positive for master above
-            assert all(x[0] >= 0 for x in data)
+        data_commits = [revision_to_hash[x[0]] for x in data]
+        if branch == "master":
+            assert all(c in master_commits for c in data_commits)
         else:
-            # we set some dates negative for some-branch above
-            assert any(x[0] < 0 for x in data) and any(x[0] >= 0 for x in data)
+            # Must contains commits from some-branch
+            assert any(c in only_branch for c in data_commits)
+            # And commits from master
+            assert any(c in master_commits for c in data_commits)
+
+        # Check that revisions are strictly increasing
+        assert all(x[0] < y[0] for x, y in zip(data, data[1:]))
 
     check_file("master", "Cython")
     check_file("master", "Cython-null")
@@ -155,7 +160,7 @@ def test_regression_simple(generate_result_dir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
-        [[None, repo.get_date_from_name(commits[5])]], 10.0, 1.0,
+        [[None, 5]], 10.0, 1.0,
     ]]]}
     assert regressions == expected
 
@@ -165,7 +170,7 @@ def test_regression_range(generate_result_dir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
-        [[repo.get_date_from_name(commits[4]), repo.get_date_from_name(commits[6])]], 10.0, 1.0,
+        [[4, 6]], 10.0, 1.0,
     ]]]}
     assert regressions == expected
 
@@ -183,7 +188,7 @@ def test_regression_double(generate_result_dir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
-        [[None, repo.get_date_from_name(commits[5])], [None, repo.get_date_from_name(commits[10])]], 15.0, 1.0,
+        [[None, 5], [None, 10]], 15.0, 1.0,
     ]]]}
     assert regressions == expected
 
@@ -207,7 +212,7 @@ def test_regression_first_commits(generate_result_dir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
-        [[None, repo.get_date_from_name(commits[5])]], 10.0, 1.0,
+        [[None, 5]], 10.0, 1.0,
     ]]]}
     assert regressions == expected
 
@@ -223,13 +228,13 @@ def test_regression_parameterized(generate_result_dir):
         _graph_path(repo.dvcs),
         {},
         0,
-        [[[None, repo.get_date_from_name(commits[5])]], 6.0, 5.0],
+        [[[None, 5]], 6.0, 5.0],
     ], [
         'time_func(c)',
         _graph_path(repo.dvcs),
         {},
         2,
-        [[[None, repo.get_date_from_name(commits[5])]], 10.0, 1.0],
+        [[[None, 5]], 10.0, 1.0],
     ]]}
     assert regressions == expected
 
@@ -280,7 +285,32 @@ def test_regression_multiple_branches(dvcs_type, tmpdir):
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     graph_path = join('graphs', 'branch-stable', 'machine-tarzan', 'time_func.json')
     # Regression occur on 5th commit of stable branch
-    date = repo.get_date_from_name(branches["stable"][5])
+    revision = repo.get_revisions(commit_values.keys())[branches["stable"][5]]
     expected = {'regressions': [['time_func', graph_path, {'branch': 'stable'}, None,
-                                 [[[None, date]], 2.0, 1.0]]]}
+                                 [[[None, revision]], 2.0, 1.0]]]}
+    assert regressions == expected
+
+
+@pytest.mark.parametrize("dvcs_type", [
+    "git",
+    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg"),
+])
+def test_regression_non_monotonic(dvcs_type, tmpdir):
+    tmpdir = six.text_type(tmpdir)
+    now = datetime.datetime.now()
+
+    dates = [now + datetime.timedelta(days=i) for i in range(5)] + [now - datetime.timedelta(days=i) for i in range(5)]
+    # last commit in the past
+    dates[-1] = now - datetime.timedelta(days=1)
+
+    dvcs = tools.generate_repo_from_ops(tmpdir, dvcs_type, [("commit", i, d) for i, d in enumerate(dates)])
+    commits = list(reversed(dvcs.get_branch_hashes()))
+    commit_values = {}
+    for commit, value in zip(commits, 5 * [1] + 5 * [2]):
+        commit_values[commit] = value
+    conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
+    tools.run_asv_with_conf(conf, "publish")
+    regressions = util.load_json(join(conf.html_dir, "regressions.json"))
+    expected = {'regressions': [['time_func', _graph_path(dvcs_type), {}, None,
+                                 [[[None, 5]], 2.0, 1.0]]]}
     assert regressions == expected

@@ -100,14 +100,13 @@ class Git(object):
         self.run_git(['config', 'user.email', 'robot@asv'])
         self.run_git(['config', 'user.name', 'Robotic Swallow'])
 
-    def commit(self, message):
-        # We explicitly override the date here, or the commits
-        # will all be in the same second and cause all kinds
-        # of problems for asv
-        self._fake_date += datetime.timedelta(seconds=1)
+    def commit(self, message, date=None):
+        if date is None:
+            self._fake_date += datetime.timedelta(seconds=1)
+            date = self._fake_date
 
-        self.run_git(['commit', '--date', self._fake_date.isoformat(),
-                      '-m', message])
+        self.run_git(['commit', '--date', date.isoformat(),
+                       '-m', message])
 
     def tag(self, number):
         self.run_git(['tag', '-a', '-m', 'Tag {0}'.format(number),
@@ -160,12 +159,11 @@ class Hg(object):
             fd.write(_hg_config)
         self._repo = hglib.open(self.path)
 
-    def commit(self, message):
-        # We explicitly override the date here, or the commits
-        # will all be in the same second and cause all kinds
-        # of problems for asv
-        self._fake_date += datetime.timedelta(seconds=1)
-        date = "{0} 0".format(util.datetime_to_timestamp(self._fake_date))
+    def commit(self, message, date=None):
+        if date is None:
+            self._fake_date += datetime.timedelta(seconds=1)
+            date = self._fake_date
+        date = "{0} 0".format(util.datetime_to_timestamp(date))
 
         self._repo.commit(message, date=date)
 
@@ -327,7 +325,7 @@ def generate_repo_from_ops(tmpdir, dvcs_type, operations):
                 "dummy_value": op[1],
             })
             version += 1
-            dvcs.commit("Revision {0}".format(version))
+            dvcs.commit("Revision {0}".format(version), *op[2:])
         elif op[0] == "checkout":
             dvcs.checkout(*op[1:])
         elif op[0] == "merge":

@@ -14,5 +14,5 @@ class OutputPublisher(object):
     description = None
 
     @classmethod
-    def publish(cls, conf, repo, benchmarks, graphs, hash_to_date):
+    def publish(cls, conf, repo, benchmarks, graphs, revisions):
         pass

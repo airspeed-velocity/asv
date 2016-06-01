@@ -151,7 +151,7 @@ def test_web_regressions(browser, tmpdir):
 
         href = regression_1.get_attribute('href')
         assert '/#params_examples.track_find_test?' in href
-        assert 'time=' in href
+        assert 'commits=' in href
 
         # Sort the tables vs. benchmark name (PhantomJS doesn't allow doing it via actionchains)
         browser.execute_script("$('thead th').eq(0).stupidsort('asc')")

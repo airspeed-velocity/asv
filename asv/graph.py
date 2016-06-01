@@ -109,22 +109,20 @@ class Graph(object):
         self.n_series = None
         self.scalar_series = True
 
-    def add_data_point(self, date, value):
+    def add_data_point(self, revision, value):
         """
         Add a data point to the graph.
 
         Parameters
         ----------
-        date : int
-            A Javascript timestamp value representing the time a
-            particular commit was merged into the repository.
+        revision : int
+            An integer value representing the commit revision in the commit log
 
         value : float or list
             The value(s) to plot in the benchmark.
 
         """
-        # Add simple time series
-        self.data_points.setdefault(date, [])
+        self.data_points.setdefault(revision, [])
         if not _is_na(value):
             if not hasattr(value, '__len__'):
                 value = [value]
@@ -136,7 +134,7 @@ class Graph(object):
             elif len(value) != self.n_series:
                 raise ValueError("Mismatching number of data series in graph")
 
-            self.data_points[date].append(value)
+            self.data_points[revision].append(value)
 
     def get_data(self):
         """
@@ -153,7 +151,7 @@ class Graph(object):
             return [_mean_with_none(x[j] for x in v)
                     for j in xrange(self.n_series)]
 
-        # Average data over dates
+        # Average data over commit log
         val = [(k, mean_axis0(v)) for (k, v) in
                six.iteritems(self.data_points)]
         val.sort()
@@ -303,29 +301,22 @@ def resample_data(val):
     if len(val) < RESAMPLED_POINTS:
         return val
 
-    min_time = min(x[0] for x in val)
-    max_time = max(x[0] for x in val)
-    step_size = int((max_time - min_time) / RESAMPLED_POINTS)
+    min_revision = min(x[0] for x in val)
+    max_revision = max(x[0] for x in val)
+    step_size = int((max_revision - min_revision) / RESAMPLED_POINTS)
 
     if step_size == 0:
-        step_size = max_time - min_time + 1
+        step_size = max_revision - min_revision + 1
 
-    # This loop cannot use xrange, because xrange on Python2 on
-    # 32-bit systems can only deal with 32-bit integers, and
-    # Javascript timestamps (1000*unix_timestamp) handled here
-    # overflow this range
     new_val = []
     j = 0
-    i = min_time + step_size
-    while i < max_time + step_size:
+    for i in xrange(min_revision + step_size, max_revision + step_size, step_size):
         chunk = []
         while j < len(val) and val[j][0] < i:
             chunk.append(val[j][1])
             j += 1
         if len(chunk):
             new_val.append((i, _mean_with_none(chunk)))
-        i += step_size
-
     return new_val
 
 

@@ -147,8 +147,12 @@ A benchmark suite directory has the following layout.  The
     - ``benchmarks``: A dictionary of benchmarks.  At the moment, this
       is identical to the content in ``$results_dir/benchmarks.json``.
 
-    - ``date_to_hash``: A dictionary mapping Javascript date stamps to
-      commit hashes.  This allows the x-scale of a plot to be scaled
+    - ``revision_to_hash``: A dictionary mapping revision number to commit
+      hash. This allows to show commits tooltip in graph and commits involved
+      in a regression.
+
+    - ``revision_to_date``: A dictionary mapping Javascript date stamps to
+      revisions (including tags).  This allows the x-scale of a plot to be scaled
       by date.
 
     - ``machines``: Describes the machines used for testing.
@@ -157,7 +161,7 @@ A benchmark suite directory has the following layout.  The
       results can be selected.  Each entry is a list of valid values
       for that parameter.
 
-    - ``tags``: A dictionary of git tags and their dates, so this
+    - ``tags``: A dictionary of git tags and their revisions, so this
       information can be displayed in the plot.
 
   - ``graphs/``: This is a nested tree of directories where each level
