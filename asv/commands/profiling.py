@@ -141,7 +141,7 @@ class Profile(Command):
                                 # We need to checkout the correct commit so that
                                 # the line numbers in the profile data match up with
                                 # what's in the source tree.
-                                result.env.checkout_project(commit_hash)
+                                result.env.checkout_project(repo, commit_hash)
                                 checked_out.add(result.env.name)
                             profile_data = result.get_profile(benchmark)
                             break
@@ -165,7 +165,7 @@ class Profile(Command):
                     "Profiles must be run in the same version of Python as the "
                     "asv master process")
 
-            benchmarks = Benchmarks(conf, environments, regex='^{0}$'.format(benchmark))
+            benchmarks = Benchmarks(conf, repo, environments, regex='^{0}$'.format(benchmark))
             if len(benchmarks) != 1:
                 raise util.UserError(
                     "Could not find benchmark {0}".format(benchmark))
@@ -177,7 +177,7 @@ class Profile(Command):
             else:
                 log.info("Running profiler")
             with log.indent():
-                env.install_project(conf, commit_hash)
+                env.install_project(conf, repo, commit_hash)
 
                 results = benchmarks.run_benchmarks(
                     env, show_stderr=True, quick=False, profile=True)

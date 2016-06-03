@@ -267,7 +267,7 @@ class Benchmarks(dict):
     """
     api_version = 1
 
-    def __init__(self, conf, environments, benchmarks=None, regex=None):
+    def __init__(self, conf, repo, environments, benchmarks=None, regex=None):
         """
         Discover benchmarks in the given `benchmark_dir`.
 
@@ -275,6 +275,9 @@ class Benchmarks(dict):
         ----------
         conf : Config object
             The project's configuration
+
+        repo : Repo object
+            The project's repository
 
         environments : list of Environment
             List of environments available for benchmark discovery.
@@ -288,7 +291,7 @@ class Benchmarks(dict):
         self._benchmark_dir = conf.benchmark_dir
 
         if benchmarks is None:
-            benchmarks = self.disc_benchmarks(conf, environments)
+            benchmarks = self.disc_benchmarks(conf, repo, environments)
         else:
             benchmarks = six.itervalues(benchmarks)
 
@@ -304,7 +307,7 @@ class Benchmarks(dict):
                 self[benchmark['name']] = benchmark
 
     @classmethod
-    def disc_benchmarks(cls, conf, environments):
+    def disc_benchmarks(cls, conf, repo, environments):
         """
         Discover all benchmarks in a directory tree.
         """
@@ -329,7 +332,7 @@ class Benchmarks(dict):
         log.info("Discovering benchmarks")
         with log.indent():
             env.create()
-            env.install_project(conf)
+            env.install_project(conf, repo)
 
             result_file = tempfile.NamedTemporaryFile(delete=False)
             try:
@@ -404,7 +407,7 @@ class Benchmarks(dict):
         del self._all_benchmarks['version']
 
     @classmethod
-    def load(cls, conf, environments):
+    def load(cls, conf, repo, environments):
         """
         Load the benchmark descriptions from the `benchmarks.json` file.
         If the file is not found, one of the given `environments` will
@@ -414,13 +417,17 @@ class Benchmarks(dict):
         ----------
         conf : Config object
             The project's configuration
+        repo : Repo object
+            The project's repository (for benchmark discovery)
+        environments : list of Environment objects
+            Environments for benchmark discovery
 
         Returns
         -------
         benchmarks : Benchmarks object
         """
         def regenerate():
-            self = cls(conf, environments)
+            self = cls(conf, repo, environments)
             self.save()
             return self
 
@@ -436,7 +443,7 @@ class Benchmarks(dict):
             # version
             return regenerate()
 
-        return cls(conf, environments, benchmarks=d)
+        return cls(conf, repo, environments, benchmarks=d)
 
     def run_benchmarks(self, env, show_stderr=False, quick=False, profile=False,
                        skip=None):

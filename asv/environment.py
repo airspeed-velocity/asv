@@ -20,7 +20,6 @@ import subprocess
 import six
 
 from .console import log
-from .repo import get_repo
 from . import util
 from . import wheel_cache
 
@@ -342,7 +341,6 @@ class Environment(object):
 
         self._is_setup = False
 
-        self._repo = get_repo(conf)
         self._cache = wheel_cache.WheelCache(conf, self._path)
         self._build_root = os.path.abspath(os.path.join(self._path, 'project'))
 
@@ -375,12 +373,6 @@ class Environment(object):
     @property
     def python(self):
         return self._python
-
-    @property
-    def repo(self):
-        if not self._is_setup:
-            raise ValueError("No repo set up yet")
-        return self._repo
 
     def check_presence(self):
         """
@@ -477,19 +469,19 @@ class Environment(object):
         """
         raise NotImplementedError()
 
-    def checkout_project(self, commit_hash):
+    def checkout_project(self, repo, commit_hash):
         """
         Check out the working tree of the project at given commit hash
         """
-        self._repo.checkout(self._build_root, commit_hash)
+        repo.checkout(self._build_root, commit_hash)
 
-    def build_project(self, commit_hash):
-        self.checkout_project(commit_hash)
+    def build_project(self, repo, commit_hash):
+        self.checkout_project(repo, commit_hash)
         log.info("Building for {0}".format(self.name))
         self.run(['setup.py', 'build'], cwd=self._build_root)
         return self._build_root
 
-    def install_project(self, conf, commit_hash=None):
+    def install_project(self, conf, repo, commit_hash=None):
         """
         Install the benchmarked project into the environment.
         Uninstalls any installed copy of the project first.
@@ -500,15 +492,15 @@ class Environment(object):
         if commit_hash is None:
             commit_hash = self._cache.get_existing_commit_hash()
             if commit_hash is None:
-                commit_hash = self.repo.get_hash_from_master()
+                commit_hash = repo.get_hash_from_master()
 
         self.uninstall(conf.project)
 
         build_root = self._cache.build_project_cached(
-            self, conf, commit_hash)
+            self, conf, repo, commit_hash)
 
         if build_root is None:
-            build_root = self.build_project(commit_hash)
+            build_root = self.build_project(repo, commit_hash)
 
         self.install(build_root)
 
@@ -613,7 +605,7 @@ class ExistingEnvironment(Environment):
     def _setup(self):
         pass
 
-    def install_project(self, conf, commit_hash=None):
+    def install_project(self, conf, repo, commit_hash=None):
         pass
 
     def can_install_project(self):

@@ -91,7 +91,7 @@ class Find(Command):
             log.error("No environments selected")
             return 1
 
-        benchmarks = Benchmarks(conf, environments, regex=bench)
+        benchmarks = Benchmarks(conf, repo, environments, regex=bench)
         if len(benchmarks) == 0:
             log.error("'{0}' benchmark not found".format(bench))
             return 1
@@ -119,7 +119,7 @@ class Find(Command):
                 "For {0} commit hash {1}:".format(
                     conf.project, commit_hash[:8]))
 
-            env.install_project(conf, commit_hash)
+            env.install_project(conf, repo, commit_hash)
             x = benchmarks.run_benchmarks(
                 env, show_stderr=show_stderr)
             result = list(x.values())[0]['result']

@@ -16,6 +16,7 @@ from asv import benchmarks
 from asv import config
 from asv import environment
 from asv import util
+from asv.repo import get_repo
 
 from . import tools
 
@@ -42,25 +43,27 @@ def test_find_benchmarks(tmpdir):
     d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
     conf = config.Config.from_json(d)
 
+    repo = get_repo(conf)
+
     envs = list(environment.get_environments(conf, None))
 
-    b = benchmarks.Benchmarks(conf, envs, regex='secondary')
+    b = benchmarks.Benchmarks(conf, repo, envs, regex='secondary')
     assert len(b) == 3
 
-    b = benchmarks.Benchmarks(conf, envs, regex='example')
+    b = benchmarks.Benchmarks(conf, repo, envs, regex='example')
     assert len(b) == 22
 
-    b = benchmarks.Benchmarks(conf, envs, regex='time_example_benchmark_1')
+    b = benchmarks.Benchmarks(conf, repo, envs, regex='time_example_benchmark_1')
     assert len(b) == 2
 
-    b = benchmarks.Benchmarks(conf, envs, regex=['time_example_benchmark_1',
-                                                 'some regexp that does not match anything'])
+    b = benchmarks.Benchmarks(conf, repo, envs, regex=['time_example_benchmark_1',
+                                                       'some regexp that does not match anything'])
     assert len(b) == 2
 
-    b = benchmarks.Benchmarks(conf, envs)
+    b = benchmarks.Benchmarks(conf, repo, envs)
     assert len(b) == 26
 
-    b = benchmarks.Benchmarks(conf, envs)
+    b = benchmarks.Benchmarks(conf, repo, envs)
     times = b.run_benchmarks(envs[0], profile=True, show_stderr=True)
 
     assert len(times) == len(b)
@@ -135,10 +138,11 @@ def test_invalid_benchmark_tree(tmpdir):
     d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
     conf = config.Config.from_json(d)
 
+    repo = get_repo(conf)
     envs = list(environment.get_environments(conf, None))
 
     with pytest.raises(util.UserError):
-        b = benchmarks.Benchmarks(conf, envs)
+        b = benchmarks.Benchmarks(conf, repo, envs)
 
 
 def test_table_formatting():
@@ -220,7 +224,8 @@ def track_this():
     d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
     conf = config.Config.from_json(d)
 
+    repo = get_repo(conf)
     envs = list(environment.get_environments(conf, None))
 
-    b = benchmarks.Benchmarks(conf, envs, regex='track_this')
+    b = benchmarks.Benchmarks(conf, repo, envs, regex='track_this')
     assert len(b) == 1

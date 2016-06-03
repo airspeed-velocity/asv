@@ -25,10 +25,10 @@ from . import common_args
 
 
 def _do_build(args):
-    env, conf, commit_hash = args
+    env, conf, repo, commit_hash = args
     try:
         with log.set_level(logging.WARN):
-            env.install_project(conf, commit_hash)
+            env.install_project(conf, repo, commit_hash)
     except util.ProcessError:
         return False
     return True
@@ -179,7 +179,7 @@ class Run(Command):
                         "No range spec may be specified if benchmarking in "
                         "an existing environment")
 
-        benchmarks = Benchmarks(conf, environments, regex=bench)
+        benchmarks = Benchmarks(conf, repo, environments, regex=bench)
         if len(benchmarks) == 0:
             log.error("No benchmarks selected")
             return 1
@@ -239,7 +239,7 @@ class Run(Command):
                     log.info("Building for {0}".format(
                         ', '.join([x.name for x in subenv])))
                     with log.indent():
-                        args = [(env, conf, commit_hash) for env in subenv]
+                        args = [(env, conf, repo, commit_hash) for env in subenv]
                         if parallel != 1:
                             pool = multiprocessing.Pool(parallel)
                             try:
