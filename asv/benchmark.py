@@ -266,6 +266,7 @@ class Benchmark(object):
         name = name.split('.', 1)[1]
         self.name = name
         self.func = func
+        self.pretty_name = getattr(func, "pretty_name", name)
         self._attr_sources = attr_sources
         self._setups = list(_get_all_attrs(attr_sources, 'setup', True))[::-1]
         self._teardowns = list(_get_all_attrs(attr_sources, 'teardown', True))

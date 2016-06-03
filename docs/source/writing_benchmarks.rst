@@ -187,6 +187,9 @@ The following attributes are applicable to all benchmark types:
 - ``timeout``: The amount of time, in seconds, to give the benchmark
   to run before forcibly killing it.  Defaults to 60 seconds.
 
+- ``pretty_name``: If given, used to display the benchmark name instead of the
+  benchmark function name.
+
 Parameterized benchmarks
 ------------------------
 
