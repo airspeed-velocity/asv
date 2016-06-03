@@ -46,18 +46,6 @@ def check_benchmark_params(name, benchmark):
             raise ValueError(msg)
 
 
-def safe_branch_name(branch):
-    """
-    Convert a branch name to a string, dealing with the None default value
-    """
-    if branch is None:
-        # Occurs only if no branch is set in the configuration, and is
-        # not visible to the user.
-        return "master"
-    else:
-        return branch
-
-
 class Publish(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
@@ -151,7 +139,7 @@ class Publish(Command):
                         if results.commit_hash in commits
                     ]:
                         cur_params = dict(results.params)
-                        cur_params['branch'] = safe_branch_name(branch)
+                        cur_params['branch'] = repo.get_branch_name(branch)
 
                         # Backward compatibility, see above
                         for param_key, param_value in list(cur_params.items()):
@@ -193,7 +181,7 @@ class Publish(Command):
             val = list(val)
             val.sort(key=lambda x: '[none]' if x is None else str(x))
             params[key] = val
-        params['branch'] = [safe_branch_name(branch) for branch in conf.branches]
+        params['branch'] = [repo.get_branch_name(branch) for branch in conf.branches]
         util.write_json(os.path.join(conf.html_dir, "index.json"), {
             'project': conf.project,
             'project_url': conf.project_url,

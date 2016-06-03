@@ -143,14 +143,18 @@ def generate_result_dir(request, tmpdir):
         return conf, repo, commits
     return _generate_result_dir
 
-GRAPH_PATH = join("graphs", "branch-master", "machine-tarzan", "time_func.json")
-
+def _graph_path(dvcs_type):
+    if dvcs_type == "git":
+        master = "master"
+    elif dvcs_type == "hg":
+        master = "default"
+    return join("graphs", "branch-{0}".format(master), "machine-tarzan", "time_func.json")
 
 def test_regression_simple(generate_result_dir):
     conf, repo, commits = generate_result_dir(5 * [1] + 5 * [10])
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
-    expected = {"regressions": [["time_func", GRAPH_PATH, {}, None, [
+    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
         [[None, repo.get_date_from_name(commits[5])]], 10.0, 1.0,
     ]]]}
     assert regressions == expected
@@ -160,7 +164,7 @@ def test_regression_range(generate_result_dir):
     conf, repo, commits = generate_result_dir(5 * [1] + 6 * [10], commits_without_result=[5])
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
-    expected = {"regressions": [["time_func", GRAPH_PATH, {}, None, [
+    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
         [[repo.get_date_from_name(commits[4]), repo.get_date_from_name(commits[6])]], 10.0, 1.0,
     ]]]}
     assert regressions == expected
@@ -178,7 +182,7 @@ def test_regression_double(generate_result_dir):
     conf, repo, commits = generate_result_dir(5 * [1] + 5 * [10] + 5 * [15])
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
-    expected = {"regressions": [["time_func", GRAPH_PATH, {}, None, [
+    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
         [[None, repo.get_date_from_name(commits[5])], [None, repo.get_date_from_name(commits[10])]], 15.0, 1.0,
     ]]]}
     assert regressions == expected
@@ -202,7 +206,7 @@ def test_regression_first_commits(generate_result_dir):
     conf.regressions_first_commits = {"^time_*": commits[2]}
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
-    expected = {"regressions": [["time_func", GRAPH_PATH, {}, None, [
+    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
         [[None, repo.get_date_from_name(commits[5])]], 10.0, 1.0,
     ]]]}
     assert regressions == expected
@@ -216,13 +220,13 @@ def test_regression_parameterized(generate_result_dir):
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {'regressions': [[
         'time_func(a)',
-        GRAPH_PATH,
+        _graph_path(repo.dvcs),
         {},
         0,
         [[[None, repo.get_date_from_name(commits[5])]], 6.0, 5.0],
     ], [
         'time_func(c)',
-        GRAPH_PATH,
+        _graph_path(repo.dvcs),
         {},
         2,
         [[[None, repo.get_date_from_name(commits[5])]], 10.0, 1.0],

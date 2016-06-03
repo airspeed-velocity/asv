@@ -22,6 +22,7 @@ from .. import util
 
 class Hg(Repo):
     dvcs = "hg"
+    _default_branch = "default"
 
     def __init__(self, url, mirror_path):
         # TODO: shared repositories in Mercurial are only possible
@@ -79,9 +80,7 @@ class Hg(Repo):
         return '{0}::{1} and not {0}'.format(commit_a, commit_b, commit_a)
 
     def get_new_range_spec(self, latest_result, branch=None):
-        if branch is None:
-            branch = "default"
-        return '{0}::{1}'.format(latest_result, branch)
+        return '{0}::{1}'.format(latest_result, self.get_branch_name(branch))
 
     def pull(self):
         # We assume the remote isn't updated during the run of asv
@@ -128,9 +127,6 @@ class Hg(Repo):
     def get_hash_from_name(self, name):
         return self._repo.log(name)[0].node
 
-    def get_hash_from_master(self):
-        return self.get_hash_from_name('default')
-
     def get_hash_from_parent(self, name):
         return self.get_hash_from_name('p1({0})'.format(name))
 
@@ -141,6 +137,4 @@ class Hg(Repo):
         return self.get_date(name)
 
     def get_branch_commits(self, branch):
-        if branch is None:
-            branch = "default"
-        return self.get_hashes_from_range("ancestors({0})".format(branch))
+        return self.get_hashes_from_range("ancestors({0})".format(self.get_branch_name(branch)))
