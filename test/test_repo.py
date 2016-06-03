@@ -309,3 +309,93 @@ def test_get_new_branch_commits(two_branch_repo_case, existing, expected):
         for commit in r.get_new_branch_commits(conf.branches, existing_commits)
     ])
     assert commits == expected
+
+
+def test_git_submodule(tmpdir):
+    tmpdir = six.text_type(tmpdir)
+
+    # State 0 (no submodule)
+    dvcs = tools.generate_test_repo(tmpdir, values=[0], dvcs_type='git')
+    sub_dvcs = tools.generate_test_repo(tmpdir, values=[0], dvcs_type='git')
+    ssub_dvcs = tools.generate_test_repo(tmpdir, values=[0], dvcs_type='git')
+    commit_hash_0 = dvcs.get_hash("master")
+
+    # State 1 (one submodule)
+    dvcs.run_git(['submodule', 'add', sub_dvcs.path, 'sub1'])
+    dvcs.commit('Add sub1')
+    commit_hash_1 = dvcs.get_hash("master")
+
+    # State 2 (one submodule with sub-submodule)
+    dvcs.run_git(['submodule', 'update', '--init'])
+    sub1_dvcs = tools.Git(join(dvcs.path, 'sub1'))
+    sub_dvcs.run_git(['submodule', 'add', ssub_dvcs.path, 'ssub1'])
+    sub_dvcs.commit('Add sub1')
+    sub1_dvcs.run_git(['pull'])
+    dvcs.run_git(['add', 'sub1'])
+    dvcs.commit('Update sub1')
+    sub1_hash_2 = sub1_dvcs.get_hash("master")
+    commit_hash_2 = dvcs.get_hash("master")
+
+    # State 3 (one submodule; sub-submodule removed)
+    sub_dvcs.run_git(['rm', '-f', 'ssub1'])
+    sub_dvcs.commit('Remove ssub1')
+    sub1_dvcs.run_git(['pull'])
+    dvcs.run_git(['add', 'sub1'])
+    dvcs.commit('Update sub1 again')
+    commit_hash_3 = dvcs.get_hash("master")
+
+    # State 4 (back to one submodule with sub-submodule)
+    sub1_dvcs.run_git(['checkout', sub1_hash_2])
+    dvcs.run_git(['add', 'sub1'])
+    dvcs.commit('Update sub1 3rd time')
+    commit_hash_4 = dvcs.get_hash("master")
+
+    # State 5 (remove final submodule)
+    dvcs.run_git(['rm', '-f', 'sub1'])
+    dvcs.commit('Remove sub1')
+    commit_hash_5 = dvcs.get_hash("master")
+
+
+    # Verify clean operation
+    conf = config.Config()
+    conf.branches = [None]
+    conf.repo = dvcs.path
+    conf.project = join(tmpdir, "repo")
+    r = repo.get_repo(conf)
+
+    checkout_dir = join(tmpdir, "checkout")
+
+    # State 0
+    r.checkout(checkout_dir, commit_hash_0)
+    assert os.path.isfile(join(checkout_dir, 'README'))
+    assert not os.path.exists(join(checkout_dir, 'sub1'))
+
+    # State 1
+    r.checkout(checkout_dir, commit_hash_1)
+    assert os.path.isfile(join(checkout_dir, 'sub1', 'README'))
+    assert not os.path.exists(join(checkout_dir, 'sub1', 'ssub1'))
+
+    # State 2
+    r.checkout(checkout_dir, commit_hash_2)
+    assert os.path.isfile(join(checkout_dir, 'sub1', 'ssub1', 'README'))
+
+    # State 3
+    r.checkout(checkout_dir, commit_hash_3)
+    assert os.path.isfile(join(checkout_dir, 'sub1', 'README'))
+    assert not os.path.exists(join(checkout_dir, 'sub1', 'ssub1'))
+
+    # State 4
+    r.checkout(checkout_dir, commit_hash_4)
+    assert os.path.isfile(join(checkout_dir, 'sub1', 'ssub1', 'README'))
+
+    # State 4 (check clean -fdx runs in sub-sub modules)
+    garbage_filename = join(checkout_dir, 'sub1', 'ssub1', '.garbage')
+    util.write_json(garbage_filename, {})
+    assert os.path.isfile(garbage_filename)
+    r.checkout(checkout_dir, commit_hash_4)
+    assert not os.path.isfile(garbage_filename)
+
+    # State 5
+    r.checkout(checkout_dir, commit_hash_5)
+    assert os.path.isfile(join(checkout_dir, 'README'))
+    assert not os.path.isdir(join(checkout_dir, 'sub1'))
