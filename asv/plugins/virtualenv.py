@@ -119,10 +119,15 @@ class Virtualenv(environment.Environment):
 
     def _install_requirements(self):
         if sys.version_info[:2] == (3, 2):
-            self.run_executable(
-                'pip', ['install', '-v', 'wheel<0.29.0', 'pip<8'])
+            pip_args = ['install', '-v', 'wheel<0.29.0', 'pip<8']
         else:
-            self.run_executable('pip', ['install', '-v', 'wheel', 'pip>=8'])
+            pip_args = ['install', '-v', 'wheel', 'pip>=8']
+
+        if not WIN:
+            self.run_executable('pip', pip_args)
+        else:
+            # Run pip self-upgrade via python -m pip, so that it works on Windows
+            self.run_executable('python', ['-m', 'pip'] + pip_args)
 
         if self._requirements:
             args = ['install', '-v', '--upgrade']
