@@ -8,6 +8,8 @@ $(document).ready(function() {
     var current_benchmark = null;
     /* An array of graphs being displayed. */
     var graphs = [];
+    /* An array of commit dates being displayed */
+    var current_dates = [];
     /* True when log scaling is enabled. */
     var log_scale = false;
     /* True when zooming in on the y-axis. */
@@ -569,7 +571,7 @@ $(document).ready(function() {
         /* Time/commit value selector */
         if (x_coordinate_axis != 0) {
             /* Generate list of all commits+dates */
-            var dates = Object.keys($.asv.master_json.date_to_hash).map(function (x) { return parseInt(x); });
+            var dates = current_dates.slice();
             dates.sort();
             dates.push(null);
             dates.reverse();
@@ -839,10 +841,16 @@ $(document).ready(function() {
         var failures = 0;
         var count = 1;
 
+        current_dates = [];
         $.each(to_load, function(i, item) {
             $.asv.load_graph_data(
                 item[0]
             ).done(function (data) {
+                $.each(data, function(i, point) {
+                    if (current_dates.indexOf(point[0]) === -1) {
+                        current_dates.push(point[0]);
+                    }
+                });
                 $.each(item[1], function(j, graph_content) {
                     var series;
                     series = $.asv.filter_graph_data(data,
