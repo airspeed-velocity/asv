@@ -8,6 +8,7 @@ import base64
 import os
 import zlib
 import itertools
+import datetime
 
 import six
 from six.moves import zip as izip
@@ -196,6 +197,8 @@ class Results(object):
         self._profiles = {}
         self._python = python
         self._env_name = env_name
+        self._started_at = {}
+        self._ended_at = {}
 
         self._filename = get_filename(
             params['machine'], self._commit_hash, env_name)
@@ -216,19 +219,36 @@ class Results(object):
     def results(self):
         return self._results
 
-    def add_time(self, benchmark_name, time):
+    @property
+    def started_at(self):
+        return self._started_at
+
+    @property
+    def ended_at(self):
+        return self._ended_at
+
+    def add_result(self, benchmark_name, result, started_at, ended_at):
         """
-        Add benchmark times.
+        Add benchmark result.
 
         Parameters
         ----------
         benchmark_name : str
             Name of benchmark
 
-        time : number
-            Numeric result
+        result : {float, dict}
+            Result of the benchmark. A number, or for parameterized benchmarks
+            a dictionary ``{'result': number, 'params': [param1, ...], ...}``
+
+        started_at : datetime
+            Datetime when the benchmark run started
+
+        ended_at : datetime
+            Datetime when the benchmark run ended
         """
-        self._results[benchmark_name] = time
+        self._results[benchmark_name] = result
+        self._started_at[benchmark_name] = util.datetime_to_js_timestamp(started_at)
+        self._ended_at[benchmark_name] = util.datetime_to_js_timestamp(ended_at)
 
     def add_profile(self, benchmark_name, profile):
         """
@@ -269,7 +289,7 @@ class Results(object):
         """
         path = os.path.join(result_dir, self._filename)
 
-        util.write_json(path, {
+        data = {
             'results': self._results,
             'params': self._params,
             'requirements': self._requirements,
@@ -277,8 +297,12 @@ class Results(object):
             'date': self._date,
             'env_name': self._env_name,
             'python': self._python,
-            'profiles': self._profiles
-        }, self.api_version)
+            'profiles': self._profiles,
+            'started_at': self._started_at,
+            'ended_at': self._ended_at
+        }
+
+        util.write_json(path, data, self.api_version)
 
     def update_save(self, result_dir):
         """
@@ -322,6 +346,10 @@ class Results(object):
         if 'profiles' in d:
             obj._profiles = d['profiles']
         obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
+
+        obj._started_at = d.get('started_at', {})
+        obj._ended_at = d.get('ended_at', {})
+
         return obj
 
     def add_existing_results(self, old):
@@ -329,12 +357,12 @@ class Results(object):
         Add any existing old results that aren't overridden by the
         current results.
         """
-        for key, val in six.iteritems(old.results):
-            if key not in self._results:
-                self._results[key] = val
-        for key, val in six.iteritems(old._profiles):
-            if key not in self._profiles:
-                self._profiles[key] = val
+        for dict_name in ('_results', '_profiles', '_started_at', '_ended_at'):
+            old_dict = getattr(old, dict_name)
+            new_dict = getattr(self, dict_name)
+            for key, val in six.iteritems(old_dict):
+                if key not in new_dict:
+                    new_dict[key] = val
 
     def rm(self, result_dir):
         path = os.path.join(result_dir, self._filename)
