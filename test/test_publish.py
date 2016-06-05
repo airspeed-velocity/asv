@@ -11,6 +11,7 @@ import shutil
 
 import six
 import pytest
+import xml.etree.ElementTree as etree
 try:
     import hglib
 except ImportError:
@@ -177,7 +178,7 @@ def test_regression_simple(generate_result_dir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
-        [[None, 5]], 10.0, 1.0,
+        [[None, 5, 1.0, 10.0]], 10.0, 1.0,
     ]]]}
     assert regressions == expected
 
@@ -187,7 +188,7 @@ def test_regression_range(generate_result_dir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
-        [[4, 6]], 10.0, 1.0,
+        [[4, 6, 1.0, 10.0]], 10.0, 1.0,
     ]]]}
     assert regressions == expected
 
@@ -205,7 +206,7 @@ def test_regression_double(generate_result_dir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
-        [[None, 5], [None, 10]], 15.0, 1.0,
+        [[None, 5, 1.0, 10.0], [None, 10, 10.0, 15.0]], 15.0, 1.0,
     ]]]}
     assert regressions == expected
 
@@ -229,7 +230,7 @@ def test_regression_first_commits(generate_result_dir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
-        [[None, 5]], 10.0, 1.0,
+        [[None, 5, 1.0, 10.0]], 10.0, 1.0,
     ]]]}
     assert regressions == expected
 
@@ -245,13 +246,13 @@ def test_regression_parameterized(generate_result_dir):
         _graph_path(repo.dvcs),
         {},
         0,
-        [[[None, 5]], 6.0, 5.0],
+        [[[None, 5, 5.0, 6.0]], 6.0, 5.0],
     ], [
         'time_func(c)',
         _graph_path(repo.dvcs),
         {},
         2,
-        [[[None, 5]], 10.0, 1.0],
+        [[[None, 5, 1.0, 10.0]], 10.0, 1.0],
     ]]}
     assert regressions == expected
 
@@ -304,7 +305,7 @@ def test_regression_multiple_branches(dvcs_type, tmpdir):
     # Regression occur on 5th commit of stable branch
     revision = repo.get_revisions(commit_values.keys())[branches["stable"][5]]
     expected = {'regressions': [['time_func', graph_path, {'branch': 'stable'}, None,
-                                 [[[None, revision]], 2.0, 1.0]]]}
+                                 [[[None, revision, 1.0, 2.0]], 2.0, 1.0]]]}
     assert regressions == expected
 
 
@@ -329,5 +330,31 @@ def test_regression_non_monotonic(dvcs_type, tmpdir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {'regressions': [['time_func', _graph_path(dvcs_type), {}, None,
-                                 [[[None, 5]], 2.0, 1.0]]]}
+                                 [[[None, 5, 1.0, 2.0]], 2.0, 1.0]]]}
     assert regressions == expected
+
+
+def test_regression_atom_feed(generate_result_dir):
+    conf, repo, commits = generate_result_dir(5 * [1] + 5 * [10] + 5 * [15])
+    tools.run_asv_with_conf(conf, "publish")
+
+    commits = list(reversed(repo.get_branch_commits(None)))
+
+    tree = etree.parse(join(conf.html_dir, "regressions.xml"))
+    root = tree.getroot()
+
+    assert root.tag == '{http://www.w3.org/2005/Atom}feed'
+    entries = root.findall('{http://www.w3.org/2005/Atom}entry')
+
+    # Check entry titles
+    assert len(entries) == 2
+    title = entries[0].find('{http://www.w3.org/2005/Atom}title')
+    assert title.text == '900.00% time_func'
+    title = entries[1].find('{http://www.w3.org/2005/Atom}title')
+    assert title.text == '50.00% time_func'
+
+    # Check there's a link of some sort to the website in the content
+    content = entries[0].find('{http://www.w3.org/2005/Atom}content')
+    assert ('<a href="index.html#time_func?commits=' + commits[5]) in content.text
+    content = entries[1].find('{http://www.w3.org/2005/Atom}content')
+    assert ('<a href="index.html#time_func?commits=' + commits[10]) in content.text
