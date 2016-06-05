@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import six
 
+import datetime
 import logging
 import traceback
 
@@ -238,6 +239,7 @@ class Run(Command):
                 for subenv in util.iter_chunks(environments, parallel):
                     log.info("Building for {0}".format(
                         ', '.join([x.name for x in subenv])))
+
                     with log.indent():
                         args = [(env, conf, repo, commit_hash) for env in subenv]
                         if parallel != 1:
@@ -252,6 +254,8 @@ class Run(Command):
                             successes = map(_do_build, args)
 
                     for env, success in zip(subenv, successes):
+                        start_time = datetime.datetime.utcnow()
+
                         if success:
                             params['python'] = env.python
                             params.update(env.requirements)
@@ -260,6 +264,8 @@ class Run(Command):
                                 profile=profile, skip=skipped_benchmarks)
                         else:
                             results = benchmarks.skip_benchmarks(env)
+
+                        end_time = datetime.datetime.utcnow()
 
                         if dry_run or isinstance(env, environment.ExistingEnvironment):
                             continue
@@ -270,7 +276,9 @@ class Run(Command):
                             commit_hash,
                             repo.get_date(commit_hash),
                             env.python,
-                            env.name)
+                            env.name,
+                            start_time,
+                            end_time)
 
                         for benchmark_name, d in six.iteritems(results):
                             result.add_time(benchmark_name, d['result'])
