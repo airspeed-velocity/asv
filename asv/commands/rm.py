@@ -91,6 +91,10 @@ class Rm(Command):
                         count += 1
                         files_to_remove.add(result)
                         del result.results[benchmark]
+
+                        # Remove run times (may be missing in old files)
+                        result.started_at.pop(benchmark, None)
+                        result.ended_at.pop(benchmark, None)
             else:
                 files_to_remove.add(result)
 

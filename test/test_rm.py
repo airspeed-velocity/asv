@@ -33,6 +33,10 @@ def test_rm(tmpdir):
     for result in results_a:
         for key in six.iterkeys(result.results):
             assert not key.startswith('time_quantity')
+        for key in six.iterkeys(result.started_at):
+            assert not key.startswith('time_quantity')
+        for key in six.iterkeys(result.ended_at):
+            assert not key.startswith('time_quantity')
 
     tools.run_asv_with_conf(conf, 'rm', '-y', 'commit_hash=05d283b9')
 
