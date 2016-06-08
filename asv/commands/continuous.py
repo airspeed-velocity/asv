@@ -32,7 +32,7 @@ class Continuous(Command):
             parent of the tested commit.""")
         parser.add_argument(
             'branch', default=None,
-            help="""The commit/branch to test. By default, the master branch.""")
+            help="""The commit/branch to test. By default, the first configured branch.""")
         common_args.add_factor(parser)
         common_args.add_show_stderr(parser)
         common_args.add_bench(parser)
@@ -57,9 +57,9 @@ class Continuous(Command):
         repo.pull()
 
         if branch is None:
-            head = repo.get_hash_from_master()
-        else:
-            head = repo.get_hash_from_name(branch)
+            branch = conf.branches[0]
+        head = repo.get_hash_from_name(branch)
+
         if base is None:
             parent = repo.get_hash_from_parent(head)
         else:

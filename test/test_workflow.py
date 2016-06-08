@@ -182,40 +182,7 @@ def test_find(capfd, basic_conf):
     assert "Greatest regression found: {0}".format(regression_hash[:8]) in output
 
 
-def _test_run_branches(tmpdir, dvcs, conf, machine_file, range_spec,
-                       branches, initial_commit):
-    # Find the current head commits for each branch
-    commits = [initial_commit]
-    for branch in branches:
-        commits.append(dvcs.get_hash(branch))
-
-    # Run tests
-    tools.run_asv_with_conf(conf, 'run', range_spec, '--quick',
-                            '--bench=time_secondary.track_value',
-                            '--skip-existing-commits',
-                            _machine_file=machine_file)
-
-    # Check that files for all commits expected were generated
-    envs = list(environment.get_environments(conf, None))
-    tool_name = envs[0].tool_name
-
-    expected = set(['machine.json'])
-    for commit in commits:
-        for psver in ['0.3.6', '0.3.7']:
-            expected.add('{0}-{1}-py{2[0]}.{2[1]}-colorama{3}-six.json'.format(
-                commit[:8], tool_name, sys.version_info, psver))
-
-    result_files = os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))
-
-    if range_spec == 'NEW':
-        assert set(result_files) == expected
-    elif range_spec == 'ALL':
-        assert set(expected).difference(result_files) == set([])
-    else:
-        raise ValueError()
-
-
-def test_run_new_all(basic_conf):
+def test_run_spec(basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
     conf.wheel_cache_size = 5
 
@@ -226,6 +193,8 @@ def test_run_new_all(basic_conf):
     conf.repo = dvcs.path
 
     initial_commit = dvcs.get_hash("master~1")
+    master_commit = dvcs.get_hash("master")
+    branch_commit = dvcs.get_hash("some-branch")
     template_dir = os.path.join(tmpdir, "results_workflow_template")
     results_dir = os.path.join(tmpdir, 'results_workflow')
     tools.run_asv_with_conf(conf, 'run', initial_commit+"^!",
@@ -234,25 +203,41 @@ def test_run_new_all(basic_conf):
                             _machine_file=join(tmpdir, 'asv-machine.json'))
     shutil.copytree(results_dir, template_dir)
 
-    def rollback():
+    def _test_run(range_spec, branches, expected_commits):
+        # Rollback initial results
         shutil.rmtree(results_dir)
         shutil.copytree(template_dir, results_dir)
 
-    # Without branches in config, should just use master
-    _test_run_branches(tmpdir, dvcs, conf, machine_file, 'NEW',
-                       branches=['master'], initial_commit=initial_commit)
-    rollback()
+        args = ["run", "--quick", "--skip-existing-successful",
+                "--bench=time_secondary.track_value"]
+        if range_spec is not None:
+            args.append(range_spec)
+        conf.branches = branches
+        tools.run_asv_with_conf(conf, *args, _machine_file=machine_file)
 
-    _test_run_branches(tmpdir, dvcs, conf, machine_file, 'ALL',
-                       branches=['master'], initial_commit=initial_commit)
-    rollback()
+        # Check that files for all commits expected were generated
+        envs = list(environment.get_environments(conf, None))
+        tool_name = envs[0].tool_name
 
-    # With branches in config
-    conf.branches = ['master', 'some-branch']
+        expected = set(['machine.json'])
+        for commit in expected_commits:
+            for psver in ['0.3.6', '0.3.7']:
+                expected.add('{0}-{1}-py{2[0]}.{2[1]}-colorama{3}-six.json'.format(
+                    commit[:8], tool_name, sys.version_info, psver))
 
-    _test_run_branches(tmpdir, dvcs, conf, machine_file, 'NEW',
-                       branches=['master', 'some-branch'], initial_commit=initial_commit)
-    rollback()
+        result_files = os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))
 
-    _test_run_branches(tmpdir, dvcs, conf, machine_file, 'ALL',
-                       branches=['master', 'some-branch'], initial_commit=initial_commit)
+        assert set(result_files) == expected
+
+    for branches, expected_commits in (
+        # Without branches in config, shoud just use master
+        ([None], [initial_commit, master_commit]),
+
+        # With one branch in config, should just use that branch
+        (["some-branch"], [initial_commit, branch_commit]),
+
+        # With two branch in config, should apply to specified branches
+        (["master", "some-branch"], [initial_commit, master_commit, branch_commit]),
+    ):
+        for range_spec in (None, "NEW", "ALL"):
+            _test_run(range_spec, branches, expected_commits)

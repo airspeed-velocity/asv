@@ -125,6 +125,8 @@ class Hg(Repo):
                                                    followfirst=True)]
 
     def get_hash_from_name(self, name):
+        if name is None:
+            name = self.get_branch_name()
         return self._repo.log(name)[0].node
 
     def get_hash_from_parent(self, name):

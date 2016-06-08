@@ -115,12 +115,6 @@ class Repo(object):
         """
         raise NotImplementedError()
 
-    def get_hash_from_master(self):
-        """
-        Get the hash of the current master branch commit.
-        """
-        return self.get_hash_from_name(self.get_branch_name())
-
     def get_hash_from_parent(self, name):
         """
         Checkout the parent of the currently checked out commit.
