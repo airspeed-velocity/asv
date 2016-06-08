@@ -191,6 +191,8 @@ def _test_run_branches(tmpdir, dvcs, conf, machine_file, range_spec,
 
     # Run tests
     tools.run_asv_with_conf(conf, 'run', range_spec, '--quick',
+                            '--bench=time_secondary.track_value',
+                            '--skip-existing-commits',
                             _machine_file=machine_file)
 
     # Check that files for all commits expected were generated
@@ -224,33 +226,33 @@ def test_run_new_all(basic_conf):
     conf.repo = dvcs.path
 
     initial_commit = dvcs.get_hash("master~1")
+    template_dir = os.path.join(tmpdir, "results_workflow_template")
+    results_dir = os.path.join(tmpdir, 'results_workflow')
+    tools.run_asv_with_conf(conf, 'run', initial_commit+"^!",
+                            '--bench=time_secondary.track_value',
+                            '--quick',
+                            _machine_file=join(tmpdir, 'asv-machine.json'))
+    shutil.copytree(results_dir, template_dir)
 
-    def init_results():
-        results_dir = os.path.join(tmpdir, 'results_workflow')
-        if os.path.isdir(results_dir):
-            shutil.rmtree(results_dir)
-        tools.run_asv_with_conf(conf, 'run', initial_commit+"^!",
-                                '--bench=time_secondary.track_value',
-                                '--quick', '--skip-existing-successful',
-                                '--skip-existing-failed',
-                                _machine_file=join(tmpdir, 'asv-machine.json'))
+    def rollback():
+        shutil.rmtree(results_dir)
+        shutil.copytree(template_dir, results_dir)
 
     # Without branches in config, should just use master
-    init_results()
     _test_run_branches(tmpdir, dvcs, conf, machine_file, 'NEW',
                        branches=['master'], initial_commit=initial_commit)
+    rollback()
 
-    init_results()
     _test_run_branches(tmpdir, dvcs, conf, machine_file, 'ALL',
                        branches=['master'], initial_commit=initial_commit)
+    rollback()
 
     # With branches in config
     conf.branches = ['master', 'some-branch']
 
-    init_results()
     _test_run_branches(tmpdir, dvcs, conf, machine_file, 'NEW',
                        branches=['master', 'some-branch'], initial_commit=initial_commit)
+    rollback()
 
-    init_results()
     _test_run_branches(tmpdir, dvcs, conf, machine_file, 'ALL',
                        branches=['master', 'some-branch'], initial_commit=initial_commit)
