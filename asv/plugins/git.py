@@ -114,6 +114,8 @@ class Git(Repo):
         return output.strip().split()
 
     def get_hash_from_name(self, name):
+        if name is None:
+            name = self.get_branch_name()
         return self._run_git(['rev-parse', name],
                              dots=False).strip().split()[0]
 

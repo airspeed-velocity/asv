@@ -487,12 +487,12 @@ class Environment(object):
         Uninstalls any installed copy of the project first.
         If no specific commit hash is given, one is chosen;
         either a choice that already exist in wheel cache,
-        or current master branch in the repository.
+        or first current branch configured.
         """
         if commit_hash is None:
             commit_hash = self._cache.get_existing_commit_hash()
             if commit_hash is None:
-                commit_hash = repo.get_hash_from_master()
+                commit_hash = repo.get_hash_from_name(conf.branches[0])
 
         self.uninstall(conf.project)
 
