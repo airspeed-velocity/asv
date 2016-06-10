@@ -84,10 +84,15 @@ class Git(Repo):
 
     def checkout(self, path, commit_hash):
         def checkout_existing(display_error):
-            self._run_git(['checkout', '-f', commit_hash], cwd=path,
-                          display_error=display_error)
-            self._run_git(['clean', '-fdx'], cwd=path,
-                          display_error=display_error)
+            # Deinit fails if no submodules, so ignore its failure
+            self._run_git(['submodule', 'deinit', '-f', '.'],
+                          cwd=path, display_error=False, valid_return_codes=None)
+            self._run_git(['checkout', '-f', commit_hash],
+                          cwd=path, display_error=display_error)
+            self._run_git(['clean', '-fdx'],
+                          cwd=path, display_error=display_error)
+            self._run_git(['submodule', 'update', '--init', '--recursive'],
+                          cwd=path, display_error=display_error)
 
         if os.path.isdir(path):
             try:
@@ -97,7 +102,7 @@ class Git(Repo):
                 util.long_path_rmtree(path)
 
         if not os.path.isdir(path):
-            self._run_git(['clone', '--shared', self._path, path],
+            self._run_git(['clone', '--shared', '--recursive', self._path, path],
                           cwd=None)
             checkout_existing(display_error=True)
 

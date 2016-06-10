@@ -13,6 +13,7 @@ import os
 import threading
 import time
 import six
+import tempfile
 import sys
 from os.path import abspath, join, dirname, relpath, isdir
 from contextlib import contextmanager
@@ -85,7 +86,7 @@ class Git(object):
         self._git = util.which('git')
         self._fake_date = datetime.datetime.now()
 
-    def _run_git(self, args, chdir=True, **kwargs):
+    def run_git(self, args, chdir=True, **kwargs):
         if chdir:
             cwd = self.path
         else:
@@ -95,9 +96,9 @@ class Git(object):
             [self._git] + args, **kwargs)
 
     def init(self):
-        self._run_git(['init'])
-        self._run_git(['config', 'user.email', 'robot@asv'])
-        self._run_git(['config', 'user.name', 'Robotic Swallow'])
+        self.run_git(['init'])
+        self.run_git(['config', 'user.email', 'robot@asv'])
+        self.run_git(['config', 'user.name', 'Robotic Swallow'])
 
     def commit(self, message):
         # We explicitly override the date here, or the commits
@@ -105,15 +106,15 @@ class Git(object):
         # of problems for asv
         self._fake_date += datetime.timedelta(seconds=1)
 
-        self._run_git(['commit', '--date', self._fake_date.isoformat(),
-                       '-m', message])
+        self.run_git(['commit', '--date', self._fake_date.isoformat(),
+                      '-m', message])
 
     def tag(self, number):
-        self._run_git(['tag', '-a', '-m', 'Tag {0}'.format(number),
-                       'tag{0}'.format(number)])
+        self.run_git(['tag', '-a', '-m', 'Tag {0}'.format(number),
+                      'tag{0}'.format(number)])
 
     def add(self, filename):
-        self._run_git(['add', relpath(filename, self.path)])
+        self.run_git(['add', relpath(filename, self.path)])
 
     def checkout(self, branch_name, start_commit=None):
         args = ["checkout"]
@@ -121,25 +122,25 @@ class Git(object):
             args.extend(["-b", branch_name, start_commit])
         else:
             args.append(branch_name)
-        self._run_git(args)
+        self.run_git(args)
 
     def merge(self, branch_name, commit_message=None):
-        self._run_git(["merge", "--no-ff", "--no-commit", "-X", "theirs", branch_name])
+        self.run_git(["merge", "--no-ff", "--no-commit", "-X", "theirs", branch_name])
         if commit_message is None:
             commit_message = "Merge {0}".format(branch_name)
         self.commit(commit_message)
 
     def get_hash(self, name):
-        return self._run_git(['rev-parse', name]).strip()
+        return self.run_git(['rev-parse', name]).strip()
 
     def get_branch_hashes(self, branch=None):
         if branch is None:
             branch = "master"
-        return [x.strip() for x in self._run_git(['rev-list', branch]).splitlines()
+        return [x.strip() for x in self.run_git(['rev-list', branch]).splitlines()
                 if x.strip()]
 
     def get_commit_message(self, commit_hash):
-        return self._run_git(["log", "-n", "1", "--format=%s", commit_hash]).strip()
+        return self.run_git(["log", "-n", "1", "--format=%s", commit_hash]).strip()
 
 
 _hg_config = """
@@ -271,8 +272,9 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
 
     template_path = join(dirname(__file__), 'test_repo_template')
 
-    dvcs_path = join(tmpdir, 'test_repo')
-    os.makedirs(dvcs_path)
+    if not os.path.isdir(tmpdir):
+        os.makedirs(tmpdir)
+    dvcs_path = tempfile.mkdtemp(prefix='test_repo', dir=tmpdir)
     dvcs = dvcs_cls(dvcs_path)
     dvcs.init()
 
@@ -310,8 +312,10 @@ def generate_repo_from_ops(tmpdir, dvcs_type, operations):
         raise ValueError("Unknown dvcs type {0}".format(dvcs_type))
 
     template_path = join(dirname(__file__), 'test_repo_template')
-    dvcs_path = join(tmpdir, 'test_repo')
-    os.makedirs(dvcs_path)
+
+    if not os.path.isdir(tmpdir):
+        os.makedirs(tmpdir)
+    dvcs_path = tempfile.mkdtemp(prefix='test_repo', dir=tmpdir)
     dvcs = dvcs_cls(dvcs_path)
     dvcs.init()
 
