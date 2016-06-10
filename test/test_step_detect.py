@@ -4,10 +4,11 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import random
 import pytest
 
 from asv.step_detect import (solve_potts, solve_potts_autogamma, solve_potts_approx,
-                             detect_regressions, golden_search, median, rolling_median)
+                             detect_regressions, golden_search, median, rolling_median_dev)
 
 
 try:
@@ -114,8 +115,25 @@ def test_golden_search():
     assert abs(x - (-0.25)) < 1e-4
 
 
+def rolling_median_dev_naive(items):
+    for j in range(1, len(items)):
+        m = median(items[:j])
+        d = sum(abs(x - m) for x in items[:j])
+        yield m, d
+
+
 def test_rolling_median():
-    x = [1, 1, 10, 3, 5, 0.1, 0.6, -3, 4, 9]
-    medians = rolling_median(x)
-    for j, m in enumerate(medians):
-        assert abs(m - median(x[:j+1])) < 1e-10
+    random.seed(1)
+
+    datasets = [
+        [1, 1, 10, 3, 5, 1, -16, -3, 4, 9],
+        [random.gauss(0, 1) for j in range(500)]
+    ]
+
+    for x in datasets:
+        got = list(rolling_median_dev(x))
+        expected = rolling_median_dev_naive(x)
+        for j, b in enumerate(expected):
+            a = got[j]
+            assert abs(a[0] - b[0]) < 1e-10, (a, b)
+            assert abs(a[1] - b[1]) < 1e-10, (a, b)
