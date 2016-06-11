@@ -126,6 +126,12 @@ A benchmark suite directory has the following layout.  The
           including failures in installing the project version. ``NaN``
           indicates a benchmark explicitly skipped by the benchmark suite.
 
+      - ``started_at``: A dictionary from benchmark names to Javascript
+        time stamps indicating the start time of the benchmark run.
+
+      - ``ended_at``: A dictionary from benchmark names to Javascript
+        time stamps indicating the end time of the benchmark run.
+
 - ``$html_dir/``: The output of ``asv publish``, that turns the raw
   results in ``$results_dir/`` into something viewable in a web
   browser.  It is an important feature of ``asv`` that the results can

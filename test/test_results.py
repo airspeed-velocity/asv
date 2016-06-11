@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
+import datetime
 from os.path import join
 
 import six
@@ -15,6 +16,9 @@ import pytest
 
 def test_results(tmpdir):
     tmpdir = six.text_type(tmpdir)
+
+    timestamp1 = datetime.datetime.utcnow()
+    timestamp2 = datetime.datetime.utcnow()
 
     resultsdir = join(tmpdir, "results")
     for i in six.moves.xrange(10):
@@ -30,7 +34,7 @@ def test_results(tmpdir):
             'suite1.benchmark1': float(i * 0.001),
             'suite1.benchmark2': float(i * i * 0.001),
             'suite2.benchmark1': float((i + 1) ** -1)}.items():
-            r.add_time(key, val)
+            r.add_result(key, val, timestamp1, timestamp2)
         r.save(resultsdir)
 
         r2 = results.Results.load(join(resultsdir, r._filename))
@@ -39,6 +43,8 @@ def test_results(tmpdir):
         assert r2.date == r.date
         assert r2.commit_hash == r.commit_hash
         assert r2._filename == r._filename
+        assert r.started_at == r._started_at
+        assert r.ended_at == r._ended_at
 
 
 def test_get_result_hash_from_prefix(tmpdir):
@@ -70,3 +76,21 @@ def test_backward_compat_load():
     r = results.Results.load(join(resultsdir, filename))
     assert r._filename == filename
     assert r._env_name == 'py2.7-Cython-numpy1.8'
+
+
+def test_json_timestamp(tmpdir):
+    # Check that per-benchmark timestamps are saved as JS timestamps in the result file
+    tmpdir = six.text_type(tmpdir)
+
+    stamp0 = datetime.datetime(1970, 1, 1)
+    stamp1 = datetime.datetime(1971, 1, 1)
+    stamp2 = datetime.datetime.utcnow()
+
+    r = results.Results({'machine': 'mach'}, {}, 'aaaa', util.datetime_to_timestamp(stamp0),
+                        'py', 'env')
+    r.add_result('some_benchmark', 42, stamp1, stamp2)
+    r.save(tmpdir)
+
+    r = util.load_json(join(tmpdir, 'mach', 'aaaa-env.json'))
+    assert r['started_at']['some_benchmark'] == util.datetime_to_js_timestamp(stamp1)
+    assert r['ended_at']['some_benchmark'] == util.datetime_to_js_timestamp(stamp2)

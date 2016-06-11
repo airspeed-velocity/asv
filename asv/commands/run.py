@@ -238,6 +238,7 @@ class Run(Command):
                 for subenv in util.iter_chunks(environments, parallel):
                     log.info("Building for {0}".format(
                         ', '.join([x.name for x in subenv])))
+
                     with log.indent():
                         args = [(env, conf, repo, commit_hash) for env in subenv]
                         if parallel != 1:
@@ -273,7 +274,8 @@ class Run(Command):
                             env.name)
 
                         for benchmark_name, d in six.iteritems(results):
-                            result.add_time(benchmark_name, d['result'])
+                            result.add_result(benchmark_name, d['result'],
+                                              d['started_at'], d['ended_at'])
                             if 'profile' in d:
                                 result.add_profile(
                                     benchmark_name,

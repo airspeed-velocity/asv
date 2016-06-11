@@ -30,5 +30,11 @@
         "time_units.time_unit_to": 4.817538261413574e-05, 
         "time_units.time_very_simple_unit_parse": 1.186216115951538e-05
     }, 
+    "started_at": {
+        "time_quantity.time_quantity_array_conversion": 1
+    },
+    "ended_at": {
+        "time_quantity.time_quantity_array_conversion": 2
+    },
     "version": 1
 }

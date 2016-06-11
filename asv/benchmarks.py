@@ -13,6 +13,7 @@ import shutil
 import sys
 import tempfile
 import itertools
+import datetime
 import pstats
 
 import six
@@ -98,6 +99,8 @@ def run_benchmark(benchmark, root, env, show_stderr=False,
         bad_output = None
         failure_count = 0
         total_count = 0
+
+        result['started_at'] = datetime.datetime.utcnow()
 
         for param_idx, params in param_iter:
             success, data, profile_data, err, out, errcode = \
@@ -187,6 +190,8 @@ def run_benchmark(benchmark, root, env, show_stderr=False,
             result['result'] = bench_results[0]
             if profile and bench_profiles[0] is not None:
                 result['profile'] = bench_profiles[0]
+
+        result['ended_at'] = datetime.datetime.utcnow()
 
         return result
 
@@ -531,7 +536,10 @@ class Benchmarks(dict):
 
                             for name, benchmark in benchmark_set:
                                 # TODO: Store more information about failure
-                                times[name] = {'result': None, 'stderr': err}
+                                times[name] = {'result': None,
+                                               'stderr': err,
+                                               'started_at': datetime.datetime.utcnow(),
+                                               'ended_at': datetime.datetime.utcnow()}
                             continue
 
                     for name, benchmark in benchmark_set:

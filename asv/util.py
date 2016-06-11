@@ -834,6 +834,13 @@ def datetime_to_timestamp(dt):
     return int(total_seconds(dt - datetime.datetime(1970, 1, 1)))
 
 
+def datetime_to_js_timestamp(dt):
+    """
+    Convert a Python datetime object to a Javascript timestamp.
+    """
+    return 1000 * datetime_to_timestamp(dt)
+
+
 def is_nan(x):
     """
     Returns `True` if x is a NaN value.

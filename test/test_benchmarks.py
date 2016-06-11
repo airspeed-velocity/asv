@@ -8,6 +8,7 @@ import os
 import shutil
 from os.path import join, dirname
 
+import datetime
 import pstats
 import pytest
 import six
@@ -63,8 +64,12 @@ def test_find_benchmarks(tmpdir):
     b = benchmarks.Benchmarks(conf, repo, envs)
     assert len(b) == 26
 
+    start_timestamp = datetime.datetime.utcnow()
+
     b = benchmarks.Benchmarks(conf, repo, envs)
     times = b.run_benchmarks(envs[0], profile=True, show_stderr=True)
+
+    end_timestamp = datetime.datetime.utcnow()
 
     assert len(times) == len(b)
     assert times[
@@ -125,6 +130,12 @@ def test_find_benchmarks(tmpdir):
     # Calibration of iterations should not rerun setup
     expected = ['setup']*2
     assert times['time_examples.TimeWithRepeatCalibrate.time_it']['stderr'].split() == expected
+
+    # Check run time timestamps
+    for name, result in times.items():
+        assert result['started_at'] >= start_timestamp
+        assert result['ended_at'] >= result['started_at']
+        assert result['ended_at'] <= end_timestamp
 
 
 def test_invalid_benchmark_tree(tmpdir):
