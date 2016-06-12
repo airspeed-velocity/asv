@@ -370,7 +370,15 @@ $(document).ready(function() {
         var ignore_payload = benchmark_name;
 
         $.each(revisions, function (i, revs) {
-            ignore_payload = ignore_payload + ',' + revs[0] + ',' + revs[1];
+            if (revs[0] === null) {
+                ignore_payload = ignore_payload + ',';
+            }
+            else {
+                ignore_payload = (ignore_payload + ','
+                                  + $.asv.master_json.revision_to_hash[revs[0]]);
+            }
+            ignore_payload = (ignore_payload + ','
+                              + $.asv.master_json.revision_to_hash[revs[1]]);
         });
 
         return ignore_key_prefix + $.md5(ignore_payload);
