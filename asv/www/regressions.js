@@ -165,12 +165,12 @@ $(document).ready(function() {
             if (branch !== null && param_dict['branch'] != branch) {
                 return;
             }
-            var dates = regression[0];
+            var revisions = regression[0];
             var new_value = regression[1];
             var old_value = regression[2];
 
             var factor = new_value / old_value;
-            var date_fmt = new Date(dates[0][1]);
+            var date_fmt = new Date($.asv.master_json.revision_to_date[revisions[0][1]]);
 
             var row = $('<tr/>');
 
@@ -181,13 +181,15 @@ $(document).ready(function() {
                 url_params[key] = [value];
             });
 
-            url_params.time = [];
-            $.each(dates, function(i, date) {
-                if (date[0]) {
-                    url_params.time.push(date[0] + '-' + date[1]);
+            url_params.commits = [];
+            $.each(revisions, function(i, revs) {
+                var commit_b = $.asv.get_commit_hash(revs[1]);
+                if (revs[0] !== null) {
+                    var commit_a = $.asv.get_commit_hash(revs[0]);
+                    url_params.commits.push(commit_a + '-' + commit_b);
                 }
                 else {
-                    url_params.time.push(date[1]);
+                    url_params.commits.push(commit_b);
                 }
             });
 
@@ -213,9 +215,9 @@ $(document).ready(function() {
             row.append($('<td/>').text(date_fmt.toISOString()));
 
             var commit_td = $('<td/>');
-            $.each(dates, function(i, date) {
-                var commit_a = $.asv.get_commit_hash(date[0]);
-                var commit_b = $.asv.get_commit_hash(date[1]);
+            $.each(revisions, function(i, revs) {
+                var commit_a = $.asv.get_commit_hash(revs[0]);
+                var commit_b = $.asv.get_commit_hash(revs[1]);
                 if (i > 0) {
                     commit_td.append($('<span>, </span>'));
                 }
@@ -289,15 +291,15 @@ $(document).ready(function() {
             function update_plot() {
                 var markings = [];
 
-                $.each(dates, function(i, date) {
-                    var date_a = date[0];
-                    var date_b = date[1];
+                $.each(revisions, function(i, revs) {
+                    var rev_a = revs[0];
+                    var rev_b = revs[1];
 
-                    if (date_a !== null) {
-                        markings.push({ color: '#d00', lineWidth: 2, xaxis: { from: date_a, to: date_a }});
-                        markings.push({ color: "rgba(255,0,0,0.1)", xaxis: { from: date_a, to: date_b }});
+                    if (rev_a !== null) {
+                        markings.push({ color: '#d00', lineWidth: 2, xaxis: { from: rev_a, to: rev_a }});
+                        markings.push({ color: "rgba(255,0,0,0.1)", xaxis: { from: rev_a, to: rev_b }});
                     }
-                    markings.push({ color: '#d00', lineWidth: 2, xaxis: { from: date_b, to: date_b }});
+                    markings.push({ color: '#d00', lineWidth: 2, xaxis: { from: rev_b, to: rev_b }});
                 });
 
                 $.asv.load_graph_data(
@@ -364,11 +366,11 @@ $(document).ready(function() {
         if (regression === null) {
             return null;
         }
-        var dates = regression[0];
+        var revisions = regression[0];
         var ignore_payload = benchmark_name;
 
-        $.each(dates, function (i, date) {
-            ignore_payload = ignore_payload + ',' + date[0] + ',' + date[1];
+        $.each(revisions, function (i, revs) {
+            ignore_payload = ignore_payload + ',' + revs[0] + ',' + revs[1];
         });
 
         return ignore_key_prefix + $.md5(ignore_payload);
@@ -425,8 +427,8 @@ $(document).ready(function() {
                     return;
                 }
                 var benchmark_name_re = (benchmark_name + branch_suffix).replace(/[.?*+^$[\]\\(){}|-]/g, "\\\\$&");
-                var dates = regression[0];
-                var last_commit = $.asv.get_commit_hash(dates[dates.length-1][1]);
+                var revisions = regression[0];
+                var last_commit = $.asv.get_commit_hash(revisions[revisions.length-1][1]);
                 var entry = "        \"^" + benchmark_name_re + "$\": \"" + last_commit + "\",\n";
                 entries[entry] = 1;
             }

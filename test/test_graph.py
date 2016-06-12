@@ -163,6 +163,20 @@ def test_nan():
     assert data == [(1, [1, None]), (2, [2, 2])]
 
 
+def test_summary_graph():
+    n = 2 * int(RESAMPLED_POINTS)
+    g = Graph('foo', {})
+    for i in range(n):
+        g.add_data_point(i, 0.1)
+        g.add_data_point(n + i, 0.2)
+    g = make_summary_graph([g])
+    data = g.get_data()
+    assert len(data) == 512
+    for i in range(256):
+        assert abs(data[i][1] - 0.1) < 1e-7
+        assert abs(data[256 + i][1] - 0.2) < 1e-7
+
+
 def test_summary_graph_loop():
     n = int(RESAMPLED_POINTS)
 
@@ -175,14 +189,6 @@ def test_summary_graph_loop():
     assert len(data) == 1
     assert data[0][0] == n
     assert abs(data[0][1] - 0.1) < 1e-7
-
-    # Resampling should work with long integers
-    g = Graph('foo', {})
-    k0 = 2**80
-    for j in range(2*int(RESAMPLED_POINTS)):
-        g.add_data_point(k0 + j, 0.1)
-    g = make_summary_graph([g])
-    g.get_data()
 
 
 def _sgn(x):

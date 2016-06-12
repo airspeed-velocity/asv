@@ -322,13 +322,25 @@ $(document).ready(function() {
         }
     }
 
-    function get_commit_hash(date) {
-        var commit_hash = master_json.date_to_hash[date];
+    function get_commit_hash(revision) {
+        var commit_hash = master_json.revision_to_hash[revision];
         if (commit_hash) {
             // Return printable commit hash
             commit_hash = commit_hash.slice(0, master_json.hash_length);
         }
         return commit_hash;
+    }
+
+    function get_revision(commit_hash) {
+        var rev = null;
+        $.each(master_json.revision_to_hash, function(revision, full_commit_hash) {
+            if (full_commit_hash.startsWith(commit_hash)) {
+                rev = revision;
+                // break the $.each loop
+                return false;
+            }
+        });
+        return rev;
     }
 
     function init() {
@@ -378,6 +390,7 @@ $(document).ready(function() {
     this.param_selection_from_flat_idx = param_selection_from_flat_idx;
     this.load_graph_data = load_graph_data;
     this.get_commit_hash = get_commit_hash;
+    this.get_revision = get_revision;
 
     this.network_error = network_error;
 

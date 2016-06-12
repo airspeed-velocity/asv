@@ -24,15 +24,15 @@ class Regressions(OutputPublisher):
     description = "Display information about recent regressions"
 
     @classmethod
-    def publish(cls, conf, repo, benchmarks, graphs, hash_to_date):
+    def publish(cls, conf, repo, benchmarks, graphs, revisions):
         # Analyze the data in the graphs --- it's been cleaned up and
         # it's easier to work with than the results directly
 
         regressions = []
         seen = {}
-        date_to_hash = dict((d, h) for h, d in six.iteritems(hash_to_date))
+        revision_to_hash = dict((r, h) for h, r in six.iteritems(revisions))
 
-        data_filter = _GraphDataFilter(conf, repo, hash_to_date)
+        data_filter = _GraphDataFilter(conf, repo, revisions)
 
         all_params = graphs.get_params()
         last_percentage_time = time.time()
@@ -62,12 +62,12 @@ class Regressions(OutputPublisher):
 
                 while len(results) > n_processes:
                     r, graph = results.pop(0)
-                    cls._insert_regression(regressions, seen, date_to_hash, repo, all_params,
+                    cls._insert_regression(regressions, seen, revision_to_hash, repo, all_params,
                                            r.get(), graph)
 
             while results:
                 r, graph = results.pop(0)
-                cls._insert_regression(regressions, seen, date_to_hash, repo, all_params,
+                cls._insert_regression(regressions, seen, revision_to_hash, repo, all_params,
                                        r.get(), graph)
         finally:
             pool.terminate()
@@ -75,7 +75,7 @@ class Regressions(OutputPublisher):
         cls._save(conf, {'regressions': regressions})
 
     @classmethod
-    def _insert_regression(cls, regressions, seen, date_to_hash, repo, all_params,
+    def _insert_regression(cls, regressions, seen, revision_to_hash, repo, all_params,
                            result_item, graph):
         j, entry_name, result = result_item
         if result is None:
@@ -84,8 +84,8 @@ class Regressions(OutputPublisher):
         # Check which ranges are a single commit
         jumps = result[0]
         for k, jump in enumerate(jumps):
-            commit_a = date_to_hash[jump[0]]
-            commit_b = date_to_hash[jump[1]]
+            commit_a = revision_to_hash[jump[0]]
+            commit_b = revision_to_hash[jump[1]]
             spec = repo.get_range_spec(commit_a, commit_b)
             commits = repo.get_hashes_from_range(spec)
             if len(commits) == 1:
@@ -121,12 +121,12 @@ class Regressions(OutputPublisher):
 
 def _analyze_data(graph_data):
     """
-    Analyze a single time series
+    Analyze a single series
 
     Returns
     -------
-    jumps : list of (time_a, time_b)
-         List of time pairs, between which there is an upward jump
+    jumps : list of (revision_a, revision_b)
+         List of revision pairs, between which there is an upward jump
          in the value.
     cur_value : int
          Most recent value
@@ -134,7 +134,7 @@ def _analyze_data(graph_data):
          Best value
     """
     try:
-        j, entry_name, times, values = graph_data
+        j, entry_name, revisions, values = graph_data
 
         v, jump_pos, best_v = detect_regressions(values)
         if v is None:
@@ -148,7 +148,7 @@ def _analyze_data(graph_data):
                     break
             else:
                 next_r = jump_r + 1
-            jumps.append((times[jump_r], times[next_r]))
+            jumps.append((revisions[jump_r], revisions[next_r]))
 
         return j, entry_name, (jumps, v, best_v)
     except BaseException as exc:
@@ -160,11 +160,11 @@ class _GraphDataFilter(object):
     Obtain data sets from graphs, following configuration settings.
     """
 
-    def __init__(self, conf, repo, hash_to_date):
+    def __init__(self, conf, repo, revisions):
         self.conf = conf
         self.repo = repo
-        self.hash_to_date = hash_to_date
-        self.time_sets = {}
+        self.revisions = revisions
+        self.revision_sets = {}
 
     def get_graph_data(self, graph, benchmark):
         """
@@ -178,8 +178,8 @@ class _GraphDataFilter(object):
         entry_name
             Name for the data set. If benchmark is non-parameterized, this is the
             benchmark name.
-        times
-            List of times (ints)
+        revisions
+            List of revisions (ints)
         values
             List of benchmark values (floats or Nones)
 
@@ -197,24 +197,21 @@ class _GraphDataFilter(object):
             else:
                 entry_name = benchmark['name'] + '({0})'.format(', '.join(param))
 
-            time_set = self._get_allowed_times(graph, benchmark, entry_name)
+            revision_set = self._get_allowed_revisions(graph, benchmark, entry_name)
 
-            times = [item[0] for item in series if item[0] in time_set]
+            times = [item[0] for item in series if item[0] in revision_set]
             if param is None:
-                values = [item[1] for item in series if item[0] in time_set]
+                values = [item[1] for item in series if item[0] in revision_set]
             else:
-                values = [item[1][j] for item in series if item[0] in time_set]
+                values = [item[1][j] for item in series if item[0] in revision_set]
 
             yield j, entry_name, times, values
 
-    def _get_allowed_times(self, graph, benchmark, entry_name):
+    def _get_allowed_revisions(self, graph, benchmark, entry_name):
         """
-        Compute the set of times allowed by asv.conf.json.
-
-        The decision which commits to include is based on commit
-        order, not on commit authoring date
+        Compute the set of revisions allowed by asv.conf.json.
         """
-        time_set = set(self.hash_to_date.values())
+        revision_set = set(self.revisions.values())
 
         if graph.params.get('branch'):
             branch_suffix = '@' + graph.params.get('branch')
@@ -232,16 +229,16 @@ class _GraphDataFilter(object):
                 else:
                     key = (start_commit, graph.params.get('branch'))
 
-                if key not in self.time_sets:
-                    times = set()
+                if key not in self.revision_sets:
+                    revs = set()
                     spec = self.repo.get_new_range_spec(*key)
                     start_hash = self.repo.get_hash_from_name(start_commit)
                     for commit in [start_hash] + self.repo.get_hashes_from_range(spec):
-                        time = self.hash_to_date.get(commit)
-                        if time is not None:
-                            times.add(time)
-                    self.time_sets[key] = times
+                        rev = self.revisions.get(commit)
+                        if rev is not None:
+                            revs.add(rev)
+                    self.revision_sets[key] = revs
 
-                time_set = time_set.intersection(self.time_sets[key])
+                revision_set = revision_set.intersection(self.revision_sets[key])
 
-        return time_set
+        return revision_set
