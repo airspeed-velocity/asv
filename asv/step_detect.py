@@ -296,7 +296,7 @@ def detect_regressions(steps):
     Parameters
     ----------
     steps : list of (left, right, value, min, error)
-        List of steps computed by detect_steps
+        List of steps computed by detect_steps, or equivalent
 
     Returns
     -------
@@ -304,9 +304,9 @@ def detect_regressions(steps):
         Latest value
     best_value
         Best value
-    upjump_pos : list of integers
-        List of positions after which value increased. The first item corresponds
-        to the last position at which the best value was obtained.
+    regression_pos : list of (before, after)
+        List of positions between which the value increased. The first item
+        corresponds to the last position at which the best value was obtained.
 
     """
     # Find best value and compare to the most recent one
@@ -318,11 +318,12 @@ def detect_regressions(steps):
     prev_v = None
     prev_err = None
 
-    upjumps = []
     if steps:
         last_v = steps[-1][2]
     else:
         last_v = None
+
+    regression_pos = []
 
     prev_r = None
     for l, r, cur_v, cur_min, cur_err in steps:
@@ -334,22 +335,21 @@ def detect_regressions(steps):
             # Found best value (modulo errors)
             best_v = cur_v
             best_err = cur_err
-            upjumps = [r - 1]
-        elif (prev_v is not None and
-              cur_v > prev_v + max(cur_err, prev_err) and
-              prev_v < last_v - max(cur_err, prev_err)):
+            regression_pos = []
+        elif (not regression_pos or (prev_v is not None and
+                cur_v > prev_v + max(cur_err, prev_err) and
+                prev_v < last_v - max(cur_err, prev_err))):
             # Found an upward jump
-            if prev_r - 1 != upjumps[-1]:
-                upjumps.append(prev_r - 1)
+            regression_pos.append((prev_r - 1, l))
 
         prev_r = r
         prev_v = cur_v
         prev_err = cur_err
 
-    if cur_v is None or best_v is None or cur_v <= best_v + max(cur_err, best_err):
+    if cur_v is None or best_v is None or cur_v <= best_v + max(cur_err, best_err) or not regression_pos:
         return (None, None, None)
     else:
-        return (cur_v, best_v, upjumps)
+        return (cur_v, best_v, regression_pos)
 
 
 #

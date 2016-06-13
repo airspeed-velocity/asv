@@ -120,8 +120,9 @@ def test_detect_regressions():
         assert np.allclose(steps_err, [0.7/4]*7, rtol=0.3)
 
         # Check detect_regressions
-        new_value, best_value, jump_pos = detect_regressions(steps)
-        assert jump_pos == [3233 + (seed % 123), 3499 + (seed % 71)]
+        new_value, best_value, regression_pos = detect_regressions(steps)
+        assert regression_pos == [(3233 + (seed % 123), (3233 + (seed % 123) + 1)),
+                                  (3499 + (seed % 71), 3499 + (seed % 71) + 1)]
         assert np.allclose(best_value, 0.7/2 - 0.3, rtol=0.3, atol=0)
         assert np.allclose(new_value, 0.7/2 - 0.3 + 2, rtol=0.3, atol=0)
 
