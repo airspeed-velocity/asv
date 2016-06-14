@@ -59,10 +59,9 @@ class GraphSet(object):
             if dots is not None and pool is not None:
                 dots()
 
-    def make_summary_graphs(self, dots=None):
+    def get_summary_graphs(self, dots=None):
         for graphs in six.itervalues(self._groups):
-            graph = make_summary_graph(graphs)
-            self._graphs[graph.path] = graph
+            yield make_summary_graph(graphs)
             if dots is not None:
                 dots()
 

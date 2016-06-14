@@ -7,7 +7,7 @@ $(document).ready(function() {
     function callback_in_view(element, func) {
         function handler(evt) {
             var visible = (
-                $('#summary-display').css('display') != 'none' &&
+                $('#summarygrid-display').css('display') != 'none' &&
                 (element.offset().top <= $(window).height() + $(window).scrollTop()) &&
                     (element.offset().top + element.height() >= $(window).scrollTop()));
             if (visible) {
@@ -19,7 +19,7 @@ $(document).ready(function() {
     }
 
     function make_summary() {
-        var summary_display = $('#summary-display');
+        var summary_display = $('#summarygrid-display');
         var master_json = $.asv.master_json;
         var summary_container = $('<div/>');
 
@@ -27,26 +27,12 @@ $(document).ready(function() {
             return;
         }
 
-        if (master_json.extra_pages) {
-            var pages_container = $('<div id="extra-buttons" class="btn-group" role="group" />');
-
-            $.each(master_json.extra_pages, function(j, item) {
-                var button = $('<a class="btn btn-default" role="button"/>');
-                button.attr('href', '#/' + item[0]);
-                button.text(item[1]);
-                button.tooltip({title: item[2], html: true});
-                pages_container.append(button);
-            });
-            pages_container.show();
-            summary_display.append(pages_container);
-        }
-
         $.each(master_json.benchmarks, function(bm_name, bm) {
             var container = $(
                 '<a class="btn benchmark-container" href="#' + bm_name +
                 '"/>');
             var plot_div = $(
-                '<div id="summary-' + bm_name + '" class="benchmark-plot"/>');
+                '<div id="summarygrid-' + bm_name + '" class="benchmark-plot"/>');
             var name = $('<div class="benchmark-text">' + bm_name + '</div>');
             name.tooltip({
                 title: bm_name,
@@ -115,7 +101,7 @@ $(document).ready(function() {
     }
 
     $.asv.register_page('', function(params) {
-        $('#summary-display').show();
+        $('#summarygrid-display').show();
         $("#title").text("All benchmarks");
         $('.tooltip').remove();
         make_summary();

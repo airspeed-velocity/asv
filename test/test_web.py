@@ -141,7 +141,7 @@ def test_web_regressions(browser, tmpdir):
     with tools.preview(conf.html_dir) as base_url:
         get_with_retry(browser, base_url)
 
-        regressions_btn = browser.find_element_by_link_text('Show regressions')
+        regressions_btn = browser.find_element_by_link_text('Regressions')
         regressions_btn.click()
 
         # Check that the expected links appear in the table

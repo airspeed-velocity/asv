@@ -180,18 +180,18 @@ class Publish(Command):
         log.step()
         log.info("Generating graphs")
         with log.indent():
-            # Add summary graphs
-            graphs.make_summary_graphs(dots=log.dot)
             # Save files
             graphs.save(conf.html_dir, dots=log.dot)
 
-        extra_pages = []
-        for cls in util.iter_subclasses(OutputPublisher):
+        pages = []
+        classes = sorted(util.iter_subclasses(OutputPublisher),
+                         key=lambda cls: cls.order)
+        for cls in classes:
             log.step()
-            log.info("Generating output for {0}".format(cls.name))
+            log.info("Generating output for {0}".format(cls.__name__))
             with log.indent():
                 cls.publish(conf, repo, benchmarks, graphs, revisions)
-                extra_pages.append([cls.name, cls.button_label, cls.description])
+                pages.append([cls.name, cls.button_label, cls.description])
 
         log.step()
         log.info("Writing index")
@@ -216,5 +216,5 @@ class Publish(Command):
             'benchmarks': benchmark_map,
             'machines': machines,
             'tags': tags,
-            'extra_pages': extra_pages,
+            'pages': pages,
         })

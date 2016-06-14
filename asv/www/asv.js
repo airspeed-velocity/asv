@@ -287,9 +287,12 @@ $(document).ready(function() {
 
     function show_page(name, params) {
         if (loaded_pages[name] !== undefined) {
+	    $("#nav ul li.active").removeClass('active');
+	    $("#nav-li-" + name).addClass('active');
             $("#graph-display").hide();
-            $("#summary-display").hide();
+            $("#summarygrid-display").hide();
             $('#regressions-display').hide();
+            $('.tooltip').remove();
             loaded_pages[name](params);
             return true;
         }
@@ -365,7 +368,7 @@ $(document).ready(function() {
 
             $('#graph-display').hide();
             $('#regressions-display').hide();
-            $('#summary-display').hide();
+            $('#summarygrid-display').hide();
 
             hashchange();
         }).fail(function () {

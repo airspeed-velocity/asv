@@ -4,7 +4,7 @@ $(document).ready(function() {
     /* Cached contents of downloaded regressions.json */
     var regression_data = null;
     /* Current page title */
-    var current_title = "Regressions";
+    var current_title = "All regressions";
     /* Whether HTML5 local storage is available */
     var local_storage_available = false;
     /* Key prefix for ignored regressions. For each ignored regression,
@@ -78,7 +78,7 @@ $(document).ready(function() {
 
                 dropdown_menu.append($('<li role="presentation"/>').append(branch_link));
                 branch_link.on('click', function(evt) {
-                    current_title = "Regressions (" + branch + " branch)";
+                    current_title = "Regressions in " + branch + " branch";
                     $("#title").text(current_title);
                     $(".regression-div").hide();
                     $(".ignored").hide();
@@ -114,7 +114,7 @@ $(document).ready(function() {
         });
 
         if (branches && branches.length > 1) {
-            current_title = "Regressions (" + branches[0] + " branch)";
+            current_title = "Regressions in " + branches[0] + " branch";
         }
         $("#title").text(current_title);
         main_div.find("#regression-div-0").show();
@@ -346,7 +346,7 @@ $(document).ready(function() {
                 return plot_div;
             }
             benchmark_link.popover({
-                placement: 'right auto',
+                placement: 'left auto',
                 trigger: 'hover',
                 html: true,
                 delay: 50,
