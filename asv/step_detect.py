@@ -328,7 +328,7 @@ def detect_steps(y):
         y_filtered.append(x)
 
     # Find piecewise segments
-    right, values, dists, gamma = solve_potts_autogamma(y_filtered, p=1, min_size=5)
+    right, values, dists, gamma = solve_potts_autogamma(y_filtered, p=1)
 
     # Extract the steps, mapping indices back etc.
     steps = []
@@ -380,10 +380,6 @@ def detect_regressions(steps):
 
     prev_r = None
     for l, r, cur_v, cur_min, cur_err in steps:
-        if r - l < 3:
-            # disregard too short segments
-            continue
-
         if best_v is None or cur_min <= best_v + best_err:
             # Found best value (modulo errors)
             best_v = cur_v
