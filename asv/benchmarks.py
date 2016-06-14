@@ -536,10 +536,11 @@ class Benchmarks(dict):
 
                             for name, benchmark in benchmark_set:
                                 # TODO: Store more information about failure
+                                timestamp = datetime.datetime.utcnow()
                                 times[name] = {'result': None,
                                                'stderr': err,
-                                               'started_at': datetime.datetime.utcnow(),
-                                               'ended_at': datetime.datetime.utcnow()}
+                                               'started_at': timestamp,
+                                               'ended_at': timestamp}
                             continue
 
                     for name, benchmark in benchmark_set:
@@ -563,7 +564,10 @@ class Benchmarks(dict):
             for name in self:
                 log.step()
                 log.warn('Benchmark {0} skipped'.format(name))
-                times[name] = {'result': None}
+                timestamp = datetime.datetime.utcnow()
+                times[name] = {'result': None,
+                               'started_at': timestamp,
+                               'ended_at': timestamp}
         return times
 
 

@@ -9,12 +9,13 @@ import os
 from os.path import abspath, dirname, join, isfile, relpath
 import shutil
 import sys
+import datetime
 
 import six
 import json
 import pytest
 
-from asv import config, environment
+from asv import config, environment, util
 from asv.util import check_output, which
 
 from . import tools
@@ -241,3 +242,51 @@ def test_run_spec(basic_conf):
     ):
         for range_spec in (None, "NEW", "ALL"):
             _test_run(range_spec, branches, expected_commits)
+
+
+def test_run_build_failure(basic_conf):
+    tmpdir, local, conf, machine_file = basic_conf
+
+    conf.matrix = {}
+
+    # Add a commit that fails to build
+    dvcs = tools.Git(conf.repo)
+    setup_py = join(dvcs.path, 'setup.py')
+    with open(setup_py, 'r') as f:
+        setup_py_content = f.read()
+    with open(setup_py, 'w') as f:
+        f.write("assert False")
+    dvcs.add(join(dvcs.path, 'setup.py'))
+    dvcs.commit("Break setup.py")
+    with open(setup_py, 'w') as f:
+        f.write(setup_py_content)
+    dvcs.add(join(dvcs.path, 'setup.py'))
+    dvcs.commit("Fix setup.py")
+
+    # Test running it
+    timestamp = util.datetime_to_js_timestamp(datetime.datetime.utcnow())
+
+    bench_name = 'time_secondary.track_value'
+    tools.run_asv_with_conf(conf, 'run', "master~2..",
+                            '--quick', '--show-stderr',
+                            '--bench', bench_name,
+                            _machine_file=machine_file)
+
+    # Check results
+    hashes = dvcs.get_branch_hashes()
+    fn_broken, = glob.glob(join(tmpdir, 'results_workflow', 'orangutan',
+                                    hashes[1][:8] + '-*.json'))
+    fn_ok, = glob.glob(join(tmpdir, 'results_workflow', 'orangutan',
+                                hashes[0][:8] + '-*.json'))
+
+    data_broken = util.load_json(fn_broken)
+    data_ok = util.load_json(fn_ok)
+
+    for data in (data_broken, data_ok):
+        assert data['started_at'][bench_name] >= timestamp
+        assert data['ended_at'][bench_name] >= data['started_at'][bench_name]
+
+    assert len(data_broken['results']) == 1
+    assert len(data_ok['results']) == 1
+    assert data_broken['results'][bench_name] is None
+    assert data_ok['results'][bench_name] == 42.0
