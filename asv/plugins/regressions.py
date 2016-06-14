@@ -13,7 +13,7 @@ import six
 
 from ..console import log
 from ..publishing import OutputPublisher
-from ..step_detect import detect_regressions
+from ..step_detect import detect_regressions, detect_steps
 
 from .. import util
 
@@ -78,6 +78,7 @@ class Regressions(OutputPublisher):
     def _insert_regression(cls, regressions, seen, revision_to_hash, repo, all_params,
                            result_item, graph):
         j, entry_name, result = result_item
+
         if result is None:
             return
 
@@ -136,7 +137,8 @@ def _analyze_data(graph_data):
     try:
         j, entry_name, revisions, values = graph_data
 
-        v, jump_pos, best_v = detect_regressions(values)
+        steps = detect_steps(values)
+        v, best_v, jump_pos = detect_regressions(steps)
         if v is None:
             return j, entry_name, None
 

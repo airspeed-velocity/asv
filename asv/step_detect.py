@@ -244,9 +244,9 @@ import six
 # Detecting regressions
 #
 
-def detect_regressions(y):
+def detect_steps(y):
     """
-    Detect regressions in a (noisy) signal.
+    Detect steps in a (noisy) signal.
 
     Parameters
     ----------
@@ -255,13 +255,13 @@ def detect_regressions(y):
 
     Returns
     -------
-    latest_value
-        Latest value
-    jump_pos : list of integers
-        List of positions after which value increased. The first item corresponds
-        to the last position at which the best value was obtained.
-    best_value
-        Best value
+    steps : list of (left_pos, right_pos, value, err_est)
+        List containing a decomposition of the input data to a piecewise
+        constant function. Each element contains the left (inclusive) and
+        right (exclusive) bounds of a segment, the average value on 
+        the segment and the l1 error estimate, <|Y - avg|>. Missing data
+        points are not necessarily contained in any segment; right_pos-1
+        is the last non-missing data point.
 
     """
 
@@ -275,59 +275,81 @@ def detect_regressions(y):
         y_filtered.append(x)
 
     # Find piecewise segments
-    p = 1
-    right, values, dists, gamma = solve_potts_autogamma(y_filtered, p=p, min_size=5)
+    right, values, dists, gamma = solve_potts_autogamma(y_filtered, p=1, min_size=5)
 
+    # Extract the steps, mapping indices back etc.
+    steps = []
+    l = 0
+    for r, v, d in zip(right, values, dists):
+        steps.append((index_map[l], index_map[r-1] + 1,
+                          v,
+                          min(y_filtered[l:r]),
+                          abs(d/(r - l))))
+        l = r
+    return steps
+
+
+def detect_regressions(steps):
+    """
+    Detect regressions in a (noisy) signal.
+
+    Parameters
+    ----------
+    steps : list of (left, right, value, min, error)
+        List of steps computed by detect_steps
+
+    Returns
+    -------
+    latest_value
+        Latest value
+    best_value
+        Best value
+    upjump_pos : list of integers
+        List of positions after which value increased. The first item corresponds
+        to the last position at which the best value was obtained.
+
+    """
     # Find best value and compare to the most recent one
-    best_r = None
     best_v = None
     best_err = None
     cur_err = None
     cur_v = None
 
-    prev_r = 0
     prev_v = None
     prev_err = None
 
-    l = 0
-    jumps = []
-    if values:
-        last_v = values[-1]
+    upjumps = []
+    if steps:
+        last_v = steps[-1][2]
     else:
         last_v = None
 
-    for r, v, d in zip(right, values, dists):
-        if r - prev_r < 3:
+    prev_r = None
+    for l, r, cur_v, cur_min, cur_err in steps:
+        if r - l < 3:
             # disregard too short segments
-            prev_r = r
             continue
-
-        cur_v = v
-        cur_min = min(y_filtered[l:r])
-        cur_err = abs(d / (r - prev_r))**(1/p)
 
         if best_v is None or cur_min <= best_v + best_err:
             # Found best value (modulo errors)
             best_v = cur_v
             best_err = cur_err
-            jumps = [index_map[r-1]]
+            upjumps = [r - 1]
         elif (prev_v is not None and
               cur_v > prev_v + max(cur_err, prev_err) and
               prev_v < last_v - max(cur_err, prev_err)):
             # Found an upward jump
-            if index_map[prev_r-1] != jumps[-1]:
-                jumps.append(index_map[prev_r-1])
+            if prev_r - 1 != upjumps[-1]:
+                upjumps.append(prev_r - 1)
 
         prev_r = r
         prev_v = cur_v
         prev_err = cur_err
 
-        l = r
-
     if cur_v is None or best_v is None or cur_v <= best_v + max(cur_err, best_err):
-        return None, None, None
+        return (None, None, None)
     else:
-        return (cur_v, jumps, best_v)
+        return (cur_v, best_v, upjumps)
 
 
 #

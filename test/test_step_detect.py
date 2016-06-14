@@ -8,7 +8,8 @@ import random
 import pytest
 
 from asv.step_detect import (solve_potts, solve_potts_autogamma, solve_potts_approx,
-                             detect_regressions, golden_search, median, rolling_median_dev)
+                             detect_regressions, golden_search, median, rolling_median_dev,
+                             detect_steps)
 
 
 try:
@@ -99,12 +100,30 @@ def test_detect_regressions():
         y = y.tolist()
         y[123] = None
         y[1234] = np.nan
-        new_value, jump_pos, best_value = detect_regressions(y)
+        steps = detect_steps(y)
 
+        steps_lr = [(l, r) for l, r, _, _, _ in steps]
+        k = steps[0][1]
+        assert 990 <= k <= 1010
+        assert steps_lr == [(0, k),
+                            (k, 3234 + (seed % 123)),
+                            (3234 + (seed % 123), 3264 + (seed % 53)),
+                            (3264 + (seed % 53), 3350),
+                            (3350, 3500 + (seed % 71)),
+                            (3500 + (seed % 71), 3700),
+                            (3700, 4000)]
+        steps_v = [x[2] for x in steps]
+        assert np.allclose(steps_v, [0.35, 0.05, 2.05, 4.05, 1.15, 4.05, 2.05], rtol=0.3)
+
+        # The expected mean error is 0.7 <|U(0,1) - 1/2|> = 0.7/4
+        steps_err = [x[4] for x in steps]
+        assert np.allclose(steps_err, [0.7/4]*7, rtol=0.3)
+
+        # Check detect_regressions
+        new_value, best_value, jump_pos = detect_regressions(steps)
         assert jump_pos == [3233 + (seed % 123), 3499 + (seed % 71)]
         assert np.allclose(best_value, 0.7/2 - 0.3, rtol=0.3, atol=0)
         assert np.allclose(new_value, 0.7/2 - 0.3 + 2, rtol=0.3, atol=0)
-
 
 def test_golden_search():
     def f(x):
