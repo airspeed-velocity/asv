@@ -5,11 +5,13 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
+import traceback
 
 import six
 from six.moves import xrange
 
 from . import util
+from . import step_detect
 
 
 # This is the maximum number of points to include in summary graphs.
@@ -44,6 +46,18 @@ class GraphSet(object):
                 if value:
                     params[key].add(value)
         return params
+
+    def detect_steps(self, pool=None, dots=None):
+        for graph in six.itervalues(self._graphs):
+            graph.detect_steps(pool)
+            if dots is not None and pool is None:
+                dots()
+
+        # Wait for results to compute
+        for graph in six.itervalues(self._graphs):
+            graph.get_steps()
+            if dots is not None and pool is not None:
+                dots()
 
     def make_summary_graphs(self, dots=None):
         for graphs in six.itervalues(self._groups):
@@ -108,6 +122,7 @@ class Graph(object):
         self.path = os.path.join(*parts)
         self.n_series = None
         self.scalar_series = True
+        self._steps = None
 
     def add_data_point(self, revision, value):
         """
@@ -191,6 +206,86 @@ class Graph(object):
         val = self.get_data()
 
         util.write_json(filename, val)
+
+    def detect_steps(self, pool=None):
+        """
+        Run step detection algorithm on the graph data.
+
+        Afterward, the results can be obtained via get_steps()
+
+        Parameters
+        ----------
+        pool : multiprocessing.Pool, optional
+            Pool to use for asynchronous jobs.
+            If not given, run in serial.
+
+        """
+        if self._steps is not None:
+            # Already computed
+            return
+
+        val = self.get_data()
+
+        if not val:
+            # Nothing to compute
+            self._steps = [[]*self.n_series]
+            return
+
+        if self.scalar_series:
+            items = [val]
+        else:
+            items = [[(v[0], v[1][j]) for v in val] for j in range(self.n_series)]
+
+        if pool is None:
+            self._steps = [_compute_graph_steps(item, reraise=False) for item in items]
+        else:
+            self._steps = [pool.apply_async(_compute_graph_steps, (item,)) for item in items]
+
+    def get_steps(self):
+        """
+        Return results from step detection.
+
+        Returns
+        -------
+        steps : list of (left, right, val, min, err)
+            Result of fitting a piecewise function to the graph.
+            Missing data points do not necessarily belong in any piece.
+            The values are: `left` (inclusive) and `right` (exclusive) specify
+            a revision interval, `val` the median value in the interval, `min`
+            the minimum value in the interval, and `err` the mean deviation from
+            the median.
+
+        """
+        if self._steps is None:
+            self.detect_steps()
+
+        for j, item in enumerate(self._steps):
+            if not isinstance(item, list):
+                self._steps[j] = item.get()
+
+        if self.scalar_series:
+            return self._steps[0]
+        else:
+            return self._steps
+
+
+def _compute_graph_steps(data, reraise=True):
+    try:
+        x = [d[0] for d in data]
+        y = [d[1] for d in data]
+
+        steps = step_detect.detect_steps(y)
+        new_steps = []
+
+        for left, right, cur_val, cur_min, cur_err in steps:
+            new_steps.append((x[left], x[right-1] + 1, cur_val, cur_min, cur_err))
+
+        return new_steps
+    except BaseException as exc:
+        if reraise:
+            raise util.ParallelFailure(str(exc), exc.__class__, traceback.format_exc())
+        else:
+            raise
 
 
 def make_summary_graph(graphs):
