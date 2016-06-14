@@ -467,7 +467,7 @@ $(document).ready(function() {
                 function key(s) {
                     for (var k = 0; k < $.asv.time_units.length; ++k) {
                         var entry = $.asv.time_units[k];
-                        m = s.match('^([0-9.]+)'+entry[0]+'$');
+                        var m = s.match('^([0-9.]+)'+entry[0]+'$');
                         if (m) {
                             return parseFloat(m[1]) * entry[2] * 1e-30;
                         }

@@ -100,7 +100,7 @@ $(document).ready(function() {
         setup_benchmark_graph_display();
 
         $('#graph-display').show();
-        $('#summary-display').hide();
+        $('#summarygrid-display').hide();
         $('#regressions-display').hide();
         $('.tooltip').remove();
 
@@ -116,68 +116,6 @@ $(document).ready(function() {
         replace_graphs();
     }
 
-    function make_panel(nav, heading) {
-        var panel = $('<div class="panel panel-default"/>');
-        nav.append(panel);
-        var panel_header = $(
-            '<div class="panel-heading">' + heading + '</div>');
-        panel.append(panel_header);
-        var panel_body = $('<div class="panel-body"/>');
-        panel.append(panel_body);
-        return panel_body;
-    }
-
-    function make_value_selector_panel(nav, heading, values, setup_callback) {
-        var panel_body = make_panel(nav, heading);
-        var vertical = false;
-        var buttons = $('<div class="btn-group" ' +
-                        'data-toggle="buttons"/>');
-
-        panel_body.append(buttons);
-
-        $.each(values, function (idx, value) {
-            var button = $(
-                '<a class="btn btn-default btn-xs active" role="button"/>');
-            setup_callback(idx, value, button);
-            buttons.append(button);
-        });
-
-        return panel_body;
-    }
-
-    function reflow_value_selector_panels() {
-        $('.panel').each(function (i, panel_obj) {
-            var panel = $(panel_obj);
-            panel.find('.btn-group').each(function (i, buttons_obj) {
-                var buttons = $(buttons_obj);
-                var width = 0;
-
-                if (buttons.hasClass('btn-group-vertical') ||
-                    buttons.hasClass('btn-group-justified')) {
-                    /* already processed */
-                    return;
-                }
-
-                $.each(buttons.children(), function(idx, value) {
-                    width += value.scrollWidth;
-                });
-
-                var vertical = (width >= panel_obj.clientWidth &&
-                                panel_obj.clientWidth > 0);
-
-                if (vertical) {
-                    buttons.addClass("btn-group-vertical");
-                    buttons.css("width", "100%");
-                    buttons.css("max-height", "20ex");
-                    buttons.css("overflow-y", "auto");
-                }
-                else {
-                    buttons.addClass("btn-group-justified");
-                }
-            });
-        });
-    }
-
     function setup_benchmark_graph_display() {
         if (benchmark_graph_display_ready) {
             return;
@@ -189,21 +127,21 @@ $(document).ready(function() {
             update_graphs();
         });
 
-        var nav = $("#navigation");
+        var nav = $("#graphdisplay-navigation");
 
         /* Make the static tooltips look correct */
         $('[data-toggle="tooltip"]').tooltip({container: 'body'});
 
         /* Add insertion point for benchmark parameters */
-        var state_params_nav = $("<div id='state-params'/>");
+        var state_params_nav = $("<div id='graphdisplay-state-params'/>");
         nav.append(state_params_nav);
 
         /* Add insertion point for benchmark parameters */
-        var bench_params_nav = $("<div id='navigation-params'/>");
+        var bench_params_nav = $("<div id='graphdisplay-navigation-params'/>");
         nav.append(bench_params_nav);
 
         /* Benchmark panel */
-        var panel_body = make_panel(nav, 'benchmark');
+        var panel_body = $.asv.make_panel(nav, 'benchmark');
 
         var tree = $('<ul class="nav nav-list" style="padding-left: 0px"/>');
         var cursor = [];
@@ -480,11 +418,11 @@ $(document).ready(function() {
     function replace_params_ui() {
         var index = $.asv.master_json;
 
-        var nav = $('#state-params');
+        var nav = $('#graphdisplay-state-params');
         nav.empty();
 
         /* Machine selection */
-        make_value_selector_panel(nav, 'machine', index.params.machine,  function(i, machine, button) {
+        $.asv.make_value_selector_panel(nav, 'machine', index.params.machine,  function(i, machine, button) {
             button.text(machine);
 
             if (index.params.machine.length > 1) {
@@ -522,7 +460,7 @@ $(document).ready(function() {
         /* Generic parameter selectors */
         $.each(index.params, function(param, values) {
             if (values.length > 1 && param != 'machine') {
-                make_value_selector_panel(nav, param, values, function(i, value, button) {
+                $.asv.make_value_selector_panel(nav, param, values, function(i, value, button) {
                     var value_display;
                     if (value === null)
                         value_display = '[none]';
@@ -558,12 +496,12 @@ $(document).ready(function() {
         var param_names = $.asv.master_json.benchmarks[current_benchmark].param_names;
 
         /* Parameter selection UI */
-        var nav = $('#navigation-params');
+        var nav = $('#graphdisplay-navigation-params');
         nav.empty();
 
         if (params.length == 0) {
             /* Simple time series: no need for parameter selection UI */
-            reflow_value_selector_panels();
+            $.asv.reflow_value_selector_panels();
             return;
         }
 
@@ -574,7 +512,7 @@ $(document).ready(function() {
                 axes.push(axis);
             }
 
-            make_value_selector_panel(nav, "x-axis", axes, function (idx, axis, button) {
+            $.asv.make_value_selector_panel(nav, "x-axis", axes, function (idx, axis, button) {
                 var text;
                 if (axis == 0) {
                     text = "commit";
@@ -607,7 +545,7 @@ $(document).ready(function() {
             revisions.reverse();
 
             /* Add buttons */
-            make_value_selector_panel(nav, "commit", revisions, function(idx, rev, button) {
+            $.asv.make_value_selector_panel(nav, "commit", revisions, function(idx, rev, button) {
                 if (rev === null) {
                     button.text("last");
                 } else {
@@ -650,7 +588,7 @@ $(document).ready(function() {
             name = param_names[param_idx];
 
             /* Add benchmark parameter selector */
-            make_value_selector_panel(nav, name, values, function(value_idx, value, button) {
+            $.asv.make_value_selector_panel(nav, name, values, function(value_idx, value, button) {
                 var value_display;
                 value_display = '' + $.asv.convert_benchmark_param_value(value);
 
@@ -684,7 +622,7 @@ $(document).ready(function() {
             });
         });
 
-        reflow_value_selector_panels();
+        $.asv.reflow_value_selector_panels();
     }
 
     /* Check if x-axis is a category axis */
@@ -710,25 +648,6 @@ $(document).ready(function() {
         /* Given the settings in the sidebar, generate a list of the
            graphs we need to load. */
         function collect_graphs(current_benchmark, state, param_selection) {
-            /* Given a specific group of parameters, generate the URL to
-               use to load that graph. */
-            function graph_to_path(benchmark_name, state) {
-                var parts = [];
-                $.each(state, function(key, value) {
-                    if (value === null) {
-                        parts.push(key + "-null");
-                    } else if (value) {
-                        parts.push(key + "-" + value);
-                    } else {
-                        parts.push(key);
-                    }
-                });
-                parts.sort();
-                parts.splice(0, 0, "graphs");
-                parts.push(benchmark_name);
-                return parts.join('/') + ".json";
-            }
-
             /* Given a specific group of parameters, generate the legend
                label to display for that line. Differences is an object of
                parameters that have different values across all graphs. */
@@ -863,7 +782,7 @@ $(document).ready(function() {
                         graph_contents.push([param_perm,
                                              graph_label(labels, different)]);
                     });
-                    all.push([graph_to_path(current_benchmark, perm),
+                    all.push([$.asv.graph_to_path(current_benchmark, perm),
                               graph_contents]);
                 });
                 return all;

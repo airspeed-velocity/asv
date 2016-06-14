@@ -37,6 +37,9 @@ class GraphSet(object):
             self._groups.setdefault(benchmark_name, []).append(graph)
         return self._graphs[graph.path]
 
+    def get_graph_group(self, benchmark_name):
+        return self._groups.get(benchmark_name, [])
+
     def get_params(self):
         """Return all params used in graphs and their corresponding values set"""
         params = {}
@@ -104,10 +107,20 @@ class Graph(object):
         self.params = params
         self.data_points = {}
 
+        self.path = self.get_file_path(self.params, benchmark_name)
+        self.n_series = None
+        self.scalar_series = True
+        self._steps = None
+
+    @classmethod
+    def get_file_path(cls, params, benchmark_name):
+        """
+        Get a file path understood by the JS frontend, corresponding
+        on the given parameters and benchmark_name.
+        """
         # TODO: Make filename safe
         parts = ['graphs']
-
-        l = list(six.iteritems(self.params))
+        l = list(six.iteritems(params))
         l.sort()
         for key, val in l:
             if val is None:
@@ -117,11 +130,7 @@ class Graph(object):
             else:
                 parts.append('{0}'.format(key))
         parts.append(benchmark_name)
-
-        self.path = os.path.join(*parts)
-        self.n_series = None
-        self.scalar_series = True
-        self._steps = None
+        return os.path.join(*parts)
 
     def add_data_point(self, revision, value):
         """
@@ -227,7 +236,7 @@ class Graph(object):
 
         if not val:
             # Nothing to compute
-            self._steps = [[]*self.n_series]
+            self._steps = [[]]*self.n_series
             return
 
         if self.scalar_series:

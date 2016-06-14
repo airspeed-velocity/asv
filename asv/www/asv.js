@@ -40,19 +40,12 @@ $(document).ready(function() {
 
     function pretty_second(x) {
         for (var i = 0; i < time_units.length - 1; ++i) {
-            if (x < time_units[i+1][2]) {
+            if (Math.abs(x) < time_units[i+1][2]) {
                 return (x / time_units[i][2]).toFixed(3) + time_units[i][0];
             }
         }
 
         return 'inf';
-    }
-
-    function network_error(ajax, status, error) {
-        $("#error-message").text(
-            "Error fetching content. " +
-            "Perhaps web server has gone down.");
-        $("#error").modal('show');
     }
 
     /* Convert a flat index to permutation to the corresponding value */
@@ -182,6 +175,25 @@ $(document).ready(function() {
         return filter_graph_data(raw_series, x_axis, flat_selection, params);
     }
 
+    /* Given a specific group of parameters, generate the URL to
+       use to load that graph. */
+    function graph_to_path(benchmark_name, state) {
+        var parts = [];
+        $.each(state, function(key, value) {
+            if (value === null) {
+                parts.push(key + "-null");
+            } else if (value) {
+                parts.push(key + "-" + value);
+            } else {
+                parts.push(key);
+            }
+        });
+        parts.sort();
+        parts.splice(0, 0, "graphs");
+        parts.push(benchmark_name);
+        return parts.join('/') + ".json";
+    }
+
     /*
       Load and cache graph data (on javascript side)
      */
@@ -282,6 +294,78 @@ $(document).ready(function() {
     }
 
     /*
+     * UI helper functions
+     */
+    function make_panel(nav, heading) {
+        var panel = $('<div class="panel panel-default"/>');
+        nav.append(panel);
+        var panel_header = $(
+            '<div class="panel-heading">' + heading + '</div>');
+        panel.append(panel_header);
+        var panel_body = $('<div class="panel-body"/>');
+        panel.append(panel_body);
+        return panel_body;
+    }
+
+    function make_value_selector_panel(nav, heading, values, setup_callback) {
+        var panel_body = make_panel(nav, heading);
+        var vertical = false;
+        var buttons = $('<div class="btn-group" ' +
+                        'data-toggle="buttons"/>');
+
+        panel_body.append(buttons);
+
+        $.each(values, function (idx, value) {
+            var button = $(
+                '<a class="btn btn-default btn-xs active" role="button"/>');
+            setup_callback(idx, value, button);
+            buttons.append(button);
+        });
+
+        return panel_body;
+    }
+
+    function reflow_value_selector_panels() {
+        $('.panel').each(function (i, panel_obj) {
+            var panel = $(panel_obj);
+            panel.find('.btn-group').each(function (i, buttons_obj) {
+                var buttons = $(buttons_obj);
+                var width = 0;
+
+                if (buttons.hasClass('btn-group-vertical') ||
+                    buttons.hasClass('btn-group-justified')) {
+                    /* already processed */
+                    return;
+                }
+
+                $.each(buttons.children(), function(idx, value) {
+                    width += value.scrollWidth;
+                });
+
+                var vertical = (width >= panel_obj.clientWidth &&
+                                panel_obj.clientWidth > 0);
+
+                if (vertical) {
+                    buttons.addClass("btn-group-vertical");
+                    buttons.css("width", "100%");
+                    buttons.css("max-height", "20ex");
+                    buttons.css("overflow-y", "auto");
+                }
+                else {
+                    buttons.addClass("btn-group-justified");
+                }
+            });
+        });
+    }
+
+    function network_error(ajax, status, error) {
+        $("#error-message").text(
+            "Error fetching content. " +
+            "Perhaps web server has gone down.");
+        $("#error").modal('show');
+    }
+
+    /*
       Dealing with sub-pages
      */
 
@@ -291,6 +375,7 @@ $(document).ready(function() {
 	    $("#nav-li-" + name).addClass('active');
             $("#graph-display").hide();
             $("#summarygrid-display").hide();
+            $("#summarylist-display").hide();
             $('#regressions-display').hide();
             $('.tooltip').remove();
             loaded_pages[name](params);
@@ -369,6 +454,7 @@ $(document).ready(function() {
             $('#graph-display').hide();
             $('#regressions-display').hide();
             $('#summarygrid-display').hide();
+            $('#summarylist-display').hide();
 
             hashchange();
         }).fail(function () {
@@ -391,11 +477,15 @@ $(document).ready(function() {
     this.filter_graph_data_idx = filter_graph_data_idx;
     this.convert_benchmark_param_value = convert_benchmark_param_value;
     this.param_selection_from_flat_idx = param_selection_from_flat_idx;
+    this.graph_to_path = graph_to_path;
     this.load_graph_data = load_graph_data;
     this.get_commit_hash = get_commit_hash;
     this.get_revision = get_revision;
 
     this.network_error = network_error;
+    this.make_panel = make_panel;
+    this.make_value_selector_panel = make_value_selector_panel;
+    this.reflow_value_selector_panels = reflow_value_selector_panels;
 
     this.master_json = master_json; /* Updated after index.json loads */
 
