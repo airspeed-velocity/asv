@@ -267,10 +267,11 @@ def test_run_build_failure(basic_conf):
     timestamp = util.datetime_to_js_timestamp(datetime.datetime.utcnow())
 
     bench_name = 'time_secondary.track_value'
-    tools.run_asv_with_conf(conf, 'run', "master~2..",
-                            '--quick', '--show-stderr',
-                            '--bench', bench_name,
-                            _machine_file=machine_file)
+    for commit in ['master^!', 'master~1^!']:
+        tools.run_asv_with_conf(conf, 'run', commit,
+                                '--quick', '--show-stderr',
+                                '--bench', bench_name,
+                                _machine_file=machine_file)
 
     # Check results
     hashes = dvcs.get_branch_hashes()
@@ -290,3 +291,6 @@ def test_run_build_failure(basic_conf):
     assert len(data_ok['results']) == 1
     assert data_broken['results'][bench_name] is None
     assert data_ok['results'][bench_name] == 42.0
+
+    # Check that parameters were also saved
+    assert data_broken['params'] == data_ok['params']
