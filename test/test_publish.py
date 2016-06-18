@@ -125,6 +125,23 @@ def test_publish(tmpdir):
     assert index['params']['Cython'] == ['', None]
     assert index['params']['ram'] == ['8.2G', 8804682956.8]
 
+    expected_graph_list = [{'Cython': cython, 'arch': 'x86_64',
+                            'branch': branch,
+                            'cpu': 'Intel(R) Core(TM) i5-2520M CPU @ 2.50GHz (4 cores)',
+                            'machine': 'cheetah',
+                            'numpy': '1.8',
+                            'os': 'Linux (Fedora 20)',
+                            'python': '2.7',
+                            'ram': '8.2G'}
+                            for cython in ["", None] for branch in ["master", "some-branch"]]
+    d = dict(expected_graph_list[0])
+    d['ram'] = 8804682956.8
+    expected_graph_list.append(d)
+
+    assert len(index['graph_param_list']) == len(expected_graph_list)
+    for item in expected_graph_list:
+        assert item in index['graph_param_list']
+
 
 @pytest.fixture(params=[
     "git",

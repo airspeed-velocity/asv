@@ -807,7 +807,16 @@ $(document).ready(function() {
             if (current_benchmark) {
                 /* For the current set of enabled parameters, generate a
                    list of all the permutations we need to load. */
-                var state_permutations = permutations(state);
+                var state_permutations = $.grep($.asv.master_json.graph_param_list, function (params) {
+                    var ok = true;
+                    $.each(state, function (key, values) {
+                        if ($.inArray(params[key], values) == -1) {
+                            ok = false;
+                        }
+                    });
+                    return ok;
+                });
+
                 /* Find where the parameters are different. */
                 var different = find_different_properties(state_permutations);
                 /* For parameterized tests: names of benchmark parameters */
@@ -821,7 +830,7 @@ $(document).ready(function() {
                 /* Generate a master list of URLs and legend labels for
                    the graphs. */
                 var all = [];
-                $.each(state_permutations, function(i, perm) {
+                $.each(state_permutations, function (i, perm) {
                     var graph_contents = [];
                     $.each(param_permutations, function(k, param_perm) {
                         /* For each state value, there can be several

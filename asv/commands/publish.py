@@ -159,6 +159,13 @@ class Publish(Command):
                         graph = graphs.get_graph(key, cur_params)
                         graph.add_data_point(revisions[results.commit_hash], result)
 
+            # Get the parameter sets for all graphs
+            graph_param_list = []
+            for path, graph in graphs:
+                if 'summary' not in graph.params:
+                    if graph.params not in graph_param_list:
+                        graph_param_list.append(graph.params)
+
         log.step()
         log.info("Generating graphs")
         with log.indent():
@@ -194,6 +201,7 @@ class Publish(Command):
             'revision_to_hash': revision_to_hash,
             'revision_to_date': revision_to_date,
             'params': params,
+            'graph_param_list': graph_param_list,
             'benchmarks': benchmark_map,
             'machines': machines,
             'tags': tags,
