@@ -8,6 +8,12 @@ New Features
 - Support for Windows. (#282)
 - New ``setup_cache`` method. (#277)
 - Exclude/include rules in configuration matrix. (#329)
+- Command-line option for selecting environments. (#352)
+- Possibility to include packages via pip in conda environments. (#373)
+- The ``pretty_name`` attribute can be used to change the display
+  name of benchmarks. (#425)
+- Git submodules are supported. (#426)
+- The time when benchmarks were run is tracked. (#428)
 
 API Changes
 ^^^^^^^^^^^
@@ -22,16 +28,18 @@ API Changes
   even when the benchmark method was run multiple times, for example due
   to ``repeat > 1`` being present in timing benchmarks. This is now
   changed so that also they are run multiple times. (#316)
+- The default branch for Mercurial is now ``default``, not ``tip`` (#394).
+- Benchmark results are now by default ordered by commit, not by date. (#429)
+- When ``asv run`` and other commands are called without specifying
+  revisions, the default values are taken from the branches in
+  ``asv.conf.json``. (#430)
 
 Bug Fixes
 ^^^^^^^^^
 
-- Output will display on non-Unicode consoles. (#313, #318)
-- Various bugfixes and minor improvements. (#276, #284, #289, #291,
-  #295, #298, #300, #302, #304, #306, #307, #315, #321, #325)
-
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- Output will display on non-Unicode consoles. (#313, #318, #336)
+- Longer default install timeout. (#342)
+- Various other bugfixes and minor improvements.
 
 0.1.1 (2015-05-05)
 ------------------
