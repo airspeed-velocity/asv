@@ -85,6 +85,16 @@ def test_solve_potts():
 
 
 @pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
+def test_autocorrelated():
+    # Check that a low-amplitude cosine signal is not intepreted as
+    # multiple steps
+    j = np.arange(1000)
+    y = 0.2 * np.cos(j/100.0) + 1.0 * (j >= 500)
+    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), p=1)
+    assert right == [500, 1000]
+
+
+@pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
 def test_detect_regressions():
     for seed in [1234, 5678, 8901, 2345]:
         np.random.seed(seed)
