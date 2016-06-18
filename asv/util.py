@@ -539,6 +539,7 @@ def write_json(path, data, api_version=None):
         os.makedirs(dirname)
 
     if api_version is not None:
+        data = dict(data)
         data['version'] = api_version
 
     with long_path_open(path, 'w') as fd:

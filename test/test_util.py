@@ -12,6 +12,7 @@ import shutil
 import pickle
 import multiprocessing
 import traceback
+import six
 import pytest
 
 from asv import console
@@ -114,3 +115,33 @@ def test_which_path(tmpdir):
             util.which('asv_test_exe_1234')
     finally:
         os.environ['PATH'] = old_path
+
+
+def test_write_load_json(tmpdir):
+    data = {
+        'a': 1,
+        'b': 2,
+        'c': 3
+    }
+    orig_data = dict(data)
+
+    filename = os.path.join(six.text_type(tmpdir), 'test.json')
+
+    util.write_json(filename, data)
+    data2 = util.load_json(filename)
+    assert data == orig_data
+    assert data2 == orig_data
+
+    util.write_json(filename, data, 3)
+    data2 = util.load_json(filename, 3)
+    assert data == orig_data
+    assert data2 == orig_data
+
+    # Wrong API version must fail to load
+    with pytest.raises(util.UserError):
+        util.load_json(filename, 2)
+    with pytest.raises(util.UserError):
+        util.load_json(filename, 4)
+    util.write_json(filename, data)
+    with pytest.raises(util.UserError):
+        util.load_json(filename, 3)
