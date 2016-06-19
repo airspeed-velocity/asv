@@ -235,6 +235,7 @@ the above approach provides. For details, see
 from __future__ import absolute_import, division, unicode_literals, print_function
 
 import math
+import collections
 import heapq
 import six
 
@@ -624,8 +625,32 @@ class L1Dist(object):
     """
     def __init__(self, y):
         self.y = y
-        self.mu_memo = {}
-        self.dist_memo = {}
+
+        class mu_dict(collections.defaultdict):
+            def __missing__(self, a):
+                l, r = a
+                v = median(y[l:r+1])
+                self[a] = v
+                return v
+
+        mu = mu_dict()
+
+        class dist_dict(collections.defaultdict):
+            def __missing__(self, a):
+                l, r = a
+                m = mu[l, r]
+                v = sum(abs(x - m) for x in y[l:r+1])
+                self[a] = v
+                return v
+
+        self.mu_memo = mu
+        self.dist_memo = dist_dict()
+
+    def mu(self, *a):
+        return self.mu_memo[a]
+
+    def dist(self, *a):
+        return self.dist_memo[a]
 
     def precompute(self, max_size, min_pos, max_pos):
         y = self.y
@@ -643,29 +668,6 @@ class L1Dist(object):
                     break
                 self.mu_memo[j,j+p] = m
                 self.dist_memo[j,j+p] = d
-
-    def mu(self, *a):
-        """
-        median(y[l:r+1])
-        """
-        r = self.mu_memo.get(a)
-        if r is None:
-            l, r = a
-            r = median(self.y[l:r+1])
-            self.mu_memo[a] = r
-        return r
-
-    def dist(self, *a):
-        """
-        sum(abs(x - median(y[l:r+1])) for x in y[l:r+1])
-        """
-        r = self.dist_memo.get(a)
-        if r is None:
-            l, r = a
-            m = self.mu(l, r)
-            r = sum(abs(x - m) for x in self.y[l:r+1])
-            self.dist_memo[a] = r
-        return r
 
 
 class L2Dist(object):
