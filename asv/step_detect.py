@@ -235,6 +235,7 @@ the above approach provides. For details, see
 from __future__ import absolute_import, division, unicode_literals, print_function
 
 import math
+import collections
 import heapq
 import six
 
@@ -624,8 +625,32 @@ class L1Dist(object):
     """
     def __init__(self, y):
         self.y = y
-        self.mu_memo = {}
-        self.dist_memo = {}
+
+        class mu_dict(collections.defaultdict):
+            def __missing__(self, a):
+                l, r = a
+                v = median(y[l:r+1])
+                self[a] = v
+                return v
+
+        mu = mu_dict()
+
+        class dist_dict(collections.defaultdict):
+            def __missing__(self, a):
+                l, r = a
+                m = mu[l, r]
+                v = sum(abs(x - m) for x in y[l:r+1])
+                self[a] = v
+                return v
+
+        self.mu_memo = mu
+        self.dist_memo = dist_dict()
+
+    def mu(self, *a):
+        return self.mu_memo[a]
+
+    def dist(self, *a):
+        return self.dist_memo[a]
 
     def precompute(self, max_size, min_pos, max_pos):
         y = self.y
@@ -637,34 +662,12 @@ class L1Dist(object):
         # Precompute interval medians. Does not matter much for
         # solve_potts_approx, but doesn't hurt either.
         for j in range(min_pos, max_pos):
-            medians = rolling_median(y[j:min(max_pos,(j+(max_size+1)))])
-            for p, m in enumerate(medians):
+            median_dev = rolling_median_dev(y[j:min(max_pos,(j+(max_size+1)))])
+            for p, (m, d) in enumerate(median_dev):
                 if j+p > j+max_size:
                     break
                 self.mu_memo[j,j+p] = m
-
-    def mu(self, *a):
-        """
-        median(y[l:r+1])
-        """
-        r = self.mu_memo.get(a)
-        if r is None:
-            l, r = a
-            r = median(self.y[l:r+1])
-            self.mu_memo[a] = r
-        return r
-
-    def dist(self, *a):
-        """
-        sum(abs(x - median(y[l:r+1])) for x in y[l:r+1])
-        """
-        r = self.dist_memo.get(a)
-        if r is None:
-            l, r = a
-            m = self.mu(l, r)
-            r = sum(abs(x - m) for x in self.y[l:r+1])
-            self.dist_memo[a] = r
-        return r
+                self.dist_memo[j,j+p] = d
 
 
 class L2Dist(object):
@@ -732,23 +735,42 @@ def median(items):
         return items[k]
 
 
-def rolling_median(items):
-    """Compute medians of [items[:1], items[:2], items[:3], ...] in O(n log n)"""
+def rolling_median_dev(items):
+    """
+    Compute median(items[:j]), deviation[j]) for j in range(1, len(items))
+    in O(n log n) time.
+
+    deviation[j] == sum(abs(x - median(items[:j])) for x in items[:j])
+    """
     min_heap = []
     max_heap = []
-    result = []
+    min_heap_sum = 0   # equal to -sum(min_heap)
+    max_heap_sum = 0   # equal to sum(max_heap)
     s = iter(items)
     try:
         while True:
-            v = -heapq.heappushpop(min_heap, -six.next(s))
+            # Odd
+            v = six.next(s)
+            min_heap_sum += v
+            v = -heapq.heappushpop(min_heap, -v)
+            min_heap_sum -= v
             heapq.heappush(max_heap, v)
-            result.append(max_heap[0])   # number of elements is odd
+            max_heap_sum += v
+            # Ensure d >= 0 despite rounding error
+            d = max(0, max_heap_sum - min_heap_sum - max_heap[0])
+            yield (max_heap[0], d)
 
-            v = heapq.heappushpop(max_heap, six.next(s))
+            # Even
+            v = six.next(s)
+            max_heap_sum += v
+            v = heapq.heappushpop(max_heap, v)
+            max_heap_sum -= v
             heapq.heappush(min_heap, -v)
-            result.append((max_heap[0] - min_heap[0])/2)   # number of elements is even
+            min_heap_sum += v
+            d = max(0, max_heap_sum - min_heap_sum)
+            yield ((max_heap[0] - min_heap[0])/2, d)
     except StopIteration:
-        return result
+        return
 
 
 def golden_search(f, a, b, xatol=1e-6, ftol=1e-8, expand_bounds=False):
