@@ -287,6 +287,11 @@ import collections
 import heapq
 import six
 
+try:
+    from . import _rangemedian
+except ImportError:
+    _rangemedian = None
+
 
 #
 # Detecting regressions
@@ -382,7 +387,7 @@ def detect_regressions(y):
 # Fitting piecewise constant functions to noisy data
 #
 
-def solve_potts(y, gamma, p=2, min_size=2, max_size=1e99,
+def solve_potts(y, gamma, p=2, min_size=2, max_size=None,
                 min_pos=None, max_pos=None, mu_dist=None):
     """Fit penalized stepwise constant function (Potts model) to data.
 
@@ -453,6 +458,9 @@ def solve_potts(y, gamma, p=2, min_size=2, max_size=1e99,
     if mu_dist is None:
         mu_dist = get_mu_dist(y, p)
 
+    if max_size is None:
+        max_size = len(y)
+
     mu_dist.precompute(max_size, min_pos, max_pos)
     mu, dist = mu_dist.mu, mu_dist.dist
 
@@ -469,36 +477,39 @@ def solve_potts(y, gamma, p=2, min_size=2, max_size=1e99,
     #     For interval (inclusive) right edge r in {0, ..., n-1},
     #     the best (exclusive) left edge is at l=p[r].
     #     Where intervals overlap, the rightmost one has priority.
-    n = len(y)
-    i0 = min_pos
-    i1 = max_pos
 
-    B = [-gamma]
-    p = [None]*i1
-    for r in range(i0, i1):
-        B.append(inf)
-        a = max(r + 1 - max_size, i0)
-        b = max(r + 1 - min_size + 1, i0)
-        for l in range(a, b):
-            b = B[l-i0] + gamma + dist(l, r)
-            if b <= B[r+1-i0]:
-                B[r+1-i0] = b
-                p[r] = l - 1
+    if hasattr(mu_dist, 'find_best_partition'):
+        p = mu_dist.find_best_partition(gamma, min_size, max_size, min_pos, max_pos)
+    else:
+        i0 = min_pos
+        i1 = max_pos
+
+        B = [-gamma]*(i1 - i0 + 1)
+        p = [0]*(i1 - i0)
+        for r in range(i0, i1):
+            B[r+1-i0] = inf
+            a = max(r + 1 - max_size, i0)
+            b = max(r + 1 - min_size + 1, i0)
+            for l in range(a, b):
+                b = B[l-i0] + gamma + dist(l, r)
+                if b <= B[r+1-i0]:
+                    B[r+1-i0] = b
+                    p[r-i0] = l - 1
 
     # Routine "Segmentation from partition" in [1]
     # Convert interval representation computed above
     # to a list of intervals and values.
-    r = len(p) - 1
-    l = p[r]
+    r = len(p) - 1 + min_pos
+    l = p[r - min_pos]
     right = []
     values = []
     dists = []
-    while r >= i0:
+    while r >= min_pos:
         right.append(r + 1)
         values.append(mu((l + 1), r))
         dists.append(dist((l + 1), r))
         r = l
-        l = p[r]
+        l = p[r - min_pos]
     right.reverse()
     values.reverse()
     dists.reverse()
@@ -789,7 +800,10 @@ class L2Dist(object):
 
 def get_mu_dist(y, p):
     if p == 1:
-        return L1Dist(y)
+        if _rangemedian is not None:
+            return _rangemedian.RangeMedian(y)
+        else:
+            return L1Dist(y)
     elif p == 2:
         return L2Dist(y)
     else:

@@ -3,8 +3,11 @@
 import ez_setup
 ez_setup.use_setuptools()
 
-from setuptools import setup
+from setuptools import setup, Extension, Command
 from setuptools.command.test import test as TestCommand
+
+from distutils.command.build_ext import build_ext
+from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 
 import os
 import subprocess
@@ -100,10 +103,28 @@ __release__ = {2}
             f.write(content)
 
 
-version = '0.2.dev'
+class BuildFailed(Exception):
+    pass
 
 
-if __name__ == "__main__":
+class optional_build_ext(build_ext):
+    def run(self):
+        try:
+            build_ext.run(self)
+        except DistutilsPlatformError:
+            raise BuildFailed()
+
+    def build_extension(self, ext):
+        try:
+            build_ext.build_extension(self, ext)
+        except (CCompilerError, DistutilsExecError, DistutilsPlatformError,
+                IOError, ValueError):
+            raise BuildFailed()
+
+
+def run_setup(build_binary=False):
+    version = '0.2.dev'
+
     git_hash = get_git_hash()
 
     # Indicates if this version is a release version
@@ -116,7 +137,6 @@ if __name__ == "__main__":
     write_version_file(
         os.path.join(basedir, 'asv', '_version.py'), version, git_hash)
 
-
     # Install entry points for making releases with zest.releaser
     entry_points = {}
     for hook in [('releaser', 'middle'), ('postreleaser', 'before')]:
@@ -127,6 +147,10 @@ if __name__ == "__main__":
 
     entry_points['console_scripts'] = ['asv = asv.main:main']
 
+    if build_binary:
+        ext_modules = [Extension("asv._rangemedian", ["asv/_rangemedian.cpp"])]
+    else:
+        ext_modules = []
 
     setup(
         name="asv",
@@ -137,6 +161,7 @@ if __name__ == "__main__":
                   'asv.extern',
                   'asv._release'],
         entry_points=entry_points,
+        ext_modules = ext_modules,
 
         install_requires=[
             str('six>=1.4')
@@ -164,7 +189,7 @@ if __name__ == "__main__":
 
         # py.test testing
         tests_require=['pytest'],
-        cmdclass={'test': PyTest},
+        cmdclass={'test': PyTest, 'build_ext': optional_build_ext},
 
         author="Michael Droettboom",
         author_email="mdroe@stsci.edu",
@@ -172,3 +197,11 @@ if __name__ == "__main__":
         license="BSD",
         url="http://github.com/spacetelescope/asv"
     )
+
+
+if __name__ == "__main__":
+    try:
+        run_setup(build_binary=True)
+    except BuildFailed:
+        print("Compiling asv._rangemedian failed -- continuing without it")
+        run_setup(build_binary=False)
