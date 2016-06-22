@@ -20,3 +20,7 @@
 #regressions-body table.ignored a {
     color: #82abda;
 }
+
+#regressions-body .feed-div {
+    float: right;
+}
