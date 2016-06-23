@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import io
+import sys
 import datetime
 import xml.etree.ElementTree as etree
 import xml.dom.minidom
@@ -33,7 +34,7 @@ def prettify_xml(text):
 
 
 def dummy_feed_xml():
-    entry_1 = feed.FeedEntry(title='Some title', updated=datetime.datetime.utcnow())
+    entry_1 = feed.FeedEntry(title='Some title', updated=datetime.datetime(1993, 1, 1))
     entry_2 = feed.FeedEntry(title='Another title', updated=datetime.datetime(1990, 1, 1),
                              link='http://foo', content='More text')
 
@@ -44,12 +45,48 @@ def dummy_feed_xml():
     return stream.getvalue()
 
 
-def test_smoketest():
-    # Check the result is valid XML and has sensible content
+def test_dummy_xml():
     xml = dummy_feed_xml()
-    root = etree.fromstring(xml)
-    entries = root.findall('{http://www.w3.org/2005/Atom}entry')
-    assert len(entries) == 2
+    text = xml.decode('utf-8').replace('>', '>\n')
+
+    expected = """\
+<?xml version='1.0' encoding='utf-8'?>
+
+<feed xmlns="http://www.w3.org/2005/Atom">
+<id>
+tag:baz.com,1970-01-01:/82438e6f2527536e1271ba04e05f31b7fcbef238753fb5069b1fd52a9242173a</id>
+<author>
+<name>
+Me</name>
+</author>
+<title xml:lang="en">
+Feed title</title>
+<updated>
+1993-01-01T00:00:00Z</updated>
+<entry>
+<id>
+tag:baz.com,1993-01-01:/9c12e06399d193907df13570525d9887b7f8e8f5ff23ddd7e9938416d490ff78</id>
+<title xml:lang="en">
+Some title</title>
+<updated>
+1993-01-01T00:00:00Z</updated>
+<content xml:lang="en">
+ </content>
+</entry>
+<entry>
+<id>
+tag:baz.com,1990-01-01:/a413675aef85f04bef68c6ec832563e56cff679bcdbb210a1f7dd797dddc844e</id>
+<title xml:lang="en">
+Another title</title>
+<updated>
+1990-01-01T00:00:00Z</updated>
+<link href="http://foo" />
+<content type="html" xml:lang="en">
+More text</content>
+</entry>
+</feed>
+"""
+    assert text == expected
 
 
 @pytest.mark.skipif(not HAVE_FEEDPARSER, reason="test requires feedparser module")
@@ -61,9 +98,9 @@ def test_feedparser():
     assert feed['entries'][0]['title'] == 'Some title'
     assert feed['entries'][1]['content'][0]['type'] == 'text/html'
     assert feed['entries'][1]['content'][0]['value'] == 'More text'
-    assert feed['entries'][1]['links'] == [{'href': u'http://foo',
-                                            'type': u'text/html',
-                                            'rel': u'alternate'}]
+    assert feed['entries'][1]['links'] == [{'href': 'http://foo',
+                                            'type': 'text/html',
+                                            'rel': 'alternate'}]
 
 
 @pytest.mark.skipif(not HAVE_FEEDVALIDATOR, reason="test requires feedvalidator module")

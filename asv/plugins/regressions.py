@@ -11,7 +11,8 @@ import multiprocessing
 import time
 import traceback
 import six
-import urllib
+
+from six.moves.urllib.parse import urlencode
 
 from ..results import iter_results
 from ..console import log
@@ -167,14 +168,15 @@ class Regressions(OutputPublisher):
                 updated = datetime.datetime.fromtimestamp(last_timestamp/1000)
 
                 params = dict(graph_params)
-                params['idx'] = idx
+                if idx is not None:
+                    params['idx'] = idx
                 if rev1 is None:
                     params['commits'] = '{0}'.format(revision_to_hash[rev2])
                 else:
                     params['commits'] = '{0}-{1}'.format(revision_to_hash[rev1],
                                                          revision_to_hash[rev2])
 
-                link = 'index.html#{0}?{1}'.format(benchmark_name, urllib.urlencode(params))
+                link = 'index.html#{0}?{1}'.format(benchmark_name, urlencode(params))
 
                 try:
                     best_percentage = "{0:.2f}%".format(100 * (last_value - best_value) / best_value)

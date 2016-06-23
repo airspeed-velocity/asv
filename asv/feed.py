@@ -5,6 +5,7 @@ Minimal Atom feed writer.
 """
 from __future__ import absolute_import, division, unicode_literals, print_function
 
+import sys
 import datetime
 import hashlib
 import xml.etree.ElementTree as etree
@@ -144,8 +145,11 @@ def write_atom(dest, entries, author, title, address, updated=None, link=None,
     tree = etree.ElementTree(root)
 
     def write(f):
-        tree.write(f, xml_declaration=True, default_namespace=ATOM_NS[1:-1],
-                   encoding=str('utf-8'))
+        if sys.version_info[:2] < (2, 7):
+            _etree_py26_write(f, tree)
+        else:
+            tree.write(f, xml_declaration=True, default_namespace=ATOM_NS[1:-1],
+                       encoding=str('utf-8'))
 
     if hasattr(dest, 'write'):
         write(dest)
@@ -154,13 +158,48 @@ def write_atom(dest, entries, author, title, address, updated=None, link=None,
             write(f)
 
 
+def _etree_py26_write(f, tree):
+    """
+    Compatibility workaround for ElementTree shipped with py2.6
+    """
+    f.write("<?xml version='1.0' encoding='utf-8'?>\n".encode('utf-8'))
+
+    if etree.VERSION[:3] == '1.2':
+        def fixtag(tag, namespaces):
+            if tag == XML_NS + 'lang':
+                return 'xml:lang', ""
+            if '}' in tag:
+                j = tag.index('}') + 1
+                tag = tag[j:]
+                xmlns = ''
+            if tag == 'feed':
+                xmlns = ('xmlns', str('http://www.w3.org/2005/Atom'))
+                namespaces['http://www.w3.org/2005/Atom'] = 'xmlns'
+            return tag, xmlns
+    else:
+        fixtag = etree.fixtag
+
+    old_fixtag = etree.fixtag
+    etree.fixtag = fixtag
+    try:
+        tree.write(f, encoding=str('utf-8'))
+    finally:
+        etree.fixtag = old_fixtag
+
+
 def _get_id(owner, date, content):
     """
     Generate an unique Atom id for the given content
     """
     h = hashlib.sha256()
     h.update("github.com/spacetelescope/asv".encode('utf-8'))
-    h.update(repr(tuple(content)).encode('utf-8'))
+    for x in content:
+        if x is None:
+            h.update(",".encode('utf-8'))
+        else:
+            h.update(x.encode('utf-8'))
+        h.update(",".encode('utf-8'))
+
     if date is None:
         date = datetime.datetime(1970, 1, 1)
     return "tag:{0},{1}:/{2}".format(owner, date.strftime('%Y-%m-%d'), h.hexdigest())
