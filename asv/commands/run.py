@@ -128,11 +128,9 @@ class Run(Command):
             show_stderr=False, quick=False, profile=False, env_spec=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
             skip_failed=False, skip_existing_commits=False, _returns={}):
-        params = {}
         machine_params = Machine.load(
             machine_name=machine,
             _path=_machine_file, interactive=True)
-        params.update(machine_params.__dict__)
         machine_params.save(conf.results_dir)
 
         environments = list(environment.get_environments(conf, env_spec))
@@ -253,9 +251,11 @@ class Run(Command):
                             successes = map(_do_build, args)
 
                     for env, success in zip(subenv, successes):
+                        params = dict(machine_params.__dict__)
+                        params['python'] = env.python
+                        params.update(env.requirements)
+
                         if success:
-                            params['python'] = env.python
-                            params.update(env.requirements)
                             results = benchmarks.run_benchmarks(
                                 env, show_stderr=show_stderr, quick=quick,
                                 profile=profile, skip=skipped_benchmarks)
