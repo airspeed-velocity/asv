@@ -358,3 +358,62 @@ def test_regression_atom_feed(generate_result_dir):
     assert ('<a href="index.html#time_func?commits=' + commits[5]) in content.text
     content = entries[1].find('{http://www.w3.org/2005/Atom}content')
     assert ('<a href="index.html#time_func?commits=' + commits[10]) in content.text
+
+    # Smoke check ids
+    id_1 = entries[0].find('{http://www.w3.org/2005/Atom}id')
+    id_2 = entries[1].find('{http://www.w3.org/2005/Atom}id')
+    assert id_1.text != id_2.text
+
+
+@pytest.mark.parametrize("dvcs_type", [
+    "git",
+    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg"),
+])
+def test_regression_atom_feed_update(dvcs_type, tmpdir):
+    # Check that adding new commits which only change values preserves
+    # feed entry ids
+    tmpdir = six.text_type(tmpdir)
+    values = 5 * [1] + 5 * [10] + 5*[15.70, 15.31]
+    dvcs = tools.generate_repo_from_ops(
+        tmpdir, dvcs_type, [("commit", i) for i in range(len(values))])
+    commits = list(reversed(dvcs.get_branch_hashes()))
+
+    # Old results (drop last 6)
+    commit_values = {}
+    for commit, value in zip(commits, values[:-5]):
+        commit_values[commit] = value
+    conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
+
+    tools.run_asv_with_conf(conf, "publish")
+
+    old_tree = etree.parse(join(conf.html_dir, "regressions.xml"))
+
+    # New results (values change, regressing revisions stay same)
+    for commit, value in zip(commits, values):
+        commit_values[commit] = value
+
+    shutil.rmtree(conf.results_dir)
+    shutil.rmtree(conf.html_dir)
+    conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
+
+    tools.run_asv_with_conf(conf, "publish")
+
+    new_tree = etree.parse(join(conf.html_dir, "regressions.xml"))
+
+    # Check ids didn't change
+    old_root = old_tree.getroot()
+    new_root = new_tree.getroot()
+
+    old_entries = old_root.findall('{http://www.w3.org/2005/Atom}entry')
+    new_entries = new_root.findall('{http://www.w3.org/2005/Atom}entry')
+
+    assert len(new_entries) == len(old_entries) == 2
+
+    for j, (a, b) in enumerate(zip(new_entries, old_entries)):
+        a_id = a.find('{http://www.w3.org/2005/Atom}id')
+        b_id = b.find('{http://www.w3.org/2005/Atom}id')
+        assert a_id.text == b_id.text
+
+        a_content = a.find('{http://www.w3.org/2005/Atom}content')
+        b_content = b.find('{http://www.w3.org/2005/Atom}content')
+        assert a_content.text != b_content.text

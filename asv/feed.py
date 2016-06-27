@@ -33,20 +33,31 @@ class FeedEntry(object):
         Link (alternate) for the entry
     content : str, optional
         Body HTML text for the entry.
+    id_context : list of str, optional
+        Material to generate unique IDs from. Feed readers show each id
+        as a separate entry, so if an entry is updated, it appears as
+        a new entry only if the id_context changes.
+        Default: [title, link, content]
 
     """
-    def __init__(self, title, updated, link=None, content=None):
+    def __init__(self, title, updated, link=None, content=None, id_context=None):
         self.title = title
         self.link = link
         self.updated = updated
         self.content = content
+        self.id_context = id_context
 
     def get_atom(self, id_prefix, language):
         item = etree.Element(ATOM_NS + 'entry')
 
+        id_context = ["entry"]
+        if self.id_context is None:
+            id_context += [self.title, self.link, self.content]
+        else:
+            id_context += list(self.id_context)
+
         el = etree.Element(ATOM_NS + 'id')
-        el.text = _get_id(id_prefix, self.updated,
-                          ["entry", self.title, self.link, self.content])
+        el.text = _get_id(id_prefix, self.updated, id_context)
         item.append(el)
 
         el = etree.Element(ATOM_NS + 'title')

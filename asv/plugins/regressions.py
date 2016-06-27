@@ -219,7 +219,14 @@ class Regressions(OutputPublisher):
                 Latest value: {last_value_str} ({best_percentage} worse than best value {best_value_str}).
                 """.format(**locals()).strip()
 
-                entries.append(feed.FeedEntry(title, updated, link, summary))
+                # Information that uniquely identifies a regression
+                # --- if the values and the texts change on later
+                # runs, feed readers should is identify the regression
+                # as the same one, as long as the benchmark name and
+                # commits match.
+                id_context = [name, revision_to_hash.get(rev1, ""), revision_to_hash.get(rev2, "")]
+
+                entries.append(feed.FeedEntry(title, updated, link, summary, id_context))
 
         entries.sort(key=lambda x: x.updated, reverse=True)
 
