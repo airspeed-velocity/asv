@@ -9,8 +9,8 @@ amplitude is constant in time.
 
 Luckily, step detection is a well-studied problem. In this
 implementation, we mainly follow a variant of the approach outlined in
-[Friedrich2008]_. This provides a fast algorithm for solving the piecewise
-fitting problem
+[Friedrich2008]_ and elsewhere. This provides a fast algorithm for
+solving the piecewise fitting problem
 
 .. math::
    :label: gamma-opt
@@ -23,8 +23,9 @@ scaling, which is too harsh for pure-Python code. For details, see
 ``asv.step_detect.solve_potts_approx``.  Moreover, we follow a
 slightly different approach on obtaining a suitable number of
 intervals, by selecting an optimal value for :math:`\gamma`, based on
-a variant of the information criterion problem mentioned in
-[Friedrich2008]_
+a variant of the information criterion problem discussed in
+[Yao1988]_.
+
 
 .. [Friedrich2008] F. Friedrich et al.,
    ''Complexity Penalized M-Estimation: Fast Computation'',
@@ -49,10 +50,10 @@ criteria,
 .. math::
    :label: ic-form
 
-   \text{SC} = \frac{m}{2} \ln \sigma^2 + k \log m = \text{min!}
+   \text{SC} = \frac{m}{2} \ln \sigma^2 + k \ln m = \text{min!}
 
-where :math:`\sigma^2` is maximum likelihood variance estimator for
-gaussian noise. For the implementation, see
+where :math:`\sigma^2` is maximum likelihood variance estimator (if
+noise is gaussian). For the implementation, see
 ``asv.step_detect.solve_potts_autogamma``.
 
 What follows is a handwaving plausibility argument why such an
@@ -64,7 +65,7 @@ contributions/corrections are welcome!
 We assume a Bayesian model:
 
 .. math::
-   :label:
+   :label: prob-model
 
    P(\{y_i\}_{i=1}^m|\sigma,k,\{\mu_i\}_{i=1}^k,\{j_i\}_{i=1}^{k-1})
    =
@@ -78,7 +79,7 @@ Here, :math:`y_i` are the :math:`m` data points at hand, :math:`k` is
 the number of intervals, :math:`\mu_i` are the values of the function
 at the intervals, :math:`j_i` are the interval breakpoints;
 :math:`j_0=0`, :math:`j_k=m`, :math:`j_{r-1}<j_r`. The noise is
-assumed exponential rather than gaussian, which results to the more
+assumed Laplace rather than gaussian, which results to the more
 robust :math:`l_1` norm fitting rather than :math:`l_2`.  The noise
 amplitude :math:`\sigma` is not known.
 :math:`N` is a normalization constant that depends on :math:`m` but
@@ -146,7 +147,7 @@ We now approximate the rest of the integrals/sums with only the
 max-likelihood terms, and assume :math:`m_j^*\sim{}m/k`. Then,
 
 .. math::
-   :label:
+   :label: p-k-estimate
 
    \ln P(k|\{y\})
    &\simeq
@@ -188,7 +189,7 @@ we get
    \sim
    C
    -
-   \frac{k}{2} \log m
+   \frac{k}{2} \ln m
    -
    m \ln\sum_{r=1}^k\sum_{i=j_{r-1}^*}^{j_r^*} |y_i - \mu_r^*|
 
@@ -200,11 +201,11 @@ final fitting problem then becomes
 
    \mathop{\mathrm{argmin}}_{k,\{j\},\{\mu\}} r(m) k + \ln\sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} |y_i - \mu_r|
 
-with :math:`r(m) = \frac{\log m}{2m}`. As we know this function
+with :math:`r(m) = \frac{\ln m}{2m}`. As we know this function
 :math:`r(m)` is not necessarily completely correct, and it seems doing
 the calculation rigorously requires more effort than can be justified
 by the requirements of the application, we now take a pragmatic view and
-fudge the function to :math:`r(m) = \beta \frac{\log m}{m}` with
+fudge the function to :math:`r(m) = \beta \frac{\ln m}{m}` with
 :math:`\beta` chosen so that things appear to work in practice
 for the problem at hand.
 
@@ -222,6 +223,53 @@ completely. This probably is not a far-fetched assumption; in practice
 it appears such Bayesian information criterion provides a reasonable
 way for selecting a suitable :math:`\gamma`.
 
+
+Autocorrelated noise
+--------------------
+
+Practical experience shows that the noise in the benchmark results can be
+correlated. Often benchmarks are run for multiple commits at once, for
+example the new commits at a given time, and the benchmark machine
+does something else between the runs. Alternatively, the background
+load from other processes on the machine varies with time.
+
+To give a basic model for the noise correlations, we include
+AR(1) Laplace noise in :eq:`prob-model`,
+
+.. math::
+   :label: autocorr-model
+
+   P(\{y_i\}_{i=1}^m|\sigma,\rho,k,\{\mu_i\}_{i=1}^k,\{j_i\}_{i=1}^{k-1})
+   =
+   N
+   \sigma^{-m}
+   \exp(-\sigma^{-1}\sum_{r=1}^k\sum_{i=j_{r-1}+1}^{j_r} |\epsilon_{i,r} - \rho \epsilon_{i-1,r}|)
+
+where :math:`\epsilon_{i,r}=y_i-\mu_{r}` with
+:math:`\epsilon_{j_{r-1},r}=y_{j_{r-1}}-\mu_{r-1}` and
+:math:`\epsilon_{j_0,1}=0` are the deviations from the stepwise
+model. The correlation measure :math:`\rho` is unknown, but assumed to
+be constant in :math:`(-1,1)`.
+
+Since the parameter :math:`\rho` is global, it does not change the parameter
+counting part of the Schwarz criterion.  The maximum likelihood term however
+does depend on :math:`\rho`, so that the problem becomes:
+
+.. math::
+   :label: bic-form-autocorr
+
+   \mathop{\mathrm{argmin}}_{k,\rho,\{j\},\{\mu\}} r(m) k + \ln\sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} |\epsilon_{i,r} - \rho\epsilon_{i-1,r}|
+
+To save computation time, we do not solve this optimization problem
+exactly. Instead, we again minimize along the :math:`\mu_r^*(\gamma)`,
+:math:`j_r^*(\gamma)` curve provided by the solution to
+:eq:`gamma-opt`, and use :eq:`bic-form-autocorr` only in selecting the
+optimal value of the :math:`\gamma` parameter.
+
+The minimization vs. :math:`\rho` can be done numerically for given
+:math:`\mu_r^*(\gamma)`, :math:`j_r^*(\gamma)`. This minimization step
+is computationally cheap compared to the piecewise fit, so including
+it will not significantly change the runtime of the total algorithm.
 
 Postprocessing
 --------------
@@ -485,7 +533,7 @@ def solve_potts_autogamma(y, beta=None, **kw):
     mu, dist = mu_dist.mu, mu_dist.dist
 
     if beta is None:
-        beta = 5 * math.log(n) / n
+        beta = 4 * math.log(n) / n
 
     gamma_0 = dist(0, n-1)
 
@@ -498,7 +546,30 @@ def solve_potts_autogamma(y, beta=None, **kw):
     def f(x):
         gamma = gamma_0 * math.exp(x)
         r, v, d = solve_potts_approx(y, gamma=gamma, mu_dist=mu_dist, **kw)
-        obj = beta*len(r) + math.log(1e-300 + sum(d))
+
+        # MLE fit noise correlation
+        def sigma_star(rights, values, rho):
+            """
+            |E_0| + sum_{j>0} |E_j - rho E_{j-1}|
+            """
+            l = 1
+            E_prev = y[0] - values[0]
+            s = abs(E_prev)
+            for r, v in zip(rights, values):
+                for yv in y[l:r]:
+                    E = yv - v
+                    s += abs(E - rho*E_prev)
+                    E_prev = E
+                l = r
+            return s
+
+        rho_best = golden_search(lambda rho: sigma_star(r, v, rho), -1, 1,
+                                 xatol=0.05, expand_bounds=True)
+
+        # Objective function
+        obj = beta*len(r) + math.log(1e-300 + sigma_star(r, v, rho_best))
+
+        # Done
         if obj < best_obj[0]:
             best_r[0] = r
             best_v[0] = v
