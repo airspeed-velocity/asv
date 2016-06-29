@@ -240,3 +240,32 @@ def track_this():
 
     b = benchmarks.Benchmarks(conf, repo, envs, regex='track_this')
     assert len(b) == 1
+
+
+def test_quick(tmpdir):
+    # Check that the quick option works
+    tmpdir = six.text_type(tmpdir)
+    os.chdir(tmpdir)
+
+    shutil.copytree(BENCHMARK_DIR, 'benchmark')
+
+    d = {}
+    d.update(ASV_CONF_JSON)
+    d['env_dir'] = "env"
+    d['benchmark_dir'] = 'benchmark'
+    d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
+    conf = config.Config.from_json(d)
+
+    repo = get_repo(conf)
+    envs = list(environment.get_environments(conf, None))
+
+    b = benchmarks.Benchmarks(conf, repo, envs)
+    skip_names = [name for name in b.keys() if name != 'time_examples.TimeWithRepeat.time_it']
+    times = b.run_benchmarks(envs[0], quick=True, show_stderr=True, skip=skip_names)
+
+    assert len(times) == 1
+
+    # Check that the benchmark was run only once. The result for quick==False
+    # is tested above in test_find_benchmarks
+    expected = ["<1>"]
+    assert times['time_examples.TimeWithRepeat.time_it']['stderr'].split() == expected
