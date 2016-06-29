@@ -6,16 +6,21 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 import os
 import re
 import itertools
+import datetime
 import multiprocessing
 import time
 import traceback
 import six
 
+from six.moves.urllib.parse import urlencode
+
+from ..results import iter_results
 from ..console import log
 from ..publishing import OutputPublisher
 from ..step_detect import detect_regressions
 
 from .. import util
+from .. import feed
 
 
 class Regressions(OutputPublisher):
@@ -73,6 +78,7 @@ class Regressions(OutputPublisher):
             pool.terminate()
 
         cls._save(conf, {'regressions': regressions})
+        cls._save_feed(conf, benchmarks, regressions, revisions, revision_to_hash)
 
     @classmethod
     def _insert_regression(cls, regressions, seen, revision_to_hash, repo, all_params,
@@ -89,7 +95,7 @@ class Regressions(OutputPublisher):
             spec = repo.get_range_spec(commit_a, commit_b)
             commits = repo.get_hashes_from_range(spec)
             if len(commits) == 1:
-                jumps[k] = (None, jump[1])
+                jumps[k] = (None, jump[1], jump[2], jump[3])
 
         # Select unique graph params
         graph_params = {}
@@ -118,6 +124,117 @@ class Regressions(OutputPublisher):
         fn = os.path.join(conf.html_dir, 'regressions.json')
         util.write_json(fn, data)
 
+    @classmethod
+    def _save_feed(cls, conf, benchmarks, data, revisions, revision_to_hash):
+        """
+        Save the results as an Atom feed
+        """
+
+        filename = os.path.join(conf.html_dir, 'regressions.xml')
+
+        # Determine publication date as the date when the benchmark
+        # was run --- if it is missing, use the date of the commit
+        run_timestamps = {}
+        revision_timestamps = {}
+        for results in iter_results(conf.results_dir):
+            revision = revisions[results.commit_hash]
+            revision_timestamps[revision] = results.date
+
+            # Time when the benchmark was run
+            for benchmark_name, timestamp in six.iteritems(results.ended_at):
+                key = (benchmark_name, revision)
+                run_timestamps[key] = timestamp
+
+            # Fallback to commit date
+            for benchmark_name in six.iterkeys(results.results):
+                key = (benchmark_name, revision)
+                run_timestamps.setdefault(key, results.date)
+
+        # Generate feed entries
+        entries = []
+
+        for name, graph_path, graph_params, idx, info in data:
+            if '(' in name:
+                benchmark_name = name[:name.index('(')]
+            else:
+                benchmark_name = name
+
+            jumps, last_value, best_value = info
+
+            for rev1, rev2, value1, value2 in jumps:
+                timestamps = (run_timestamps[benchmark_name, t] for t in (rev1, rev2) if t is not None)
+                last_timestamp = max(timestamps)
+
+                updated = datetime.datetime.fromtimestamp(last_timestamp/1000)
+
+                params = dict(graph_params)
+                if idx is not None:
+                    params['idx'] = idx
+                if rev1 is None:
+                    params['commits'] = '{0}'.format(revision_to_hash[rev2])
+                else:
+                    params['commits'] = '{0}-{1}'.format(revision_to_hash[rev1],
+                                                         revision_to_hash[rev2])
+
+                link = 'index.html#{0}?{1}'.format(benchmark_name, urlencode(params))
+
+                try:
+                    best_percentage = "{0:.2f}%".format(100 * (last_value - best_value) / best_value)
+                except ZeroDivisionError:
+                    best_percentage = "{0:.2g} units".format(last_value - best_value)
+
+                try:
+                    percentage = "{0:.2f}%".format(100 * (value2 - value1) / value1)
+                except ZeroDivisionError:
+                    percentage = "{0:.2g} units".format(value2 - value1)
+
+                jump_date = datetime.datetime.fromtimestamp(revision_timestamps[rev2]/1000)
+                jump_date_str = jump_date.strftime('%Y-%m-%d %H:%M:%S')
+
+                if rev1 is not None:
+                    commit_a = revision_to_hash[rev1]
+                    commit_b = revision_to_hash[rev2]
+                    if 'github.com' in conf.show_commit_url:
+                        commit_url = conf.show_commit_url + '../compare/' + commit_a + "..." + commit_b
+                    else:
+                        commit_url = conf.show_commit_url + commit_a
+                    commit_ref = 'in commits <a href="{0}">{1}...{2}</a>'.format(commit_url,
+                                                                                 commit_a[:8],
+                                                                                 commit_b[:8])
+                else:
+                    commit_a = revision_to_hash[rev2]
+                    commit_url = conf.show_commit_url + commit_a
+                    commit_ref = 'in commit <a href="{0}">{1}</a>'.format(commit_url, commit_a[:8])
+
+                unit = benchmarks[benchmark_name].get('unit', '')
+                best_value_str = util.human_value(best_value, unit)
+                last_value_str = util.human_value(last_value, unit)
+                value1_str = util.human_value(value1, unit)
+                value2_str = util.human_value(value2, unit)
+
+                title = "{percentage} {name}".format(**locals())
+                summary = """
+                <a href="{link}">{percentage} regression</a> on {jump_date_str} {commit_ref}.<br>
+                New value: {value2_str}, old value: {value1_str}.<br>
+                Latest value: {last_value_str} ({best_percentage} worse than best value {best_value_str}).
+                """.format(**locals()).strip()
+
+                # Information that uniquely identifies a regression
+                # --- if the values and the texts change on later
+                # runs, feed readers should is identify the regression
+                # as the same one, as long as the benchmark name and
+                # commits match.
+                id_context = [name, revision_to_hash.get(rev1, ""), revision_to_hash.get(rev2, "")]
+
+                entries.append(feed.FeedEntry(title, updated, link, summary, id_context))
+
+        entries.sort(key=lambda x: x.updated, reverse=True)
+
+        feed.write_atom(filename, entries,
+                        title='{0} performance regressions'.format(conf.project),
+                        author='Airspeed Velocity',
+                        address='{0}.asv'.format(conf.project))
+
 
 def _analyze_data(graph_data):
     """
@@ -125,12 +242,12 @@ def _analyze_data(graph_data):
 
     Returns
     -------
-    jumps : list of (revision_a, revision_b)
+    jumps : list of (revision_a, revision_b, prev_value, next_value)
          List of revision pairs, between which there is an upward jump
-         in the value.
-    cur_value : int
+         in the value, and the preceding and following values.
+    cur_value : float
          Most recent value
-    best_value : int
+    best_value : float
          Best value
     """
     try:
@@ -145,10 +262,14 @@ def _analyze_data(graph_data):
             for r in range(jump_r + 1, len(values)):
                 if values[r] is not None:
                     next_r = r
+                    next_value = values[r]
                     break
             else:
                 next_r = jump_r + 1
-            jumps.append((revisions[jump_r], revisions[next_r]))
+                next_value = v
+            prev_value = values[jump_r]
+            jumps.append((revisions[jump_r], revisions[next_r],
+                          prev_value, next_value))
 
         return j, entry_name, (jumps, v, best_v)
     except BaseException as exc:
@@ -242,3 +363,4 @@ class _GraphDataFilter(object):
                 revision_set = revision_set.intersection(self.revision_sets[key])
 
         return revision_set
+

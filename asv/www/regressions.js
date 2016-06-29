@@ -61,6 +61,9 @@ $(document).ready(function() {
             main_div.append(dropdown_div);
         }
 
+        var feed_div = $('<div class="feed-div"><a class="btn" href="regressions.xml">Feed (Atom)</a></div>');
+        main_div.append(feed_div);
+
         $.each(branches, function(i, branch) {
             var branch_div = $('<div class="regression-div"/>')
 
