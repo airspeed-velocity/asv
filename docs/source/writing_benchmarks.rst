@@ -358,6 +358,9 @@ instead.
     The memory benchmarking feature is still experimental.
     ``asizeof`` may not be the most appropriate metric to use.
 
+.. note::
+
+    The memory benchmarks are not supported on PyPy.
 
 .. _peak-memory:
 
