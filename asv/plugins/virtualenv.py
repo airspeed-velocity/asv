@@ -55,9 +55,8 @@ class Virtualenv(environment.Environment):
         try:
             import virtualenv
         except ImportError:
-            raise util.UserError(
-                "virtualenv must be installed to run asv with the given "
-                "Python executable")
+            raise environment.EnvironmentUnavailable(
+                "virtualenv package not installed")
 
         # Can't use `virtualenv.__file__` here, because that will refer to a
         # .pyc file which can't be used on another version of Python
