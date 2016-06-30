@@ -420,8 +420,10 @@ class Benchmark(object):
             benchmark.set_param_idx(param_idx)
 
         if quick:
-            benchmark.repeat = 1
-            benchmark.number = 1
+            class QuickBenchmarkAttrs:
+                repeat = 1
+                number = 1
+            benchmark._attr_sources.insert(0, QuickBenchmarkAttrs)
 
         return benchmark
 
