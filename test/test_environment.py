@@ -32,6 +32,13 @@ except (RuntimeError, IOError):
 
 
 try:
+    util.which('pypy')
+    HAS_PYPY = True
+except (RuntimeError, IOError):
+    HAS_PYPY = hasattr(sys, 'pypy_version_info') and (sys.version_info[:2] == (2, 7))
+
+
+try:
     # Conda can install Python 2.7 and 3.4 on demand
     util.which('conda')
     HAS_CONDA = True
@@ -405,3 +412,23 @@ def test_environment_select_autodetect():
     assert len(environments) == 1
     assert environments[0].python == "2.7"
     assert environments[0].tool_name in ("virtualenv", "conda")
+
+
+@pytest.mark.skipif(not (HAS_PYPY and HAS_VIRTUALENV), reason="Requires pypy and virtualenv")
+def test_pypy_virtualenv(tmpdir):
+    # test that we can setup a pypy environment
+    conf = config.Config()
+
+    conf.env_dir = six.text_type(tmpdir.join("env"))
+
+    conf.environment_type = "virtualenv"
+    conf.pythons = ["pypy"]
+    conf.matrix = {}
+    environments = list(environment.get_environments(conf, None))
+
+    assert len(environments) == 1
+
+    for env in environments:
+        env.create()
+        output = env.run(['-c', 'import sys; print(sys.pypy_version_info)'])
+        assert output.startswith(six.text_type("(major="))

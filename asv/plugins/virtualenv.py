@@ -66,22 +66,50 @@ class Virtualenv(environment.Environment):
     @staticmethod
     def _find_python(python):
         """Find Python executable for the given Python version"""
+        is_pypy = python.startswith("pypy")
+
+        # Parse python specifier
+        if is_pypy:
+            executable = python
+            if python == 'pypy':
+                python_version = '2'
+            else:
+                python_version = python[4:]
+        else:
+            python_version = python
+            executable = "python{0}".format(python_version)
+
         # Find Python executable on path
         try:
-            return util.which('python{0}'.format(python))
+            return util.which(executable)
         except IOError:
             pass
 
-        # Maybe the current one is correct
-        if '{0[0]}.{0[1]}'.format(sys.version_info) == python:
+        # Maybe the current one is correct?
+        current_is_pypy = hasattr(sys, 'pypy_version_info')
+        current_versions = ['{0[0]}'.format(sys.version_info),
+                            '{0[0]}.{0[1]}'.format(sys.version_info)]
+
+        if is_pypy == current_is_pypy and python_version in current_versions:
             return sys.executable
 
         return None
 
+    @property
+    def name(self):
+        """
+        Get a name to uniquely identify this environment.
+        """
+        python = self._python
+        if self._python.startswith('pypy'):
+            # get_env_name adds py-prefix
+            python = python[2:]
+        return environment.get_env_name(self.tool_name, python, self._requirements)
+
     @classmethod
     def matches(self, python):
-        if not re.match(r'^[0-9].*$', python):
-            # The python name should be a version number
+        if not (re.match(r'^[0-9].*$', python) or re.match(r'^pypy[0-9.]*$', python)):
+            # The python name should be a version number, or pypy+number
             return False
 
         try:
@@ -108,9 +136,11 @@ class Virtualenv(environment.Environment):
         """
         log.info("Creating virtualenv for {0}".format(self.name))
         util.check_call([
-            self._executable,
+            sys.executable,
             self._virtualenv_path,
             '--no-site-packages',
+            "-p",
+            self._executable,
             self._path])
 
         log.info("Installing requirements for {0}".format(self.name))
