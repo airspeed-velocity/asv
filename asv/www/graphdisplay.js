@@ -937,19 +937,24 @@ $(document).ready(function() {
         var max = -Infinity;
         var left = options.xaxis.min || 0;
         var right = options.xaxis.max || Infinity;
+
         $.each(graphs, function(i, graph) {
             var data = graph.data;
-            var j;
-            for (j = 0; j < data.length; ++j) {
-                var x = data[j][0];
-                if (x >= left) {
-                    break;
+            var j = 0;
+            if (!x_coordinate_is_category) {
+                for (; j < data.length; ++j) {
+                    var x = data[j][0];
+                    if (x >= left) {
+                        break;
+                    }
                 }
             }
             for (; j < data.length; ++j) {
-                var x = data[j][0];
-                if (x >= right) {
-                    break;
+                if (!x_coordinate_is_category) {
+                    var x = data[j][0];
+                    if (x >= right) {
+                        break;
+                    }
                 }
                 var p = data[j][1];
                 if (p !== null && (!log_scale || p > 0)) {
