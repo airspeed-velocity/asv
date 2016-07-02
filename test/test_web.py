@@ -138,6 +138,8 @@ def test_web_regressions(browser, tmpdir):
 
     bad_commit_hash = dvcs.get_hash('master~9')
 
+    browser.set_window_size(1200, 900)
+
     with tools.preview(conf.html_dir) as base_url:
         get_with_retry(browser, base_url)
 
