@@ -51,6 +51,8 @@ class SummaryList(OutputPublisher):
 
         # Investigate all benchmarks
         for benchmark_name, benchmark in sorted(six.iteritems(benchmarks)):
+            log.dot()
+
             benchmark_graphs = graphs.get_graph_group(benchmark_name)
 
             # For parameterized benchmarks, consider each combination separately
@@ -86,13 +88,13 @@ class SummaryList(OutputPublisher):
                         pass
                     else:
                         last_piece = steps[-1]
-                        last_value = last_piece[3]
+                        last_value = last_piece[2]
                         last_err = last_piece[4]
                         last_rev = last_piece[1] - 1
 
                         if len(steps) > 1:
                             prev_piece = steps[-2]
-                            prev_value = prev_piece[3]
+                            prev_value = prev_piece[2]
                             change_rev = last_piece[0]
 
                     row = dict(name=benchmark_name,

@@ -70,6 +70,143 @@ $(document).ready(function() {
         $("#error").modal('show');
     }
 
+    function hover_graph(element, graph_url, benchmark_basename, parameter_idx, revisions) {
+        /* Show the summary graph as a popup */
+        var plot_div = $('<div/>');
+        plot_div.css('width', '11.8em');
+        plot_div.css('height', '7em');
+        plot_div.css('border', '2px solid black');
+        plot_div.css('background-color', 'white');
+
+        function update_plot() {
+            var markings = [];
+
+            if (revisions) {
+                $.each(revisions, function(i, revs) {
+                    var rev_a = revs[0];
+                    var rev_b = revs[1];
+
+                    if (rev_a !== null) {
+                        markings.push({ color: '#d00', lineWidth: 2, xaxis: { from: rev_a, to: rev_a }});
+                        markings.push({ color: "rgba(255,0,0,0.1)", xaxis: { from: rev_a, to: rev_b }});
+                    }
+                    markings.push({ color: '#d00', lineWidth: 2, xaxis: { from: rev_b, to: rev_b }});
+                });
+            }
+
+            $.asv.load_graph_data(
+                graph_url
+            ).done(function (data) {
+                var params = $.asv.master_json.benchmarks[benchmark_basename].params;
+                data = $.asv.filter_graph_data_idx(data, 0, parameter_idx, params);
+                var options = {
+                    colors: ['#000'],
+                    series: {
+                        lines: {
+                            show: true,
+                            lineWidth: 2
+                        },
+                        shadowSize: 0
+                    },
+                    grid: {
+                        borderWidth: 1,
+                        margin: 0,
+                        labelMargin: 0,
+                        axisMargin: 0,
+                        minBorderMargin: 0,
+                        markings: markings,
+                    },
+                    xaxis: {
+                        ticks: [],
+                    },
+                    yaxis: {
+                        ticks: [],
+                        min: 0
+                    },
+                    legend: {
+                        show: false
+                    }
+                };
+                var plot = $.plot(plot_div, [{data: data}], options);
+            }).fail(function () {
+                // TODO: Handle failure
+            });
+
+            return plot_div;
+        }
+
+        element.popover({
+            placement: 'left auto',
+            trigger: 'hover',
+            html: true,
+            delay: 50,
+            content: $('<div/>').append(plot_div)
+        });
+
+        element.on('show.bs.popover', update_plot);
+    }
+
+    function hover_summary_graph(element, benchmark_basename) {
+        /* Show the summary graph as a popup */
+        var plot_div = $('<div/>');
+        plot_div.css('width', '11.8em');
+        plot_div.css('height', '7em');
+        plot_div.css('border', '2px solid black');
+        plot_div.css('background-color', 'white');
+
+        function update_plot() {
+            var markings = [];
+
+            $.asv.load_graph_data(
+                'graphs/summary/' + benchmark_basename + '.json'
+            ).done(function (data) {
+                var options = {
+                    colors: $.asv.colors,
+                    series: {
+                        lines: {
+                            show: true,
+                            lineWidth: 2
+                        },
+                        shadowSize: 0
+                    },
+                    grid: {
+                        borderWidth: 1,
+                        margin: 0,
+                        labelMargin: 0,
+                        axisMargin: 0,
+                        minBorderMargin: 0,
+                        markings: markings,
+                    },
+                    xaxis: {
+                        ticks: [],
+                    },
+                    yaxis: {
+                        ticks: [],
+                        min: 0
+                    },
+                    legend: {
+                        show: false
+                    }
+                };
+                var plot = $.plot(plot_div, [{data: data}], options);
+            }).fail(function () {
+                // TODO: Handle failure
+            });
+
+            return plot_div;
+        }
+
+        element.popover({
+            placement: 'left auto',
+            trigger: 'hover',
+            html: true,
+            delay: 50,
+            content: $('<div/>').append(plot_div)
+        });
+
+        element.on('show.bs.popover', update_plot);
+    }
+
     /*
       Set up $.asv.ui
      */

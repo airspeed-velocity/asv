@@ -42,4 +42,9 @@
 
 #summarylist-body table tbody td.change a {
     color: black;
+    white-space: nowrap;
+}
+
+#summarylist-body table tbody td.change-date {
+    white-space: nowrap;
 }

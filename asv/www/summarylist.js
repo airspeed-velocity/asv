@@ -73,7 +73,7 @@ $(document).ready(function() {
 
         var nav = $('#summarylist-navigation');
         nav.empty();
-        
+
         /* Machine selection */
         $.asv.ui.make_value_selector_panel(nav, 'machine', index.params.machine,  function(i, machine, button) {
             button.text(machine);
@@ -133,6 +133,20 @@ $(document).ready(function() {
         $.asv.ui.reflow_value_selector_panels();
     }
 
+    function pad_left(s, c, num) {
+        s = '' + s;
+        while (s.length < num) {
+            s = c + s;
+        }
+        return s;
+    }
+
+    function format_date_yyyymmdd(date) {
+        return (pad_left(date.getFullYear(), '0', 4)
+                + '-' + pad_left(date.getMonth() + 1, '0', 2)
+                + '-' + pad_left(date.getDay() + 1, '0', 2));
+    }
+
     function replace_benchmark_table(data) {
         var index = $.asv.master_json;
         var body = $("#summarylist-body");
@@ -145,8 +159,8 @@ $(document).ready(function() {
 
         var table_head = $('<thead><tr>' +
                            '<th data-sort="string">Benchmark</th>' +
-                           '<th data-sort="value">Value</th>' +
-                           '<th data-sort="factor">Recent change</th>' +
+                           '<th data-sort="float">Value</th>' +
+                           '<th data-sort="float">Recent change</th>' +
                            '<th data-sort="string">Changed at</th>' +
                            '</tr></thead>');
         table.append(table_head);
@@ -158,11 +172,13 @@ $(document).ready(function() {
             var name_td = $('<td/>');
             var name = $('<a/>');
             var url = '#/' + row.name;
-	    var benchmark_full_url;
+            var benchmark_full_url;
 
+            var bm_link;
             if (row.idx === null) {
-                name_td.append($('<a/>').attr('href', url).text(row.pretty_name));
-		benchmark_full_url = url + '?';
+                bm_link = $('<a/>').attr('href', url).text(row.pretty_name);
+                name_td.append(bm_link);
+                benchmark_full_url = url + '?';
             }
             else {
                 var basename = row.pretty_name;
@@ -172,22 +188,33 @@ $(document).ready(function() {
                     basename = m[1];
                     args = row.pretty_name.slice(basename.length);
                 }
-                name_td.append($('<a/>').attr('href', url).text(basename));
+                bm_link = $('<a/>').attr('href', url).text(basename);
+                name_td.append(bm_link);
                 if (args) {
-                    name_td.append($('<a/>').attr('href', url + '?idx=' + row.idx).text(' ' + args));
+                    var bm_idx_link;
+                    var graph_url;
+                    bm_idx_link = $('<a/>').attr('href', url + '?idx=' + row.idx).text(' ' + args);
+                    name_td.append(bm_idx_link);
+                    graph_url = $.asv.graph_to_path(row.name, state);
+                    $.asv.ui.hover_graph(bm_idx_link, graph_url, row.name, row.idx, null);
                 }
-		benchmark_full_url = url + '?idx=' + row.idx;
+                benchmark_full_url = url + '?idx=' + row.idx;
             }
+            $.asv.ui.hover_summary_graph(bm_link, row.name);
 
             var value_td = $('<td class="value"/>');
             if (row.last_value !== null) {
-                var value, err, err_str;
+                var value, err, err_str, sort_value;
                 if ($.asv.master_json.benchmarks[row.name].unit == "seconds") {
                     value = $.asv.pretty_second(row.last_value);
+                    sort_value = row.last_value * 1e100;
                 }
                 else {
                     value = row.last_value.toPrecision(3);
+                    sort_value = row.last_value;
                 }
+                var value_span = $('<span/>').text(value);
+
                 err = 100*row.last_err/row.last_value;
                 if (err == err) {
                     err_str = " \u00b1 " + err.toFixed(0.1) + '%';
@@ -195,12 +222,18 @@ $(document).ready(function() {
                 else {
                     err_str = "";
                 }
-                value_td.append($('<span/>').text(value + err_str));
+                value_span.attr('data-toggle', 'tooltip');
+                value_span.attr('title', value + err_str);
+                value_td.append(value_span);
+                value_td.attr('data-sort-value', sort_value);
+            }
+            else {
+                value_td.attr('data-sort-value', -1e99);
             }
 
             var change_td = $('<td class="change"/>');
             if (row.prev_value !== null) {
-                var text, change_str, change = 0;
+                var text, change_str, change = 0, sort_value = 0;
                 if ($.asv.master_json.benchmarks[row.name].unit == "seconds") {
                     change_str = $.asv.pretty_second(row.last_value - row.prev_value);
                 }
@@ -216,24 +249,37 @@ $(document).ready(function() {
                     if (change > 0) {
                         text = '+' + text;
                     }
+                    sort_value = change;
                 }
                 else {
                     text = ' (' + change_str + ')';
                 }
                 text = text.replace('-', '\u2212');
-                change_td.append($('<a/>').attr('href', benchmark_full_url
-						+ '&commits='
-						+ $.asv.master_json.revision_to_hash[row.change_rev]
-					       ).text(text));
+
+                var change_commit = $.asv.master_json.revision_to_hash[row.change_rev];
+                var change_link = $('<a/>').attr('href', benchmark_full_url
+                                                 + '&commits='
+                                                 + change_commit
+                                                ).text(text);
+
+                graph_url = $.asv.graph_to_path(row.name, state);
+                $.asv.ui.hover_graph(change_link, graph_url, row.name, row.idx, [[null, row.change_rev]]);
+
+                change_td.append(change_link);
+
                 if (change > 5) {
                     change_td.addClass('positive-change');
                 }
                 else if (change < -5) {
                     change_td.addClass('negative-change');
                 }
+                change_td.attr('data-sort-value', sort_value);
+            }
+            else {
+                change_td.attr('data-sort-value', 0);
             }
 
-            var changed_at_td = $("<td/>");
+            var changed_at_td = $('<td class="change-date"/>');
             if (row.change_rev !== null) {
                 var date = new Date($.asv.master_json.revision_to_date[row.change_rev]);
                 var commit = $.asv.get_commit_hash(row.change_rev);
@@ -245,8 +291,8 @@ $(document).ready(function() {
                 commit_a.text(commit);
                 last_commit_a.attr('href', $.asv.master_json.show_commit_url + commit);
                 last_commit_a.text(commit);
-                span.text(' (' + date.toISOString() + ')');
-                span.prepend(commit_a);
+                span.text(format_date_yyyymmdd(date) + ' ');
+                span.append(commit_a);
                 changed_at_td.append(span);
             }
 
@@ -258,6 +304,8 @@ $(document).ready(function() {
             table_body.append(tr);
         });
 
+        table_body.find('[data-toggle="tooltip"]').tooltip();
+
         /* Finalize */
         table.append(table_body);
         setup_sort(table);
@@ -267,32 +315,7 @@ $(document).ready(function() {
     function setup_sort(table) {
         var info = $.asv.parse_hash_string(window.location.hash);
 
-        table.stupidtable({
-            'value': function(a, b) {
-                function key(s) {
-                    for (var k = 0; k < $.asv.time_units.length; ++k) {
-                        var entry = $.asv.time_units[k];
-                        var m = s.match('^([0-9.]+)' + entry[0] + ' .*');
-                        if (m) {
-                            return parseFloat(m[1]) * entry[2] * 1e-30;
-                        }
-                    }
-                    return parseFloat(s.replace(/\u00b1.*/, ''));
-                }
-                return key(a) - key(b)
-            },
-            'factor': function(a, b) {
-                var val_a = a.replace(/x/, '').replace(/\u2212/, '-').replace(/\(.*/, '');
-                var val_b = b.replace(/x/, '').replace(/\u2212/, '-').replace(/\(.*/, '');
-                if (!val_a) {
-                    val_a = '0';
-                }
-                if (!val_b) {
-                    val_b = '0';
-                }
-                return parseFloat(val_a) - parseFloat(val_b);
-            }
-        });
+        table.stupidtable();
 
         table.bind('aftertablesort', function (event, data) {
             var info = $.asv.parse_hash_string(window.location.hash);
