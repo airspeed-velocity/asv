@@ -141,7 +141,7 @@ $(document).ready(function() {
         nav.append(bench_params_nav);
 
         /* Benchmark panel */
-        var panel_body = $.asv.make_panel(nav, 'benchmark');
+        var panel_body = $.asv.ui.make_panel(nav, 'benchmark');
 
         var tree = $('<ul class="nav nav-list" style="padding-left: 0px"/>');
         var cursor = [];
@@ -422,7 +422,7 @@ $(document).ready(function() {
         nav.empty();
 
         /* Machine selection */
-        $.asv.make_value_selector_panel(nav, 'machine', index.params.machine,  function(i, machine, button) {
+        $.asv.ui.make_value_selector_panel(nav, 'machine', index.params.machine,  function(i, machine, button) {
             button.text(machine);
 
             if (index.params.machine.length > 1) {
@@ -460,7 +460,7 @@ $(document).ready(function() {
         /* Generic parameter selectors */
         $.each(index.params, function(param, values) {
             if (values.length > 1 && param != 'machine') {
-                $.asv.make_value_selector_panel(nav, param, values, function(i, value, button) {
+                $.asv.ui.make_value_selector_panel(nav, param, values, function(i, value, button) {
                     var value_display;
                     if (value === null)
                         value_display = '[none]';
@@ -501,7 +501,7 @@ $(document).ready(function() {
 
         if (params.length == 0) {
             /* Simple time series: no need for parameter selection UI */
-            $.asv.reflow_value_selector_panels();
+            $.asv.ui.reflow_value_selector_panels();
             return;
         }
 
@@ -512,7 +512,7 @@ $(document).ready(function() {
                 axes.push(axis);
             }
 
-            $.asv.make_value_selector_panel(nav, "x-axis", axes, function (idx, axis, button) {
+            $.asv.ui.make_value_selector_panel(nav, "x-axis", axes, function (idx, axis, button) {
                 var text;
                 if (axis == 0) {
                     text = "commit";
@@ -545,7 +545,7 @@ $(document).ready(function() {
             revisions.reverse();
 
             /* Add buttons */
-            $.asv.make_value_selector_panel(nav, "commit", revisions, function(idx, rev, button) {
+            $.asv.ui.make_value_selector_panel(nav, "commit", revisions, function(idx, rev, button) {
                 if (rev === null) {
                     button.text("last");
                 } else {
@@ -588,7 +588,7 @@ $(document).ready(function() {
             name = param_names[param_idx];
 
             /* Add benchmark parameter selector */
-            $.asv.make_value_selector_panel(nav, name, values, function(value_idx, value, button) {
+            $.asv.ui.make_value_selector_panel(nav, name, values, function(value_idx, value, button) {
                 var value_display;
                 value_display = '' + $.asv.convert_benchmark_param_value(value);
 
@@ -622,7 +622,7 @@ $(document).ready(function() {
             });
         });
 
-        $.asv.reflow_value_selector_panels();
+        $.asv.ui.reflow_value_selector_panels();
     }
 
     /* Check if x-axis is a category axis */
@@ -839,7 +839,7 @@ $(document).ready(function() {
                         update_graphs();
                         no_data();
                     }).fail(function () {
-                        $.asv.network_error();
+                        $.asv.ui.network_error();
                     });
                 }
             });

@@ -75,7 +75,7 @@ $(document).ready(function() {
         nav.empty();
         
         /* Machine selection */
-        $.asv.make_value_selector_panel(nav, 'machine', index.params.machine,  function(i, machine, button) {
+        $.asv.ui.make_value_selector_panel(nav, 'machine', index.params.machine,  function(i, machine, button) {
             button.text(machine);
 
             button.on('click', function(evt) {
@@ -106,7 +106,7 @@ $(document).ready(function() {
         /* Generic parameter selectors */
         $.each(index.params, function(param, values) {
             if (values.length > 1 && param != 'machine') {
-                $.asv.make_value_selector_panel(nav, param, values, function(i, value, button) {
+                $.asv.ui.make_value_selector_panel(nav, param, values, function(i, value, button) {
                     var value_display;
                     if (value === null)
                         value_display = '[none]';
@@ -130,7 +130,7 @@ $(document).ready(function() {
 
         $(nav).find(".btn-group").removeAttr("data-toggle");
 
-        $.asv.reflow_value_selector_panels();
+        $.asv.ui.reflow_value_selector_panels();
     }
 
     function replace_benchmark_table(data) {
