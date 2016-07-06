@@ -30,15 +30,14 @@ $(document).ready(function() {
         return panel_body;
     }
 
-    function reflow_value_selector_panels() {
+    function reflow_value_selector_panels(no_timeout) {
         $('.panel').each(function (i, panel_obj) {
             var panel = $(panel_obj);
             panel.find('.btn-group').each(function (i, buttons_obj) {
                 var buttons = $(buttons_obj);
                 var width = 0;
 
-                if (buttons.hasClass('btn-group-vertical') ||
-                    buttons.hasClass('btn-group-justified')) {
+                if (buttons.hasClass('reflow-done')) {
                     /* already processed */
                     return;
                 }
@@ -47,10 +46,9 @@ $(document).ready(function() {
                     width += value.scrollWidth;
                 });
 
-                var vertical = (width >= panel_obj.clientWidth &&
-                                panel_obj.clientWidth > 0);
+                var max_width = panel_obj.clientWidth;
 
-                if (vertical) {
+                if (width >= max_width) {
                     buttons.addClass("btn-group-vertical");
                     buttons.css("width", "100%");
                     buttons.css("max-height", "20ex");
@@ -59,8 +57,19 @@ $(document).ready(function() {
                 else {
                     buttons.addClass("btn-group-justified");
                 }
+
+                /* The widths can be zero if the UI is not fully layouted yet,
+                   so mark the adjustment complete only if this is not the case */
+                if (width > 0 && max_width > 0) {
+                    buttons.addClass("reflow-done");
+                }
             });
         });
+
+        if (!no_timeout) {
+            /* Call again asynchronously, in case the UI was not fully layouted yet */
+            setTimeout(function() { $.asv.ui.reflow_value_selector_panels(true); }, 0);
+        }
     }
 
     function network_error(ajax, status, error) {
