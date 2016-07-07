@@ -8,6 +8,7 @@ import os
 import re
 import shutil
 import time
+import tempfile
 from os.path import join, abspath, dirname
 
 import six
@@ -22,23 +23,27 @@ from .tools import browser, get_with_retry
 
 @pytest.fixture(scope="session")
 def basic_html(request):
-    # Cache the generated html
-    cache_dir = request.config.cache.makedir("asv-test_web-basic_html")
-    tmpdir = join(six.text_type(cache_dir), 'cached')
+    if hasattr(request.config, 'cache'):
+        # Cache the generated html, if py.test is new enough to support it
+        cache_dir = request.config.cache.makedir("asv-test_web-basic_html")
+        tmpdir = join(six.text_type(cache_dir), 'cached')
 
-    if os.path.isdir(tmpdir):
-        # Cached result found
-        try:
-            if util.load_json(join(tmpdir, 'tag.json')) != [asv.__version__]:
-                raise ValueError()
+        if os.path.isdir(tmpdir):
+            # Cached result found
+            try:
+                if util.load_json(join(tmpdir, 'tag.json')) != [asv.__version__]:
+                    raise ValueError()
 
-            html_dir = join(tmpdir, 'html')
-            dvcs = tools.Git(join(tmpdir, 'repo'))
-            return html_dir, dvcs
-        except (IOError, ValueError):
-            shutil.rmtree(tmpdir)
+                html_dir = join(tmpdir, 'html')
+                dvcs = tools.Git(join(tmpdir, 'repo'))
+                return html_dir, dvcs
+            except (IOError, ValueError):
+                shutil.rmtree(tmpdir)
 
-    os.makedirs(tmpdir)
+        os.makedirs(tmpdir)
+    else:
+        tmpdir = tempfile.mkdtemp()
+        request.addfinalizer(lambda: shutil.rmtree(tmpdir))
 
     local = abspath(dirname(__file__))
     cwd = os.getcwd()
