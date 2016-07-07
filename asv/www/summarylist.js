@@ -34,16 +34,66 @@ $(document).ready(function() {
 
     function update_state_url(key, value) {
         var info = $.asv.parse_hash_string(window.location.hash);
+        var new_state = get_valid_state(state, key, value);
+
         $.each($.asv.master_json.params, function(param, values) {
             if (values.length > 1) {
-                info.params[param] = [state[param]];
+                info.params[param] = [new_state[param]];
             }
             else if (info.params[param]) {
                 delete info.params[param];
             }
         });
-        info.params[key] = [value];
+
         window.location.hash = $.asv.format_hash_string(info);
+    }
+
+    function obj_copy(obj) {
+        var newobj = {};
+        $.each(obj, function(key, val) {
+            newobj[key] = val;
+        });
+        return newobj;
+    }
+
+    function obj_diff(obj1, obj2) {
+        var count = 0;
+        $.each(obj1, function(key, val) {
+            if (obj2[key] != val) {
+                ++count
+            }
+        });
+        return count;
+    }
+
+    function get_valid_state(tmp_state, wanted_key, wanted_value) {
+        /*
+          Get an available state with wanted_key having wanted_value,
+          preferably as a minor modification of tmp_state.
+         */
+        var best_params = null;
+        var best_diff = 1e99;
+        var best_hit = false;
+
+        tmp_state = obj_copy(tmp_state);
+        tmp_state[wanted_key] = wanted_value;
+
+        $.each($.asv.master_json.graph_param_list, function(idx, params) {
+            var diff = obj_diff(tmp_state, params);
+            var hit = (params[wanted_key] == wanted_value);
+
+            if ((!best_hit && hit) || (hit == best_hit && diff < best_diff)) {
+                best_params = params;
+                best_diff = diff;
+                best_hit = hit;
+            }
+        });
+
+        if (best_params === null) {
+            best_params = $.asv.master_json.graph_param_list[0];
+        }
+
+        return obj_copy(best_params);
     }
 
     function setup_state(state_selection) {
