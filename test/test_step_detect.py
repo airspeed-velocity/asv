@@ -8,7 +8,9 @@ import random
 import pytest
 
 from asv.step_detect import (solve_potts, solve_potts_autogamma, solve_potts_approx,
-                             detect_regressions, golden_search, median, rolling_median_dev)
+                             detect_regressions, golden_search, median, rolling_median_dev,
+                             L1Dist)
+from asv import step_detect
 
 
 try:
@@ -17,9 +19,35 @@ try:
 except ImportError:
     HAVE_NUMPY = False
 
+try:
+    from asv import _rangemedian
+    HAVE_RANGEMEDIAN = True
+except ImportError:
+    HAVE_RANGEMEDIAN = False
+
+
+@pytest.fixture(params=[
+    "python",
+    pytest.mark.skipif(not HAVE_RANGEMEDIAN, reason="compiled asv._rangemedian required")("rangemedian")
+])
+def use_rangemedian(request):
+    if request.param == "rangemedian":
+        assert isinstance(step_detect.get_mu_dist([0], p=1), _rangemedian.RangeMedian)
+        return True
+    else:
+        step_detect._rangemedian = None
+
+        def restore():
+            if HAVE_RANGEMEDIAN:
+                step_detect._rangemedian = _rangemedian
+        request.addfinalizer(restore)
+
+        assert isinstance(step_detect.get_mu_dist([0], p=1), L1Dist)
+        return False
+
 
 @pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
-def test_solve_potts():
+def test_solve_potts(use_rangemedian):
     np.random.seed(1234)
 
     # Easy case, exact solver
@@ -95,7 +123,7 @@ def test_autocorrelated():
 
 
 @pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
-def test_detect_regressions():
+def test_detect_regressions(use_rangemedian):
     for seed in [1234, 5678, 8901, 2345]:
         np.random.seed(seed)
         t = np.arange(4000)
@@ -147,3 +175,26 @@ def test_rolling_median():
             a = got[j]
             assert abs(a[0] - b[0]) < 1e-10, (a, b)
             assert abs(a[1] - b[1]) < 1e-10, (a, b)
+
+
+def test_l1dist(use_rangemedian):
+    random.seed(1)
+
+    datasets = [
+        [1, 1, 10, 3, 5, 1, -16, -3, 4, 9],
+        [random.gauss(0, 1) for j in range(50)]
+    ]
+
+    for dataset in datasets:
+        dist = step_detect.get_mu_dist(dataset, p=1)
+        dist.precompute(len(dataset)//2, 0, len(dataset)//2)
+
+        for i in range(len(dataset)):
+            for p, (m2, d2) in enumerate(rolling_median_dev(dataset[i:])):
+                j = i + p
+
+                m = dist.mu(i, j)
+                d = dist.dist(i, j)
+
+                assert m == m2, (i, j)
+                assert abs(d - d2) < 1e-10, (i, j)
