@@ -89,7 +89,7 @@ def basic_html(request):
     return conf.html_dir, dvcs
 
 
-def test_web_smoketest(browser, basic_html):
+def test_web_summarygrid(browser, basic_html):
     html_dir, dvcs = basic_html
 
     with tools.preview(html_dir) as base_url:
@@ -216,3 +216,20 @@ def test_web_regressions(browser, basic_html):
 
         popover = browser.find_element_by_css_selector('div.popover-content')
         flotplot = browser.find_element_by_css_selector('canvas.flot-base')
+
+
+def test_web_summarylist(browser, basic_html):
+    html_dir, dvcs = basic_html
+
+    bad_commit_hash = dvcs.get_hash('master~9')
+
+    browser.set_window_size(1200, 900)
+
+    with tools.preview(html_dir) as base_url:
+        get_with_retry(browser, base_url)
+
+        summarylist_btn = browser.find_element_by_link_text('Benchmark list')
+        summarylist_btn.click()
+
+        # Check links in the table
+        base_link = browser.find_element_by_link_text('params_examples.track_find_test')
