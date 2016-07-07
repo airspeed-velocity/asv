@@ -78,6 +78,18 @@ def basic_html(request):
         tools.run_asv_with_conf(conf, 'run', 'ALL',
                                 '--show-stderr', '--quick',
                                 _machine_file=machine_file)
+
+        # Swap CPU info and obtain some results
+        info = util.load_json(machine_file, api_version=1)
+        info['orangutan']['cpu'] = 'Not really fast'
+        info['orangutan']['ram'] = 'Not much ram'
+        util.write_json(machine_file, info, api_version=1)
+
+        tools.run_asv_with_conf(conf, 'run', 'master~10..', '--steps=3',
+                                '--show-stderr', '--quick', '--bench=time_examples',
+                                _machine_file=machine_file)
+
+        # Output
         tools.run_asv_with_conf(conf, 'publish')
 
         shutil.rmtree(join(tmpdir, 'env'))
@@ -219,9 +231,13 @@ def test_web_regressions(browser, basic_html):
 
 
 def test_web_summarylist(browser, basic_html):
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver import ActionChains
+
     html_dir, dvcs = basic_html
 
-    bad_commit_hash = dvcs.get_hash('master~9')
+    last_change_hash = dvcs.get_hash('master~4')
 
     browser.set_window_size(1200, 900)
 
@@ -231,5 +247,27 @@ def test_web_summarylist(browser, basic_html):
         summarylist_btn = browser.find_element_by_link_text('Benchmark list')
         summarylist_btn.click()
 
-        # Check links in the table
+        # Check text content in the table
         base_link = browser.find_element_by_link_text('params_examples.track_find_test')
+        cur_row = base_link.find_element_by_xpath('../..')
+        m = re.match('params_examples.track_find_test \\([12]\\) 2.00 \u221233.3% \\(-1.00\\).*'
+                         + last_change_hash[:8],
+                     cur_row.text)
+        assert m, cur_row.text
+
+        # Change table sort (sorting is async, so needs waits)
+        sort_th = browser.find_element_by_xpath('//th[text()="Recent change"]')
+        sort_th.click()
+        WebDriverWait(browser, 5).until(
+            EC.text_to_be_present_in_element(('xpath', '//tbody/tr[1]'),
+                                              'params_examples.track_find_test'))
+
+        # Try to click cpu selector link in the panel
+        cpu_select = browser.find_element_by_link_text('Not really fast')
+        cpu_select.click()
+
+        # For the other CPU, there is no recent change recorded, only
+        # the latest result is available
+        base_link = browser.find_element_by_link_text('params_examples.track_find_test')
+        cur_row = base_link.find_element_by_xpath('../..')
+        assert cur_row.text == 'params_examples.track_find_test (1) 2.00'
