@@ -8,13 +8,13 @@ import os
 import re
 import shutil
 import time
-import tempfile
 from os.path import join, abspath, dirname
 
 import six
 import pytest
+import asv
 
-from asv import config
+from asv import config, util
 
 from . import tools
 from .tools import browser, get_with_retry
@@ -22,8 +22,23 @@ from .tools import browser, get_with_retry
 
 @pytest.fixture(scope="session")
 def basic_html(request):
-    tmpdir = tempfile.mkdtemp()
-    request.addfinalizer(lambda: shutil.rmtree(tmpdir))
+    # Cache the generated html
+    cache_dir = request.config.cache.makedir("asv-test_web-basic_html")
+    tmpdir = join(six.text_type(cache_dir), 'cached')
+
+    if os.path.isdir(tmpdir):
+        # Cached result found
+        try:
+            if util.load_json(join(tmpdir, 'tag.json')) != [asv.__version__]:
+                raise ValueError()
+
+            html_dir = join(tmpdir, 'html')
+            dvcs = tools.Git(join(tmpdir, 'repo'))
+            return html_dir, dvcs
+        except (IOError, ValueError):
+            shutil.rmtree(tmpdir)
+
+    os.makedirs(tmpdir)
 
     local = abspath(dirname(__file__))
     cwd = os.getcwd()
@@ -35,37 +50,49 @@ def basic_html(request):
         shutil.copyfile(join(local, 'asv-machine.json'),
                         machine_file)
 
-        dvcs = tools.generate_test_repo(tmpdir, list(range(10)))
+        values = [[x]*2 for x in [0, 0, 0, 0, 0,
+                                  1, 1, 1, 1, 1,
+                                  3, 3, 3, 3, 3,
+                                  2, 2, 2, 2, 2]]
+        dvcs = tools.generate_test_repo(tmpdir, values)
+        first_tested_commit_hash = dvcs.get_hash('master~14')
+
         repo_path = dvcs.path
+        shutil.move(repo_path, join(tmpdir, 'repo'))
+        dvcs = tools.Git(join(tmpdir, 'repo'))
 
         conf = config.Config.from_json({
             'env_dir': join(tmpdir, 'env'),
             'benchmark_dir': join(local, 'benchmark'),
             'results_dir': join(tmpdir, 'results_workflow'),
             'html_dir': join(tmpdir, 'html'),
-            'repo': repo_path,
+            'repo': join(tmpdir, 'repo'),
             'dvcs': 'git',
             'project': 'asv',
-            'matrix': {
-                "six": [""],
-                "asv": [None],
-                "colorama": ["0.3.6", "0.3.7"]
-            }
+            'matrix': {},
+            'regressions_first_commits': {
+                '.*': first_tested_commit_hash
+            },
         })
 
-        tools.run_asv_with_conf(conf, 'run', "master~5..master", '--steps=3',
-                                '--quick', _machine_file=machine_file)
+        tools.run_asv_with_conf(conf, 'run', 'ALL',
+                                '--show-stderr', '--quick',
+                                _machine_file=machine_file)
         tools.run_asv_with_conf(conf, 'publish')
+
+        shutil.rmtree(join(tmpdir, 'env'))
     finally:
         os.chdir(cwd)
 
-    return conf, dvcs
+    util.write_json(join(tmpdir, 'tag.json'), [asv.__version__])
+
+    return conf.html_dir, dvcs
 
 
 def test_web_smoketest(browser, basic_html):
-    conf, dvcs = basic_html
+    html_dir, dvcs = basic_html
 
-    with tools.preview(conf.html_dir) as base_url:
+    with tools.preview(html_dir) as base_url:
         get_with_retry(browser, base_url)
 
         assert browser.title == 'airspeed velocity of an unladen asv'
@@ -90,57 +117,18 @@ def test_web_smoketest(browser, basic_html):
         assert not error_box.is_displayed()
 
 
-def test_web_regressions(browser, tmpdir):
+def test_web_regressions(browser, basic_html):
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver import ActionChains
 
-    tmpdir = six.text_type(tmpdir)
-    local = abspath(dirname(__file__))
-    cwd = os.getcwd()
-
-    os.chdir(tmpdir)
-    try:
-        machine_file = join(tmpdir, 'asv-machine.json')
-
-        shutil.copyfile(join(local, 'asv-machine.json'),
-                        machine_file)
-
-        values = [[x]*2 for x in [0, 0, 0, 0, 0,
-                                  1, 1, 1, 1, 1,
-                                  3, 3, 3, 3, 3,
-                                  2, 2, 2, 2, 2]]
-        dvcs = tools.generate_test_repo(tmpdir, values)
-        repo_path = dvcs.path
-
-        first_tested_commit_hash = dvcs.get_hash('master~14')
-
-        conf = config.Config.from_json({
-            'env_dir': join(tmpdir, 'env'),
-            'benchmark_dir': join(local, 'benchmark'),
-            'results_dir': join(tmpdir, 'results_workflow'),
-            'html_dir': join(tmpdir, 'html'),
-            'repo': repo_path,
-            'dvcs': 'git',
-            'project': 'asv',
-            'matrix': {},
-            'regressions_first_commits': {
-                '.*': first_tested_commit_hash
-            },
-        })
-
-        tools.run_asv_with_conf(conf, 'run', 'ALL', '--bench=params_examples.track_find_test',
-                                '--show-stderr', '--quick',
-                                _machine_file=machine_file)
-        tools.run_asv_with_conf(conf, 'publish')
-    finally:
-        os.chdir(cwd)
+    html_dir, dvcs = basic_html
 
     bad_commit_hash = dvcs.get_hash('master~9')
 
     browser.set_window_size(1200, 900)
 
-    with tools.preview(conf.html_dir) as base_url:
+    with tools.preview(html_dir) as base_url:
         get_with_retry(browser, base_url)
 
         regressions_btn = browser.find_element_by_link_text('Regressions')
