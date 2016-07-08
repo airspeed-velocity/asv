@@ -48,7 +48,12 @@ def use_rangemedian(request):
 
 @pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
 def test_solve_potts(use_rangemedian):
-    np.random.seed(1234)
+    try:
+        np.random.seed(1234)
+    except NameError:
+        # work around a bug in old pypy/pytest
+        pytest.skip("test needs numpy")
+        return
 
     # Easy case, exact solver
     y = [1, 1, 1, 2, 2, 2, 3, 3, 3]
@@ -124,6 +129,13 @@ def test_autocorrelated():
 
 @pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
 def test_detect_regressions(use_rangemedian):
+    try:
+        np.random.seed(1234)
+    except NameError:
+        # work around a bug in old pypy/pytest
+        pytest.skip("test needs numpy")
+        return
+
     for seed in [1234, 5678, 8901, 2345]:
         np.random.seed(seed)
         t = np.arange(4000)
