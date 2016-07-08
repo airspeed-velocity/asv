@@ -239,6 +239,9 @@ def test_web_summarylist(browser, basic_html):
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver import ActionChains
+    from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+
+    ignore_exc = (NoSuchElementException, StaleElementReferenceException)
 
     html_dir, dvcs = basic_html
 
@@ -273,6 +276,10 @@ def test_web_summarylist(browser, basic_html):
 
         # For the other CPU, there is no recent change recorded, only
         # the latest result is available
-        base_link = browser.find_element_by_link_text('params_examples.track_find_test')
-        cur_row = base_link.find_element_by_xpath('../..')
-        assert cur_row.text == 'params_examples.track_find_test (1) 2.00'
+        def check(*args):
+            base_link = browser.find_element_by_link_text('params_examples.track_find_test')
+            cur_row = base_link.find_element_by_xpath('../..')
+            return cur_row.text in ('params_examples.track_find_test (1) 2.00',
+                                    'params_examples.track_find_test (2) 2.00')
+        WebDriverWait(browser, 5, ignored_exceptions=ignore_exc).until(check)
+
