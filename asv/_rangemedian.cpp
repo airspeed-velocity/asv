@@ -158,9 +158,11 @@ int RangeMedian_init(RangeMedianObject *self, PyObject *args, PyObject *kwds)
 
         x = PyNumber_Float(PyList_GET_ITEM(y_obj, k));
         if (x == NULL || !PyFloat_Check(x)) {
+            Py_XDECREF(x);
             return -1;
         }
         (*self->y)[k] = PyFloat_AS_DOUBLE(x);
+        Py_DECREF(x);
     }
 
     return 0;
