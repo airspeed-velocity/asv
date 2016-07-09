@@ -4,6 +4,9 @@ $(document).ready(function() {
     /* The state of the parameters in the sidebar.  Dictionary mapping
        strings to values determining the "enabled" configurations. */
     var state = null;
+    /* Cache of constructed tables, {data_path: table_dom_id} */
+    var table_cache = {};
+    var table_cache_counter = 0;
 
     function setup_display(state_selection) {
         var new_state = setup_state(state_selection);
@@ -24,11 +27,29 @@ $(document).ready(function() {
             replace_params_ui();
 
             var filename = $.asv.graph_to_path('summary', state);
-            $.asv.load_graph_data(
-                filename
-            ).done(function (data) {
-                replace_benchmark_table(data);
-            });
+
+            $("#summarylist-body table").hide();
+            $("#summarylist-body .message").remove();
+
+            if (table_cache[filename] !== undefined) {
+                $(table_cache[filename]).show();
+            }
+            else {
+                $("#summarylist-body").append($("<p class='message'>Loading...</p>"));
+                $.asv.load_graph_data(
+                    filename
+                ).done(function (data) {
+                    var table = construct_benchmark_table(data);
+                    var table_name = 'summarylist-table-' + table_cache_counter;
+                    ++table_cache_counter;
+
+                    table.attr('id', table_name);
+                    table_cache[filename] = '#' + table_name;
+                    $("#summarylist-body .message").remove();
+                    $("#summarylist-body").append(table);
+                    table.show()
+                });
+            }
         }
     }
 
@@ -197,11 +218,8 @@ $(document).ready(function() {
                 + '-' + pad_left(date.getDay() + 1, '0', 2));
     }
 
-    function replace_benchmark_table(data) {
+    function construct_benchmark_table(data) {
         var index = $.asv.master_json;
-        var body = $("#summarylist-body");
-
-        body.empty();
 
         /* Form a new table */
 
@@ -359,7 +377,8 @@ $(document).ready(function() {
         /* Finalize */
         table.append(table_body);
         setup_sort(table);
-        body.append(table);
+
+        return table;
     }
 
     function setup_sort(table) {
