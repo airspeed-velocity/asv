@@ -342,7 +342,7 @@ def detect_steps(y):
     return steps
 
 
-def detect_regressions(steps):
+def detect_regressions(steps, threshold=0):
     """
     Detect regressions in a (noisy) signal.
 
@@ -350,6 +350,11 @@ def detect_regressions(steps):
     ----------
     steps : list of (left, right, value, min, error)
         List of steps computed by detect_steps, or equivalent
+    threshold : float
+        Relative threshold for reporting regressions. Filter out jumps
+        whose relative size is smaller than threshold, if they are not
+        necessary to explain the difference between the best and the latest
+        values.
 
     Returns
     -------
@@ -395,6 +400,24 @@ def detect_regressions(steps):
         prev_v = cur_v
         prev_err = cur_err
 
+    # Apply threshold
+    if best_v is not None:
+        if best_v != 0:
+            min_jump = threshold * abs(best_v)
+        else:
+            min_jump = threshold * abs(last_v)
+
+        regression_pos.sort(key=lambda pos: pos[3] - pos[2], reverse=True)
+        explained = 0
+        for j, pos in enumerate(regression_pos):
+            jump = pos[3] - pos[2]
+            if jump < min_jump and explained >= last_v - best_v - min_jump:
+                regression_pos = regression_pos[:j]
+                break
+            explained += jump
+        regression_pos.sort(key=lambda pos: pos[0])
+
+    # Return results
     if cur_v is None or best_v is None or cur_v <= best_v + max(cur_err, best_err) or not regression_pos:
         return (None, None, None)
     else:

@@ -217,3 +217,29 @@ def test_l1dist(use_rangemedian):
 
                 assert m == m2, (i, j)
                 assert abs(d - d2) < 1e-10, (i, j)
+
+
+def test_regression_threshold():
+    steps = [(0, 1,   1.0, 1.0, 0.0),
+             (1, 2,   1.1, 1.1, 0.0),
+             (2, 3,   2.0, 2.0, 0.0)]
+
+    latest, best, pos = detect_regressions(steps, threshold=0.05)
+    assert latest == 2
+    assert best == 1
+    assert pos == [(0, 1, 1.0, 1.1), (1, 2, 1.1, 2.0)]
+
+    latest, best, pos = detect_regressions(steps, threshold=0.2)
+    assert latest == 2
+    assert best == 1
+    assert pos == [(1, 2, 1.1, 2.0)]
+
+    latest, best, pos = detect_regressions(steps, threshold=0.9)
+    assert latest == 2
+    assert best == 1
+    assert pos == [(1, 2, 1.1, 2.0)]
+
+    latest, best, pos = detect_regressions(steps, threshold=1.1)
+    assert latest == None
+    assert best == None
+    assert pos == None

@@ -276,3 +276,23 @@ In this case, regressions are detected only for commits after tag
 detection is further limited to commits after the commit given, and
 for ``benchmark_2``, regression detection is skipped completely in the
 ``master`` branch.
+
+``regressions_thresholds``
+--------------------------
+
+The minimum relative change required before `asv publish` reports a
+regression.
+
+The value is a dictionary, similar to ``regressions_first_commits``.
+If multiple entries match, the largest threshold is taken.  If no
+entry matches, the default threshold is ``0.05`` (iow. 5%).
+
+Example::
+
+    "regressions_thresholds": {
+        ".*": 0.01,
+        "benchmark_1": 0.2,
+    }
+
+In this case, the reporting threshold is 1% for all benchmarks, except
+``benchmark_1`` which uses a threshold of 20%.

@@ -62,9 +62,9 @@ class Regressions(OutputPublisher):
     @classmethod
     def _process_regression(cls, regressions, seen, revision_to_hash, repo, all_params,
                            graph_data, graph):
-        j, entry_name, steps = graph_data
+        j, entry_name, steps, threshold = graph_data
 
-        v, best_v, jumps = detect_regressions(steps)
+        v, best_v, jumps = detect_regressions(steps, threshold)
 
         if v is None:
             return
@@ -244,6 +244,8 @@ class _GraphDataFilter(object):
             benchmark name.
         steps
             Steps to consider in regression detection.
+        threshold
+            User-specified threshold for regression detection.
 
         """
         if benchmark.get('params'):
@@ -259,6 +261,7 @@ class _GraphDataFilter(object):
                 entry_name = benchmark['name'] + '({0})'.format(', '.join(param))
 
             start_revision = self._get_start_revision(graph, benchmark, entry_name)
+            threshold = self._get_threshold(graph, benchmark, entry_name)
 
             if start_revision is None:
                 # Skip detection
@@ -266,7 +269,7 @@ class _GraphDataFilter(object):
 
             steps = [step for step in steps if step[1] >= start_revision]
 
-            yield j, entry_name, steps
+            yield j, entry_name, steps, threshold
 
     def _get_start_revision(self, graph, benchmark, entry_name):
         """
@@ -312,3 +315,31 @@ class _GraphDataFilter(object):
                 start_revision = max(start_revision, self._start_revisions[key] + 1)
 
         return start_revision
+
+    def _get_threshold(self, graph, benchmark, entry_name):
+        """
+        Compute the regression threshold in asv.conf.json.
+        """
+        if graph.params.get('branch'):
+            branch_suffix = '@' + graph.params.get('branch')
+        else:
+            branch_suffix = ''
+
+        max_threshold = None
+
+        for regex, threshold in six.iteritems(self.conf.regressions_thresholds):
+            if re.match(regex, entry_name + branch_suffix):
+                try:
+                    threshold = float(threshold)
+                except ValueError:
+                    raise util.UserError("Non-float threshold in asv.conf.json: {!r}".format(threshold))
+
+                if max_threshold is None:
+                    max_threshold = threshold
+                else:
+                    max_threshold = max(threshold, max_threshold)
+
+        if max_threshold is None:
+            max_threshold = 0.05
+
+        return max_threshold

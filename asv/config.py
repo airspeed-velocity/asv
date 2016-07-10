@@ -37,6 +37,7 @@ class Config(object):
         self.install_timeout = 600
         self.dvcs = None
         self.regressions_first_commits = {}
+        self.regressions_thresholds = {}
         self.plugins = []
 
     @classmethod

@@ -334,6 +334,26 @@ def test_regression_non_monotonic(dvcs_type, tmpdir):
     assert regressions == expected
 
 
+def test_regression_threshold(generate_result_dir):
+    conf, repo, commits = generate_result_dir(5 * [1.0] + 5 * [1.1] + 5 * [2.0])
+
+    conf.regressions_thresholds = {'.*': 0}
+    tools.run_asv_with_conf(conf, "publish")
+    regressions = util.load_json(join(conf.html_dir, "regressions.json"))
+    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
+        [[None, 5, 1.0, 1.1], [None, 10, 1.1, 2.0]], 2.0, 1.0,
+    ]]]}
+    assert regressions == expected
+
+    conf.regressions_thresholds = {'.*': 0, 'time_func.*': 0.2}
+    tools.run_asv_with_conf(conf, "publish")
+    regressions = util.load_json(join(conf.html_dir, "regressions.json"))
+    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
+        [[None, 10, 1.1, 2.0]], 2.0, 1.0,
+    ]]]}
+    assert regressions == expected
+
+
 def test_regression_atom_feed(generate_result_dir):
     conf, repo, commits = generate_result_dir(5 * [1] + 5 * [10] + 5 * [15])
     tools.run_asv_with_conf(conf, "publish")
