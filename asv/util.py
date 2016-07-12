@@ -413,6 +413,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
             stderr_reader.join()
             stdout_reader.join()
 
+            proc.stdout.close()
+            proc.stderr.close()
+
         is_timeout = was_timeout[0]
     else:
         try:
@@ -484,6 +487,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
         stdout_chunks.append(proc.stdout.read())
         stderr_chunks.append(proc.stderr.read())
+
+        proc.stdout.close()
+        proc.stderr.close()
 
     stdout = b''.join(stdout_chunks)
     stderr = b''.join(stderr_chunks)

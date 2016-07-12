@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
+import sys
 import shutil
 from os.path import join, dirname
 
@@ -29,6 +30,12 @@ INVALID_BENCHMARK_DIR = join(
 ASV_CONF_JSON = {
     'project': 'asv'
     }
+
+if hasattr(sys, 'pypy_version_info'):
+    ON_PYPY = True
+    ASV_CONF_JSON['pythons'] = ["pypy{0[0]}.{0[1]}".format(sys.version_info)]
+else:
+    ON_PYPY = False
 
 
 def test_find_benchmarks(tmpdir):
@@ -79,8 +86,11 @@ def test_find_benchmarks(tmpdir):
         'time_secondary.TimeSecondary.time_exception']['result'] is None
     assert times[
         'subdir.time_subdir.time_foo']['result'] is not None
-    assert times[
-        'mem_examples.mem_list']['result'] > 1000
+    if not ON_PYPY:
+        # XXX: the memory benchmarks don't work on Pypy, since asizeof
+        # is CPython-only
+        assert times[
+            'mem_examples.mem_list']['result'] > 1000
     assert times[
         'time_secondary.track_value']['result'] == 42.0
     assert 'profile' in times[

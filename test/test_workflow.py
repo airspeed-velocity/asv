@@ -77,6 +77,9 @@ def basic_conf(tmpdir):
         }
     })
 
+    if hasattr(sys, 'pypy_version_info'):
+        conf.pythons = ["pypy{0[0]}.{0[1]}".format(sys.version_info)]
+
     return tmpdir, local, conf, machine_file
 
 
@@ -220,11 +223,15 @@ def test_run_spec(basic_conf):
         envs = list(environment.get_environments(conf, None))
         tool_name = envs[0].tool_name
 
+        pyver = conf.pythons[0]
+        if pyver.startswith('pypy'):
+            pyver = pyver[2:]
+
         expected = set(['machine.json'])
         for commit in expected_commits:
             for psver in ['0.3.6', '0.3.7']:
-                expected.add('{0}-{1}-py{2[0]}.{2[1]}-colorama{3}-six.json'.format(
-                    commit[:8], tool_name, sys.version_info, psver))
+                expected.add('{0}-{1}-py{2}-colorama{3}-six.json'.format(
+                    commit[:8], tool_name, pyver, psver))
 
         result_files = os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))
 

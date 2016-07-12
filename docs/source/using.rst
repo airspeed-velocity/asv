@@ -211,6 +211,13 @@ versions of Python installed -- your package manager, ``apt-get``,
 ``yum``, ``MacPorts`` or ``homebrew`` probably has them, or you
 can also use `pyenv <https://github.com/yyuu/pyenv>`__.
 
+The ``virtualenv`` environment also supports PyPy_. You can specify
+``"pypy"`` or ``"pypy3"`` as a Python version number in the
+``"pythons"`` list.  Note that PyPy must be installed and available on
+your ``PATH``.
+
+.. _PyPy: http://pypy.org/
+
 Benchmarking
 ````````````
 
