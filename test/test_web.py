@@ -81,7 +81,7 @@ def basic_html(request):
         })
 
         tools.run_asv_with_conf(conf, 'run', 'ALL',
-                                '--show-stderr', '--quick',
+                                '--show-stderr', '--quick', '--bench=params_examples.*track_.*',
                                 _machine_file=machine_file)
 
         # Swap CPU info and obtain some results
@@ -91,7 +91,7 @@ def basic_html(request):
         util.write_json(machine_file, info, api_version=1)
 
         tools.run_asv_with_conf(conf, 'run', 'master~10..', '--steps=3',
-                                '--show-stderr', '--quick', '--bench=time_examples',
+                                '--show-stderr', '--quick', '--bench=params_examples.*track_.*',
                                 _machine_file=machine_file)
 
         # Output
