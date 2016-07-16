@@ -9,7 +9,7 @@ import pytest
 
 from asv.step_detect import (solve_potts, solve_potts_autogamma, solve_potts_approx,
                              detect_regressions, golden_search, median, rolling_median_dev,
-                             L1Dist)
+                             L1Dist, detect_steps)
 from asv import step_detect
 
 
@@ -149,12 +149,31 @@ def test_detect_regressions(use_rangemedian):
         y = y.tolist()
         y[123] = None
         y[1234] = np.nan
-        new_value, jump_pos, best_value = detect_regressions(y)
+        steps = detect_steps(y)
 
-        assert jump_pos == [3233 + (seed % 123), 3499 + (seed % 71)]
+        steps_lr = [(l, r) for l, r, _, _, _ in steps]
+        k = steps[0][1]
+        assert 990 <= k <= 1010
+        assert steps_lr == [(0, k),
+                            (k, 3234 + (seed % 123)),
+                            (3234 + (seed % 123), 3264 + (seed % 53)),
+                            (3264 + (seed % 53), 3350),
+                            (3350, 3500 + (seed % 71)),
+                            (3500 + (seed % 71), 3700),
+                            (3700, 4000)]
+        steps_v = [x[2] for x in steps]
+        assert np.allclose(steps_v, [0.35, 0.05, 2.05, 4.05, 1.15, 4.05, 2.05], rtol=0.3)
+
+        # The expected mean error is 0.7 <|U(0,1) - 1/2|> = 0.7/4
+        steps_err = [x[4] for x in steps]
+        assert np.allclose(steps_err, [0.7/4]*7, rtol=0.3)
+
+        # Check detect_regressions
+        new_value, best_value, regression_pos = detect_regressions(steps)
+        assert regression_pos == [(3233 + (seed % 123), (3233 + (seed % 123) + 1), steps_v[1], steps_v[2]),
+                                  (3499 + (seed % 71), 3499 + (seed % 71) + 1, steps_v[4], steps_v[5])]
         assert np.allclose(best_value, 0.7/2 - 0.3, rtol=0.3, atol=0)
         assert np.allclose(new_value, 0.7/2 - 0.3 + 2, rtol=0.3, atol=0)
-
 
 def test_golden_search():
     def f(x):
@@ -210,3 +229,29 @@ def test_l1dist(use_rangemedian):
 
                 assert m == m2, (i, j)
                 assert abs(d - d2) < 1e-10, (i, j)
+
+
+def test_regression_threshold():
+    steps = [(0, 1,   1.0, 1.0, 0.0),
+             (1, 2,   1.1, 1.1, 0.0),
+             (2, 3,   2.0, 2.0, 0.0)]
+
+    latest, best, pos = detect_regressions(steps, threshold=0.05)
+    assert latest == 2
+    assert best == 1
+    assert pos == [(0, 1, 1.0, 1.1), (1, 2, 1.1, 2.0)]
+
+    latest, best, pos = detect_regressions(steps, threshold=0.2)
+    assert latest == 2
+    assert best == 1
+    assert pos == [(1, 2, 1.1, 2.0)]
+
+    latest, best, pos = detect_regressions(steps, threshold=0.9)
+    assert latest == 2
+    assert best == 1
+    assert pos == [(1, 2, 1.1, 2.0)]
+
+    latest, best, pos = detect_regressions(steps, threshold=1.1)
+    assert latest == None
+    assert best == None
+    assert pos == None

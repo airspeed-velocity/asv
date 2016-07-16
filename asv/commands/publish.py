@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 import shutil
+import multiprocessing
 
 import six
 
@@ -74,7 +75,7 @@ class Publish(Command):
         machines = {}
         benchmark_names = set()
 
-        log.set_nitems(5 + len(list(util.iter_subclasses(OutputPublisher))))
+        log.set_nitems(6 + len(list(util.iter_subclasses(OutputPublisher))))
 
         if os.path.exists(conf.html_dir):
             util.long_path_rmtree(conf.html_dir)
@@ -165,6 +166,16 @@ class Publish(Command):
                 if 'summary' not in graph.params:
                     if graph.params not in graph_param_list:
                         graph_param_list.append(graph.params)
+
+        log.step()
+        log.info("Detecting steps")
+        with log.indent():
+            n_processes = multiprocessing.cpu_count()
+            pool = multiprocessing.Pool(n_processes)
+            try:
+                graphs.detect_steps(pool, dots=log.dot)
+            finally:
+                pool.terminate()
 
         log.step()
         log.info("Generating graphs")
