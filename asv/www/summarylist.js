@@ -324,14 +324,19 @@ $(document).ready(function() {
                 }
                 text = text.replace('-', '\u2212');
 
-                var change_commit = $.asv.master_json.revision_to_hash[row.change_rev];
-                var change_link = $('<a/>').attr('href', benchmark_full_url
-                                                 + '&commits='
-                                                 + change_commit
-                                                ).text(text);
+                var change_commit_a = $.asv.master_json.revision_to_hash[row.change_rev[0]];
+                var change_commit_b = $.asv.master_json.revision_to_hash[row.change_rev[1]];
+                var change_q;
+                if (change_commit_a === undefined) {
+                    change_q = '&commits=' + change_commit_b;
+                }
+                else {
+                    change_q = '&commits=' + change_commit_a + '-' + change_commit_b;
+                }
+                var change_link = $('<a/>').attr('href', benchmark_full_url + change_q).text(text);
 
                 graph_url = $.asv.graph_to_path(row.name, state);
-                $.asv.ui.hover_graph(change_link, graph_url, row.name, row.idx, [[null, row.change_rev]]);
+                $.asv.ui.hover_graph(change_link, graph_url, row.name, row.idx, [row.change_rev]);
 
                 change_td.append(change_link);
 
@@ -349,16 +354,27 @@ $(document).ready(function() {
 
             var changed_at_td = $('<td class="change-date"/>');
             if (row.change_rev !== null) {
-                var date = new Date($.asv.master_json.revision_to_date[row.change_rev]);
-                var commit = $.asv.get_commit_hash(row.change_rev);
+                var date = new Date($.asv.master_json.revision_to_date[row.change_rev[1]]);
+                var commit_1 = $.asv.get_commit_hash(row.change_rev[0]);
+                var commit_2 = $.asv.get_commit_hash(row.change_rev[1]);
                 var commit_a = $('<a/>');
-                var last_commit = $.asv.get_commit_hash(row.last_rev);
-                var last_commit_a = $('<a/>');
                 var span = $('<span/>');
-                commit_a.attr('href', $.asv.master_json.show_commit_url + commit);
-                commit_a.text(commit);
-                last_commit_a.attr('href', $.asv.master_json.show_commit_url + commit);
-                last_commit_a.text(commit);
+                if (commit_1) {
+                    var commit_url;
+                    if ($.asv.master_json.show_commit_url.match(/.*\/\/github.com\//)) {
+                        commit_url = ($.asv.master_json.show_commit_url + '../compare/'
+                                      + commit_1 + '...' + commit_2);
+                    }
+                    else {
+                        commit_url = $.asv.master_json.show_commit_url + commit_2;
+                    }
+                    commit_a.attr('href', commit_url);
+                    commit_a.text(commit_1 + '...' + commit_2);
+                }
+                else {
+                    commit_a.attr('href', $.asv.master_json.show_commit_url + commit_2);
+                    commit_a.text(commit_2);
+                }
                 span.text(format_date_yyyymmdd(date) + ' ');
                 span.append(commit_a);
                 changed_at_td.append(span);

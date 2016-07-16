@@ -78,7 +78,6 @@ class SummaryList(OutputPublisher):
 
                     last_value = None
                     last_err = None
-                    change = None
                     change_rev = None
                     last_rev = None
                     prev_value = None
@@ -95,7 +94,12 @@ class SummaryList(OutputPublisher):
                         if len(steps) > 1:
                             prev_piece = steps[-2]
                             prev_value = prev_piece[2]
-                            change_rev = last_piece[0]
+                            if prev_piece[1] == last_piece[0]:
+                                # Single commit
+                                change_rev = [None, last_piece[0]]
+                            else:
+                                # Revision range (left-exclusive)
+                                change_rev = [prev_piece[1]-1, last_piece[0]]
 
                     row = dict(name=benchmark_name,
                                idx=idx,
