@@ -12,8 +12,9 @@ from .run import Run
 from .compare import Compare
 
 from ..repo import get_repo
-from ..console import color_print
+from ..console import color_print, log
 from .. import results
+from .. import util
 
 from . import common_args
 
@@ -77,10 +78,16 @@ class Continuous(Command):
 
         def results_iter(commit_hash):
             for env in run_objs['environments']:
+                machine_name = run_objs['machine_params']['machine']
                 filename = results.get_filename(
-                    run_objs['machine_params']['machine'], commit_hash, env.name)
+                    machine_name, commit_hash, env.name)
                 filename = os.path.join(conf.results_dir, filename)
-                result = results.Results.load(filename)
+                try:
+                    result = results.Results.load(filename, machine_name)
+                except util.UserError as err:
+                    log.warn(six.text_type(err))
+                    continue
+
                 for name, benchmark in six.iteritems(run_objs['benchmarks']):
                     yield name, result.results.get(name, float("nan"))
 

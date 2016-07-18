@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 import datetime
+import shutil
 from os.path import join
 
 import six
@@ -49,22 +50,25 @@ def test_results(tmpdir):
 
 def test_get_result_hash_from_prefix(tmpdir):
     results_dir = tmpdir.mkdir('results')
-    machine_dir = results_dir.mkdir('machine')
+    machine_dir = results_dir.mkdir('cheetah')
+
+    machine_json = join(os.path.dirname(__file__), 'example_results', 'cheetah', 'machine.json')
+    shutil.copyfile(machine_json, join(str(machine_dir), 'machine.json'))
 
     for f in ['e5b6cdbc', 'e5bfoo12']:
         open(join(str(machine_dir), '{0}-py2.7-Cython-numpy1.8.json'.format(f)), 'a').close()
 
     # check unique, valid case
-    full_commit = results.get_result_hash_from_prefix(str(results_dir), 'machine', 'e5b6')
+    full_commit = results.get_result_hash_from_prefix(str(results_dir), 'cheetah', 'e5b6')
     assert full_commit == 'e5b6cdbc'
 
     # check invalid hash case
-    bad_commit = results.get_result_hash_from_prefix(str(results_dir), 'machine', 'foobar')
+    bad_commit = results.get_result_hash_from_prefix(str(results_dir), 'cheetah', 'foobar')
     assert bad_commit is None
 
     # check non-unique case
     with pytest.raises(util.UserError) as excinfo:
-        results.get_result_hash_from_prefix(str(results_dir), 'machine', 'e')
+        results.get_result_hash_from_prefix(str(results_dir), 'cheetah', 'e')
 
     assert 'one of multiple commits' in str(excinfo.value)
 
@@ -96,15 +100,32 @@ def test_json_timestamp(tmpdir):
     assert r['ended_at']['some_benchmark'] == util.datetime_to_js_timestamp(stamp2)
 
 
-def test_iter_results():
-    path = os.path.join(os.path.dirname(__file__), 'example_results', 'cheetah')
+def test_iter_results(capsys, tmpdir):
+    src = os.path.join(os.path.dirname(__file__), 'example_results')
+    dst = os.path.join(six.text_type(tmpdir), 'example_results')
+    shutil.copytree(src, dst)
+
+    path = os.path.join(dst, 'cheetah')
 
     skip_list = [
         'machine.json',
         'aaaaaaaa-py2.7-Cython-numpy1.8.json', # malformed file
         'bbbbbbbb-py2.7-Cython-numpy1.8.json', # malformed file
+        'cccccccc-py2.7-Cython-numpy1.8.json', # malformed file
     ]
 
     files = [f for f in os.listdir(path) if f.endswith('.json') and f not in skip_list]
     res = list(results.iter_results(path))
     assert len(res) == len(files)
+    out, err = capsys.readouterr()
+    assert skip_list[1] in out
+    assert skip_list[2] in out
+    assert skip_list[3] in out
+    assert skip_list[0] not in out
+
+    # The directory should be ignored without machine.json
+    os.unlink(os.path.join(path, 'machine.json'))
+    res = list(results.iter_results(path))
+    assert len(res) == 0
+    out, err = capsys.readouterr()
+    assert "machine.json" in out

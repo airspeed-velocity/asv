@@ -357,6 +357,7 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
 
     util.write_json(join(machine_dir, "machine.json"), {
         'machine': 'tarzan',
+        'version': 1,
     })
 
     timestamp = datetime.datetime.utcnow()
