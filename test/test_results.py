@@ -94,3 +94,17 @@ def test_json_timestamp(tmpdir):
     r = util.load_json(join(tmpdir, 'mach', 'aaaa-env.json'))
     assert r['started_at']['some_benchmark'] == util.datetime_to_js_timestamp(stamp1)
     assert r['ended_at']['some_benchmark'] == util.datetime_to_js_timestamp(stamp2)
+
+
+def test_iter_results():
+    path = os.path.join(os.path.dirname(__file__), 'example_results', 'cheetah')
+
+    skip_list = [
+        'machine.json',
+        'aaaaaaaa-py2.7-Cython-numpy1.8.json', # malformed file
+        'bbbbbbbb-py2.7-Cython-numpy1.8.json', # malformed file
+    ]
+
+    files = [f for f in os.listdir(path) if f.endswith('.json') and f not in skip_list]
+    res = list(results.iter_results(path))
+    assert len(res) == len(files)

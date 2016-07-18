@@ -36,7 +36,10 @@ def iter_results(results):
     Iterate over all of the result files.
     """
     for (root, filename) in iter_results_paths(results):
-        yield Results.load(os.path.join(root, filename))
+        try:
+            yield Results.load(os.path.join(root, filename))
+        except util.UserError as exc:
+            log.warn(six.text_type(exc))
 
 
 def iter_results_for_machine(results, machine_name):
@@ -57,7 +60,10 @@ def iter_results_for_machine_and_hash(results, machine_name, commit):
             os.path.join(results, machine_name)):
         results_commit = filename.split('-')[0]
         if results_commit == full_commit:
-            yield Results.load(os.path.join(root, filename))
+            try:
+                yield Results.load(os.path.join(root, filename))
+            except util.UserError as exc:
+                log.warn(six.text_type(exc))
 
 
 def iter_existing_hashes(results):
@@ -333,22 +339,27 @@ class Results(object):
         """
         d = util.load_json(path, cls.api_version, cleanup=False)
 
-        obj = cls(
-            d['params'],
-            d['requirements'],
-            d['commit_hash'],
-            d['date'],
-            d['python'],
-            d.get('env_name',
-                  environment.get_env_name('', d['python'], d['requirements']))
-        )
-        obj._results = d['results']
-        if 'profiles' in d:
-            obj._profiles = d['profiles']
-        obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
+        try:
+            obj = cls(
+                d['params'],
+                d['requirements'],
+                d['commit_hash'],
+                d['date'],
+                d['python'],
+                d.get('env_name',
+                      environment.get_env_name('', d['python'], d['requirements']))
+            )
+            obj._results = d['results']
+            if 'profiles' in d:
+                obj._profiles = d['profiles']
+            obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
 
-        obj._started_at = d.get('started_at', {})
-        obj._ended_at = d.get('ended_at', {})
+            obj._started_at = d.get('started_at', {})
+            obj._ended_at = d.get('ended_at', {})
+        except KeyError as exc:
+            raise util.UserError(
+                "Error loading results file '{0}': missing key {1}".format(
+                    path, six.text_type(exc)))
 
         return obj
 
