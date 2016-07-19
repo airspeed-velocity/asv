@@ -97,11 +97,13 @@ $(document).ready(function() {
         var best_hit = false;
 
         tmp_state = obj_copy(tmp_state);
-        tmp_state[wanted_key] = wanted_value;
+        if (wanted_key !== undefined) {
+            tmp_state[wanted_key] = wanted_value;
+        }
 
         $.each($.asv.master_json.graph_param_list, function(idx, params) {
             var diff = obj_diff(tmp_state, params);
-            var hit = (params[wanted_key] == wanted_value);
+            var hit = (wanted_key === undefined || params[wanted_key] == wanted_value);
 
             if ((!best_hit && hit) || (hit == best_hit && diff < best_diff)) {
                 best_params = params;
@@ -136,7 +138,7 @@ $(document).ready(function() {
             });
         }
 
-        return state;
+        return get_valid_state(state);
     }
 
     function replace_params_ui() {
