@@ -27,6 +27,7 @@ class Regressions(OutputPublisher):
     name = "regressions"
     button_label = "Show regressions"
     description = "Display information about recent regressions"
+    order = 3
 
     @classmethod
     def publish(cls, conf, repo, benchmarks, graphs, revisions):

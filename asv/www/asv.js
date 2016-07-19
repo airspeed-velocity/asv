@@ -40,19 +40,12 @@ $(document).ready(function() {
 
     function pretty_second(x) {
         for (var i = 0; i < time_units.length - 1; ++i) {
-            if (x < time_units[i+1][2]) {
+            if (Math.abs(x) < time_units[i+1][2]) {
                 return (x / time_units[i][2]).toFixed(3) + time_units[i][0];
             }
         }
 
         return 'inf';
-    }
-
-    function network_error(ajax, status, error) {
-        $("#error-message").text(
-            "Error fetching content. " +
-            "Perhaps web server has gone down.");
-        $("#error").modal('show');
     }
 
     /* Convert a flat index to permutation to the corresponding value */
@@ -182,6 +175,25 @@ $(document).ready(function() {
         return filter_graph_data(raw_series, x_axis, flat_selection, params);
     }
 
+    /* Given a specific group of parameters, generate the URL to
+       use to load that graph. */
+    function graph_to_path(benchmark_name, state) {
+        var parts = [];
+        $.each(state, function(key, value) {
+            if (value === null) {
+                parts.push(key + "-null");
+            } else if (value) {
+                parts.push(key + "-" + value);
+            } else {
+                parts.push(key);
+            }
+        });
+        parts.sort();
+        parts.splice(0, 0, "graphs");
+        parts.push(benchmark_name);
+        return parts.join('/') + ".json";
+    }
+
     /*
       Load and cache graph data (on javascript side)
      */
@@ -287,9 +299,13 @@ $(document).ready(function() {
 
     function show_page(name, params) {
         if (loaded_pages[name] !== undefined) {
+	    $("#nav ul li.active").removeClass('active');
+	    $("#nav-li-" + name).addClass('active');
             $("#graph-display").hide();
-            $("#summary-display").hide();
+            $("#summarygrid-display").hide();
+            $("#summarylist-display").hide();
             $('#regressions-display').hide();
+            $('.tooltip').remove();
             loaded_pages[name](params);
             return true;
         }
@@ -365,11 +381,12 @@ $(document).ready(function() {
 
             $('#graph-display').hide();
             $('#regressions-display').hide();
-            $('#summary-display').hide();
+            $('#summarygrid-display').hide();
+            $('#summarylist-display').hide();
 
             hashchange();
         }).fail(function () {
-            network_error();
+            $.asv.ui.network_error();
         });
     }
 
@@ -388,11 +405,10 @@ $(document).ready(function() {
     this.filter_graph_data_idx = filter_graph_data_idx;
     this.convert_benchmark_param_value = convert_benchmark_param_value;
     this.param_selection_from_flat_idx = param_selection_from_flat_idx;
+    this.graph_to_path = graph_to_path;
     this.load_graph_data = load_graph_data;
     this.get_commit_hash = get_commit_hash;
     this.get_revision = get_revision;
-
-    this.network_error = network_error;
 
     this.master_json = master_json; /* Updated after index.json loads */
 

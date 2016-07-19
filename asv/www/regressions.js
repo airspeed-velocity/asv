@@ -4,7 +4,7 @@ $(document).ready(function() {
     /* Cached contents of downloaded regressions.json */
     var regression_data = null;
     /* Current page title */
-    var current_title = "Regressions";
+    var current_title = "All regressions";
     /* Whether HTML5 local storage is available */
     var local_storage_available = false;
     /* Key prefix for ignored regressions. For each ignored regression,
@@ -78,7 +78,7 @@ $(document).ready(function() {
 
                 dropdown_menu.append($('<li role="presentation"/>').append(branch_link));
                 branch_link.on('click', function(evt) {
-                    current_title = "Regressions (" + branch + " branch)";
+                    current_title = "Regressions in " + branch + " branch";
                     $("#title").text(current_title);
                     $(".regression-div").hide();
                     $(".ignored").hide();
@@ -114,7 +114,7 @@ $(document).ready(function() {
         });
 
         if (branches && branches.length > 1) {
-            current_title = "Regressions (" + branches[0] + " branch)";
+            current_title = "Regressions in " + branches[0] + " branch";
         }
         $("#title").text(current_title);
         main_div.find("#regression-div-0").show();
@@ -284,75 +284,8 @@ $(document).ready(function() {
                 ignored_table_body.append(row);
             }
 
-            /* Show the summary graph as a popup */
-            var plot_div = $('<div/>');
-            plot_div.css('width', '11.8em');
-            plot_div.css('height', '7em');
-            plot_div.css('border', '2px solid black');
-            plot_div.css('background-color', 'white');
-
-            function update_plot() {
-                var markings = [];
-
-                $.each(revisions, function(i, revs) {
-                    var rev_a = revs[0];
-                    var rev_b = revs[1];
-
-                    if (rev_a !== null) {
-                        markings.push({ color: '#d00', lineWidth: 2, xaxis: { from: rev_a, to: rev_a }});
-                        markings.push({ color: "rgba(255,0,0,0.1)", xaxis: { from: rev_a, to: rev_b }});
-                    }
-                    markings.push({ color: '#d00', lineWidth: 2, xaxis: { from: rev_b, to: rev_b }});
-                });
-
-                $.asv.load_graph_data(
-                    graph_url
-                ).done(function (data) {
-                    var params = $.asv.master_json.benchmarks[benchmark_basename].params;
-                    data = $.asv.filter_graph_data_idx(data, 0, parameter_idx, params);
-                    var options = {
-                        colors: ['#000'],
-                        series: {
-                            lines: {
-                                show: true,
-                                lineWidth: 2
-                            },
-                            shadowSize: 0
-                        },
-                        grid: {
-                            borderWidth: 1,
-                            margin: 0,
-                            labelMargin: 0,
-                            axisMargin: 0,
-                            minBorderMargin: 0,
-                            markings: markings,
-                        },
-                        xaxis: {
-                            ticks: [],
-                        },
-                        yaxis: {
-                            ticks: [],
-                            min: 0
-                        },
-                        legend: {
-                            show: false
-                        }
-                    };
-                    var plot = $.plot(plot_div, [{data: data}], options);
-                }).fail(function () {
-                    // TODO: Handle failure
-                });
-
-                return plot_div;
-            }
-            benchmark_link.popover({
-                placement: 'right auto',
-                trigger: 'hover',
-                html: true,
-                delay: 50,
-                content: $('<div/>').append(plot_div)
-            });
-            benchmark_link.on('show.bs.popover', update_plot);
+            /* Show a graph as a popup */
+            $.asv.ui.hover_graph(benchmark_link, graph_url, benchmark_basename, parameter_idx, revisions);
         });
 
         display_table.append(table_body);
@@ -467,7 +400,7 @@ $(document).ready(function() {
                 function key(s) {
                     for (var k = 0; k < $.asv.time_units.length; ++k) {
                         var entry = $.asv.time_units[k];
-                        m = s.match('^([0-9.]+)'+entry[0]+'$');
+                        var m = s.match('^([0-9.]+)'+entry[0]+'$');
                         if (m) {
                             return parseFloat(m[1]) * entry[2] * 1e-30;
                         }

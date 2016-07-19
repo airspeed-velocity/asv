@@ -12,6 +12,7 @@ class OutputPublisher(object):
     name = None
     button_label = None
     description = None
+    order = float('inf')
 
     @classmethod
     def publish(cls, conf, repo, benchmarks, graphs, revisions):

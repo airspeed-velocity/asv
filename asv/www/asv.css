@@ -4,6 +4,19 @@
     padding: 2px;
 }
 
+nav ul li.active a {
+    height: 52px;
+}
+
+nav li.active span.navbar-brand {
+    background-color: #e7e7e7;
+    height: 52px;
+}
+
+nav li.active span.navbar-brand:hover {
+    background-color: #e7e7e7;
+}
+
 .navbar-default .navbar-link {
     color: #2458D9;
 }
