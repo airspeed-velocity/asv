@@ -241,14 +241,29 @@ $(document).ready(function() {
             var tr = $('<tr/>');
             var name_td = $('<td/>');
             var name = $('<a/>');
-            var url = '#/' + row.name;
+            var benchmark_url_args = {};
             var benchmark_full_url;
+            var benchmark_base_url;
 
+            /* Format benchmark url */
+            benchmark_url_args.location = [row.name];
+            benchmark_url_args.params = {};
+            $.each($.asv.master_json.params, function (key, values) {
+                if (values.length > 1) {
+                    benchmark_url_args.params[key] = [state[key]];
+                }
+            });
+            benchmark_base_url = $.asv.format_hash_string(benchmark_url_args);
+            if (row.idx !== null) {
+                benchmark_url_args.params.idx = [row.idx];
+            }
+            benchmark_full_url = $.asv.format_hash_string(benchmark_url_args);
+
+            /* Benchmark name column */
             var bm_link;
             if (row.idx === null) {
-                bm_link = $('<a/>').attr('href', url).text(row.pretty_name);
+                bm_link = $('<a/>').attr('href', benchmark_base_url).text(row.pretty_name);
                 name_td.append(bm_link);
-                benchmark_full_url = url + '?';
             }
             else {
                 var basename = row.pretty_name;
@@ -258,20 +273,20 @@ $(document).ready(function() {
                     basename = m[1];
                     args = row.pretty_name.slice(basename.length);
                 }
-                bm_link = $('<a/>').attr('href', url).text(basename);
+                bm_link = $('<a/>').attr('href', benchmark_base_url).text(basename);
                 name_td.append(bm_link);
                 if (args) {
                     var bm_idx_link;
                     var graph_url;
-                    bm_idx_link = $('<a/>').attr('href', url + '?idx=' + row.idx).text(' ' + args);
+                    bm_idx_link = $('<a/>').attr('href', benchmark_full_url).text(' ' + args);
                     name_td.append(bm_idx_link);
                     graph_url = $.asv.graph_to_path(row.name, state);
                     $.asv.ui.hover_graph(bm_idx_link, graph_url, row.name, row.idx, null);
                 }
-                benchmark_full_url = url + '?idx=' + row.idx;
             }
             $.asv.ui.hover_summary_graph(bm_link, row.name);
 
+            /* Value column */
             var value_td = $('<td class="value"/>');
             if (row.last_value !== null) {
                 var value, err, err_str, sort_value;
@@ -301,6 +316,7 @@ $(document).ready(function() {
                 value_td.attr('data-sort-value', -1e99);
             }
 
+            /* Change percentage column */
             var change_td = $('<td class="change"/>');
             if (row.prev_value !== null) {
                 var text, change_str, change = 0, sort_value = 0;
@@ -354,6 +370,7 @@ $(document).ready(function() {
                 change_td.attr('data-sort-value', 0);
             }
 
+            /* Change date column */
             var changed_at_td = $('<td class="change-date"/>');
             if (row.change_rev !== null) {
                 var date = new Date($.asv.master_json.revision_to_date[row.change_rev[1]]);
