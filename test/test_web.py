@@ -12,6 +12,8 @@ import tempfile
 from os.path import join, abspath, dirname
 
 import six
+from six.moves.urllib.parse import parse_qs, splitquery, splittag
+
 import pytest
 import asv
 
@@ -263,6 +265,12 @@ def test_web_summarylist(browser, basic_html):
                      cur_row.text)
         assert m, cur_row.text
 
+        # Check link
+        base_href, qs = splitquery(base_link.get_attribute('href'))
+        base_url, tag = splittag(base_href)
+        assert parse_qs(qs) == {'ram': ['128GB'], 'cpu': ['Blazingly fast']}
+        assert tag == 'params_examples.track_find_test'
+
         # Change table sort (sorting is async, so needs waits)
         sort_th = browser.find_element_by_xpath('//th[text()="Recent change"]')
         sort_th.click()
@@ -282,4 +290,3 @@ def test_web_summarylist(browser, basic_html):
             return cur_row.text in ('params_examples.track_find_test (1) 2.00',
                                     'params_examples.track_find_test (2) 2.00')
         WebDriverWait(browser, 5, ignored_exceptions=ignore_exc).until(check)
-
