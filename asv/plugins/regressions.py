@@ -51,7 +51,7 @@ class Regressions(OutputPublisher):
             if not benchmark:
                 continue
 
-            log.add('.')
+            log.dot()
 
             for graph_data in data_filter.get_graph_data(graph, benchmark):
                 cls._process_regression(regressions, seen, revision_to_hash, repo, all_params,

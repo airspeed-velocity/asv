@@ -16,6 +16,7 @@ import logging
 import os
 import sys
 import textwrap
+import time
 
 import six
 from six.moves import xrange, input
@@ -250,6 +251,7 @@ class Log(object):
         self._count = 0
         self._logger = logging.getLogger()
         self._needs_newline = False
+        self._last_dot = time.time()
 
     def _stream_formatter(self, record):
         '''
@@ -311,8 +313,10 @@ class Log(object):
 
     def dot(self):
         if isatty(sys.stdout):
-            color_print('.', 'darkgrey', end='')
-            sys.stdout.flush()
+            if time.time() > self._last_dot + 1.0:
+                color_print('.', 'darkgrey', end='')
+                sys.stdout.flush()
+                self._last_dot = time.time()
 
     def set_nitems(self, n):
         """
