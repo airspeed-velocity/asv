@@ -27,8 +27,7 @@ from . import wheel_cache
 WIN = (os.name == "nt")
 
 
-def iter_requirement_matrix(environment_type, pythons, conf,
-                            process_includes=True):
+def iter_requirement_matrix(environment_type, pythons, conf, explicit_selection=False):
     """
     Iterate through all combinations of the given requirement
     matrix and python versions.
@@ -50,41 +49,52 @@ def iter_requirement_matrix(environment_type, pythons, conf,
     }
 
     # Parse input
-    keys = ['python'] + sorted(conf.matrix.keys())
-    values = [pythons] + [conf.matrix[key] for key in keys[1:]]
+    keys = sorted(conf.matrix.keys())
+    values = [conf.matrix[key] for key in keys]
     values = [value if isinstance(value, list) else [value]
               for value in values]
     values = [[''] if value == [] else value
               for value in values]
 
-    # Cartesian product of everything
-    all_combinations = itertools.product(*values)
-
     # Process excludes
-    for combination in all_combinations:
-        target = dict(zip(keys, combination))
-        target.update(platform_keys)
+    for python in pythons:
+        empty_matrix = True
 
-        if not environment_type:
-            try:
-                target['environment_type'] = get_env_type(target['python'])
-            except EnvironmentUnavailable as err:
-                log.warn(str(err))
-                continue
+        # Cartesian product of everything
+        all_keys = ['python'] + keys
+        all_combinations = itertools.product([python], *values)
 
-        for rule in conf.exclude:
-            # check if all fields in the rule match
-            if match_rule(target, rule):
-                # rule matched
-                break
-        else:
-            # not excluded
-            yield dict(item for item in zip(keys, combination)
-                       if item[1] is not None)
+        for combination in all_combinations:
+            target = dict(zip(all_keys, combination))
+            target.update(platform_keys)
 
-    # Process includes
-    if not process_includes:
+            if not environment_type:
+                try:
+                    target['environment_type'] = get_env_type(target['python'])
+                except EnvironmentUnavailable as err:
+                    log.warn(str(err))
+                    continue
+
+            for rule in conf.exclude:
+                # check if all fields in the rule match
+                if match_rule(target, rule):
+                    # rule matched
+                    break
+            else:
+                # not excluded
+                empty_matrix = False
+                yield dict(item for item in zip(all_keys, combination)
+                           if item[1] is not None)
+
+        # If the user explicitly selected environment/python, yield it
+        # even if matrix contains no packages to be installed
+        if empty_matrix and explicit_selection:
+            yield dict(python=python)
+
+    # Process includes, unless explicit selection
+    if explicit_selection:
         return
+
     for include in conf.include:
         if 'python' not in include:
             raise util.UserError("include rule '{0}' does not specify Python version".format(include))
@@ -215,20 +225,21 @@ def get_environments(conf, env_specifiers):
         if env_name_found:
             continue
 
-        process_includes = False
+        explicit_selection = False
 
         if env_spec and ':' in env_spec:
             env_type, python_spec = env_spec.split(':', 1)
             pythons = [python_spec]
+            explicit_selection = True
         else:
             env_type = env_spec
             if env_type == "existing":
+                explicit_selection = True
                 pythons = ["same"]
             else:
-                process_includes = True
                 pythons = conf.pythons
 
-        for requirements in iter_requirement_matrix(env_type, pythons, conf, process_includes):
+        for requirements in iter_requirement_matrix(env_type, pythons, conf, explicit_selection):
             python = requirements.pop('python')
 
             try:

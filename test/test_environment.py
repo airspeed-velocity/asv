@@ -429,11 +429,23 @@ def test_environment_select_autodetect():
 
     conf.exclude = [{'environment_type': 'virtualenv|conda'}]
     environments = list(environment.get_environments(conf, [":2.7"]))
-    assert len(environments) == 0
+    assert len(environments) == 1
 
     conf.exclude = [{'environment_type': 'conda'}]
     environments = list(environment.get_environments(conf, ["conda:2.7"]))
-    assert len(environments) == 0
+    assert len(environments) == 1
+
+
+def test_matrix_empty():
+    conf = config.Config()
+    conf.environment_type = ""
+    conf.pythons = ["2.7"]
+    conf.matrix = {}
+
+    # Check default environment config
+    environments = list(environment.get_environments(conf, None))
+    items = set(env.python for env in environments)
+    assert items == set(['2.7'])
 
 
 @pytest.mark.skipif(not (HAS_PYPY and HAS_VIRTUALENV), reason="Requires pypy and virtualenv")
