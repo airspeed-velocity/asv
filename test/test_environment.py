@@ -354,8 +354,8 @@ def test_environment_select():
 
     # Check default environment config
     environments = list(environment.get_environments(conf, None))
-    items = set((env.tool_name, env.python) for env in environments)
-    assert items == set([('conda', '2.7'), ('conda', '3.4'), ('conda', '1.9')])
+    items = sorted([(env.tool_name, env.python) for env in environments])
+    assert items == [('conda', '1.9'), ('conda', '2.7'), ('conda', '3.4')]
 
     if HAS_PYTHON_27 and HAS_VIRTUALENV:
         # Virtualenv plugin fails on initialization if not available,
@@ -365,13 +365,13 @@ def test_environment_select():
 
         # Check default python specifiers
         environments = list(environment.get_environments(conf, ["conda", "virtualenv"]))
-        items = set((env.tool_name, env.python) for env in environments)
-        assert items == set([('conda', '1.9'), ('conda', '2.7'), ('virtualenv', '2.7')])
+        items = sorted((env.tool_name, env.python) for env in environments)
+        assert items == [('conda', '1.9'), ('conda', '2.7'), ('virtualenv', '2.7')]
 
         # Check specific python specifiers
         environments = list(environment.get_environments(conf, ["conda:3.4", "virtualenv:2.7"]))
-        items = set((env.tool_name, env.python) for env in environments)
-        assert items == set([('conda', '3.4'), ('virtualenv', '2.7')])
+        items = sorted((env.tool_name, env.python) for env in environments)
+        assert items == [('conda', '3.4'), ('virtualenv', '2.7')]
 
     # Check same specifier
     environments = list(environment.get_environments(conf, ["existing:same", ":same", "existing"]))
@@ -444,8 +444,25 @@ def test_matrix_empty():
 
     # Check default environment config
     environments = list(environment.get_environments(conf, None))
-    items = set(env.python for env in environments)
-    assert items == set(['2.7'])
+    items = [env.python for env in environments]
+    assert items == ['2.7']
+
+
+def test_matrix_existing():
+    conf = config.Config()
+    conf.environment_type = "existing"
+    conf.pythons = ["same"]
+    conf.matrix = {'foo': ['a', 'b'], 'bar': ['c', 'd']}
+
+    # ExistingEnvironment should ignore the matrix
+    environments = list(environment.get_environments(conf, None))
+    items = [(env.tool_name, tuple(env.requirements.keys())) for env in environments]
+    assert items == [('existing', ())]
+
+    conf.exclude = {'environment_type': '.*'}
+    environments = list(environment.get_environments(conf, None))
+    items = [(env.tool_name, tuple(env.requirements.keys())) for env in environments]
+    assert items == [('existing', ())]
 
 
 @pytest.mark.skipif(not (HAS_PYPY and HAS_VIRTUALENV), reason="Requires pypy and virtualenv")

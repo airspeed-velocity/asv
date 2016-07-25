@@ -239,7 +239,14 @@ def get_environments(conf, env_specifiers):
             else:
                 pythons = conf.pythons
 
-        for requirements in iter_requirement_matrix(env_type, pythons, conf, explicit_selection):
+        if env_type != "existing":
+            requirements_iter = iter_requirement_matrix(env_type, pythons, conf,
+                                                        explicit_selection)
+        else:
+            # Ignore requirement matrix
+            requirements_iter = [dict(python=python) for python in pythons]
+
+        for requirements in requirements_iter:
             python = requirements.pop('python')
 
             try:
