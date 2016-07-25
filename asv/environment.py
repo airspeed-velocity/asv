@@ -39,7 +39,8 @@ def iter_requirement_matrix(environment_type, pythons, conf,
     def get_env_type(python):
         env_type = env_classes.get(python)
         if env_type is None:
-            env_type = get_environment_class(conf, python)
+            cls = get_environment_class(conf, python)
+            env_type = cls.tool_name
             env_classes[python] = env_type
         return env_type
 

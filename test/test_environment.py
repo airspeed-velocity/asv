@@ -396,6 +396,15 @@ def test_environment_select():
     assert environments[0].tool_name == "conda"
     assert environments[0].requirements == {'six': '1.4'}
 
+    # Check interaction with exclude
+    conf.exclude = [{'environment_type': "conda"}]
+    environments = list(environment.get_environments(conf, ["conda-py2.7-six1.4"]))
+    assert len(environments) == 0
+
+    conf.exclude = [{'environment_type': 'matches nothing'}]
+    environments = list(environment.get_environments(conf, ["conda-py2.7-six1.4"]))
+    assert len(environments) == 1
+
 
 @pytest.mark.skipif(not ((HAS_PYTHON_27 and HAS_VIRTUALENV) or HAS_CONDA),
                     reason="Requires Python 2.7")
@@ -412,6 +421,19 @@ def test_environment_select_autodetect():
     assert len(environments) == 1
     assert environments[0].python == "2.7"
     assert environments[0].tool_name in ("virtualenv", "conda")
+
+    # Check interaction with exclude
+    conf.exclude = [{'environment_type': 'matches nothing'}]
+    environments = list(environment.get_environments(conf, [":2.7"]))
+    assert len(environments) == 1
+
+    conf.exclude = [{'environment_type': 'virtualenv|conda'}]
+    environments = list(environment.get_environments(conf, [":2.7"]))
+    assert len(environments) == 0
+
+    conf.exclude = [{'environment_type': 'conda'}]
+    environments = list(environment.get_environments(conf, ["conda:2.7"]))
+    assert len(environments) == 0
 
 
 @pytest.mark.skipif(not (HAS_PYPY and HAS_VIRTUALENV), reason="Requires pypy and virtualenv")
