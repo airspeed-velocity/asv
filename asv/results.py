@@ -15,6 +15,7 @@ from six.moves import zip as izip
 
 from . import environment
 from .console import log
+from .machine import Machine
 from . import util
 
 
@@ -26,17 +27,41 @@ def iter_results_paths(results):
         'machine.json', 'benchmarks.json'
     ])
     for root, dirs, files in os.walk(results):
+        # Iterate over files only if machine.json is valid json
+        machine_json = os.path.join(root, "machine.json")
+        try:
+            data = util.load_json(machine_json, api_version=Machine.api_version)
+            machine_name = data.get('machine')
+            if not isinstance(machine_name, six.text_type):
+                raise util.UserError("malformed {0}".format(machine_json))
+        except util.UserError as err:
+            machine_json_err = "Skipping results: {0}".format(six.text_type(err))
+        except IOError as err:
+            machine_json_err = "Skipping results: could not load {0}".format(
+                machine_json)
+        else:
+            machine_json_err = None
+
+        # Iterate over files
         for filename in files:
             if filename not in skip_files and filename.endswith('.json'):
-                yield (root, filename)
+                if machine_json_err is not None:
+                    # Show the warning only if there are some files to load
+                    log.warn(machine_json_err)
+                    break
+
+                yield (root, filename, machine_name)
 
 
 def iter_results(results):
     """
     Iterate over all of the result files.
     """
-    for (root, filename) in iter_results_paths(results):
-        yield Results.load(os.path.join(root, filename))
+    for (root, filename, machine_name) in iter_results_paths(results):
+        try:
+            yield Results.load(os.path.join(root, filename), machine_name=machine_name)
+        except util.UserError as exc:
+            log.warn(six.text_type(exc))
 
 
 def iter_results_for_machine(results, machine_name):
@@ -53,11 +78,14 @@ def iter_results_for_machine_and_hash(results, machine_name, commit):
     """
     full_commit = get_result_hash_from_prefix(results, machine_name, commit)
 
-    for (root, filename) in iter_results_paths(
+    for (root, filename, machine_name) in iter_results_paths(
             os.path.join(results, machine_name)):
         results_commit = filename.split('-')[0]
         if results_commit == full_commit:
-            yield Results.load(os.path.join(root, filename))
+            try:
+                yield Results.load(os.path.join(root, filename), machine_name=machine_name)
+            except util.UserError as exc:
+                log.warn(six.text_type(exc))
 
 
 def iter_existing_hashes(results):
@@ -91,8 +119,14 @@ def get_result_hash_from_prefix(results, machine_name, commit_prefix):
     """
     commits = set([])
 
-    for (root, filename) in iter_results_paths(os.path.join(results,
-                                                            machine_name)):
+    path = os.path.join(results, machine_name)
+
+    for (root, filename, r_machine_name) in iter_results_paths(path):
+        if r_machine_name != machine_name:
+            log.warn("Skipping results '{0}': machine name is not '{1}'".format(
+                os.path.join(root, filename), machine_name))
+            continue
+
         results_commit = filename.split('-')[0]
         cmp_len = min(len(commit_prefix), len(results_commit))
         if results_commit[:cmp_len] == commit_prefix[:cmp_len]:
@@ -322,7 +356,7 @@ class Results(object):
         self.save(result_dir)
 
     @classmethod
-    def load(cls, path):
+    def load(cls, path, machine_name=None):
         """
         Load results from disk.
 
@@ -330,25 +364,38 @@ class Results(object):
         ----------
         path : str
             Path to results file.
+        machine_name : str, optional
+            If given, check that the results file is for the given machine.
+
         """
         d = util.load_json(path, cls.api_version, cleanup=False)
 
-        obj = cls(
-            d['params'],
-            d['requirements'],
-            d['commit_hash'],
-            d['date'],
-            d['python'],
-            d.get('env_name',
-                  environment.get_env_name('', d['python'], d['requirements']))
-        )
-        obj._results = d['results']
-        if 'profiles' in d:
-            obj._profiles = d['profiles']
-        obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
+        try:
+            obj = cls(
+                d['params'],
+                d['requirements'],
+                d['commit_hash'],
+                d['date'],
+                d['python'],
+                d.get('env_name',
+                      environment.get_env_name('', d['python'], d['requirements']))
+            )
+            obj._results = d['results']
+            if 'profiles' in d:
+                obj._profiles = d['profiles']
+            obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
 
-        obj._started_at = d.get('started_at', {})
-        obj._ended_at = d.get('ended_at', {})
+            obj._started_at = d.get('started_at', {})
+            obj._ended_at = d.get('ended_at', {})
+        except KeyError as exc:
+            raise util.UserError(
+                "Error loading results file '{0}': missing key {1}".format(
+                    path, six.text_type(exc)))
+
+        if machine_name is not None and obj.params.get('machine') != machine_name:
+            raise util.UserError(
+                "Error loading results file '{0}': machine name is not '{1}'".format(
+                    path, machine_name))
 
         return obj
 

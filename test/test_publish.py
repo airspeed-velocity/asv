@@ -56,7 +56,12 @@ def test_publish(tmpdir):
         fn, commit = item
         src = join(RESULT_DIR, 'cheetah', fn)
         dst = join(result_dir, 'cheetah', commit[:8] + fn[8:])
-        data = util.load_json(src, cleanup=False)
+        try:
+            data = util.load_json(src, cleanup=False)
+        except util.UserError:
+            # intentionally malformed file, ship it as is
+            shutil.copyfile(src, dst)
+            continue
         data['commit_hash'] = commit
         util.write_json(dst, data)
 
