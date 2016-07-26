@@ -14,6 +14,9 @@ New Features
   name of benchmarks. (#425)
 - Git submodules are supported. (#426)
 - The time when benchmarks were run is tracked. (#428)
+- New summary web page showing a list of benchmarks. (#437)
+- Atom feed for regressions. (#447)
+- PyPy support. (#452)
 
 API Changes
 ^^^^^^^^^^^
@@ -28,7 +31,7 @@ API Changes
   even when the benchmark method was run multiple times, for example due
   to ``repeat > 1`` being present in timing benchmarks. This is now
   changed so that also they are run multiple times. (#316)
-- The default branch for Mercurial is now ``default``, not ``tip`` (#394).
+- The default branch for Mercurial is now ``default``, not ``tip``. (#394)
 - Benchmark results are now by default ordered by commit, not by date. (#429)
 - When ``asv run`` and other commands are called without specifying
   revisions, the default values are taken from the branches in
