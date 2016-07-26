@@ -91,6 +91,7 @@ class Continuous(Command):
                                      sort_by_ratio=True)
         worsened, improved = status
 
+        color_print("")
         if worsened:
             color_print("SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY.", 'red')
         elif improved:
