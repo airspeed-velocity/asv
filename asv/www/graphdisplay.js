@@ -1253,13 +1253,12 @@ $(document).ready(function() {
                 var x = get_x_from_revision(revision);
                 if (x >= xmin && x <= xmax) {
                     var p = plot.pointOffset({x: x, y: 0});
-                    var o = plot.getPlotOffset();
 
                     graph_div.append(
                         "<div style='position:absolute;" +
                             "left:" + p.left + "px;" +
-                            "bottom:" + (canvas.height - o.top) + "px;" +
-                            "color:#666;font-size:smaller'>" + tag + "</div>");
+                            "top: -2ex;" +
+                            "color:#666;background:white;padding-left:0.25em;font-size:smaller;'>" + tag + "</div>");
                 }
             });
         }
