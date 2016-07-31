@@ -159,6 +159,10 @@ As another example, explicitly saving data in a file::
         def track_numbers(self):
             return len(self.data)
 
+The ``setup_cache`` timeout can be specified by setting the
+``.timeout`` attribute of the ``setup_cache`` function. The default
+value is the maximum of the timeouts of the benchmarks using it.
+
 .. _benchmark-attributes:
 
 Benchmark attributes

@@ -59,7 +59,7 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 3
 
     b = benchmarks.Benchmarks(conf, repo, envs, regex='example')
-    assert len(b) == 22
+    assert len(b) == 24
 
     b = benchmarks.Benchmarks(conf, repo, envs, regex='time_example_benchmark_1')
     assert len(b) == 2
@@ -69,7 +69,7 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 2
 
     b = benchmarks.Benchmarks(conf, repo, envs)
-    assert len(b) == 26
+    assert len(b) == 28
 
     start_timestamp = datetime.datetime.utcnow()
 
@@ -126,6 +126,9 @@ def test_find_benchmarks(tmpdir):
 
     assert times['cache_examples.ClassLevelSetupFail.track_fail']['result'] == None
     assert 'raise RuntimeError()' in times['cache_examples.ClassLevelSetupFail.track_fail']['stderr']
+
+    assert times['cache_examples.ClassLevelCacheTimeout.track_fail']['result'] == None
+    assert times['cache_examples.ClassLevelCacheTimeoutSuccess.track_success']['result'] == 0
 
     profile_path = join(tmpdir, 'test.profile')
     with open(profile_path, 'wb') as fd:

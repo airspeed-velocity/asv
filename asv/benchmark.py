@@ -272,6 +272,7 @@ class Benchmark(object):
         self._teardowns = list(_get_all_attrs(attr_sources, 'teardown', True))
         self._setup_cache = _get_first_attr(attr_sources, 'setup_cache', None)
         self.setup_cache_key = get_setup_cache_key(self._setup_cache)
+        self.setup_cache_timeout = _get_first_attr([self._setup_cache], "timeout", None)
         self.timeout = _get_first_attr(attr_sources, "timeout", 60.0)
         self.code = textwrap.dedent(inspect.getsource(self.func))
         self.type = "base"
