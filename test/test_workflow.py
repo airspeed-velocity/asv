@@ -213,7 +213,9 @@ def test_run_spec(basic_conf):
         shutil.copytree(template_dir, results_dir)
 
         args = ["run", "--quick", "--skip-existing-successful",
-                "--bench=time_secondary.track_value"]
+                "--bench=time_secondary.track_value",
+                "-s", "1000"  # large number of steps should be noop
+               ]
         if range_spec is not None:
             args.append(range_spec)
         conf.branches = branches

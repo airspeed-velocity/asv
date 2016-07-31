@@ -147,12 +147,15 @@ class Repo(object):
         `existing` commits
         """
         new = set()
+        new_commits = []
         for branch in branches:
             for commit in self.get_branch_commits(branch):
                 if commit in existing:
                     break
-                new.add(commit)
-        return new
+                if commit not in new:
+                    new.add(commit)
+                    new_commits.append(commit)
+        return new_commits
 
 
 class NoRepository(Repo):

@@ -143,7 +143,7 @@ class Run(Command):
         repo.pull()
 
         if range_spec is None:
-            commit_hashes = set([repo.get_hash_from_name(branch) for branch in conf.branches])
+            commit_hashes = list(set([repo.get_hash_from_name(branch) for branch in conf.branches]))
         elif range_spec == 'EXISTING':
             commit_hashes = get_existing_hashes(conf.results_dir)
         elif range_spec == "NEW":
