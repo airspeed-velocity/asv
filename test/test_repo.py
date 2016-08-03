@@ -208,7 +208,7 @@ def two_branch_repo_case(request, tmpdir):
         |
         | o  Revision 5 (stable)
         | |
-        | o  Merge default
+        | o  Merge master
         |/|
         o |  Revision 4
         | |
@@ -278,19 +278,19 @@ def test_get_branch_commits(two_branch_repo_case):
 
 
 @pytest.mark.parametrize("existing, expected", [
-    # No existing commit, we expect all commits
-    ([], set(["Revision {0}".format(x) for x in range(1, 7)] + [
-        "Merge stable", "Merge master"])),
+    # No existing commit, we expect all commits in commit order,
+    # master branch first
+    ([], ["Revision 6", "Revision 4", "Merge stable", "Revision 3",
+          "Revision 1", "Revision 5", "Merge master", "Revision 2"]),
 
     # New commits on each branch
-    (["Revision 4", "Merge master"], set(["Revision 6", "Revision 5"])),
+    (["Revision 4", "Merge master"], ["Revision 6", "Revision 5"]),
 
     # No new commits
-    (["Revision 6", "Revision 5"], set()),
+    (["Revision 6", "Revision 5"], []),
 
     # Missing all commits on one branch (case of new branch added in config)
-    (["Revision 6"], set([
-        "Revision 5", "Merge master", "Revision 2", "Revision 1"])),
+    (["Revision 6"], ["Revision 5", "Merge master", "Revision 2", "Revision 1"]),
 ], ids=["all", "new", "no-new", "new-branch-added-in-config"])
 def test_get_new_branch_commits(two_branch_repo_case, existing, expected):
     dvcs, master, r, conf = two_branch_repo_case
@@ -304,10 +304,8 @@ def test_get_new_branch_commits(two_branch_repo_case, existing, expected):
 
     assert len(existing_commits) == len(existing)
 
-    commits = set([
-        dvcs.get_commit_message(commit)
-        for commit in r.get_new_branch_commits(conf.branches, existing_commits)
-    ])
+    new_commits = r.get_new_branch_commits(conf.branches, existing_commits)
+    commits = [dvcs.get_commit_message(commit) for commit in new_commits]
     assert commits == expected
 
 
