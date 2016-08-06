@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, unicode_literals, print_function
 
 import os
+import time
 
 
 class ClassLevelSetup:
@@ -53,3 +54,26 @@ class ClassLevelSetupFail:
 
     def track_fail(self):
         return -1
+
+
+class ClassLevelCacheTimeout:
+    def setup_cache(self):
+        time.sleep(2.0)
+
+    setup_cache.timeout = 0.1
+
+    def track_fail(self):
+        return 0
+
+
+class ClassLevelCacheTimeoutSuccess:
+    timeout = 1.0
+
+    def setup_cache(self):
+        time.sleep(2.0)
+
+    setup_cache.timeout = 5.0
+
+    def track_success(self):
+        return 0
+

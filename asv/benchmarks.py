@@ -510,15 +510,22 @@ class Benchmarks(dict):
 
             # Organize benchmarks by the setup_cache_key
             benchmark_order = {}
+            benchmark_timeout = {}
             for name, benchmark in benchmarks:
                 key = benchmark.get('setup_cache_key')
                 benchmark_order.setdefault(key, []).append((name, benchmark))
+
+                # setup_cache timeout
+                benchmark_timeout[key] = max(benchmark.get('setup_cache_timeout',
+                                                           benchmark['timeout']),
+                                             benchmark_timeout.get(key, 0))
 
             times = {}
             for setup_cache_key, benchmark_set in six.iteritems(benchmark_order):
                 tmpdir = tempfile.mkdtemp()
                 try:
                     if setup_cache_key is not None:
+                        timeout = benchmark_timeout[setup_cache_key]
                         log.info("Setting up {0}".format(setup_cache_key))
                         out, err, errcode = env.run(
                             [BENCHMARK_RUN_SCRIPT, 'setup_cache',
@@ -526,7 +533,7 @@ class Benchmarks(dict):
                              benchmark_set[0][0]],
                             dots=False, display_error=False,
                             return_stderr=True, valid_return_codes=None,
-                            cwd=tmpdir)
+                            cwd=tmpdir, timeout=timeout)
                         if errcode:
                             # Dump program output
                             if show_stderr and err:
