@@ -12,28 +12,20 @@ from ..console import log
 from .. import util
 
 
-def _has_staged_changes(git):
-    try:
-        util.check_call(
-            [git, 'diff-index', '--quiet', '--cached', 'HEAD'],
-            display_error=False)
-    except util.ProcessError as e:
-        if e.retcode == 1:
-            return True
-        else:
-            raise
-    return False
-
-
 class GithubPages(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "gh-pages",
-            help="""
-            Publish the results to Github pages.
-            """,
-            description="Publish the results to github pages")
+            "gh-pages", help="Publish the results to Github pages.",
+            description="""
+            Publish the results to github pages.
+
+            Updates the 'gh-pages' branch in the current repository,
+            and pushes it to 'origin'.
+            """)
+        parser.add_argument(
+            "--no-push", action="store_true",
+            help="Update local gh-pages branch but don't push")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -41,46 +33,37 @@ class GithubPages(Command):
 
     @classmethod
     def run_from_conf_args(cls, conf, args):
-        return cls.run(conf=conf)
+        return cls.run(conf=conf, no_push=args.no_push)
 
     @classmethod
-    def run(cls, conf):
-        # TODO: For transactional integrity, we probably need to check
-        # out the repo in a temporary directory
-
+    def run(cls, conf, no_push):
         git = util.which('git')
 
-        if _has_staged_changes(git):
-            raise util.UserError(
-                "You currently have staged changes. "
-                "Commit, stash or revert them before continuing.")
-
+        # Publish
         Publish.run(conf)
 
-        os.environ['HTML_DIR'] = conf.html_dir
+        log.info("Updating gh-pages branch")
+        try:
+            # Create new repo for the html data
+            util.check_call([git, 'init'], cwd=conf.html_dir)
+            util.check_call([git, 'checkout', '-b', 'gh-pages'], cwd=conf.html_dir)
 
+            # We need to tell github this is not a Jekyll document
+            with open(os.path.join(conf.html_dir, '.nojekyll'), 'wb') as fd:
+                fd.write(b'\n')
 
-        # Get the current branch name
-        current_branch = util.check_output(
-            [git, 'rev-parse', '--abbrev-ref', 'HEAD']).strip()
-        if current_branch == 'gh-pages':
-            util.check_call([git, 'checkout', 'master'])
+            # Add all files
+            util.check_call([git, 'add', '.'], cwd=conf.html_dir)
+            util.check_call([git, 'commit', '-m', 'Generated from sources'], cwd=conf.html_dir)
 
-        # Create a new "orphaned" branch -- we don't need history for
-        # the built products
-        util.check_call([git, 'branch', '-D', 'gh-pages'],
-                        valid_return_codes=None, display_error=False)
-        util.check_call([git, 'checkout', '--orphan', 'gh-pages'])
+            # Fetch branch here
+            util.check_call([git, 'fetch', conf.html_dir])
+            util.check_call([git, 'branch', '-f', 'gh-pages', 'FETCH_HEAD'])
+        finally:
+            # Cleanup the child repo under html
+            util.long_path_rmtree(os.path.join(conf.html_dir, '.git'))
 
-        # We need to tell github this is not a Jekyll document
-        with open('.nojekyll', 'wb') as fd:
-            fd.write(b'\n')
-        util.check_call([git, 'add', '.nojekyll'])
-
-        util.check_call([git, 'add', '-f', 'html'])
-        util.check_call(["git mv html/* ."], shell=True)
-        util.check_call([git, 'commit', '-m', 'Generated from sources'])
-
-        log.info("Updating gh-pages branch on github")
-        util.check_call([git, 'push', '-f', 'origin', 'gh-pages'])
-        util.check_call([git, 'checkout', current_branch])
+        # Push branch
+        if not no_push:
+            log.info("Pushing gh-pages branch")
+            util.check_call([git, 'push', 'origin', 'gh-pages'])
