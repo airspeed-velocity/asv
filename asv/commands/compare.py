@@ -96,7 +96,7 @@ class Compare(Command):
                        machine=args.machine)
 
     @classmethod
-    def run(cls, conf, hash_1, hash_2, factor=2, split=False, machine=None):
+    def run(cls, conf, hash_1, hash_2, factor=None, split=False, machine=None):
 
         machines = []
         for path in iter_machine_files(conf.results_dir):

@@ -36,11 +36,11 @@ def add_global_arguments(parser, suppress_defaults=True):
 
 def add_factor(parser):
     parser.add_argument(
-        '--factor', "-f", type=float, default=2.0,
+        '--factor', "-f", type=float, default=1.1,
         help="""The factor above or below which a result is considered
-        problematic.  For example, with a factor of 2, if a benchmark
-        gets twice as slow or twice as fast, it will be displayed in
-        the results list.""")
+        problematic.  For example, with a factor of 1.1 (the default
+        value), if a benchmark gets 10%% slower or faster, it will
+        be displayed in the results list.""")
 
 
 def add_show_stderr(parser):

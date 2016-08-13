@@ -52,7 +52,7 @@ class Continuous(Command):
         )
 
     @classmethod
-    def run(cls, conf, branch=None, base=None, factor=2.0, show_stderr=False, bench=None,
+    def run(cls, conf, branch=None, base=None, factor=None, show_stderr=False, bench=None,
             machine=None, env_spec=None, _machine_file=None):
         repo = get_repo(conf)
         repo.pull()
