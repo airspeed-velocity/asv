@@ -21,9 +21,9 @@ New Features
 API Changes
 ^^^^^^^^^^^
 
-- Mirrors are no longer created for local repositories. (#314)
 - The parent directory of the benchmark suite is no longer inserted
   into ``sys.path``. (#307)
+- Repository mirrors are no longer created for local repositories. (#314)
 - In asv.conf.json matrix, ``null`` previously meant (undocumented)
   the latest version. Now it means that the package is to not be
   installed. (#329)
@@ -36,13 +36,15 @@ API Changes
 - When ``asv run`` and other commands are called without specifying
   revisions, the default values are taken from the branches in
   ``asv.conf.json``. (#430)
+- The default value for ``--factor`` in ``asv continuous`` and
+  ``asv compare`` was changed from 2.0 to 1.1 (#469).
 
 Bug Fixes
 ^^^^^^^^^
 
 - Output will display on non-Unicode consoles. (#313, #318, #336)
 - Longer default install timeout. (#342)
-- Various other bugfixes and minor improvements.
+- Many other bugfixes and minor improvements.
 
 0.1.1 (2015-05-05)
 ------------------
