@@ -17,6 +17,13 @@ command.  Like ``git``, the ``asv`` command has a number of
 "subcommands" for performing various actions on your benchmarking
 project.
 
+.. note::
+
+   Currently, the project that you want to benchmark needs to be a
+   Python package, and installable via ``setup.py`` in the standard
+   way. If not, you cannot use the features of ``asv`` that depend on
+   building the project.
+
 Setting up a new benchmarking project
 -------------------------------------
 
@@ -33,8 +40,9 @@ new benchmarking suite to be created and run::
     Is this the top level of your project repository? [y/n] n
     Edit asv.conf.json to get started.
 
-Answer 'y' if you want a default configuration more suitable for
-putting on the top level of your project's repository.
+Answer 'y' if you want a default configuration suitable for putting
+the benchmark suite on the top level of the same repository where your
+project is.
 
 Now that you have the bare bones of a benchmarking suite, let's edit
 the configuration file, ``asv.conf.json``.  Like most files that
