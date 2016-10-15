@@ -232,7 +232,7 @@ When you have multiple parameters, the test is run for all
 of their combinations::
 
      def time_ranges(n, func_name):
-         f = {'range': range, 'arange': numpy.arange}[f]
+         f = {'range': range, 'arange': numpy.arange}[func_name]
          for i in f(n):
              pass
 
