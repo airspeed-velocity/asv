@@ -1,5 +1,21 @@
-0.2 (unreleased)
+0.3 (unreleased)
 ----------------
+
+New Features
+^^^^^^^^^^^^
+
+API Changes
+^^^^^^^^^^^
+
+Bug Fixes
+^^^^^^^^^
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+0.2rc2 (2016-10-17)
+-------------------
 
 New Features
 ^^^^^^^^^^^^
