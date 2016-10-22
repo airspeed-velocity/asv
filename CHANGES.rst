@@ -1,21 +1,5 @@
-0.2 (unreleased)
+0.2 (2016-10-22)
 ----------------
-
-New Features
-^^^^^^^^^^^^
-
-API Changes
-^^^^^^^^^^^
-
-Bug Fixes
-^^^^^^^^^
-
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-0.2rc2 (2016-10-17)
--------------------
 
 New Features
 ^^^^^^^^^^^^
@@ -61,6 +45,11 @@ Bug Fixes
 - Output will display on non-Unicode consoles. (#313, #318, #336)
 - Longer default install timeout. (#342)
 - Many other bugfixes and minor improvements.
+
+0.2rc2 (2016-10-17)
+-------------------
+
+Same as 0.2.
 
 0.1.1 (2015-05-05)
 ------------------
