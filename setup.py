@@ -152,6 +152,9 @@ def run_setup(build_binary=False):
     else:
         ext_modules = []
 
+    with open('README.rst', 'r') as f:
+        long_description = f.read()
+
     setup(
         name="asv",
         version=version,
@@ -190,12 +193,21 @@ def run_setup(build_binary=False):
         # py.test testing
         tests_require=['pytest'],
         cmdclass={'test': PyTest, 'build_ext': optional_build_ext},
-
         author="Michael Droettboom",
         author_email="mdroe@stsci.edu",
         description="Airspeed Velocity: A simple Python history benchmarking tool",
         license="BSD",
-        url="http://github.com/spacetelescope/asv"
+        url="http://github.com/spacetelescope/asv",
+        long_description=long_description,
+        classifiers=[
+            'Environment :: Console',
+            'Environment :: Web Environment',
+            'Intended Audience :: Developers',
+            'License :: OSI Approved :: BSD License',
+            'Programming Language :: Python :: 2',
+            'Programming Language :: Python :: 3',
+            'Topic :: Software Development :: Testing',
+        ]
     )
 
 
