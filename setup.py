@@ -123,7 +123,7 @@ class optional_build_ext(build_ext):
 
 
 def run_setup(build_binary=False):
-    version = '0.2'
+    version = '0.2.1.dev'
 
     git_hash = get_git_hash()
 
