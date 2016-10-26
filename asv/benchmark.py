@@ -628,7 +628,7 @@ class SpecificImporter(object):
     Using this enables importing the asv benchmark suite without
     adding its parent directory to sys.path. The parent directory can
     in principle contain anything, including some version of the
-    project module (common situtation if asv.conf.json is on project
+    project module (common situation if asv.conf.json is on project
     repository top level).
     """
 
