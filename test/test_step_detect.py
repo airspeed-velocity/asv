@@ -119,7 +119,7 @@ def test_solve_potts(use_rangemedian):
 
 @pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
 def test_autocorrelated():
-    # Check that a low-amplitude cosine signal is not intepreted as
+    # Check that a low-amplitude cosine signal is not interpreted as
     # multiple steps
     j = np.arange(1000)
     y = 0.2 * np.cos(j/100.0) + 1.0 * (j >= 500)
