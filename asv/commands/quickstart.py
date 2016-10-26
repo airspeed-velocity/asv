@@ -18,7 +18,7 @@ class Quickstart(Command):
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
             "quickstart", help="Create a new benchmarking suite",
-            description="Creates a new bechmarking suite")
+            description="Creates a new benchmarking suite")
 
         parser.add_argument(
             "--dest", "-d", default=".",
