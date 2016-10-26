@@ -97,7 +97,7 @@ class Repo(object):
 
     def get_date(self, hash):
         """
-        Get a Javascript timestamp for a particular commit.
+        Get a JavaScript timestamp for a particular commit.
         """
         raise NotImplementedError()
 
@@ -130,7 +130,7 @@ class Repo(object):
 
     def get_date_from_name(self, name):
         """
-        Get a Javascript timestamp for a particular name.
+        Get a JavaScript timestamp for a particular name.
         """
         raise NotImplementedError()
 

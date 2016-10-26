@@ -843,7 +843,7 @@ def datetime_to_timestamp(dt):
 
 def datetime_to_js_timestamp(dt):
     """
-    Convert a Python datetime object to a Javascript timestamp.
+    Convert a Python datetime object to a JavaScript timestamp.
     """
     return 1000 * datetime_to_timestamp(dt)
 

@@ -214,7 +214,7 @@ class Results(object):
             The commit hash for the benchmark run.
 
         date : int
-            Javascript timestamp for when the commit was merged into
+            JavaScript timestamp for when the commit was merged into
             the repository.
 
         python : str

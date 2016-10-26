@@ -99,7 +99,7 @@ A benchmark suite directory has the following layout.  The
       - ``commit_hash``: The project commit that the benchmarks were
         run on.
 
-      - ``date``: A Javascript date stamp of the date of the commit
+      - ``date``: A JavaScript date stamp of the date of the commit
         (not when the benchmarks were run).
 
       - ``params``: Information about the machine the benchmarks were
@@ -126,10 +126,10 @@ A benchmark suite directory has the following layout.  The
           including failures in installing the project version. ``NaN``
           indicates a benchmark explicitly skipped by the benchmark suite.
 
-      - ``started_at``: A dictionary from benchmark names to Javascript
+      - ``started_at``: A dictionary from benchmark names to JavaScript
         time stamps indicating the start time of the benchmark run.
 
-      - ``ended_at``: A dictionary from benchmark names to Javascript
+      - ``ended_at``: A dictionary from benchmark names to JavaScript
         time stamps indicating the end time of the benchmark run.
 
 - ``$html_dir/``: The output of ``asv publish``, that turns the raw
@@ -137,7 +137,7 @@ A benchmark suite directory has the following layout.  The
   browser.  It is an important feature of ``asv`` that the results can
   be shared on a static web server, so there is no server side
   component, and the result data is accessed through AJAX calls from
-  Javascript.  Most of the files at the root of ``$html_dir/`` are
+  JavaScript.  Most of the files at the root of ``$html_dir/`` are
   completely static and are just copied verbatim from ``asv/www/`` in
   the source tree.
 
@@ -151,7 +151,7 @@ A benchmark suite directory has the following layout.  The
       hash. This allows to show commits tooltip in graph and commits involved
       in a regression.
 
-    - ``revision_to_date``: A dictionary mapping Javascript date stamps to
+    - ``revision_to_date``: A dictionary mapping JavaScript date stamps to
       revisions (including tags).  This allows the x-scale of a plot to be scaled
       by date.
 
