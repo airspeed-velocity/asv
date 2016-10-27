@@ -10,7 +10,7 @@ arbitrarily nested in subdirectories, and all ``.py`` files will be
 used, regardless of their file name.
 
 Within each ``.py`` file, each benchmark is a function or method.  The
-name of the functon must have a special prefix, depending on the type
+name of the function must have a special prefix, depending on the type
 of benchmark.  ``asv`` understands how to handle the prefix in either
 ``CamelCase`` or lowercase with underscores.  For example, to create a
 timing benchmark, the following are equivalent::

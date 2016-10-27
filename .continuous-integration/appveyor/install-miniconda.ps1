@@ -1,6 +1,6 @@
 ﻿# Sample script to install anaconda under windows
 # Authors: Stuart Mumford
-# Borrwed from: Olivier Grisel and Kyle Kastner
+# Borrowed from: Olivier Grisel and Kyle Kastner
 # License: BSD 3 clause
 
 $MINICONDA_URL = "https://repo.continuum.io/miniconda/"
