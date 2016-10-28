@@ -256,7 +256,6 @@ class Benchmark(object):
     name_regex = re.compile('^$')
 
     def __init__(self, name, func, attr_sources):
-        name = name.split('.', 1)[1]
         self.name = name
         self.func = func
         self.pretty_name = getattr(func, "pretty_name", name)
@@ -565,13 +564,15 @@ def _get_benchmark(attr_name, module, klass, func):
             break
     else:
         return
+    # relative to benchmark_dir
+    mname = module.__name__.split('.', 1)[1]
     if klass is None:
-        name = ".".join([module.__name__, func.__name__])
+        name = ".".join([mname, func.__name__])
         sources = [func, module]
     else:
         instance = klass()
         func = getattr(instance, func.__name__)
-        name = ".".join([module.__name__, klass.__name__, func.__name__])
+        name = ".".join([mname, klass.__name__, func.__name__])
         sources = [func, instance, module]
     return cls(name, func, sources)
 
