@@ -559,20 +559,30 @@ def disc_files(root, package=''):
 
 
 def _get_benchmark(attr_name, module, klass, func):
+    try:
+        name = func.benchmark_name
+    except AttributeError:
+        name = None
+        search = attr_name
+    else:
+        search = name.split('.')[-1]
+
     for cls in benchmark_types:
-        if cls.name_regex.match(attr_name):
+        if cls.name_regex.match(search):
             break
     else:
         return
     # relative to benchmark_dir
     mname = module.__name__.split('.', 1)[1]
     if klass is None:
-        name = ".".join([mname, func.__name__])
+        if name is None:
+            name = ".".join([mname, func.__name__])
         sources = [func, module]
     else:
         instance = klass()
         func = getattr(instance, func.__name__)
-        name = ".".join([mname, klass.__name__, func.__name__])
+        if name is None:
+            name = ".".join([mname, klass.__name__, func.__name__])
         sources = [func, instance, module]
     return cls(name, func, sources)
 
