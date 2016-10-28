@@ -239,13 +239,6 @@ def _get_first_attr(sources, name, default, ignore_case=False):
     return default
 
 
-def get_benchmark_type_from_name(name):
-    for bm_type in benchmark_types:
-        if bm_type.name_regex.match(name):
-            return bm_type
-    return None
-
-
 def get_setup_cache_key(func):
     if func is None:
         return None
@@ -326,107 +319,6 @@ class Benchmark(object):
 
     def __repr__(self):
         return '<{0} {1}>'.format(self.__class__.__name__, self.name)
-
-    @classmethod
-    def from_function(cls, func):
-        """
-        Create a benchmark object from a free function.
-        """
-        module = inspect.getmodule(func)
-        name = '.'.join(
-            [module.__name__, func.__name__])
-        return cls(name, func, [func, inspect.getmodule(func)])
-
-    @classmethod
-    def from_class_method(cls, klass, method_name):
-        """
-        Create a benchmark object from a method.
-
-        Parameters
-        ----------
-        klass : type
-            The class containing the method.
-
-        method_name : str
-            The name of the method.
-        """
-        module = inspect.getmodule(klass)
-        instance = klass()
-        func = getattr(instance, method_name)
-        name = '.'.join(
-            [module.__name__, klass.__name__, method_name])
-        return cls(name, func, [func, instance, module])
-
-    @classmethod
-    def from_name(cls, root, name, quick=False):
-        """
-        Create a benchmark from a fully-qualified benchmark name.
-
-        Parameters
-        ----------
-        root : str
-            Path to the root of a benchmark suite.
-
-        name : str
-            Fully-qualified name to a specific benchmark.
-        """
-        update_sys_path(root)
-
-        def find_on_filesystem(root, parts, package):
-            path = os.path.join(root, parts[0])
-            if package:
-                new_package = package + '.' + parts[0]
-            else:
-                new_package = parts[0]
-            if os.path.isfile(path + '.py'):
-                module = import_module(new_package)
-                return find_in_module(module, parts[1:])
-            elif os.path.isdir(path):
-                return find_on_filesystem(
-                    path, parts[1:], new_package)
-
-        def find_in_module(module, parts):
-            attr = getattr(module, parts[0], None)
-
-            if attr is not None:
-                if inspect.isfunction(attr):
-                    if len(parts) == 1:
-                        bm_type = get_benchmark_type_from_name(parts[0])
-                        if bm_type is not None:
-                            return bm_type.from_function(attr)
-                elif inspect.isclass(attr):
-                    if len(parts) == 2:
-                        bm_type = get_benchmark_type_from_name(parts[1])
-                        if bm_type is not None:
-                            return bm_type.from_class_method(attr, parts[1])
-
-            raise ValueError(
-                "Could not find benchmark '{0}'".format(name))
-
-        if '-' in name:
-            try:
-                name, param_idx = name.split('-', 1)
-                param_idx = int(param_idx)
-            except ValueError:
-                raise ValueError("Benchmark id %r is invalid" % (name,))
-        else:
-            param_idx = None
-
-        parts = name.split('.')
-
-        benchmark = find_on_filesystem(
-            root, parts, os.path.basename(root))
-
-        if param_idx is not None:
-            benchmark.set_param_idx(param_idx)
-
-        if quick:
-            class QuickBenchmarkAttrs:
-                repeat = 1
-                number = 1
-            benchmark._attr_sources.insert(0, QuickBenchmarkAttrs)
-
-        return benchmark
 
     def do_setup(self):
         try:
@@ -651,42 +543,6 @@ def update_sys_path(root):
                                              os.path.dirname(root)))
 
 
-def disc_class(klass):
-    """
-    Iterate over all benchmarks in a given class.
-
-    For each method with a special name, yields a Benchmark
-    object.
-    """
-    for key, val in inspect.getmembers(klass):
-        bm_type = get_benchmark_type_from_name(key)
-        if bm_type is not None and (inspect.isfunction(val) or inspect.ismethod(val)):
-            yield bm_type.from_class_method(klass, key)
-
-
-def disc_objects(module):
-    """
-    Iterate over all benchmarks in a given module, returning
-    Benchmark objects.
-
-    For each class definition, looks for any methods with a
-    special name.
-
-    For each free function, yields all functions with a special
-    name.
-    """
-    for key, val in module.__dict__.items():
-        if key.startswith('_'):
-            continue
-        if inspect.isclass(val):
-            for benchmark in disc_class(val):
-                yield benchmark
-        elif inspect.isfunction(val):
-            bm_type = get_benchmark_type_from_name(key)
-            if bm_type is not None:
-                yield bm_type.from_function(val)
-
-
 def disc_files(root, package=''):
     """
     Iterate over all .py files in a given directory tree.
@@ -703,13 +559,94 @@ def disc_files(root, package=''):
                 yield x
 
 
+def _get_benchmark(attr_name, module, klass, func):
+    for cls in benchmark_types:
+        if cls.name_regex.match(attr_name):
+            break
+    else:
+        return
+    if klass is None:
+        name = ".".join([module.__name__, func.__name__])
+        sources = [func, module]
+    else:
+        instance = klass()
+        func = getattr(instance, func.__name__)
+        name = ".".join([module.__name__, klass.__name__, func.__name__])
+        sources = [func, instance, module]
+    return cls(name, func, sources)
+
+
 def disc_benchmarks(root):
     """
-    Discover all benchmarks in a given directory tree.
+    Discover all benchmarks in a given directory tree, yielding Benchmark
+    objects
+
+    For each class definition, looks for any methods with a
+    special name.
+
+    For each free function, yields all functions with a special
+    name.
     """
+
     for module in disc_files(root, os.path.basename(root) + '.'):
-        for benchmark in disc_objects(module):
-            yield benchmark
+        for attr_name, module_attr in (
+            (k, v) for k, v in module.__dict__.items()
+            if not k.startswith('_')
+        ):
+            if inspect.isclass(module_attr):
+                for name, class_attr in inspect.getmembers(module_attr):
+                    if (inspect.isfunction(class_attr) or
+                            inspect.ismethod(class_attr)):
+                        benchmark = _get_benchmark(name, module, module_attr,
+                                                   class_attr)
+                        if benchmark is not None:
+                            yield benchmark
+            elif inspect.isfunction(module_attr):
+                benchmark = _get_benchmark(attr_name, module, None, module_attr)
+                if benchmark is not None:
+                    yield benchmark
+
+
+def get_benchmark_from_name(root, name, quick=False):
+    """
+    Create a benchmark from a fully-qualified benchmark name.
+
+    Parameters
+    ----------
+    root : str
+        Path to the root of a benchmark suite.
+
+    name : str
+        Fully-qualified name to a specific benchmark.
+    """
+
+    if '-' in name:
+        try:
+            name, param_idx = name.split('-', 1)
+            param_idx = int(param_idx)
+        except ValueError:
+            raise ValueError("Benchmark id %r is invalid" % (name,))
+    else:
+        param_idx = None
+
+    update_sys_path(root)
+    for benchmark in disc_benchmarks(root):
+        if benchmark.name == name:
+            break
+    else:
+        raise ValueError(
+            "Could not find benchmark '{0}'".format(name))
+
+    if param_idx is not None:
+        benchmark.set_param_idx(param_idx)
+
+    if quick:
+        class QuickBenchmarkAttrs:
+            repeat = 1
+            number = 1
+        benchmark._attr_sources.insert(0, QuickBenchmarkAttrs)
+
+    return benchmark
 
 
 def list_benchmarks(root, fp):
@@ -742,7 +679,7 @@ def main_discover(args):
 
 def main_setup_cache(args):
     (benchmark_dir, benchmark_id) = args
-    benchmark = Benchmark.from_name(benchmark_dir, benchmark_id)
+    benchmark = get_benchmark_from_name(benchmark_dir, benchmark_id)
     cache = benchmark.do_setup_cache()
     with open("cache.pickle", "wb") as fd:
         pickle.dump(cache, fd)
@@ -754,7 +691,7 @@ def main_run(args):
     if profile_path == 'None':
         profile_path = None
 
-    benchmark = Benchmark.from_name(
+    benchmark = get_benchmark_from_name(
         benchmark_dir, benchmark_id, quick=quick)
 
     if benchmark.setup_cache_key is not None:
