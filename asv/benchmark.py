@@ -57,6 +57,7 @@ import json
 import os
 import pickle
 import re
+import subprocess
 import textwrap
 import timeit
 import time
@@ -779,6 +780,59 @@ class PeakMemBenchmark(Benchmark):
         return get_maxrss()
 
 
+class ImpBenchmark(TimeBenchmark):
+    """
+    Represents a single benchmark for tracking import times.
+    """
+    name_regex = re.compile(
+        '^(Imp[A-Z_].+)|(imp_.+)$')
+    subprocess_tmpl = textwrap.dedent('''
+        from __future__ import print_function
+        from timeit import timeit
+        try:
+            # Python 3.3+.
+            from time import process_time as timer
+        except ImportError:
+            from timeit import default_timer as timer
+
+        print(timeit(stmt="""{stmt}""", number={number}, timer=timer))
+    ''').strip()
+
+    def do_profile(self, filename=None):
+        raise ValueError("Import benchmarks cannot be profiled")
+
+    def run(self, *param):
+        if param:
+            raise ValueError("Import benchmarks do not support parameters")
+        body = self.code[self.code.index('\n') + 1:]
+        stmt = textwrap.dedent(body).replace('"""', r'\"\"\"')
+
+        def subprocess_timeit(number):
+            self.redo_setup()
+            script = self.subprocess_tmpl.format(stmt=stmt, number=number)
+            timing = subprocess.check_output((sys.executable, '-c', script))
+            return float(timing)
+
+        number = self.number
+        if number == 0:
+            # Consequent imports take negligible time.
+            number = 1
+
+        timings = []
+        repeat = self.repeat
+        if repeat == 0:
+            # Do not exceed the goal time by more than one run (taking into
+            # account interpreter startup overhead in the subprocess).
+            system_time = timeit.default_timer
+            start = system_time()
+            while system_time() - start < self.goal_time:
+                timings.append(subprocess_timeit(number))
+        else:
+            for r in range(repeat):
+                timings.append(subprocess_timeit(number))
+        return min(timings) / number
+
+
 class TrackBenchmark(Benchmark):
     """
     Represents a single benchmark for tracking an arbitrary value.
@@ -799,7 +853,7 @@ class TrackBenchmark(Benchmark):
 
 
 benchmark_types = [
-    TimeBenchmark, MemBenchmark, PeakMemBenchmark, TrackBenchmark
+    TimeBenchmark, MemBenchmark, PeakMemBenchmark, ImpBenchmark, TrackBenchmark
 ]
 
 

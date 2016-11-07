@@ -372,6 +372,40 @@ memory usage you want to track::
 
 For details, see :doc:`benchmarks`.
 
+
+Imports
+```````
+
+To benchmark import times use the ``imp`` prefix::
+
+    def imp_inspect():
+        import inspect
+
+Importing a module takes a meaningful amount of time only the first time
+it is executed, therefore a fresh interpreter is used for each iteration of
+the benchmark. The source code of the benchmark function is executed in a
+subprocess; the setup is performed in the base benchmark process, parameters
+and profiling are not supported.
+
+The ``goal_time``, ``number``, and ``repeat`` arguments have the same meaning
+as in :ref:`timing` benchmarks, but by default ``number`` is set to 1 and
+``repeat`` is adjusted to approximate the goal time. The ``timer`` argument is
+ignored, ``process_time`` is used inside the subprocess (falling back to
+``timeit.default_timer`` under older Pythons).
+
+.. note::
+
+   Timing standard library modules is possible as long as they are not
+   `built-in`_ or brought in by importing the ``timeit`` module (which
+   further imports ``gc``, ``sys``, ``time``, and ``itertools``).
+
+.. note::
+
+   Import benchmarks require Python 2.7 or later, the timing is more precise
+   with Python 3.3 or later.
+
+.. _built-in: https://hg.python.org/cpython/file/tip/Modules/Setup.dist
+
 .. _tracking:
 
 Tracking (Generic)

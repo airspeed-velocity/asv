@@ -118,6 +118,30 @@ def test_discover_benchmarks(benchmarks_fixture):
     assert params[0][1] in ['<function FunctionParamSuite.<lambda>>', '<function <lambda>>']
 
 
+@pytest.mark.skipif(sys.version_info < (2, 7),
+                    reason="Import benchmarks require Python 2.7+")
+def test_imp_benchmark(tmpdir):
+    tmpdir = six.text_type(tmpdir)
+    os.chdir(tmpdir)
+
+    d = {}
+    d.update(ASV_CONF_JSON)
+    d['benchmark_dir'] = BENCHMARK_DIR
+    d['env_dir'] = "env"
+    d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
+    conf = config.Config.from_json(d)
+
+    repo = get_repo(conf)
+    envs = list(environment.get_environments(conf, None))
+
+    b = benchmarks.Benchmarks(conf, repo, envs, regex='ImpSuite')
+    times = b.run_benchmarks(envs[0], show_stderr=True)
+    assert times['imp_examples.ImpSuite.imp_fresh']['result'] is not None
+    assert times['imp_examples.ImpSuite.imp_docstring']['result'] is not None
+    assert 'timed out' in times['imp_examples.ImpSuite.imp_timeout']['stderr']
+    assert '0' * 21 in times['imp_examples.ImpSuite.imp_count']['stderr']
+
+
 def test_invalid_benchmark_tree(tmpdir):
     tmpdir = six.text_type(tmpdir)
     os.chdir(tmpdir)
