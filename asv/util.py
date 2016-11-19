@@ -341,26 +341,23 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     log.debug("Running '{0}'".format(' '.join(args)))
 
-    posix = getattr(os, 'setpgid', None)
-    if posix:
-        # Run the subprocess in a separate process group, so that we
-        # can kill it and all child processes it spawns e.g. on
-        # timeouts. Note that subprocess.Popen will wait until exec()
-        # before returning in parent process, so there is no race
-        # condition in setting the process group vs. calls to os.killpg
-        preexec_fn = lambda: os.setpgid(0, 0)
+    kwargs = dict(shell=shell, env=env, cwd=cwd,
+                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if WIN:
+        kwargs['close_fds'] = False
+        kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
     else:
-        preexec_fn = None
+        kwargs['close_fds'] = True
+        posix = getattr(os, 'setpgid', None)
+        if posix:
+            # Run the subprocess in a separate process group, so that we
+            # can kill it and all child processes it spawns e.g. on
+            # timeouts. Note that subprocess.Popen will wait until exec()
+            # before returning in parent process, so there is no race
+            # condition in setting the process group vs. calls to os.killpg
+            kwargs['preexec_fn'] = lambda: os.setpgid(0, 0)
 
-    proc = subprocess.Popen(
-        args,
-        close_fds=(not WIN),
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        shell=shell,
-        preexec_fn=preexec_fn,
-        cwd=cwd)
+    proc = subprocess.Popen(args, **kwargs)
 
     last_dot_time = time.time()
     stdout_chunks = []
@@ -392,7 +389,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                 time.sleep(0.1)
                 if time.time() - start_time[0] > timeout:
                     was_timeout[0] = True
-                    proc.terminate()
+                    proc.send_signal(signal.CTRL_BREAK_EVENT)
 
         watcher = threading.Thread(target=watcher_run)
         watcher.start()
