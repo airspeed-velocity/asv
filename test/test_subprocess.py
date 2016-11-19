@@ -4,7 +4,6 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import os
 import sys
 import time
 
@@ -27,11 +26,8 @@ sys.stderr.write("Stderr after waiting\n")
     """)
 
     # Another example, where timeout is due to a hanging sub-subprocess
-    if getattr(os, 'setpgid', None):
-        # only on posix
-        timeout_codes.append(r"""
+    timeout_codes.append(r"""
 import sys
-import time
 import subprocess
 
 sys.stdout.write("Stdout before waiting\n")
@@ -42,7 +38,7 @@ subprocess.call([sys.executable, "-c",
     "import sys, subprocess; subprocess.call([sys.executable, '-c', 'import time; time.sleep(60)'])"])
 sys.stdout.write("Stdout after waiting\n")
 sys.stderr.write("Stderr after waiting\n")
-        """)
+    """)
 
     for timeout_code in timeout_codes:
         t = time.time()
