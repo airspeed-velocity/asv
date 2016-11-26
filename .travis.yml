@@ -71,7 +71,7 @@ install:
     if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install mercurial ; fi;
     if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install python-hglib ; fi;
     $TRAVIS_PIP install selenium six pytest feedparser;
-    if [[ $COVERAGE != '' ]]; then $TRAVIS_PIP install coverage pytest-coverage coveralls; fi;
+    if [[ $COVERAGE != '' ]]; then $TRAVIS_PIP install pytest-cov coveralls; fi;
 
 script:
   - $TRAVIS_PYTHON setup.py test $COVERAGE

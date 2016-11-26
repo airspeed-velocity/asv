@@ -41,7 +41,7 @@ class PyTest(TestCommand):
         if self.pytest_args:
             test_args += self.pytest_args.split()
         if self.coverage:
-            test_args += ['--cov', 'asv']
+            test_args += ['--cov', os.path.abspath('asv')]
         errno = pytest.main(test_args)
         sys.exit(errno)
 
