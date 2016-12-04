@@ -274,11 +274,6 @@ class Run(Command):
                             env.name)
 
                         for benchmark_name, d in six.iteritems(results):
-                            result.add_result(benchmark_name, d['result'],
-                                              d['started_at'], d['ended_at'])
-                            if 'profile' in d:
-                                result.add_profile(
-                                    benchmark_name,
-                                    d['profile'])
+                            result.add_result(benchmark_name, d)
 
                         result.update_save(conf.results_dir)

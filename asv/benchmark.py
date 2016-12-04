@@ -16,7 +16,8 @@ its runtime to a file.
 # there although it's not part of the package, and Python puts it to
 # sys.path[0] on start which can shadow other modules
 import sys
-sys.path.pop(0)
+if __name__ == "__main__":
+    sys.path.pop(0)
 
 import copy
 try:
@@ -35,6 +36,7 @@ import pickle
 import re
 import textwrap
 import timeit
+import time
 
 # The best timer we can use is time.process_time, but it is not
 # available in the Python stdlib until Python 3.3.  This is a ctypes
@@ -383,7 +385,8 @@ class TimeBenchmark(Benchmark):
     def _load_vars(self):
         self.repeat = _get_first_attr(self._attr_sources, 'repeat', 0)
         self.number = int(_get_first_attr(self._attr_sources, 'number', 0))
-        self.goal_time = _get_first_attr(self._attr_sources, 'goal_time', 2.0)
+        self.goal_time = _get_first_attr(self._attr_sources, 'goal_time', 0.1)
+        self.warmup_time = _get_first_attr(self._attr_sources, 'warmup_time', -1)
         self.timer = _get_first_attr(self._attr_sources, 'timer', process_time)
 
     def do_setup(self):
@@ -397,7 +400,16 @@ class TimeBenchmark(Benchmark):
         repeat = self.repeat
 
         if repeat == 0:
-            repeat = timeit.default_repeat
+            repeat = 10
+
+        warmup_time = self.warmup_time
+        if warmup_time < 0:
+            if '__pypy__' in sys.modules:
+                warmup_time = 1.0
+            else:
+                # Transient effects exist also on CPython, e.g. from
+                # OS scheduling
+                warmup_time = 0.1
 
         if param:
             func = lambda: self.func(*param)
@@ -409,36 +421,62 @@ class TimeBenchmark(Benchmark):
             setup=self.redo_setup,
             timer=self.timer)
 
+        samples, number = self.benchmark_timing(timer, repeat, warmup_time, number=number)
+
+        samples = [s/number for s in samples]
+        return {'samples': samples, 'number': number}
+
+    def benchmark_timing(self, timer, repeat, warmup_time, number=0):
+        goal_time = self.goal_time
+
+        start_time = time.time()
+
+        def too_slow():
+            # too slow, don't take more samples
+            return time.time() > start_time + warmup_time + 2 * repeat * goal_time
+
         if number == 0:
-            # determine number automatically so that
-            # goal_time / 10 <= total time < goal_time
+            # Select number & warmup.
+            #
+            # This needs to be done at the same time, because the
+            # benchmark timings at the beginning can be larger, and
+            # lead to too small number being selected.
             number = 1
-            for i in range(1, 10):
-                if i > 1:
-                    # increase number (don't rerun setup)
-                    self._redo_setup_next = False
-                    number *= 10
-
+            while True:
+                self._redo_setup_next = False
                 timing = timer.timeit(number)
-                if timing >= 5*self.goal_time and number == 1 and self.repeat == 0:
-                    # very slow benchmark: use a default repeat value of 1
-                    self.repeat = repeat = 1
+                if timing >= goal_time:
+                    if time.time() > start_time + warmup_time:
+                        break
+                else:
+                    try:
+                        p = min(10.0, max(1.1, goal_time/timing))
+                    except ZeroDivisionError:
+                        p = 10.0
+                    number = max(number + 1, int(p * number))
+
+            if too_slow():
+                return [timing], number
+        elif warmup_time > 0:
+            # Warmup
+            while True:
+                self._redo_setup_next = False
+                timing = timer.timeit(number)
+                if time.time() >= start_time + warmup_time:
                     break
-                elif timing >= self.goal_time / 10.0:
-                    break
+            if too_slow():
+                return [timing], number
 
-            self.number = number
+        # Collect samples
+        samples = []
+        for j in range(repeat):
+            timing = timer.timeit(number)
+            samples.append(timing)
 
-            # keep the timing from the run we already made
-            repeat -= 1
-            all_runs = [timing]
-        else:
-            all_runs = []
+            if too_slow():
+                break
 
-        if repeat > 0:
-            all_runs.extend(timer.repeat(repeat, number))
-        best = min(all_runs) / number
-        return best
+        return samples, number
 
 
 class MemBenchmark(Benchmark):

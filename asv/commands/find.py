@@ -124,13 +124,6 @@ class Find(Command):
                 env, show_stderr=show_stderr)
             result = list(x.values())[0]['result']
 
-            if isinstance(result, dict):
-                # parameterized results
-                result = result['result']
-            else:
-                # single value
-                result = [result]
-
             results[i] = result
 
             return results[i]

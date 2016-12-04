@@ -46,6 +46,7 @@ class TuningTest:
     counter = [0]
     number = 10
     repeat = 10
+    warmup_time = 0
 
     def setup(self, n):
         self.number = 1

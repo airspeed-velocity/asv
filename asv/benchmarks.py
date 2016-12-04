@@ -20,6 +20,7 @@ import six
 
 from .console import log, truncate_left
 from . import util
+from . import statistics
 
 
 WIN = (os.name == "nt")
@@ -64,16 +65,32 @@ def run_benchmark(benchmark, root, env, show_stderr=False,
     result : dict
         Returns a dictionary with the following keys:
 
-        - `result`: The numeric value of the benchmark (usually the
-          runtime in seconds for a timing benchmark), but may be an
-          arbitrary JSON data structure.  Set to `None` if the
-          benchmark failed.
+        - `result`: List of numeric values of the benchmarks (one for each parameter
+          combination), either returned directly or obtained from `samples` via 
+          statistical analysis.
 
-        - `profile`: If `profile` is `True`, this key will exist, and
-          be a byte string containing the cProfile data.
+          Values are `None` if benchmark failed or NaN if it was skipped.
+
+          If benchmark is not parameterized, the list contains a single number.
+
+        - `params`: Same as `benchmark['params']`. Empty list if non-parameterized.
+
+        - `samples`: List of lists of sampled raw data points, if benchmark produces
+          those and was successful.
+
+        - `number`: Repeact count associated with each sample.
+
+        - `stats`: List of results of statistical analysis of data.
+
+        - `profile`: If `profile` is `True` and run was at least partially successful, 
+          this key will be a byte string containing the cProfile data. Otherwise, None.
+
+        - `stderr`: Output produced.
+
+        - `errcode`: Error return code.
     """
     name = benchmark['name']
-    result = {}
+    result = {'stderr': '', 'profile': None, 'errcode': 0}
     bench_results = []
     bench_profiles = []
 
@@ -111,12 +128,24 @@ def run_benchmark(benchmark, root, env, show_stderr=False,
 
             total_count += 1
             if success:
-                bench_results.append(data)
+                if isinstance(data, dict) and 'samples' in data:
+                    value, stats = statistics.compute_stats(data['samples'])
+                    result_data = dict(samples=data['samples'],
+                                       number=data['number'],
+                                       result=value,
+                                       stats=stats)
+                else:
+                    result_data = dict(samples=None,
+                                       number=None,
+                                       result=data,
+                                       stats=None)
+
+                bench_results.append(result_data)
                 if profile:
                     bench_profiles.append(profile_data)
             else:
                 failure_count += 1
-                bench_results.append(None)
+                bench_results.append(dict(samples=None, number=None, result=None, stats=None))
                 bench_profiles.append(None)
                 if data is not None:
                     bad_output = data
@@ -138,9 +167,26 @@ def run_benchmark(benchmark, root, env, show_stderr=False,
                 else:
                     head_msg = ''
 
-                result.setdefault('stderr', '')
                 result['stderr'] += head_msg
                 result['stderr'] += err
+
+        # Produce result
+        for key in ['samples', 'number', 'result', 'stats']:
+            result[key] = [x[key] for x in bench_results]
+
+        if benchmark['params']:
+            result['params'] = benchmark['params']
+            if profile:
+                # Produce only a single profile
+                profile_data = _combine_profile_data(bench_profiles)
+                if profile_data is not None:
+                    result['profile'] = profile_data
+        else:
+            result['params'] = []
+            if profile and bench_profiles[0] is not None:
+                result['profile'] = bench_profiles[0]
+
+        result['ended_at'] = datetime.datetime.utcnow()
 
         # Display status
         if failure_count > 0:
@@ -159,7 +205,10 @@ def run_benchmark(benchmark, root, env, show_stderr=False,
             # Long format display
             if failure_count == 0:
                 log_result("ok")
-            display = _format_benchmark_result(bench_results, benchmark)
+
+            display_result = [(v, statistics.get_err(v, s) if s is not None else None)
+                              for v, s in zip(result['result'], result['stats'])]
+            display = _format_benchmark_result(display_result, benchmark)
             log.info("\n" + "\n".join(display))
         else:
             if failure_count == 0:
@@ -167,7 +216,11 @@ def run_benchmark(benchmark, root, env, show_stderr=False,
                 if not bench_results:
                     display = "[]"
                 else:
-                    display = util.human_value(bench_results[0], benchmark['unit'])
+                    if result['stats'][0]:
+                        err = statistics.get_err(result['result'][0], result['stats'][0])
+                    else:
+                        err = None
+                    display = util.human_value(result['result'][0], benchmark['unit'], err=err)
                     if len(bench_results) > 1:
                         display += ";..."
                 log_result(display)
@@ -176,22 +229,6 @@ def run_benchmark(benchmark, root, env, show_stderr=False,
         if show_stderr and result.get('stderr'):
             with log.indent():
                 log.error(result['stderr'])
-
-        # Non-parameterized benchmarks have just a single number
-        if benchmark['params']:
-            result['result'] = dict(result=bench_results,
-                                    params=benchmark['params'])
-            if profile:
-                # Produce only a single profile
-                profile_data = _combine_profile_data(bench_profiles)
-                if profile_data is not None:
-                    result['profile'] = profile_data
-        else:
-            result['result'] = bench_results[0]
-            if profile and bench_profiles[0] is not None:
-                result['profile'] = bench_profiles[0]
-
-        result['ended_at'] = datetime.datetime.utcnow()
 
         return result
 
@@ -544,6 +581,9 @@ class Benchmarks(dict):
                                 # TODO: Store more information about failure
                                 timestamp = datetime.datetime.utcnow()
                                 times[name] = {'result': None,
+                                               'samples': None,
+                                               'stats': None,
+                                               'params': [],
                                                'stderr': err,
                                                'started_at': timestamp,
                                                'ended_at': timestamp}
@@ -572,6 +612,9 @@ class Benchmarks(dict):
                 log.warn('Benchmark {0} skipped'.format(name))
                 timestamp = datetime.datetime.utcnow()
                 times[name] = {'result': None,
+                               'samples': None,
+                               'stats': None,
+                               'params': [],
                                'started_at': timestamp,
                                'ended_at': timestamp}
         return times
@@ -647,7 +690,7 @@ def _format_benchmark_result(result, benchmark, max_width=None):
             rows.append(header)
 
         for j, values in enumerate(itertools.product(*row_params)):
-            row_results = [util.human_value(x, benchmark['unit'])
+            row_results = [util.human_value(x[0], benchmark['unit'], err=x[1])
                            for x in result[j*column_items:(j+1)*column_items]]
             row = [_format_param_value(value) for value in values] + row_results
             rows.append(row)
