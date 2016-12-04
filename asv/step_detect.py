@@ -638,7 +638,7 @@ def solve_potts_autogamma(y, beta=None, **kw):
     return best_r[0], best_v[0], best_d[0], best_gamma[0]
 
 
-def solve_potts_approx(y, gamma=None, p=2, **kw):
+def solve_potts_approx(y, gamma=None, p=2, min_size=2, **kw):
     """
     Fit penalized stepwise constant function (Potts model) to data
     approximatively, in linear time.
@@ -661,8 +661,14 @@ def solve_potts_approx(y, gamma=None, p=2, **kw):
         mu, dist = mu_dist.mu, mu_dist.dist
         gamma = 3 * dist(0,n-1) * math.log(n) / n
 
-    right, values, dists = solve_potts(y, gamma, p=p, max_size=20, **kw)
-    return merge_pieces(gamma, right, values, dists, mu_dist, max_size=20)
+    if min_size < 10:
+        max_size = 20
+    else:
+        max_size = min_size + 50
+
+    right, values, dists = solve_potts(y, gamma, p=p, min_size=min_size, max_size=max_size,
+                                       **kw)
+    return merge_pieces(gamma, right, values, dists, mu_dist, max_size=max_size)
 
 
 def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
