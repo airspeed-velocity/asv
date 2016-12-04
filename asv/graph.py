@@ -13,6 +13,8 @@ from six.moves import xrange
 from . import util
 from . import step_detect
 
+from .util import is_na, mean_na, geom_mean_na
+
 
 # This is the maximum number of points to include in summary graphs.
 # It is based on the number of pixels in the summary graph display on
@@ -148,7 +150,7 @@ class Graph(object):
 
         """
         self.data_points.setdefault(revision, [])
-        if not _is_na(value):
+        if not is_na(value):
             if not hasattr(value, '__len__'):
                 value = [value]
             else:
@@ -173,7 +175,7 @@ class Graph(object):
         def mean_axis0(v):
             if not v:
                 return [None]*self.n_series
-            return [_mean_with_none(x[j] for x in v)
+            return [mean_na(x[j] for x in v)
                     for j in xrange(self.n_series)]
 
         # Average data over commit log
@@ -184,14 +186,14 @@ class Graph(object):
         # Discard missing data at edges
         i = 0
         for i in xrange(len(val)):
-            if any(not _is_na(v) for v in val[i][1]):
+            if any(not is_na(v) for v in val[i][1]):
                 break
         else:
             i = len(val)
 
         j = i
         for j in xrange(len(val) - 1, i, -1):
-            if any(not _is_na(v) for v in val[j][1]):
+            if any(not is_na(v) for v in val[j][1]):
                 break
 
         val = val[i:j+1]
@@ -320,9 +322,9 @@ def make_summary_graph(graphs):
     first_values = [None]*n_series
     for k, v in val:
         for j, x in enumerate(v):
-            if first_values[j] is None and not _is_na(x):
+            if first_values[j] is None and not is_na(x):
                 first_values[j] = x
-        if not any(_is_na(x) for x in first_values):
+        if not any(is_na(x) for x in first_values):
             break
 
     first_values = [fv if fv is not None else 1.0
@@ -335,9 +337,9 @@ def make_summary_graph(graphs):
         # Fill missing data, unless it's missing from all
         # parameter combinations
         cur_vals = []
-        if any(not _is_na(x) for x in v):
+        if any(not is_na(x) for x in v):
             for j, x in enumerate(v):
-                if _is_na(x):
+                if is_na(x):
                     if last_values[j] is not None:
                         x = last_values[j]
                     else:
@@ -347,8 +349,8 @@ def make_summary_graph(graphs):
 
                 cur_vals.append(x)
 
-        # Mean of normalized values, on top of mean of means
-        v = _geom_mean_with_none(cur_vals)
+        # Geometric mean of values
+        v = geom_mean_na(cur_vals)
         new_val.append((k, v))
 
     val = new_val
@@ -421,42 +423,5 @@ def resample_data(val):
             chunk.append(val[j][1])
             j += 1
         if len(chunk):
-            new_val.append((i, _mean_with_none(chunk)))
+            new_val.append((i, mean_na(chunk)))
     return new_val
-
-
-def _is_na(value):
-    """
-    Return true if value is None or nan
-    """
-    return value is None or value != value
-
-
-def _mean_with_none(values):
-    """
-    Take a mean, with the understanding that None and NaN stand for
-    missing data.
-    """
-    values = [x for x in values if not _is_na(x)]
-    if values:
-        return sum(values) / len(values)
-    else:
-        return None
-
-
-def _geom_mean_with_none(values):
-    """
-    Compute geometric mean, with the understanding that None and NaN
-    stand for missing data.
-    """
-    values = [x for x in values if not _is_na(x)]
-    if values:
-        exponent = 1/len(values)
-        prod = 1.0
-        acc = 0
-        for x in values:
-            prod *= abs(x)**exponent
-            acc += x
-        return prod if acc >= 0 else -prod
-    else:
-        return None

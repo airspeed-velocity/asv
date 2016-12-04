@@ -31,6 +31,8 @@ from .console import log
 from .extern import minify_json
 
 
+nan = float('nan')
+
 WIN = (os.name == 'nt')
 
 if not WIN:
@@ -912,6 +914,43 @@ def is_nan(x):
     if isinstance(x, float):
         return x != x
     return False
+
+
+def is_na(value):
+    """
+    Return True if value is None or NaN
+    """
+    return value is None or is_nan(value)
+
+
+def mean_na(values):
+    """
+    Take a mean, with the understanding that None and NaN stand for
+    missing data.
+    """
+    values = [x for x in values if not is_na(x)]
+    if values:
+        return sum(values) / len(values)
+    else:
+        return None
+
+
+def geom_mean_na(values):
+    """
+    Compute geometric mean, with the understanding that None and NaN
+    stand for missing data.
+    """
+    values = [x for x in values if not is_na(x)]
+    if values:
+        exponent = 1/len(values)
+        prod = 1.0
+        acc = 0
+        for x in values:
+            prod *= abs(x)**exponent
+            acc += x
+        return prod if acc >= 0 else -prod
+    else:
+        return None
 
 
 if not WIN:
