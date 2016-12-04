@@ -89,7 +89,11 @@ class Continuous(Command):
                     continue
 
                 for name, benchmark in six.iteritems(run_objs['benchmarks']):
-                    yield name, result.results.get(name, float("nan"))
+                    params = benchmark['params']
+
+                    value = result.get_result_value(name, params)
+                    stats = result.get_result_stats(name, params)
+                    yield name, params, value, stats
 
         status = Compare.print_table(conf, parent, head,
                                      resultset_1=results_iter(parent),

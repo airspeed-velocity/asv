@@ -36,8 +36,8 @@
 	    "result": [1, 4, null]
 	},
 	"params_examples.ParamSuite.track_value": null,
-	"time_ci_small": {"result": [3], "stats": [{"scale": 0.5, "df": 5, "systematic": 0}], "samples": [[[0,0],[1,3],[2,6],[3,9],[4,12.5]]]},
-	"time_ci_big": {"result": [3], "stats": [{"scale": 2.0, "df": 5, "systematic": 0}], "samples": [[[0,0],[1,9],[2,6],[3,9],[4,12]]]}
+	"time_ci_small": {"result": 3, "stats": [{"ci_99": [3.9, 3.1], "q_25": 3, "q_75": 3}]},
+	"time_ci_big": {"result": 3, "stats": [{"ci_99": [1.5, 3.5], "q_25": 1.5, "q_75": 3.5}]}
     }, 
     "version": 1
 }

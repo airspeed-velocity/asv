@@ -33,8 +33,8 @@
 	    "params": [["1", "2", "3"]],
 	    "result": [1, 2, 3]
 	},
-	"time_ci_small": {"result": 1, "stats": [{"scale": 0.5, "df": 5, "systematic": 0}], "samples": [[[0,0],[1,1],[2,2],[3,3],[4,3]]]},
-	"time_ci_big": {"result": 1, "stats": [{"scale": 2, "df": 5, "systematic": 0}], "samples": [[[0,0],[1,9],[2,0],[3,9],[4,4]]]}
+	"time_ci_small": {"result": 1, "stats": [{"ci_99": [0.9, 1.1], "q_25": 1, "q_75": 1}]},
+	"time_ci_big": {"result": 1, "stats": [{"ci_99": [0.5, 2.5], "q_25": 0.5, "q_75": 2.5}]}
     }, 
     "version": 1
 }
