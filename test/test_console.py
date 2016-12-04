@@ -72,8 +72,8 @@ def test_write_with_fallback(tmpdir, capfd):
     #   - Try to print in latin1
     #   - Try to print in ascii, replacing all non-ascii characters
     encodings = ['utf-8', 'latin1', 'ascii', 'euc-jp']
-    strings = ["helloμ", "hello·", "hello難", "helloä"]
-    repmap = {"helloμ": "hellou", "hello·": "hello-"}
+    strings = ["helloμ", "hello·", "hello難", "helloä", "hello±"]
+    repmap = {"helloμ": "hellou", "hello·": "hello-", "hello±": "hello~"}
 
     for pref_enc, stream_enc, s in itertools.product(encodings, encodings, strings):
         expected = None

@@ -145,3 +145,93 @@ def test_write_load_json(tmpdir):
     util.write_json(filename, data)
     with pytest.raises(util.UserError):
         util.load_json(filename, 3)
+
+
+def test_human_float():
+    items = [
+        # (expected, value, significant, truncate_small, significant_zeros, reference_value)
+
+        # significant
+        ("1", 1.2345, 1),
+        ("1.2", 1.2345, 2),
+        ("1.23", 1.2345, 3),
+        ("100", 123.45, 1),
+        ("120", 123.45, 2),
+        ("123", 123.45, 3),
+        ("123.5", 123.45, 4),
+        ("0.001", 0.0012346, 1),
+        ("0.001235", 0.0012346, 4),
+
+        # significant zeros
+        ("0.001", 0.001, 1, None, True),
+        ("0.0010", 0.001, 2, None, True),
+        ("0.00100", 0.001, 3, None, True),
+        ("1", 1, 1, None, True),
+        ("1.0", 1, 2, None, True),
+        ("1.00", 1, 3, None, True),
+
+        # truncate small
+        ("0", 0.001, 2, 0),
+        ("0", 0.001, 2, 1),
+        ("0.001", 0.001, 2, 2),
+    ]
+
+    for item in items:
+        expected = item[0]
+        got = util.human_float(*item[1:])
+        assert got == expected, item
+
+
+def test_human_time():
+    items = [
+        # (expected, value, err)
+
+        # scales
+        ("1.00ns", 1e-9),
+        ("1.10μs", 1.1e-6),
+        ("1.12ms", 1.12e-3),
+        ("1.12s", 1.123),
+        ("1.13s", 1.126),
+        ("1.00m", 60),
+        ("2.00h", 3600*2),
+
+        # err
+        ("1.00±1ns", 1e-9, 1e-9),
+        ("1.00±0.1ns", 1e-9, 0.1e-9),
+        ("1.00±0.01ns", 1e-9, 0.01e-9),
+        ("1.00±0.01ns", 1e-9, 0.006e-9),
+        ("1.00±0ns", 1e-9, 0.001e-9),
+    ]
+
+    for item in items:
+        expected = item[0]
+        got = util.human_time(*item[1:])
+        assert got == expected, item
+        got = util.human_value(item[1], 'seconds', *item[2:])
+        assert got == expected, item
+
+
+def test_human_file_size():
+    items = [
+        # (expected, value, err)
+
+        # scales
+        ("1", 1),
+        ("999", 999),
+        ("1k", 1000),
+        ("1.1M", 1.1e6),
+        ("1.12G", 1.12e9),
+        ("1.12T", 1.123e12),
+
+        # err
+        ("1±2", 1, 2),
+        ("1±0.1k", 1e3, 123),
+        ("12.3±4M", 12.34e6, 4321e3),
+    ]
+
+    for item in items:
+        expected = item[0]
+        got = util.human_file_size(*item[1:])
+        assert got == expected, item
+        got = util.human_value(item[1], 'bytes', *item[2:])
+        assert got == expected, item

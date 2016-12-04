@@ -91,7 +91,52 @@ def human_list(l):
         return ', '.join(l[:-1]) + ' and ' + l[-1]
 
 
-def human_file_size(size):
+def human_float(value, significant=3, truncate_small=None, significant_zeros=False):
+    """
+    Return a string representing a float with human friendly significant digits.
+    Switches to scientific notation for too large/small numbers.
+    If `truncate_small`, then leading zeros of numbers < 1 are counted as 
+    significant. If not `significant_zeros`, trailing unnecessary zeros are 
+    stripped.
+    """
+    if value == 0:
+        return "0"
+
+    logv = math.log10(value)
+    magnitude = int(math.floor(logv)) + 1
+
+    if truncate_small is not None:
+        magnitude = max(magnitude, -truncate_small + 1)
+
+    num_digits = significant - magnitude
+
+    if magnitude <= -5 or magnitude >= 9:
+        # Too many digits, use scientific notation
+        fmt = "{{0:.{0}e}}".format(significant)
+    elif value == int(value):
+        value = int(round(value, num_digits))
+        fmt = "{0:d}"
+    elif num_digits <= 0:
+        value = int(round(value, num_digits))
+        fmt = "{0:d}"
+    else:
+        fmt = "{{0:.{0}f}}".format(num_digits)
+
+    formatted = fmt.format(value)
+
+    if not significant_zeros and '.' in formatted and 'e' not in fmt:
+        formatted = formatted.rstrip('0')
+        if formatted[-1] == '.':
+            formatted = formatted[:-1]
+
+    if significant_zeros and '.' not in formatted:
+        if len(formatted) < significant:
+            formatted += "." + "0"*(significant - len(formatted))
+
+    return formatted
+
+
+def human_file_size(size, err=None):
     """
     Returns a human-friendly string representing a file size
     that is 2-4 characters long.
@@ -115,6 +160,9 @@ def human_file_size(size):
     """
     size = float(size)
 
+    if size < 1:
+        size = 0.0
+
     suffixes = ' kMGTPEH'
     if size == 0:
         num_scale = 0
@@ -123,18 +171,19 @@ def human_file_size(size):
     if num_scale > 7:
         suffix = '?'
     else:
-        suffix = suffixes[num_scale]
-    num_scale = int(math.pow(1000, num_scale))
-    value = size / num_scale
-    str_value = str(value)
-    if str_value[2] == '.':
-        str_value = str_value[:2]
+        suffix = suffixes[num_scale].strip()
+    scale = int(math.pow(1000, num_scale))
+    value = size / scale
+
+    str_value = human_float(value, 3)
+
+    if err is None:
+        return "{0:s}{1}".format(str_value, suffix)
     else:
-        str_value = str_value[:3]
-    return "{0:>3s}{1}".format(str_value, suffix)
+        str_err = human_float(err / scale, 1, truncate_small=2)
+        return "{0:s}±{1:s}{2}".format(str_value, str_err, suffix)
 
-
-def human_time(seconds):
+def human_time(seconds, err=None):
     """
     Returns a human-friendly time string that is always exactly 6
     characters long.
@@ -177,11 +226,16 @@ def human_time(seconds):
 
     for i in xrange(len(units) - 1):
         if seconds < units[i+1][1]:
-            return "{0:.02f}{1}".format(seconds / units[i][1], units[i][0])
+            str_time = human_float(seconds / units[i][1], 3, significant_zeros=True)
+            if err is None:
+                return "{0:s}{1}".format(str_time, units[i][0])
+            else:
+                str_err = human_float(err / units[i][1], 1, truncate_small=2)
+                return "{0:s}±{1:s}{2}".format(str_time, str_err, units[i][0])
     return '~0'
 
 
-def human_value(value, unit):
+def human_value(value, unit, err=None):
     """
     Formats a value in a given unit in a human friendly way.
 
@@ -192,17 +246,22 @@ def human_value(value, unit):
 
     unit : str
         The unit the value is in.  Currently understands `seconds` and `bytes`.
+
+    err : float, optional
+        Std. error in the value
     """
     if isinstance(value, (int, float)):
         if value != value:
             # nan
             display = "n/a"
         elif unit == 'seconds':
-            display = human_time(value)
+            display = human_time(value, err=err)
         elif unit == 'bytes':
-            display = human_file_size(value)
+            display = human_file_size(value, err=err)
         else:
             display = json.dumps(value)
+            if err is not None:
+                display += "±{:.2g}".format(err)
     elif value is None:
         display = "failed"
     else:
