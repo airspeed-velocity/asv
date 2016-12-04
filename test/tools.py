@@ -368,7 +368,16 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
             params = value["params"]
         result = Results({"machine": "tarzan"}, {}, commit,
                          repo.get_date_from_name(commit), "2.7", None)
-        result.add_result("time_func", value, timestamp, timestamp)
+        value = {
+            'result': [value],
+            'params': [],
+            'started_at': timestamp,
+            'ended_at': timestamp,
+            'stats': None,
+            'samples': None,
+            'number': None
+        }
+        result.add_result("time_func", value)
         result.save(result_dir)
 
     util.write_json(join(result_dir, "benchmarks.json"), {

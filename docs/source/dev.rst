@@ -106,14 +106,23 @@ A benchmark suite directory has the following layout.  The
         run on.
 
       - ``results``: A dictionary from benchmark names to benchmark
-        results.
+        results. The item can also be directly the float/list of result
+        values instead of a dictionary.
 
-        - If non-parameterized benchmark, the result is a single value.
+        The dictionary form can have the following keys:
 
-        - For parameterized benchmarks, the result is a dictionary
-          with keys ``params`` and ``result``. The ``params`` value
-          contains a copy of the parameter values of the benchmark, as
-          described above. If the user has modified the benchmark
+        - ``result``: contains the summarized result value(s) of
+          the benchmark. For a non-parameterized benchmark, the value is
+          the result: float, NaN or null. For parameterized
+          benchmarks, it is a list of such values (see ``params`` below).
+
+          The values are either numbers indicating result from
+          successful run, ``null`` indicating a failed benchmark,
+          or ``NaN`` indicating a benchmark explicitly skipped by the
+          benchmark suite.
+
+        - ``params``: contains a copy of the parameter values of the
+          benchmark, as described above. If the user has modified the benchmark
           after the benchmark was run, these may differ from the
           current values. The ``result`` value is a list of
           results. Each entry corresponds to one combination of the
@@ -122,9 +131,28 @@ A benchmark suite directory has the following layout.  The
           i.e., the results appear in cartesian product order, with
           the last parameters varying fastest.
 
-        - In the results, ``null`` indicates a failed benchmark,
-          including failures in installing the project version. ``NaN``
-          indicates a benchmark explicitly skipped by the benchmark suite.
+          This key is omitted if the benchmark is not parameterized.
+
+        - ``samples``: contains the raw data samples produced.
+          For a non-parameterized benchmark, the result is a single
+          list of float values. For parameterized benchmarks,
+          it is a list of such lists (see below).
+          The samples are in the order they were measured in.
+
+          This key is omitted if there are no samples recorded.
+
+        - ``number``: contains the repeat count(s) associated with the
+          measured samples. Same format as for ``result``.
+
+          This key is omitted if there are no samples recorded.
+
+        - ``stats``: dictionary containing results of statistical
+          analysis. Contains keys ``ci_99`` (confidence interval
+          estimate for the result), ``q_25``, ``q_75`` (percentiles),
+          ``min``, ``max``, ``mean``, ``std``, ``n``, and
+          ``systematic`` (estimate of systematic error).
+
+          This key is omitted if there is no statistical analysis.
 
       - ``started_at``: A dictionary from benchmark names to JavaScript
         time stamps indicating the start time of the benchmark run.

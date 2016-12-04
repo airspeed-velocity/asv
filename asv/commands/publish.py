@@ -16,7 +16,7 @@ from ..console import log
 from ..graph import GraphSet
 from ..machine import iter_machine_files
 from ..repo import get_repo
-from ..results import iter_results, compatible_results
+from ..results import iter_results
 from ..publishing import OutputPublisher
 from .. import environment
 from .. import util
@@ -132,9 +132,13 @@ class Publish(Command):
             for results in iter_results(conf.results_dir):
                 log.dot()
 
-                for key, val in six.iteritems(results.results):
+                for key in results.result_keys:
                     b = benchmarks.get(key)
-                    result = compatible_results(val, b)
+
+                    b_params = b['params'] if b else []
+                    result = results.get_result_value(key, b_params)
+                    if not b_params:
+                        result = result[0]
 
                     benchmark_names.add(key)
 

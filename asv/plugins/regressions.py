@@ -130,7 +130,7 @@ class Regressions(OutputPublisher):
                 run_timestamps[key] = timestamp
 
             # Fallback to commit date
-            for benchmark_name in six.iterkeys(results.results):
+            for benchmark_name in results.result_keys:
                 key = (benchmark_name, revision)
                 run_timestamps.setdefault(key, results.date)
 

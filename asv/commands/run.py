@@ -210,8 +210,14 @@ class Run(Command):
                             skipped_benchmarks.update(benchmarks)
                             break
 
-                        for key, value in six.iteritems(result.results):
-                            failed = value is None or (isinstance(value, dict) and None in value['result'])
+                        for key in result.result_keys:
+                            if key not in benchmarks:
+                                continue
+
+                            value = result.get_result_value(key, benchmarks[key]['params'])
+
+                            failed = value is None or (isinstance(value, list) and None in value)
+
                             if skip_failed and failed:
                                 skipped_benchmarks.add(key)
                             if skip_successful and not failed:

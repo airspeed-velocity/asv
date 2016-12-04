@@ -31,21 +31,56 @@ def test_results(tmpdir):
             i * 1000000,
             '2.7',
             'some-environment-name')
-        for key, val in {
-            'suite1.benchmark1': float(i * 0.001),
-            'suite1.benchmark2': float(i * i * 0.001),
-            'suite2.benchmark1': float((i + 1) ** -1)}.items():
-            r.add_result(key, val, timestamp1, timestamp2)
+
+        values = {
+            'suite1.benchmark1': {'result': [float(i * 0.001)], 'stats': [{'foo': 1}],
+                                  'samples': [[1,2]], 'number': [6], 'params': [['a']]},
+            'suite1.benchmark2': {'result': [float(i * i * 0.001)], 'stats': [{'foo': 2}],
+                                  'samples': [[3,4]], 'number': [7], 'params': []},
+            'suite2.benchmark1': {'result': [float((i + 1) ** -1)], 'stats': [{'foo': 3}],
+                                  'samples': [[5,6]], 'number': [8], 'params': [['c']]}
+        }
+
+        for key, val in values.items():
+            val['started_at'] = timestamp1
+            val['ended_at'] = timestamp2
+            r.add_result(key, val)
+
+        # Save / add_existing_results roundtrip
         r.save(resultsdir)
 
         r2 = results.Results.load(join(resultsdir, r._filename))
-
-        assert r2._results == r._results
         assert r2.date == r.date
         assert r2.commit_hash == r.commit_hash
         assert r2._filename == r._filename
-        assert r.started_at == r._started_at
-        assert r.ended_at == r._ended_at
+
+        r3 = results.Results({'machine': 'bar'}, {}, 'a'*8, 123, '3.5', 'something')
+        r3.add_existing_results(r)
+
+        for rr in [r2, r3]:
+            assert rr._results == r._results
+            assert rr._stats == r._stats
+            assert rr._number == r._number
+            assert rr._samples == r._samples
+            assert rr.started_at == r._started_at
+            assert rr.ended_at == r._ended_at
+
+        # Check the get_* methods
+        assert sorted(r2.result_keys) == sorted(values.keys())
+        for bench in r2.result_keys:
+            # Get with same parameters as stored
+            params = r2.get_result_params(bench)
+            assert params == values[bench]['params']
+            assert r2.get_result_value(bench, params) == values[bench]['result']
+            assert r2.get_result_stats(bench, params) == values[bench]['stats']
+            assert r2.get_result_samples(bench, params) == (values[bench]['samples'],
+                                                            values[bench]['number'])
+
+            # Get with different parameters than stored (should return n/a)
+            bad_params = [['foo', 'bar']]
+            assert r2.get_result_value(bench, bad_params) == [None, None]
+            assert r2.get_result_stats(bench, bad_params) == [None, None]
+            assert r2.get_result_samples(bench, bad_params) == ([None, None], [None, None])
 
 
 def test_get_result_hash_from_prefix(tmpdir):
@@ -92,7 +127,16 @@ def test_json_timestamp(tmpdir):
 
     r = results.Results({'machine': 'mach'}, {}, 'aaaa', util.datetime_to_timestamp(stamp0),
                         'py', 'env')
-    r.add_result('some_benchmark', 42, stamp1, stamp2)
+    value = {
+        'result': [42],
+        'params': [],
+        'stats': None,
+        'samples': None,
+        'number': None,
+        'started_at': stamp1,
+        'ended_at': stamp2
+    }
+    r.add_result('some_benchmark', value)
     r.save(tmpdir)
 
     r = util.load_json(join(tmpdir, 'mach', 'aaaa-env.json'))
