@@ -104,6 +104,9 @@ class Run(Command):
             "--skip-existing", "-k", action="store_true",
             help="""Skip running benchmarks that have previous successful
             or failed results""")
+        parser.add_argument(
+            "--record-samples", action="store_true",
+            help="""Store raw measurement samples, not only statistics""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -120,6 +123,7 @@ class Run(Command):
             skip_successful=args.skip_existing_successful or args.skip_existing,
             skip_failed=args.skip_existing_failed or args.skip_existing,
             skip_existing_commits=args.skip_existing_commits,
+            record_samples=args.record_samples,
             **kwargs
         )
 
@@ -127,7 +131,8 @@ class Run(Command):
     def run(cls, conf, range_spec=None, steps=None, bench=None, parallel=1,
             show_stderr=False, quick=False, profile=False, env_spec=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
-            skip_failed=False, skip_existing_commits=False, _returns={}):
+            skip_failed=False, skip_existing_commits=False, record_samples=False,
+            _returns={}):
         machine_params = Machine.load(
             machine_name=machine,
             _path=_machine_file, interactive=True)
@@ -280,6 +285,10 @@ class Run(Command):
                             env.name)
 
                         for benchmark_name, d in six.iteritems(results):
+                            if not record_samples:
+                                d['samples'] = None
+                                d['number'] = None
+
                             result.add_result(benchmark_name, d)
 
                         result.update_save(conf.results_dir)
