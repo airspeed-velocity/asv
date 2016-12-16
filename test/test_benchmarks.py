@@ -68,8 +68,11 @@ def test_find_benchmarks(tmpdir):
                                                        'some regexp that does not match anything'])
     assert len(b) == 2
 
+    b = benchmarks.Benchmarks(conf, repo, envs, regex='custom')
+    assert sorted(b.keys()) == ['custom.time_function', 'custom.track_method']
+
     b = benchmarks.Benchmarks(conf, repo, envs)
-    assert len(b) == 28
+    assert len(b) == 30
 
     start_timestamp = datetime.datetime.utcnow()
 
