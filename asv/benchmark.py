@@ -641,12 +641,42 @@ def get_benchmark_from_name(root, name, quick=False):
         param_idx = None
 
     update_sys_path(root)
-    for benchmark in disc_benchmarks(root):
-        if benchmark.name == name:
+    benchmark = None
+
+    # try to directly import benchmark function by guessing its import module
+    # name
+    parts = name.split('.')
+    for i in [1, 2]:
+        path = os.path.join(root, *parts[:-i]) + '.py'
+        if not os.path.isfile(path):
+            continue
+        modname = '.'.join([os.path.basename(root)] + parts[:-i])
+        module = import_module(modname)
+        try:
+            module_attr = getattr(module, parts[-i])
+        except AttributeError:
             break
-    else:
-        raise ValueError(
-            "Could not find benchmark '{0}'".format(name))
+        if i == 1 and inspect.isfunction(module_attr):
+            benchmark = _get_benchmark(parts[-i], module, None, module_attr)
+            break
+        elif i == 2 and inspect.isclass(module_attr):
+            try:
+                class_attr = getattr(module_attr, parts[-1])
+            except AttributeError:
+                break
+            if (inspect.isfunction(class_attr) or
+                    inspect.ismethod(class_attr)):
+                benchmark = _get_benchmark(parts[-1], module, module_attr,
+                                           class_attr)
+                break
+
+    if benchmark is None:
+        for benchmark in disc_benchmarks(root):
+            if benchmark.name == name:
+                break
+        else:
+            raise ValueError(
+                "Could not find benchmark '{0}'".format(name))
 
     if param_idx is not None:
         benchmark.set_param_idx(param_idx)
