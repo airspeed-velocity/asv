@@ -146,8 +146,8 @@ def test_find_benchmarks(tmpdir):
     assert times['time_examples.TimeWithRepeat.time_it']['stderr'].split() == expected
 
     # Calibration of iterations should not rerun setup
-    expected = ['setup']*3
-    assert times['time_examples.TimeWithRepeatCalibrate.time_it']['stderr'].split() == expected
+    expected = (['setup']*2, ['setup']*3)
+    assert times['time_examples.TimeWithRepeatCalibrate.time_it']['stderr'].split() in expected
 
     # Check run time timestamps
     for name, result in times.items():
