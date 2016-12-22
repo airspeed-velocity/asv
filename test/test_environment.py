@@ -436,6 +436,20 @@ def test_environment_select_autodetect():
     assert len(environments) == 1
 
 
+def test_environment_name():
+    conf = config.Config()
+    conf.environment_type = "conda"
+    conf.pythons = ["3.4"]
+    conf.matrix = {
+        "six": ["1.4"],
+    }
+
+    # Check autodetect
+    environments = list(environment.get_environments(conf))
+    assert len(environments) == 1
+    assert environments[0].name = "foo"
+
+
 def test_matrix_empty():
     conf = config.Config()
     conf.environment_type = ""
