@@ -447,7 +447,7 @@ def test_environment_name():
     # Check autodetect
     environments = list(environment.get_environments(conf))
     assert len(environments) == 1
-    assert environments[0].name = "foo"
+    assert environments[0].name == "foo"
 
 
 def test_matrix_empty():
