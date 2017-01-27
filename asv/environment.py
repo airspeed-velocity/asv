@@ -183,7 +183,7 @@ def get_env_name(tool_name, python, requirements):
             name.append(''.join([key, val]))
         else:
             name.append(key)
-    return '-'.join(name)
+    return '-'.join(name).replace('/', '_')
 
 
 def get_environments(conf, env_specifiers):
