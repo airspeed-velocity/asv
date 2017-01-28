@@ -483,3 +483,17 @@ def test_pypy_virtualenv(tmpdir):
         env.create()
         output = env.run(['-c', 'import sys; print(sys.pypy_version_info)'])
         assert output.startswith(six.text_type("(major="))
+
+
+def test_environment_name_sanitization():
+    conf = config.Config()
+    conf.environment_type = "conda"
+    conf.pythons = ["3.4"]
+    conf.matrix = {
+        "pip+git+http://github.com/space-telescope/asv.git": [],
+    }
+
+    # Check name sanitization
+    environments = list(environment.get_environments(conf, []))
+    assert len(environments) == 1
+    assert environments[0].name == "conda-py3.4-pip+git+http___github.com_space-telescope_asv.git"
