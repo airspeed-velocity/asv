@@ -62,7 +62,7 @@ def test_matrix_environments(tmpdir):
 
     conf.pythons = ["2.7", "3.4"]
     conf.matrix = {
-        "six": ["1.4", None],
+        "six": ["1.10", None],
         "colorama": ["0.3.6", "0.3.7"]
     }
     environments = list(environment.get_environments(conf, None))
@@ -346,7 +346,7 @@ def test_environment_select():
     conf.environment_type = "conda"
     conf.pythons = ["2.7", "3.4"]
     conf.matrix = {
-        "six": ["1.4"],
+        "six": ["1.10"],
     }
     conf.include = [
         {'environment_type': 'conda', 'python': '1.9'}
@@ -390,19 +390,19 @@ def test_environment_select():
         assert os.path.normcase(os.path.abspath(env._executable)) == os.path.normcase(os.path.abspath(sys.executable))
 
     # Select by environment name
-    environments = list(environment.get_environments(conf, ["conda-py2.7-six1.4"]))
+    environments = list(environment.get_environments(conf, ["conda-py2.7-six1.10"]))
     assert len(environments) == 1
     assert environments[0].python == "2.7"
     assert environments[0].tool_name == "conda"
-    assert environments[0].requirements == {'six': '1.4'}
+    assert environments[0].requirements == {'six': '1.10'}
 
     # Check interaction with exclude
     conf.exclude = [{'environment_type': "conda"}]
-    environments = list(environment.get_environments(conf, ["conda-py2.7-six1.4"]))
+    environments = list(environment.get_environments(conf, ["conda-py2.7-six1.10"]))
     assert len(environments) == 0
 
     conf.exclude = [{'environment_type': 'matches nothing'}]
-    environments = list(environment.get_environments(conf, ["conda-py2.7-six1.4"]))
+    environments = list(environment.get_environments(conf, ["conda-py2.7-six1.10"]))
     assert len(environments) == 1
 
 
@@ -413,7 +413,7 @@ def test_environment_select_autodetect():
     conf.environment_type = "conda"
     conf.pythons = ["3.4"]
     conf.matrix = {
-        "six": ["1.4"],
+        "six": ["1.10"],
     }
 
     # Check autodetect
