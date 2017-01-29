@@ -12,6 +12,7 @@ import datetime
 import json
 import math
 import os
+import re
 import select
 import signal
 import subprocess
@@ -882,3 +883,28 @@ else:
         shutil.rmtree(long_path(path),
                       ignore_errors=ignore_errors,
                       onerror=onerror)
+
+
+def sanitize_filename(filename):
+    """
+    Replace characters to make a string safe to use in file names.
+
+    This is not a 1-to-1 mapping.
+
+    The implementation needs to match www/asv.js:escape_graph_parameter
+    """
+    if not isinstance(filename, six.text_type):
+        filename = filename.decode(sys.getfilesystemencoding())
+
+    # ntfs & ext3
+    filename = re.sub('[<>:"/\\^|?*\x00-\x1f]', '_', filename)
+
+    # ntfs
+    forbidden = ["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3",
+                 "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1",
+                 "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8",
+                 "LPT9"]
+    if filename.upper() in forbidden:
+        filename = filename + "_"
+
+    return filename

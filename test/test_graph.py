@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+# Licensed under a 3-clause BSD style license - see LICENSE.rst
+
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
+import os
+
 from asv.graph import Graph, RESAMPLED_POINTS, make_summary_graph
 
 
@@ -210,6 +218,11 @@ def test_graph_steps():
 
     for s in multi_g.get_steps():
         assert s == steps
+
+
+def test_graph_filename_sanitization():
+    g = Graph('hello:world', {'a/a': 'b>b', 'c*c': 'd\0\0d'})
+    assert g.path == os.path.join('graphs', 'a_a-b_b', 'c_c-d__d', 'hello_world')
 
 
 def _sgn(x):
