@@ -175,22 +175,41 @@ $(document).ready(function() {
         return filter_graph_data(raw_series, x_axis, flat_selection, params);
     }
 
+    /* Escape special characters in graph item file names.
+       The implementation must match asv.util.sanitize_filename */
+    function sanitize_filename(name) {
+        var bad_re = /[<>:"\/\\^|?*\x00-\x1f]/g;
+        var bad_names = ["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3",
+                         "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1",
+                         "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8",
+                         "LPT9"];
+        name = name.replace(bad_re, "_");
+        if (bad_names.indexOf(name.toUpperCase()) != -1) {
+            name = name + "_";
+        }
+        return name;
+    }
+
     /* Given a specific group of parameters, generate the URL to
-       use to load that graph. */
+       use to load that graph.
+       The implementation must match asv.graph.Graph.get_file_path
+     */
     function graph_to_path(benchmark_name, state) {
         var parts = [];
         $.each(state, function(key, value) {
+            var part;
             if (value === null) {
-                parts.push(key + "-null");
+                part = key + "-null";
             } else if (value) {
-                parts.push(key + "-" + value);
+                part = key + "-" + value;
             } else {
-                parts.push(key);
+                part = key;
             }
+            parts.push(sanitize_filename('' + part));
         });
         parts.sort();
         parts.splice(0, 0, "graphs");
-        parts.push(benchmark_name);
+        parts.push(sanitize_filename(benchmark_name));
         return parts.join('/') + ".json";
     }
 

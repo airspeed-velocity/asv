@@ -117,19 +117,21 @@ class Graph(object):
         """
         Get a file path understood by the JS frontend, corresponding
         on the given parameters and benchmark_name.
+
+        The implementation must match asv.js:graph_to_path
         """
-        # TODO: Make filename safe
         parts = ['graphs']
         l = list(six.iteritems(params))
         l.sort()
         for key, val in l:
             if val is None:
-                parts.append('{0}-null'.format(key))
+                part = '{0}-null'.format(key)
             elif val:
-                parts.append('{0}-{1}'.format(key, val))
+                part = '{0}-{1}'.format(key, val)
             else:
-                parts.append('{0}'.format(key))
-        parts.append(benchmark_name)
+                part = '{0}'.format(key)
+            parts.append(util.sanitize_filename(part))
+        parts.append(util.sanitize_filename(benchmark_name))
         return os.path.join(*parts)
 
     def add_data_point(self, revision, value):
