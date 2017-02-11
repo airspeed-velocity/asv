@@ -10,6 +10,7 @@ from distutils.command.build_ext import build_ext
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 
 import os
+import re
 import subprocess
 import sys
 
@@ -92,15 +93,30 @@ def write_version_file(filename, version, revision):
 __version__ = "{0}"
 __githash__ = "{1}"
 __release__ = {2}
-    '''.format(version, revision, 'dev' in version)
+    '''.format(version, revision, 'dev' not in version)
 
     old_content = None
     if os.path.isfile(filename):
         with open(filename, 'r') as f:
             old_content = f.read()
+
+        if 'dev' in version and not revision.strip():
+            # Dev version and Git revision not available. Probably
+            # running from an sdist, so assume the version file is up
+            # to date.
+            m = re.search(r'__version__ = "([0-9a-z+.-]*)"', old_content)
+            if m:
+                old_version = m.group(1)
+                prefix = version[:version.find('dev')]
+                if old_version.startswith(prefix):
+                    version = old_version
+                    content = old_content
+
     if content != old_content:
         with open(filename, 'w') as f:
             f.write(content)
+
+    return version
 
 
 class BuildFailed(Exception):
@@ -134,7 +150,7 @@ def run_setup(build_binary=False):
         version = '{0}{1}+{2}'.format(
             version, get_git_revision(), git_hash[:8])
 
-    write_version_file(
+    version = write_version_file(
         os.path.join(basedir, 'asv', '_version.py'), version, git_hash)
 
     # Install entry points for making releases with zest.releaser
