@@ -317,7 +317,7 @@ by the ``number`` and ``repeat`` attributes, as explained below.
   and after that ``teardown`` runs.
 
 - ``repeat``: The number of times to repeat the benchmark, with each
-  repetition running the benchmark ``number`` of times.  The minimum
+  repetition running the benchmark ``number`` of times.  The median
   time from all of these repetitions is used as the final result.
   When not provided, defaults to 10. Setup and teardown are run on each repeat.
 
