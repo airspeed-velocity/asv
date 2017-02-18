@@ -431,9 +431,12 @@ class TimeBenchmark(Benchmark):
 
         start_time = time.time()
 
+        max_time = start_time + min(warmup_time + 1.3 * repeat * goal_time,
+                                    self.timeout - 1.3 * goal_time)
+
         def too_slow():
             # too slow, don't take more samples
-            return time.time() > start_time + warmup_time + 2 * repeat * goal_time
+            return time.time() > max_time
 
         if number == 0:
             # Select number & warmup.
