@@ -3,11 +3,11 @@
 # Borrowed from: Olivier Grisel and Kyle Kastner
 # License: BSD 3 clause
 
-$MINICONDA_URL = "http://repo.continuum.io/miniconda/"
+$MINICONDA_URL = "https://repo.continuum.io/miniconda/"
 
 function DownloadMiniconda ($version, $platform_suffix) {
     $webclient = New-Object System.Net.WebClient
-    $filename = "Miniconda-" + $version + "-Windows-" + $platform_suffix + ".exe"
+    $filename = "Miniconda3-" + $version + "-Windows-" + $platform_suffix + ".exe"
 
     $url = $MINICONDA_URL + $filename
 
@@ -39,8 +39,8 @@ function DownloadMiniconda ($version, $platform_suffix) {
    return $filepath
 }
 
-function InstallMiniconda ($python_version, $architecture, $python_home) {
-    Write-Host "Installing miniconda" $python_version "for" $architecture "bit architecture to" $python_home
+function InstallMiniconda ($miniconda_version, $architecture, $python_home) {
+    Write-Host "Installing miniconda" $miniconda_version "for" $architecture "bit architecture to" $python_home
     if (Test-Path $python_home) {
         Write-Host $python_home "already exists, skipping."
         return $false
@@ -50,14 +50,14 @@ function InstallMiniconda ($python_version, $architecture, $python_home) {
     } else {
         $platform_suffix = "x86_64"
     }
-    $filepath = DownloadMiniconda $python_version $platform_suffix
+    $filepath = DownloadMiniconda $miniconda_version $platform_suffix
     Write-Host "Installing" $filepath "to" $python_home
     $args = "/InstallationType=AllUsers /S /AddToPath=1 /RegisterPython=1 /D=" + $python_home
     Write-Host $filepath $args
     Start-Process -FilePath $filepath -ArgumentList $args -Wait -Passthru
     #Start-Sleep -s 15
-    if (Test-Path C:\conda) {
-        Write-Host "Miniconda $python_version ($architecture) installation complete"
+    if (Test-Path $python_home) {
+        Write-Host "Miniconda $miniconda_version ($architecture) installation complete"
     } else {
         Write-Host "Failed to install Python in $python_home"
         Exit 1
