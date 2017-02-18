@@ -85,7 +85,8 @@ def test_find_benchmarks(tmpdir):
     assert times[
         'time_examples.TimeSuite.time_example_benchmark_1']['result'] != [None]
     assert isinstance(times['time_examples.TimeSuite.time_example_benchmark_1']['stats'][0]['std'], float)
-    assert len(times['time_examples.TimeSuite.time_example_benchmark_1']['samples'][0]) == 10
+    # The exact number of samples may vary if the calibration is not fully accurate
+    assert len(times['time_examples.TimeSuite.time_example_benchmark_1']['samples'][0]) in (8, 9, 10)
     # Benchmarks that raise exceptions should have a time of "None"
     assert times[
         'time_secondary.TimeSecondary.time_exception']['result'] == [None]
