@@ -113,7 +113,8 @@ def _color_text(text, color):
 
 _unicode_translations = {
     ord('μ'): 'u',
-    ord('·'): '-'
+    ord('·'): '-',
+    ord('±'): '~'
 }
 
 

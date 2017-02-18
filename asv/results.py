@@ -154,41 +154,25 @@ def get_filename(machine, commit_hash, env_name):
             env_name))
 
 
-def compatible_results(result, benchmark):
+def _compatible_results(result, result_params, params):
     """
     For parameterized benchmarks, obtain values from *result* that
     are compatible with parameters of *benchmark*
     """
-    if not benchmark or not benchmark.get('params'):
-        # Not a parameterized benchmark, or a benchmark that is not
-        # currently there. The javascript side doesn't know how to
-        # visualize benchmarks unless the params are the same as those
-        # of the current benchmark. Single floating point values are
-        # OK, but not parameterized ones.
-        if isinstance(result, dict):
-            return None
-        else:
-            return result
-
     if result is None:
         # All results missing, eg. build failure
-        return result
-
-    if not isinstance(result, dict) or 'params' not in result:
-        # Not a parameterized result -- test probably was once
-        # non-parameterized
         return None
 
     # Pick results for those parameters that also appear in the
     # current benchmark
     old_results = {}
-    for param, value in izip(itertools.product(*result['params']),
-                             result['result']):
+    for param, value in izip(itertools.product(*result_params), result):
         old_results[param] = value
 
     new_results = []
-    for param in itertools.product(*benchmark['params']):
+    for param in itertools.product(*params):
         new_results.append(old_results.get(param))
+
     return new_results
 
 
@@ -228,6 +212,10 @@ class Results(object):
         self._commit_hash = commit_hash
         self._date = date
         self._results = {}
+        self._samples = {}
+        self._number = {}
+        self._stats = {}
+        self._benchmark_params = {}
         self._profiles = {}
         self._python = python
         self._env_name = env_name
@@ -250,10 +238,6 @@ class Results(object):
         return self._params
 
     @property
-    def results(self):
-        return self._results
-
-    @property
     def started_at(self):
         return self._started_at
 
@@ -261,7 +245,104 @@ class Results(object):
     def ended_at(self):
         return self._ended_at
 
-    def add_result(self, benchmark_name, result, started_at, ended_at):
+    @property
+    def result_keys(self):
+        return six.iterkeys(self._results)
+
+    def get_result_value(self, key, params):
+        """
+        Return the value of benchmark result.
+
+        Parameters
+        ----------
+        key : str
+            Benchmark name to return results for
+        params : {list of list, None}
+            Set of benchmark parameters to return values for
+
+        Returns
+        -------
+        value : {float, list of float}
+            Benchmark result value. If the benchmark is parameterized, return 
+            a list of values.
+        """
+        return _compatible_results(self._results[key],
+                                   self._benchmark_params[key],
+                                   params)
+
+    def get_result_stats(self, key, params):
+        """
+        Return the statistical information of a benchmark result.
+
+        Parameters
+        ----------
+        key : str
+            Benchmark name to return results for
+        params : {list of list, None}
+            Set of benchmark parameters to return values for
+
+        Returns
+        -------
+        stats : {None, dict, list of dict}
+            Result statistics. If the benchmark is parameterized,
+            return a list of values.
+        """
+        return _compatible_results(self._stats[key],
+                                   self._benchmark_params[key],
+                                   params)
+
+    def get_result_samples(self, key, params):
+        """
+        Return the raw data points of a benchmark result.
+
+        Parameters
+        ----------
+        key : str
+            Benchmark name to return results for
+        params : {list of list, None}
+            Set of benchmark parameters to return values for
+
+        Returns
+        -------
+        samples : {None, list}
+            Raw result samples. If the benchmark is parameterized,
+            return a list of values.
+        number : int
+            Associated repeat count
+
+        """
+        samples = _compatible_results(self._samples[key],
+                                      self._benchmark_params[key],
+                                      params)
+        number = _compatible_results(self._number[key],
+                                     self._benchmark_params[key],
+                                     params)
+        return samples, number
+
+    def get_result_params(self, key):
+        """
+        Return the benchmark parameters of the given result
+        """
+        return self._benchmark_params[key]
+
+    def remove_result(self, key):
+        """
+        Remove results corresponding to a given benchmark.
+        """
+        del self._results[key]
+        del self._benchmark_params[key]
+        del self._samples[key]
+        del self._number[key]
+        del self._stats[key]
+
+        # Remove profiles (may be missing)
+        self._profiles.pop(key, None)
+
+        # Remove run times (may be missing in old files)
+        self._started_at.pop(key, None)
+        self._ended_at.pop(key, None)
+
+    def add_result(self, benchmark_name, result):
         """
         Add benchmark result.
 
@@ -270,34 +351,21 @@ class Results(object):
         benchmark_name : str
             Name of benchmark
 
-        result : {float, dict}
-            Result of the benchmark. A number, or for parameterized benchmarks
-            a dictionary ``{'result': number, 'params': [param1, ...], ...}``
+        result : dict
+            Result of the benchmark, as returned by `benchmarks.run_benchmark`.
 
-        started_at : datetime
-            Datetime when the benchmark run started
-
-        ended_at : datetime
-            Datetime when the benchmark run ended
         """
-        self._results[benchmark_name] = result
-        self._started_at[benchmark_name] = util.datetime_to_js_timestamp(started_at)
-        self._ended_at[benchmark_name] = util.datetime_to_js_timestamp(ended_at)
+        self._results[benchmark_name] = result['result']
+        self._samples[benchmark_name] = result['samples']
+        self._number[benchmark_name] = result['number']
+        self._stats[benchmark_name] = result['stats']
+        self._benchmark_params[benchmark_name] = result['params']
+        self._started_at[benchmark_name] = util.datetime_to_js_timestamp(result['started_at'])
+        self._ended_at[benchmark_name] = util.datetime_to_js_timestamp(result['ended_at'])
 
-    def add_profile(self, benchmark_name, profile):
-        """
-        Add benchmark profile data.
-
-        Parameters
-        ----------
-        benchmark_name : str
-            Name of benchmark
-
-        profile : bytes
-            `cProfile` data
-        """
-        self._profiles[benchmark_name] = base64.b64encode(
-            zlib.compress(profile))
+        if 'profile' in result and result['profile']:
+            self._profiles[benchmark_name] = base64.b64encode(
+                zlib.compress(result['profile']))
 
     def get_profile(self, benchmark_name):
         """
@@ -323,8 +391,26 @@ class Results(object):
         """
         path = os.path.join(result_dir, self._filename)
 
+        results = {}
+        for key in six.iterkeys(self._samples):
+            # Save omitting default values
+            value = {'result': self._results[key]}
+            if self._samples[key] and any(x is not None for x in self._samples[key]):
+                value['samples'] = self._samples[key]
+            if self._number[key] and any(x is not None for x in self._number[key]):
+                value['number'] = self._number[key]
+            if self._stats[key] and any(x is not None for x in self._stats[key]):
+                value['stats'] = self._stats[key]
+            if self._benchmark_params[key]:
+                value['params'] = self._benchmark_params[key]
+            if list(value.keys()) == ['result']:
+                value = value['result']
+                if isinstance(value, list) and len(value) == 1:
+                    value = value[0]
+            results[key] = value
+
         data = {
-            'results': self._results,
+            'results': results,
             'params': self._params,
             'requirements': self._requirements,
             'commit_hash': self._commit_hash,
@@ -380,7 +466,37 @@ class Results(object):
                 d.get('env_name',
                       environment.get_env_name('', d['python'], d['requirements']))
             )
-            obj._results = d['results']
+
+            obj._results = {}
+            obj._samples = {}
+            obj._number = {}
+            obj._stats = {}
+            obj._benchmark_params = {}
+
+            for key, value in six.iteritems(d['results']):
+                # Backward compatibility
+                if not isinstance(value, dict):
+                    value = {'result': [value], 'samples': None, 'number': None,
+                             'stats': None, 'params': []}
+
+                if not isinstance(value['result'], list):
+                    value['result'] = [value['result']]
+
+                if 'stats' in value and not isinstance(value['stats'], list):
+                    value['stats'] = [value['stats']]
+
+                value.setdefault('samples', None)
+                value.setdefault('number', None)
+                value.setdefault('stats', None)
+                value.setdefault('params', [])
+
+                # Assign results
+                obj._results[key] = value['result']
+                obj._samples[key] = value['samples']
+                obj._number[key] = value['number']
+                obj._stats[key] = value['stats']
+                obj._benchmark_params[key] = value['params']
+
             if 'profiles' in d:
                 obj._profiles = d['profiles']
             obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
@@ -404,7 +520,9 @@ class Results(object):
         Add any existing old results that aren't overridden by the
         current results.
         """
-        for dict_name in ('_results', '_profiles', '_started_at', '_ended_at'):
+        for dict_name in ('_results', '_samples', '_number', '_stats',
+                          '_benchmark_params', '_profiles', '_started_at',
+                          '_ended_at'):
             old_dict = getattr(old, dict_name)
             new_dict = getattr(self, dict_name)
             for key, val in six.iteritems(old_dict):

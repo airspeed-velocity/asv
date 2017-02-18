@@ -249,21 +249,28 @@ Finally, the benchmarks are run::
     [  0.00%] ··· Installing project into py2.7.
     [  0.00%] ·· Benchmarking py2.7
     [ 10.00%] ··· Running benchmarks.MemSuite.mem_list                               2.4k
-    [ 20.00%] ··· Running benchmarks.TimeSuite.time_iterkeys                       9.27μs
-    [ 30.00%] ··· Running benchmarks.TimeSuite.time_keys                          10.74μs
-    [ 40.00%] ··· Running benchmarks.TimeSuite.time_range                         42.20μs
-    [ 50.00%] ··· Running benchmarks.TimeSuite.time_xrange                        32.94μs
+    [ 20.00%] ··· Running benchmarks.TimeSuite.time_iterkeys                  9.27±0.01μs
+    [ 30.00%] ··· Running benchmarks.TimeSuite.time_keys                      10.74±0.1μs
+    [ 40.00%] ··· Running benchmarks.TimeSuite.time_range                    42.20±0.05μs
+    [ 50.00%] ··· Running benchmarks.TimeSuite.time_xrange                   32.94±0.09μs
     [ 50.00%] ·· Building for py3.4
     [ 50.00%] ··· Uninstalling project from py3.4
     [ 50.00%] ··· Installing project into py3.4..
     [ 50.00%] ·· Benchmarking py3.4
     [ 60.00%] ··· Running benchmarks.MemSuite.mem_list                               2.4k
-    [ 70.00%] ··· Running benchmarks.TimeSuite.time_iterkeys                     failed
-    [ 80.00%] ··· Running benchmarks.TimeSuite.time_keys                           7.29μs
-    [ 90.00%] ··· Running benchmarks.TimeSuite.time_range                         30.41μs
-    [100.00%] ··· Running benchmarks.TimeSuite.time_xrange                       failed
+    [ 70.00%] ··· Running benchmarks.TimeSuite.time_iterkeys                       failed
+    [ 80.00%] ··· Running benchmarks.TimeSuite.time_keys                      7.29±0.07μs
+    [ 90.00%] ··· Running benchmarks.TimeSuite.time_range                    30.41±0.04μs
+    [100.00%] ··· Running benchmarks.TimeSuite.time_xrange                         failed
 
 To improve reproducibility, each benchmark is run in its own process.
+
+The results of each benchmark are displayed in the output and also
+recorded on disk.  For timing benchmarks, the median and interquartile
+range of collected measurements are displayed.  Note that the results
+may vary on slow time scales due to CPU frequency scaling, heat
+management, and system load, and this variability is not necessarily
+captured by a single run.
 
 The killer feature of **airspeed velocity** is that it can track the
 benchmark performance of your project over time.  The ``range``

@@ -86,15 +86,11 @@ class Rm(Command):
 
             if single_benchmark is not None:
                 found = False
-                for benchmark in list(six.iterkeys(result.results)):
+                for benchmark in list(result.result_keys):
                     if fnmatchcase(benchmark, single_benchmark):
                         count += 1
                         files_to_remove.add(result)
-                        del result.results[benchmark]
-
-                        # Remove run times (may be missing in old files)
-                        result.started_at.pop(benchmark, None)
-                        result.ended_at.pop(benchmark, None)
+                        result.remove_result(benchmark)
             else:
                 files_to_remove.add(result)
 

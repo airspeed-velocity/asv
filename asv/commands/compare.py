@@ -13,6 +13,7 @@ from ..results import iter_results_for_machine_and_hash
 from ..util import human_value, load_json
 from ..console import color_print
 from .. import util
+from .. import statistics
 
 from . import common_args
 
@@ -25,7 +26,7 @@ def mean(values):
         return sum(values) / float(len(values))
 
 
-def unroll_result(benchmark_name, result):
+def unroll_result(benchmark_name, params, *values):
     """
     Iterate through parameterized result values
 
@@ -39,19 +40,41 @@ def unroll_result(benchmark_name, result):
         Benchmark timing or other scalar value.
 
     """
-    if not isinstance(result, dict):
-        yield benchmark_name, result
-        return
+    num_comb = 1
+    for p in params:
+        num_comb *= len(p)
 
-    for params, result in zip(itertools.product(*result['params']),
-                              result['result']):
-        name = "%s(%s)" % (benchmark_name, ", ".join(params))
-        yield name, result
+    values = list(values)
+    for j in range(len(values)):
+        if values[j] is None:
+            values[j] = [None] * num_comb
+
+    for params, value in zip(itertools.product(*params), zip(*values)):
+        if params == ():
+            name = benchmark_name
+        else:
+            name = "%s(%s)" % (benchmark_name, ", ".join(params))
+        yield (name,) + value
 
 
 def _isna(value):
     # None (failed) or NaN (skipped)
     return value is None or value != value
+
+
+def _is_result_better(a, b, a_stats, b_stats, factor, use_stats=True):
+    """
+    Check if result 'a' is better than 'b' by the given factor,
+    possibly taking confidence intervals into account.
+
+    """
+
+    if use_stats and a_stats and b_stats:
+        # Return False if estimates don't differ
+        if not statistics.is_different(a_stats, b_stats):
+            return False
+
+    return a < b / factor
 
 
 class Compare(Command):
@@ -123,15 +146,20 @@ class Compare(Command):
     @classmethod
     def print_table(cls, conf, hash_1, hash_2, factor, split,
                     resultset_1=None, resultset_2=None, machine=None,
-                    sort_by_ratio=False, only_changed=False):
+                    sort_by_ratio=False, only_changed=False, use_stats=True):
         results_1 = {}
         results_2 = {}
+        stats_1 = {}
+        stats_2 = {}
 
         def results_default_iter(commit_hash):
             for result in iter_results_for_machine_and_hash(
                     conf.results_dir, machine, commit_hash):
-                for key, value in six.iteritems(result.results):
-                    yield key, value
+                for key in result.result_keys:
+                    params = result.get_result_params(key)
+                    result_value = result.get_result_value(key, params)
+                    result_stats = result.get_result_stats(key, params)
+                    yield key, params, result_value, result_stats
 
         if resultset_1 is None:
             resultset_1 = results_default_iter(hash_1)
@@ -139,17 +167,15 @@ class Compare(Command):
         if resultset_2 is None:
             resultset_2 = results_default_iter(hash_2)
 
-        for key, result in resultset_1:
-            for name, value in unroll_result(key, result):
-                if name not in results_1:
-                    results_1[name] = []
-                results_1[name].append(value)
+        for key, params, value, stats in resultset_1:
+            for name, value, stats in unroll_result(key, params, value, stats):
+                results_1[name] = value
+                stats_1[name] = stats
 
-        for key, result in resultset_2:
-            for name, value in unroll_result(key, result):
-                if name not in results_2:
-                    results_2[name] = []
-                results_2[name].append(value)
+        for key, params, value, stats in resultset_2:
+            for name, value, stats in unroll_result(key, params, value, stats):
+                results_2[name] = value
+                stats_2[name] = stats
 
         if len(results_1) == 0:
             raise util.UserError(
@@ -178,14 +204,24 @@ class Compare(Command):
 
         for benchmark in joint_benchmarks:
             if benchmark in results_1:
-                time_1 = mean(results_1[benchmark])
+                time_1 = results_1[benchmark]
             else:
                 time_1 = float("nan")
 
             if benchmark in results_2:
-                time_2 = mean(results_2[benchmark])
+                time_2 = results_2[benchmark]
             else:
                 time_2 = float("nan")
+
+            if benchmark in stats_1 and stats_1[benchmark]:
+                err_1 = statistics.get_err(time_1, stats_1[benchmark])
+            else:
+                err_1 = None
+
+            if benchmark in stats_2 and stats_2[benchmark]:
+                err_2 = statistics.get_err(time_2, stats_2[benchmark])
+            else:
+                err_2 = None
 
             if _isna(time_1) or _isna(time_2):
                 ratio = 'n/a'
@@ -216,11 +252,15 @@ class Compare(Command):
                 # either one was skipped
                 color = 'default'
                 mark = ' '
-            elif time_2 < time_1 / factor:
+            elif _is_result_better(time_2, time_1,
+                                   stats_2.get(benchmark), stats_1.get(benchmark),
+                                   factor, use_stats=use_stats):
                 color = 'green'
                 mark = '-'
                 improved = True
-            elif time_2 > time_1 * factor:
+            elif _is_result_better(time_1, time_2,
+                                   stats_1.get(benchmark), stats_2.get(benchmark),
+                                   factor, use_stats=use_stats):
                 color = 'red'
                 mark = '+'
                 worsened = True
@@ -228,13 +268,18 @@ class Compare(Command):
                 color = 'default'
                 mark = ' '
 
+                # Mark statistically insignificant results
+                if (_is_result_better(time_1, time_2, None, None, factor) or
+                        _is_result_better(time_2, time_1, None, None, factor)):
+                    ratio = "~" + ratio.strip()
+
             if only_changed and mark == ' ':
                 continue
 
-            details = "{0:1s} {1:>9s}  {2:>9s} {3:>9s}  ".format(
+            details = "{0:1s} {1:>15s}  {2:>15s} {3:>8s}  ".format(
                 mark,
-                human_value(time_1, "seconds"),
-                human_value(time_2, "seconds"),
+                human_value(time_1, "seconds", err=err_1),
+                human_value(time_2, "seconds", err=err_2),
                 ratio)
 
             if split:
@@ -262,8 +307,8 @@ class Compare(Command):
                 color_print("")
                 color_print(titles[key])
                 color_print("")
-            color_print("    before     after       ratio")
-            color_print("  [{0:8s}] [{1:8s}]".format(hash_1[:8], hash_2[:8]))
+            color_print("       before           after         ratio")
+            color_print("     [{0:8s}]       [{1:8s}]".format(hash_1[:8], hash_2[:8]))
 
             if sort_by_ratio:
                 bench[key].sort(key=lambda v: v[3], reverse=True)

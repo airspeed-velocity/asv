@@ -34,6 +34,15 @@ class Continuous(Command):
         parser.add_argument(
             'branch', default=None,
             help="""The commit/branch to test. By default, the first configured branch.""")
+        parser.add_argument(
+            "--record-samples", action="store_true",
+            help="""Store raw measurement samples, not only statistics""")
+        parser.add_argument(
+            "--quick", "-q", action="store_true",
+            help="""Do a "quick" run, where each benchmark function is
+            run only once.  This is useful to find basic errors in the
+            benchmark functions faster.  The results are unlikely to
+            be useful, and thus are not saved.""")
         common_args.add_factor(parser)
         common_args.add_show_stderr(parser)
         common_args.add_bench(parser)
@@ -48,12 +57,13 @@ class Continuous(Command):
         return cls.run(
             conf=conf, branch=args.branch, base=args.base, factor=args.factor,
             show_stderr=args.show_stderr, bench=args.bench, machine=args.machine,
-            env_spec=args.env_spec, **kwargs
+            env_spec=args.env_spec, record_samples=args.record_samples,
+            quick=args.quick, **kwargs
         )
 
     @classmethod
     def run(cls, conf, branch=None, base=None, factor=None, show_stderr=False, bench=None,
-            machine=None, env_spec=None, _machine_file=None):
+            machine=None, env_spec=None, record_samples=False, quick=False, _machine_file=None):
         repo = get_repo(conf)
         repo.pull()
 
@@ -72,6 +82,7 @@ class Continuous(Command):
         result = Run.run(
             conf, range_spec=commit_hashes, bench=bench,
             show_stderr=show_stderr, machine=machine, env_spec=env_spec,
+            record_samples=record_samples, quick=quick,
             _returns=run_objs, _machine_file=_machine_file)
         if result:
             return result
@@ -89,7 +100,11 @@ class Continuous(Command):
                     continue
 
                 for name, benchmark in six.iteritems(run_objs['benchmarks']):
-                    yield name, result.results.get(name, float("nan"))
+                    params = benchmark['params']
+
+                    value = result.get_result_value(name, params)
+                    stats = result.get_result_stats(name, params)
+                    yield name, params, value, stats
 
         status = Compare.print_table(conf, parent, head,
                                      resultset_1=results_iter(parent),

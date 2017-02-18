@@ -55,6 +55,7 @@ class TimeWithRepeat(object):
     number = 1
     repeat = 10
     count = 0
+    warmup_time = 0
 
     def setup(self):
         assert self.called is None

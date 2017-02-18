@@ -301,9 +301,14 @@ by the ``number`` and ``repeat`` attributes, as explained below.
 **Attributes**:
 
 - ``goal_time``: ``asv`` will automatically select the number of
-  iterations to run the benchmark so that it takes between
-  ``goal_time / 10`` and ``goal_time`` seconds each time.  If not
-  specified, ``goal_time`` defaults to 2 seconds.
+  iterations to run the benchmark so that it takes at least ``goal_time``
+  seconds each time.  If not specified, ``goal_time`` defaults to 0.1
+  seconds.
+
+- ``warmup_time``: ``asv`` will spend this time (in seconds) in calling
+  the benchmarked function repeatedly, before starting to run the actual
+  benchmark. If not specified, ``warmup_time`` defaults to 0.1 seconds
+  (on PyPy, the default is 1.0 sec).
 
 - ``number``: Manually choose the number of iterations.  If ``number``
   is specified, ``goal_time`` is ignored.
@@ -312,10 +317,9 @@ by the ``number`` and ``repeat`` attributes, as explained below.
   and after that ``teardown`` runs.
 
 - ``repeat``: The number of times to repeat the benchmark, with each
-  repetition running the benchmark ``number`` of times.  The minimum
+  repetition running the benchmark ``number`` of times.  The median
   time from all of these repetitions is used as the final result.
-  When not provided, defaults to ``timeit.default_repeat`` (3).
-  Setup and teardown are run on each repeat.
+  When not provided, defaults to 10. Setup and teardown are run on each repeat.
 
 - ``timer``: The timing function to use, which can be any source of
   monotonically increasing numbers, such as `time.clock`, `time.time`
