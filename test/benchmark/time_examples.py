@@ -84,3 +84,17 @@ class TimeWithRepeatCalibrate(object):
 
     def time_it(self):
         pass
+
+
+class TimeWithBadTimer(object):
+    # Check that calibration of number is robust against bad timers
+    repeat = 1
+    number = 0
+    goal_time = 0.1
+    timeout = 5
+
+    def timer(self):
+        return 0.0
+
+    def time_it(self):
+        pass

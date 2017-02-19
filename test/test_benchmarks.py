@@ -59,7 +59,7 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 3
 
     b = benchmarks.Benchmarks(conf, repo, envs, regex='example')
-    assert len(b) == 24
+    assert len(b) == 25
 
     b = benchmarks.Benchmarks(conf, repo, envs, regex='time_example_benchmark_1')
     assert len(b) == 2
@@ -72,7 +72,7 @@ def test_find_benchmarks(tmpdir):
     assert sorted(b.keys()) == ['custom.time_function', 'custom.track_method']
 
     b = benchmarks.Benchmarks(conf, repo, envs)
-    assert len(b) == 30
+    assert len(b) == 31
 
     start_timestamp = datetime.datetime.utcnow()
 
@@ -104,6 +104,8 @@ def test_find_benchmarks(tmpdir):
     assert 'stderr' in times[
         'time_examples.time_with_warnings']
     assert times['time_examples.time_with_warnings']['errcode'] != 0
+
+    assert times['time_examples.TimeWithBadTimer.time_it']['result'] == [0.0]
 
     assert times['params_examples.track_param']['params'] == [["<class 'benchmark.params_examples.ClassOne'>",
                                                                "<class 'benchmark.params_examples.ClassTwo'>"]]
