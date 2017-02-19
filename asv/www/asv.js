@@ -48,6 +48,26 @@ $(document).ready(function() {
         return 'inf';
     }
 
+    function pad_left(s, c, num) {
+        s = '' + s;
+        while (s.length < num) {
+            s = c + s;
+        }
+        return s;
+    }
+
+    function format_date_yyyymmdd(date) {
+        return (pad_left(date.getFullYear(), '0', 4)
+                + '-' + pad_left(date.getMonth() + 1, '0', 2)
+                + '-' + pad_left(date.getDate(), '0', 2));
+    }
+
+    function format_date_yyyymmdd_hhmm(date) {
+        return (format_date_yyyymmdd(date) + ' '
+                + pad_left(date.getHours(), '0', 2)
+                + ':' + pad_left(date.getMinutes(), '0', 2));
+    }
+
     /* Convert a flat index to permutation to the corresponding value */
     function param_selection_from_flat_idx(params, idx) {
         var selection = [];
@@ -431,6 +451,8 @@ $(document).ready(function() {
 
     this.master_json = master_json; /* Updated after index.json loads */
 
+    this.format_date_yyyymmdd = format_date_yyyymmdd;
+    this.format_date_yyyymmdd_hhmm = format_date_yyyymmdd_hhmm;
     this.pretty_second = pretty_second;
     this.time_units = time_units;
 
