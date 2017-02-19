@@ -447,13 +447,17 @@ class TimeBenchmark(Benchmark):
             number = 1
             while True:
                 self._redo_setup_next = False
+                start = time.time()
                 timing = timer.timeit(number)
-                if timing >= goal_time:
+                wall_time = time.time() - start
+                actual_timing = max(wall_time, timing)
+
+                if actual_timing >= goal_time:
                     if time.time() > start_time + warmup_time:
                         break
                 else:
                     try:
-                        p = min(10.0, max(1.1, goal_time/timing))
+                        p = min(10.0, max(1.1, goal_time/actual_timing))
                     except ZeroDivisionError:
                         p = 10.0
                     number = max(number + 1, int(p * number))
