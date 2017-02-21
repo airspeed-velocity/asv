@@ -206,20 +206,6 @@ $(document).ready(function() {
         $.asv.ui.reflow_value_selector_panels();
     }
 
-    function pad_left(s, c, num) {
-        s = '' + s;
-        while (s.length < num) {
-            s = c + s;
-        }
-        return s;
-    }
-
-    function format_date_yyyymmdd(date) {
-        return (pad_left(date.getFullYear(), '0', 4)
-                + '-' + pad_left(date.getMonth() + 1, '0', 2)
-                + '-' + pad_left(date.getDay() + 1, '0', 2));
-    }
-
     function construct_benchmark_table(data) {
         var index = $.asv.master_json;
 
@@ -394,7 +380,7 @@ $(document).ready(function() {
                     commit_a.attr('href', $.asv.master_json.show_commit_url + commit_2);
                     commit_a.text(commit_2);
                 }
-                span.text(format_date_yyyymmdd(date) + ' ');
+                span.text($.asv.format_date_yyyymmdd(date) + ' ');
                 span.append(commit_a);
                 changed_at_td.append(span);
             }
