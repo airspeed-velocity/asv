@@ -173,7 +173,8 @@ $(document).ready(function() {
             var old_value = regression[2];
 
             var factor = new_value / old_value;
-            var date_fmt = new Date($.asv.master_json.revision_to_date[revisions[0][1]]);
+            var last_revision = revisions[revisions.length - 1];
+            var date_fmt = new Date($.asv.master_json.revision_to_date[last_revision[1]]);
 
             var row = $('<tr/>');
 
@@ -215,7 +216,7 @@ $(document).ready(function() {
 
             var benchmark_link = $('<a/>').attr('href', benchmark_url).text(benchmark_name);
             row.append($('<td/>').append(benchmark_link));
-            row.append($('<td/>').text(date_fmt.toISOString()));
+            row.append($('<td class="date"/>').text($.asv.format_date_yyyymmdd_hhmm(date_fmt)));
 
             var commit_td = $('<td/>');
             $.each(revisions, function(i, revs) {

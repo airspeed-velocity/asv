@@ -181,8 +181,8 @@ def test_web_regressions(browser, basic_html):
         assert cols1[0] == 'params_examples.track_find_test(1)'
         assert cols2[0] == 'params_examples.track_find_test(2)'
 
-        assert re.match(r'^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d+Z$', cols1[1])
-        assert re.match(r'^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d+Z$', cols2[1])
+        assert re.match(r'^\d\d\d\d-\d\d-\d\d \d\d:\d\d$', cols1[1])
+        assert re.match(r'^\d\d\d\d-\d\d-\d\d \d\d:\d\d$', cols2[1])
 
         assert cols1[2:] == [bad_commit_hash[:8], '2.00x', '1.00', '2.00', 'Ignore']
         assert cols2[2:] == [bad_commit_hash[:8], '2.00x', '1.00', '2.00', 'Ignore']
