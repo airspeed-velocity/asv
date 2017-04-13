@@ -197,6 +197,16 @@ The following attributes are applicable to all benchmark types:
 - ``pretty_name``: If given, used to display the benchmark name instead of the
   benchmark function name.
 
+- ``version``: Used to determine when to invalidate old benchmark
+  results.  Benchmark results produced with a different value of the
+  version than the current value will be ignored.  The value can be
+  any Python string (or other object, ``str()`` will be taken).
+
+  Default (if ``version=None`` or not given): hash of the source code
+  of the benchmark function and setup and setup_cache methods. If the
+  source code of any of these changes, old results become invalidated.
+
+
 Parameterized benchmarks
 ------------------------
 

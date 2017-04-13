@@ -132,10 +132,10 @@ class Publish(Command):
             for results in iter_results(conf.results_dir):
                 log.dot()
 
-                for key in results.result_keys:
-                    b = benchmarks.get(key)
+                for key in results.get_result_keys(benchmarks):
+                    b = benchmarks[key]
+                    b_params = b['params']
 
-                    b_params = b['params'] if b else []
                     result = results.get_result_value(key, b_params)
                     if not b_params:
                         result = result[0]

@@ -101,10 +101,11 @@ class Continuous(Command):
 
                 for name, benchmark in six.iteritems(run_objs['benchmarks']):
                     params = benchmark['params']
+                    version = benchmark['version']
 
                     value = result.get_result_value(name, params)
                     stats = result.get_result_stats(name, params)
-                    yield name, params, value, stats
+                    yield name, params, value, stats, version
 
         status = Compare.print_table(conf, parent, head,
                                      resultset_1=results_iter(parent),

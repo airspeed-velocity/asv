@@ -215,7 +215,7 @@ class Run(Command):
                             skipped_benchmarks.update(benchmarks)
                             break
 
-                        for key in result.result_keys:
+                        for key in result.get_result_keys(benchmarks):
                             if key not in benchmarks:
                                 continue
 
@@ -289,6 +289,7 @@ class Run(Command):
                                 d['samples'] = None
                                 d['number'] = None
 
-                            result.add_result(benchmark_name, d)
+                            benchmark_version = benchmarks[benchmark_name]['version']
+                            result.add_result(benchmark_name, d, benchmark_version)
 
                         result.update_save(conf.results_dir)

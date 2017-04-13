@@ -151,15 +151,18 @@ class Compare(Command):
         results_2 = {}
         stats_1 = {}
         stats_2 = {}
+        versions_1 = {}
+        versions_2 = {}
 
         def results_default_iter(commit_hash):
             for result in iter_results_for_machine_and_hash(
                     conf.results_dir, machine, commit_hash):
-                for key in result.result_keys:
+                for key in result.get_all_result_keys():
                     params = result.get_result_params(key)
                     result_value = result.get_result_value(key, params)
                     result_stats = result.get_result_stats(key, params)
-                    yield key, params, result_value, result_stats
+                    result_version = result.benchmark_version.get(key)
+                    yield key, params, result_value, result_stats, result_version
 
         if resultset_1 is None:
             resultset_1 = results_default_iter(hash_1)
@@ -167,15 +170,17 @@ class Compare(Command):
         if resultset_2 is None:
             resultset_2 = results_default_iter(hash_2)
 
-        for key, params, value, stats in resultset_1:
+        for key, params, value, stats, version in resultset_1:
             for name, value, stats in unroll_result(key, params, value, stats):
                 results_1[name] = value
                 stats_1[name] = stats
+                versions_1[name] = version
 
-        for key, params, value, stats in resultset_2:
+        for key, params, value, stats, version in resultset_2:
             for name, value, stats in unroll_result(key, params, value, stats):
                 results_2[name] = value
                 stats_2[name] = stats
+                versions_2[name] = version
 
         if len(results_1) == 0:
             raise util.UserError(
@@ -195,6 +200,7 @@ class Compare(Command):
         if split:
             bench['green'] = []
             bench['red'] = []
+            bench['lightgrey'] = []
             bench['default'] = []
         else:
             bench['all'] = []
@@ -223,6 +229,9 @@ class Compare(Command):
             else:
                 err_2 = None
 
+            version_1 = versions_1.get(benchmark)
+            version_2 = versions_2.get(benchmark)
+
             if _isna(time_1) or _isna(time_2):
                 ratio = 'n/a'
                 ratio_num = 1e9
@@ -234,7 +243,12 @@ class Compare(Command):
                     ratio_num = 1e9
                     ratio = "n/a"
 
-            if time_1 is not None and time_2 is None:
+            if (version_1 is not None and version_2 is not None and
+                    version_1 != version_2):
+                # not comparable
+                color = 'lightgrey'
+                mark = 'x'
+            elif time_1 is not None and time_2 is None:
                 # introduced a failure
                 color = 'red'
                 mark = '!'
@@ -273,7 +287,7 @@ class Compare(Command):
                         _is_result_better(time_2, time_1, None, None, factor)):
                     ratio = "~" + ratio.strip()
 
-            if only_changed and mark == ' ':
+            if only_changed and mark in (' ', 'x'):
                 continue
 
             details = "{0:1s} {1:>15s}  {2:>15s} {3:>8s}  ".format(
@@ -288,7 +302,7 @@ class Compare(Command):
                 bench['all'].append((color, details, benchmark, ratio_num))
 
         if split:
-            keys = ['green', 'default', 'red']
+            keys = ['green', 'default', 'red', 'lightgrey']
         else:
             keys = ['all']
 
@@ -296,6 +310,7 @@ class Compare(Command):
         titles['green'] = "Benchmarks that have improved:"
         titles['default'] = "Benchmarks that have stayed the same:"
         titles['red'] = "Benchmarks that have got worse:"
+        titles['lightgrey'] = "Benchmarks that are not comparable:"
         titles['all'] = "All benchmarks:"
 
         for key in keys:

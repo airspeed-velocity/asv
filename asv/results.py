@@ -221,6 +221,7 @@ class Results(object):
         self._env_name = env_name
         self._started_at = {}
         self._ended_at = {}
+        self._benchmark_version = {}
 
         self._filename = get_filename(
             params['machine'], self._commit_hash, env_name)
@@ -246,8 +247,45 @@ class Results(object):
         return self._ended_at
 
     @property
-    def result_keys(self):
+    def benchmark_version(self):
+        return self._benchmark_version
+
+    def get_all_result_keys(self):
+        """
+        Return all available result keys.
+        """
         return six.iterkeys(self._results)
+
+    def get_result_keys(self, benchmarks):
+        """
+        Return result keys corresponding to benchmarks.
+
+        Parameters
+        ----------
+        benchmarks : Benchmarks
+            Benchmarks to return results for.
+            Used for checking benchmark versions.
+
+        Returns
+        -------
+        keys : set
+            Set of benchmark result keys
+
+        """
+        keys = set()
+        for key in six.iterkeys(self._results):
+            if key not in benchmarks:
+                continue
+
+            version = self._benchmark_version.get(key)
+            bench_version = benchmarks[key].get('version')
+
+            if version is not None and version != bench_version:
+                continue
+
+            keys.add(key)
+
+        return keys
 
     def get_result_value(self, key, params):
         """
@@ -342,7 +380,10 @@ class Results(object):
         self._started_at.pop(key, None)
         self._ended_at.pop(key, None)
 
-    def add_result(self, benchmark_name, result):
+        # Remove version (may be missing)
+        self._benchmark_version.pop(key, None)
+
+    def add_result(self, benchmark_name, result, benchmark_version):
         """
         Add benchmark result.
 
@@ -362,6 +403,7 @@ class Results(object):
         self._benchmark_params[benchmark_name] = result['params']
         self._started_at[benchmark_name] = util.datetime_to_js_timestamp(result['started_at'])
         self._ended_at[benchmark_name] = util.datetime_to_js_timestamp(result['ended_at'])
+        self._benchmark_version[benchmark_name] = benchmark_version
 
         if 'profile' in result and result['profile']:
             self._profiles[benchmark_name] = base64.b64encode(
@@ -419,7 +461,8 @@ class Results(object):
             'python': self._python,
             'profiles': self._profiles,
             'started_at': self._started_at,
-            'ended_at': self._ended_at
+            'ended_at': self._ended_at,
+            'benchmark_version': self._benchmark_version,
         }
 
         util.write_json(path, data, self.api_version)
@@ -503,6 +546,7 @@ class Results(object):
 
             obj._started_at = d.get('started_at', {})
             obj._ended_at = d.get('ended_at', {})
+            obj._benchmark_version = d.get('benchmark_version', {})
         except KeyError as exc:
             raise util.UserError(
                 "Error loading results file '{0}': missing key {1}".format(
@@ -522,7 +566,7 @@ class Results(object):
         """
         for dict_name in ('_results', '_samples', '_number', '_stats',
                           '_benchmark_params', '_profiles', '_started_at',
-                          '_ended_at'):
+                          '_ended_at', '_benchmark_version'):
             old_dict = getattr(old, dict_name)
             new_dict = getattr(self, dict_name)
             for key, val in six.iteritems(old_dict):

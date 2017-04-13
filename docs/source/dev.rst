@@ -83,6 +83,10 @@ A benchmark suite directory has the following layout.  The
     - ``param_names``: Names for parameters for a parameterized
       benchmark. Must be of the same length as the ``params`` list.
 
+    - ``version``: An arbitrary string identifying the benchmark
+      version. Default value is hash of ``code``, but user can
+      override.
+
     Other keys are specific to the kind of benchmark, and correspond
     to :ref:`benchmark-attributes`.
 
@@ -159,6 +163,12 @@ A benchmark suite directory has the following layout.  The
 
       - ``ended_at``: A dictionary from benchmark names to JavaScript
         time stamps indicating the end time of the benchmark run.
+
+      - ``benchmark_version``: A dictionary from benchmark names to benchmark
+        version identifier (an arbitrary string). Results whose version
+        is not equal to the version of the benchmark are ignored.
+        If the value is missing, no version comparisons are done
+        (backward compatibility).
 
 - ``$html_dir/``: The output of ``asv publish``, that turns the raw
   results in ``$results_dir/`` into something viewable in a web
