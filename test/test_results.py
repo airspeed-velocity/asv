@@ -44,7 +44,7 @@ def test_results(tmpdir):
         for key, val in values.items():
             val['started_at'] = timestamp1
             val['ended_at'] = timestamp2
-            r.add_result(key, val)
+            r.add_result(key, val, "some version")
 
         # Save / add_existing_results roundtrip
         r.save(resultsdir)
@@ -66,8 +66,8 @@ def test_results(tmpdir):
             assert rr.ended_at == r._ended_at
 
         # Check the get_* methods
-        assert sorted(r2.result_keys) == sorted(values.keys())
-        for bench in r2.result_keys:
+        assert sorted(r2.get_all_result_keys()) == sorted(values.keys())
+        for bench in r2.get_all_result_keys():
             # Get with same parameters as stored
             params = r2.get_result_params(bench)
             assert params == values[bench]['params']
@@ -136,7 +136,7 @@ def test_json_timestamp(tmpdir):
         'started_at': stamp1,
         'ended_at': stamp2
     }
-    r.add_result('some_benchmark', value)
+    r.add_result('some_benchmark', value, "some version")
     r.save(tmpdir)
 
     r = util.load_json(join(tmpdir, 'mach', 'aaaa-env.json'))

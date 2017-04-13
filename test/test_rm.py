@@ -31,7 +31,7 @@ def test_rm(tmpdir):
 
     results_a = list(results.iter_results(tmpdir))
     for result in results_a:
-        for key in result.result_keys:
+        for key in result.get_all_result_keys():
             assert not key.startswith('time_quantity')
         for key in six.iterkeys(result.started_at):
             assert not key.startswith('time_quantity')
