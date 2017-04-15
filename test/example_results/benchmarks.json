@@ -359,5 +359,35 @@
         "type": "time", 
         "unit": "unit"
     },
+    "time_with_version_match": {
+        "code": "foo\n", 
+        "name": "time_with_version", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit",
+        "version": "1"
+    },
+    "time_with_version_mismatch_bench": {
+        "code": "foo\n", 
+        "name": "time_with_version_mismatch_bench", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit",
+        "version": "2"
+    },
+    "time_with_version_mismatch_other": {
+        "code": "foo\n", 
+        "name": "time_with_version_mismatch_other", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit",
+        "version": "1"
+    },
     "version": 1
 }
