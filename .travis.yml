@@ -68,9 +68,7 @@ install:
         $TRAVIS_PIP install virtualenv;
       fi
     fi
-    if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install mercurial ; fi;
-    if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install python-hglib ; fi;
-    $TRAVIS_PIP install selenium six pytest feedparser;
+    $TRAVIS_PIP install selenium six pytest feedparser python-hglib;
     if [[ $COVERAGE != '' ]]; then $TRAVIS_PIP install pytest-cov coveralls; fi;
 
 script:
