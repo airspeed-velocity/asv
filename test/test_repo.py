@@ -155,7 +155,7 @@ def test_repo_hg(tmpdir):
     conf = config.Config()
 
     dvcs = tools.generate_test_repo(tmpdir, list(range(10)), dvcs_type='hg', 
-                                    extra_branches=[('default~4', 'some-branch',[11, 12, 13])])
+                                    extra_branches=[('default~4', 'somebranch',[11, 12, 13])])
 
     mirror_dir = join(tmpdir, "repo")
 
@@ -166,10 +166,10 @@ def test_repo_hg(tmpdir):
                            master="default", branch="tag5",
                            is_remote=is_remote)
 
-        conf.branches = ['default', 'some-branch']
+        conf.branches = ['default', 'somebranch']
         branch_commits = {
             'default': [dvcs.get_hash('default'), dvcs.get_hash('default~6')],
-            'some-branch': [dvcs.get_hash('some-branch'), dvcs.get_hash('some-branch~6')]
+            'somebranch': [dvcs.get_hash('somebranch'), dvcs.get_hash('somebranch~6')]
         }
         _test_branches(conf, branch_commits)
 

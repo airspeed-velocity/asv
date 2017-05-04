@@ -149,6 +149,8 @@ username = Robotic Swallow <robot@asv>
 
 
 class Hg(object):
+    encoding = 'utf-8'
+
     def __init__(self, path):
         self._fake_date = datetime.datetime.now()
         self.path = abspath(path)
@@ -157,7 +159,8 @@ class Hg(object):
         hglib.init(self.path)
         with io.open(join(self.path, '.hg', 'hgrc'), 'w', encoding="utf-8") as fd:
             fd.write(_hg_config)
-        self._repo = hglib.open(self.path)
+        self._repo = hglib.open(self.path.encode(sys.getfilesystemencoding()),
+                                encoding=self.encoding)
 
     def commit(self, message, date=None):
         if date is None:
@@ -165,46 +168,49 @@ class Hg(object):
             date = self._fake_date
         date = "{0} 0".format(util.datetime_to_timestamp(date))
 
-        self._repo.commit(message, date=date)
+        self._repo.commit(message.encode(self.encoding),
+                          date=date.encode(self.encoding))
 
     def tag(self, number):
         self._fake_date += datetime.timedelta(seconds=1)
         date = "{0} 0".format(util.datetime_to_timestamp(self._fake_date))
 
         self._repo.tag(
-            ['tag{0}'.format(number)], message="Tag {0}".format(number),
-            date=date)
+            ['tag{0}'.format(number).encode(self.encoding)],
+            message="Tag {0}".format(number).encode(self.encoding),
+            date=date.encode(self.encoding))
 
     def add(self, filename):
-        self._repo.add([filename])
+        self._repo.add([filename.encode(sys.getfilesystemencoding())])
 
     def checkout(self, branch_name, start_commit=None):
         if start_commit is not None:
-            self._repo.update(start_commit)
-            self._repo.branch(branch_name)
+            self._repo.update(start_commit.encode(self.encoding))
+            self._repo.branch(branch_name.encode(self.encoding))
         else:
-            self._repo.update(branch_name)
+            self._repo.update(branch_name.encode(self.encoding))
 
     def merge(self, branch_name, commit_message=None):
-        self._repo.merge(branch_name, tool="internal:other")
+        self._repo.merge(branch_name.encode(self.encoding),
+                         tool=b"internal:other")
         if commit_message is None:
             commit_message = "Merge {0}".format(branch_name)
         self.commit(commit_message)
 
     def get_hash(self, name):
-        log = self._repo.log(name, limit=1)
+        log = self._repo.log(name.encode(self.encoding), limit=1)
         if log:
-            return log[0][1]
+            return log[0][1].decode(self.encoding)
         return None
 
     def get_branch_hashes(self, branch=None):
         if branch is None:
             branch = "default"
-        log = self._repo.log('sort(ancestors({0}), -rev)'.format(branch))
-        return [entry[1] for entry in log]
+        log = self._repo.log('sort(ancestors({0}), -rev)'.format(branch).encode(self.encoding))
+        return [entry[1].decode(self.encoding) for entry in log]
 
     def get_commit_message(self, commit_hash):
-        return self._repo.log(commit_hash)[0].desc
+        return self._repo.log(commit_hash.encode(self.encoding))[0].desc.decode(self.encoding)
 
 
 def copy_template(src, dst, dvcs, values):
