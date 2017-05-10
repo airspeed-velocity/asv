@@ -11,9 +11,6 @@ class ClassLevelSetup:
     def setup_cache(self):
         return [0] * 500
 
-    def teardown_cache(self):
-        pass
-
     def track_example(self, big_list):
         return len(big_list)
 
