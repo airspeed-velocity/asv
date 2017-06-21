@@ -88,6 +88,12 @@ class Publish(Command):
             os.path.dirname(os.path.abspath(__file__)), '..', 'www')
         shutil.copytree(template_dir, conf.html_dir)
 
+        # Ensure html_dir is writable even if template_dir is on a read-only FS
+        os.chmod(conf.html_dir, 0o755)
+        for (pre, ds, fs) in os.walk(conf.html_dir):
+            for x in fs + ds:
+                os.chmod(os.path.join(pre, x), 0o755)
+
         log.step()
         log.info("Loading machine info")
         with log.indent():
