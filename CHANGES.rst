@@ -13,6 +13,18 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+
+0.2.1 (2017-06-22)
+------------------
+
+Bug Fixes
+^^^^^^^^^
+
+- Use process groups on Windows (#489)
+- Sanitize html filenames (#498)
+- Fix incorrect date formatting + default sort order in web ui (#504)
+
+
 0.2 (2016-10-22)
 ----------------
 
