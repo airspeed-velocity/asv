@@ -152,6 +152,12 @@ class Virtualenv(environment.Environment):
         else:
             pip_args = ['install', '-v', 'wheel', 'pip>=8']
 
+        if 'COV_CORE_SOURCE' in os.environ:
+            # To measure coverage of ASV parts run in a subprocess from
+            # a temporary virtual environment an interpreter hook needs
+            # to be installed for that environment.
+            pip_args.append('pytest-cov')
+
         if not WIN:
             self.run_executable('pip', pip_args)
         else:

@@ -10,15 +10,15 @@ environment:
 
   matrix:
 
+      - PYTHON_VERSION: "3.5"
+        platform: x64
+        PYTHON_ARCH: "64"
       - PYTHON_VERSION: "2.7"
         platform: x64
         PYTHON_ARCH: "64"
       - PYTHON_VERSION: "2.7"
         platform: x86
         PYTHON_ARCH: "32"
-      - PYTHON_VERSION: "3.4"
-        platform: x64
-        PYTHON_ARCH: "64"
 
 install:
     # Install miniconda using a powershell script.
@@ -26,7 +26,7 @@ install:
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 
     # Install the build and runtime dependencies of the project.
-    - "conda update --yes conda"
+    - "conda update -q --yes conda"
     # Create a conda environment
     - "conda create -q --yes -n test python=%PYTHON_VERSION%"
     - "activate test"
@@ -41,4 +41,4 @@ install:
 build: false
 
 test_script:
-  - "%CMD_IN_ENV% python setup.py test -a --tb=native"
+  - "%CMD_IN_ENV% python setup.py test -a --tb=native -a --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp"

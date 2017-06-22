@@ -27,6 +27,7 @@ class Conda(environment.Environment):
     method to install from an arbitrary ``setup.py``).
     """
     tool_name = "conda"
+    _matches_cache = {}
 
     def __init__(self, conf, python, requirements):
         """
@@ -46,7 +47,14 @@ class Conda(environment.Environment):
         super(Conda, self).__init__(conf, python, requirements)
 
     @classmethod
-    def matches(self, python):
+    def matches(cls, python):
+        # Calling conda can take a long time, so remember the result
+        if python not in cls._matches_cache:
+            cls._matches_cache[python] = cls._matches(python)
+        return cls._matches_cache[python]
+
+    @classmethod
+    def _matches(cls, python):
         if not re.match(r'^[0-9].*$', python):
             # The python name should be a version number
             return False

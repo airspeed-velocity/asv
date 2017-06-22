@@ -48,6 +48,26 @@ $(document).ready(function() {
         return 'inf';
     }
 
+    function pad_left(s, c, num) {
+        s = '' + s;
+        while (s.length < num) {
+            s = c + s;
+        }
+        return s;
+    }
+
+    function format_date_yyyymmdd(date) {
+        return (pad_left(date.getFullYear(), '0', 4)
+                + '-' + pad_left(date.getMonth() + 1, '0', 2)
+                + '-' + pad_left(date.getDate(), '0', 2));
+    }
+
+    function format_date_yyyymmdd_hhmm(date) {
+        return (format_date_yyyymmdd(date) + ' '
+                + pad_left(date.getHours(), '0', 2)
+                + ':' + pad_left(date.getMinutes(), '0', 2));
+    }
+
     /* Convert a flat index to permutation to the corresponding value */
     function param_selection_from_flat_idx(params, idx) {
         var selection = [];
@@ -175,22 +195,41 @@ $(document).ready(function() {
         return filter_graph_data(raw_series, x_axis, flat_selection, params);
     }
 
+    /* Escape special characters in graph item file names.
+       The implementation must match asv.util.sanitize_filename */
+    function sanitize_filename(name) {
+        var bad_re = /[<>:"\/\\^|?*\x00-\x1f]/g;
+        var bad_names = ["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3",
+                         "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1",
+                         "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8",
+                         "LPT9"];
+        name = name.replace(bad_re, "_");
+        if (bad_names.indexOf(name.toUpperCase()) != -1) {
+            name = name + "_";
+        }
+        return name;
+    }
+
     /* Given a specific group of parameters, generate the URL to
-       use to load that graph. */
+       use to load that graph.
+       The implementation must match asv.graph.Graph.get_file_path
+     */
     function graph_to_path(benchmark_name, state) {
         var parts = [];
         $.each(state, function(key, value) {
+            var part;
             if (value === null) {
-                parts.push(key + "-null");
+                part = key + "-null";
             } else if (value) {
-                parts.push(key + "-" + value);
+                part = key + "-" + value;
             } else {
-                parts.push(key);
+                part = key;
             }
+            parts.push(sanitize_filename('' + part));
         });
         parts.sort();
         parts.splice(0, 0, "graphs");
-        parts.push(benchmark_name);
+        parts.push(sanitize_filename(benchmark_name));
         return parts.join('/') + ".json";
     }
 
@@ -412,6 +451,8 @@ $(document).ready(function() {
 
     this.master_json = master_json; /* Updated after index.json loads */
 
+    this.format_date_yyyymmdd = format_date_yyyymmdd;
+    this.format_date_yyyymmdd_hhmm = format_date_yyyymmdd_hhmm;
     this.pretty_second = pretty_second;
     this.time_units = time_units;
 

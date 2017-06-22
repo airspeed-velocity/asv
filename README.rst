@@ -9,7 +9,7 @@ lifetime using a given suite of benchmarks.  The results are displayed
 in an interactive web frontend that requires only a basic static
 webserver to host.
 
-See an `example airspeed velocity site <http://mdboom.github.io/astropy-benchmark/>`__.
+See an `example airspeed velocity site <https://pv.github.io/numpy-bench/>`__.
 
 See the `full documentation <http://spacetelescope.github.io/asv>`__
 for more information.

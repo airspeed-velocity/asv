@@ -12,6 +12,7 @@ import datetime
 import json
 import math
 import os
+import re
 import select
 import signal
 import subprocess
@@ -341,26 +342,23 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     log.debug("Running '{0}'".format(' '.join(args)))
 
-    posix = getattr(os, 'setpgid', None)
-    if posix:
-        # Run the subprocess in a separate process group, so that we
-        # can kill it and all child processes it spawns e.g. on
-        # timeouts. Note that subprocess.Popen will wait until exec()
-        # before returning in parent process, so there is no race
-        # condition in setting the process group vs. calls to os.killpg
-        preexec_fn = lambda: os.setpgid(0, 0)
+    kwargs = dict(shell=shell, env=env, cwd=cwd,
+                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if WIN:
+        kwargs['close_fds'] = False
+        kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
     else:
-        preexec_fn = None
+        kwargs['close_fds'] = True
+        posix = getattr(os, 'setpgid', None)
+        if posix:
+            # Run the subprocess in a separate process group, so that we
+            # can kill it and all child processes it spawns e.g. on
+            # timeouts. Note that subprocess.Popen will wait until exec()
+            # before returning in parent process, so there is no race
+            # condition in setting the process group vs. calls to os.killpg
+            kwargs['preexec_fn'] = lambda: os.setpgid(0, 0)
 
-    proc = subprocess.Popen(
-        args,
-        close_fds=(not WIN),
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        shell=shell,
-        preexec_fn=preexec_fn,
-        cwd=cwd)
+    proc = subprocess.Popen(args, **kwargs)
 
     last_dot_time = time.time()
     stdout_chunks = []
@@ -392,7 +390,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                 time.sleep(0.1)
                 if time.time() - start_time[0] > timeout:
                     was_timeout[0] = True
-                    proc.terminate()
+                    proc.send_signal(signal.CTRL_BREAK_EVENT)
 
         watcher = threading.Thread(target=watcher_run)
         watcher.start()
@@ -843,7 +841,7 @@ def datetime_to_timestamp(dt):
 
 def datetime_to_js_timestamp(dt):
     """
-    Convert a Python datetime object to a Javascript timestamp.
+    Convert a Python datetime object to a JavaScript timestamp.
     """
     return 1000 * datetime_to_timestamp(dt)
 
@@ -885,3 +883,28 @@ else:
         shutil.rmtree(long_path(path),
                       ignore_errors=ignore_errors,
                       onerror=onerror)
+
+
+def sanitize_filename(filename):
+    """
+    Replace characters to make a string safe to use in file names.
+
+    This is not a 1-to-1 mapping.
+
+    The implementation needs to match www/asv.js:escape_graph_parameter
+    """
+    if not isinstance(filename, six.text_type):
+        filename = filename.decode(sys.getfilesystemencoding())
+
+    # ntfs & ext3
+    filename = re.sub('[<>:"/\\^|?*\x00-\x1f]', '_', filename)
+
+    # ntfs
+    forbidden = ["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3",
+                 "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1",
+                 "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8",
+                 "LPT9"]
+    if filename.upper() in forbidden:
+        filename = filename + "_"
+
+    return filename

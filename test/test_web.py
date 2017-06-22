@@ -88,8 +88,12 @@ def basic_html(request):
 
         # Swap CPU info and obtain some results
         info = util.load_json(machine_file, api_version=1)
-        info['orangutan']['cpu'] = 'Not really fast'
-        info['orangutan']['ram'] = 'Not much ram'
+
+        # Put in parameter values that need quoting in file names
+        info['orangutan']['cpu'] = 'Not /really/ <fast>'
+        info['orangutan']['ram'] = '?'
+        info['orangutan']['NUL'] = ''
+
         util.write_json(machine_file, info, api_version=1)
 
         tools.run_asv_with_conf(conf, 'run', 'master~10..', '--steps=3',
@@ -177,8 +181,8 @@ def test_web_regressions(browser, basic_html):
         assert cols1[0] == 'params_examples.track_find_test(1)'
         assert cols2[0] == 'params_examples.track_find_test(2)'
 
-        assert re.match(r'^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d+Z$', cols1[1])
-        assert re.match(r'^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d+Z$', cols2[1])
+        assert re.match(r'^\d\d\d\d-\d\d-\d\d \d\d:\d\d$', cols1[1])
+        assert re.match(r'^\d\d\d\d-\d\d-\d\d \d\d:\d\d$', cols2[1])
 
         assert cols1[2:] == [bad_commit_hash[:8], '2.00x', '1.00', '2.00', 'Ignore']
         assert cols2[2:] == [bad_commit_hash[:8], '2.00x', '1.00', '2.00', 'Ignore']
@@ -268,7 +272,8 @@ def test_web_summarylist(browser, basic_html):
         # Check link
         base_href, qs = splitquery(base_link.get_attribute('href'))
         base_url, tag = splittag(base_href)
-        assert parse_qs(qs) == {'ram': ['128GB'], 'cpu': ['Blazingly fast']}
+        assert parse_qs(qs) == {'ram': ['128GB'], 'cpu': ['Blazingly fast'],
+                                'NUL': ['[none]']}
         assert tag == 'params_examples.track_find_test'
 
         # Change table sort (sorting is async, so needs waits)
@@ -279,7 +284,7 @@ def test_web_summarylist(browser, basic_html):
                                               'params_examples.track_find_test'))
 
         # Try to click cpu selector link in the panel
-        cpu_select = browser.find_element_by_link_text('Not really fast')
+        cpu_select = browser.find_element_by_link_text('Not /really/ <fast>')
         cpu_select.click()
 
         # For the other CPU, there is no recent change recorded, only

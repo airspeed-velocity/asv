@@ -1,17 +1,12 @@
 0.2.1 (unreleased)
 ------------------
 
-New Features
-^^^^^^^^^^^^
-
-API Changes
-^^^^^^^^^^^
-
 Bug Fixes
 ^^^^^^^^^
 
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- Use process groups on Windows (#489)
+- Sanitize html filenames (#498)
+- Fix incorrect date formatting + default sort order in web ui (#504)
 
 
 0.2 (2016-10-22)

@@ -10,6 +10,7 @@ from distutils.command.build_ext import build_ext
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 
 import os
+import re
 import subprocess
 import sys
 
@@ -41,7 +42,7 @@ class PyTest(TestCommand):
         if self.pytest_args:
             test_args += self.pytest_args.split()
         if self.coverage:
-            test_args += ['--cov', 'asv']
+            test_args += ['--cov', os.path.abspath('asv')]
         errno = pytest.main(test_args)
         sys.exit(errno)
 
@@ -92,15 +93,30 @@ def write_version_file(filename, version, revision):
 __version__ = "{0}"
 __githash__ = "{1}"
 __release__ = {2}
-    '''.format(version, revision, 'dev' in version)
+    '''.format(version, revision, 'dev' not in version)
 
     old_content = None
     if os.path.isfile(filename):
         with open(filename, 'r') as f:
             old_content = f.read()
+
+        if 'dev' in version and not revision.strip():
+            # Dev version and Git revision not available. Probably
+            # running from an sdist, so assume the version file is up
+            # to date.
+            m = re.search(r'__version__ = "([0-9a-z+.-]*)"', old_content)
+            if m:
+                old_version = m.group(1)
+                prefix = version[:version.find('dev')]
+                if old_version.startswith(prefix):
+                    version = old_version
+                    content = old_content
+
     if content != old_content:
         with open(filename, 'w') as f:
             f.write(content)
+
+    return version
 
 
 class BuildFailed(Exception):
@@ -134,7 +150,7 @@ def run_setup(build_binary=False):
         version = '{0}{1}+{2}'.format(
             version, get_git_revision(), git_hash[:8])
 
-    write_version_file(
+    version = write_version_file(
         os.path.join(basedir, 'asv', '_version.py'), version, git_hash)
 
     # Install entry points for making releases with zest.releaser
@@ -151,6 +167,9 @@ def run_setup(build_binary=False):
         ext_modules = [Extension("asv._rangemedian", ["asv/_rangemedian.cpp"])]
     else:
         ext_modules = []
+
+    with open('README.rst', 'r') as f:
+        long_description = f.read()
 
     setup(
         name="asv",
@@ -190,12 +209,21 @@ def run_setup(build_binary=False):
         # py.test testing
         tests_require=['pytest'],
         cmdclass={'test': PyTest, 'build_ext': optional_build_ext},
-
         author="Michael Droettboom",
         author_email="mdroe@stsci.edu",
         description="Airspeed Velocity: A simple Python history benchmarking tool",
         license="BSD",
-        url="http://github.com/spacetelescope/asv"
+        url="http://github.com/spacetelescope/asv",
+        long_description=long_description,
+        classifiers=[
+            'Environment :: Console',
+            'Environment :: Web Environment',
+            'Intended Audience :: Developers',
+            'License :: OSI Approved :: BSD License',
+            'Programming Language :: Python :: 2',
+            'Programming Language :: Python :: 3',
+            'Topic :: Software Development :: Testing',
+        ]
     )
 
 

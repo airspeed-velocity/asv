@@ -106,7 +106,7 @@ def test_run_publish(capfd, basic_conf):
     # Check parameterized test json data format
     filename = glob.glob(join(tmpdir, 'html', 'graphs', 'arch-x86_64', 'branch-master',
                               'colorama-0.3.7',  'cpu-Blazingly fast', 'machine-orangutan',
-                              'os-GNU', 'Linux', 'python-*', 'ram-128GB',
+                              'os-GNU_Linux', 'python-*', 'ram-128GB',
                               'six', 'params_examples.time_skip.json'))[0]
     with open(filename, 'r') as fp:
         data = json.load(fp)

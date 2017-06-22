@@ -31,3 +31,7 @@
 #regressions-body .feed-div {
     float: right;
 }
+
+#regressions-body table tbody td.date {
+    white-space: nowrap;
+}
