@@ -18,6 +18,7 @@ import sys
 from os.path import abspath, join, dirname, relpath, isdir
 from contextlib import contextmanager
 from distutils.spawn import find_executable
+from hashlib import sha256
 from six.moves import SimpleHTTPServer
 
 import pytest
@@ -368,6 +369,8 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
 
     timestamp = datetime.datetime.utcnow()
 
+    benchmark_version = sha256(os.urandom(16)).hexdigest()
+
     params = None
     for commit, value in values.items():
         if isinstance(value, dict):
@@ -381,9 +384,9 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
             'ended_at': timestamp,
             'stats': None,
             'samples': None,
-            'number': None
+            'number': None,
         }
-        result.add_result("time_func", value)
+        result.add_result("time_func", value, benchmark_version)
         result.save(result_dir)
 
     util.write_json(join(result_dir, "benchmarks.json"), {
@@ -391,6 +394,7 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
             "name": "time_func",
             "params": params or [],
             "param_names": params or [],
+            "version": benchmark_version,
         }
     }, api_version=1)
     return conf

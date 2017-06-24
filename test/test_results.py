@@ -34,17 +34,21 @@ def test_results(tmpdir):
 
         values = {
             'suite1.benchmark1': {'result': [float(i * 0.001)], 'stats': [{'foo': 1}],
-                                  'samples': [[1,2]], 'number': [6], 'params': [['a']]},
+                                  'samples': [[1,2]], 'number': [6], 'params': [['a']],
+                                  'version': "1"},
             'suite1.benchmark2': {'result': [float(i * i * 0.001)], 'stats': [{'foo': 2}],
-                                  'samples': [[3,4]], 'number': [7], 'params': []},
+                                  'samples': [[3,4]], 'number': [7], 'params': [],
+                                  'version': "1"},
             'suite2.benchmark1': {'result': [float((i + 1) ** -1)], 'stats': [{'foo': 3}],
-                                  'samples': [[5,6]], 'number': [8], 'params': [['c']]}
+                                  'samples': [[5,6]], 'number': [8], 'params': [['c']],
+                                  'version': None}
         }
 
         for key, val in values.items():
+            val = dict(val)
             val['started_at'] = timestamp1
             val['ended_at'] = timestamp2
-            r.add_result(key, val)
+            r.add_result(key, val, val.pop("version"))
 
         # Save / add_existing_results roundtrip
         r.save(resultsdir)
@@ -64,10 +68,11 @@ def test_results(tmpdir):
             assert rr._samples == r._samples
             assert rr.started_at == r._started_at
             assert rr.ended_at == r._ended_at
+            assert rr.benchmark_version == r._benchmark_version
 
         # Check the get_* methods
-        assert sorted(r2.result_keys) == sorted(values.keys())
-        for bench in r2.result_keys:
+        assert sorted(r2.get_all_result_keys()) == sorted(values.keys())
+        for bench in r2.get_all_result_keys():
             # Get with same parameters as stored
             params = r2.get_result_params(bench)
             assert params == values[bench]['params']
@@ -81,6 +86,15 @@ def test_results(tmpdir):
             assert r2.get_result_value(bench, bad_params) == [None, None]
             assert r2.get_result_stats(bench, bad_params) == [None, None]
             assert r2.get_result_samples(bench, bad_params) == ([None, None], [None, None])
+
+        # Check get_result_keys
+        mock_benchmarks = {
+            'suite1.benchmark1': {'version': '1'},
+            'suite1.benchmark2': {'version': '2'},
+            'suite2.benchmark1': {'version': '2'},
+        }
+        assert sorted(r2.get_result_keys(mock_benchmarks)) == ['suite1.benchmark1',
+                                                               'suite2.benchmark1']
 
 
 def test_get_result_hash_from_prefix(tmpdir):
@@ -136,7 +150,7 @@ def test_json_timestamp(tmpdir):
         'started_at': stamp1,
         'ended_at': stamp2
     }
-    r.add_result('some_benchmark', value)
+    r.add_result('some_benchmark', value, "some version")
     r.save(tmpdir)
 
     r = util.load_json(join(tmpdir, 'mach', 'aaaa-env.json'))

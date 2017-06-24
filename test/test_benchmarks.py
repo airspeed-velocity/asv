@@ -13,6 +13,8 @@ import datetime
 import pstats
 import pytest
 import six
+import textwrap
+from hashlib import sha256
 
 from asv import benchmarks
 from asv import config
@@ -72,7 +74,7 @@ def test_find_benchmarks(tmpdir):
     assert sorted(b.keys()) == ['custom.time_function', 'custom.track_method']
 
     b = benchmarks.Benchmarks(conf, repo, envs)
-    assert len(b) == 31
+    assert len(b) == 33
 
     start_timestamp = datetime.datetime.utcnow()
 
@@ -290,3 +292,68 @@ def test_quick(tmpdir):
     # is tested above in test_find_benchmarks
     expected = ["<1>"]
     assert times['time_examples.TimeWithRepeat.time_it']['stderr'].split() == expected
+
+
+def test_code_extraction(tmpdir):
+    tmpdir = six.text_type(tmpdir)
+    os.chdir(tmpdir)
+
+    shutil.copytree(BENCHMARK_DIR, 'benchmark')
+
+    d = {}
+    d.update(ASV_CONF_JSON)
+    d['env_dir'] = "env"
+    d['benchmark_dir'] = 'benchmark'
+    d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
+    conf = config.Config.from_json(d)
+
+    repo = get_repo(conf)
+
+    envs = list(environment.get_environments(conf, None))
+
+    b = benchmarks.Benchmarks(conf, repo, envs, regex=r'^code_extraction\.')
+
+    expected_code = textwrap.dedent("""
+    def track_test():
+        # module-level 難
+        return 0
+
+    def setup():
+        # module-level
+        pass
+
+    def setup_cache():
+        # module-level
+        pass
+    """).strip()
+
+    bench = b['code_extraction.track_test']
+    assert bench['version'] == sha256(bench['code'].encode('utf-8')).hexdigest()
+    assert bench['code'] == expected_code
+
+    expected_code = textwrap.dedent("""
+    class MyClass:
+        def track_test(self):
+            # class-level 難
+            return 0
+
+    def setup():
+        # module-level
+        pass
+
+    class MyClass:
+        def setup(self):
+            # class-level
+            pass
+
+        def setup_cache(self):
+            # class-level
+            pass
+    """).strip()
+
+    bench = b['code_extraction.MyClass.track_test']
+    assert bench['version'] == sha256(bench['code'].encode('utf-8')).hexdigest()
+
+    if sys.version_info[:2] != (3, 2):
+        # Python 3.2 doesn't have __qualname__
+        assert bench['code'] == expected_code

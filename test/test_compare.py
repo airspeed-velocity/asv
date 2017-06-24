@@ -45,6 +45,9 @@ All benchmarks:
 +           372μs           11.5ms    30.81  time_units.time_unit_parse
 -          69.1μs           18.3μs     0.27  time_units.time_unit_to
            11.9μs           13.1μs     1.10  time_units.time_very_simple_unit_parse
++           1.00s            3.00s     3.00  time_with_version_match
++           1.00s            3.00s     3.00  time_with_version_mismatch_bench
+x           1.00s            3.00s     3.00  time_with_version_mismatch_other
 """
 
 REFERENCE_SPLIT = """
@@ -82,6 +85,14 @@ Benchmarks that have got worse:
 +          1.31ms           7.75ms     5.91  time_quantity.time_quantity_ufunc_sin
 +           125μs           3.81ms    30.42  time_units.time_simple_unit_parse
 +           372μs           11.5ms    30.81  time_units.time_unit_parse
++           1.00s            3.00s     3.00  time_with_version_match
++           1.00s            3.00s     3.00  time_with_version_mismatch_bench
+
+Benchmarks that are not comparable:
+
+       before           after         ratio
+     [22b920c6]       [fcf8c079]
+x           1.00s            3.00s     3.00  time_with_version_mismatch_other
 """
 
 REFERENCE_ONLY_CHANGED = """
@@ -96,6 +107,8 @@ REFERENCE_ONLY_CHANGED = """
 +           125μs           3.81ms    30.42  time_units.time_simple_unit_parse
 +          1.31ms           7.75ms     5.91  time_quantity.time_quantity_ufunc_sin
 +         1.00±0s          3.00±0s     3.00  time_ci_small
++           1.00s            3.00s     3.00  time_with_version_match
++           1.00s            3.00s     3.00  time_with_version_mismatch_bench
 -          69.1μs           18.3μs     0.27  time_units.time_unit_to
 """
 

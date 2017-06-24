@@ -26,6 +26,7 @@ except:
     profile = None
 import ctypes
 from ctypes.util import find_library
+from hashlib import sha256
 import errno
 import imp
 import inspect
@@ -248,6 +249,48 @@ def get_setup_cache_key(func):
                             inspect.getsourcelines(func)[1])
 
 
+def get_source_code(items):
+    """
+    Extract source code of given items, and concatenate and dedent it.
+    """
+    sources = []
+    prev_class_name = None
+
+    for func in items:
+        try:
+            lines, lineno = inspect.getsourcelines(func)
+        except TypeError:
+            continue
+
+        if not lines:
+            continue
+
+        src = "\n".join(line.rstrip() for line in lines)
+        src = textwrap.dedent(src)
+
+        class_name = None
+        if inspect.ismethod(func):
+            # Add class name
+            if hasattr(func, 'im_class'):
+                class_name = func.im_class.__name__
+            elif hasattr(func, '__qualname__'):
+                names = func.__qualname__.split('.')
+                if len(names) > 1:
+                    class_name = names[-2]
+
+        if class_name and prev_class_name != class_name:
+            src = "class {0}:\n    {1}".format(
+                class_name, src.replace("\n", "\n    "))
+        elif class_name:
+            src = "    {1}".format(
+                class_name, src.replace("\n", "\n    "))
+
+        sources.append(src)
+        prev_class_name = class_name
+
+    return "\n\n".join(sources).rstrip()
+
+
 class Benchmark(object):
     """
     Represents a single benchmark.
@@ -268,7 +311,13 @@ class Benchmark(object):
         self.setup_cache_key = get_setup_cache_key(self._setup_cache)
         self.setup_cache_timeout = _get_first_attr([self._setup_cache], "timeout", None)
         self.timeout = _get_first_attr(attr_sources, "timeout", 60.0)
-        self.code = textwrap.dedent(inspect.getsource(self.func))
+        self.code = get_source_code([self.func] + self._setups + [self._setup_cache])
+        if sys.version_info[0] >= 3:
+            code_text = self.code.encode('utf-8')
+        else:
+            code_text = self.code
+        code_hash = sha256(code_text).hexdigest()
+        self.version = str(_get_first_attr(attr_sources, "version", code_hash))
         self.type = "base"
         self.unit = "unit"
 

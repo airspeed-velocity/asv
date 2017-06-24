@@ -203,8 +203,191 @@
         "param_names": [], 
         "params": [], 
         "timeout": 60.0, 
-        "type": "track", 
+        "type": "time", 
         "unit": "unit"
-    }, 
+    },
+    "time_AAA_failure": {
+        "code": "foo\n", 
+        "name": "time_AAA_failure", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_AAA_skip": {
+        "code": "foo\n", 
+        "name": "time_AAA_skip", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_coordinates.time_latitude": {
+        "code": "foo\n", 
+        "name": "time_coordinates.time_latitude", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_quantity.time_quantity_array_conversion": {
+        "code": "foo\n", 
+        "name": "time_quantity.time_quantity_array_conversion", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_quantity.time_quantity_init_array": {
+        "code": "foo\n", 
+        "name": "time_quantity.time_quantity_init_array", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_quantity.time_quantity_init_scalar": {
+        "code": "foo\n", 
+        "name": "time_quantity.time_quantity_init_scalar", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_quantity.time_quantity_scalar_conversion": {
+        "code": "foo\n", 
+        "name": "time_quantity.time_quantity_scalar_conversion", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_quantity.time_quantity_ufunc_sin": {
+        "code": "foo\n", 
+        "name": "time_quantity.time_quantity_ufunc_sin", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_units.mem_unit": {
+        "code": "foo\n", 
+        "name": "time_units.mem_unit", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_units.time_simple_unit_parse": {
+        "code": "foo\n", 
+        "name": "time_units.time_simple_unit_parse", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_units.time_unit_compose": {
+        "code": "foo\n", 
+        "name": "time_units.time_unit_compose", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_units.time_unit_parse": {
+        "code": "foo\n", 
+        "name": "time_units.time_unit_parse", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_units.time_unit_to": {
+        "code": "foo\n", 
+        "name": "time_units.time_unit_to", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_units.time_very_simple_unit_parse": {
+        "code": "foo\n", 
+        "name": "time_units.time_very_simple_unit_parse", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_other.time_parameterized": {
+        "code": "foo\n", 
+        "name": "time_other.time_parameterized", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_ci_small": {
+        "code": "foo\n", 
+        "name": "time_ci_small", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_ci_big": {
+        "code": "foo\n", 
+        "name": "time_ci_big", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit"
+    },
+    "time_with_version_match": {
+        "code": "foo\n", 
+        "name": "time_with_version", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit",
+        "version": "1"
+    },
+    "time_with_version_mismatch_bench": {
+        "code": "foo\n", 
+        "name": "time_with_version_mismatch_bench", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit",
+        "version": "2"
+    },
+    "time_with_version_mismatch_other": {
+        "code": "foo\n", 
+        "name": "time_with_version_mismatch_other", 
+        "param_names": [], 
+        "params": [], 
+        "timeout": 60.0, 
+        "type": "time", 
+        "unit": "unit",
+        "version": "1"
+    },
     "version": 1
 }

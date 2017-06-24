@@ -34,7 +34,15 @@
 	    "result": [1, 2, 3]
 	},
 	"time_ci_small": {"result": 1, "stats": [{"ci_99": [0.9, 1.1], "q_25": 1, "q_75": 1}]},
-	"time_ci_big": {"result": 1, "stats": [{"ci_99": [0.5, 2.5], "q_25": 0.5, "q_75": 2.5}]}
-    }, 
+	"time_ci_big": {"result": 1, "stats": [{"ci_99": [0.5, 2.5], "q_25": 0.5, "q_75": 2.5}]},
+	"time_with_version_match": 1,
+	"time_with_version_mismatch_bench": 1,
+	"time_with_version_mismatch_other": 1
+    },
+    "benchmark_version": {
+    	"time_with_version_match": "1",
+    	"time_with_version_mismatch_bench": "1",
+    	"time_with_version_mismatch_other": "1"
+    },
     "version": 1
 }

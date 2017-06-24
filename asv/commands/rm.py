@@ -86,7 +86,7 @@ class Rm(Command):
 
             if single_benchmark is not None:
                 found = False
-                for benchmark in list(result.result_keys):
+                for benchmark in list(result.get_all_result_keys()):
                     if fnmatchcase(benchmark, single_benchmark):
                         count += 1
                         files_to_remove.add(result)
