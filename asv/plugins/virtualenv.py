@@ -52,17 +52,6 @@ class Virtualenv(environment.Environment):
         self._requirements = requirements
         super(Virtualenv, self).__init__(conf, python, requirements)
 
-        try:
-            import virtualenv
-        except ImportError:
-            raise environment.EnvironmentUnavailable(
-                "virtualenv package not installed")
-
-        # Can't use `virtualenv.__file__` here, because that will refer to a
-        # .pyc file which can't be used on another version of Python
-        self._virtualenv_path = os.path.abspath(
-            inspect.getsourcefile(virtualenv))
-
     @staticmethod
     def _find_python(python):
         """Find Python executable for the given Python version"""
@@ -108,24 +97,30 @@ class Virtualenv(environment.Environment):
 
     @classmethod
     def matches(self, python):
-        if not (re.match(r'^[0-9].*$', python) or re.match(r'^pypy[0-9.]*$', python)):
+        match = re.match(r'\A(?:pypy)?([0-9.]*)\Z', python)
+        if not match:
             # The python name should be a version number, or pypy+number
             return False
-
-        try:
-            import virtualenv
-        except ImportError:
-            return False
-        else:
-            if LooseVersion(virtualenv.__version__) == LooseVersion('1.11.0'):
-                log.warn(
-                    "asv is not compatible with virtualenv 1.11 due to a bug in "
-                    "setuptools.")
-            if LooseVersion(virtualenv.__version__) < LooseVersion('1.10'):
-                log.warn(
-                    "If using virtualenv, it much be at least version 1.10")
-
         executable = Virtualenv._find_python(python)
+
+        if LooseVersion(match.group(1)) < LooseVersion("3.3"):
+            self._virtualenv_argv = [
+                sys.executable, "-mvirtualenv", "--no-site-packages"]
+            try:
+                virtualenv_version = util.check_output(
+                    self._virtualenv_argv + ["--version"])
+            except util.ProcessError:
+                raise environment.EnvironmentUnavailable(
+                    "virtualenv package not installed")
+            if LooseVersion(virtualenv_version) == LooseVersion('1.11.0'):
+                log.warn("asv is not compatible with virtualenv 1.11 due to a "
+                         "bug in setuptools.")
+            if LooseVersion(virtualenv_version) < LooseVersion('1.10'):
+                log.warn("If using virtualenv, it much be at least version "
+                         "1.10")
+        else:
+            self._virtualenv_argv = [executable, "-mvenv"]
+
         return executable is not None
 
     def _setup(self):
@@ -135,13 +130,7 @@ class Virtualenv(environment.Environment):
         it using `pip install`.
         """
         log.info("Creating virtualenv for {0}".format(self.name))
-        util.check_call([
-            sys.executable,
-            self._virtualenv_path,
-            '--no-site-packages',
-            "-p",
-            self._executable,
-            self._path])
+        util.check_call(self._virtualenv_argv + [self._path])
 
         log.info("Installing requirements for {0}".format(self.name))
         self._install_requirements()

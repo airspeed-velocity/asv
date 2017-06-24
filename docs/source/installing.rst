@@ -18,9 +18,11 @@ the requirements are:
 
 One of the following:
 
-- `virtualenv <http://virtualenv.org/>`__, 1.10 or later (this is true
-  even with Python 3.3, where virtualenv is included as venv, since
-  venv is not compatible with other versions of Python).
+- `virtualenv <http://virtualenv.org/>`__, 1.10 or later, for Python
+  2.6, 2.7, and 3.2 (starting from Python 3.3, the builtin ``venv``
+  module is used; however, if you want to include earlier Pythons in
+  your benchmark, then the *master* Python, i.e. the one which is
+  running asv, still needs virtualenv).
 
   Note that virtualenv 1.11.0 will not work, as it contains a bug in
   setuptools that prevents its installation in a clean virtual
