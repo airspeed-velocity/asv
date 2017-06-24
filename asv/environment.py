@@ -552,7 +552,11 @@ class Environment(object):
         """
         Run a given executable (eg. python, pip) in the environment.
         """
+        # When running pip, we need to set PIP_USER to false, as --user (which
+        # may have been set from a pip config file) is incompatible with
+        # virtualenvs.
         exe = self.find_executable(executable)
+        kwargs["env"] = dict(kwargs.pop("env", os.environ), PIP_USER="false")
         return util.check_output([exe] + args, **kwargs)
 
     def load_info_file(self, path):
