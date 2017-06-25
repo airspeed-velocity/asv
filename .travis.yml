@@ -14,8 +14,8 @@ python:
   - 3.3
   - 3.4
   - 3.5
+  - 3.6
   - pypy
-  - "pypy3.3-5.2-alpha1"
   # - pypy3
 
 matrix:
@@ -23,7 +23,7 @@ matrix:
     - python: 2.7
       env:
         - USE_CONDA=true
-        - COVERAGE=--coverage
+        - COVERAGE=--cov asv
 
     - python: 3.6
       env: USE_CONDA=true
@@ -72,9 +72,10 @@ install:
     if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then $TRAVIS_PIP install python-hglib ; fi;
     $TRAVIS_PIP install selenium six pytest feedparser;
     if [[ $COVERAGE != '' ]]; then $TRAVIS_PIP install pytest-cov coveralls; fi;
+  - $TRAVIS_PYTHON setup.py build_ext -i
 
 script:
-  - $TRAVIS_PYTHON setup.py test $COVERAGE
+  - $TRAVIS_PYTHON -m pytest $COVERAGE test
 
 after_success:
   - if [[ $COVERAGE != '' ]]; then coveralls; fi
