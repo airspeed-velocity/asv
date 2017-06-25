@@ -10,10 +10,10 @@ environment:
 
   matrix:
 
-      - PYTHON_VERSION: "3.5"
+      - PYTHON_VERSION: "2.7"
         platform: x64
         PYTHON_ARCH: "64"
-      - PYTHON_VERSION: "2.7"
+      - PYTHON_VERSION: "3.5"
         platform: x64
         PYTHON_ARCH: "64"
       - PYTHON_VERSION: "2.7"
@@ -21,12 +21,22 @@ environment:
         PYTHON_ARCH: "32"
 
 install:
+    # Clear tmpdir (sometimes left behind by appveyor?)
+    - rmdir /s /q %APPVEYOR_BUILD_FOLDER%\\tmp & exit /b 0
+
     # Install miniconda using a powershell script.
     - "powershell .continuous-integration/appveyor/install-miniconda.ps1"
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 
     # Install the build and runtime dependencies of the project.
     - "conda update -q --yes conda"
+
+    # Tell conda to not use hardlinks: on Windows it's not possible
+    # to delete hard links to files in use, which causes problem when
+    # trying to cleanup environments during the tests
+    - "conda config --set always_copy True"
+    - "conda config --set allow_softlinks False"
+
     # Create a conda environment
     - "conda create -q --yes -n test python=%PYTHON_VERSION%"
     - "activate test"
@@ -37,8 +47,11 @@ install:
     # Install specified version of dependencies
     - "conda install -q --yes six pytest numpy"
 
+    # In-place build
+    - "%CMD_IN_ENV% python setup.py build_ext -i"
+
 # Not a .NET project
 build: false
 
 test_script:
-  - "%CMD_IN_ENV% python setup.py test -a --tb=native -a --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp"
+    - "python -m pytest --tb=native --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp test"
