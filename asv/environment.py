@@ -556,7 +556,7 @@ class Environment(object):
         # may have been set from a pip config file) is incompatible with
         # virtualenvs.
         exe = self.find_executable(executable)
-        kwargs["env"] = dict(kwargs.pop("env", os.environ), PIP_USER="false")
+        kwargs["env"] = dict(kwargs.pop("env", os.environ), PIP_USER=str("false"))
         return util.check_output([exe] + args, **kwargs)
 
     def load_info_file(self, path):
