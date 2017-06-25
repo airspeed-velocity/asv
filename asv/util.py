@@ -965,10 +965,19 @@ else:
         return "\\\\?\\" + os.path.abspath(path)
 
     def _remove_readonly(func, path, exc_info):
-        """Clear the readonly bit and reattempt the removal;
-        Windows rmtree doesn't do this by default"""
-        os.chmod(path, stat.S_IWRITE)
-        func(path)
+        """Try harder to remove files on Windows"""
+
+        if isinstance(exc_info[1], OSError) and exc_info[1].errno == errno.EACCES:
+            # Clear read-only flag and try again
+            try:
+                os.chmod(path, stat.S_IWRITE | stat.S_IREAD)
+                func(path)
+                return
+            except OSError:
+                pass
+
+        # Reraise original error
+        six.reraise(*exc_info)
 
     def long_path_open(filename, *a, **kw):
         return open(long_path(filename), *a, **kw)
