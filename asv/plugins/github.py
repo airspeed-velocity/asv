@@ -57,7 +57,7 @@ class GithubPages(Command):
             util.check_call([git, 'commit', '-m', 'Generated from sources'], cwd=conf.html_dir)
 
             # Fetch branch here
-            util.check_call([git, 'fetch', conf.html_dir])
+            util.check_call([git, 'fetch', os.path.abspath(conf.html_dir)])
             util.check_call([git, 'branch', '-f', 'gh-pages', 'FETCH_HEAD'])
         finally:
             # Cleanup the child repo under html
