@@ -17,7 +17,8 @@ from ..console import log
 from .. import util
 
 
-WIN = (os.name == "nt")
+# We always run `python -mpip` instead of `pip` because the latter may fail to
+# get installed into nested environments (... sometimes).
 
 
 class Virtualenv(environment.Environment):
@@ -148,9 +149,9 @@ class Virtualenv(environment.Environment):
 
     def _install_requirements(self):
         if sys.version_info[:2] == (3, 2):
-            pip_args = ['install', '-v', 'wheel<0.29.0', 'pip<8']
+            pip_args = ['-m', 'pip', 'install', '-v', 'wheel<0.29.0', 'pip<8']
         else:
-            pip_args = ['install', '-v', 'wheel', 'pip>=8']
+            pip_args = ['-m', 'pip', 'install', '-v', 'wheel', 'pip>=8']
 
         if 'COV_CORE_SOURCE' in os.environ:
             # To measure coverage of ASV parts run in a subprocess from
@@ -158,11 +159,7 @@ class Virtualenv(environment.Environment):
             # to be installed for that environment.
             pip_args.append('pytest-cov')
 
-        if not WIN:
-            self.run_executable('pip', pip_args)
-        else:
-            # Run pip self-upgrade via python -m pip, so that it works on Windows
-            self.run_executable('python', ['-m', 'pip'] + pip_args)
+        self.run_executable('python', pip_args)
 
         if self._requirements:
             args = ['install', '-v', '--upgrade']
