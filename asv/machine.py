@@ -147,8 +147,8 @@ class Machine(object):
             }
 
     @staticmethod
-    def generate_machine_file():
-        if not sys.stdout.isatty():
+    def generate_machine_file(use_defaults=False):
+        if not sys.stdout.isatty() and not use_defaults:
             raise util.UserError(
                 "Run asv at the console the first time to generate "
                 "one.")
@@ -167,13 +167,14 @@ class Machine(object):
                     '{0}. {1}: {2}'.format(
                         i+1, name, textwrap.dedent(description)),
                     subsequent_indent='   '))
-            values[name] = console.get_answer_default(name, defaults[name])
+            values[name] = console.get_answer_default(name, defaults[name],
+                                                      use_defaults=use_defaults)
 
         return values
 
     @classmethod
     def load(cls, interactive=False, force_interactive=False, _path=None,
-             machine_name=None, **kwargs):
+             machine_name=None, use_defaults=False, **kwargs):
         self = Machine()
 
         if machine_name is None:
@@ -185,7 +186,7 @@ class Machine(object):
             d = {}
         d.update(kwargs)
         if (not len(d) and interactive) or force_interactive:
-            d.update(self.generate_machine_file())
+            d.update(self.generate_machine_file(use_defaults=use_defaults))
 
         machine_name = d['machine']
 
