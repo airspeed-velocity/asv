@@ -29,7 +29,8 @@ class Conda(environment.Environment):
     tool_name = "conda"
     _matches_cache = {}
 
-    def __init__(self, conf, python, requirements):
+    def __init__(self, conf, python, requirements,
+                 commit_hash):
         """
         Parameters
         ----------
@@ -44,7 +45,8 @@ class Conda(environment.Environment):
         """
         self._python = python
         self._requirements = requirements
-        super(Conda, self).__init__(conf, python, requirements)
+        super(Conda, self).__init__(conf, python, requirements,
+                                    commit_hash)
 
     @classmethod
     def matches(cls, python):

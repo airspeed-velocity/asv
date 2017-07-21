@@ -186,7 +186,7 @@ def get_env_name(tool_name, python, requirements):
     return util.sanitize_filename('-'.join(name))
 
 
-def get_environments(conf, env_specifiers):
+def get_environments(conf, env_specifiers, commit_hash):
     """
     Iterator returning `Environment` objects for all of the
     permutations of the given versions of Python and a matrix of
@@ -255,7 +255,8 @@ def get_environments(conf, env_specifiers):
                 else:
                     cls = get_environment_class(conf, python)
 
-                yield cls(conf, python, requirements)
+                yield cls(conf, python, requirements,
+                          commit_hash)
             except EnvironmentUnavailable as err:
                 log.warn(str(err))
 
@@ -329,7 +330,7 @@ class Environment(object):
     """
     tool_name = None
 
-    def __init__(self, conf, python, requirements):
+    def __init__(self, conf, python, requirements, commit_hash):
         """
         Get an environment for a given requirement matrix and
         Python version specifier.
