@@ -309,7 +309,7 @@ class Benchmarks(dict):
     """
     api_version = 1
 
-    def __init__(self, conf, repo, environments, benchmarks=None, regex=None):
+    def __init__(self, conf, repo, environments, commit_hash, benchmarks=None, regex=None):
         """
         Discover benchmarks in the given `benchmark_dir`.
 
@@ -333,7 +333,7 @@ class Benchmarks(dict):
         self._benchmark_dir = conf.benchmark_dir
 
         if benchmarks is None:
-            benchmarks = self.disc_benchmarks(conf, repo, environments)
+            benchmarks = self.disc_benchmarks(conf, repo, environments, commit_hash)
         else:
             benchmarks = six.itervalues(benchmarks)
 
@@ -349,7 +349,8 @@ class Benchmarks(dict):
                 self[benchmark['name']] = benchmark
 
     @classmethod
-    def disc_benchmarks(cls, conf, repo, environments):
+    def disc_benchmarks(cls, conf, repo, environments,
+                        commit_hash):
         """
         Discover all benchmarks in a directory tree.
         """
@@ -374,7 +375,7 @@ class Benchmarks(dict):
         log.info("Discovering benchmarks")
         with log.indent():
             env.create()
-            env.install_project(conf, repo)
+            env.install_project(conf, repo, commit_hash)
 
             result_file = tempfile.NamedTemporaryFile(delete=False)
             try:

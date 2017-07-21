@@ -43,6 +43,9 @@ class Continuous(Command):
             run only once.  This is useful to find basic errors in the
             benchmark functions faster.  The results are unlikely to
             be useful, and thus are not saved.""")
+        parser.add_argument(
+            "--extrabranch", default=None,
+            help="""Name of an extra branch to consider if not in JSON config file.""")
         common_args.add_factor(parser)
         common_args.add_show_stderr(parser)
         common_args.add_bench(parser)
@@ -58,23 +61,31 @@ class Continuous(Command):
             conf=conf, branch=args.branch, base=args.base, factor=args.factor,
             show_stderr=args.show_stderr, bench=args.bench, machine=args.machine,
             env_spec=args.env_spec, record_samples=args.record_samples,
-            quick=args.quick, **kwargs
+            quick=args.quick, extrabranch=args.extrabranch, **kwargs
         )
 
     @classmethod
     def run(cls, conf, branch=None, base=None, factor=None, show_stderr=False, bench=None,
-            machine=None, env_spec=None, record_samples=False, quick=False, _machine_file=None):
+            machine=None, env_spec=None, record_samples=False, quick=False, extrabranch=None,
+            _machine_file=None):
         repo = get_repo(conf)
         repo.pull()
 
+
         if branch is None:
             branch = conf.branches[0]
-        head = repo.get_hash_from_name(branch)
+
+        if extrabranch is not None:
+            head = extrabranch
+        else:
+            head = repo.get_hash_from_name(branch)
+
 
         if base is None:
             parent = repo.get_hash_from_parent(head)
         else:
             parent = repo.get_hash_from_name(base)
+
 
         commit_hashes = [head, parent]
         run_objs = {}
@@ -83,7 +94,8 @@ class Continuous(Command):
             conf, range_spec=commit_hashes, bench=bench,
             show_stderr=show_stderr, machine=machine, env_spec=env_spec,
             record_samples=record_samples, quick=quick,
-            _returns=run_objs, _machine_file=_machine_file)
+            _returns=run_objs, _machine_file=_machine_file,
+             commit_hash=extrabranch)
         if result:
             return result
 

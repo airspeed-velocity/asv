@@ -131,14 +131,14 @@ class Run(Command):
     def run(cls, conf, range_spec=None, steps=None, bench=None, parallel=1,
             show_stderr=False, quick=False, profile=False, env_spec=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
-            skip_failed=False, skip_existing_commits=False, record_samples=False,
+            skip_failed=False, skip_existing_commits=False, record_samples=False, commit_hash=None,
             _returns={}):
         machine_params = Machine.load(
             machine_name=machine,
             _path=_machine_file, interactive=True)
         machine_params.save(conf.results_dir)
 
-        environments = list(environment.get_environments(conf, env_spec))
+        environments = list(environment.get_environments(conf, env_spec, commit_hash))
 
         if environment.is_existing_only(environments):
             # No repository required, so skip using it
@@ -182,7 +182,7 @@ class Run(Command):
                         "No range spec may be specified if benchmarking in "
                         "an existing environment")
 
-        benchmarks = Benchmarks(conf, repo, environments, regex=bench)
+        benchmarks = Benchmarks(conf, repo, environments, commit_hash, regex=bench)
         if len(benchmarks) == 0:
             log.error("No benchmarks selected")
             return 1
