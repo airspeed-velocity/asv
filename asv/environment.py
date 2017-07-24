@@ -498,7 +498,8 @@ class Environment(object):
     def build_project(self, repo, commit_hash):
         self.checkout_project(repo, commit_hash)
         log.info("Building for {0}".format(self.name))
-        self.run(['setup.py', 'build'], cwd=self._build_root)
+        cwd = os.path.join(self._build_root, 'package')
+        self.run(['setup.py', 'build'], cwd=cwd)
         return self._build_root
 
     def install_project(self, conf, repo, commit_hash=None):

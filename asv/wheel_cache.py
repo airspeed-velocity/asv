@@ -83,6 +83,8 @@ class WheelCache(object):
 
         build_root = env.build_project(repo, commit_hash)
         cache_path = self._create_wheel_cache_path(commit_hash)
+        if 'mdanalysis' in build_root:
+            build_root = os.path.join(build_root, 'package')
 
         try:
             env.run_executable(
