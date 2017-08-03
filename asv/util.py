@@ -272,20 +272,18 @@ def human_value(value, unit, err=None):
     return display
 
 
-def which(filename):
+def which(filename, paths=None):
     """
     Emulates the UNIX `which` command in Python.
 
     Raises an IOError if no result is found.
     """
-    if WIN:
-        if not filename.endswith('.exe'):
-            filename = filename + '.exe'
-
     if os.path.sep in filename:
         locations = ['']
     else:
         locations = os.environ.get("PATH", "").split(os.pathsep)
+        if paths is not None:
+            locations = paths + locations
 
         if WIN:
             # On windows, an entry in %PATH% may be quoted
@@ -294,9 +292,17 @@ def which(filename):
 
     candidates = []
     for location in locations:
+        for alternate_ext in ['.exe', '.bat']:
+            alternate_filename = filename + alternate_ext
+            alternate_candidate = os.path.join(location, alternate_filename)
+            if os.path.isfile(alternate_candidate) or os.path.islink(alternate_candidate):
+                candidates.append(alternate_candidate)
+
+        # check for the extension-based filenames above first
         candidate = os.path.join(location, filename)
         if os.path.isfile(candidate) or os.path.islink(candidate):
             candidates.append(candidate)
+
     if len(candidates) == 0:
         raise IOError("Could not find '{0}' in PATH".format(filename))
     return candidates[0]

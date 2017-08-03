@@ -416,7 +416,9 @@ class Environment(object):
 
         for executable in ['pip', 'python']:
             exe = self.find_executable(executable)
-            if not os.path.isfile(exe):
+            # do not count a system install of pip or python
+            # as evidence of an installed env
+            if not os.path.isfile(exe) or (self._path not in os.path.dirname(exe)):
                 return False
 
         try:
@@ -536,17 +538,15 @@ class Environment(object):
         """
 
         # Assume standard virtualenv/Conda layout
-        if WIN:
-            executable += ".exe"
+        # account for known posix / Windows subfolders
+        paths = [self._path]
+        possible_subfolders = ['Scripts', 'bin']
+        for subfolder in possible_subfolders:
+            paths.append(os.path.join(self._path, subfolder))
 
-            exe = os.path.join(self._path, 'Scripts', executable)
-            if os.path.isfile(exe):
-                return exe
-            exe = os.path.join(self._path, executable)
-            if os.path.isfile(exe):
-                return exe
+        executable = util.which(executable, paths)
 
-        return os.path.join(self._path, 'bin', executable)
+        return executable
 
     def run_executable(self, executable, args, **kwargs):
         """

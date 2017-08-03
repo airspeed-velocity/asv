@@ -44,6 +44,7 @@ class Conda(environment.Environment):
         """
         self._python = python
         self._requirements = requirements
+        self._conda_channels = conf.conda_channels
         super(Conda, self).__init__(conf, python, requirements)
 
     @classmethod
@@ -85,30 +86,44 @@ class Conda(environment.Environment):
 
     def _setup(self):
         try:
-            conda = util.which('conda')
+            conda = self.find_executable('conda')
         except IOError as e:
             raise util.UserError(str(e))
 
         log.info("Creating conda environment for {0}".format(self.name))
-        util.check_call([
-            conda,
-            'create',
-            '--yes',
-            '-p',
-            self._path,
-            '--use-index-cache',
-            'python={0}'.format(self._python),
-            'pip'])
+        # create a temporary environment.yml file
+        # and use that to generate the env for benchmarking
 
-        log.info("Installing requirements for {0}".format(self.name))
-        self._install_requirements(conda)
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as env_file:
+            env_file.write('name: {0}\n'
+                           'channels:\n'.format(self.name))
+            env_file.writelines(('   - %s\n' % ch for ch in self._conda_channels))
+            env_file.write('dependencies:\n'
+                           '   - python={0}\n'
+                           '   - wheel\n'
+                           '   - pip\n'.format(self._python))
+            # categorize & write dependencies based on pip vs. conda
+            reqs = self._get_requirements(conda)
+            # handle the case where there are multiple dependencies
+            # that are not actually installed (this is mostly
+            # related to tests that probe issue #169)
+            if reqs == None:
+                conda_args, pip_args = [], []
+            else:
+                conda_args, pip_args = reqs
+            env_file.writelines(('   - %s\n' % s for s in conda_args))
+            if pip_args:
+                # and now specify the packages that are to be installed in
+                # the pip subsection
+                env_file.write('   - pip:\n')
+                env_file.writelines(('     - %s\n' % s for s in pip_args))
 
-    def _install_requirements(self, conda):
-        self.install('wheel')
+        util.check_output([conda] + ['env', 'create', '-f', env_file.name,
+                                 '-p', self._path, '--force'])
+
+    def _get_requirements(self, conda):
         if self._requirements:
-            # Install all the dependencies with a single conda command.
-            # This ensures we get the versions requested, or an error
-            # otherwise. It's also quicker than doing it one by one.
+            # retrieve and return all conda / pip dependencies
             conda_args = []
             pip_args = []
 
@@ -124,16 +139,9 @@ class Conda(environment.Environment):
                     else:
                         conda_args.append(key)
 
-            conda_cmd = ['install', '-p', self._path, '--yes']
-            pip_cmd = ['install', '-v', '--upgrade']
-
-            # install conda packages
-            if conda_args:
-                util.check_output([conda] + conda_cmd + conda_args)
-            # install packages only available with pip
-            if pip_args:
-                self.run_executable('pip', pip_cmd + pip_args,
-                                    timeout=self._install_timeout)
+            return conda_args, pip_args
+        else:
+            return [],[]
 
     def install(self, package):
         log.info("Installing into {0}".format(self.name))
