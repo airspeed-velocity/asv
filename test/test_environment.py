@@ -492,3 +492,25 @@ def test_environment_name_sanitization():
     environments = list(environment.get_environments(conf, []))
     assert len(environments) == 1
     assert environments[0].name == "conda-py3.4-pip+git+http___github.com_space-telescope_asv.git"
+
+
+@pytest.mark.parametrize("environment_type", [
+    pytest.mark.skipif(not HAS_CONDA, reason="needs conda")("conda"),
+    pytest.mark.skipif(not HAS_VIRTUALENV, reason="needs virtualenv")("virtualenv")
+])
+def test_environment_environ_path(environment_type, tmpdir):
+    # Check that virtualenv binary dirs are in the PATH
+    conf = config.Config()
+    conf.env_dir = six.text_type(tmpdir.join("env"))
+    conf.environment_type = environment_type
+    if environment_type == "virtualenv":
+        conf.pythons = ["{0[0]}.{0[1]}".format(sys.version_info)]
+    else:
+        conf.pythons = ["3.5"]
+    conf.matrix = {}
+
+    env, = environment.get_environments(conf, [])
+    env.create()
+    output = env.run(['-c', 'import os; print(os.environ["PATH"])'])
+    paths = output.strip().split(os.pathsep)
+    assert os.path.commonprefix([paths[0], conf.env_dir]) == conf.env_dir
