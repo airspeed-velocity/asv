@@ -60,6 +60,10 @@ class Publish(Command):
         parser.add_argument(
             'range', nargs='?', default=None,
             help="""Optional commit range to consider""")
+        parser.add_argument(
+            '--html-dir', '-o', default=None, help=(
+                "Optional output directory. Default is 'html_dir' "
+                "from asv config"))
 
         common_args.add_environment(parser)
 
@@ -69,6 +73,8 @@ class Publish(Command):
 
     @classmethod
     def run_from_conf_args(cls, conf, args):
+        if args.html_dir is not None:
+            conf.html_dir = args.html_dir
         return cls.run(conf=conf, env_spec=args.env_spec,
                        range_spec=args.range)
 
