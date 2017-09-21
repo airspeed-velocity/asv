@@ -31,3 +31,14 @@ def test_machine(tmpdir):
     assert m.arch == 'MIPS'
     assert m.cpu == '10 MHz'
     assert m.ram == '640k'
+
+
+def test_machine_defaults(tmpdir):
+    tmpdir = six.text_type(tmpdir)
+
+    m = machine.Machine.load(
+        interactive=True,
+        use_defaults=True,
+        _path=join(tmpdir, 'asv-machine.json'))
+
+    assert m.__dict__ == m.get_defaults()
