@@ -57,6 +57,13 @@ class Publish(Command):
             Collate all results into a website.  This website will be
             written to the ``html_dir`` given in the ``asv.conf.json``
             file, and may be served using any static web server.""")
+        parser.add_argument(
+            'range', nargs='?', default=None,
+            help="""Optional commit range to consider""")
+        parser.add_argument(
+            '--html-dir', '-o', default=None, help=(
+                "Optional output directory. Default is 'html_dir' "
+                "from asv config"))
 
         common_args.add_environment(parser)
 
@@ -66,10 +73,26 @@ class Publish(Command):
 
     @classmethod
     def run_from_conf_args(cls, conf, args):
-        return cls.run(conf=conf, env_spec=args.env_spec)
+        if args.html_dir is not None:
+            conf.html_dir = args.html_dir
+        return cls.run(conf=conf, env_spec=args.env_spec,
+                       range_spec=args.range)
+
+    @staticmethod
+    def iter_results(conf, repo, range_spec=None):
+        if range_spec is not None:
+            if isinstance(range_spec, list):
+                hashes = range_spec
+            else:
+                hashes = repo.get_hashes_from_range(range_spec)
+        else:
+            hashes = None
+        for result in iter_results(conf.results_dir):
+            if hashes is None or result.commit_hash in hashes:
+                yield result
 
     @classmethod
-    def run(cls, conf, env_spec=None):
+    def run(cls, conf, env_spec=None, range_spec=None):
         params = {}
         graphs = GraphSet()
         machines = {}
@@ -100,7 +123,7 @@ class Publish(Command):
         with log.indent():
             # Determine first the set of all parameters and all commits
             hash_to_date = {}
-            for results in iter_results(conf.results_dir):
+            for results in cls.iter_results(conf, repo, range_spec):
                 hash_to_date[results.commit_hash] = results.date
                 for key, val in six.iteritems(results.params):
                     if val is None:
@@ -129,7 +152,7 @@ class Publish(Command):
         log.info("Loading results")
         with log.indent():
             # Generate all graphs
-            for results in iter_results(conf.results_dir):
+            for results in cls.iter_results(conf, repo, range_spec):
                 log.dot()
 
                 for key, val in six.iteritems(results.results):

@@ -68,6 +68,10 @@ class Preview(Command):
                             help="Port to run webserver on.  [8080]")
         parser.add_argument("--browser", "-b", action="store_true",
                             help="Open in webbrowser")
+        parser.add_argument(
+            '--html-dir', '-o', default=None, help=(
+                "Optional output directory. Default is 'html_dir' "
+                "from asv config"))
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -75,6 +79,8 @@ class Preview(Command):
 
     @classmethod
     def run_from_conf_args(cls, conf, args):
+        if args.html_dir:
+            conf.html_dir = args.html_dir
         return cls.run(conf=conf, port=args.port,
                        browser=args.browser)
 
