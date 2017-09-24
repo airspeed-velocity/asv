@@ -151,7 +151,7 @@ class Machine(object):
         if not sys.stdout.isatty() and not use_defaults:
             raise util.UserError(
                 "Run asv at the console the first time to generate "
-                "one.")
+                "one, or run `asv machine --yes`.")
 
         color_print(
             "I will now ask you some questions about this machine to "
