@@ -229,8 +229,12 @@ def color_print(*args, **kwargs):
         write(end)
 
 
-def get_answer_default(prompt, default):
+def get_answer_default(prompt, default, use_defaults=False):
     color_print("{0} [{1}]: ".format(prompt, default), end='')
+
+    if use_defaults:
+        return default
+
     x = input()
     if x.strip() == '':
         return default
