@@ -279,8 +279,14 @@ def which(filename):
     Raises an IOError if no result is found.
     """
     if WIN:
-        if not filename.endswith('.exe'):
-            filename = filename + '.exe'
+        exe_exts = ['.exe', '.bat', '.com']
+        base, ext = os.path.splitext(filename)
+        if ext in exe_exts:
+            filenames = [filename]
+        else:
+            filenames = [base + ext2 for ext2 in exe_exts]
+    else:
+        filenames = [filename]
 
     if os.path.sep in filename:
         locations = ['']
@@ -294,9 +300,10 @@ def which(filename):
 
     candidates = []
     for location in locations:
-        candidate = os.path.join(location, filename)
-        if os.path.isfile(candidate) or os.path.islink(candidate):
-            candidates.append(candidate)
+        for fn in filenames:
+            candidate = os.path.join(location, fn)
+            if os.path.isfile(candidate) or os.path.islink(candidate):
+                candidates.append(candidate)
     if len(candidates) == 0:
         raise IOError("Could not find '{0}' in PATH".format(filename))
     return candidates[0]
