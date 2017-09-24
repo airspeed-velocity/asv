@@ -280,31 +280,34 @@ def which(filename, paths=None):
     """
     if os.path.sep in filename:
         locations = ['']
+    elif paths is not None:
+        locations = paths
     else:
         locations = os.environ.get("PATH", "").split(os.pathsep)
-        if paths is not None:
-            locations = paths + locations
-
         if WIN:
             # On windows, an entry in %PATH% may be quoted
             locations = [path[1:-1] if len(path) > 2 and path[0] == path[-1] == '"' else path
                          for path in locations]
 
+    if WIN:
+        filenames = [filename + ext for ext in ('.exe', '.bat', '.com', '')]
+    else:
+        filenames = [filename]
+
     candidates = []
     for location in locations:
-        for alternate_ext in ['.exe', '.bat']:
-            alternate_filename = filename + alternate_ext
-            alternate_candidate = os.path.join(location, alternate_filename)
-            if os.path.isfile(alternate_candidate) or os.path.islink(alternate_candidate):
-                candidates.append(alternate_candidate)
-
-        # check for the extension-based filenames above first
-        candidate = os.path.join(location, filename)
-        if os.path.isfile(candidate) or os.path.islink(candidate):
-            candidates.append(candidate)
+        for filename in filenames:
+            candidate = os.path.join(location, filename)
+            if os.path.isfile(candidate) or os.path.islink(candidate):
+                candidates.append(candidate)
 
     if len(candidates) == 0:
-        raise IOError("Could not find '{0}' in PATH".format(filename))
+        if paths is None:
+            loc_info = 'PATH'
+        else:
+            loc_info = os.pathsep.join(locations)
+        raise IOError("Could not find '{0}' in {1}".format(filename, loc_info))
+
     return candidates[0]
 
 

@@ -69,6 +69,7 @@ class Conda(environment.Environment):
             # doing a dry run below.  All it needs to be is something
             # that doesn't already exist.
             path = os.path.join(tempfile.gettempdir(), 'check')
+
             # Check that the version number is valid
             try:
                 util.check_call([
@@ -86,15 +87,16 @@ class Conda(environment.Environment):
 
     def _setup(self):
         try:
-            conda = self.find_executable('conda')
+            conda = util.which('conda')
         except IOError as e:
             raise util.UserError(str(e))
 
         log.info("Creating conda environment for {0}".format(self.name))
+
         # create a temporary environment.yml file
         # and use that to generate the env for benchmarking
-
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as env_file:
+        env_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
+        try:
             env_file.write('name: {0}\n'
                            'channels:\n'.format(self.name))
             env_file.writelines(('   - %s\n' % ch for ch in self._conda_channels))
@@ -102,15 +104,9 @@ class Conda(environment.Environment):
                            '   - python={0}\n'
                            '   - wheel\n'
                            '   - pip\n'.format(self._python))
+
             # categorize & write dependencies based on pip vs. conda
-            reqs = self._get_requirements(conda)
-            # handle the case where there are multiple dependencies
-            # that are not actually installed (this is mostly
-            # related to tests that probe issue #169)
-            if reqs == None:
-                conda_args, pip_args = [], []
-            else:
-                conda_args, pip_args = reqs
+            conda_args, pip_args = self._get_requirements(conda)
             env_file.writelines(('   - %s\n' % s for s in conda_args))
             if pip_args:
                 # and now specify the packages that are to be installed in
@@ -118,8 +114,12 @@ class Conda(environment.Environment):
                 env_file.write('   - pip:\n')
                 env_file.writelines(('     - %s\n' % s for s in pip_args))
 
-        util.check_output([conda] + ['env', 'create', '-f', env_file.name,
-                                 '-p', self._path, '--force'])
+            env_file.close()
+
+            util.check_output([conda] + ['env', 'create', '-f', env_file.name,
+                                         '-p', self._path, '--force'])
+        finally:
+            os.unlink(env_file.name)
 
     def _get_requirements(self, conda):
         if self._requirements:
@@ -141,7 +141,7 @@ class Conda(environment.Environment):
 
             return conda_args, pip_args
         else:
-            return [],[]
+            return [], []
 
     def install(self, package):
         log.info("Installing into {0}".format(self.name))

@@ -415,10 +415,9 @@ class Environment(object):
             return False
 
         for executable in ['pip', 'python']:
-            exe = self.find_executable(executable)
-            # do not count a system install of pip or python
-            # as evidence of an installed env
-            if not os.path.isfile(exe) or (self._path not in os.path.dirname(exe)):
+            try:
+                self.find_executable(executable)
+            except IOError:
                 return False
 
         try:
@@ -535,18 +534,19 @@ class Environment(object):
     def find_executable(self, executable):
         """
         Find an executable (eg. python, pip) in the environment.
+
+        If not found, raises IOError
         """
 
         # Assume standard virtualenv/Conda layout
-        # account for known posix / Windows subfolders
-        paths = [self._path]
-        possible_subfolders = ['Scripts', 'bin']
-        for subfolder in possible_subfolders:
-            paths.append(os.path.join(self._path, subfolder))
+        if WIN:
+            paths = [self._path,
+                     os.path.join(self._path, 'Scripts'),
+                     os.path.join(self._path, 'bin')]
+        else:
+            paths = [os.path.join(self._path, 'bin')]
 
-        executable = util.which(executable, paths)
-
-        return executable
+        return util.which(executable, paths)
 
     def run_executable(self, executable, args, **kwargs):
         """

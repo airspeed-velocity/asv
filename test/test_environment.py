@@ -107,7 +107,7 @@ def test_large_environment_matrix(tmpdir):
         # this test run a long time, we only set up the environment,
         # but don't actually install dependencies into it.  This is
         # enough to trigger the bug in #169.
-        env._get_requirements = lambda *a: None
+        env._get_requirements = lambda *a: ([], [])
         # pip / virtualenv setup still uses
         # _install_requirements
         env._install_requirements = lambda *a: None
@@ -324,6 +324,7 @@ def test_conda_pip_install(tmpdir):
 
     conf.env_dir = six.text_type(tmpdir.join("env"))
 
+    conf.environment_type = "conda"
     conf.pythons = ["3.4"]
     conf.matrix = {
         "pip+colorama": ["0.3.6"]

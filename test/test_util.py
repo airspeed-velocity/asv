@@ -99,9 +99,11 @@ def test_write_unicode_to_ascii():
 def test_which_path(tmpdir):
     dirname = os.path.abspath(os.path.join(str(tmpdir), 'name with spaces'))
     fn = 'asv_test_exe_1234.exe'
+    fn2 = 'asv_test_exe_4321.bat'
 
     os.makedirs(dirname)
     shutil.copyfile(sys.executable, os.path.join(dirname, fn))
+    shutil.copyfile(sys.executable, os.path.join(dirname, fn2))
 
     old_path = os.environ.get('PATH', '')
     try:
@@ -109,11 +111,23 @@ def test_which_path(tmpdir):
             os.environ['PATH'] = old_path + os.pathsep + '"' + dirname + '"'
             util.which('asv_test_exe_1234')
             util.which('asv_test_exe_1234.exe')
+            util.which('asv_test_exe_4321')
+            util.which('asv_test_exe_4321.bat')
 
         os.environ['PATH'] = old_path + os.pathsep + dirname
         util.which('asv_test_exe_1234.exe')
+        util.which('asv_test_exe_4321.bat')
         if WIN:
             util.which('asv_test_exe_1234')
+            util.which('asv_test_exe_4321')
+
+        # Check the paths= argument
+        util.which('asv_test_exe_1234.exe', paths=[dirname])
+        util.which('asv_test_exe_4321.bat', paths=[dirname])
+
+        # Check non-existent files
+        with pytest.raises(IOError):
+            util.which('nonexistent.exe', paths=[dirname])
     finally:
         os.environ['PATH'] = old_path
 
