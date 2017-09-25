@@ -78,7 +78,8 @@ following:
 - a Python version string, e.g. ``"2.7"``, in which case:
 
   - if ``conda`` is found, ``conda`` will be used to create an
-    environment for that version of Python
+    environment for that version of Python via a temporary
+    environment.yml file
 
   - if ``virtualenv`` is installed, ``asv`` will search for that
     version of Python on the ``PATH`` and create a new virtual
@@ -93,6 +94,17 @@ following:
   fully loaded and read-only.  Thus, the benchmarked project must
   already be installed, and it will not be possible to benchmark
   multiple revisions of the project.
+
+``conda_channels``
+------------------
+A list of ``conda`` channel names (strings) to use in the provided
+order as the source channels for the dependencies. For example::
+
+    "conda_channels": ["conda-forge", "defaults"]
+
+The channels will be parsed by ``asv`` to populate the ``channels``
+section of a temporary environment.yml file used to build the
+benchmarking environment.
 
 ``matrix``
 ----------
