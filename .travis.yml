@@ -61,12 +61,12 @@ install:
     else
       $TRAVIS_PIP install virtualenv;
     fi
-    $TRAVIS_PIP install selenium six pytest feedparser python-hglib;
+    $TRAVIS_PIP install selenium six pytest pytest-timeout feedparser python-hglib;
     if [[ $COVERAGE != '' ]]; then $TRAVIS_PIP install pytest-cov coveralls; fi;
   - $TRAVIS_PYTHON setup.py build_ext -i
 
 script:
-  - $TRAVIS_PYTHON -m pytest $COVERAGE test
+  - $TRAVIS_PYTHON -m pytest --timeout=360 -l $COVERAGE test
 
 after_success:
   - if [[ $COVERAGE != '' ]]; then coveralls; fi
