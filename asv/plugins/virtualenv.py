@@ -17,7 +17,8 @@ from ..console import log
 from .. import util
 
 
-WIN = (os.name == "nt")
+# We always run `python -mpip` instead of `pip` because the latter may fail to
+# get installed into nested environments (... sometimes).
 
 
 class Virtualenv(environment.Environment):
@@ -42,26 +43,10 @@ class Virtualenv(environment.Environment):
             Dictionary mapping a PyPI package name to a version
             identifier string.
         """
-        executable = Virtualenv._find_python(python)
-        if executable is None:
-            raise environment.EnvironmentUnavailable(
-                "No executable found for python {0}".format(python))
-
-        self._executable = executable
+        self._virtualenv_argv = self._find_virtualenv_argv(python)
         self._python = python
         self._requirements = requirements
         super(Virtualenv, self).__init__(conf, python, requirements)
-
-        try:
-            import virtualenv
-        except ImportError:
-            raise environment.EnvironmentUnavailable(
-                "virtualenv package not installed")
-
-        # Can't use `virtualenv.__file__` here, because that will refer to a
-        # .pyc file which can't be used on another version of Python
-        self._virtualenv_path = os.path.abspath(
-            inspect.getsourcefile(virtualenv))
 
     @staticmethod
     def _find_python(python):
@@ -107,26 +92,48 @@ class Virtualenv(environment.Environment):
         return environment.get_env_name(self.tool_name, python, self._requirements)
 
     @classmethod
-    def matches(self, python):
-        if not (re.match(r'^[0-9].*$', python) or re.match(r'^pypy[0-9.]*$', python)):
-            # The python name should be a version number, or pypy+number
+    def matches(cls, python):
+        match = re.match(r'\A(?:pypy)?([0-9.]*)\Z', python)
+        # No match if the version string is invalid.
+        if not match:
             return False
-
-        try:
-            import virtualenv
-        except ImportError:
+        executable = cls._find_python(python)
+        # No match if the executable does not exist.
+        if executable is None:
             return False
-        else:
+        # If we target Python<3.3, the current Python needs virtualenv.
+        if LooseVersion(match.group(1)) < LooseVersion("3.3"):
+            try:
+                import virtualenv
+            except ImportError:
+                log.warn("virtualenv package not installed")
+                return False
             if LooseVersion(virtualenv.__version__) == LooseVersion('1.11.0'):
-                log.warn(
-                    "asv is not compatible with virtualenv 1.11 due to a bug in "
-                    "setuptools.")
+                log.warn("asv is not compatible with virtualenv 1.11 due to a "
+                         "bug in setuptools.")
+                return False
             if LooseVersion(virtualenv.__version__) < LooseVersion('1.10'):
-                log.warn(
-                    "If using virtualenv, it much be at least version 1.10")
+                log.warn("If using virtualenv, it much be at least version "
+                         "1.10")
+                return False
+            return True
+        # If we target Python>=3.3, we can just use its venv.
+        else:
+            return True
 
-        executable = Virtualenv._find_python(python)
-        return executable is not None
+    @classmethod
+    def _find_virtualenv_argv(cls, python):
+        executable = cls._find_python(python)
+        match = re.match(r'\A(?:pypy)?([0-9.]*)\Z', python)
+        if executable is None:
+            raise environment.EnvironmentUnavailable(
+                "No executable found for python {0}".format(python))
+        if LooseVersion(match.group(1)) < LooseVersion("3.3"):
+            # We have already checked that virtualenv is present.
+            return [sys.executable, "-mvirtualenv",
+                    "--no-site-packages", "-p", executable]
+        else:
+            return [executable, "-mvenv"]
 
     def _setup(self):
         """
@@ -135,22 +142,16 @@ class Virtualenv(environment.Environment):
         it using `pip install`.
         """
         log.info("Creating virtualenv for {0}".format(self.name))
-        util.check_call([
-            sys.executable,
-            self._virtualenv_path,
-            '--no-site-packages',
-            "-p",
-            self._executable,
-            self._path])
+        util.check_call(self._virtualenv_argv + [self._path])
 
         log.info("Installing requirements for {0}".format(self.name))
         self._install_requirements()
 
     def _install_requirements(self):
         if sys.version_info[:2] == (3, 2):
-            pip_args = ['install', '-v', 'wheel<0.29.0', 'pip<8']
+            pip_args = ['-m', 'pip', 'install', '-v', 'wheel<0.29.0', 'pip<8']
         else:
-            pip_args = ['install', '-v', 'wheel', 'pip>=8']
+            pip_args = ['-m', 'pip', 'install', '-v', 'wheel', 'pip>=8']
 
         if 'COV_CORE_SOURCE' in os.environ:
             # To measure coverage of ASV parts run in a subprocess from
@@ -158,11 +159,7 @@ class Virtualenv(environment.Environment):
             # to be installed for that environment.
             pip_args.append('pytest-cov')
 
-        if not WIN:
-            self.run_executable('pip', pip_args)
-        else:
-            # Run pip self-upgrade via python -m pip, so that it works on Windows
-            self.run_executable('python', ['-m', 'pip'] + pip_args)
+        self.run_executable('python', pip_args)
 
         if self._requirements:
             args = ['install', '-v', '--upgrade']
