@@ -39,6 +39,7 @@ class Config(object):
         self.regressions_first_commits = {}
         self.regressions_thresholds = {}
         self.plugins = []
+        self.conda_channels = []
 
     @classmethod
     def load(cls, path=None):

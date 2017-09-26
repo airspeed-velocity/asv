@@ -42,6 +42,10 @@
     // to the current version of Python used to run `asv`.
     // "pythons": ["2.7", "3.3"],
 
+    // The list of conda channel names to be searched for benchmark
+    // dependency packages in the specified order
+    // "conda_channels": ["conda-forge", "defaults"]
+
     // The matrix of dependencies to test.  Each key is the name of a
     // package (in PyPI) and the values are version numbers.  An empty
     // list or empty string indicates to just test against the default

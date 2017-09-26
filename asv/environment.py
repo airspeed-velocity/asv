@@ -415,8 +415,9 @@ class Environment(object):
             return False
 
         for executable in ['pip', 'python']:
-            exe = self.find_executable(executable)
-            if not os.path.isfile(exe):
+            try:
+                self.find_executable(executable)
+            except IOError:
                 return False
 
         try:
@@ -533,20 +534,19 @@ class Environment(object):
     def find_executable(self, executable):
         """
         Find an executable (eg. python, pip) in the environment.
+
+        If not found, raises IOError
         """
 
         # Assume standard virtualenv/Conda layout
         if WIN:
-            executable += ".exe"
+            paths = [self._path,
+                     os.path.join(self._path, 'Scripts'),
+                     os.path.join(self._path, 'bin')]
+        else:
+            paths = [os.path.join(self._path, 'bin')]
 
-            exe = os.path.join(self._path, 'Scripts', executable)
-            if os.path.isfile(exe):
-                return exe
-            exe = os.path.join(self._path, executable)
-            if os.path.isfile(exe):
-                return exe
-
-        return os.path.join(self._path, 'bin', executable)
+        return util.which(executable, paths)
 
     def run_executable(self, executable, args, **kwargs):
         """

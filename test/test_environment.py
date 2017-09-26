@@ -8,6 +8,7 @@ import os
 import sys
 import six
 import pytest
+import json
 
 from asv import config
 from asv import environment
@@ -106,6 +107,9 @@ def test_large_environment_matrix(tmpdir):
         # this test run a long time, we only set up the environment,
         # but don't actually install dependencies into it.  This is
         # enough to trigger the bug in #169.
+        env._get_requirements = lambda *a: ([], [])
+        # pip / virtualenv setup still uses
+        # _install_requirements
         env._install_requirements = lambda *a: None
         env.create()
 
@@ -320,6 +324,7 @@ def test_conda_pip_install(tmpdir):
 
     conf.env_dir = six.text_type(tmpdir.join("env"))
 
+    conf.environment_type = "conda"
     conf.pythons = ["3.4"]
     conf.matrix = {
         "pip+colorama": ["0.3.6"]
@@ -459,6 +464,55 @@ def test_matrix_existing():
     items = [(env.tool_name, tuple(env.requirements.keys())) for env in environments]
     assert items == [('existing', ())]
 
+# environment.yml should respect the specified order
+# of channels when adding packages
+@pytest.mark.skipif((not HAS_CONDA),
+                    reason="Requires conda")
+@pytest.mark.parametrize("channel_list,expected_channel", [
+    (["defaults", "conda-forge"], "defaults"),
+    (["conda-forge", "defaults"], "conda-forge"),
+    ])
+def test_conda_channel_addition(tmpdir,
+                                channel_list,
+                                expected_channel):
+    # test that we can add conda channels to environments
+    # and that we respect the specified priority order
+    # of channels
+    conf = config.Config()
+    conf.env_dir = six.text_type(tmpdir.join("env"))
+    conf.environment_type = "conda"
+    conf.pythons = ["2.7", "3.6"]
+    conf.matrix = {}
+    # these have to be valid channels
+    # available for online access
+    conf.conda_channels = channel_list
+    environments = list(environment.get_environments(conf, None))
+
+    # should have one environment per Python version
+    assert len(environments) == 2
+
+    # create the two environments
+    for env in environments:
+        env.create()
+        # generate JSON output from conda list
+        # and parse to verify added channels
+        # for current env
+        # (conda info would be more direct, but
+        # seems to reflect contents of condarc file,
+        # which we are intentionally trying not to modify)
+        conda = os.path.normpath(env.find_executable('conda'))
+        print("\n**conda being used:", conda)
+        out_str = six.text_type(util.check_output([conda,
+                                                    'list',
+                                                    '-p',
+                                                    os.path.normpath(env._path),
+                                                    '--json']))
+        json_package_list = json.loads(out_str)
+        for installed_package in json_package_list:
+            # ignore default-only package
+            if installed_package['name'] == 'vs2008_runtime':
+                continue
+            assert installed_package['channel'] == expected_channel
 
 @pytest.mark.skipif(not (HAS_PYPY and HAS_VIRTUALENV), reason="Requires pypy and virtualenv")
 def test_pypy_virtualenv(tmpdir):
