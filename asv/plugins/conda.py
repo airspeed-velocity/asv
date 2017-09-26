@@ -156,3 +156,9 @@ class Conda(environment.Environment):
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
         return self.run_executable('python', args, **kwargs)
+
+    def run_executable(self, executable, args, **kwargs):
+        # Conda doesn't guarantee that user site directories are excluded
+        kwargs["env"] = dict(kwargs.pop("env", os.environ),
+                             PYTHONNOUSERSITE=str("True"))
+        return super(Conda, self).run_executable(executable, args, **kwargs)
