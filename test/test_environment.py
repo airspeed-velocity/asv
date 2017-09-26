@@ -514,3 +514,8 @@ def test_environment_environ_path(environment_type, tmpdir):
     output = env.run(['-c', 'import os; print(os.environ["PATH"])'])
     paths = output.strip().split(os.pathsep)
     assert os.path.commonprefix([paths[0], conf.env_dir]) == conf.env_dir
+
+    # Check user-site directory is not in sys.path
+    output = env.run(['-c', 'import site; print(site.ENABLE_USER_SITE)'])
+    usersite_in_syspath = output.strip()
+    assert usersite_in_syspath == "False"
