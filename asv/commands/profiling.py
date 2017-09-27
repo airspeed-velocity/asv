@@ -164,7 +164,9 @@ class Profile(Command):
                     "Profiles must be run in the same version of Python as the "
                     "asv master process")
 
-            benchmarks = Benchmarks(conf, repo, environments, regex='^{0}$'.format(benchmark))
+            benchmarks = Benchmarks.discover(conf, repo, environments,
+                                             [commit_hash],
+                                             regex='^{0}$'.format(benchmark))
             if len(benchmarks) != 1:
                 raise util.UserError(
                     "Could not find benchmark {0}".format(benchmark))

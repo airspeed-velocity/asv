@@ -497,23 +497,15 @@ class Environment(object):
 
     def build_project(self, repo, commit_hash):
         self.checkout_project(repo, commit_hash)
-        log.info("Building for {0}".format(self.name))
+        log.info("Building {0} for {1}".format(commit_hash[:8], self.name))
         self.run(['setup.py', 'build'], cwd=self._build_root)
         return self._build_root
 
-    def install_project(self, conf, repo, commit_hash=None):
+    def install_project(self, conf, repo, commit_hash):
         """
         Install the benchmarked project into the environment.
         Uninstalls any installed copy of the project first.
-        If no specific commit hash is given, one is chosen;
-        either a choice that already exist in wheel cache,
-        or first current branch configured.
         """
-        if commit_hash is None:
-            commit_hash = self._cache.get_existing_commit_hash()
-            if commit_hash is None:
-                commit_hash = repo.get_hash_from_name(conf.branches[0])
-
         self.uninstall(conf.project)
 
         build_root = self._cache.build_project_cached(

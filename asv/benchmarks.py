@@ -309,7 +309,40 @@ class Benchmarks(dict):
     """
     api_version = 1
 
-    def __init__(self, conf, repo, environments, benchmarks=None, regex=None):
+    def __init__(self, conf, benchmarks, regex=None):
+        """
+        Initialize a list of benchmarks.
+
+        Parameters
+        ----------
+        conf : Config object
+            The project's configuration
+
+        benchmarks : list
+            Benchmarks as from Benchmarks._disc_benchmarks
+            or loaded from a file.
+
+        regex : str or list of str, optional
+            `regex` is a list of regular expressions matching the
+            benchmarks to run.  If none are provided, all benchmarks
+            are run.
+        """
+        self._conf = conf
+        self._benchmark_dir = conf.benchmark_dir
+
+        if not regex:
+            regex = []
+        if isinstance(regex, six.string_types):
+            regex = [regex]
+
+        self._all_benchmarks = {}
+        for benchmark in benchmarks:
+            self._all_benchmarks[benchmark['name']] = benchmark
+            if not regex or any(re.search(reg, benchmark['name']) for reg in regex):
+                self[benchmark['name']] = benchmark
+
+    @classmethod
+    def discover(cls, conf, repo, environments, commit_hash, regex=None):
         """
         Discover benchmarks in the given `benchmark_dir`.
 
@@ -324,32 +357,20 @@ class Benchmarks(dict):
         environments : list of Environment
             List of environments available for benchmark discovery.
 
+        commit_hash : list of str
+            Commit hashes to use for benchmark discovery.
+
         regex : str or list of str, optional
             `regex` is a list of regular expressions matching the
             benchmarks to run.  If none are provided, all benchmarks
             are run.
+
         """
-        self._conf = conf
-        self._benchmark_dir = conf.benchmark_dir
-
-        if benchmarks is None:
-            benchmarks = self.disc_benchmarks(conf, repo, environments)
-        else:
-            benchmarks = six.itervalues(benchmarks)
-
-        if not regex:
-            regex = []
-        if isinstance(regex, six.string_types):
-            regex = [regex]
-
-        self._all_benchmarks = {}
-        for benchmark in benchmarks:
-            self._all_benchmarks[benchmark['name']] = benchmark
-            if not regex or any(re.search(reg, benchmark['name']) for reg in regex):
-                self[benchmark['name']] = benchmark
+        benchmarks = cls._disc_benchmarks(conf, repo, environments, commit_hash)
+        return cls(conf, benchmarks, regex=regex)
 
     @classmethod
-    def disc_benchmarks(cls, conf, repo, environments):
+    def _disc_benchmarks(cls, conf, repo, environments, commit_hashes):
         """
         Discover all benchmarks in a directory tree.
         """
@@ -360,21 +381,32 @@ class Benchmarks(dict):
         if len(environments) == 0:
             raise util.UserError("No available environments")
 
-        # Ideally, use an environment in the same Python version as
-        # master, but if one isn't found, just default to the first
-        # one.
-        this_version = "{0:d}.{1:d}".format(
-            sys.version_info[0], sys.version_info[1])
-        for env in environments:
-            if env.python == this_version:
-                break
-        else:
-            env = environments[0]
+        # Append default commit hashes, to make it probably the
+        # discovery usually succeeds
+        commit_hashes = list(commit_hashes)
+        for branch in conf.branches:
+            branch_hash = repo.get_hash_from_name(branch)
+            if branch_hash not in commit_hashes:
+                commit_hashes.append(branch_hash)
 
         log.info("Discovering benchmarks")
         with log.indent():
-            env.create()
-            env.install_project(conf, repo)
+            last_err = None
+            for env, commit_hash in itertools.product(environments, commit_hashes):
+                env.create()
+
+                if last_err is not None:
+                    log.warn("Build failed: trying different commit")
+
+                try:
+                    env.install_project(conf, repo, commit_hash)
+                    break
+                except util.ProcessError as err:
+                    # Installation failed
+                    last_err = err
+            else:
+                log.error(str(last_err))
+                raise util.UserError("Failed to build the project.")
 
             result_file = tempfile.NamedTemporaryFile(delete=False)
             try:
@@ -448,7 +480,7 @@ class Benchmarks(dict):
         util.write_json(path, self._all_benchmarks, self.api_version)
 
     @classmethod
-    def load(cls, conf, repo, environments):
+    def load(cls, conf):
         """
         Load the benchmark descriptions from the `benchmarks.json` file.
         If the file is not found, one of the given `environments` will
@@ -458,33 +490,21 @@ class Benchmarks(dict):
         ----------
         conf : Config object
             The project's configuration
-        repo : Repo object
-            The project's repository (for benchmark discovery)
-        environments : list of Environment objects
-            Environments for benchmark discovery
 
         Returns
         -------
         benchmarks : Benchmarks object
         """
-        def regenerate():
-            self = cls(conf, repo, environments)
-            self.save()
-            return self
-
-        path = cls.get_benchmark_file_path(conf.results_dir)
-        if not os.path.isfile(path):
-            return regenerate()
-
-        d = util.load_json(path, cleanup=False)
-        version = d['version']
-        del d['version']
-        if version != cls.api_version:
-            # Just re-do the discovery if the file is the wrong
-            # version
-            return regenerate()
-
-        return cls(conf, repo, environments, benchmarks=d)
+        try:
+            path = cls.get_benchmark_file_path(conf.results_dir)
+            if not os.path.isfile(path):
+                raise util.UserError("Benchmark list file {} missing!".format(path))
+            d = util.load_json(path, cleanup=False, api_version=cls.api_version)
+            benchmarks = six.itervalues(d)
+            return cls(conf, benchmarks)
+        except util.UserError as err:
+            raise util.UserError("{}\nUse `asv run --bench just-discover` to "
+                                 "regenerate benchmarks.json".format(str(err)))
 
     def run_benchmarks(self, env, show_stderr=False, quick=False, profile=False,
                        skip=None):

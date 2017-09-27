@@ -138,12 +138,12 @@ def test_run_publish(capfd, basic_conf):
     tools.run_asv_with_conf(conf, 'run', "EXISTING", '--quick', *env_spec,
                             _machine_file=machine_file)
 
-    # Remove the benchmarks.json file to make sure publish can
-    # regenerate it
+    # Remove the benchmarks.json file and check publish fails
 
     os.remove(join(tmpdir, "results_workflow", "benchmarks.json"))
 
-    tools.run_asv_with_conf(conf, 'publish')
+    with pytest.raises(util.UserError):
+        tools.run_asv_with_conf(conf, 'publish')
 
 
 def test_continuous(capfd, basic_conf):
