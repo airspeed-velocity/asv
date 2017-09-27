@@ -6,9 +6,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 from distutils.version import LooseVersion
 import sys
 import re
-import inspect
 import os
-import subprocess
 
 import six
 
@@ -57,11 +55,6 @@ class Virtualenv(environment.Environment):
         except ImportError:
             raise environment.EnvironmentUnavailable(
                 "virtualenv package not installed")
-
-        # Can't use `virtualenv.__file__` here, because that will refer to a
-        # .pyc file which can't be used on another version of Python
-        self._virtualenv_path = os.path.abspath(
-            inspect.getsourcefile(virtualenv))
 
     @staticmethod
     def _find_python(python):
@@ -137,7 +130,7 @@ class Virtualenv(environment.Environment):
         log.info("Creating virtualenv for {0}".format(self.name))
         util.check_call([
             sys.executable,
-            self._virtualenv_path,
+            "-mvirtualenv",
             '--no-site-packages',
             "-p",
             self._executable,
