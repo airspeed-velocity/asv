@@ -63,7 +63,7 @@ def test_matrix_environments(tmpdir):
     conf.pythons = ["2.7", "3.4"]
     conf.matrix = {
         "six": ["1.10", None],
-        "colorama": ["0.3.6", "0.3.7"]
+        "colorama": ["0.3.7", "0.3.9"]
     }
     environments = list(environment.get_environments(conf, None))
 
@@ -327,7 +327,7 @@ def test_conda_pip_install(tmpdir):
 
     conf.pythons = ["3.4"]
     conf.matrix = {
-        "pip+colorama": ["0.3.6"]
+        "pip+colorama": ["0.3.9"]
     }
     environments = list(environment.get_environments(conf, None))
 
