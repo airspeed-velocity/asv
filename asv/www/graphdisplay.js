@@ -185,7 +185,7 @@ $(document).ready(function() {
                 });
             }
 
-            var name = bm.pretty_name || bm.name || parts[parts.length - 1];
+            var name = bm.pretty_name || parts[parts.length - 1];
             var top = $('<li><a href="#' + bm_name + '">' + name + '</li>');
             stack[stack.length - 1].append(top);
 
