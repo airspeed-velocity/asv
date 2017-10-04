@@ -24,7 +24,8 @@ $(document).ready(function() {
             '"/>');
         var plot_div = $(
             '<div id="summarygrid-' + bm.name + '" class="benchmark-plot"/>');
-        var name = $('<div class="benchmark-text">' + bm.name + '</div>');
+        var display_name = bm.pretty_name || bm.name;
+        var name = $('<div class="benchmark-text">' + display_name + '</div>');
         name.tooltip({
             title: bm.name,
             html: true,
