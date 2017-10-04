@@ -398,6 +398,20 @@ $(document).ready(function() {
         return rev;
     }
 
+    function get_benchmark_by_groups() {
+        var groups = {};
+        $.each(master_json.benchmarks, function(bm_name, bm) {
+            var i = bm_name.indexOf('.');
+            var group = bm_name.slice(0, i);
+            var name = bm_name.slice(i + 1);
+            if (groups[group] === undefined) {
+                groups[group] = [];
+            }
+            groups[group].push(bm_name);
+        });
+        return groups;
+    }
+
     function init() {
         /* Fetch the master index.json and then set up the page elements
            based on it. */
@@ -448,6 +462,7 @@ $(document).ready(function() {
     this.load_graph_data = load_graph_data;
     this.get_commit_hash = get_commit_hash;
     this.get_revision = get_revision;
+    this.get_benchmark_by_groups = get_benchmark_by_groups;
 
     this.master_json = master_json; /* Updated after index.json loads */
 

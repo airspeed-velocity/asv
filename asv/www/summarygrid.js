@@ -24,7 +24,7 @@ $(document).ready(function() {
             '"/>');
         var plot_div = $(
             '<div id="summarygrid-' + bm.name + '" class="benchmark-plot"/>');
-        var display_name = bm.pretty_name || bm.name;
+        var display_name = bm.pretty_name || bm.name.slice(bm.name.indexOf('.') + 1);
         var name = $('<div class="benchmark-text">' + display_name + '</div>');
         name.tooltip({
             title: bm.name,
@@ -95,8 +95,14 @@ $(document).ready(function() {
             return;
         }
 
-        $.each(master_json.benchmarks, function(bm_name, bm) {
-            summary_container.append(benchmark_container(bm));
+        $.each($.asv.get_benchmark_by_groups(), function(group, benchmarks) {
+            var group_container = $('<div class="benchmark-group"/>')
+            group_container.append($('<h1>' + group + '</h1>'));
+            summary_display.append(group_container);
+            $.each(benchmarks, function(i, bm_name) {
+                var bm = $.asv.master_json.benchmarks[bm_name];
+                group_container.append(benchmark_container(bm));
+            });
         });
 
         summary_display.append(summary_container);
