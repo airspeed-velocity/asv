@@ -89,7 +89,7 @@ class Repo(object):
 
     def get_new_range_spec(self, latest_result, branch=None):
         """
-        Returns a formatted string giving the results between the 
+        Returns a formatted string giving the results between the
         latest result and the newest hash in a given branch.
         If no branch given, use the 'master' branch.
         """
@@ -107,6 +107,13 @@ class Repo(object):
         syntax of the range specifier will depend on the DVCS used.
         """
         raise NotImplementedError()
+
+    def get_hashes_from_pipe(self, text):
+        """
+        Get a list of commit hashes given a chunk of text where each hash is on
+        a new line.
+        """
+        return [s.strip() for s in text.splitlines()]
 
     def get_hash_from_name(self, name):
         """

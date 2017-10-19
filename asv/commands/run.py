@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import six
 
+import sys
 import logging
 import traceback
 
@@ -53,7 +54,7 @@ class Run(Command):
             description="Run a benchmark suite.")
 
         parser.add_argument(
-            'range', nargs='?', default=None,
+            'range', nargs='?', default=sys.stdin,
             help="""Range of commits to benchmark.  For a git
             repository, this is passed as the first argument to ``git
             log``.  See 'specifying ranges' section of the
@@ -161,7 +162,10 @@ class Run(Command):
         elif isinstance(range_spec, list):
             commit_hashes = range_spec
         else:
-            commit_hashes = repo.get_hashes_from_range(range_spec)
+            try:  # if range_spec is stdin it will have .read()
+                commit_hashes = range_spec.read().splitlines()
+            except AttributeError:
+                commit_hashes = repo.get_hashes_from_range(range_spec)
 
         if len(commit_hashes) == 0:
             log.error("No commit hashes selected")
