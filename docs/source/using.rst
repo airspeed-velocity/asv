@@ -61,7 +61,7 @@ suite are:
   should be a read-only URL so that anyone, even those without commit
   rights to the repository, can run the benchmarks.  For a project on
   github, for example, the URL would look like:
-  ``https://github.com/spacetelescope/asv.git``
+  ``https://github.com/airspeed-velocity/asv.git``
 
   The value can also be a path, relative to the location of the
   configuration file. For example, if the benchmarks are stored

@@ -30,9 +30,9 @@ set ``"repo": ".."`` to use the local repository.
 Currently, only ``git`` and ``hg`` repositories are supported, so this must be
 a URL that ``git`` or ``hg`` know how to clone from, for example:
 
-   - git@github.com:spacetelescope/asv.git
+   - git@github.com:airspeed-velocity/asv.git
 
-   - https://github.com/spacetelescope/asv.git
+   - https://github.com/airspeed-velocity/asv.git
 
    - ssh://hg@bitbucket.org/yt_analysis/yt
 
