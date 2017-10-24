@@ -11,7 +11,7 @@ webserver to host.
 
 See an `example airspeed velocity site <https://pv.github.io/numpy-bench/>`__.
 
-See the `full documentation <http://spacetelescope.github.io/asv>`__
+See the `full documentation <https://asv.readthedocs.io/>`__
 for more information.
 
 Are you using ``asv``?  Consider adding a badge to your project's
