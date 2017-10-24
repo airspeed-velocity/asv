@@ -19,7 +19,7 @@ License: `BSD three-clause license
 
 Releases: https://pypi.python.org/pypi/asv
 
-Development: https://github.com/spacetelescope/asv
+Development: https://github.com/airspeed-velocity/asv
 
 .. toctree::
    :maxdepth: 1

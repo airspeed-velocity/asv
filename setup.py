@@ -228,7 +228,7 @@ def run_setup(build_binary=False):
         author_email="mdroe@stsci.edu",
         description="Airspeed Velocity: A simple Python history benchmarking tool",
         license="BSD",
-        url="http://github.com/spacetelescope/asv",
+        url="https://github.com/airspeed-velocity/asv",
         long_description=long_description,
         classifiers=[
             'Environment :: Console',
