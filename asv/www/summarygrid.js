@@ -18,6 +18,21 @@ $(document).ready(function() {
         $(window).on('scroll', handler);
     }
 
+    function get_benchmarks_by_groups() {
+        var master_json = $.asv.master_json;
+        var groups = {};
+        $.each(master_json.benchmarks, function(bm_name, bm) {
+            var i = bm_name.indexOf('.');
+            var group = bm_name.slice(0, i);
+            var name = bm_name.slice(i + 1);
+            if (groups[group] === undefined) {
+                groups[group] = [];
+            }
+            groups[group].push(bm_name);
+        });
+        return groups;
+    }
+
     function benchmark_container(bm) {
         var container = $(
             '<a class="btn benchmark-container" href="#' + bm.name +
@@ -95,7 +110,7 @@ $(document).ready(function() {
             return;
         }
 
-        $.each($.asv.get_benchmark_by_groups(), function(group, benchmarks) {
+        $.each(get_benchmarks_by_groups(), function(group, benchmarks) {
             var group_container = $('<div class="benchmark-group"/>')
             group_container.append($('<h1>' + group + '</h1>'));
             summary_display.append(group_container);
