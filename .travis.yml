@@ -20,7 +20,7 @@ matrix:
     - python: 2.7
       env:
         - USE_CONDA=true
-        - COVERAGE=--cov asv
+        - COVERAGE="--cov=asv --cov=test"
 
     - python: 3.6
       env: USE_CONDA=true
@@ -62,11 +62,11 @@ install:
       $TRAVIS_PIP install virtualenv;
     fi
     $TRAVIS_PIP install selenium six pytest pytest-timeout feedparser python-hglib;
-    if [[ $COVERAGE != '' ]]; then $TRAVIS_PIP install pytest-cov codecov; fi;
+    if [[ "$COVERAGE" != '' ]]; then $TRAVIS_PIP install pytest-cov codecov; fi;
   - $TRAVIS_PYTHON setup.py build_ext -i
 
 script:
   - $TRAVIS_PYTHON -m pytest --timeout=360 -l $COVERAGE test
 
 after_success:
-  - if [[ $COVERAGE != '' ]]; then codecov; fi
+  - if [[ "$COVERAGE" != '' ]]; then codecov; fi
