@@ -125,8 +125,11 @@ nav li.active span.navbar-brand:hover {
 
 /* Summary page */
 
+.benchmark-group > h1 {
+    text-align: center;
+}
+
 .benchmark-container {
-    float: left;
     width: 300px;
     height: 116px;
     padding: 4px;
