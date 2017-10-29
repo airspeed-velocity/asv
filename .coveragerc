@@ -1,0 +1,5 @@
+[run]
+source =
+    asv
+    test
+branch = True

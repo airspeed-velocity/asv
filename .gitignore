@@ -38,6 +38,7 @@ distribute-*.tar.gz
 .settings
 .idea
 .coverage
+.coverage.*
 cover
 htmlcov
 
