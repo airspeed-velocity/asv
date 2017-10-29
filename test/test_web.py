@@ -120,8 +120,13 @@ def test_web_summarygrid(browser, basic_html):
 
         assert browser.title == 'airspeed velocity of an unladen asv'
 
-        # Open a graph display
-        browser.find_element_by_link_text('params_examples.track_param').click()
+        # Open a graph display, scroll to item and click
+        item = browser.find_element_by_link_text('params_examples.track_param')
+
+        y = item.location['y']
+        browser.execute_script('window.scrollTo(0, {0})'.format(y - 200))
+
+        item.click()
 
         # Verify there's a plot of some sort
         browser.find_element_by_css_selector('canvas.flot-base')
