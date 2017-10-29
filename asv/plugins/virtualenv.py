@@ -158,11 +158,7 @@ class Virtualenv(environment.Environment):
             # to be installed for that environment.
             pip_args.append('pytest-cov')
 
-        if not WIN:
-            self.run_executable('pip', pip_args)
-        else:
-            # Run pip self-upgrade via python -m pip, so that it works on Windows
-            self.run_executable('python', ['-m', 'pip'] + pip_args)
+        self._run_pip(pip_args)
 
         if self._requirements:
             args = ['install', '-v', '--upgrade']
@@ -175,17 +171,22 @@ class Virtualenv(environment.Environment):
                     args.append("{0}=={1}".format(pkg, val))
                 else:
                     args.append(pkg)
-            self.run_executable('pip', args, timeout=self._install_timeout)
+            self._run_pip(args, timeout=self._install_timeout)
+
+    def _run_pip(self, args, **kwargs):
+        # Run pip via python -m pip, so that it works on Windows when
+        # upgrading pip itself, and avoids shebang length limit on Linux
+        return self.run_executable('python', ['-mpip'] + list(args), **kwargs)
 
     def install(self, package):
         log.info("Installing into {0}".format(self.name))
-        self.run_executable('pip', ['install', package],
-                            timeout=self._install_timeout)
+        self._run_pip(['install', package], timeout=self._install_timeout)
 
     def uninstall(self, package):
         log.info("Uninstalling from {0}".format(self.name))
-        self.run_executable('pip', ['uninstall', '-y', package],
-                            valid_return_codes=None)
+        self._run_pip(['uninstall', '-y', package],
+                      timeout=self._install_timeout,
+                      valid_return_codes=None)
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
