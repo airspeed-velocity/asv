@@ -50,16 +50,16 @@ install:
     export TRAVIS_PYTHON=`which python`
     export TRAVIS_PIP=`which pip`
     if [[ $USE_CONDA == true ]]; then
-      wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
       chmod +x miniconda.sh;
       ./miniconda.sh -b;
-      export PATH=$HOME/miniconda2/bin:$PATH;
+      export PATH=$HOME/miniconda3/bin:$PATH;
       conda update --yes conda;
-      mv $HOME/miniconda2/bin/conda $HOME/miniconda2/bin/conda.real;
-      echo -e '#!/bin/bash\n' > $HOME/miniconda2/bin/conda;
-      declare -f travis_retry >> $HOME/miniconda2/bin/conda;
-      echo -e '\ntravis_retry "$HOME/miniconda2/bin/conda.real" "$@"' >> $HOME/miniconda2/bin/conda;
-      chmod +x $HOME/miniconda2/bin/conda;
+      mv $HOME/miniconda3/bin/conda $HOME/miniconda3/bin/conda.real;
+      echo -e '#!/bin/bash\n' > $HOME/miniconda3/bin/conda;
+      declare -f travis_retry >> $HOME/miniconda3/bin/conda;
+      echo -e '\ntravis_retry "$HOME/miniconda3/bin/conda.real" "$@"' >> $HOME/miniconda3/bin/conda;
+      chmod +x $HOME/miniconda3/bin/conda;
       if $TRAVIS_PYTHON -c 'import virtualenv'; then echo "ERROR: virtualenv package is installed"; exit 1; fi;
     else
       if [[ "$TRAVIS_PYTHON_VERSION" == "3.2" ]]; then
