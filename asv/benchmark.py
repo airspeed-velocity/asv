@@ -303,7 +303,7 @@ class Benchmark(object):
     def __init__(self, name, func, attr_sources):
         self.name = name
         self.func = func
-        self.pretty_name = getattr(func, "pretty_name", name)
+        self.pretty_name = getattr(func, "pretty_name", None)
         self._attr_sources = attr_sources
         self._setups = list(_get_all_attrs(attr_sources, 'setup', True))[::-1]
         self._teardowns = list(_get_all_attrs(attr_sources, 'teardown', True))

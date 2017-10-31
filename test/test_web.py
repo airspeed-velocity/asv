@@ -120,8 +120,19 @@ def test_web_summarygrid(browser, basic_html):
 
         assert browser.title == 'airspeed velocity of an unladen asv'
 
+        # Verify benchmark names are displayed as expected
+        for href, expected in (
+            ('#subdir.time_subdir.time_foo', u'time_subdir.time_foo'),
+            ('#params_examples.ParamSuite.track_value', u'ParamSuite.track_value'),
+            ('#custom.time_function', u'My Custom Function'),
+            ('#named.track_custom_pretty_name', u'this.is/the.answer'),
+        ):
+            item = browser.find_element_by_xpath(
+                "//a[@href='{}']/div[@class='benchmark-text']".format(href))
+            assert item.text == expected
+
         # Open a graph display, scroll to item and click
-        item = browser.find_element_by_link_text('params_examples.track_param')
+        item = browser.find_element_by_link_text('track_param')
 
         y = item.location['y']
         browser.execute_script('window.scrollTo(0, {0})'.format(y - 200))

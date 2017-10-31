@@ -71,10 +71,14 @@ def test_find_benchmarks(tmpdir):
     assert len(b) == 2
 
     b = benchmarks.Benchmarks(conf, repo, envs, regex='custom')
-    assert sorted(b.keys()) == ['custom.time_function', 'custom.track_method']
+    assert sorted(b.keys()) == ['custom.time_function', 'custom.track_method',
+                                'named.track_custom_pretty_name']
+    assert 'pretty_name' not in b['custom.track_method']
+    assert b['custom.time_function']['pretty_name'] == 'My Custom Function'
+    assert b['named.track_custom_pretty_name']['pretty_name'] == 'this.is/the.answer'
 
     b = benchmarks.Benchmarks(conf, repo, envs)
-    assert len(b) == 33
+    assert len(b) == 34
 
     start_timestamp = datetime.datetime.utcnow()
 
