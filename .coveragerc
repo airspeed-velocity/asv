@@ -1,6 +1,4 @@
 [run]
-source =
-    .
 include =
     asv/**
     test/**
