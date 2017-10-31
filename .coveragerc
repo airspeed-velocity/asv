@@ -1,5 +1,7 @@
 [run]
 source =
-    asv
-    test
+    .
+include =
+    asv/**
+    test/**
 branch = True
