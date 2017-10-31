@@ -17,3 +17,11 @@ def named_function(self):
 
 
 named_function.benchmark_name = 'custom.time_function'
+named_function.pretty_name = 'My Custom Function'
+
+
+def track_custom_pretty_name(self):
+    return 42
+
+
+track_custom_pretty_name.pretty_name = 'this.is/the.answer'
