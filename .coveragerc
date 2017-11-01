@@ -1,5 +1,3 @@
 [run]
-include =
-    asv/**
-    test/**
+include = */asv/*
 branch = True
