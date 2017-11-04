@@ -12,7 +12,7 @@ import warnings
 
 
 class TimeSuite:
-    goal_time = 0.1
+    sample_time = 0.1
 
     def setup(self):
         self.n = 100
@@ -39,7 +39,7 @@ def time_with_warnings():
     1 / 0
     warnings.warn('after')
 
-time_with_warnings.goal_time = 0.1
+time_with_warnings.sample_time = 0.1
 
 
 def time_with_timeout():
@@ -77,7 +77,7 @@ class TimeWithRepeatCalibrate(object):
     # autodetection of suitable `number`
     repeat = 1
     number = 0
-    goal_time = 0.1
+    sample_time = 0.1
 
     def setup(self):
         print("setup")
@@ -90,7 +90,7 @@ class TimeWithBadTimer(object):
     # Check that calibration of number is robust against bad timers
     repeat = 1
     number = 0
-    goal_time = 0.1
+    sample_time = 0.1
     timeout = 5
 
     def timer(self):

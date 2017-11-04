@@ -434,7 +434,7 @@ class TimeBenchmark(Benchmark):
     def _load_vars(self):
         self.repeat = _get_first_attr(self._attr_sources, 'repeat', 0)
         self.number = int(_get_first_attr(self._attr_sources, 'number', 0))
-        self.goal_time = _get_first_attr(self._attr_sources, 'goal_time', 0.1)
+        self.sample_time = _get_first_attr(self._attr_sources, 'sample_time', 0.1)
         self.warmup_time = _get_first_attr(self._attr_sources, 'warmup_time', -1)
         self.timer = _get_first_attr(self._attr_sources, 'timer', process_time)
 
@@ -476,12 +476,12 @@ class TimeBenchmark(Benchmark):
         return {'samples': samples, 'number': number}
 
     def benchmark_timing(self, timer, repeat, warmup_time, number=0):
-        goal_time = self.goal_time
+        sample_time = self.sample_time
 
         start_time = time.time()
 
-        max_time = start_time + min(warmup_time + 1.3 * repeat * goal_time,
-                                    self.timeout - 1.3 * goal_time)
+        max_time = start_time + min(warmup_time + 1.3 * repeat * sample_time,
+                                    self.timeout - 1.3 * sample_time)
 
         def too_slow():
             # too slow, don't take more samples
@@ -501,12 +501,12 @@ class TimeBenchmark(Benchmark):
                 wall_time = time.time() - start
                 actual_timing = max(wall_time, timing)
 
-                if actual_timing >= goal_time:
+                if actual_timing >= sample_time:
                     if time.time() > start_time + warmup_time:
                         break
                 else:
                     try:
-                        p = min(10.0, max(1.1, goal_time/actual_timing))
+                        p = min(10.0, max(1.1, sample_time/actual_timing))
                     except ZeroDivisionError:
                         p = 10.0
                     number = max(number + 1, int(p * number))

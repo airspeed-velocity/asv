@@ -310,26 +310,26 @@ by the ``number`` and ``repeat`` attributes, as explained below.
 
 **Attributes**:
 
-- ``goal_time``: ``asv`` will automatically select the number of
-  iterations to run the benchmark so that it takes at least ``goal_time``
-  seconds each time.  If not specified, ``goal_time`` defaults to 0.1
-  seconds.
-
 - ``warmup_time``: ``asv`` will spend this time (in seconds) in calling
   the benchmarked function repeatedly, before starting to run the actual
   benchmark. If not specified, ``warmup_time`` defaults to 0.1 seconds
   (on PyPy, the default is 1.0 sec).
 
-- ``number``: Manually choose the number of iterations.  If ``number``
-  is specified, ``goal_time`` is ignored.
-  Note that ``setup`` and ``teardown`` are not run between iterations:
-  ``setup`` runs first, then the timing routine is called ``number`` times,
-  and after that ``teardown`` runs.
+- ``repeat``: The number measurement samples to collect. Each sample
+  consists of running the benchmark ``number`` times.  The median
+  time from all of these repetitions is used as the final measurement
+  result. When not provided, ``repeat`` defaults to 10. Setup and
+  teardown are before and after each sample.
 
-- ``repeat``: The number of times to repeat the benchmark, with each
-  repetition running the benchmark ``number`` of times.  The median
-  time from all of these repetitions is used as the final result.
-  When not provided, defaults to 10. Setup and teardown are run on each repeat.
+- ``number``: Manually choose the number of iterations in each sample.
+  If ``number`` is specified, ``sample_time`` is ignored.
+  Note that ``setup`` and ``teardown`` are not run between iterations:
+  ``setup`` runs first, then the timed benchmark routine is called
+  ``number`` times, and after that ``teardown`` runs.
+
+- ``sample_time``: ``asv`` will automatically select ``number`` so that
+  each sample takes approximatively ``sample_time`` seconds.  If not
+  specified, ``sample_time`` defaults to 0.1 seconds.
 
 - ``timer``: The timing function to use, which can be any source of
   monotonically increasing numbers, such as `time.clock`, `time.time`
@@ -349,7 +349,7 @@ by the ``number`` and ``repeat`` attributes, as explained below.
   measures the time used by the current process, is often the best
   choice.
 
-The ``goal_time``, ``number``, ``repeat``, and ``timer`` attributes
+The ``sample_time``, ``number``, ``repeat``, and ``timer`` attributes
 can be adjusted in the ``setup()`` routine, which can be useful for
 parameterized benchmarks.
 
