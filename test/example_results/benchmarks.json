@@ -27,7 +27,7 @@
     }, 
     "params_examples.TuningTest.time_it": {
         "code": "def time_it(self, n):\n    self.counter[0] += 1\n", 
-        "goal_time": 2.0, 
+        "sample_time": 2.0, 
         "name": "params_examples.TuningTest.time_it", 
         "number": 10, 
         "param_names": [
@@ -67,7 +67,7 @@
     }, 
     "params_examples.time_skip": {
         "code": "def time_skip(n):\n    list(range(n))\n", 
-        "goal_time": 0.01, 
+        "sample_time": 0.01, 
         "name": "params_examples.time_skip", 
         "number": 0, 
         "param_names": [
@@ -103,7 +103,7 @@
     }, 
     "subdir.time_subdir.time_foo": {
         "code": "def time_foo():\n    if x != 42:\n        raise RuntimeError()\n    for y in range(1000):\n        pass\n", 
-        "goal_time": 2.0, 
+        "sample_time": 2.0, 
         "name": "subdir.time_subdir.time_foo", 
         "number": 0, 
         "param_names": [], 
@@ -115,7 +115,7 @@
     }, 
     "time_examples.TimeSuite.time_example_benchmark_1": {
         "code": "def time_example_benchmark_1(self):\n    s = ''\n    for i in xrange(self.n):\n        s = s + 'x'\n", 
-        "goal_time": 2.0, 
+        "sample_time": 2.0, 
         "name": "time_examples.TimeSuite.time_example_benchmark_1", 
         "number": 0, 
         "param_names": [], 
@@ -127,7 +127,7 @@
     }, 
     "time_examples.TimeSuite.time_example_benchmark_2": {
         "code": "def time_example_benchmark_2(self):\n    s = []\n    for i in xrange(self.n):\n        s.append('x')\n    ''.join(s)\n", 
-        "goal_time": 2.0, 
+        "sample_time": 2.0, 
         "name": "time_examples.TimeSuite.time_example_benchmark_2", 
         "number": 0, 
         "param_names": [], 
@@ -139,7 +139,7 @@
     }, 
     "time_examples.TimeSuiteSub.time_example_benchmark_1": {
         "code": "def time_example_benchmark_1(self):\n    s = ''\n    for i in xrange(self.n):\n        s = s + 'x'\n", 
-        "goal_time": 2.0, 
+        "sample_time": 2.0, 
         "name": "time_examples.TimeSuiteSub.time_example_benchmark_1", 
         "number": 0, 
         "param_names": [], 
@@ -151,7 +151,7 @@
     }, 
     "time_examples.TimeSuiteSub.time_example_benchmark_2": {
         "code": "def time_example_benchmark_2(self):\n    s = []\n    for i in xrange(self.n):\n        s.append('x')\n    ''.join(s)\n", 
-        "goal_time": 2.0, 
+        "sample_time": 2.0, 
         "name": "time_examples.TimeSuiteSub.time_example_benchmark_2", 
         "number": 0, 
         "param_names": [], 
@@ -163,7 +163,7 @@
     }, 
     "time_examples.time_with_warnings": {
         "code": "def time_with_warnings():\n    print('hi')\n    warnings.warn('before')\n    1 / 0\n    warnings.warn('after')\n", 
-        "goal_time": 2.0, 
+        "sample_time": 2.0, 
         "name": "time_examples.time_with_warnings", 
         "number": 0, 
         "param_names": [], 
@@ -175,7 +175,7 @@
     }, 
     "time_secondary.TimeSecondary.time_exception": {
         "code": "def time_exception(self):\n    raise RuntimeError()\n", 
-        "goal_time": 2.0, 
+        "sample_time": 2.0, 
         "name": "time_secondary.TimeSecondary.time_exception", 
         "number": 0, 
         "param_names": [], 
@@ -187,7 +187,7 @@
     }, 
     "time_secondary.TimeSecondary.time_factorial": {
         "code": "def time_factorial(self):\n    x = 1\n    for i in xrange(100):\n        x *= i\n    # This is to generate invalid output\n    sys.stdout.write(\"X\")\n", 
-        "goal_time": 2.0, 
+        "sample_time": 2.0, 
         "name": "time_secondary.TimeSecondary.time_factorial", 
         "number": 0, 
         "param_names": [], 

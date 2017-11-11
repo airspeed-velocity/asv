@@ -24,7 +24,7 @@ except ImportError:
 
 
 class TimeSecondary:
-    goal_time = 0.05
+    sample_time = 0.05
 
     def time_factorial(self):
         x = 1

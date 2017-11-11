@@ -16,4 +16,4 @@ def setup_foo():
 
 
 time_foo.setup = setup_foo
-time_foo.goal_time = 0.1
+time_foo.sample_time = 0.1

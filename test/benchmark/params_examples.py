@@ -71,7 +71,7 @@ def time_skip(n):
     list(range(n))
 time_skip.params = [1000, 2000, 3000]
 time_skip.setup = setup_skip
-time_skip.goal_time = 0.01
+time_skip.sample_time = 0.01
 
 
 def track_find_test(n):
