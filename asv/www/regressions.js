@@ -179,6 +179,7 @@ $(document).ready(function() {
             var row = $('<tr/>');
 
             var benchmark_basename = benchmark_name.replace(/\(.*/, '');
+            var benchmark = $.asv.master_json.benchmarks[benchmark_basename];
             var url_params = {};
 
             $.each(param_dict, function (key, value) {
@@ -198,14 +199,16 @@ $(document).ready(function() {
             });
 
             if (parameter_idx !== null) {
-                url_params.idx = [parameter_idx];
+                $.each($.asv.param_selection_from_flat_idx(benchmark.params, parameter_idx).slice(1), function(i, param_values) {
+                    url_params['p-'+benchmark.param_names[i]] = [benchmark.params[i][param_values[0]]];
+                });
             }
             var benchmark_url = $.asv.format_hash_string({
                 location: [benchmark_basename],
                 params: url_params
             });
 
-            if ($.asv.master_json.benchmarks[benchmark_basename].unit == "seconds") {
+            if (benchmark.unit == "seconds") {
                 new_value = $.asv.pretty_second(new_value);
                 old_value = $.asv.pretty_second(old_value);
             }
