@@ -33,7 +33,7 @@ BENCHMARK_RUN_SCRIPT = os.path.join(
 
 
 def run_benchmark(benchmark, root, env, show_stderr=False,
-                  quick=False, profile=False, cwd=None):
+                  quick=False, profile=False, cwd=None, selected_idx=None):
     """
     Run a benchmark in different process in the given environment.
 
@@ -59,6 +59,10 @@ def run_benchmark(benchmark, root, env, show_stderr=False,
     cwd : str, optional
         The path to the current working directory to use when running
         the benchmark process.
+
+    selected_idx : str, optional
+        The list of parameters combination to run benchmark on. By default
+        run all combinations.
 
     Returns
     -------
@@ -120,6 +124,13 @@ def run_benchmark(benchmark, root, env, show_stderr=False,
         result['started_at'] = datetime.datetime.utcnow()
 
         for param_idx, params in param_iter:
+            if (selected_idx is not None and benchmark['params']
+                    and param_idx not in selected_idx):
+                # Use NaN to mark the result as skipped
+                bench_results.append(dict(samples=None, number=None,
+                                          result=float('nan'), stats=None))
+                bench_profiles.append(None)
+                continue
             success, data, profile_data, err, out, errcode = \
                 _run_benchmark_single(
                     benchmark, root, env, param_idx,
@@ -326,6 +337,9 @@ class Benchmarks(dict):
             `regex` is a list of regular expressions matching the
             benchmarks to run.  If none are provided, all benchmarks
             are run.
+            For parameterized benchmarks, the regex match against
+            `funcname(param0, param1, ...)` to include the parameter
+            combination in regex filtering.
         """
         self._conf = conf
         self._benchmark_dir = conf.benchmark_dir
@@ -336,10 +350,23 @@ class Benchmarks(dict):
             regex = [regex]
 
         self._all_benchmarks = {}
+        self._benchmark_selection = {}
         for benchmark in benchmarks:
             self._all_benchmarks[benchmark['name']] = benchmark
-            if not regex or any(re.search(reg, benchmark['name']) for reg in regex):
-                self[benchmark['name']] = benchmark
+            if benchmark['params']:
+                self._benchmark_selection[benchmark['name']] = []
+                for idx, param_set in enumerate(
+                        itertools.product(*benchmark['params'])):
+                    name = '%s(%s)' % (
+                        benchmark['name'],
+                        ', '.join(param_set))
+                    if not regex or any(re.search(reg, name) for reg in regex):
+                        self[benchmark['name']] = benchmark
+                        self._benchmark_selection[benchmark['name']].append(idx)
+            else:
+                self._benchmark_selection[benchmark['name']] = None
+                if not regex or any(re.search(reg, benchmark['name']) for reg in regex):
+                    self[benchmark['name']] = benchmark
 
     @classmethod
     def discover(cls, conf, repo, environments, commit_hash, regex=None):
@@ -616,7 +643,8 @@ class Benchmarks(dict):
                             benchmark, self._benchmark_dir, env,
                             show_stderr=show_stderr,
                             quick=quick, profile=profile,
-                            cwd=tmpdir)
+                            cwd=tmpdir,
+                            selected_idx=self._benchmark_selection[benchmark['name']])
                 finally:
                     shutil.rmtree(tmpdir, True)
 

@@ -564,7 +564,7 @@ class Results(object):
         Add any existing old results that aren't overridden by the
         current results.
         """
-        for dict_name in ('_results', '_samples', '_number', '_stats',
+        for dict_name in ('_samples', '_number', '_stats',
                           '_benchmark_params', '_profiles', '_started_at',
                           '_ended_at', '_benchmark_version'):
             old_dict = getattr(old, dict_name)
@@ -572,6 +572,23 @@ class Results(object):
             for key, val in six.iteritems(old_dict):
                 if key not in new_dict:
                     new_dict[key] = val
+        new_results = self._results
+        old_results = old._results
+        for key, val in six.iteritems(old_results):
+            if key not in new_results:
+                new_results[key] = val
+            elif self._benchmark_params[key]:
+                old_benchmark_results = {}
+                for idx, param_set in enumerate(itertools.product(
+                        *old._benchmark_params[key])):
+                    old_benchmark_results[param_set] = val[idx]
+                for idx, param_set in enumerate(itertools.product(
+                        *self._benchmark_params[key])):
+                    # when new result is skipped (NaN), keep previous result.
+                    if (util.is_nan(new_results[key][idx]) and
+                            old_benchmark_results.get(param_set) is not None):
+                        new_results[key][idx] = (
+                            old_benchmark_results[param_set])
 
     def rm(self, result_dir):
         path = os.path.join(result_dir, self._filename)
