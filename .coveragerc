@@ -1,3 +1,5 @@
 [run]
 include = */asv/*
 branch = True
+disable_warnings =
+    include-ignored
