@@ -20,6 +20,9 @@ environment:
         platform: x86
         PYTHON_ARCH: "32"
 
+cache:
+    - '%LOCALAPPDATA%\pip\Cache'
+
 install:
     # Clear tmpdir (sometimes left behind by appveyor?)
     - rmdir /s /q %APPVEYOR_BUILD_FOLDER%\\tmp & exit /b 0
@@ -55,3 +58,11 @@ build: false
 
 test_script:
     - "python -m pytest --timeout=360 -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp test"
+
+after_build:
+    # Clear up pip cache
+    - C:\cygwin\bin\find "%LOCALAPPDATA%\pip" -type f -mtime +360 -delete
+    - C:\cygwin\bin\find "%LOCALAPPDATA%\pip" -type f -size +10M -delete
+    - C:\cygwin\bin\find "%LOCALAPPDATA%\pip" -empty -delete
+    # Show size of cache
+    - C:\cygwin\bin\du -hs "%LOCALAPPDATA%\pip\Cache"
