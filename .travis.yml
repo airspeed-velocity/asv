@@ -44,15 +44,24 @@ matrix:
           SKIP="$SKIP|asv/benchmark.py.*undefined name .(run|params)."
           PYFLAKES_NODOCTEST=1 pyflakes asv test | grep -E -v "$SKIP" > test.out; cat test.out; test \! -s test.out
 
+cache:
+  directories:
+    - $HOME/.cache/pip
+    - $HOME/download
+
 install:
   - |
-    set -ev
+    set -e
     export TRAVIS_PYTHON=`which python`
     export TRAVIS_PIP=`which pip`
     if [[ $USE_CONDA == true ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-      chmod +x miniconda.sh;
-      ./miniconda.sh -b;
+      mkdir -p $HOME/download;
+      export MINICONDA_SH="Miniconda3-4.3.30-Linux-x86_64.sh";
+      pushd $HOME/download;
+      wget -N https://repo.continuum.io/miniconda/$MINICONDA_SH;
+      chmod +x $MINICONDA_SH;
+      ./$MINICONDA_SH -b;
+      popd;
       export PATH=$HOME/miniconda3/bin:$PATH;
       conda update --yes conda;
       mv $HOME/miniconda3/bin/conda $HOME/miniconda3/bin/conda.real;
