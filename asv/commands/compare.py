@@ -4,7 +4,6 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import six
 import itertools
 
 from . import Command
@@ -132,11 +131,11 @@ class Compare(Command):
             if len(machines) > 1:
                 raise util.UserError(
                     "Results available for several machines: {0} - "
-                    "specify which one to use with the --machine option".format(
-                        '/'.join(machines)))
+                    "specify which one to use with the --machine "
+                    "option".format('/'.join(machines)))
             else:
                 machine = machines[0]
-        elif not machine in machines:
+        elif machine not in machines:
             raise util.UserError(
                 "Results for machine '{0} not found".format(machine))
 
@@ -162,7 +161,8 @@ class Compare(Command):
                     result_value = result.get_result_value(key, params)
                     result_stats = result.get_result_stats(key, params)
                     result_version = result.benchmark_version.get(key)
-                    yield key, params, result_value, result_stats, result_version
+                    yield (key, params, result_value,
+                           result_stats, result_version)
 
         if resultset_1 is None:
             resultset_1 = results_default_iter(hash_1)
@@ -273,7 +273,8 @@ class Compare(Command):
                 mark = '-'
                 improved = True
             elif _is_result_better(time_1, time_2,
-                                   stats_1.get(benchmark), stats_2.get(benchmark),
+                                   stats_1.get(benchmark),
+                                   stats_2.get(benchmark),
                                    factor, use_stats=use_stats):
                 color = 'red'
                 mark = '+'
@@ -323,7 +324,8 @@ class Compare(Command):
                 color_print(titles[key])
                 color_print("")
             color_print("       before           after         ratio")
-            color_print("     [{0:8s}]       [{1:8s}]".format(hash_1[:8], hash_2[:8]))
+            color_print("     [{0:8s}]       [{1:8s}]".format(hash_1[:8],
+                                                              hash_2[:8]))
 
             if sort_by_ratio:
                 bench[key].sort(key=lambda v: v[3], reverse=True)

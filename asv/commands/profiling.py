@@ -138,8 +138,8 @@ class Profile(Command):
                         if env_matched:
                             if result.env.name not in checked_out:
                                 # We need to checkout the correct commit so that
-                                # the line numbers in the profile data match up with
-                                # what's in the source tree.
+                                # the line numbers in the profile data match
+                                # up with what's in the source tree.
                                 result.env.checkout_project(repo, commit_hash)
                                 checked_out.add(result.env.name)
                             profile_data = result.get_profile(benchmark)
@@ -164,7 +164,8 @@ class Profile(Command):
                     "Profiles must be run in the same version of Python as the "
                     "asv master process")
 
-            benchmarks = Benchmarks(conf, repo, environments, regex='^{0}$'.format(benchmark))
+            benchmarks = Benchmarks(conf, repo, environments,
+                                    regex='^{0}$'.format(benchmark))
             if len(benchmarks) != 1:
                 raise util.UserError(
                     "Could not find benchmark {0}".format(benchmark))

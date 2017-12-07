@@ -1,7 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import, division, unicode_literals, print_function
+from __future__ import (absolute_import, division, unicode_literals,
+                        print_function)
 
 import argparse
 
@@ -73,7 +74,8 @@ class PythonArgAction(argparse.Action):
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
         if nargs is not None:
             raise ValueError("nargs not allowed")
-        super(PythonArgAction, self).__init__(option_strings, dest, nargs=1, **kwargs)
+        super(PythonArgAction, self).__init__(option_strings, dest,
+                                              nargs=1, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         items = list(getattr(namespace, "env_spec", []))
@@ -127,7 +129,8 @@ def positive_int(string):
     try:
         value = int(string)
         if not value > 0:
-            raise argparse.ArgumentTypeError("%r is not a positive integer" % (string,))
+            raise argparse.ArgumentTypeError("%r is not a positive "
+                                             "integer" % (string,))
         return value
     except ValueError:
         raise argparse.ArgumentTypeError("%r is not an integer" % (string,))

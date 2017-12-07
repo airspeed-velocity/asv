@@ -1,15 +1,13 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import, division, unicode_literals, print_function
+from __future__ import (absolute_import, division, unicode_literals,
+                        print_function)
 
 import os
 import re
 import itertools
 import datetime
-import multiprocessing
-import time
-import traceback
 import six
 
 from six.moves.urllib.parse import urlencode
@@ -17,7 +15,7 @@ from six.moves.urllib.parse import urlencode
 from ..results import iter_results
 from ..console import log
 from ..publishing import OutputPublisher
-from ..step_detect import detect_regressions, detect_steps
+from ..step_detect import detect_regressions
 
 from .. import util
 from .. import feed
@@ -54,15 +52,16 @@ class Regressions(OutputPublisher):
             log.dot()
 
             for graph_data in data_filter.get_graph_data(graph, benchmark):
-                cls._process_regression(regressions, seen, revision_to_hash, repo, all_params,
-                                        graph_data, graph)
+                cls._process_regression(regressions, seen, revision_to_hash,
+                                        repo, all_params, graph_data, graph)
 
         cls._save(conf, {'regressions': regressions})
-        cls._save_feed(conf, benchmarks, regressions, revisions, revision_to_hash)
+        cls._save_feed(conf, benchmarks, regressions, revisions,
+                       revision_to_hash)
 
     @classmethod
-    def _process_regression(cls, regressions, seen, revision_to_hash, repo, all_params,
-                           graph_data, graph):
+    def _process_regression(cls, regressions, seen, revision_to_hash, repo,
+                            all_params, graph_data, graph):
         j, entry_name, steps, threshold = graph_data
 
         v, best_v, jumps = detect_regressions(steps, threshold)
@@ -100,7 +99,7 @@ class Regressions(OutputPublisher):
             # Pick the worse regression
             old_regression = seen[key]
             prev_result = old_regression[-1]
-            if abs(prev_result[1]*result[2]) < abs(result[1]*prev_result[2]):
+            if abs(prev_result[1] * result[2]) < abs(result[1] * prev_result[2]):
                 old_regression[:] = regression
 
     @classmethod
@@ -150,10 +149,11 @@ class Regressions(OutputPublisher):
             jumps, last_value, best_value = info
 
             for rev1, rev2, value1, value2 in jumps:
-                timestamps = (run_timestamps[benchmark_name, t] for t in (rev1, rev2) if t is not None)
+                timestamps = (run_timestamps[benchmark_name, t]
+                              for t in (rev1, rev2) if t is not None)
                 last_timestamp = max(timestamps)
 
-                updated = datetime.datetime.fromtimestamp(last_timestamp/1000)
+                updated = datetime.datetime.fromtimestamp(last_timestamp / 1000)
 
                 params = dict(graph_params)
                 if idx is not None:
@@ -164,7 +164,8 @@ class Regressions(OutputPublisher):
                     params['commits'] = '{0}-{1}'.format(revision_to_hash[rev1],
                                                          revision_to_hash[rev2])
 
-                link = 'index.html#{0}?{1}'.format(benchmark_name, urlencode(params))
+                link = 'index.html#{0}?{1}'.format(benchmark_name,
+                                                   urlencode(params))
 
                 try:
                     best_percentage = "{0:.2f}%".format(100 * (last_value - best_value) / best_value)
@@ -176,7 +177,7 @@ class Regressions(OutputPublisher):
                 except ZeroDivisionError:
                     percentage = "{0:.2g} units".format(value2 - value1)
 
-                jump_date = datetime.datetime.fromtimestamp(revision_timestamps[rev2]/1000)
+                jump_date = datetime.datetime.fromtimestamp(revision_timestamps[rev2] / 1000)
                 jump_date_str = jump_date.strftime('%Y-%m-%d %H:%M:%S')
 
                 if rev1 is not None:
@@ -212,9 +213,11 @@ class Regressions(OutputPublisher):
                 # runs, feed readers should is identify the regression
                 # as the same one, as long as the benchmark name and
                 # commits match.
-                id_context = [name, revision_to_hash.get(rev1, ""), revision_to_hash.get(rev2, "")]
+                id_context = [name, revision_to_hash.get(rev1, ""),
+                              revision_to_hash.get(rev2, "")]
 
-                entries.append(feed.FeedEntry(title, updated, link, summary, id_context))
+                entries.append(feed.FeedEntry(title, updated, link,
+                                              summary, id_context))
 
         entries.sort(key=lambda x: x.updated, reverse=True)
 
@@ -245,8 +248,8 @@ class _GraphDataFilter(object):
             Flat index to parameter permutations for parameterized benchmarks.
             None if benchmark is not parameterized.
         entry_name
-            Name for the data set. If benchmark is non-parameterized, this is the
-            benchmark name.
+            Name for the data set. If benchmark is non-parameterized, this
+            is the benchmark name.
         steps
             Steps to consider in regression detection.
         threshold
@@ -255,7 +258,7 @@ class _GraphDataFilter(object):
         """
         if benchmark.get('params'):
             param_iter = enumerate(zip(itertools.product(*benchmark['params']),
-                                           graph.get_steps()))
+                                       graph.get_steps()))
         else:
             param_iter = [(None, (None, graph.get_steps()))]
 
@@ -265,7 +268,8 @@ class _GraphDataFilter(object):
             else:
                 entry_name = benchmark['name'] + '({0})'.format(', '.join(param))
 
-            start_revision = self._get_start_revision(graph, benchmark, entry_name)
+            start_revision = self._get_start_revision(graph, benchmark,
+                                                      entry_name)
             threshold = self._get_threshold(graph, benchmark, entry_name)
 
             if start_revision is None:
@@ -313,11 +317,13 @@ class _GraphDataFilter(object):
                             break
                     else:
                         # Commit not found in the branch --- warn and ignore.
-                        log.warn(("Commit {0} specified in `regressions_first_commits` "
+                        log.warn(("Commit {0} specified in "
+                                  "`regressions_first_commits` "
                                   "not found in branch").format(start_commit))
                         self._start_revisions[key] = -1
 
-                start_revision = max(start_revision, self._start_revisions[key] + 1)
+                start_revision = max(start_revision,
+                                     self._start_revisions[key] + 1)
 
         return start_revision
 
@@ -337,7 +343,9 @@ class _GraphDataFilter(object):
                 try:
                     threshold = float(threshold)
                 except ValueError:
-                    raise util.UserError("Non-float threshold in asv.conf.json: {!r}".format(threshold))
+                    raise util.UserError("Non-float threshold in "
+                                         "asv.conf.json: {!r}"
+                                         .format(threshold))
 
                 if max_threshold is None:
                     max_threshold = threshold

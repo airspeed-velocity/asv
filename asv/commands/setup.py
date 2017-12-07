@@ -24,7 +24,8 @@ def _create_parallel(env):
     try:
         _create(env)
     except BaseException as exc:
-        raise util.ParallelFailure(str(exc), exc.__class__, traceback.format_exc())
+        raise util.ParallelFailure(str(exc), exc.__class__,
+                                   traceback.format_exc())
 
 
 class Setup(Command):
@@ -48,7 +49,8 @@ class Setup(Command):
 
     @classmethod
     def run_from_conf_args(cls, conf, args):
-        return cls.run(conf=conf, parallel=args.parallel, env_spec=args.env_spec)
+        return cls.run(conf=conf, parallel=args.parallel,
+                       env_spec=args.env_spec)
 
     @classmethod
     def run(cls, conf, parallel=-1, env_spec=None):
