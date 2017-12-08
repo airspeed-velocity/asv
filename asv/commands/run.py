@@ -42,7 +42,8 @@ def _do_build_multiprocess(args):
     try:
         return _do_build(args)
     except BaseException as exc:
-        raise util.ParallelFailure(str(exc), exc.__class__, traceback.format_exc())
+        raise util.ParallelFailure(str(exc), exc.__class__,
+                                   traceback.format_exc())
 
 
 class Run(Command):
@@ -124,18 +125,17 @@ class Run(Command):
             skip_failed=args.skip_existing_failed or args.skip_existing,
             skip_existing_commits=args.skip_existing_commits,
             record_samples=args.record_samples,
-            **kwargs
-        )
+            **kwargs)
 
     @classmethod
     def run(cls, conf, range_spec=None, steps=None, bench=None, parallel=1,
             show_stderr=False, quick=False, profile=False, env_spec=None,
-            dry_run=False, machine=None, _machine_file=None, skip_successful=False,
-            skip_failed=False, skip_existing_commits=False, record_samples=False,
-            _returns={}):
-        machine_params = Machine.load(
-            machine_name=machine,
-            _path=_machine_file, interactive=True)
+            dry_run=False, machine=None, _machine_file=None,
+            skip_successful=False, skip_failed=False,
+            skip_existing_commits=False, record_samples=False, _returns={}):
+
+        machine_params = Machine.load(machine_name=machine,
+                                      _path=_machine_file, interactive=True)
         machine_params.save(conf.results_dir)
 
         environments = list(environment.get_environments(conf, env_spec))
@@ -148,7 +148,8 @@ class Run(Command):
         repo.pull()
 
         if range_spec is None:
-            commit_hashes = list(set([repo.get_hash_from_name(branch) for branch in conf.branches]))
+            commit_hashes = list(set([repo.get_hash_from_name(branch)
+                                      for branch in conf.branches]))
         elif range_spec == 'EXISTING':
             commit_hashes = get_existing_hashes(conf.results_dir)
         elif range_spec == "NEW":
@@ -209,7 +210,8 @@ class Run(Command):
             if skip_successful or skip_failed or skip_existing_commits:
                 try:
                     for result in iter_results_for_machine_and_hash(
-                            conf.results_dir, machine_params.machine, commit_hash):
+                            conf.results_dir, machine_params.machine,
+                            commit_hash):
 
                         if skip_existing_commits:
                             skipped_benchmarks.update(benchmarks)
@@ -249,11 +251,13 @@ class Run(Command):
                         ', '.join([x.name for x in subenv])))
 
                     with log.indent():
-                        args = [(env, conf, repo, commit_hash) for env in subenv]
+                        args = [(env, conf, repo, commit_hash)
+                                for env in subenv]
                         if parallel != 1:
                             pool = multiprocessing.Pool(parallel)
                             try:
-                                successes = pool.map(_do_build_multiprocess, args)
+                                successes = pool.map(_do_build_multiprocess,
+                                                     args)
                             except util.ParallelFailure as exc:
                                 exc.reraise()
                             finally:
@@ -290,6 +294,7 @@ class Run(Command):
                                 d['number'] = None
 
                             benchmark_version = benchmarks[benchmark_name]['version']
-                            result.add_result(benchmark_name, d, benchmark_version)
+                            result.add_result(benchmark_name, d,
+                                              benchmark_version)
 
                         result.update_save(conf.results_dir)

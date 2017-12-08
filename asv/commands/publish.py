@@ -148,7 +148,8 @@ class Publish(Command):
                 tags[tag] = revisions[tags[tag]]
                 hash_to_date[commit_hash] = repo.get_date_from_name(commit_hash)
 
-            revision_to_date = dict((r, hash_to_date[h]) for h, r in six.iteritems(revisions))
+            revision_to_date = dict((r, hash_to_date[h])
+                                    for h, r in six.iteritems(revisions))
 
             branches = dict(
                 (branch, repo.get_branch_commits(branch))
@@ -191,7 +192,8 @@ class Publish(Command):
 
                         # Create graph
                         graph = graphs.get_graph(key, cur_params)
-                        graph.add_data_point(revisions[results.commit_hash], result)
+                        graph.add_data_point(revisions[results.commit_hash],
+                                             result)
 
             # Get the parameter sets for all graphs
             graph_param_list = []
@@ -235,7 +237,8 @@ class Publish(Command):
             val = list(val)
             val.sort(key=lambda x: '[none]' if x is None else str(x))
             params[key] = val
-        params['branch'] = [repo.get_branch_name(branch) for branch in conf.branches]
+        params['branch'] = [repo.get_branch_name(branch)
+                            for branch in conf.branches]
         revision_to_hash = dict((r, h) for h, r in six.iteritems(revisions))
         util.write_json(os.path.join(conf.html_dir, "index.json"), {
             'project': conf.project,

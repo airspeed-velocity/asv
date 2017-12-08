@@ -67,8 +67,8 @@ except ImportError:  # Python <3.3
                 err = ctypes.get_errno()
                 msg = errno.errorcode[err]
                 if err == errno.EINVAL:
-                    msg += (
-                        "The clk_id (4) specified is not supported on this system")
+                    msg += ("The clk_id (4) specified is not supported "
+                            "on this system")
                 raise OSError(err, msg)
             return tp.tv_sec + tp.tv_nsec * 1e-9
 
@@ -113,8 +113,8 @@ except ImportError:  # Python <3.3
                 err = ctypes.get_errno()
                 msg = errno.errorcode[err]
                 if err == errno.EINVAL:
-                    msg += (
-                        "The clk_id (0) specified is not supported on this system")
+                    msg += ("The clk_id (0) specified is not supported "
+                            "on this system")
                 raise OSError(err, msg)
             return float(ru.ru_utime.tv_sec + ru.ru_utime.tv_usec * 1e-6 +
                          ru.ru_stime.tv_sec + ru.ru_stime.tv_usec * 1e-6)
@@ -129,11 +129,13 @@ def get_maxrss():
     # current platform
     return None
 
+
 if sys.platform.startswith('win'):
     import ctypes
     import ctypes.wintypes
 
     SIZE_T = ctypes.c_size_t
+
     class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
         _fields_ = [
             ('cb', ctypes.wintypes.DWORD),
@@ -158,10 +160,11 @@ if sys.platform.startswith('win'):
                                      ctypes.wintypes.DWORD)
     GetProcessMemoryInfo.restype = ctypes.wintypes.BOOL
 
-    def get_maxrss():
+    def get_maxrss():  # noqa: F811
         proc_hnd = GetCurrentProcess()
         counters = PROCESS_MEMORY_COUNTERS()
-        info = GetProcessMemoryInfo(proc_hnd, ctypes.byref(counters), ctypes.sizeof(counters))
+        info = GetProcessMemoryInfo(proc_hnd, ctypes.byref(counters),
+                                    ctypes.sizeof(counters))
         if info == 0:
             raise ctypes.WinError()
         return counters.PeakWorkingSetSize
@@ -173,12 +176,13 @@ else:
         if sys.platform == 'darwin':
             def get_maxrss():
                 # OSX getrusage returns maxrss in bytes
-                # https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man2/getrusage.2.html
+                # https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man2/getrusage.2.html  # noqa: E501
                 return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         else:
             def get_maxrss():
                 # Linux, *BSD return maxrss in kilobytes
-                return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
+                rusage = resource.RUSAGE_SELF
+                return resource.getrusage(rusage).ru_maxrss * 1024
     except ImportError:
         pass
 
@@ -195,13 +199,14 @@ except ImportError:  # For Python 2.6
                 dot = package.rindex('.', 0, dot)
             except ValueError:
                 raise ValueError("attempted relative import beyond top-level "
-                                  "package")
+                                 "package")
         return "%s.%s" % (package[:dot], name)
 
     def import_module(name, package=None):
         if name.startswith('.'):
             if not package:
-                raise TypeError("relative imports require the 'package' argument")
+                raise TypeError("relative imports require the 'package' "
+                                "argument")
             level = 0
             for character in name:
                 if character != '.':
@@ -309,9 +314,11 @@ class Benchmark(object):
         self._teardowns = list(_get_all_attrs(attr_sources, 'teardown', True))
         self._setup_cache = _get_first_attr(attr_sources, 'setup_cache', None)
         self.setup_cache_key = get_setup_cache_key(self._setup_cache)
-        self.setup_cache_timeout = _get_first_attr([self._setup_cache], "timeout", None)
+        self.setup_cache_timeout = _get_first_attr([self._setup_cache],
+                                                   "timeout", None)
         self.timeout = _get_first_attr(attr_sources, "timeout", 60.0)
-        self.code = get_source_code([self.func] + self._setups + [self._setup_cache])
+        self.code = get_source_code([self.func] +
+                                    self._setups + [self._setup_cache])
         if sys.version_info[0] >= 3:
             code_text = self.code.encode('utf-8')
         else:
@@ -331,7 +338,8 @@ class Benchmark(object):
         try:
             self.param_names = [str(x) for x in list(self.param_names)]
         except ValueError:
-            raise ValueError("%s.param_names is not a list of strings" % (name,))
+            raise ValueError("%s.param_names is not a list of "
+                             "strings" % (name,))
 
         try:
             self._params = list(self._params)
@@ -346,11 +354,13 @@ class Benchmark(object):
 
         if len(self.param_names) != len(self._params):
             self.param_names = self.param_names[:len(self._params)]
-            self.param_names += ['param%d' % (k+1,) for k in range(len(self.param_names),
-                                                                   len(self._params))]
+            self.param_names += ['param%d' % (k+1,)
+                                 for k in range(len(self.param_names),
+                                                len(self._params))]
 
         # Exported parameter representations
-        self.params = [[repr(item) for item in entry] for entry in self._params]
+        self.params = [[repr(item) for item in entry]
+                       for entry in self._params]
 
     def set_param_idx(self, param_idx):
         try:
@@ -358,8 +368,8 @@ class Benchmark(object):
                 itertools.product(*self._params),
                 param_idx, param_idx + 1)
         except ValueError:
-            raise ValueError(
-                "Invalid benchmark parameter permutation index: %r" % (param_idx,))
+            raise ValueError("Invalid benchmark parameter permutation "
+                             "index: %r" % (param_idx,))
 
     def insert_param(self, param):
         """
@@ -434,8 +444,10 @@ class TimeBenchmark(Benchmark):
     def _load_vars(self):
         self.repeat = _get_first_attr(self._attr_sources, 'repeat', 0)
         self.number = int(_get_first_attr(self._attr_sources, 'number', 0))
-        self.sample_time = _get_first_attr(self._attr_sources, 'sample_time', 0.1)
-        self.warmup_time = _get_first_attr(self._attr_sources, 'warmup_time', -1)
+        self.sample_time = _get_first_attr(self._attr_sources,
+                                           'sample_time', 0.1)
+        self.warmup_time = _get_first_attr(self._attr_sources,
+                                           'warmup_time', -1)
         self.timer = _get_first_attr(self._attr_sources, 'timer', process_time)
 
     def do_setup(self):
@@ -461,7 +473,7 @@ class TimeBenchmark(Benchmark):
                 warmup_time = 0.1
 
         if param:
-            func = lambda: self.func(*param)
+            func = lambda: self.func(*param)  # noqa: E731
         else:
             func = self.func
 
@@ -470,7 +482,8 @@ class TimeBenchmark(Benchmark):
             setup=self.redo_setup,
             timer=self.timer)
 
-        samples, number = self.benchmark_timing(timer, repeat, warmup_time, number=number)
+        samples, number = self.benchmark_timing(timer, repeat, warmup_time,
+                                                number=number)
 
         samples = [s/number for s in samples]
         return {'samples': samples, 'number': number}
@@ -707,7 +720,8 @@ def disc_benchmarks(root):
                         if benchmark is not None:
                             yield benchmark
             elif inspect.isfunction(module_attr):
-                benchmark = _get_benchmark(attr_name, module, None, module_attr)
+                benchmark = _get_benchmark(attr_name, module,
+                                           None, module_attr)
                 if benchmark is not None:
                     yield benchmark
 
@@ -797,10 +811,9 @@ def list_benchmarks(root, fp):
     for benchmark in disc_benchmarks(root):
         if not first:
             fp.write(', ')
-        clean = dict(
-            (k, v) for (k, v) in benchmark.__dict__.items()
-            if isinstance(v, (str, int, float, list, dict, bool)) and not
-               k.startswith('_'))
+        clean = dict((k, v) for (k, v) in benchmark.__dict__.items()
+                     if isinstance(v, (str, int, float, list, dict, bool)) and
+                     not k.startswith('_'))
         json.dump(clean, fp, skipkeys=True)
         first = False
     fp.write(']')

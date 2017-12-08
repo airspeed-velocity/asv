@@ -33,7 +33,8 @@ class Continuous(Command):
             parent of the tested commit.""")
         parser.add_argument(
             'branch', default=None,
-            help="""The commit/branch to test. By default, the first configured branch.""")
+            help="The commit/branch to test. By default, the first "
+                 "configured branch.")
         parser.add_argument(
             "--record-samples", action="store_true",
             help="""Store raw measurement samples, not only statistics""")
@@ -56,14 +57,14 @@ class Continuous(Command):
     def run_from_conf_args(cls, conf, args, **kwargs):
         return cls.run(
             conf=conf, branch=args.branch, base=args.base, factor=args.factor,
-            show_stderr=args.show_stderr, bench=args.bench, machine=args.machine,
-            env_spec=args.env_spec, record_samples=args.record_samples,
-            quick=args.quick, **kwargs
-        )
+            show_stderr=args.show_stderr, bench=args.bench,
+            machine=args.machine, env_spec=args.env_spec,
+            record_samples=args.record_samples, quick=args.quick, **kwargs)
 
     @classmethod
-    def run(cls, conf, branch=None, base=None, factor=None, show_stderr=False, bench=None,
-            machine=None, env_spec=None, record_samples=False, quick=False, _machine_file=None):
+    def run(cls, conf, branch=None, base=None, factor=None, show_stderr=False,
+            bench=None, machine=None, env_spec=None, record_samples=False,
+            quick=False, _machine_file=None):
         repo = get_repo(conf)
         repo.pull()
 
@@ -110,7 +111,8 @@ class Continuous(Command):
         status = Compare.print_table(conf, parent, head,
                                      resultset_1=results_iter(parent),
                                      resultset_2=results_iter(head),
-                                     factor=factor, split=False, only_changed=True,
+                                     factor=factor, split=False,
+                                     only_changed=True,
                                      sort_by_ratio=True)
         worsened, improved = status
 

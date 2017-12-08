@@ -30,7 +30,8 @@ class Quickstart(Command):
             "--top-level", action="store_true", dest="top_level", default=None,
             help="Benchmarks are on the top level of the project's repository")
         grp.add_argument(
-            "--no-top-level", action="store_false", dest="top_level", default=None,
+            "--no-top-level", action="store_false", dest="top_level",
+            default=None,
             help="Benchmarks are not in the project's repository top level")
 
         parser.set_defaults(func=cls.run_from_args)
@@ -45,7 +46,8 @@ class Quickstart(Command):
     def run(cls, dest=".", top_level=None):
         if top_level is None:
             while True:
-                answer = raw_input("Is this the top level of your project repository? [y/n] ")
+                answer = raw_input("Is this the top level of your project "
+                                   "repository? [y/n] ")
                 if answer.lower()[:1] == "y":
                     top_level = True
                     break
