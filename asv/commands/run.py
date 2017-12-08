@@ -104,6 +104,9 @@ class Run(Command):
             "--skip-existing", "-k", action="store_true",
             help="""Skip running benchmarks that have previous successful
             or failed results""")
+        parser.add_argument(
+            "--no-pull", action="store_true",
+            help="Do not pull the repository")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -120,6 +123,7 @@ class Run(Command):
             skip_successful=args.skip_existing_successful or args.skip_existing,
             skip_failed=args.skip_existing_failed or args.skip_existing,
             skip_existing_commits=args.skip_existing_commits,
+            pull=not args.no_pull,
             **kwargs
         )
 
@@ -127,7 +131,7 @@ class Run(Command):
     def run(cls, conf, range_spec=None, steps=None, bench=None, parallel=1,
             show_stderr=False, quick=False, profile=False, env_spec=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
-            skip_failed=False, skip_existing_commits=False, _returns={}):
+            skip_failed=False, skip_existing_commits=False, pull=True, _returns={}):
         machine_params = Machine.load(
             machine_name=machine,
             _path=_machine_file, interactive=True)
@@ -140,7 +144,8 @@ class Run(Command):
             conf.dvcs = "none"
 
         repo = get_repo(conf)
-        repo.pull()
+        if pull:
+            repo.pull()
 
         if range_spec is None:
             commit_hashes = list(set([repo.get_hash_from_name(branch) for branch in conf.branches]))
