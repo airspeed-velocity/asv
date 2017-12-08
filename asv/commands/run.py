@@ -107,6 +107,9 @@ class Run(Command):
         parser.add_argument(
             "--record-samples", action="store_true",
             help="""Store raw measurement samples, not only statistics""")
+        parser.add_argument(
+            "--no-pull", action="store_true",
+            help="Do not pull the repository")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -124,6 +127,7 @@ class Run(Command):
             skip_failed=args.skip_existing_failed or args.skip_existing,
             skip_existing_commits=args.skip_existing_commits,
             record_samples=args.record_samples,
+            pull=not args.no_pull,
             **kwargs
         )
 
@@ -132,7 +136,7 @@ class Run(Command):
             show_stderr=False, quick=False, profile=False, env_spec=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
             skip_failed=False, skip_existing_commits=False, record_samples=False,
-            _returns={}):
+            pull=True, _returns={}):
         machine_params = Machine.load(
             machine_name=machine,
             _path=_machine_file, interactive=True)
@@ -145,7 +149,8 @@ class Run(Command):
             conf.dvcs = "none"
 
         repo = get_repo(conf)
-        repo.pull()
+        if pull:
+            repo.pull()
 
         if range_spec is None:
             commit_hashes = list(set([repo.get_hash_from_name(branch) for branch in conf.branches]))

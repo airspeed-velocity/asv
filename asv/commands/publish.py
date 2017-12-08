@@ -58,6 +58,9 @@ class Publish(Command):
             written to the ``html_dir`` given in the ``asv.conf.json``
             file, and may be served using any static web server.""")
         parser.add_argument(
+            '--no-pull', action='store_true', dest='no_pull',
+            help="Do not pull the repository")
+        parser.add_argument(
             'range', nargs='?', default=None,
             help="""Optional commit range to consider""")
         parser.add_argument(
@@ -76,7 +79,7 @@ class Publish(Command):
         if args.html_dir is not None:
             conf.html_dir = args.html_dir
         return cls.run(conf=conf, env_spec=args.env_spec,
-                       range_spec=args.range)
+                       range_spec=args.range, pull=not args.no_pull)
 
     @staticmethod
     def iter_results(conf, repo, range_spec=None):
@@ -92,7 +95,7 @@ class Publish(Command):
                 yield result
 
     @classmethod
-    def run(cls, conf, env_spec=None, range_spec=None):
+    def run(cls, conf, env_spec=None, range_spec=None, pull=True):
         params = {}
         graphs = GraphSet()
         machines = {}
@@ -139,7 +142,8 @@ class Publish(Command):
                     params.setdefault(key, set())
                     params[key].add(val)
 
-            repo.pull()
+            if pull:
+                repo.pull()
             tags = repo.get_tags()
             revisions = repo.get_revisions(set(hash_to_date.keys()) | set(tags.values()))
 
