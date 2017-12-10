@@ -12,6 +12,8 @@ import re
 import sys
 import tempfile
 
+from six.moves import StringIO
+
 from . import Command
 from ..benchmarks import Benchmarks
 from ..console import log
@@ -202,7 +204,8 @@ class Profile(Command):
 def _strip_env(stats):
     """
     Wrap pstats.Stats.print_stats() to strip long directory prefixes off of
-    filenames.
+    filenames.  This is different from `pstats.Stats.strip_dirs` in that it
+    does not strip _all_ directories, just the least interesting ones.
 
     Parameters
     ----------
@@ -212,12 +215,14 @@ def _strip_env(stats):
     -------
     res : str
     """
-    c = io.StringIO()
-    stats.print_stats(c)
+    c = StringIO()
+    stats.stream = c
+    stats.print_stats()
     stats_str = c.getvalue()
 
     # Leading ' ' ensures we don't accidentally substitute the actual stats
-    res = re.sub(' /.*/env/[0-9abcdef]+/lib/python\d\.\d/(site-packages)?',
+    res = re.sub(' /.*/env/[0-9abcdef]+/(bin/\.\./)?lib/python\d\.\d/(site-packages/)?',
                  ' ',
                  stats_str)
+
     return res
