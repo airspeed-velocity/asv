@@ -8,6 +8,7 @@ import contextlib
 import io
 import os
 import pstats
+import re
 import sys
 import tempfile
 
@@ -194,4 +195,29 @@ class Profile(Command):
             with temp_profile(profile_data) as profile_path:
                 stats = pstats.Stats(profile_path)
                 stats.sort_stats('cumulative')
-                stats.print_stats()
+                stats_str = _strip_env(stats)
+                print(stats_str)
+
+
+def _strip_env(stats):
+    """
+    Wrap pstats.Stats.print_stats() to strip long directory prefixes off of
+    filenames.
+
+    Parameters
+    ----------
+    stats : pstats.Stats
+
+    Returns
+    -------
+    res : str
+    """
+    c = io.StringIO()
+    stats.print_stats(c)
+    stats_str = c.getvalue()
+
+    # Leading ' ' ensures we don't accidentally substitute the actual stats
+    res = re.sub(' /.*/env/[0-9abcdef]+/lib/python\d\.\d/(site-packages)?',
+                 ' ',
+                 stats_str)
+    return res
