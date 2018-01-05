@@ -118,6 +118,12 @@ class Conda(environment.Environment):
 
             util.check_output([conda] + ['env', 'create', '-f', env_file.name,
                                          '-p', self._path, '--force'])
+        except Exception as exc:
+            if os.path.isfile(env_file.name):
+                with open(env_file.name, 'r') as f:
+                    text = f.read()
+                log.info("conda env create failed: in {} with:\n{}".format(self._path, text))
+            raise
         finally:
             os.unlink(env_file.name)
 
