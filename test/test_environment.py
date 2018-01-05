@@ -500,7 +500,7 @@ def test_conda_channel_addition(tmpdir,
         # (conda info would be more direct, but
         # seems to reflect contents of condarc file,
         # which we are intentionally trying not to modify)
-        conda = os.path.normpath(env.find_executable('conda'))
+        conda = util.which('conda')
         print("\n**conda being used:", conda)
         out_str = six.text_type(util.check_output([conda,
                                                     'list',
