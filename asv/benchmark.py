@@ -674,9 +674,9 @@ def _get_benchmark(attr_name, module, klass, func):
         sources = [func, module]
     else:
         instance = klass()
-        func = getattr(instance, func.__name__)
+        func = getattr(instance, attr_name)
         if name is None:
-            name = ".".join([mname, klass.__name__, func.__name__])
+            name = ".".join([mname, klass.__name__, attr_name])
         sources = [func, instance, module]
     return cls(name, func, sources)
 

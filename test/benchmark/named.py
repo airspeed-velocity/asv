@@ -25,3 +25,13 @@ def track_custom_pretty_name(self):
 
 
 track_custom_pretty_name.pretty_name = 'this.is/the.answer'
+
+
+class BaseSuite:
+
+    def some_func():
+        return 0
+
+
+class OtherSuite:
+    track_some_func = BaseSuite.some_func
