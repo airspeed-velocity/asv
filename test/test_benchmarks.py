@@ -78,7 +78,9 @@ def test_find_benchmarks(tmpdir):
     assert b['named.track_custom_pretty_name']['pretty_name'] == 'this.is/the.answer'
 
     b = benchmarks.Benchmarks(conf, repo, envs)
-    assert len(b) == 34
+    assert len(b) == 35
+
+    assert 'named.OtherSuite.track_some_func' in b
 
     start_timestamp = datetime.datetime.utcnow()
 
