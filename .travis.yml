@@ -77,7 +77,7 @@ install:
 script:
   - $TRAVIS_PYTHON -m pytest --timeout=360 -l $COVERAGE test
 
-after_success:
+after_script:
   - if [[ "$COVERAGE" != '' ]]; then
       $TRAVIS_PYTHON -m coverage xml;
       codecov;
