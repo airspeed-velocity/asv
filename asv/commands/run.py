@@ -241,23 +241,23 @@ class Run(Command):
                     if bench in skipped_benchmarks[env.name]:
                         log.step()
 
+            active_environments = [env for env in environments
+                                   if set(six.iterkeys(benchmarks))
+                                   .difference(skipped_benchmarks[env.name])]
+
+            if not active_environments:
+                continue
+
             if commit_hash:
                 log.info(
                     "For {0} commit hash {1}:".format(
                         conf.project, commit_hash[:8]))
 
             with log.indent():
-                for subenv in util.iter_chunks(environments, parallel):
+
+                for subenv in util.iter_chunks(active_environments, parallel):
 
                     subenv_name = ', '.join([x.name for x in subenv])
-
-                    # If all the benchmarks can be skipped, no need to continue
-                    for env in subenv:
-                        if set(six.iterkeys(benchmarks)).difference(skipped_benchmarks[env.name]):
-                            break
-                    else:
-                        log.info("No benchmarks to run for {0}".format(subenv_name))
-                        continue
 
                     log.info("Building for {0}".format(subenv_name))
 
