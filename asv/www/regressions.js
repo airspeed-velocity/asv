@@ -42,6 +42,14 @@ $(document).ready(function() {
         }
     }
 
+    function update_url(params) {
+        var info = $.asv.parse_hash_string(window.location.hash);
+        $.each(params || {}, function(key, value) {
+            info.params[key] = value;
+        });
+        window.location.hash = $.asv.format_hash_string(info);
+    }
+
     function display_data(data, params) {
         var main_div = $('<div/>');
         var branches = $.asv.master_json.params['branch'];
@@ -79,6 +87,7 @@ $(document).ready(function() {
                 dropdown_menu.append($('<li role="presentation"/>').append(branch_link));
                 branch_link.on('click', function(evt) {
                     current_title = "Regressions in " + branch + " branch";
+                    update_url({'branch': [branch]});
                     $("#title").text(current_title);
                     $(".regression-div").hide();
                     $(".ignored").hide();
@@ -113,11 +122,18 @@ $(document).ready(function() {
             });
         });
 
+        var branch_index = 0;
         if (branches && branches.length > 1) {
-            current_title = "Regressions in " + branches[0] + " branch";
+            if (params.branch) {
+                branch_index = branches.indexOf(params.branch[0]);
+                if (branch_index < 0) {
+                    branch_index = 0;
+                }
+            }
+            current_title = "Regressions in " + branches[branch_index] + " branch";
         }
         $("#title").text(current_title);
-        main_div.find("#regression-div-0").show();
+        main_div.find("#regression-div-" + branch_index).show();
         main_div.show();
 
         if (local_storage_available) {
@@ -419,11 +435,7 @@ $(document).ready(function() {
         });
 
         table.bind('aftertablesort', function (event, data) {
-            var info = $.asv.parse_hash_string(window.location.hash);
-            info.params['sort'] = [data.column];
-            info.params['dir'] = [data.direction];
-            window.location.hash = $.asv.format_hash_string(info);
-
+            update_url({'sort': [data.column], 'dir': [data.direction]});
             /* Update appearance */
             table.find('thead th').removeClass('asc');
             table.find('thead th').removeClass('desc');
