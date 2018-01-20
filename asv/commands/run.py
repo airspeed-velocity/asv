@@ -8,6 +8,7 @@ import six
 
 import logging
 import traceback
+from collections import defaultdict
 
 from . import Command
 from ..benchmarks import Benchmarks
@@ -209,7 +210,7 @@ class Run(Command):
         _returns['machine_params'] = machine_params.__dict__
 
         for commit_hash in commit_hashes:
-            skipped_benchmarks = set()
+            skipped_benchmarks = defaultdict(lambda: set())
 
             if skip_successful or skip_failed or skip_existing_commits:
                 try:
@@ -217,7 +218,7 @@ class Run(Command):
                             conf.results_dir, machine_params.machine, commit_hash):
 
                         if skip_existing_commits:
-                            skipped_benchmarks.update(benchmarks)
+                            skipped_benchmarks[result.env_name].update(benchmarks)
                             break
 
                         for key in result.get_result_keys(benchmarks):
@@ -229,18 +230,22 @@ class Run(Command):
                             failed = value is None or (isinstance(value, list) and None in value)
 
                             if skip_failed and failed:
-                                skipped_benchmarks.add(key)
+                                skipped_benchmarks[result.env_name].add(key)
                             if skip_successful and not failed:
-                                skipped_benchmarks.add(key)
+                                skipped_benchmarks[result.env_name].add(key)
                 except IOError:
                     pass
 
             for env in environments:
                 for bench in benchmarks:
-                    if bench in skipped_benchmarks:
+                    if bench in skipped_benchmarks[env.name]:
                         log.step()
 
-            if not set(six.iterkeys(benchmarks)).difference(skipped_benchmarks):
+            active_environments = [env for env in environments
+                                   if set(six.iterkeys(benchmarks))
+                                   .difference(skipped_benchmarks[env.name])]
+
+            if not active_environments:
                 continue
 
             if commit_hash:
@@ -249,9 +254,12 @@ class Run(Command):
                         conf.project, commit_hash[:8]))
 
             with log.indent():
-                for subenv in util.iter_chunks(environments, parallel):
-                    log.info("Building for {0}".format(
-                        ', '.join([x.name for x in subenv])))
+
+                for subenv in util.iter_chunks(active_environments, parallel):
+
+                    subenv_name = ', '.join([x.name for x in subenv])
+
+                    log.info("Building for {0}".format(subenv_name))
 
                     with log.indent():
                         args = [(env, conf, repo, commit_hash) for env in subenv]
@@ -274,7 +282,7 @@ class Run(Command):
                         if success:
                             results = benchmarks.run_benchmarks(
                                 env, show_stderr=show_stderr, quick=quick,
-                                profile=profile, skip=skipped_benchmarks)
+                                profile=profile, skip=skipped_benchmarks[env.name])
                         else:
                             results = benchmarks.skip_benchmarks(env)
 

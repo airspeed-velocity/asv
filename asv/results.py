@@ -301,7 +301,7 @@ class Results(object):
         Returns
         -------
         value : {float, list of float}
-            Benchmark result value. If the benchmark is parameterized, return 
+            Benchmark result value. If the benchmark is parameterized, return
             a list of values.
         """
         return _compatible_results(self._results[key],
@@ -580,3 +580,7 @@ class Results(object):
     @classmethod
     def update(cls, path):
         util.update_json(cls, path, cls.api_version)
+
+    @property
+    def env_name(self):
+        return self._env_name
