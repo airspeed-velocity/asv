@@ -68,8 +68,6 @@ class Publish(Command):
                 "Optional output directory. Default is 'html_dir' "
                 "from asv config"))
 
-        common_args.add_environment(parser)
-
         parser.set_defaults(func=cls.run_from_args)
 
         return parser
@@ -78,8 +76,7 @@ class Publish(Command):
     def run_from_conf_args(cls, conf, args):
         if args.html_dir is not None:
             conf.html_dir = args.html_dir
-        return cls.run(conf=conf, env_spec=args.env_spec,
-                       range_spec=args.range, pull=not args.no_pull)
+        return cls.run(conf=conf, range_spec=args.range, pull=not args.no_pull)
 
     @staticmethod
     def iter_results(conf, repo, range_spec=None):
@@ -95,7 +92,7 @@ class Publish(Command):
                 yield result
 
     @classmethod
-    def run(cls, conf, env_spec=None, range_spec=None, pull=True):
+    def run(cls, conf, range_spec=None, pull=True):
         params = {}
         graphs = GraphSet()
         machines = {}
@@ -106,9 +103,8 @@ class Publish(Command):
         if os.path.exists(conf.html_dir):
             util.long_path_rmtree(conf.html_dir)
 
-        environments = list(environment.get_environments(conf, env_spec))
         repo = get_repo(conf)
-        benchmarks = Benchmarks.load(conf, repo, environments)
+        benchmarks = Benchmarks.load(conf)
 
         template_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), '..', 'www')

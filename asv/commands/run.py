@@ -188,11 +188,15 @@ class Run(Command):
                         "No range spec may be specified if benchmarking in "
                         "an existing environment")
 
-        benchmarks = Benchmarks(conf, repo, environments, regex=bench)
+        benchmarks = Benchmarks.discover(conf, repo, environments,
+                                         commit_hashes, regex=bench)
+        benchmarks.save()
         if len(benchmarks) == 0:
             log.error("No benchmarks selected")
-            return 1
-        benchmarks.save()
+            if bench == ["just-discover"]:
+                return 0
+            else:
+                return 1
 
         steps = len(commit_hashes) * len(benchmarks) * len(environments)
 

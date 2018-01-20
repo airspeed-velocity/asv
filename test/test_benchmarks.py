@@ -57,34 +57,40 @@ def test_find_benchmarks(tmpdir):
 
     envs = list(environment.get_environments(conf, None))
 
-    b = benchmarks.Benchmarks(conf, repo, envs, regex='secondary')
+    commit_hash = repo.get_hash_from_name(repo.get_branch_name())
+
+    b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
+                                       regex='secondary')
     assert len(b) == 3
 
-    b = benchmarks.Benchmarks(conf, repo, envs, regex='example')
+    b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
+                                       regex='example')
     assert len(b) == 25
 
-    b = benchmarks.Benchmarks(conf, repo, envs, regex='time_example_benchmark_1')
+    b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
+                              regex='time_example_benchmark_1')
     assert len(b) == 2
 
-    b = benchmarks.Benchmarks(conf, repo, envs, regex=['time_example_benchmark_1',
-                                                       'some regexp that does not match anything'])
+    b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
+                              regex=['time_example_benchmark_1',
+                                     'some regexp that does not match anything'])
     assert len(b) == 2
 
-    b = benchmarks.Benchmarks(conf, repo, envs, regex='custom')
+    b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash], regex='custom')
     assert sorted(b.keys()) == ['custom.time_function', 'custom.track_method',
                                 'named.track_custom_pretty_name']
     assert 'pretty_name' not in b['custom.track_method']
     assert b['custom.time_function']['pretty_name'] == 'My Custom Function'
     assert b['named.track_custom_pretty_name']['pretty_name'] == 'this.is/the.answer'
 
-    b = benchmarks.Benchmarks(conf, repo, envs)
+    b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
     assert len(b) == 35
 
     assert 'named.OtherSuite.track_some_func' in b
 
     start_timestamp = datetime.datetime.utcnow()
 
-    b = benchmarks.Benchmarks(conf, repo, envs)
+    b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
     times = b.run_benchmarks(envs[0], profile=True, show_stderr=True)
 
     end_timestamp = datetime.datetime.utcnow()
@@ -180,9 +186,10 @@ def test_invalid_benchmark_tree(tmpdir):
 
     repo = get_repo(conf)
     envs = list(environment.get_environments(conf, None))
+    commit_hash = repo.get_hash_from_name(repo.get_branch_name())
 
     with pytest.raises(util.UserError):
-        b = benchmarks.Benchmarks(conf, repo, envs)
+        b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
 
 
 def test_table_formatting():
@@ -266,8 +273,10 @@ def track_this():
 
     repo = get_repo(conf)
     envs = list(environment.get_environments(conf, None))
+    commit_hash = repo.get_hash_from_name(repo.get_branch_name())
 
-    b = benchmarks.Benchmarks(conf, repo, envs, regex='track_this')
+    b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
+                                       regex='track_this')
     assert len(b) == 1
 
 
@@ -287,8 +296,9 @@ def test_quick(tmpdir):
 
     repo = get_repo(conf)
     envs = list(environment.get_environments(conf, None))
+    commit_hash = repo.get_hash_from_name(repo.get_branch_name())
 
-    b = benchmarks.Benchmarks(conf, repo, envs)
+    b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
     skip_names = [name for name in b.keys() if name != 'time_examples.TimeWithRepeat.time_it']
     times = b.run_benchmarks(envs[0], quick=True, show_stderr=True, skip=skip_names)
 
@@ -314,10 +324,11 @@ def test_code_extraction(tmpdir):
     conf = config.Config.from_json(d)
 
     repo = get_repo(conf)
-
     envs = list(environment.get_environments(conf, None))
+    commit_hash = repo.get_hash_from_name(repo.get_branch_name())
 
-    b = benchmarks.Benchmarks(conf, repo, envs, regex=r'^code_extraction\.')
+    b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
+                                       regex=r'^code_extraction\.')
 
     expected_code = textwrap.dedent("""
     def track_test():
