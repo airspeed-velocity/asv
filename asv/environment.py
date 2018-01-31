@@ -354,6 +354,7 @@ class Environment(object):
 
         """
         self._env_dir = conf.env_dir
+        self._repo_subdir = conf.repo_subdir
         self._install_timeout = conf.install_timeout  # GH391
         self._path = os.path.abspath(os.path.join(
             self._env_dir, self.hashname))
@@ -498,8 +499,12 @@ class Environment(object):
     def build_project(self, repo, commit_hash):
         self.checkout_project(repo, commit_hash)
         log.info("Building {0} for {1}".format(commit_hash[:8], self.name))
-        self.run(['setup.py', 'build'], cwd=self._build_root)
-        return self._build_root
+        if self._repo_subdir:
+            build_dir = os.path.join(self._build_root, self._repo_subdir)
+        else:
+            build_dir = self._build_root
+        self.run(['setup.py', 'build'], cwd=build_dir)
+        return build_dir
 
     def install_project(self, conf, repo, commit_hash):
         """

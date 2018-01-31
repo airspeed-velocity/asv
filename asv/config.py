@@ -22,6 +22,7 @@ class Config(object):
         self.project = "project"
         self.project_url = "#"
         self.repo = None
+        self.repo_subdir = ""
         self.branches = [None]
         self.pythons = ["{0[0]}.{0[1]}".format(sys.version_info)]
         self.matrix = {}
