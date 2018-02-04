@@ -154,6 +154,7 @@ def test_web_summarygrid(browser, basic_html):
         param_button = browser.find_element_by_link_text('benchmark.params_examples.ClassOne')
         assert 'active' in param_button.get_attribute('class').split()
         param_button.click()
+        param_button = browser.find_element_by_link_text('benchmark.params_examples.ClassOne')
         assert 'active' not in param_button.get_attribute('class').split()
 
         # Check there's no error popup; needs an explicit wait because
