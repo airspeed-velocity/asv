@@ -96,7 +96,7 @@ $(document).ready(function() {
     }
 
 
-    function display_benchmark(bm_name, state_selection, sub_benchmark_idx, highlight_revisions) {
+    function display_benchmark(bm_name, state_selection, highlight_revisions) {
         setup_benchmark_graph_display();
 
         $('#graph-display').show();
@@ -112,7 +112,7 @@ $(document).ready(function() {
         current_benchmark = bm_name;
         highlighted_revisions = highlight_revisions;
         $("#title").text(bm_name);
-        setup_benchmark_params(state_selection, sub_benchmark_idx);
+        setup_benchmark_params(state_selection);
         replace_graphs();
     }
 
@@ -324,7 +324,7 @@ $(document).ready(function() {
         });
     }
 
-    function setup_benchmark_params(state_selection, sub_benchmark_idx) {
+    function setup_benchmark_params(state_selection) {
         if (!current_benchmark) {
             x_coordinate_axis = 0;
             x_coordinate_is_category = false;
@@ -373,35 +373,29 @@ $(document).ready(function() {
         /* Default plot: time series */
         x_coordinate_axis = 0;
 
-        if (sub_benchmark_idx !== null) {
-            /* Only a single parameter set */
-            benchmark_param_selection = $.asv.param_selection_from_flat_idx(params, sub_benchmark_idx);
-        }
-        else {
-            /* Default plot: up to 8 lines */
-            benchmark_param_selection = [[null]];
-            if (params.length >= 1) {
-                var count = 1;
-                var max_curves = 8;
+        /* Default plot: up to 8 lines */
+        benchmark_param_selection = [[null]];
+        if (params.length >= 1) {
+            var count = 1;
+            var max_curves = 8;
 
-                for (var k = 0; k < params.length; ++k) {
-                    var param_name = param_names[k]
-                    var param_values = params[k]
-                    var item = [];
-                    if (state_selection['p-'+param_name] !== undefined) {
-                        for (var j = 0; j < param_values.length; ++j) {
-                            if (state_selection['p-'+param_name].includes(param_values[j])) {
-                                item.push(j);
-                            }
-                        }
-                    } else {
-                        for (var j = 0; j < param_values.length && (j+1)*count <= max_curves; ++j) {
+            for (var k = 0; k < params.length; ++k) {
+                var param_name = param_names[k]
+                var param_values = params[k]
+                var item = [];
+                if (state_selection['p-'+param_name] !== undefined) {
+                    for (var j = 0; j < param_values.length; ++j) {
+                        if (state_selection['p-'+param_name].includes(param_values[j])) {
                             item.push(j);
                         }
                     }
-                    count = count * item.length;
-                    benchmark_param_selection.push(item);
+                } else {
+                    for (var j = 0; j < param_values.length && (j+1)*count <= max_curves; ++j) {
+                        item.push(j);
+                    }
                 }
+                count = count * item.length;
+                benchmark_param_selection.push(item);
             }
         }
 
@@ -1290,14 +1284,8 @@ $(document).ready(function() {
 
     $.asv.register_page('graphdisplay', function(params) {
         var benchmark = params['benchmark'];
-        var sub_benchmark_idx = null;
         var highlight_revisions = null;
         var state_selection = null;
-
-        if (params['idx']) {
-            sub_benchmark_idx = parseInt(params['idx'][0]);
-            delete params['idx'];
-        }
 
         if (params['commits']) {
             highlight_revisions = [];
@@ -1339,6 +1327,6 @@ $(document).ready(function() {
             state_selection = params;
         }
 
-        display_benchmark(benchmark, state_selection, sub_benchmark_idx, highlight_revisions);
+        display_benchmark(benchmark, state_selection, highlight_revisions);
     });
 });
