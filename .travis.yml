@@ -75,7 +75,7 @@ install:
   - $TRAVIS_PYTHON setup.py build_ext -i
 
 script:
-  - $TRAVIS_PYTHON -m pytest --timeout=360 -l $COVERAGE test
+  - $TRAVIS_PYTHON -m pytest --timeout=360 -l $COVERAGE test -vv
 
 after_script:
   - if [[ "$COVERAGE" != '' ]]; then

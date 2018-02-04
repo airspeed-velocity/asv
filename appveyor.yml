@@ -57,7 +57,7 @@ install:
 build: false
 
 test_script:
-    - "python -m pytest --timeout=360 -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp test"
+    - "python -m pytest --timeout=360 -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp test -vv"
 
 after_build:
     # Clear up pip cache
