@@ -509,8 +509,8 @@ def test_conda_channel_addition(tmpdir,
                                                     '--json']))
         json_package_list = json.loads(out_str)
         for installed_package in json_package_list:
-            # ignore default-only package
-            if installed_package['name'] == 'vs2008_runtime':
+            # check only explicitly installed packages
+            if installed_package['name'] not in ('python', 'pip', 'wheel'):
                 continue
             assert installed_package['channel'] == expected_channel
 
