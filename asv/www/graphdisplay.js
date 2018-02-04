@@ -1127,7 +1127,11 @@ $(document).ready(function() {
                 mode: "x"
             },
             legend: {
-                position: "nw"
+                position: "nw",
+                labelFormatter: function(label, series) {
+                    // Ensure HTML escaping
+                    return $("<span>").text(label).html();
+                }
             }
         };
 
