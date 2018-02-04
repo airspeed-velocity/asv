@@ -147,6 +147,17 @@ class Regressions(OutputPublisher):
             else:
                 benchmark_name = name
 
+            benchmark = benchmarks[benchmark_name]
+
+            if idx is not None:
+                graph_params = dict(graph_params)
+
+                # Add URL parameters
+                param_values, = itertools.islice(itertools.product(*benchmark['params']),
+                                                 idx, idx + 1)
+                for k, v in zip(benchmark['param_names'], param_values):
+                    graph_params['p-' + k] = v
+
             jumps, last_value, best_value = info
 
             for rev1, rev2, value1, value2 in jumps:
@@ -156,8 +167,7 @@ class Regressions(OutputPublisher):
                 updated = datetime.datetime.fromtimestamp(last_timestamp/1000)
 
                 params = dict(graph_params)
-                if idx is not None:
-                    params['idx'] = idx
+
                 if rev1 is None:
                     params['commits'] = '{0}'.format(revision_to_hash[rev2])
                 else:
@@ -194,7 +204,7 @@ class Regressions(OutputPublisher):
                     commit_url = conf.show_commit_url + commit_a
                     commit_ref = 'in commit <a href="{0}">{1}</a>'.format(commit_url, commit_a[:8])
 
-                unit = benchmarks[benchmark_name].get('unit', '')
+                unit = benchmark.get('unit', '')
                 best_value_str = util.human_value(best_value, unit)
                 last_value_str = util.human_value(last_value, unit)
                 value1_str = util.human_value(value1, unit)
