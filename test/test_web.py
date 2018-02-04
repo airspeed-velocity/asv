@@ -19,6 +19,14 @@ import asv
 
 from asv import config, util
 
+try:
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver import ActionChains
+    from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+except ImportError:
+    pass
+
 from . import tools
 from .tools import browser, get_with_retry
 
@@ -157,10 +165,6 @@ def test_web_summarygrid(browser, basic_html):
 
 
 def test_web_regressions(browser, basic_html):
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    from selenium.webdriver import ActionChains
-
     html_dir, dvcs = basic_html
 
     bad_commit_hash = dvcs.get_hash('master~9')
@@ -258,11 +262,6 @@ def test_web_regressions(browser, basic_html):
 
 
 def test_web_summarylist(browser, basic_html):
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    from selenium.webdriver import ActionChains
-    from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
-
     ignore_exc = (NoSuchElementException, StaleElementReferenceException)
 
     html_dir, dvcs = basic_html

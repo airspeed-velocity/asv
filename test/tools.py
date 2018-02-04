@@ -14,10 +14,10 @@ import threading
 import time
 import six
 import tempfile
+import textwrap
 import sys
 from os.path import abspath, join, dirname, relpath, isdir
 from contextlib import contextmanager
-from distutils.spawn import find_executable
 from hashlib import sha256
 from six.moves import SimpleHTTPServer
 
@@ -38,22 +38,10 @@ from asv.results import Results
 
 try:
     import selenium
-    from selenium import webdriver
-    from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-    from selenium.webdriver.support.ui import WebDriverWait
     from selenium.common.exceptions import TimeoutException
     HAVE_WEBDRIVER = True
 except ImportError:
     HAVE_WEBDRIVER = False
-
-CHROMEDRIVER = [
-    'chromedriver',
-    '/usr/lib/chromium-browser/chromedriver'   # location on Ubuntu
-]
-
-PHANTOMJS = ['phantomjs']
-
-FIREFOX = ['firefox']
 
 
 def run_asv(*argv):
@@ -412,47 +400,38 @@ def browser(request, pytestconfig):
     """
     Fixture for Selenium WebDriver browser interface
     """
-    if not HAVE_WEBDRIVER:
-        pytest.skip("Selenium WebDriver Python bindings not found")
-
     driver_str = pytestconfig.getoption('webdriver')
-    driver_options_str = pytestconfig.getoption('webdriver_options')
+
+    if driver_str == "None":
+        pytest.skip("No webdriver selected for tests (use --webdriver).")
 
     # Evaluate the options
+    def FirefoxHeadless():
+        from selenium.webdriver.firefox.options import Options
+        options = Options()
+        options.add_argument("-headless")
+        return selenium.webdriver.Firefox(firefox_options=options)
+
+    def ChromeHeadless():
+        options = selenium.webdriver.ChromeOptions()
+        options.add_argument('headless')
+        return selenium.webdriver.Chrome(chrome_options=options)
+
     ns = {}
     six.exec_("import selenium.webdriver", ns)
     six.exec_("from selenium.webdriver import *", ns)
-    driver_options = eval(driver_options_str, ns)
-    driver_cls = getattr(webdriver, driver_str)
+    ns['FirefoxHeadless'] = FirefoxHeadless
+    ns['ChromeHeadless'] = ChromeHeadless
 
-    # Find the executable (if applicable)
-    paths = []
-    if driver_cls is webdriver.Chrome:
-        paths += CHROMEDRIVER
-        exe_kw = 'executable_path'
-    elif driver_cls is webdriver.PhantomJS:
-        paths += PHANTOMJS
-        exe_kw = 'executable_path'
-    elif driver_cls is webdriver.Firefox:
-        paths += FIREFOX
-        exe_kw = 'firefox_binary'
-    else:
-        exe_kw = None
-
-    for exe in paths:
-        if exe is None:
-            continue
-        exe = find_executable(exe)
-        if exe:
-            break
-    else:
-        exe = None
-
-    if exe is not None and exe_kw is not None and exe_kw not in driver_options:
-        driver_options[exe_kw] = exe
+    create_driver = ns.get(driver_str, None)
+    if create_driver is None:
+        src = "def create_driver():\n"
+        src += textwrap.indent(driver_str, "    ")
+        six.exec_(src, ns)
+        create_driver = ns['create_driver']
 
     # Create the browser
-    browser = driver_cls(**driver_options)
+    browser = create_driver()
 
     # Set timeouts
     browser.set_page_load_timeout(10)
