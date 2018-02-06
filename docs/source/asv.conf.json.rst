@@ -46,6 +46,16 @@ The repository may be readonly.
    Mercurial used in ``asv`` (``python-hglib``) is being ported to Python 3.
    At the present time, Mercurial support will only function on Python 2.
 
+``repo_subdir``
+---------------
+
+The relative path to your Python project inside the repository.  This is
+where its ``setup.py`` file is located.
+
+If empty or omitted, the project is assumed to be located at the root of
+the repository.
+
+
 ``branches``
 ------------
 Branches to generate benchmark results for.
