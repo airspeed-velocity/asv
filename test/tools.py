@@ -379,6 +379,7 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
     benchmark_version = sha256(os.urandom(16)).hexdigest()
 
     params = None
+    param_names = None
     for commit, value in values.items():
         if isinstance(value, dict):
             params = value["params"]
@@ -396,11 +397,14 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
         result.add_result("time_func", value, benchmark_version)
         result.save(result_dir)
 
+    if params:
+        param_names = ["param{}".format(k) for k in range(len(params))]
+
     util.write_json(join(result_dir, "benchmarks.json"), {
         "time_func": {
             "name": "time_func",
             "params": params or [],
-            "param_names": params or [],
+            "param_names": param_names or [],
             "version": benchmark_version,
         }
     }, api_version=1)
