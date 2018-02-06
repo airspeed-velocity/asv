@@ -126,7 +126,8 @@ def test_web_summarygrid(browser, basic_html):
     with tools.preview(html_dir) as base_url:
         get_with_retry(browser, base_url)
 
-        assert browser.title == 'airspeed velocity of an unladen asv'
+        WebDriverWait(browser, 5).until(EC.title_is(
+            'airspeed velocity of an unladen asv'))
 
         # Verify benchmark names are displayed as expected
         for href, expected in (
@@ -306,8 +307,13 @@ def test_web_summarylist(browser, basic_html):
         # For the other CPU, there is no recent change recorded, only
         # the latest result is available
         def check(*args):
-            base_link = browser.find_element_by_link_text('params_examples.track_find_test')
-            cur_row = base_link.find_element_by_xpath('../..')
-            return cur_row.text in ('params_examples.track_find_test (1) 2.00',
-                                    'params_examples.track_find_test (2) 2.00')
+            links = browser.find_elements_by_link_text('params_examples.track_find_test')
+            visible_links = [item for item in links if item.is_displayed()]
+
+            row_texts = [link.find_element_by_xpath('../..').text
+                         for link in visible_links]
+            row_texts.sort()
+
+            return row_texts == ['params_examples.track_find_test (1) 2.00',
+                                 'params_examples.track_find_test (2) 2.00']
         WebDriverWait(browser, 5, ignored_exceptions=ignore_exc).until(check)
