@@ -45,8 +45,7 @@ dummy_values = [
 ]
 
 
-@pytest.fixture
-def basic_conf(tmpdir):
+def generate_basic_conf(tmpdir, repo_subdir=''):
     tmpdir = six.text_type(tmpdir)
     local = abspath(dirname(__file__))
     os.chdir(tmpdir)
@@ -61,9 +60,10 @@ def basic_conf(tmpdir):
     shutil.copyfile(join(local, 'asv-machine.json'),
                     machine_file)
 
-    repo_path = tools.generate_test_repo(tmpdir, dummy_values).path
+    repo_path = tools.generate_test_repo(tmpdir, dummy_values,
+                                         subdir=repo_subdir).path
 
-    conf = config.Config.from_json({
+    conf_dict = {
         'env_dir': 'env',
         'benchmark_dir': 'benchmark',
         'results_dir': 'results_workflow',
@@ -73,14 +73,28 @@ def basic_conf(tmpdir):
         'project': 'asv',
         'matrix': {
             "six": [""],
-            "colorama": ["0.3.7", "0.3.9"]
-        }
-    })
+            "colorama": ["0.3.7", "0.3.9"],
+        },
+    }
+    if repo_subdir:
+        conf_dict['repo_subdir'] = repo_subdir
+
+    conf = config.Config.from_json(conf_dict)
 
     if hasattr(sys, 'pypy_version_info'):
         conf.pythons = ["pypy{0[0]}.{0[1]}".format(sys.version_info)]
 
     return tmpdir, local, conf, machine_file
+
+
+@pytest.fixture
+def basic_conf(tmpdir):
+    return generate_basic_conf(tmpdir)
+
+
+@pytest.fixture
+def basic_conf_with_subdir(tmpdir):
+    return generate_basic_conf(tmpdir, 'some_subdir')
 
 
 def test_run_publish(capfd, basic_conf):
@@ -303,3 +317,27 @@ def test_run_build_failure(basic_conf):
 
     # Check that parameters were also saved
     assert data_broken['params'] == data_ok['params']
+
+
+def test_run_with_repo_subdir(basic_conf_with_subdir):
+    """
+    Check 'asv run' with the Python project inside a subdirectory.
+    """
+    tmpdir, local, conf, machine_file = basic_conf_with_subdir
+
+    conf.matrix = {}
+
+    # This benchmark imports the project under test (asv_test_repo)
+    bench_name = 'params_examples.track_find_test'
+    # Test with a single changeset
+    tools.run_asv_with_conf(conf, 'run', 'master^!',
+                            '--quick', '--show-stderr',
+                            '--bench', bench_name,
+                            _machine_file=machine_file)
+
+    # Check it ran ok
+    fn_results, = glob.glob(join(tmpdir, 'results_workflow', 'orangutan',
+                                 '*-*.json'))  # avoid machine.json
+    data = util.load_json(fn_results)
+    assert data['results'][bench_name] == {'params': [['1', '2']],
+                                           'result': [6, 6]}

@@ -19,8 +19,7 @@ from asv.commands import make_argparser
 from . import tools
 
 
-@pytest.fixture
-def basic_conf(tmpdir):
+def generate_basic_conf(tmpdir, repo_subdir=''):
     tmpdir = six.text_type(tmpdir)
     local = abspath(dirname(__file__))
     os.chdir(tmpdir)
@@ -33,20 +32,37 @@ def basic_conf(tmpdir):
     shutil.copyfile(join(local, 'asv-machine.json'),
                     join(tmpdir, 'asv-machine.json'))
 
-    conf = config.Config.from_json({
+    repo_path = relpath(tools.generate_test_repo(tmpdir,
+                                                 subdir=repo_subdir).path)
+
+    conf_dict = {
         'env_dir': 'env',
         'benchmark_dir': 'benchmark',
         'results_dir': 'results_workflow',
         'html_dir': 'html',
-        'repo': relpath(tools.generate_test_repo(tmpdir).path),
+        'repo': repo_path,
         'project': 'asv',
         'matrix': {
             "six": [None],
-            "colorama": ["0.3.6", "0.3.7"]
-        }
-    })
+            "colorama": ["0.3.6", "0.3.7"],
+        },
+    }
+    if repo_subdir:
+        conf_dict['repo_subdir'] = repo_subdir
+
+    conf = config.Config.from_json(conf_dict)
 
     return tmpdir, local, conf
+
+
+@pytest.fixture
+def basic_conf(tmpdir):
+    return generate_basic_conf(tmpdir)
+
+
+@pytest.fixture
+def basic_conf_with_subdir(tmpdir):
+    return generate_basic_conf(tmpdir, 'some_subdir')
 
 
 def test_dev(capsys, basic_conf):
@@ -58,6 +74,24 @@ def test_dev(capsys, basic_conf):
 
     # time_with_warnings failure case
     assert re.search("File.*time_exception.*RuntimeError", text, re.S)
+    assert re.search(r"Running time_secondary.track_value\s+42.0", text)
+
+    # Check that it did not clone or install
+    assert "Cloning" not in text
+    assert "Installing" not in text
+
+
+def test_dev_with_repo_subdir(capsys, basic_conf_with_subdir):
+    """
+    Same as test_dev, but with the Python project inside a subdirectory.
+    """
+    tmpdir, local, conf = basic_conf_with_subdir
+
+    # Test Dev runs
+    tools.run_asv_with_conf(conf, 'dev', _machine_file=join(tmpdir, 'asv-machine.json'))
+    text, err = capsys.readouterr()
+
+    # Benchmarks were found and run
     assert re.search(r"Running time_secondary.track_value\s+42.0", text)
 
     # Check that it did not clone or install
