@@ -13,6 +13,11 @@
     // project being benchmarked
     "repo": "",
 
+    // The Python project's subdirectory in your repo.  If missing or
+    // the empty string, the project is assumed to be located at the root
+    // of the repository.
+    // "repo_subdir": "",
+
     // List of branches to benchmark. If not provided, defaults to "master"
     // (for git) or "default" (for mercurial).
     // "branches": ["master"], // for git
