@@ -1,8 +1,8 @@
 
 def pytest_addoption(parser):
-    selenium_class_names = ("Android", "Chrome", "Firefox", "Ie", "Opera", "PhantomJS", "Remote", "Safari")
-    parser.addoption("--webdriver", action="store", choices=selenium_class_names,
-                     default="PhantomJS",
-                     help="Selenium WebDriver interface to use for running the test. Default: PhantomJS")
-    parser.addoption("--webdriver-options", action="store", default="{}",
-                     help="Python dictionary of options to pass to the Selenium WebDriver class. Default: {}")
+    parser.addoption("--webdriver", action="store", default="None",
+                     help=("Selenium WebDriver interface to use for running the test. "
+                           "Choices: None, PhantomJS, Chrome, Firefox, ChromeHeadless, "
+                           "FirefoxHeadless. Alternatively, it can be arbitrary Python code "
+                           "with a return statement with selenium.webdriver object, for "
+                           "example 'return Chrome()'"))
