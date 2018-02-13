@@ -626,7 +626,7 @@ def write_json(path, data, api_version=None):
         data = dict(data)
         data['version'] = api_version
 
-    with long_path_open(path, 'w') as fd:
+    with long_path_open(path, 'w', encoding='utf-8') as fd:
         json.dump(data, fd, indent=4, sort_keys=True)
 
 
