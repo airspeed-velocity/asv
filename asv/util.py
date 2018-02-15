@@ -9,6 +9,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import datetime
+import base64
 import json
 import math
 import os
@@ -623,8 +624,13 @@ def write_json(path, data, api_version=None):
         os.makedirs(dirname)
 
     if api_version is not None:
-        data = dict(data)
         data['version'] = api_version
+    
+    data = dict(data)
+    for key in data.keys():
+        if isinstance(data[key], bytes):
+            encoded = base64.encodestring(data[key])
+            data[key] = encoded.decode('ascii')
 
     with long_path_open(path, 'w', encoding='utf-8') as fd:
         json.dump(data, fd, indent=4, sort_keys=True)
