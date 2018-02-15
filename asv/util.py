@@ -624,13 +624,14 @@ def write_json(path, data, api_version=None):
         os.makedirs(dirname)
 
     if api_version is not None:
+        data = dict(data)
         data['version'] = api_version
     
-    data = dict(data)
-    for key in data.keys():
-        if isinstance(data[key], bytes):
-            encoded = base64.encodestring(data[key])
-            data[key] = encoded.decode('ascii')
+#     data = dict(data)
+#     for key in data.keys():
+#         if isinstance(data[key], bytes):
+#             encoded = base64.encodestring(data[key])
+#             data[key] = encoded.decode('ascii')
 
     with long_path_open(path, 'w', encoding='utf-8') as fd:
         json.dump(data, fd, indent=4, sort_keys=True)
