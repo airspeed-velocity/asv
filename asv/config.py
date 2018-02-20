@@ -41,6 +41,9 @@ class Config(object):
         self.regressions_thresholds = {}
         self.plugins = []
         self.conda_channels = []
+        self.build_command = None
+        self.install_command = None
+        self.uninstall_command = None
 
     @classmethod
     def load(cls, path=None):
