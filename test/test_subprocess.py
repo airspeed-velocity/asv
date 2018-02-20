@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import os
 import sys
 import time
 
@@ -102,6 +103,20 @@ for j in range(3):
         assert e.retcode == util.TIMEOUT_RETCODE
     else:
         assert False, "Expected exception"
+
+
+def test_env():
+    code = r"""
+import os
+print(os.environ['TEST_ASV_FOO'])
+print(os.environ['TEST_ASV_BAR'])
+"""
+    env = os.environ.copy()
+    env['TEST_ASV_FOO'] = 'foo'
+    # Force unicode string on Python 2
+    env['TEST_ASV_BAR'] = u'bar'
+    output = util.check_output([sys.executable, "-c", code], env=env)
+    assert output.splitlines() == ['foo', 'bar']
 
 
 # This *does* seem to work, only seems untestable somehow...
