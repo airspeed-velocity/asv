@@ -18,6 +18,11 @@
     // of the repository.
     // "repo_subdir": "",
 
+    // XXX document
+    // "build_command": ["setup.py", "build"],
+    // "install_command": ["python", "-mpip", "install", "{build_dir}"],
+    // "uninstall_command": ["python", "-mpip", "uninstall", "-y", "{project}"],
+
     // List of branches to benchmark. If not provided, defaults to "master"
     // (for git) or "default" (for mercurial).
     // "branches": ["master"], // for git

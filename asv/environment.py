@@ -361,11 +361,15 @@ class Environment(object):
         self._install_timeout = conf.install_timeout  # GH391
         self._path = os.path.abspath(os.path.join(
             self._env_dir, self.hashname))
+        self._project = conf.project
 
         self._is_setup = False
 
         self._cache = wheel_cache.WheelCache(conf, self._path)
         self._build_root = os.path.abspath(os.path.join(self._path, 'project'))
+        self._build_command = conf.build_command
+        self._install_command = conf.install_command
+        self._uninstall_command = conf.uninstall_command
 
         self._env_vars = {}
         self._env_vars['ASV'] = 'true'
@@ -481,24 +485,42 @@ class Environment(object):
         """
         raise NotImplementedError()
 
-    def install(self, package):
-        """
-        Install a package into the environment.
-        """
-        raise NotImplementedError()
-
-    def uninstall(self, package):
-        """
-        Uninstall a package into the environment.
-        """
-        raise NotImplementedError()
-
     def run(self, args, **kwargs):
         """
         Start up the environment's python executable with the given
         args.
         """
         raise NotImplementedError()
+
+    def _interpolate_command(self, command, **kwargs):
+        return [c.format(project=self._project, **kwargs) for c in command]
+
+    def _install_build(self, build_dir):
+        log.info("Installing into {0}".format(self.name))
+        cmd = self._install_command
+        if cmd is None:
+            # Run pip via python -m pip, so that it works on Windows when
+            # upgrading pip itself, and avoids shebang length limit on Linux
+            cmd = ['python', '-mpip', 'install', '{build_dir}']
+        if cmd:
+            cmd = self._interpolate_command(cmd, build_dir=build_dir)
+            self.run_executable(cmd[0], cmd[1:], timeout=self._install_timeout)
+
+    def _uninstall_project(self):
+        log.info("Uninstalling from {0}".format(self.name))
+        cmd = self._uninstall_command
+        valid_return_codes = {0}
+        if cmd is None:
+            # Run pip via python -m pip, so that it works on Windows when
+            # upgrading pip itself, and avoids shebang length limit on Linux
+            cmd = ['python', '-mpip', 'uninstall', '-y', '{project}']
+            # uninstall may fail if not installed
+            valid_return_codes = None
+        if cmd:
+            cmd = self._interpolate_command(cmd)
+            self.run_executable(cmd[0], cmd[1:],
+                                timeout=self._install_timeout,
+                                valid_return_codes=valid_return_codes)
 
     def checkout_project(self, repo, commit_hash):
         """
@@ -517,7 +539,13 @@ class Environment(object):
             build_dir = os.path.join(self._build_root, self._repo_subdir)
         else:
             build_dir = self._build_root
-        self.run(['setup.py', 'build'], cwd=build_dir)
+
+        cmd = self._build_command
+        if cmd is None:
+            cmd = ['python', 'setup.py', 'build']
+        if cmd:
+            cmd = self._interpolate_command(cmd)
+            self.run_executable(cmd[0], cmd[1:], cwd=build_dir)
         return build_dir
 
     def install_project(self, conf, repo, commit_hash):
@@ -525,17 +553,20 @@ class Environment(object):
         Install the benchmarked project into the environment.
         Uninstalls any installed copy of the project first.
         """
-        self.uninstall(conf.project)
+        self._uninstall_project()
 
         self._set_commit_hash(commit_hash)
 
-        build_root = self._cache.build_project_cached(
-            self, conf, repo, commit_hash)
+        if self._build_command is None and self._install_command is None:
+            build_root = self._cache.build_project_cached(
+                self, conf, repo, commit_hash)
+        else:
+            build_root = None
 
         if build_root is None:
             build_root = self.build_project(repo, commit_hash)
 
-        self.install(build_root)
+        self._install_build(build_root)
 
     def can_install_project(self):
         """
