@@ -48,7 +48,7 @@ install:
     - "python --version"
 
     # Install specified version of dependencies
-    - "conda install -q --yes six pip pytest pytest-timeout numpy"
+    - "conda install -q --yes six pip pytest pytest-xdist numpy"
 
     # In-place build
     - "%CMD_IN_ENV% python setup.py build_ext -i"
@@ -57,7 +57,7 @@ install:
 build: false
 
 test_script:
-    - "python -m pytest --timeout=360 -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp test -vv"
+    - "python -m pytest -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp -vv -n 5 --dist=loadscope test"
 
 after_build:
     # Clear up pip cache
