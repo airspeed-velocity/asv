@@ -136,9 +136,11 @@ def test_run_publish(capfd, basic_conf):
     capfd.readouterr()
     tools.run_asv_with_conf(conf, 'run', "master~5..master", '--steps=2',
                             '--quick', '--skip-existing-successful',
+                            '--bench=time_secondary.track_value',
                             '--skip-existing-failed',
                             _machine_file=join(tmpdir, 'asv-machine.json'))
     tools.run_asv_with_conf(conf, 'run', "master~5..master", '--steps=2',
+                            '--bench=time_secondary.track_value',
                             '--quick', '--skip-existing-commits',
                             _machine_file=join(tmpdir, 'asv-machine.json'))
     text, err = capfd.readouterr()
@@ -149,7 +151,9 @@ def test_run_publish(capfd, basic_conf):
         env_spec = ("-E", "conda:{0[0]}.{0[1]}".format(sys.version_info))
     else:
         env_spec = ("-E", "virtualenv:{0[0]}.{0[1]}".format(sys.version_info))
-    tools.run_asv_with_conf(conf, 'run', "EXISTING", '--quick', *env_spec,
+    tools.run_asv_with_conf(conf, 'run', "EXISTING", '--quick',
+                            '--bench=time_secondary.track_value',
+                            *env_spec,
                             _machine_file=machine_file)
 
     # Remove the benchmarks.json file and check publish fails
@@ -170,6 +174,8 @@ def test_continuous(capfd, basic_conf):
 
     # Check that asv continuous runs
     tools.run_asv_with_conf(conf, 'continuous', "master^", '--show-stderr',
+                            '--bench=params_examples.track_find_test',
+                            '--bench=params_examples.track_param',
                             *env_spec, _machine_file=machine_file)
 
     text, err = capfd.readouterr()
