@@ -44,6 +44,9 @@ except ImportError:
     HAVE_WEBDRIVER = False
 
 
+WAIT_TIME = 20.0
+
+
 def run_asv(*argv):
     parser, subparsers = commands.make_argparser()
     args = parser.parse_args(argv)
@@ -438,8 +441,8 @@ def browser(request, pytestconfig):
     browser = create_driver()
 
     # Set timeouts
-    browser.set_page_load_timeout(10)
-    browser.set_script_timeout(10)
+    browser.set_page_load_timeout(WAIT_TIME)
+    browser.set_script_timeout(WAIT_TIME)
 
     # Clean up on fixture finalization
     def fin():
@@ -447,7 +450,7 @@ def browser(request, pytestconfig):
     request.addfinalizer(fin)
 
     # Set default time to wait for AJAX requests to complete
-    browser.implicitly_wait(5)
+    browser.implicitly_wait(WAIT_TIME)
 
     return browser
 

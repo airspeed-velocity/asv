@@ -25,13 +25,16 @@ except ImportError:
 
 class TimeSecondary:
     sample_time = 0.05
+    _printed = False
 
     def time_factorial(self):
         x = 1
         for i in xrange(100):
             x *= i
-        # This is to generate invalid output
-        sys.stdout.write("X")
+        # This is to print things to stdout, but not spam too much
+        if not self._printed:
+            sys.stdout.write("X")
+            self._printed = True
 
     def time_exception(self):
         raise RuntimeError()

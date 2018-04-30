@@ -28,7 +28,7 @@ except ImportError:
     pass
 
 from . import tools
-from .tools import browser, get_with_retry
+from .tools import browser, get_with_retry, WAIT_TIME
 
 
 @pytest.fixture(scope="session")
@@ -126,7 +126,7 @@ def test_web_summarygrid(browser, basic_html):
     with tools.preview(html_dir) as base_url:
         get_with_retry(browser, base_url)
 
-        WebDriverWait(browser, 5).until(EC.title_is(
+        WebDriverWait(browser, WAIT_TIME).until(EC.title_is(
             'airspeed velocity of an unladen asv'))
 
         # Verify benchmark names are displayed as expected
@@ -190,7 +190,7 @@ def test_web_regressions(browser, basic_html):
 
         # Sort the tables vs. benchmark name (PhantomJS doesn't allow doing it via actionchains)
         browser.execute_script("$('thead th').eq(0).stupidsort('asc')")
-        WebDriverWait(browser, 5).until(EC.text_to_be_present_in_element(
+        WebDriverWait(browser, WAIT_TIME).until(EC.text_to_be_present_in_element(
             ('xpath', '//table[1]/tbody/tr[1]/td[1]'), 'params_examples.track_find_test(1)'
             ))
 
@@ -215,8 +215,8 @@ def test_web_regressions(browser, basic_html):
         buttons[0].click()
 
         # The button should disappear, together with the link
-        WebDriverWait(browser, 5).until_not(EC.visibility_of(buttons[0]))
-        WebDriverWait(browser, 5).until_not(EC.visibility_of(regression_1))
+        WebDriverWait(browser, WAIT_TIME).until_not(EC.visibility_of(buttons[0]))
+        WebDriverWait(browser, WAIT_TIME).until_not(EC.visibility_of(regression_1))
 
         table_rows = browser.find_elements_by_xpath('//table[1]/tbody/tr')
         assert len(table_rows) == 1
@@ -228,7 +228,7 @@ def test_web_regressions(browser, basic_html):
         show_button.click()
 
         regression_1 = browser.find_element_by_link_text('params_examples.track_find_test(1)')
-        WebDriverWait(browser, 5).until(EC.visibility_of(regression_1))
+        WebDriverWait(browser, WAIT_TIME).until(EC.visibility_of(regression_1))
 
         table_rows = browser.find_elements_by_xpath('//table[2]/tbody/tr')
         assert len(table_rows) == 1
@@ -296,7 +296,7 @@ def test_web_summarylist(browser, basic_html):
         # Change table sort (sorting is async, so needs waits)
         sort_th = browser.find_element_by_xpath('//th[text()="Recent change"]')
         sort_th.click()
-        WebDriverWait(browser, 5).until(
+        WebDriverWait(browser, WAIT_TIME).until(
             EC.text_to_be_present_in_element(('xpath', '//tbody/tr[1]'),
                                               'params_examples.track_find_test'))
 
@@ -316,4 +316,4 @@ def test_web_summarylist(browser, basic_html):
 
             return row_texts == ['params_examples.track_find_test (1) 2.00',
                                  'params_examples.track_find_test (2) 2.00']
-        WebDriverWait(browser, 5, ignored_exceptions=ignore_exc).until(check)
+        WebDriverWait(browser, WAIT_TIME, ignored_exceptions=ignore_exc).until(check)
