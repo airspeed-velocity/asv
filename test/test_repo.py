@@ -397,3 +397,40 @@ def test_git_submodule(tmpdir):
     r.checkout(checkout_dir, commit_hash_5)
     assert os.path.isfile(join(checkout_dir, 'README'))
     assert not os.path.isdir(join(checkout_dir, 'sub1'))
+
+
+@pytest.mark.parametrize('dvcs_type', [
+    "git",
+    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg")
+])
+def test_root_ceiling(dvcs_type, tmpdir):
+    # Check that git/hg does not try to look for repository in parent
+    # directories.
+    tmpdir = six.text_type(tmpdir)
+    dvcs1 = tools.generate_repo_from_ops(tmpdir, dvcs_type, [("commit", 1)])
+    dvcs2 = tools.generate_repo_from_ops(tmpdir, dvcs_type, [("commit", 2)])
+    commit1 = dvcs1.get_branch_hashes()[0]
+    commit2 = dvcs2.get_branch_hashes()[0]
+
+    conf = config.Config()
+    conf.branches = []
+    conf.dvcs = dvcs_type
+    conf.project = join(tmpdir, "repo")
+    conf.repo = dvcs1.path
+
+    r = repo.get_repo(conf)
+
+    # Checkout into a subdir inside another repository
+    workcopy_dir = join(dvcs2.path, "workcopy")
+    r.checkout(workcopy_dir, commit1)
+
+    # Corrupt the checkout
+    for pth in ['.hg', '.git']:
+        pth = os.path.join(workcopy_dir, pth)
+        if os.path.isdir(pth):
+            shutil.rmtree(pth)
+
+    # Operation must fail (commit2 is not in dvcs1), not use the
+    # parent repository
+    with pytest.raises(Exception):
+        r.checkout(workcopy_dir, commit2)
