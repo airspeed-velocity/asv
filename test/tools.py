@@ -36,6 +36,18 @@ from asv.repo import get_repo
 from asv.results import Results
 
 
+# Two Python versions for testing
+PYTHON_VER1 = "{0[0]}.{0[1]}".format(sys.version_info)
+if sys.version_info < (3,):
+    PYTHON_VER2 = "3.6"
+else:
+    PYTHON_VER2 = "2.7"
+
+# Installable library versions to use in tests
+SIX_VERSION = "1.10"
+COLORAMA_VERSIONS = ["0.3.7", "0.3.9"]
+
+
 try:
     import selenium
     from selenium.common.exceptions import TimeoutException
