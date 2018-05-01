@@ -268,13 +268,16 @@ class Run(Command):
                     with log.indent():
                         args = [(env, conf, repo, commit_hash) for env in subenv]
                         if parallel != 1:
-                            pool = multiprocessing.Pool(parallel)
                             try:
-                                successes = pool.map(_do_build_multiprocess, args)
+                                pool = multiprocessing.Pool(parallel)
+                                try:
+                                    successes = pool.map(_do_build_multiprocess, args)
+                                    pool.close()
+                                    pool.join()
+                                finally:
+                                    pool.terminate()
                             except util.ParallelFailure as exc:
                                 exc.reraise()
-                            finally:
-                                pool.close()
                         else:
                             successes = map(_do_build, args)
 

@@ -408,18 +408,20 @@ class Benchmarks(dict):
                 log.error(str(last_err))
                 raise util.UserError("Failed to build the project.")
 
-            result_file = tempfile.NamedTemporaryFile(delete=False)
+            result_dir = tempfile.mkdtemp()
             try:
-                result_file.close()
+                result_file = os.path.join(result_dir, 'result.json')
                 env.run(
                     [BENCHMARK_RUN_SCRIPT, 'discover',
-                     os.path.abspath(root), result_file.name],
+                     os.path.abspath(root),
+                     os.path.abspath(result_file)],
+                    cwd=result_dir,
                     dots=False)
 
-                with open(result_file.name, 'r') as fp:
+                with open(result_file, 'r') as fp:
                     benchmarks = json.load(fp)
             finally:
-                os.remove(result_file.name)
+                util.long_path_rmtree(result_dir)
 
         return benchmarks
 
