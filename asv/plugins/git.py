@@ -64,7 +64,13 @@ class Git(Repo):
         if cwd is True:
             cwd = self._path
         kwargs['cwd'] = cwd
-        return util.check_output([self._git] + args, **kwargs)
+        env = dict(kwargs.pop('env', os.environ))
+        if cwd is not None:
+            prev = env.get('GIT_CEILING_DIRECTORIES')
+            env['GIT_CEILING_DIRECTORIES'] = os.pathsep.join(
+                [os.path.join(os.path.abspath(cwd), os.pardir)]
+                + ([prev] if prev is not None else []))
+        return util.check_output([self._git] + args, env=env, **kwargs)
 
     def get_new_range_spec(self, latest_result, branch=None):
         return '{0}..{1}'.format(latest_result, self.get_branch_name(branch))
