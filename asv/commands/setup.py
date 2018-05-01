@@ -67,12 +67,15 @@ class Setup(Command):
         log.info("Creating environments")
         with log.indent():
             if parallel != 1:
-                pool = multiprocessing.Pool(parallel)
                 try:
-                    pool.map(_create_parallel, environments)
+                    pool = multiprocessing.Pool(parallel)
+                    try:
+                        pool.map(_create_parallel, environments)
+                        pool.close()
+                        pool.join()
+                    finally:
+                        pool.terminate()
                 except util.ParallelFailure as exc:
                     exc.reraise()
-                finally:
-                    pool.close()
             else:
                 list(map(_create, environments))

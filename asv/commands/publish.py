@@ -207,6 +207,8 @@ class Publish(Command):
             pool = multiprocessing.Pool(n_processes)
             try:
                 graphs.detect_steps(pool, dots=log.dot)
+                pool.close()
+                pool.join()
             finally:
                 pool.terminate()
 
