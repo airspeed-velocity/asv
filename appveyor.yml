@@ -30,6 +30,11 @@ install:
 
     # Install the build and runtime dependencies of the project.
     - "conda update -q --yes conda"
+    - "conda install -q --yes python=%PYTHON_VERSION% conda six pip pytest pytest-xdist lockfile"
+
+    # Pre-download all necessary packages
+    - "python .continuous-integration/download_reqs.py --conda --pip=pip-cache"
+    - "set PIP_FIND_LINKS=file:///projects/asv/pip-cache"
 
     # Tell conda to not use hardlinks: on Windows it's not possible
     # to delete hard links to files in use, which causes problem when
@@ -37,15 +42,8 @@ install:
     - "conda config --set always_copy True"
     - "conda config --set allow_softlinks False"
 
-    # Create a conda environment
-    - "conda create -q --yes -n test python=%PYTHON_VERSION%"
-    - "activate test"
-
     # Check that we have the expected version of Python
     - "python --version"
-
-    # Install specified version of dependencies
-    - "conda install -q --yes six pip pytest pytest-xdist numpy"
 
     # In-place build
     - "%CMD_IN_ENV% python setup.py build_ext -i"
@@ -54,7 +52,7 @@ install:
 build: false
 
 test_script:
-    - "python -m pytest -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp -vv -n 5 --dist=loadscope test"
+    - "python -m pytest -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp -vv -n 3 --offline test"
 
 after_build:
     # Clear up pip cache
