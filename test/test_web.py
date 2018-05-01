@@ -9,6 +9,7 @@ import re
 import shutil
 import time
 import tempfile
+import contextlib
 from os.path import join, abspath, dirname
 
 import six
@@ -31,36 +32,60 @@ from . import tools
 from .tools import browser, get_with_retry, WAIT_TIME
 
 
+class DummyLock(object):
+    def __init__(self, filename):
+        pass
+    def acquire(self, timeout=None):
+        pass
+    def release(self):
+        pass
+
+try:
+    from lockfile import LockFile
+except ImportError:
+    LockFile = DummyLock
+
+
 @pytest.fixture(scope="session")
 def basic_html(request):
-    if hasattr(request.config, 'cache'):
-        # Cache the generated html, if py.test is new enough to support it
-        cache_dir = request.config.cache.makedir("asv-test_web-basic_html")
-        tmpdir = join(six.text_type(cache_dir), 'cached')
+    cache_key = "asv-test_web-basic_html"
+    if LockFile is DummyLock:
+        cache_key += os.environ.get('PYTEST_XDIST_WORKER', '')
+    cache_dir = request.config.cache.makedir(cache_key)
 
-        if os.path.isdir(tmpdir):
-            # Cached result found
-            try:
-                if util.load_json(join(tmpdir, 'tag.json')) != [asv.__version__]:
-                    raise ValueError()
+    tmpdir = join(six.text_type(cache_dir), 'cached')
+    lockfile = join(six.text_type(cache_dir), 'lock')
 
-                html_dir = join(tmpdir, 'html')
-                dvcs = tools.Git(join(tmpdir, 'repo'))
-                return html_dir, dvcs
-            except (IOError, ValueError):
-                shutil.rmtree(tmpdir)
+    lock = LockFile(lockfile)
+    try:
+        lock.acquire(timeout=900)
+        html_dir, dvcs = _rebuild_basic_html(tmpdir)
+    finally:
+        lock.release()
 
-        os.makedirs(tmpdir)
-    else:
-        tmpdir = tempfile.mkdtemp()
-        request.addfinalizer(lambda: shutil.rmtree(tmpdir))
+    return html_dir, dvcs
 
+
+def _rebuild_basic_html(basedir):
     local = abspath(dirname(__file__))
     cwd = os.getcwd()
 
-    os.chdir(tmpdir)
+    if os.path.isdir(basedir):
+        # Cached result found
+        try:
+            if util.load_json(join(basedir, 'tag.json')) != [asv.__version__]:
+                raise ValueError()
+
+            html_dir = join(basedir, 'html')
+            dvcs = tools.Git(join(basedir, 'repo'))
+            return html_dir, dvcs
+        except (IOError, ValueError):
+            shutil.rmtree(basedir)
+
+    os.makedirs(basedir)
+    os.chdir(basedir)
     try:
-        machine_file = join(tmpdir, 'asv-machine.json')
+        machine_file = join(basedir, 'asv-machine.json')
 
         shutil.copyfile(join(local, 'asv-machine.json'),
                         machine_file)
@@ -69,19 +94,19 @@ def basic_html(request):
                                   1, 1, 1, 1, 1,
                                   3, 3, 3, 3, 3,
                                   2, 2, 2, 2, 2]]
-        dvcs = tools.generate_test_repo(tmpdir, values)
+        dvcs = tools.generate_test_repo(basedir, values)
         first_tested_commit_hash = dvcs.get_hash('master~14')
 
         repo_path = dvcs.path
-        shutil.move(repo_path, join(tmpdir, 'repo'))
-        dvcs = tools.Git(join(tmpdir, 'repo'))
+        shutil.move(repo_path, join(basedir, 'repo'))
+        dvcs = tools.Git(join(basedir, 'repo'))
 
         conf = config.Config.from_json({
-            'env_dir': join(tmpdir, 'env'),
+            'env_dir': join(basedir, 'env'),
             'benchmark_dir': join(local, 'benchmark'),
-            'results_dir': join(tmpdir, 'results_workflow'),
-            'html_dir': join(tmpdir, 'html'),
-            'repo': join(tmpdir, 'repo'),
+            'results_dir': join(basedir, 'results_workflow'),
+            'html_dir': join(basedir, 'html'),
+            'repo': join(basedir, 'repo'),
             'dvcs': 'git',
             'project': 'asv',
             'matrix': {},
@@ -111,11 +136,11 @@ def basic_html(request):
         # Output
         tools.run_asv_with_conf(conf, 'publish')
 
-        shutil.rmtree(join(tmpdir, 'env'))
+        shutil.rmtree(join(basedir, 'env'))
     finally:
         os.chdir(cwd)
 
-    util.write_json(join(tmpdir, 'tag.json'), [asv.__version__])
+    util.write_json(join(basedir, 'tag.json'), [asv.__version__])
 
     return conf.html_dir, dvcs
 

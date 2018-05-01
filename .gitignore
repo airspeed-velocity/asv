@@ -29,7 +29,9 @@ develop-eggs
 distribute-*.tar.gz
 
 # Other
+.asv
 .cache
+.pytest_cache
 .tox
 .*.swp
 *~
