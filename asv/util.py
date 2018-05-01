@@ -503,7 +503,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         is_timeout = was_timeout[0]
     else:
         try:
-            if posix:
+            if posix and is_main_thread():
                 # Forward signals related to Ctrl-Z handling; the child
                 # process is in a separate process group so it won't receive
                 # these automatically from the terminal
@@ -543,7 +543,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                         dots()
                     last_dot_time = time.time()
         finally:
-            if posix:
+            if posix and is_main_thread():
                 # Restore signal handlers
                 signal.signal(signal.SIGTSTP, signal.SIG_DFL)
                 signal.signal(signal.SIGCONT, signal.SIG_DFL)
@@ -616,6 +616,16 @@ def _killpg_safe(pgid, signo):
             pass
         else:
             raise
+
+
+def is_main_thread():
+    """
+    Return True if the current thread is the main thread.
+    """
+    if sys.version_info[0] >= 3:
+        return threading.current_thread() == threading.main_thread()
+    else:
+        return isinstance(threading.current_thread(), threading._MainThread)
 
 
 def write_json(path, data, api_version=None):
