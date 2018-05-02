@@ -49,7 +49,9 @@ class Profile(Command):
         parser.add_argument(
             'benchmark',
             help="""The benchmark to profile.  Must be a
-            fully-specified benchmark name.""")
+            fully-specified benchmark name. For parameterized benchmark, it
+            must include the parameter combination to use, e.g.:
+            benchmark_name(param0, param1, ...)""")
         parser.add_argument(
             'revision', nargs='?',
             help="""The revision of the project to profile.  May be a

@@ -80,3 +80,11 @@ def track_find_test(n):
     return asv_test_repo.dummy_value[n - 1]
 
 track_find_test.params = [1, 2]
+
+
+def track_param_selection(a, b):
+    return a + b
+
+
+track_param_selection.param_names = ['a', 'b']
+track_param_selection.params = [[1, 2], [3, 5]]

@@ -348,3 +348,30 @@ def test_run_with_repo_subdir(basic_conf_with_subdir):
     data = util.load_json(fn_results)
     assert data['results'][bench_name] == {'params': [['1', '2']],
                                            'result': [6, 6]}
+
+
+def test_benchmark_param_selection(basic_conf):
+    tmpdir, local, conf, machine_file = basic_conf
+    conf.matrix = {}
+    tools.generate_test_repo(tmpdir, values=[(1, 2, 3)])
+    tools.run_asv_with_conf(conf, 'run', 'master^!',
+                            '--quick', '--show-stderr',
+                            '--bench', 'track_param_selection\(.*, 3\)',
+                            _machine_file=machine_file)
+
+    def get_results():
+        results = util.load_json(glob.glob(join(
+            tmpdir, 'results_workflow', 'orangutan', '*-*.json'))[0])
+        # replacing NaN by 'n/a' make assertions easier
+        return ['n/a' if util.is_nan(item) else item
+                for item in results['results'][
+                    'params_examples.track_param_selection']['result']]
+
+    assert get_results() == [4, 'n/a', 5, 'n/a']
+    tools.run_asv_with_conf(conf, 'run', '--show-stderr',
+                            '--bench', 'track_param_selection\(1, ',
+                            _machine_file=machine_file)
+    assert get_results() == [4, 6, 5, 'n/a']
+    tools.run_asv_with_conf(conf, 'run', '--show-stderr',
+                            '--bench', 'track_param_selection',
+                            _machine_file=machine_file)
