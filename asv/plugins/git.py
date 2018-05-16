@@ -41,7 +41,7 @@ class Git(Repo):
     @classmethod
     def is_local_repo(cls, path):
         return os.path.isdir(path) and (
-            os.path.isdir(os.path.join(path, '.git')) or
+            os.path.exists(os.path.join(path, '.git')) or
             os.path.isdir(os.path.join(path, 'objects')))
 
     @classmethod
