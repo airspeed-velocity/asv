@@ -279,6 +279,12 @@ def which(filename, paths=None):
 
     Raises an IOError if no result is found.
     """
+    # shortcut to conda for conda >= 4.4 in POSIX platforms
+    # conda is a bash function, not an executable, since 4.4, breaking
+    # path search. See https://github.com/airspeed-velocity/asv/issues/645
+    if filename == 'conda' and 'CONDA_EXE' in os.environ:
+        return os.environ['CONDA_EXE']
+
     # Hide traceback from expected exceptions in pytest reports
     __tracebackhide__ = operator.methodcaller('errisinstance', IOError)
 
