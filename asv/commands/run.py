@@ -198,7 +198,12 @@ class Run(Command):
                 log.error("No benchmarks selected")
                 return 1
 
-        steps = len(commit_hashes) * len(benchmarks) * len(environments)
+        if quick:
+            benchmark_count = len(benchmarks)
+        else:
+            benchmark_count = sum(b.get('processes', 1) for b in benchmarks.values())
+
+        steps = len(commit_hashes) * benchmark_count * len(environments)
 
         log.info(
             "Running {0} total benchmarks "

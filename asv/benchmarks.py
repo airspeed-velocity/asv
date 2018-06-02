@@ -4,310 +4,19 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import io
 import json
 import os
 import re
-import shutil
 import tempfile
 import itertools
 import datetime
-import pstats
 
 import six
 
-from .console import log, truncate_left
+from .console import log
 from . import util
-from . import statistics
+from . import runner
 from .repo import NoSuchNameError
-
-
-WIN = (os.name == "nt")
-
-
-# Can't use benchmark.__file__, because that points to the compiled
-# file, so it can't be run by another version of Python.
-BENCHMARK_RUN_SCRIPT = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "benchmark.py")
-
-
-def run_benchmark(benchmark, root, env, show_stderr=False,
-                  quick=False, profile=False, cwd=None, selected_idx=None):
-    """
-    Run a benchmark in different process in the given environment.
-
-    Parameters
-    ----------
-    benchmark : Benchmark object
-
-    root : str
-        Path to benchmark directory in which to find the benchmark
-
-    env : Environment object
-
-    show_stderr : bool
-        When `True`, write the stderr out to the console.
-
-    quick : bool, optional
-        When `True`, run the benchmark function exactly once.
-
-    profile : bool, optional
-        When `True`, run the benchmark through the `cProfile` profiler
-        and save the results.
-
-    cwd : str, optional
-        The path to the current working directory to use when running
-        the benchmark process.
-
-    selected_idx : str, optional
-        The list of parameters combination to run benchmark on. By default
-        run all combinations.
-
-    Returns
-    -------
-    result : dict
-        Returns a dictionary with the following keys:
-
-        - `result`: List of numeric values of the benchmarks (one for each parameter
-          combination), either returned directly or obtained from `samples` via 
-          statistical analysis.
-
-          Values are `None` if benchmark failed or NaN if it was skipped.
-
-          If benchmark is not parameterized, the list contains a single number.
-
-        - `params`: Same as `benchmark['params']`. Empty list if non-parameterized.
-
-        - `samples`: List of lists of sampled raw data points, if benchmark produces
-          those and was successful.
-
-        - `stats`: List of results of statistical analysis of data.
-
-        - `profile`: If `profile` is `True` and run was at least partially successful, 
-          this key will be a byte string containing the cProfile data. Otherwise, None.
-
-        - `stderr`: Output produced.
-
-        - `errcode`: Error return code.
-    """
-    name = benchmark['name']
-    result = {'stderr': '', 'profile': None, 'errcode': 0}
-    bench_results = []
-    bench_profiles = []
-
-    log.step()
-    name_max_width = util.get_terminal_width() - 33
-    short_name = truncate_left(name, name_max_width)
-    initial_message = 'Running {0}'.format(short_name)
-    log.info(initial_message)
-
-    def log_result(msg):
-        padding_length = util.get_terminal_width() - len(initial_message) - 14 - 1 - len(msg)
-        if WIN:
-            padding_length -= 1
-        padding = " "*padding_length
-        log.add(" {0}{1}".format(padding, msg))
-
-    with log.indent():
-        if benchmark['params']:
-            param_iter = enumerate(itertools.product(*benchmark['params']))
-        else:
-            param_iter = [(None, None)]
-
-        bad_output = None
-        failure_count = 0
-        total_count = 0
-
-        result['started_at'] = datetime.datetime.utcnow()
-
-        for param_idx, params in param_iter:
-            if (selected_idx is not None and benchmark['params']
-                    and param_idx not in selected_idx):
-                # Use NaN to mark the result as skipped
-                bench_results.append(dict(samples=None, result=float('nan'),
-                                          stats=None))
-                bench_profiles.append(None)
-                continue
-            success, data, profile_data, err, out, errcode = \
-                _run_benchmark_single(
-                    benchmark, root, env, param_idx,
-                    quick=quick, profile=profile,
-                    cwd=cwd)
-
-            total_count += 1
-            if success:
-                if isinstance(data, dict) and 'samples' in data:
-                    value, stats = statistics.compute_stats(data['samples'],
-                                                            data['number'])
-                    result_data = dict(samples=data['samples'],
-                                       result=value,
-                                       stats=stats)
-                else:
-                    result_data = dict(samples=None,
-                                       result=data,
-                                       stats=None)
-
-                bench_results.append(result_data)
-                if profile:
-                    bench_profiles.append(profile_data)
-            else:
-                failure_count += 1
-                bench_results.append(dict(samples=None, result=None, stats=None))
-                bench_profiles.append(None)
-                if data is not None:
-                    bad_output = data
-
-            err = err.strip()
-            out = out.strip()
-
-            if errcode:
-                if errcode == util.TIMEOUT_RETCODE:
-                    if err:
-                        err += "\n\n"
-                    err += "asv: benchmark timed out (timeout {0}s)\n".format(benchmark['timeout'])
-                result['errcode'] = errcode
-
-            if err or out:
-                err += out
-                if benchmark['params']:
-                    head_msg = "\n\nFor parameters: %s\n" % (", ".join(params),)
-                else:
-                    head_msg = ''
-
-                result['stderr'] += head_msg
-                result['stderr'] += err
-
-        # Produce result
-        for key in ['samples', 'result', 'stats']:
-            result[key] = [x[key] for x in bench_results]
-
-        if benchmark['params']:
-            result['params'] = benchmark['params']
-            if profile:
-                # Produce only a single profile
-                profile_data = _combine_profile_data(bench_profiles)
-                if profile_data is not None:
-                    result['profile'] = profile_data
-        else:
-            result['params'] = []
-            if profile and bench_profiles[0] is not None:
-                result['profile'] = bench_profiles[0]
-
-        result['ended_at'] = datetime.datetime.utcnow()
-
-        # Display status
-        if failure_count > 0:
-            if bad_output is None:
-                if failure_count == total_count:
-                    log_result("failed")
-                else:
-                    log_result("{0}/{1} failed".format(failure_count, total_count))
-            else:
-                log_result("invalid output")
-                with log.indent():
-                    log.debug(data)
-
-        # Display results
-        if benchmark['params'] and show_stderr:
-            # Long format display
-            if failure_count == 0:
-                log_result("ok")
-
-            display_result = [(v, statistics.get_err(v, s) if s is not None else None)
-                              for v, s in zip(result['result'], result['stats'])]
-            display = _format_benchmark_result(display_result, benchmark)
-            log.info("\n" + "\n".join(display))
-        else:
-            if failure_count == 0:
-                # Failure already shown above
-                if not bench_results:
-                    display = "[]"
-                else:
-                    if result['stats'][0]:
-                        err = statistics.get_err(result['result'][0], result['stats'][0])
-                    else:
-                        err = None
-                    display = util.human_value(result['result'][0], benchmark['unit'], err=err)
-                    if len(bench_results) > 1:
-                        display += ";..."
-                log_result(display)
-
-        # Dump program output
-        if show_stderr and result.get('stderr'):
-            with log.indent():
-                log.error(result['stderr'])
-
-        return result
-
-
-def _run_benchmark_single(benchmark, root, env, param_idx, profile, quick, cwd):
-    """
-    Run a benchmark, for single parameter combination index in case it
-    is parameterized
-
-    Returns
-    -------
-    success : bool
-        Whether test was successful
-    data
-        If success, the parsed JSON data. If failure, unparsed json data.
-    profile_data
-        Collected profiler data
-    err
-        Stderr content
-    out
-        Stdout content
-    errcode
-        Process return value
-
-    """
-    name = benchmark['name']
-    if param_idx is not None:
-        name += '-%d' % (param_idx,)
-
-    if profile:
-        profile_fd, profile_path = tempfile.mkstemp()
-        os.close(profile_fd)
-    else:
-        profile_path = 'None'
-
-    result_file = tempfile.NamedTemporaryFile(delete=False)
-    try:
-        success = True
-
-        result_file.close()
-        out, err, errcode = env.run(
-            [BENCHMARK_RUN_SCRIPT, 'run', os.path.abspath(root),
-             name, str(quick), profile_path, result_file.name],
-            dots=False, timeout=benchmark['timeout'],
-            display_error=False, return_stderr=True,
-            valid_return_codes=None, cwd=cwd)
-
-        if errcode:
-            success = False
-            parsed = None
-        else:
-            with open(result_file.name, 'r') as stream:
-                data = stream.read()
-            try:
-                parsed = json.loads(data)
-            except:
-                success = False
-                parsed = data
-
-        if profile:
-            with io.open(profile_path, 'rb') as profile_fd:
-                profile_data = profile_fd.read()
-            if not profile_data:
-                profile_data = None
-        else:
-            profile_data = None
-
-        return success, parsed, profile_data, err, out, errcode
-    finally:
-        os.remove(result_file.name)
-        if profile:
-            os.remove(profile_path)
 
 
 class Benchmarks(dict):
@@ -439,7 +148,7 @@ class Benchmarks(dict):
             try:
                 result_file = os.path.join(result_dir, 'result.json')
                 env.run(
-                    [BENCHMARK_RUN_SCRIPT, 'discover',
+                    [runner.BENCHMARK_RUN_SCRIPT, 'discover',
                      os.path.abspath(root),
                      os.path.abspath(result_file)],
                     cwd=result_dir,
@@ -588,68 +297,24 @@ class Benchmarks(dict):
         """
         log.info("Benchmarking {0}".format(env.name))
 
-        with log.indent():
-            benchmarks = sorted(list(six.iteritems(self)))
+        benchmarks = sorted(list(six.iteritems(self)))
 
-            # Remove skipped benchmarks
-            if skip:
-                benchmarks = [
-                    (name, benchmark) for (name, benchmark) in
-                    benchmarks if name not in skip]
+        # Remove skipped benchmarks
+        if skip:
+            benchmarks = [
+                (name, benchmark) for (name, benchmark) in
+                benchmarks if name not in skip]
 
-            # Organize benchmarks by the setup_cache_key
-            benchmark_order = {}
-            benchmark_timeout = {}
-            for name, benchmark in benchmarks:
-                key = benchmark.get('setup_cache_key')
-                benchmark_order.setdefault(key, []).append((name, benchmark))
-
-                # setup_cache timeout
-                benchmark_timeout[key] = max(benchmark.get('setup_cache_timeout',
-                                                           benchmark['timeout']),
-                                             benchmark_timeout.get(key, 0))
-
-            times = {}
-            for setup_cache_key, benchmark_set in six.iteritems(benchmark_order):
-                tmpdir = tempfile.mkdtemp()
-                try:
-                    if setup_cache_key is not None:
-                        timeout = benchmark_timeout[setup_cache_key]
-                        log.info("Setting up {0}".format(setup_cache_key))
-                        out, err, errcode = env.run(
-                            [BENCHMARK_RUN_SCRIPT, 'setup_cache',
-                             os.path.abspath(self._benchmark_dir),
-                             benchmark_set[0][0]],
-                            dots=False, display_error=False,
-                            return_stderr=True, valid_return_codes=None,
-                            cwd=tmpdir, timeout=timeout)
-                        if errcode:
-                            # Dump program output
-                            if show_stderr and err:
-                                with log.indent():
-                                    log.error(err)
-
-                            for name, benchmark in benchmark_set:
-                                # TODO: Store more information about failure
-                                timestamp = datetime.datetime.utcnow()
-                                times[name] = {'result': None,
-                                               'samples': None,
-                                               'stats': None,
-                                               'params': [],
-                                               'stderr': err,
-                                               'started_at': timestamp,
-                                               'ended_at': timestamp}
-                            continue
-
-                    for name, benchmark in benchmark_set:
-                        times[name] = run_benchmark(
-                            benchmark, self._benchmark_dir, env,
-                            show_stderr=show_stderr,
-                            quick=quick, profile=profile,
-                            cwd=tmpdir,
-                            selected_idx=self._benchmark_selection[benchmark['name']])
-                finally:
-                    shutil.rmtree(tmpdir, True)
+        # Setup runner and run benchmarks
+        times = {}
+        benchmark_runner = runner.BenchmarkRunner(benchmarks,
+                                                  self._benchmark_dir,
+                                                  show_stderr=show_stderr,
+                                                  quick=quick,
+                                                  profile=profile,
+                                                  selected_idx=self._benchmark_selection)
+        jobs = benchmark_runner.plan()
+        times = benchmark_runner.run(jobs, env)
 
         return times
 
@@ -671,121 +336,3 @@ class Benchmarks(dict):
                                'started_at': timestamp,
                                'ended_at': timestamp}
         return times
-
-
-def _combine_profile_data(datasets):
-    """
-    Combine a list of profile data to a single profile
-    """
-    datasets = [data for data in datasets if data is not None]
-    if not datasets:
-        return None
-    elif len(datasets) == 1:
-        return datasets[0]
-
-    # Load and combine stats
-    stats = None
-
-    while datasets:
-        data = datasets.pop(0)
-
-        f = tempfile.NamedTemporaryFile(delete=False)
-        try:
-            f.write(data)
-            f.close()
-            if stats is None:
-                stats = pstats.Stats(f.name)
-            else:
-                stats.add(f.name)
-        finally:
-            os.remove(f.name)
-
-    # Write combined stats out
-    f = tempfile.NamedTemporaryFile(delete=False)
-    try:
-        f.close()
-        stats.dump_stats(f.name)
-        with open(f.name, 'rb') as fp:
-            return fp.read()
-    finally:
-        os.remove(f.name)
-
-
-def _format_benchmark_result(result, benchmark, max_width=None):
-    """
-    Format the result from a parameterized benchmark as an ASCII table
-    """
-    if not result:
-        return ['[]']
-
-    def do_formatting(num_column_params):
-        # Fold result to a table
-        if num_column_params > 0:
-            column_params = benchmark['params'][-num_column_params:]
-        else:
-            column_params = []
-
-        rows = []
-        if column_params:
-            row_params = benchmark['params'][:-len(column_params)]
-            header = benchmark['param_names'][:len(row_params)]
-            column_param_permutations = list(itertools.product(*column_params))
-            header += [" / ".join(_format_param_value(value) for value in values)
-                       for values in column_param_permutations]
-            rows.append(header)
-            column_items = len(column_param_permutations)
-            name_header = " / ".join(benchmark['param_names'][len(row_params):])
-        else:
-            column_items = 1
-            row_params = benchmark['params']
-            name_header = ""
-            header = benchmark['param_names']
-            rows.append(header)
-
-        for j, values in enumerate(itertools.product(*row_params)):
-            row_results = [util.human_value(x[0], benchmark['unit'], err=x[1])
-                           for x in result[j*column_items:(j+1)*column_items]]
-            row = [_format_param_value(value) for value in values] + row_results
-            rows.append(row)
-
-        if name_header:
-            display = util.format_text_table(rows, 1,
-                                             top_header_text=name_header,
-                                             top_header_span_start=len(row_params))
-        else:
-            display = util.format_text_table(rows, 1)
-
-        return display.splitlines()
-
-    # Determine how many parameters can be fit to columns
-    if max_width is None:
-        max_width = util.get_terminal_width() * 3//4
-
-    text = do_formatting(0)
-    for j in range(1, len(benchmark['params'])):
-        new_text = do_formatting(j)
-        width = max(len(line) for line in new_text)
-        if width < max_width:
-            text = new_text
-        else:
-            break
-
-    return text
-
-
-def _format_param_value(value_repr):
-    """
-    Format a parameter value for displaying it as test output. The
-    values are string obtained via Python repr.
-
-    """
-    regexs = ["^'(.+)'$",
-              "^u'(.+)'$",
-              "^<class '(.+)'>$"]
-
-    for regex in regexs:
-        m = re.match(regex, value_repr)
-        if m and m.group(1).strip():
-            return m.group(1)
-
-    return value_repr

@@ -17,6 +17,7 @@ import textwrap
 from hashlib import sha256
 
 from asv import benchmarks
+from asv import runner
 from asv import config
 from asv import environment
 from asv import util
@@ -213,7 +214,7 @@ def test_table_formatting():
     benchmark = {'params': [], 'param_names': [], 'unit': 's'}
     result = []
     expected = ["[]"]
-    assert benchmarks._format_benchmark_result(result, benchmark) == expected
+    assert runner._format_benchmark_result(result, benchmark) == expected
 
     benchmark = {'params': [['a', 'b', 'c']], 'param_names': ['param1'], "unit": "seconds"}
     result = list(zip([1e-6, 2e-6, 3e-6], [3e-6, 2e-6, 1e-6]))
@@ -224,7 +225,7 @@ def test_table_formatting():
                 "   b      2.00\u00b12\u03bcs \n"
                 "   c      3.00\u00b11\u03bcs \n"
                 "======== ==========")
-    table = "\n".join(benchmarks._format_benchmark_result(result, benchmark, max_width=80))
+    table = "\n".join(runner._format_benchmark_result(result, benchmark, max_width=80))
     assert table == expected
 
     benchmark = {'params': [["'a'", "'b'", "'c'"], ["[1]", "[2]"]], 'param_names': ['param1', 'param2'], "unit": "seconds"}
@@ -238,7 +239,7 @@ def test_table_formatting():
                 "   b      failed   4.00s \n"
                 "   c      5.00s     n/a  \n"
                 "======== ======== =======")
-    table = "\n".join(benchmarks._format_benchmark_result(result, benchmark, max_width=80))
+    table = "\n".join(runner._format_benchmark_result(result, benchmark, max_width=80))
     assert table == expected
 
     expected = ("======== ======== ========\n"
@@ -251,7 +252,7 @@ def test_table_formatting():
                 "   c       [1]     5.00s  \n"
                 "   c       [2]      n/a   \n"
                 "======== ======== ========")
-    table = "\n".join(benchmarks._format_benchmark_result(result, benchmark, max_width=0))
+    table = "\n".join(runner._format_benchmark_result(result, benchmark, max_width=0))
     assert table == expected
 
 
