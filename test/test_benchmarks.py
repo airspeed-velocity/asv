@@ -148,6 +148,7 @@ def test_find_benchmarks(tmpdir):
     assert times['params_examples.ParamSuite.track_value']['result'] == [1+0, 2+0, 3+0]
 
     assert isinstance(times['params_examples.TuningTest.time_it']['result'][0], float)
+    assert isinstance(times['params_examples.TuningTest.time_it']['result'][1], float)
 
     assert isinstance(times['params_examples.time_skip']['result'][0], float)
     assert isinstance(times['params_examples.time_skip']['result'][1], float)
@@ -284,7 +285,7 @@ def track_this():
     d.update(ASV_CONF_JSON)
     d['env_dir'] = "env"
     d['benchmark_dir'] = 'benchmark'
-    d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
+    d['repo'] = tools.generate_test_repo(tmpdir, [[0, 1]]).path
     conf = config.Config.from_json(d)
 
     repo = get_repo(conf)

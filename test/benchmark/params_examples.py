@@ -43,23 +43,26 @@ class ParamSuite:
 
 class TuningTest:
     params = [1, 2]
-    counter = [0]
+    counter = [0, 0]
     number = 10
     repeat = 10
+    processes = 1
     warmup_time = 0
 
     def setup(self, n):
         self.number = 1
         self.repeat = n
-        self.counter[0] = 0
+        self.counter[1] = 0
 
     def time_it(self, n):
         self.counter[0] += 1
+        self.counter[1] += 1
 
     def teardown(self, n):
         # The time benchmark may call it one additional time
-        if not (n <= self.counter[0] <= n + 1):
-            raise RuntimeError("Number and repeat didn't have effect")
+        if not (self.counter[0] <= n + 1 and self.counter[1] == 1):
+            raise RuntimeError("Number and repeat didn't have effect: {} {}".format(
+                self.counter, n))
 
 
 def setup_skip(n):
