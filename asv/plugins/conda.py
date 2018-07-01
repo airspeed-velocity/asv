@@ -6,7 +6,6 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 import re
 import os
 import tempfile
-import subprocess
 
 import six
 

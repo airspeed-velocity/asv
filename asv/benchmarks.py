@@ -4,13 +4,11 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import hashlib
 import io
 import json
 import os
 import re
 import shutil
-import sys
 import tempfile
 import itertools
 import datetime

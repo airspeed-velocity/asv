@@ -8,7 +8,6 @@ import base64
 import os
 import zlib
 import itertools
-import datetime
 
 import six
 from six.moves import zip as izip
