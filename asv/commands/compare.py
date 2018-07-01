@@ -147,189 +147,197 @@ class Compare(Command):
     def print_table(cls, conf, hash_1, hash_2, factor, split,
                     resultset_1=None, resultset_2=None, machine=None,
                     sort_by_ratio=False, only_changed=False, use_stats=True):
-        results_1 = {}
-        results_2 = {}
-        stats_1 = {}
-        stats_2 = {}
-        versions_1 = {}
-        versions_2 = {}
+        return print_table(conf, hash_1, hash_2, factor, split,
+                           resultset_1, resultset_2, machine,
+                           sort_by_ratio, only_changed, use_stats)
 
-        def results_default_iter(commit_hash):
-            for result in iter_results_for_machine_and_hash(
-                    conf.results_dir, machine, commit_hash):
-                for key in result.get_all_result_keys():
-                    params = result.get_result_params(key)
-                    result_value = result.get_result_value(key, params)
-                    result_stats = result.get_result_stats(key, params)
-                    result_version = result.benchmark_version.get(key)
-                    yield key, params, result_value, result_stats, result_version
 
-        if resultset_1 is None:
-            resultset_1 = results_default_iter(hash_1)
+def print_table(conf, hash_1, hash_2, factor, split,
+                resultset_1=None, resultset_2=None, machine=None,
+                sort_by_ratio=False, only_changed=False, use_stats=True):
+    results_1 = {}
+    results_2 = {}
+    stats_1 = {}
+    stats_2 = {}
+    versions_1 = {}
+    versions_2 = {}
 
-        if resultset_2 is None:
-            resultset_2 = results_default_iter(hash_2)
+    def results_default_iter(commit_hash):
+        for result in iter_results_for_machine_and_hash(
+                conf.results_dir, machine, commit_hash):
+            for key in result.get_all_result_keys():
+                params = result.get_result_params(key)
+                result_value = result.get_result_value(key, params)
+                result_stats = result.get_result_stats(key, params)
+                result_version = result.benchmark_version.get(key)
+                yield key, params, result_value, result_stats, result_version
 
-        for key, params, value, stats, version in resultset_1:
-            for name, value, stats in unroll_result(key, params, value, stats):
-                results_1[name] = value
-                stats_1[name] = stats
-                versions_1[name] = version
+    if resultset_1 is None:
+        resultset_1 = results_default_iter(hash_1)
 
-        for key, params, value, stats, version in resultset_2:
-            for name, value, stats in unroll_result(key, params, value, stats):
-                results_2[name] = value
-                stats_2[name] = stats
-                versions_2[name] = version
+    if resultset_2 is None:
+        resultset_2 = results_default_iter(hash_2)
 
-        if len(results_1) == 0:
-            raise util.UserError(
-                "Did not find results for commit {0}".format(hash_1))
+    for key, params, value, stats, version in resultset_1:
+        for name, value, stats in unroll_result(key, params, value, stats):
+            results_1[name] = value
+            stats_1[name] = stats
+            versions_1[name] = version
 
-        if len(results_2) == 0:
-            raise util.UserError(
-                "Did not find results for commit {0}".format(hash_2))
+    for key, params, value, stats, version in resultset_2:
+        for name, value, stats in unroll_result(key, params, value, stats):
+            results_2[name] = value
+            stats_2[name] = stats
+            versions_2[name] = version
 
-        benchmarks_1 = set(results_1.keys())
-        benchmarks_2 = set(results_2.keys())
+    if len(results_1) == 0:
+        raise util.UserError(
+            "Did not find results for commit {0}".format(hash_1))
 
-        joint_benchmarks = sorted(list(benchmarks_1 | benchmarks_2))
+    if len(results_2) == 0:
+        raise util.UserError(
+            "Did not find results for commit {0}".format(hash_2))
 
-        bench = {}
+    benchmarks_1 = set(results_1.keys())
+    benchmarks_2 = set(results_2.keys())
 
-        if split:
-            bench['green'] = []
-            bench['red'] = []
-            bench['lightgrey'] = []
-            bench['default'] = []
+    joint_benchmarks = sorted(list(benchmarks_1 | benchmarks_2))
+
+    bench = {}
+
+    if split:
+        bench['green'] = []
+        bench['red'] = []
+        bench['lightgrey'] = []
+        bench['default'] = []
+    else:
+        bench['all'] = []
+
+    worsened = False
+    improved = False
+
+    for benchmark in joint_benchmarks:
+        if benchmark in results_1:
+            time_1 = results_1[benchmark]
         else:
-            bench['all'] = []
+            time_1 = float("nan")
 
-        worsened = False
-        improved = False
+        if benchmark in results_2:
+            time_2 = results_2[benchmark]
+        else:
+            time_2 = float("nan")
 
-        for benchmark in joint_benchmarks:
-            if benchmark in results_1:
-                time_1 = results_1[benchmark]
-            else:
-                time_1 = float("nan")
+        if benchmark in stats_1 and stats_1[benchmark]:
+            err_1 = statistics.get_err(time_1, stats_1[benchmark])
+        else:
+            err_1 = None
 
-            if benchmark in results_2:
-                time_2 = results_2[benchmark]
-            else:
-                time_2 = float("nan")
+        if benchmark in stats_2 and stats_2[benchmark]:
+            err_2 = statistics.get_err(time_2, stats_2[benchmark])
+        else:
+            err_2 = None
 
-            if benchmark in stats_1 and stats_1[benchmark]:
-                err_1 = statistics.get_err(time_1, stats_1[benchmark])
-            else:
-                err_1 = None
+        version_1 = versions_1.get(benchmark)
+        version_2 = versions_2.get(benchmark)
 
-            if benchmark in stats_2 and stats_2[benchmark]:
-                err_2 = statistics.get_err(time_2, stats_2[benchmark])
-            else:
-                err_2 = None
-
-            version_1 = versions_1.get(benchmark)
-            version_2 = versions_2.get(benchmark)
-
-            if _isna(time_1) or _isna(time_2):
-                ratio = 'n/a'
+        if _isna(time_1) or _isna(time_2):
+            ratio = 'n/a'
+            ratio_num = 1e9
+        else:
+            try:
+                ratio_num = time_2 / time_1
+                ratio = "{0:6.2f}".format(ratio_num)
+            except ZeroDivisionError:
                 ratio_num = 1e9
-            else:
-                try:
-                    ratio_num = time_2 / time_1
-                    ratio = "{0:6.2f}".format(ratio_num)
-                except ZeroDivisionError:
-                    ratio_num = 1e9
-                    ratio = "n/a"
+                ratio = "n/a"
 
-            if (version_1 is not None and version_2 is not None and
-                    version_1 != version_2):
-                # not comparable
-                color = 'lightgrey'
-                mark = 'x'
-            elif time_1 is not None and time_2 is None:
-                # introduced a failure
-                color = 'red'
-                mark = '!'
-                worsened = True
-            elif time_1 is None and time_2 is not None:
-                # fixed a failure
-                color = 'green'
-                mark = ' '
-                improved = True
-            elif time_1 is None and time_2 is None:
-                # both failed
-                color = 'red'
-                mark = ' '
-            elif _isna(time_1) or _isna(time_2):
-                # either one was skipped
-                color = 'default'
-                mark = ' '
-            elif _is_result_better(time_2, time_1,
-                                   stats_2.get(benchmark), stats_1.get(benchmark),
-                                   factor, use_stats=use_stats):
-                color = 'green'
-                mark = '-'
-                improved = True
-            elif _is_result_better(time_1, time_2,
-                                   stats_1.get(benchmark), stats_2.get(benchmark),
-                                   factor, use_stats=use_stats):
-                color = 'red'
-                mark = '+'
-                worsened = True
-            else:
-                color = 'default'
-                mark = ' '
+        if (version_1 is not None and version_2 is not None and
+                version_1 != version_2):
+            # not comparable
+            color = 'lightgrey'
+            mark = 'x'
+        elif time_1 is not None and time_2 is None:
+            # introduced a failure
+            color = 'red'
+            mark = '!'
+            worsened = True
+        elif time_1 is None and time_2 is not None:
+            # fixed a failure
+            color = 'green'
+            mark = ' '
+            improved = True
+        elif time_1 is None and time_2 is None:
+            # both failed
+            color = 'red'
+            mark = ' '
+        elif _isna(time_1) or _isna(time_2):
+            # either one was skipped
+            color = 'default'
+            mark = ' '
+        elif _is_result_better(time_2, time_1,
+                               stats_2.get(benchmark), stats_1.get(benchmark),
+                               factor, use_stats=use_stats):
+            color = 'green'
+            mark = '-'
+            improved = True
+        elif _is_result_better(time_1, time_2,
+                               stats_1.get(benchmark), stats_2.get(benchmark),
+                               factor, use_stats=use_stats):
+            color = 'red'
+            mark = '+'
+            worsened = True
+        else:
+            color = 'default'
+            mark = ' '
 
-                # Mark statistically insignificant results
-                if (_is_result_better(time_1, time_2, None, None, factor) or
-                        _is_result_better(time_2, time_1, None, None, factor)):
-                    ratio = "~" + ratio.strip()
+            # Mark statistically insignificant results
+            if (_is_result_better(time_1, time_2, None, None, factor) or
+                    _is_result_better(time_2, time_1, None, None, factor)):
+                ratio = "~" + ratio.strip()
 
-            if only_changed and mark in (' ', 'x'):
-                continue
+        if only_changed and mark in (' ', 'x'):
+            continue
 
-            details = "{0:1s} {1:>15s}  {2:>15s} {3:>8s}  ".format(
-                mark,
-                human_value(time_1, "seconds", err=err_1),
-                human_value(time_2, "seconds", err=err_2),
-                ratio)
-
-            if split:
-                bench[color].append((color, details, benchmark, ratio_num))
-            else:
-                bench['all'].append((color, details, benchmark, ratio_num))
+        details = "{0:1s} {1:>15s}  {2:>15s} {3:>8s}  ".format(
+            mark,
+            human_value(time_1, "seconds", err=err_1),
+            human_value(time_2, "seconds", err=err_2),
+            ratio)
 
         if split:
-            keys = ['green', 'default', 'red', 'lightgrey']
+            bench[color].append((color, details, benchmark, ratio_num))
         else:
-            keys = ['all']
+            bench['all'].append((color, details, benchmark, ratio_num))
 
-        titles = {}
-        titles['green'] = "Benchmarks that have improved:"
-        titles['default'] = "Benchmarks that have stayed the same:"
-        titles['red'] = "Benchmarks that have got worse:"
-        titles['lightgrey'] = "Benchmarks that are not comparable:"
-        titles['all'] = "All benchmarks:"
+    if split:
+        keys = ['green', 'default', 'red', 'lightgrey']
+    else:
+        keys = ['all']
 
-        for key in keys:
+    titles = {}
+    titles['green'] = "Benchmarks that have improved:"
+    titles['default'] = "Benchmarks that have stayed the same:"
+    titles['red'] = "Benchmarks that have got worse:"
+    titles['lightgrey'] = "Benchmarks that are not comparable:"
+    titles['all'] = "All benchmarks:"
 
-            if len(bench[key]) == 0:
-                continue
+    for key in keys:
 
-            if not only_changed:
-                color_print("")
-                color_print(titles[key])
-                color_print("")
-            color_print("       before           after         ratio")
-            color_print("     [{0:8s}]       [{1:8s}]".format(hash_1[:8], hash_2[:8]))
+        if len(bench[key]) == 0:
+            continue
 
-            if sort_by_ratio:
-                bench[key].sort(key=lambda v: v[3], reverse=True)
+        if not only_changed:
+            color_print("")
+            color_print(titles[key])
+            color_print("")
+        color_print("       before           after         ratio")
+        color_print("     [{0:8s}]       [{1:8s}]".format(hash_1[:8], hash_2[:8]))
 
-            for color, details, benchmark, ratio in bench[key]:
-                color_print(details, color, end='')
-                color_print(benchmark)
+        if sort_by_ratio:
+            bench[key].sort(key=lambda v: v[3], reverse=True)
 
-        return worsened, improved
+        for color, details, benchmark, ratio in bench[key]:
+            color_print(details, color, end='')
+            color_print(benchmark)
+
+    return worsened, improved
