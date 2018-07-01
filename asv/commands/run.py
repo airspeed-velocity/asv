@@ -46,6 +46,45 @@ def _do_build_multiprocess(args):
         raise util.ParallelFailure(str(exc), exc.__class__, traceback.format_exc())
 
 
+def _get_commit_hashes(conf, repo, range_spec, steps):
+    """
+    Return the list of commit hashes over which to iterate the command.
+
+    Parameters
+    ----------
+    conf : Config
+    repo : Repo
+    range_spec : str, list, or None
+    steps : int or None
+
+    Returns
+    -------
+    commit_hashes : list
+    """
+
+    if range_spec is None:
+        commit_hashes = list(set([repo.get_hash_from_name(branch)
+                                  for branch in conf.branches]))
+    elif range_spec == 'EXISTING':
+        commit_hashes = get_existing_hashes(conf.results_dir)
+    elif range_spec == "NEW":
+        # New commits on each configured branches
+        commit_hashes = repo.get_new_branch_commits(
+            conf.branches, get_existing_hashes(conf.results_dir))
+    elif range_spec == "ALL":
+        # All commits on each configured branches
+        commit_hashes = repo.get_new_branch_commits(conf.branches, [])
+    elif isinstance(range_spec, list):
+        commit_hashes = range_spec
+    else:
+        commit_hashes = repo.get_hashes_from_range(range_spec)
+
+    if steps is not None and len(commit_hashes) != 0:
+        commit_hashes = util.pick_n(commit_hashes, steps)
+
+    return commit_hashes
+
+
 class Run(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
@@ -153,28 +192,10 @@ class Run(Command):
         if pull:
             repo.pull()
 
-        if range_spec is None:
-            commit_hashes = list(set([repo.get_hash_from_name(branch) for branch in conf.branches]))
-        elif range_spec == 'EXISTING':
-            commit_hashes = get_existing_hashes(conf.results_dir)
-        elif range_spec == "NEW":
-            # New commits on each configured branches
-            commit_hashes = repo.get_new_branch_commits(
-                conf.branches, get_existing_hashes(conf.results_dir))
-        elif range_spec == "ALL":
-            # All commits on each configured branches
-            commit_hashes = repo.get_new_branch_commits(conf.branches, [])
-        elif isinstance(range_spec, list):
-            commit_hashes = range_spec
-        else:
-            commit_hashes = repo.get_hashes_from_range(range_spec)
-
+        commit_hashes = _get_commit_hashes(conf, repo, range_spec, steps)
         if len(commit_hashes) == 0:
             log.error("No commit hashes selected")
             return 1
-
-        if steps is not None:
-            commit_hashes = util.pick_n(commit_hashes, steps)
 
         Setup.perform_setup(environments, parallel=parallel)
         if len(environments) == 0:
