@@ -331,6 +331,10 @@ by the ``number`` and ``repeat`` attributes, as explained below.
   each sample takes approximatively ``sample_time`` seconds.  If not
   specified, ``sample_time`` defaults to 0.1 seconds.
 
+- ``min_repeat``: ``asv`` will ensure to produce at least ``min_repeat``
+  samples whatever the ``sample_time`` and ``timeout`` values. If not
+  specified, ``min_repeat`` defaults to 0.
+
 - ``timer``: The timing function to use, which can be any source of
   monotonically increasing numbers, such as `time.clock`, `time.time`
   or ``time.process_time``.  If it's not provided, it defaults to
@@ -349,7 +353,7 @@ by the ``number`` and ``repeat`` attributes, as explained below.
   measures the time used by the current process, is often the best
   choice.
 
-The ``sample_time``, ``number``, ``repeat``, and ``timer`` attributes
+The ``sample_time``, ``number``, ``repeat``, ``min_repeat`` and ``timer`` attributes
 can be adjusted in the ``setup()`` routine, which can be useful for
 parameterized benchmarks.
 

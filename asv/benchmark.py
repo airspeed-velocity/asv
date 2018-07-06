@@ -433,6 +433,7 @@ class TimeBenchmark(Benchmark):
 
     def _load_vars(self):
         self.repeat = _get_first_attr(self._attr_sources, 'repeat', 0)
+        self.min_repeat = _get_first_attr(self._attr_sources, 'min_repeat', 0)
         self.number = int(_get_first_attr(self._attr_sources, 'number', 0))
         self.sample_time = _get_first_attr(self._attr_sources, 'sample_time', 0.1)
         self.warmup_time = _get_first_attr(self._attr_sources, 'warmup_time', -1)
@@ -482,10 +483,11 @@ class TimeBenchmark(Benchmark):
 
         max_time = start_time + min(warmup_time + 1.3 * repeat * sample_time,
                                     self.timeout - 1.3 * sample_time)
+        actual_repeat = 0
 
         def too_slow():
             # too slow, don't take more samples
-            return time.time() > max_time
+            return actual_repeat >= self.min_repeat and time.time() > max_time
 
         if number == 0:
             # Select number & warmup.
@@ -498,6 +500,7 @@ class TimeBenchmark(Benchmark):
                 self._redo_setup_next = False
                 start = time.time()
                 timing = timer.timeit(number)
+                actual_repeat += 1
                 wall_time = time.time() - start
                 actual_timing = max(wall_time, timing)
 
@@ -518,6 +521,7 @@ class TimeBenchmark(Benchmark):
             while True:
                 self._redo_setup_next = False
                 timing = timer.timeit(number)
+                actual_repeat += 1
                 if time.time() >= start_time + warmup_time:
                     break
             if too_slow():
@@ -525,8 +529,10 @@ class TimeBenchmark(Benchmark):
 
         # Collect samples
         samples = []
+        actual_repeat = 0
         for j in range(repeat):
             timing = timer.timeit(number)
+            actual_repeat += 1
             samples.append(timing)
 
             if too_slow():

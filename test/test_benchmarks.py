@@ -65,7 +65,7 @@ def test_find_benchmarks(tmpdir):
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                                        regex='example')
-    assert len(b) == 26
+    assert len(b) == 28
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                               regex='time_example_benchmark_1')
@@ -98,7 +98,7 @@ def test_find_benchmarks(tmpdir):
     assert b._benchmark_selection['params_examples.track_param_selection'] == [0, 1, 2, 3]
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
-    assert len(b) == 36
+    assert len(b) == 38
 
     assert 'named.OtherSuite.track_some_func' in b
 
@@ -134,6 +134,8 @@ def test_find_benchmarks(tmpdir):
     assert times['time_examples.time_with_warnings']['errcode'] != 0
 
     assert times['time_examples.TimeWithBadTimer.time_it']['result'] == [0.0]
+    assert len(times['time_examples.TimeWithMinRepeat.time_it']['samples'][0]) == 3
+    assert len(times['time_examples.TimeWithMinRepeatNoWarmup.time_it']['samples'][0]) == 3
 
     assert times['params_examples.track_param']['params'] == [["<class 'benchmark.params_examples.ClassOne'>",
                                                                "<class 'benchmark.params_examples.ClassTwo'>"]]
