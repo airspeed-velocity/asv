@@ -192,10 +192,10 @@ class Run(Command):
                                          commit_hashes, regex=bench)
         benchmarks.save()
         if len(benchmarks) == 0:
-            log.error("No benchmarks selected")
             if bench == ["just-discover"]:
                 return 0
             else:
+                log.error("No benchmarks selected")
                 return 1
 
         steps = len(commit_hashes) * len(benchmarks) * len(environments)
