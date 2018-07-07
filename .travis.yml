@@ -78,7 +78,7 @@ install:
       fi
       $TRAVIS_PYTHON .continuous-integration/download_reqs.py --pip=$HOME/download/pip-cache
     fi
-    $TRAVIS_PIP install selenium six "pytest>=3.5" pytest-xdist feedparser python-hglib;
+    $TRAVIS_PIP install selenium six "pytest>=3.5" pytest-xdist pytest-rerunfailures feedparser python-hglib;
     if [[ "$COVERAGE" != '' ]]; then $TRAVIS_PIP install pytest-cov codecov; fi;
   - $TRAVIS_PYTHON setup.py build_ext -i
   - export PIP_FIND_LINKS=file://$HOME/download/pip-cache
