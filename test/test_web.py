@@ -148,6 +148,8 @@ def _rebuild_basic_html(basedir):
 def test_web_summarygrid(browser, basic_html):
     html_dir, dvcs = basic_html
 
+    ignore_exc = (NoSuchElementException, StaleElementReferenceException)
+
     with tools.preview(html_dir) as base_url:
         get_with_retry(browser, base_url)
 
@@ -180,8 +182,11 @@ def test_web_summarygrid(browser, basic_html):
         param_button = browser.find_element_by_link_text('benchmark.params_examples.ClassOne')
         assert 'active' in param_button.get_attribute('class').split()
         param_button.click()
-        param_button = browser.find_element_by_link_text('benchmark.params_examples.ClassOne')
-        assert 'active' not in param_button.get_attribute('class').split()
+
+        def check(*args):
+            param_button = browser.find_element_by_link_text('benchmark.params_examples.ClassOne')
+            return 'active' not in param_button.get_attribute('class').split()
+        WebDriverWait(browser, WAIT_TIME, ignored_exceptions=ignore_exc).until(check)
 
         # Check there's no error popup; needs an explicit wait because
         # there is no event that occurs on successful load that
