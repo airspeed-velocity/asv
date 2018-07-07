@@ -364,6 +364,13 @@ class Environment(object):
         self._cache = wheel_cache.WheelCache(conf, self._path)
         self._build_root = os.path.abspath(os.path.join(self._path, 'project'))
 
+        self._env_vars = {}
+        self._env_vars['ASV'] = 'true'
+        self._env_vars['ASV_PROJECT'] = conf.project
+        self._env_vars['ASV_ENV_NAME'] = self.name
+        self._env_vars['ASV_ENV_PATH'] = self._path
+        self._env_vars['ASV_ENV_TYPE'] = self.tool_name
+
     @classmethod
     def matches(self, python):
         """
@@ -494,6 +501,7 @@ class Environment(object):
         """
         Check out the working tree of the project at given commit hash
         """
+        self._set_commit_hash(commit_hash)
         repo.checkout(self._build_root, commit_hash)
 
     def build_project(self, repo, commit_hash):
@@ -512,6 +520,8 @@ class Environment(object):
         Uninstalls any installed copy of the project first.
         """
         self.uninstall(conf.project)
+
+        self._set_commit_hash(commit_hash)
 
         build_root = self._cache.build_project_cached(
             self, conf, repo, commit_hash)
@@ -549,7 +559,8 @@ class Environment(object):
         """
         Run a given executable (eg. python, pip) in the environment.
         """
-        env = kwargs.pop("env", os.environ)
+        env = kwargs.pop("env", os.environ).copy()
+        env.update(self._env_vars)
 
         # Insert bin dirs to PATH
         if "PATH" in env:
@@ -593,6 +604,9 @@ class Environment(object):
             'requirements': self._requirements
         }
         util.write_json(path, content)
+
+    def _set_commit_hash(self, commit_hash):
+        self._env_vars['ASV_COMMIT'] = commit_hash
 
 
 class ExistingEnvironment(Environment):
