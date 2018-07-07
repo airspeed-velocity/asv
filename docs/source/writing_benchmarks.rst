@@ -428,3 +428,17 @@ garbage collector at a given state::
 
 - ``unit``: The unit of the values returned by the benchmark.  Used
   for display in the web interface.
+
+
+Environment variables
+---------------------
+
+When ``asv`` runs benchmarks or project installation commands, the
+following environment variables are available:
+
+- ``ASV``: has the value ``true``
+- ``ASV_PROJECT``: the value specified for ``project`` in the configuration
+- ``ASV_ENV_NAME``: the long name for the active Python environment
+- ``ASV_ENV_PATH``: full path to the root of the active Python environment
+- ``ASV_ENV_TYPE``: type of the active environment (e.g. ``virtualenv`` or ``conda``)
+- ``ASV_COMMIT``: currently checked out commit in the working directory (if any)
