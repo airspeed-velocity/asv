@@ -18,10 +18,7 @@ from ..machine import iter_machine_files
 from ..repo import get_repo
 from ..results import iter_results
 from ..publishing import OutputPublisher
-from .. import environment
 from .. import util
-
-from . import common_args
 
 
 def check_benchmark_params(name, benchmark):

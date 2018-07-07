@@ -4,16 +4,11 @@
 from __future__ import absolute_import, division, unicode_literals, print_function
 
 import os
-import re
 import itertools
-import multiprocessing
-import time
-import traceback
 import six
 
 from ..console import log
 from ..publishing import OutputPublisher
-from ..step_detect import detect_regressions, detect_steps
 from ..graph import Graph
 
 from .. import util
