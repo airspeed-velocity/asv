@@ -40,6 +40,7 @@ else:
     ON_PYPY = False
 
 
+@pytest.mark.flaky(reruns=1, reruns_delay=5)
 def test_find_benchmarks(tmpdir):
     tmpdir = six.text_type(tmpdir)
     os.chdir(tmpdir)
@@ -114,7 +115,7 @@ def test_find_benchmarks(tmpdir):
         'time_examples.TimeSuite.time_example_benchmark_1']['result'] != [None]
     assert isinstance(times['time_examples.TimeSuite.time_example_benchmark_1']['stats'][0]['std'], float)
     # The exact number of samples may vary if the calibration is not fully accurate
-    assert len(times['time_examples.TimeSuite.time_example_benchmark_1']['samples'][0]) >= 5
+    assert len(times['time_examples.TimeSuite.time_example_benchmark_1']['samples'][0]) >= 4
     # Benchmarks that raise exceptions should have a time of "None"
     assert times[
         'time_secondary.TimeSecondary.time_exception']['result'] == [None]

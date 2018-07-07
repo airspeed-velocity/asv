@@ -7,10 +7,12 @@ from __future__ import (absolute_import, division, print_function,
 import os
 import sys
 import time
+import pytest
 
 from asv import util
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=5)
 def test_timeout():
     timeout_codes = []
     timeout_codes.append(r"""
@@ -83,6 +85,7 @@ sys.exit(1)
         assert False, "Expected exception"
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=5)
 def test_output_timeout():
     # Check that timeout is determined based on last output, not based
     # on start time.

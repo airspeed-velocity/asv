@@ -31,6 +31,7 @@ install:
     # Install the build and runtime dependencies of the project.
     - "conda update -q --yes conda"
     - "conda install -q --yes python=%PYTHON_VERSION% conda six pip pytest pytest-xdist lockfile"
+    - "python -mpip install pytest-rerunfailures"
 
     # Pre-download all necessary packages
     - "python .continuous-integration/download_reqs.py --conda --pip=pip-cache"
