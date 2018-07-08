@@ -111,7 +111,8 @@ def run_benchmarks(benchmarks, env, results=None,
                    show_stderr=False, quick=False, profile=False,
                    extra_params=None,
                    record_samples=False, append_samples=False,
-                   run_rounds=None):
+                   run_rounds=None,
+                   launch_method=None):
     """
     Run all of the benchmarks in the given `Environment`.
 
@@ -144,6 +145,8 @@ def run_benchmarks(benchmarks, env, results=None,
     run_rounds : sequence of int, optional
         Run rounds for benchmarks with multiple processes.
         If None, run all rounds.
+    launch_method : {'auto', 'spawn', 'forkserver'}, optional
+        Benchmark launching method to use.
 
     Returns
     -------
@@ -235,7 +238,8 @@ def run_benchmarks(benchmarks, env, results=None,
     indent = log.indent()
     indent.__enter__()
 
-    spawner = ForkServer(env, benchmarks.benchmark_dir)
+    spawner = get_spawner(env, benchmarks.benchmark_dir,
+                          launch_method=launch_method)
 
     try:
         for name, benchmark, setup_cache_key, is_final in iter_run_items():
@@ -350,6 +354,28 @@ def run_benchmarks(benchmarks, env, results=None,
         spawner.close()
 
     return results
+
+
+def get_spawner(env, benchmark_dir, launch_method):
+    has_fork = hasattr(os, 'fork') and hasattr(socket, 'AF_UNIX')
+
+    if launch_method in (None, 'auto'):
+        if has_fork:
+            launch_method = "forkserver"
+        else:
+            launch_method = "spawn"
+
+    if launch_method == "spawn":
+        spawner_cls = Spawner
+    elif launch_method == "forkserver":
+        if not has_fork:
+            raise util.UserError("'forkserver' launch method not available "
+                                 "on this platform")
+        spawner_cls = ForkServer
+    else:
+        raise ValueError("Invalid launch_method: {}".format(launch_method))
+
+    return spawner_cls(env, benchmark_dir)
 
 
 def log_benchmark_result(benchmark, results, show_stderr=False):

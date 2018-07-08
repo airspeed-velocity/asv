@@ -53,6 +53,7 @@ class Continuous(Command):
         common_args.add_bench(parser)
         common_args.add_machine(parser)
         common_args.add_environment(parser)
+        common_args.add_launch_method(parser)
         parser.set_defaults(func=cls.run_from_args)
 
         return parser
@@ -67,7 +68,8 @@ class Continuous(Command):
             machine=args.machine,
             env_spec=args.env_spec, record_samples=args.record_samples,
             append_samples=args.append_samples,
-            quick=args.quick, interleave_processes=args.interleave_processes, **kwargs
+            quick=args.quick, interleave_processes=args.interleave_processes,
+            launch_method=args.launch_method, **kwargs
         )
 
     @classmethod
@@ -75,7 +77,7 @@ class Continuous(Command):
             factor=None, split=False, only_changed=True, sort='ratio',
             show_stderr=False, bench=None,
             attribute=None, machine=None, env_spec=None, record_samples=False, append_samples=False,
-            quick=False, interleave_processes=None, _machine_file=None):
+            quick=False, interleave_processes=None, launch_method=None, _machine_file=None):
         repo = get_repo(conf)
         repo.pull()
 
@@ -96,6 +98,7 @@ class Continuous(Command):
             show_stderr=show_stderr, machine=machine, env_spec=env_spec,
             record_samples=record_samples, append_samples=append_samples, quick=quick,
             interleave_processes=interleave_processes,
+            launch_method=launch_method,
             _returns=run_objs, _machine_file=_machine_file)
         if result:
             return result

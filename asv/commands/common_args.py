@@ -184,6 +184,16 @@ def add_environment(parser, default_same=False):
         help="Same as --environment=:PYTHON")
 
 
+def add_launch_method(parser):
+    parser.add_argument(
+        "--launch-method",
+        dest="launch_method",
+        action="store",
+        choices=("auto", "spawn", "forkserver"),
+        default="auto",
+        help="How to launch benchmarks. Choices: auto, spawn, forkserver")
+
+
 def add_parallel(parser):
     parser.add_argument(
         "--parallel", "-j", nargs='?', type=int, default=1, const=-1,
