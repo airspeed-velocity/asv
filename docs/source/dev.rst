@@ -153,8 +153,7 @@ A benchmark suite directory has the following layout.  The
         - ``stats``: dictionary containing results of statistical
           analysis. Contains keys ``ci_99`` (confidence interval
           estimate for the result), ``q_25``, ``q_75`` (percentiles),
-          ``min``, ``max``, ``mean``, ``std``, ``n``, and
-          ``systematic`` (estimate of systematic error).
+          ``min``, ``max``, ``mean``, ``std``, and ``n``.
 
           This key is omitted if there is no statistical analysis.
 
