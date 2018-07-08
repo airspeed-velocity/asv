@@ -79,15 +79,16 @@ install:
         $TRAVIS_PIP install virtualenv;
       fi
     fi
-    $TRAVIS_PIP install selenium six pytest feedparser python-hglib;
+    $TRAVIS_PIP install selenium six 'pytest!=3.3' feedparser python-hglib;
     if [[ "$TRAVIS_PYTHON_VERSION" == "2.6" ]]; then
-      $TRAVIS_PIP install "selenium<3.7"
+      $TRAVIS_PIP install "selenium>=3.6,<3.7" "virtualenv>=15,<16" "pytest==2.7.3"
+    elif [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      $TRAVIS_PIP install "pytest>=3.5"
+    elif [[ "$TRAVIS_PYTHON_VERSION" == "3.3" ]]; then
+      $TRAVIS_PIP install "pytest>=3.2,<3.3" "virtualenv>=15,<16"
     fi
     if [[ $COVERAGE != '' ]]; then $TRAVIS_PIP install pytest-cov coveralls; fi;
   - $TRAVIS_PYTHON setup.py build_ext -i
 
 script:
   - $TRAVIS_PYTHON -m pytest -l $COVERAGE test -vv --webdriver=PhantomJS
-
-after_success:
-  - if [[ $COVERAGE != '' ]]; then coveralls; fi
