@@ -464,6 +464,9 @@ class LaplacePosterior(object):
         if cdf < 0 or cdf > 1.0:
             return nan
 
+        if self._y_scale == 0:
+            return self.mle
+
         if self._cdf_norm is None:
             self._cdf_norm = self._cdf_unnorm(inf)
 

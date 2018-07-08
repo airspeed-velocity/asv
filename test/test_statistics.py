@@ -296,6 +296,7 @@ def test_laplace_posterior_basic():
     assert c.pdf(1 + 1e-5) == 0
     assert c.cdf(1 - 1e-5) == 0
     assert c.cdf(1 + 1e-5) == 1.0
+    assert c.ppf(1.0) == 1.0
 
     # one item
     y = [1]
