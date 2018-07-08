@@ -142,6 +142,10 @@ class Virtualenv(environment.Environment):
     def _install_requirements(self):
         if sys.version_info[:2] == (3, 2):
             pip_args = ['install', '-v', 'wheel<0.29.0', 'pip<8']
+        elif sys.version_info[:2] == (3, 3):
+            pip_args = ['install', '-v', 'wheel<0.31.0', 'pip<11']
+        elif sys.version_info[:2] == (2, 6):
+            pip_args = ['install', '-v', 'wheel<0.29.0', 'pip<10']
         else:
             pip_args = ['install', '-v', 'wheel', 'pip>=8']
 
@@ -169,6 +173,8 @@ class Virtualenv(environment.Environment):
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when
         # upgrading pip itself, and avoids shebang length limit on Linux
+        if sys.version_info[:2] in [(2, 6), (3, 2)]:
+            return self.run_executable('pip', list(args), **kwargs)
         return self.run_executable('python', ['-mpip'] + list(args), **kwargs)
 
     def install(self, package):

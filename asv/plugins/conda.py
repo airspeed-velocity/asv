@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 
 import re
 import os
+import sys
 import tempfile
 import subprocess
 
@@ -169,6 +170,8 @@ class Conda(environment.Environment):
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when
         # upgrading pip itself, and avoids shebang length limit on Linux
+        if sys.version_info[:2] in [(2, 6), (3, 2)]:
+            return self.run_executable('pip', list(args), **kwargs)
         return self.run_executable('python', ['-mpip'] + list(args), **kwargs)
 
     def install(self, package):

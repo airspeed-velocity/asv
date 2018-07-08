@@ -114,7 +114,7 @@ print(os.environ['TEST_ASV_BAR'])
     env = os.environ.copy()
     env['TEST_ASV_FOO'] = 'foo'
     # Force unicode string on Python 2
-    env['TEST_ASV_BAR'] = u'bar'
+    env['TEST_ASV_BAR'] = b'bar'.decode('ascii')
     output = util.check_output([sys.executable, "-c", code], env=env)
     assert output.splitlines() == ['foo', 'bar']
 

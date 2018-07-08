@@ -80,6 +80,9 @@ install:
       fi
     fi
     $TRAVIS_PIP install selenium six pytest feedparser python-hglib;
+    if [[ "$TRAVIS_PYTHON_VERSION" == "2.6" ]]; then
+      $TRAVIS_PIP install "selenium<3.7"
+    fi
     if [[ $COVERAGE != '' ]]; then $TRAVIS_PIP install pytest-cov coveralls; fi;
   - $TRAVIS_PYTHON setup.py build_ext -i
 
