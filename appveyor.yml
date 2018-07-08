@@ -30,7 +30,7 @@ install:
 
     # Install the build and runtime dependencies of the project.
     - "conda update -q --yes conda"
-    - "conda install -q --yes python=%PYTHON_VERSION% conda six pip pytest pytest-xdist lockfile"
+    - "conda install -q --yes python=%PYTHON_VERSION% conda six pip pytest pytest-xdist lockfile selenium"
     - "python -mpip install pytest-rerunfailures"
 
     # Pre-download all necessary packages
@@ -49,11 +49,14 @@ install:
     # In-place build
     - "%CMD_IN_ENV% python setup.py build_ext -i"
 
+    # Append webdriver paths
+    - "SET PATH=%PATH%;C:\\Tools\\WebDriver;C:\\Program Files (x86)\\Mozilla Firefox"
+
 # Not a .NET project
 build: false
 
 test_script:
-    - "python -m pytest -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp -vv -n 3 --offline test"
+    - "python -m pytest -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp -vv -n 3 --offline --webdriver=FirefoxHeadless test"
 
 after_build:
     # Clear up pip cache
