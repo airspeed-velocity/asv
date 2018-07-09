@@ -9,6 +9,7 @@ New Features
 - Add a ``--no-pull`` option to ``asv publish`` and ``asv run`` (#592)
 - Add a ``--rewrite`` option to ``asv gh-pages`` and fix bugs (#578, #529)
 - Add a ``--html-dir`` option to ``asv publish`` (#545)
+- Add a ``--yes`` option to ``asv machine`` (#540)
 - Enable running via ``python -masv`` (#538)
 
 Bug Fixes
