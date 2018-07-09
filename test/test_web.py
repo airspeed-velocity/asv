@@ -36,7 +36,7 @@ def basic_html(request):
     if hasattr(request.config, 'cache'):
         # Cache the generated html, if py.test is new enough to support it
         cache_dir = request.config.cache.makedir("asv-test_web-basic_html")
-        tmpdir = join(six.text_type(cache_dir), 'cached')
+        tmpdir = join(six.text_type(cache_dir), 'c')
 
         if os.path.isdir(tmpdir):
             # Cached result found
