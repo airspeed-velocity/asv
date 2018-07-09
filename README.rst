@@ -11,8 +11,12 @@ webserver to host.
 
 See an `example airspeed velocity site <https://pv.github.io/numpy-bench/>`__.
 
-See the `full documentation <http://spacetelescope.github.io/asv>`__
+See the `full documentation <https://asv.readthedocs.io/>`__
 for more information.
+
+The latest release can be installed from PyPI using
+
+    pip install asv
 
 Are you using ``asv``?  Consider adding a badge to your project's
 README like this:

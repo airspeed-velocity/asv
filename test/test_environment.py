@@ -63,7 +63,7 @@ def test_matrix_environments(tmpdir):
     conf.pythons = ["2.7", "3.4"]
     conf.matrix = {
         "six": ["1.10", None],
-        "colorama": ["0.3.6", "0.3.7"]
+        "colorama": ["0.3.7", "0.3.9"]
     }
     environments = list(environment.get_environments(conf, None))
 
@@ -112,11 +112,6 @@ def test_large_environment_matrix(tmpdir):
 
 @pytest.mark.skipif(not (HAS_PYTHON_27 or HAS_CONDA),
                     reason="Requires Python 2.7")
-@pytest.mark.xfail(WIN,
-                   reason=("Fails on some Windows installations; the Python DLLs "
-                           "in the created environments are apparently not unloaded "
-                           "properly so that removing the environments fails. This is "
-                           "likely not a very common occurrence in real use cases."))
 def test_presence_checks(tmpdir):
     conf = config.Config()
 
@@ -327,7 +322,7 @@ def test_conda_pip_install(tmpdir):
 
     conf.pythons = ["3.4"]
     conf.matrix = {
-        "pip+colorama": ["0.3.6"]
+        "pip+colorama": ["0.3.9"]
     }
     environments = list(environment.get_environments(conf, None))
 
@@ -497,3 +492,30 @@ def test_environment_name_sanitization():
     environments = list(environment.get_environments(conf, []))
     assert len(environments) == 1
     assert environments[0].name == "conda-py3.4-pip+git+http___github.com_space-telescope_asv.git"
+
+
+@pytest.mark.parametrize("environment_type", [
+    pytest.mark.skipif(not HAS_CONDA, reason="needs conda")("conda"),
+    pytest.mark.skipif(not HAS_VIRTUALENV, reason="needs virtualenv")("virtualenv")
+])
+def test_environment_environ_path(environment_type, tmpdir):
+    # Check that virtualenv binary dirs are in the PATH
+    conf = config.Config()
+    conf.env_dir = six.text_type(tmpdir.join("env"))
+    conf.environment_type = environment_type
+    if environment_type == "virtualenv":
+        conf.pythons = ["{0[0]}.{0[1]}".format(sys.version_info)]
+    else:
+        conf.pythons = ["3.5"]
+    conf.matrix = {}
+
+    env, = environment.get_environments(conf, [])
+    env.create()
+    output = env.run(['-c', 'import os; print(os.environ["PATH"])'])
+    paths = output.strip().split(os.pathsep)
+    assert os.path.commonprefix([paths[0], conf.env_dir]) == conf.env_dir
+
+    # Check user-site directory is not in sys.path
+    output = env.run(['-c', 'import site; print(site.ENABLE_USER_SITE)'])
+    usersite_in_syspath = output.strip()
+    assert usersite_in_syspath == "False"

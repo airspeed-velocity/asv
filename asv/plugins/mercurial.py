@@ -9,6 +9,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
+import sys
 import re
 try:
     import hglib
@@ -23,6 +24,7 @@ from .. import util
 class Hg(Repo):
     dvcs = "hg"
     _default_branch = "default"
+    _encoding = "utf-8"
 
     def __init__(self, url, mirror_path):
         # TODO: shared repositories in Mercurial are only possible
@@ -50,9 +52,20 @@ class Hg(Repo):
 
             # Mercurial branches are global, so there is no need for
             # an analog of git --mirror
-            hglib.clone(url, dest=self._path, noupdate=True)
+            hglib.clone(self._encode_filename(url),
+                        dest=self._encode_filename(self._path),
+                        noupdate=True)
 
-        self._repo = hglib.open(self._path)
+        self._repo = hglib.open(self._encode_filename(self._path))
+
+    def _decode(self, item):
+        return item.decode(self._encoding)
+
+    def _encode(self, item):
+        return item.encode(self._encoding)
+
+    def _encode_filename(self, filename):
+        return filename.encode(sys.getfilesystemencoding())
 
     @classmethod
     def is_local_repo(cls, path):
@@ -97,11 +110,13 @@ class Hg(Repo):
         # the repository data is not shared
 
         def checkout_existing():
-            with hglib.open(path) as subrepo:
+            with hglib.open(self._encode_filename(path)) as subrepo:
                 subrepo.pull()
-                subrepo.update(commit_hash, clean=True)
-                subrepo.rawcommand(["--config", "extensions.purge=",
-                                    "purge", "--all"])
+                subrepo.update(self._encode(commit_hash), clean=True)
+                subrepo.rawcommand([b"--config",
+                                    b"extensions.purge=",
+                                    b"purge",
+                                    b"--all"])
 
         if os.path.isdir(path):
             try:
@@ -111,42 +126,44 @@ class Hg(Repo):
                 util.long_path_rmtree(path)
 
         if not os.path.isdir(path):
-            hglib.clone(self._path, dest=path)
+            hglib.clone(self._encode_filename(self._path),
+                        dest=self._encode_filename(path))
             checkout_existing()
 
     def get_date(self, hash):
         # TODO: This works on Linux, but should be extended for other platforms
-        rev = self._repo.log(hash)[0]
+        rev = self._repo.log(self._encode(hash))[0]
         return int(rev.date.strftime("%s")) * 1000
 
-    def get_hashes_from_range(self, range_spec):
-        range_spec = "sort({0}, -rev)".format(range_spec)
-        return [rev.node for rev in self._repo.log(range_spec,
-                                                   followfirst=True)]
+    def get_hashes_from_range(self, range_spec, **kwargs):
+        range_spec = self._encode("sort({0}, -rev)".format(range_spec))
+        return [self._decode(rev.node) for rev in self._repo.log(range_spec, **kwargs)]
 
     def get_hash_from_name(self, name):
         if name is None:
             name = self.get_branch_name()
-        return self._repo.log(name)[0].node
+        return self._decode(self._repo.log(self._encode(name))[0].node)
 
     def get_hash_from_parent(self, name):
         return self.get_hash_from_name('p1({0})'.format(name))
 
     def get_tags(self):
         tags = {}
-        for item in self._repo.log("tag()"):
-            tags[item.tags] = item.node
+        for item in self._repo.log(b"tag()"):
+            tags[self._decode(item.tags)] = self._decode(item.node)
         return tags
 
     def get_date_from_name(self, name):
         return self.get_date(name)
 
     def get_branch_commits(self, branch):
-        return self.get_hashes_from_range("ancestors({0})".format(self.get_branch_name(branch)))
+        return self.get_hashes_from_range("ancestors({0})".format(self.get_branch_name(branch)),
+                                          followfirst=True)
 
     def get_revisions(self, commits):
         revisions = {}
-        for i, item in enumerate(self._repo.log("all()")):
-            if item.node in commits:
-                revisions[item.node] = i
+        for i, item in enumerate(self._repo.log(b"all()")):
+            node = self._decode(item.node)
+            if node in commits:
+                revisions[node] = i
         return revisions

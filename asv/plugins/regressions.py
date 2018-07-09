@@ -121,6 +121,10 @@ class Regressions(OutputPublisher):
         run_timestamps = {}
         revision_timestamps = {}
         for results in iter_results(conf.results_dir):
+            if results.commit_hash not in revisions:
+                # revisions could be filtered when specifying a range
+                # in 'asv publish'
+                continue
             revision = revisions[results.commit_hash]
             revision_timestamps[revision] = results.date
 

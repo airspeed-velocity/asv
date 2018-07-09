@@ -203,6 +203,7 @@ def _get_id(owner, date, content):
     Generate an unique Atom id for the given content
     """
     h = hashlib.sha256()
+    # Hash still contains the original project url, keep as is
     h.update("github.com/spacetelescope/asv".encode('utf-8'))
     for x in content:
         if x is None:

@@ -19,6 +19,14 @@ import asv
 
 from asv import config, util
 
+try:
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver import ActionChains
+    from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+except ImportError:
+    pass
+
 from . import tools
 from .tools import browser, get_with_retry
 
@@ -28,7 +36,7 @@ def basic_html(request):
     if hasattr(request.config, 'cache'):
         # Cache the generated html, if py.test is new enough to support it
         cache_dir = request.config.cache.makedir("asv-test_web-basic_html")
-        tmpdir = join(six.text_type(cache_dir), 'cached')
+        tmpdir = join(six.text_type(cache_dir), 'c')
 
         if os.path.isdir(tmpdir):
             # Cached result found
@@ -118,7 +126,8 @@ def test_web_summarygrid(browser, basic_html):
     with tools.preview(html_dir) as base_url:
         get_with_retry(browser, base_url)
 
-        assert browser.title == 'airspeed velocity of an unladen asv'
+        WebDriverWait(browser, 5).until(EC.title_is(
+            'airspeed velocity of an unladen asv'))
 
         # Open a graph display
         browser.find_element_by_link_text('params_examples.track_param').click()
@@ -130,6 +139,7 @@ def test_web_summarygrid(browser, basic_html):
         param_button = browser.find_element_by_link_text('benchmark.params_examples.ClassOne')
         assert 'active' in param_button.get_attribute('class').split()
         param_button.click()
+        param_button = browser.find_element_by_link_text('benchmark.params_examples.ClassOne')
         assert 'active' not in param_button.get_attribute('class').split()
 
         # Check there's no error popup; needs an explicit wait because
@@ -141,10 +151,6 @@ def test_web_summarygrid(browser, basic_html):
 
 
 def test_web_regressions(browser, basic_html):
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    from selenium.webdriver import ActionChains
-
     html_dir, dvcs = basic_html
 
     bad_commit_hash = dvcs.get_hash('master~9')
@@ -242,11 +248,6 @@ def test_web_regressions(browser, basic_html):
 
 
 def test_web_summarylist(browser, basic_html):
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    from selenium.webdriver import ActionChains
-    from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
-
     ignore_exc = (NoSuchElementException, StaleElementReferenceException)
 
     html_dir, dvcs = basic_html
@@ -290,8 +291,13 @@ def test_web_summarylist(browser, basic_html):
         # For the other CPU, there is no recent change recorded, only
         # the latest result is available
         def check(*args):
-            base_link = browser.find_element_by_link_text('params_examples.track_find_test')
-            cur_row = base_link.find_element_by_xpath('../..')
-            return cur_row.text in ('params_examples.track_find_test (1) 2.00',
-                                    'params_examples.track_find_test (2) 2.00')
+            links = browser.find_elements_by_link_text('params_examples.track_find_test')
+            visible_links = [item for item in links if item.is_displayed()]
+
+            row_texts = [link.find_element_by_xpath('../..').text
+                         for link in visible_links]
+            row_texts.sort()
+
+            return row_texts == ['params_examples.track_find_test (1) 2.00',
+                                 'params_examples.track_find_test (2) 2.00']
         WebDriverWait(browser, 5, ignored_exceptions=ignore_exc).until(check)

@@ -6,9 +6,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 from distutils.version import LooseVersion
 import sys
 import re
-import inspect
 import os
-import subprocess
 
 import six
 
@@ -57,11 +55,6 @@ class Virtualenv(environment.Environment):
         except ImportError:
             raise environment.EnvironmentUnavailable(
                 "virtualenv package not installed")
-
-        # Can't use `virtualenv.__file__` here, because that will refer to a
-        # .pyc file which can't be used on another version of Python
-        self._virtualenv_path = os.path.abspath(
-            inspect.getsourcefile(virtualenv))
 
     @staticmethod
     def _find_python(python):
@@ -137,7 +130,7 @@ class Virtualenv(environment.Environment):
         log.info("Creating virtualenv for {0}".format(self.name))
         util.check_call([
             sys.executable,
-            self._virtualenv_path,
+            "-mvirtualenv",
             '--no-site-packages',
             "-p",
             self._executable,
@@ -149,6 +142,10 @@ class Virtualenv(environment.Environment):
     def _install_requirements(self):
         if sys.version_info[:2] == (3, 2):
             pip_args = ['install', '-v', 'wheel<0.29.0', 'pip<8']
+        elif sys.version_info[:2] == (3, 3):
+            pip_args = ['install', '-v', 'wheel<0.31.0', 'pip<11']
+        elif sys.version_info[:2] == (2, 6):
+            pip_args = ['install', '-v', 'wheel<0.29.0', 'pip<10']
         else:
             pip_args = ['install', '-v', 'wheel', 'pip>=8']
 
@@ -158,11 +155,7 @@ class Virtualenv(environment.Environment):
             # to be installed for that environment.
             pip_args.append('pytest-cov')
 
-        if not WIN:
-            self.run_executable('pip', pip_args)
-        else:
-            # Run pip self-upgrade via python -m pip, so that it works on Windows
-            self.run_executable('python', ['-m', 'pip'] + pip_args)
+        self._run_pip(pip_args)
 
         if self._requirements:
             args = ['install', '-v', '--upgrade']
@@ -175,17 +168,24 @@ class Virtualenv(environment.Environment):
                     args.append("{0}=={1}".format(pkg, val))
                 else:
                     args.append(pkg)
-            self.run_executable('pip', args, timeout=self._install_timeout)
+            self._run_pip(args, timeout=self._install_timeout)
+
+    def _run_pip(self, args, **kwargs):
+        # Run pip via python -m pip, so that it works on Windows when
+        # upgrading pip itself, and avoids shebang length limit on Linux
+        if sys.version_info[:2] in [(2, 6), (3, 2)]:
+            return self.run_executable('pip', list(args), **kwargs)
+        return self.run_executable('python', ['-mpip'] + list(args), **kwargs)
 
     def install(self, package):
         log.info("Installing into {0}".format(self.name))
-        self.run_executable('pip', ['install', package],
-                            timeout=self._install_timeout)
+        self._run_pip(['install', package], timeout=self._install_timeout)
 
     def uninstall(self, package):
         log.info("Uninstalling from {0}".format(self.name))
-        self.run_executable('pip', ['uninstall', '-y', package],
-                            valid_return_codes=None)
+        self._run_pip(['uninstall', '-y', package],
+                      timeout=self._install_timeout,
+                      valid_return_codes=None)
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))

@@ -552,6 +552,31 @@ class Environment(object):
         """
         Run a given executable (eg. python, pip) in the environment.
         """
+        env = kwargs.pop("env", os.environ)
+
+        # Insert bin dirs to PATH
+        if "PATH" in env:
+            paths = env["PATH"].split(os.pathsep)
+        else:
+            paths = []
+
+        if WIN:
+            subpaths = ['Library\\mingw-w64\\bin',
+                        'Library\\bin',
+                        'Library\\usr\\bin',
+                        'Scripts']
+            for sub in subpaths[::-1]:
+                paths.insert(0, os.path.join(self._path, sub))
+            paths.insert(0, self._path)
+        else:
+            paths.insert(0, os.path.join(self._path, "bin"))
+
+        # When running pip, we need to set PIP_USER to false, as --user (which
+        # may have been set from a pip config file) is incompatible with
+        # virtualenvs.
+        kwargs["env"] = dict(env,
+                             PIP_USER=str("false"),
+                             PATH=str(os.pathsep.join(paths)))
         exe = self.find_executable(executable)
         return util.check_output([exe] + args, **kwargs)
 

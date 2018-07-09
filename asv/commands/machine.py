@@ -28,6 +28,9 @@ class Machine(Command):
                 '--' + name, default=defaults[name],
                 help=description)
 
+        parser.add_argument('--yes', default=False, action='store_true',
+                            help="Accept all questions")
+
         parser.set_defaults(func=cls.run_from_args)
 
         return parser
@@ -44,5 +47,8 @@ class Machine(Command):
             if kwargs.get(key) != val:
                 different[key] = kwargs.get(key)
 
+        use_defaults = kwargs['yes']
+
         machine.Machine.load(
-            force_interactive=(len(different) == 0), **different)
+            force_interactive=(len(different) == 0),
+            use_defaults=use_defaults, **different)

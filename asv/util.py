@@ -23,6 +23,7 @@ import errno
 import threading
 import shutil
 import stat
+import operator
 
 import six
 from six.moves import xrange
@@ -217,6 +218,9 @@ def which(filename):
 
     Raises an IOError if no result is found.
     """
+    # Hide traceback from expected exceptions in pytest reports
+    __tracebackhide__ = operator.methodcaller('errisinstance', IOError)
+
     if WIN:
         if not filename.endswith('.exe'):
             filename = filename + '.exe'
@@ -277,6 +281,9 @@ def check_call(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     See `check_output` for parameters.
     """
+    # Hide traceback from expected exceptions in pytest reports
+    __tracebackhide__ = operator.methodcaller('errisinstance', ProcessError)
+
     check_output(
         args, valid_return_codes=valid_return_codes, timeout=timeout,
         dots=dots, display_error=display_error, shell=shell, env=env,
@@ -324,6 +331,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         Specify the current working directory to use when running the
         process.
     """
+    # Hide traceback from expected exceptions in pytest reports
+    __tracebackhide__ = operator.methodcaller('errisinstance', ProcessError)
+
     def get_content(header=None):
         content = []
         if header is not None:
@@ -341,6 +351,12 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         args = [args]
 
     log.debug("Running '{0}'".format(' '.join(args)))
+
+    if env and WIN and sys.version_info < (3,):
+        # Environment keys and values cannot be unicode
+        def _fix_env(s):
+            return s.encode('mbcs') if isinstance(s, unicode) else s
+        env = dict((_fix_env(k), _fix_env(v)) for k, v in env.items())
 
     kwargs = dict(shell=shell, env=env, cwd=cwd,
                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -554,6 +570,9 @@ def load_json(path, api_version=None, cleanup=True):
     """
     Loads JSON to the given path, ignoring any C-style comments.
     """
+    # Hide traceback from expected exceptions in pytest reports
+    __tracebackhide__ = operator.methodcaller('errisinstance', UserError)
+
     path = os.path.abspath(path)
 
     with long_path_open(path, 'r') as fd:
@@ -607,6 +626,9 @@ def update_json(cls, path, api_version):
     api_version : int
         The current API version
     """
+    # Hide traceback from expected exceptions in pytest reports
+    __tracebackhide__ = operator.methodcaller('errisinstance', UserError)
+
     d = load_json(path)
     if 'version' not in d:
         raise UserError(
@@ -867,10 +889,19 @@ else:
         return "\\\\?\\" + os.path.abspath(path)
 
     def _remove_readonly(func, path, exc_info):
-        """Clear the readonly bit and reattempt the removal;
-        Windows rmtree doesn't do this by default"""
-        os.chmod(path, stat.S_IWRITE)
-        func(path)
+        """Try harder to remove files on Windows"""
+
+        if isinstance(exc_info[1], OSError) and exc_info[1].errno == errno.EACCES:
+            # Clear read-only flag and try again
+            try:
+                os.chmod(path, stat.S_IWRITE | stat.S_IREAD)
+                func(path)
+                return
+            except OSError:
+                pass
+
+        # Reraise original error
+        six.reraise(*exc_info)
 
     def long_path_open(filename, *a, **kw):
         return open(long_path(filename), *a, **kw)

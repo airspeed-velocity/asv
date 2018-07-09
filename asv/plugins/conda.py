@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 
 import re
 import os
+import sys
 import tempfile
 import subprocess
 
@@ -16,6 +17,37 @@ from .. import util
 
 
 WIN = (os.name == "nt")
+
+
+def _find_conda():
+    """Find the conda executable robustly across conda versions.
+
+    Returns
+    -------
+    conda : str
+        Path to the conda executable.
+
+    Raises
+    ------
+    IOError
+        If the executable cannot be found in either the CONDA_EXE environment
+        variable or in the PATH.
+
+    Notes
+    -----
+    In POSIX platforms in conda >= 4.4, conda can be set up as a bash function
+    rather than an executable. (This is to enable the syntax
+    ``conda activate env-name``.) In this case, the environment variable
+    ``CONDA_EXE`` contains the path to the conda executable. In other cases,
+    we use standard search for the appropriate name in the PATH.
+
+    See https://github.com/airspeed-velocity/asv/issues/645 for more details.
+    """
+    if 'CONDA_EXE' in os.environ:
+        conda = os.environ['CONDA_EXE']
+    else:
+        conda = util.which('conda')
+    return conda
 
 
 class Conda(environment.Environment):
@@ -60,7 +92,7 @@ class Conda(environment.Environment):
             return False
 
         try:
-            conda = util.which('conda')
+            conda = _find_conda()
         except IOError:
             return False
         else:
@@ -85,7 +117,7 @@ class Conda(environment.Environment):
 
     def _setup(self):
         try:
-            conda = util.which('conda')
+            conda = _find_conda()
         except IOError as e:
             raise util.UserError(str(e))
 
@@ -135,16 +167,29 @@ class Conda(environment.Environment):
                 self.run_executable('pip', pip_cmd + pip_args,
                                     timeout=self._install_timeout)
 
+    def _run_pip(self, args, **kwargs):
+        # Run pip via python -m pip, so that it works on Windows when
+        # upgrading pip itself, and avoids shebang length limit on Linux
+        if sys.version_info[:2] in [(2, 6), (3, 2)]:
+            return self.run_executable('pip', list(args), **kwargs)
+        return self.run_executable('python', ['-mpip'] + list(args), **kwargs)
+
     def install(self, package):
         log.info("Installing into {0}".format(self.name))
-        self.run_executable('pip', ['install', package])
+        self._run_pip(['install', package], timeout=self._install_timeout)
 
     def uninstall(self, package):
         log.info("Uninstalling from {0}".format(self.name))
-        self.run_executable('pip', ['uninstall', '-y', package],
-                            valid_return_codes=None,
-                            timeout=self._install_timeout)
+        self._run_pip(['uninstall', '-y', package],
+                      timeout=self._install_timeout,
+                      valid_return_codes=None)
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
         return self.run_executable('python', args, **kwargs)
+
+    def run_executable(self, executable, args, **kwargs):
+        # Conda doesn't guarantee that user site directories are excluded
+        kwargs["env"] = dict(kwargs.pop("env", os.environ),
+                             PYTHONNOUSERSITE=str("True"))
+        return super(Conda, self).run_executable(executable, args, **kwargs)

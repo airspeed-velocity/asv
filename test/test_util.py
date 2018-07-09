@@ -38,6 +38,7 @@ def _multiprocessing_raise_usererror(arg):
         raise util.ParallelFailure(str(exc), exc.__class__, traceback.format_exc())
 
 
+@pytest.mark.timeout(30)
 def test_parallelfailure():
     # Check the workaround for https://bugs.python.org/issue9400 works
 

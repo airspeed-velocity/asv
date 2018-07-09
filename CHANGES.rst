@@ -1,8 +1,36 @@
 0.2.2 (unreleased)
 ------------------
 
+Bugfix release with minor feature additions.
+
+New Features
+^^^^^^^^^^^^
+
+- Add a ``--no-pull`` option to ``asv publish`` and ``asv run`` (#592)
+- Add a ``--rewrite`` option to ``asv gh-pages`` and fix bugs (#578, #529)
+- Add a ``--html-dir`` option to ``asv publish`` (#545)
+- Add a ``--yes`` option to ``asv machine`` (#540)
+- Enable running via ``python -masv`` (#538)
+
 Bug Fixes
 ^^^^^^^^^
+
+- Fix support for mercurial >= 4.5 (#643)
+- Fix detection of git subrepositories (#642)
+- Find conda executable in the "official" way (#646)
+- Hide tracebacks in testing functions (#601)
+- Launch virtualenv in a more sensible way (#555)
+- Disable user site directory also when using conda (#553)
+- Set PIP_USER to false when running an executable (#524)
+- Set PATH for commands launched inside environments (#541)
+- os.environ can only contain bytes on Win/py2 (#528)
+- Fix hglib encoding issues on Python 3 (#508)
+- Set GIT_CEILING_DIRECTORIES for Git (#636)
+- Run pip via python -mpip to avoid shebang limits (#569)
+- Always use https URLs (#583)
+- Add a min-height on graphs to avoid a flot traceback (#596)
+- Escape label html text in plot legends (#614)
+- Fixup CI, test, etc issues (#616, #552, #601, #586, #554, #549, #571, #527, #560, #565)
 
 
 0.2.1 (2017-06-22)

@@ -14,10 +14,10 @@ import threading
 import time
 import six
 import tempfile
+import textwrap
 import sys
 from os.path import abspath, join, dirname, relpath, isdir
 from contextlib import contextmanager
-from distutils.spawn import find_executable
 from six.moves import SimpleHTTPServer
 
 import pytest
@@ -37,22 +37,10 @@ from asv.results import Results
 
 try:
     import selenium
-    from selenium import webdriver
-    from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-    from selenium.webdriver.support.ui import WebDriverWait
     from selenium.common.exceptions import TimeoutException
     HAVE_WEBDRIVER = True
 except ImportError:
     HAVE_WEBDRIVER = False
-
-CHROMEDRIVER = [
-    'chromedriver',
-    '/usr/lib/chromium-browser/chromedriver'   # location on Ubuntu
-]
-
-PHANTOMJS = ['phantomjs']
-
-FIREFOX = ['firefox']
 
 
 def run_asv(*argv):
@@ -149,6 +137,8 @@ username = Robotic Swallow <robot@asv>
 
 
 class Hg(object):
+    encoding = 'utf-8'
+
     def __init__(self, path):
         self._fake_date = datetime.datetime.now()
         self.path = abspath(path)
@@ -157,7 +147,8 @@ class Hg(object):
         hglib.init(self.path)
         with io.open(join(self.path, '.hg', 'hgrc'), 'w', encoding="utf-8") as fd:
             fd.write(_hg_config)
-        self._repo = hglib.open(self.path)
+        self._repo = hglib.open(self.path.encode(sys.getfilesystemencoding()),
+                                encoding=self.encoding)
 
     def commit(self, message, date=None):
         if date is None:
@@ -165,46 +156,49 @@ class Hg(object):
             date = self._fake_date
         date = "{0} 0".format(util.datetime_to_timestamp(date))
 
-        self._repo.commit(message, date=date)
+        self._repo.commit(message.encode(self.encoding),
+                          date=date.encode(self.encoding))
 
     def tag(self, number):
         self._fake_date += datetime.timedelta(seconds=1)
         date = "{0} 0".format(util.datetime_to_timestamp(self._fake_date))
 
         self._repo.tag(
-            ['tag{0}'.format(number)], message="Tag {0}".format(number),
-            date=date)
+            ['tag{0}'.format(number).encode(self.encoding)],
+            message="Tag {0}".format(number).encode(self.encoding),
+            date=date.encode(self.encoding))
 
     def add(self, filename):
-        self._repo.add([filename])
+        self._repo.add([filename.encode(sys.getfilesystemencoding())])
 
     def checkout(self, branch_name, start_commit=None):
         if start_commit is not None:
-            self._repo.update(start_commit)
-            self._repo.branch(branch_name)
+            self._repo.update(start_commit.encode(self.encoding))
+            self._repo.branch(branch_name.encode(self.encoding))
         else:
-            self._repo.update(branch_name)
+            self._repo.update(branch_name.encode(self.encoding))
 
     def merge(self, branch_name, commit_message=None):
-        self._repo.merge(branch_name, tool="internal:other")
+        self._repo.merge(branch_name.encode(self.encoding),
+                         tool=b"internal:other")
         if commit_message is None:
             commit_message = "Merge {0}".format(branch_name)
         self.commit(commit_message)
 
     def get_hash(self, name):
-        log = self._repo.log(name, limit=1)
+        log = self._repo.log(name.encode(self.encoding), limit=1)
         if log:
-            return log[0][1]
+            return log[0][1].decode(self.encoding)
         return None
 
     def get_branch_hashes(self, branch=None):
         if branch is None:
             branch = "default"
-        log = self._repo.log('sort(ancestors({0}), -rev)'.format(branch))
-        return [entry[1] for entry in log]
+        log = self._repo.log('sort(ancestors({0}), -rev)'.format(branch).encode(self.encoding))
+        return [entry[1].decode(self.encoding) for entry in log]
 
     def get_commit_message(self, commit_hash):
-        return self._repo.log(commit_hash)[0].desc
+        return self._repo.log(commit_hash.encode(self.encoding))[0].desc.decode(self.encoding)
 
 
 def copy_template(src, dst, dvcs, values):
@@ -386,47 +380,38 @@ def browser(request, pytestconfig):
     """
     Fixture for Selenium WebDriver browser interface
     """
-    if not HAVE_WEBDRIVER:
-        pytest.skip("Selenium WebDriver Python bindings not found")
-
     driver_str = pytestconfig.getoption('webdriver')
-    driver_options_str = pytestconfig.getoption('webdriver_options')
+
+    if driver_str == "None":
+        pytest.skip("No webdriver selected for tests (use --webdriver).")
 
     # Evaluate the options
+    def FirefoxHeadless():
+        from selenium.webdriver.firefox.options import Options
+        options = Options()
+        options.add_argument("-headless")
+        return selenium.webdriver.Firefox(firefox_options=options)
+
+    def ChromeHeadless():
+        options = selenium.webdriver.ChromeOptions()
+        options.add_argument('headless')
+        return selenium.webdriver.Chrome(chrome_options=options)
+
     ns = {}
     six.exec_("import selenium.webdriver", ns)
     six.exec_("from selenium.webdriver import *", ns)
-    driver_options = eval(driver_options_str, ns)
-    driver_cls = getattr(webdriver, driver_str)
+    ns['FirefoxHeadless'] = FirefoxHeadless
+    ns['ChromeHeadless'] = ChromeHeadless
 
-    # Find the executable (if applicable)
-    paths = []
-    if driver_cls is webdriver.Chrome:
-        paths += CHROMEDRIVER
-        exe_kw = 'executable_path'
-    elif driver_cls is webdriver.PhantomJS:
-        paths += PHANTOMJS
-        exe_kw = 'executable_path'
-    elif driver_cls is webdriver.Firefox:
-        paths += FIREFOX
-        exe_kw = 'firefox_binary'
-    else:
-        exe_kw = None
-
-    for exe in paths:
-        if exe is None:
-            continue
-        exe = find_executable(exe)
-        if exe:
-            break
-    else:
-        exe = None
-
-    if exe is not None and exe_kw is not None and exe_kw not in driver_options:
-        driver_options[exe_kw] = exe
+    create_driver = ns.get(driver_str, None)
+    if create_driver is None:
+        src = "def create_driver():\n"
+        src += textwrap.indent(driver_str, "    ")
+        six.exec_(src, ns)
+        create_driver = ns['create_driver']
 
     # Create the browser
-    browser = driver_cls(**driver_options)
+    browser = create_driver()
 
     # Set timeouts
     browser.set_page_load_timeout(10)
