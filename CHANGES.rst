@@ -1,5 +1,5 @@
-0.2.2 (unreleased)
-------------------
+0.2.2rc1 (2018-07-09)
+---------------------
 
 Bugfix release with minor feature additions.
 
