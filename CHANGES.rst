@@ -1,22 +1,6 @@
 0.2.2 (unreleased)
 ------------------
 
-New Features
-^^^^^^^^^^^^
-
-API Changes
-^^^^^^^^^^^
-
-Bug Fixes
-^^^^^^^^^
-
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-0.2.2rc1 (2018-07-09)
----------------------
-
 Bugfix release with minor feature additions.
 
 New Features
@@ -46,8 +30,13 @@ Bug Fixes
 - Always use https URLs (#583)
 - Add a min-height on graphs to avoid a flot traceback (#596)
 - Escape label html text in plot legends (#614)
+- Disable pip build isolation in wheel_cache (#670)
 - Fixup CI, test, etc issues (#616, #552, #601, #586, #554, #549, #571, #527, #560, #565)
 
+0.2.2rc1 (2018-07-09)
+---------------------
+
+Same as 0.2.2.
 
 0.2.1 (2017-06-22)
 ------------------
