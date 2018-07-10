@@ -80,7 +80,7 @@ def run_benchmark(benchmark, root, env, show_stderr=False,
         - `samples`: List of lists of sampled raw data points, if benchmark produces
           those and was successful.
 
-        - `number`: Repeact count associated with each sample.
+        - `number`: Repeat count associated with each sample.
 
         - `stats`: List of results of statistical analysis of data.
 

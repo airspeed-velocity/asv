@@ -8,8 +8,11 @@ import contextlib
 import io
 import os
 import pstats
+import re
 import sys
 import tempfile
+
+from six.moves import StringIO
 
 from . import Command
 from ..benchmarks import Benchmarks
@@ -198,4 +201,32 @@ class Profile(Command):
             with temp_profile(profile_data) as profile_path:
                 stats = pstats.Stats(profile_path)
                 stats.sort_stats('cumulative')
-                stats.print_stats()
+                stats_str = _strip_env(stats)
+                print(stats_str)
+
+
+def _strip_env(stats):
+    """
+    Wrap pstats.Stats.print_stats() to strip long directory prefixes off of
+    filenames.  This is different from `pstats.Stats.strip_dirs` in that it
+    does not strip _all_ directories, just the least interesting ones.
+
+    Parameters
+    ----------
+    stats : pstats.Stats
+
+    Returns
+    -------
+    res : str
+    """
+    c = StringIO()
+    stats.stream = c
+    stats.print_stats()
+    stats_str = c.getvalue()
+
+    # Leading ' ' ensures we don't accidentally substitute the actual stats
+    res = re.sub(' /.*/env/[0-9abcdef]+/(bin/\.\./)?lib/python\d\.\d/(site-packages/)?',
+                 ' ',
+                 stats_str)
+
+    return res
