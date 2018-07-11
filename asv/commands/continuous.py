@@ -87,6 +87,26 @@ class Continuous(Command):
         if result:
             return result
 
+        def results_iter(commit_hash):
+            for env in run_objs['environments']:
+                machine_name = run_objs['machine_params']['machine']
+                filename = results.get_filename(
+                    machine_name, commit_hash, env.name)
+                filename = os.path.join(conf.results_dir, filename)
+                try:
+                    result = results.Results.load(filename, machine_name)
+                except util.UserError as err:
+                    log.warn(six.text_type(err))
+                    continue
+
+                for name, benchmark in six.iteritems(run_objs['benchmarks']):
+                    params = benchmark['params']
+                    version = benchmark['version']
+
+                    value = result.get_result_value(name, params)
+                    stats = result.get_result_stats(name, params)
+                    yield name, params, value, stats, version
+
         status = print_table(conf, parent, head,
                              resultset_1=_results_iter(parent, run_objs, result),
                              resultset_2=_results_iter(head, run_objs, result),
@@ -103,40 +123,3 @@ class Continuous(Command):
             color_print("BENCHMARKS NOT SIGNIFICANTLY CHANGED.", 'green')
 
         return worsened
-
-
-def _results_iter(commit_hash, run_objs, result):
-    """
-    Iterate over results for the given commit_hash.
-
-    Parameters
-    ----------
-    commit_hash : str
-    run_objs : dict
-    result : results.Results
-
-    Yields
-    ------
-    name : str
-    params : list
-    value : object
-    stats : list
-    version : str
-    """
-    for env in run_objs['environments']:
-        machine_name = run_objs['machine_params']['machine']
-        filename = results.get_filename(machine_name, commit_hash, env.name)
-        filename = os.path.join(conf.results_dir, filename)
-        try:
-            result = results.Results.load(filename, machine_name)
-        except util.UserError as err:
-            log.warn(six.text_type(err))
-            continue
-
-        for name, benchmark in six.iteritems(run_objs['benchmarks']):
-            params = benchmark['params']
-            version = benchmark['version']
-
-            value = result.get_result_value(name, params)
-            stats = result.get_result_stats(name, params)
-            yield name, params, value, stats, version
