@@ -12,6 +12,9 @@ import pytest
 from asv import config
 from asv import environment
 from asv import util
+from asv.repo import get_repo
+
+from .tools import generate_test_repo
 
 
 WIN = (os.name == "nt")
@@ -519,3 +522,36 @@ def test_environment_environ_path(environment_type, tmpdir):
     output = env.run(['-c', 'import site; print(site.ENABLE_USER_SITE)'])
     usersite_in_syspath = output.strip()
     assert usersite_in_syspath == "False"
+
+
+@pytest.mark.skipif(not (HAS_PYTHON_27 or HAS_CONDA),
+                    reason="Requires Python 2.7")
+def test_build_isolation(tmpdir):
+    # build should not fail with wheel_cache on projects that have pyproject.toml
+    tmpdir = six.text_type(tmpdir)
+
+    # Create installable repository with pyproject.toml in it
+    dvcs = generate_test_repo(tmpdir, [0], dvcs_type='git')
+    fn = os.path.join(dvcs.path, 'pyproject.toml')
+    with open(fn, 'w') as f:
+        f.write('[build-system]\n'
+                'requires = ["wheel", "setuptools"]')
+    dvcs.add(fn)
+    dvcs.commit("Add pyproject.toml")
+    commit_hash = dvcs.get_hash("master")
+
+    # Setup config
+    conf = config.Config()
+    conf.env_dir = os.path.join(tmpdir, "env")
+    conf.pythons = ["2.7"]
+    conf.matrix = {}
+    conf.repo = os.path.abspath(dvcs.path)
+    conf.wheel_cache_size = 8
+
+    repo = get_repo(conf)
+
+    env = list(environment.get_environments(conf, None))[0]
+    env.create()
+
+    # Project installation should succeed
+    env.install_project(conf, repo, commit_hash)
