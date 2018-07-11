@@ -108,8 +108,8 @@ class Continuous(Command):
                     yield name, params, value, stats, version
 
         status = print_table(conf, parent, head,
-                             resultset_1=_results_iter(parent, run_objs, result),
-                             resultset_2=_results_iter(head, run_objs, result),
+                             resultset_1=_results_iter(parent),
+                             resultset_2=_results_iter(head),
                              factor=factor, split=False, only_changed=True,
                              sort_by_ratio=True)
         worsened, improved = status
