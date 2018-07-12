@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import time
 import sys
 if sys.version_info[0] == 3:
     xrange = range
@@ -98,3 +99,20 @@ class TimeWithBadTimer(object):
 
     def time_it(self):
         pass
+
+
+class TimeWithMinRepeat(object):
+    # benchmark with number 1 (use case is to call setup/teardown at each
+    # repeat) and benchmark duration > sample_time, with min_repeat 3 we should
+    # repeat this benchmark 3 times.
+    number = 1
+    sample_time = 0.1
+    repeat = 10
+    min_repeat = 3
+
+    def time_it(self):
+        time.sleep(0.5)
+
+
+class TimeWithMinRepeatNoWarmup(TimeWithMinRepeat):
+    warmup_time = 0
