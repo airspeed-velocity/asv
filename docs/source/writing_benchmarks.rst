@@ -318,8 +318,9 @@ by the ``number`` and ``repeat`` attributes, as explained below.
 - ``repeat``: The number measurement samples to collect. Each sample
   consists of running the benchmark ``number`` times.  The median
   time from all of these repetitions is used as the final measurement
-  result. When not provided, ``repeat`` defaults to 10. Setup and
-  teardown are before and after each sample.
+  result. When not provided (``repeat`` set to 0), the number of samples
+  defaults to 10 (or less if benchmark appears slow). Setup and teardown
+  are run before and after each sample.
 
 - ``number``: Manually choose the number of iterations in each sample.
   If ``number`` is specified, ``sample_time`` is ignored.

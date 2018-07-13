@@ -445,12 +445,6 @@ class TimeBenchmark(Benchmark):
         return result
 
     def run(self, *param):
-        number = self.number
-        repeat = self.repeat
-
-        if repeat == 0:
-            repeat = 10
-
         warmup_time = self.warmup_time
         if warmup_time < 0:
             if '__pypy__' in sys.modules:
@@ -470,7 +464,8 @@ class TimeBenchmark(Benchmark):
             setup=self.redo_setup,
             timer=self.timer)
 
-        samples, number = self.benchmark_timing(timer, repeat, warmup_time, number=number)
+        samples, number = self.benchmark_timing(timer, self.repeat, warmup_time,
+                                                number=self.number)
 
         samples = [s/number for s in samples]
         return {'samples': samples, 'number': number}
@@ -480,12 +475,25 @@ class TimeBenchmark(Benchmark):
 
         start_time = time.time()
 
-        max_time = start_time + min(warmup_time + 1.3 * repeat * sample_time,
-                                    self.timeout - 1.3 * sample_time)
+        if repeat == 0:
+            # automatic number of samples: 10 is large enough to
+            # estimate the median confidence interval
+            repeat = 10
+            default_number = (number == 0)
 
-        def too_slow():
-            # too slow, don't take more samples
-            return time.time() > max_time
+            def too_slow(timing):
+                # stop taking samples if limits exceeded
+                if default_number:
+                    t = 1.3*sample_time
+                    max_time = start_time + min(warmup_time + repeat * t,
+                                                self.timeout - t)
+                else:
+                    max_time = start_time + self.timeout - 2*timing
+                return time.time() > max_time
+        else:
+            # take exactly the number of samples requested
+            def too_slow(timing):
+                return False
 
         if number == 0:
             # Select number & warmup.
@@ -511,7 +519,7 @@ class TimeBenchmark(Benchmark):
                         p = 10.0
                     number = max(number + 1, int(p * number))
 
-            if too_slow():
+            if too_slow(timing):
                 return [timing], number
         elif warmup_time > 0:
             # Warmup
@@ -520,7 +528,7 @@ class TimeBenchmark(Benchmark):
                 timing = timer.timeit(number)
                 if time.time() >= start_time + warmup_time:
                     break
-            if too_slow():
+            if too_slow(timing):
                 return [timing], number
 
         # Collect samples
@@ -529,7 +537,7 @@ class TimeBenchmark(Benchmark):
             timing = timer.timeit(number)
             samples.append(timing)
 
-            if too_slow():
+            if too_slow(timing):
                 break
 
         return samples, number
