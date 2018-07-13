@@ -52,6 +52,7 @@ def test_find_benchmarks(tmpdir):
     d['env_dir'] = "env"
     d['benchmark_dir'] = 'benchmark'
     d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
+    d['branches'] = ["master", "some-missing-branch"]  # missing branches ignored
     conf = config.Config.from_json(d)
 
     repo = get_repo(conf)
