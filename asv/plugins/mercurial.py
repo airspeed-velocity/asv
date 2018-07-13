@@ -17,7 +17,7 @@ except ImportError as exc:
     hglib = None
 
 from ..console import log
-from ..repo import Repo
+from ..repo import Repo, NoSuchNameError
 from .. import util
 
 
@@ -142,7 +142,12 @@ class Hg(Repo):
     def get_hash_from_name(self, name):
         if name is None:
             name = self.get_branch_name()
-        return self._decode(self._repo.log(self._encode(name))[0].node)
+        try:
+            return self._decode(self._repo.log(self._encode(name))[0].node)
+        except hglib.error.CommandError as err:
+            if b'unknown revision' in err.err:
+                raise NoSuchNameError(name)
+            raise
 
     def get_hash_from_parent(self, name):
         return self.get_hash_from_name('p1({0})'.format(name))

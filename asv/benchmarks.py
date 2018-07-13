@@ -19,6 +19,7 @@ import six
 from .console import log, truncate_left
 from . import util
 from . import statistics
+from .repo import NoSuchNameError
 
 
 WIN = (os.name == "nt")
@@ -410,7 +411,11 @@ class Benchmarks(dict):
         # discovery usually succeeds
         commit_hashes = list(commit_hashes)
         for branch in conf.branches:
-            branch_hash = repo.get_hash_from_name(branch)
+            try:
+                branch_hash = repo.get_hash_from_name(branch)
+            except NoSuchNameError:
+                continue
+
             if branch_hash not in commit_hashes:
                 commit_hashes.append(branch_hash)
 

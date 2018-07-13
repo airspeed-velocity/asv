@@ -434,3 +434,35 @@ def test_root_ceiling(dvcs_type, tmpdir):
     # parent repository
     with pytest.raises(Exception):
         r.checkout(workcopy_dir, commit2)
+
+
+@pytest.mark.parametrize('dvcs_type', [
+    "git",
+    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg")
+])
+def test_no_such_name_error(dvcs_type, tmpdir):
+    tmpdir = six.text_type(tmpdir)
+    dvcs = tools.generate_test_repo(tmpdir, values=[0], dvcs_type=dvcs_type)
+
+    conf = config.Config()
+    conf.branches = []
+    conf.dvcs = dvcs_type
+    conf.project = "project"
+    conf.repo = dvcs.path
+
+    r = repo.get_repo(conf)
+
+    # Check that NoSuchNameError error gets raised correctly
+    assert r.get_hash_from_name(None) == dvcs.get_hash(r._default_branch)
+    with pytest.raises(repo.NoSuchNameError):
+        r.get_hash_from_name("badbranch")
+
+    if dvcs_type == "git":
+        # Corrupted repository/etc should not give NoSuchNameError
+        util.long_path_rmtree(join(dvcs.path, ".git"))
+        with pytest.raises(Exception) as excinfo:
+            r.get_hash_from_name(None)
+        assert excinfo.type not in (AssertionError, repo.NoSuchNameError)
+    elif dvcs_type == "hg":
+        # hglib seems to do some caching, so this doesn't work
+        pass
