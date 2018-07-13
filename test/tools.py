@@ -410,7 +410,7 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
             "param_names": param_names or [],
             "version": benchmark_version,
         }
-    }, api_version=1)
+    }, api_version=2)
     return conf
 
 

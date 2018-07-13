@@ -316,7 +316,7 @@ class Benchmarks(dict):
     """
     Manages and runs the set of benchmarks in the project.
     """
-    api_version = 1
+    api_version = 2
 
     def __init__(self, conf, benchmarks, regex=None):
         """
@@ -530,6 +530,9 @@ class Benchmarks(dict):
             benchmarks = six.itervalues(d)
             return cls(conf, benchmarks)
         except util.UserError as err:
+            if "asv update" in str(err):
+                # Don't give conflicting instructions
+                raise
             raise util.UserError("{}\nUse `asv run --bench just-discover` to "
                                  "regenerate benchmarks.json".format(str(err)))
 

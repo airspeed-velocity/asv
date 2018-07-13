@@ -721,8 +721,10 @@ def update_json(cls, path, api_version):
         write_json(path, d, api_version)
     elif d['version'] > api_version:
         raise UserError(
-            "version of {0} is newer than understood by this version of "
-            "asv. Upgrade asv in order to use or add to these results.")
+            "{0} is stored in a format that is newer than "
+            "what this version of asv understands. "
+            "Upgrade asv in order to use or add to "
+            "these results.".format(path))
 
 
 def iter_chunks(s, n):

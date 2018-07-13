@@ -10,6 +10,10 @@ from . import Command
 from ..config import Config
 from ..machine import Machine, MachineCollection
 from ..results import Results
+from ..benchmarks import Benchmarks
+from ..console import log
+from .. import util
+from .run import Run
 
 
 class Update(Command):
@@ -36,10 +40,28 @@ class Update(Command):
 
         conf = Config.load(config_path)
 
+        log.info("Updating results data...")
+
         for root, dirs, files in os.walk(conf.results_dir):
             for filename in files:
                 path = os.path.join(root, filename)
                 if filename == 'machine.json':
                     Machine.update(path)
+                elif filename == "benchmarks.json":
+                    pass
                 elif filename.endswith('.json'):
                     Results.update(path)
+
+        # Check benchmarks.json
+        log.info("Updating benchmarks.json...")
+        ok = False
+        try:
+            Benchmarks.load(conf)
+            ok = True
+        except util.UserError:
+            pass
+
+        if not ok:
+            # Regenerating the file is needed
+            with log.indent():
+                Run.run(conf, bench=['just-discover'])
