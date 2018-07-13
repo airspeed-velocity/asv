@@ -255,6 +255,8 @@ def run_setup(build_binary=False):
                 'www/*.png',
                 'www/*.ico',
                 'www/flot/*.js',
+                'www/vendor/*.css',
+                'www/vendor/*.js',
                 'template/__init__.py',
                 'template/asv.conf.json',
                 'template/benchmarks/*.py'
