@@ -12,7 +12,7 @@ import os
 import re
 
 from ..console import log
-from ..repo import Repo
+from ..repo import Repo, NoSuchNameError
 from .. import util
 
 
@@ -127,8 +127,15 @@ class Git(Repo):
     def get_hash_from_name(self, name):
         if name is None:
             name = self.get_branch_name()
-        return self._run_git(['rev-parse', name],
-                             dots=False).strip().split()[0]
+
+        try:
+            return self._run_git(['rev-parse', name],
+                                 dots=False).strip().split()[0]
+        except util.ProcessError as err:
+            if err.stdout.strip() == name:
+                # Name does not exist
+                raise NoSuchNameError(name)
+            raise
 
     def get_hash_from_parent(self, name):
         return self.get_hash_from_name(name + '^')
