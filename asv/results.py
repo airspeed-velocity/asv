@@ -9,6 +9,7 @@ import base64
 import os
 import zlib
 import itertools
+import hashlib
 
 import six
 from six.moves import zip as izip
@@ -146,7 +147,12 @@ def get_filename(machine, commit_hash, env_name):
     """
     Get the result filename for a given machine, commit_hash and
     environment.
+
+    If the environment name is too long, use its hash instead.
     """
+    if env_name and len(env_name) >= 128:
+        env_name = "env-" + hashlib.md5(env_name.encode('utf-8')).hexdigest()
+
     return os.path.join(
         machine,
         "{0}-{1}.json".format(
