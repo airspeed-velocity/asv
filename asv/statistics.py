@@ -11,7 +11,7 @@ import math
 from .util import inf, nan
 
 
-def compute_stats(samples):
+def compute_stats(samples, number):
     """
     Statistical analysis of measured samples.
 
@@ -19,6 +19,8 @@ def compute_stats(samples):
     ----------
     samples : list of float
         List of total times (y) of benchmarks.
+    number : int
+        Repeat number for each sample.
 
     Returns
     -------
@@ -72,7 +74,8 @@ def compute_stats(samples):
              'max': max(Y),
              'mean': mean,
              'std': std,
-             'n': len(Y)}
+             'repeat': len(Y),
+             'number': number}
 
     return result, stats
 

@@ -34,13 +34,13 @@ def test_results(tmpdir):
 
         values = {
             'suite1.benchmark1': {'result': [float(i * 0.001)], 'stats': [{'foo': 1}],
-                                  'samples': [[1,2]], 'number': [6], 'params': [['a']],
+                                  'samples': [[1,2]], 'params': [['a']],
                                   'version': "1", 'profile': b'\x00\xff'},
             'suite1.benchmark2': {'result': [float(i * i * 0.001)], 'stats': [{'foo': 2}],
-                                  'samples': [[3,4]], 'number': [7], 'params': [],
+                                  'samples': [[3,4]], 'params': [],
                                   'version': "1", 'profile': b'\x00\xff'},
             'suite2.benchmark1': {'result': [float((i + 1) ** -1)], 'stats': [{'foo': 3}],
-                                  'samples': [[5,6]], 'number': [8], 'params': [['c']],
+                                  'samples': [[5,6]], 'params': [['c']],
                                   'version': None, 'profile': b'\x00\xff'}
         }
 
@@ -64,7 +64,6 @@ def test_results(tmpdir):
         for rr in [r2, r3]:
             assert rr._results == r._results
             assert rr._stats == r._stats
-            assert rr._number == r._number
             assert rr._samples == r._samples
             assert rr._profiles == r._profiles
             assert rr.started_at == r._started_at
@@ -79,14 +78,13 @@ def test_results(tmpdir):
             assert params == values[bench]['params']
             assert r2.get_result_value(bench, params) == values[bench]['result']
             assert r2.get_result_stats(bench, params) == values[bench]['stats']
-            assert r2.get_result_samples(bench, params) == (values[bench]['samples'],
-                                                            values[bench]['number'])
+            assert r2.get_result_samples(bench, params) == values[bench]['samples']
 
             # Get with different parameters than stored (should return n/a)
             bad_params = [['foo', 'bar']]
             assert r2.get_result_value(bench, bad_params) == [None, None]
             assert r2.get_result_stats(bench, bad_params) == [None, None]
-            assert r2.get_result_samples(bench, bad_params) == ([None, None], [None, None])
+            assert r2.get_result_samples(bench, bad_params) == [None, None]
 
             # Get profile
             assert r2.get_profile(bench) == b'\x00\xff'
@@ -150,7 +148,6 @@ def test_json_timestamp(tmpdir):
         'params': [],
         'stats': None,
         'samples': None,
-        'number': None,
         'started_at': stamp1,
         'ended_at': stamp2
     }
