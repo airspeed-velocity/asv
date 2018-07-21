@@ -35,13 +35,13 @@ def test_results(tmpdir):
         values = {
             'suite1.benchmark1': {'result': [float(i * 0.001)], 'stats': [{'foo': 1}],
                                   'samples': [[1,2]], 'number': [6], 'params': [['a']],
-                                  'version': "1"},
+                                  'version': "1", 'profile': b'\x00\xff'},
             'suite1.benchmark2': {'result': [float(i * i * 0.001)], 'stats': [{'foo': 2}],
                                   'samples': [[3,4]], 'number': [7], 'params': [],
-                                  'version': "1"},
+                                  'version': "1", 'profile': b'\x00\xff'},
             'suite2.benchmark1': {'result': [float((i + 1) ** -1)], 'stats': [{'foo': 3}],
                                   'samples': [[5,6]], 'number': [8], 'params': [['c']],
-                                  'version': None}
+                                  'version': None, 'profile': b'\x00\xff'}
         }
 
         for key, val in values.items():
@@ -66,6 +66,7 @@ def test_results(tmpdir):
             assert rr._stats == r._stats
             assert rr._number == r._number
             assert rr._samples == r._samples
+            assert rr._profiles == r._profiles
             assert rr.started_at == r._started_at
             assert rr.ended_at == r._ended_at
             assert rr.benchmark_version == r._benchmark_version
@@ -86,6 +87,9 @@ def test_results(tmpdir):
             assert r2.get_result_value(bench, bad_params) == [None, None]
             assert r2.get_result_stats(bench, bad_params) == [None, None]
             assert r2.get_result_samples(bench, bad_params) == ([None, None], [None, None])
+
+            # Get profile
+            assert r2.get_profile(bench) == b'\x00\xff'
 
         # Check get_result_keys
         mock_benchmarks = {
