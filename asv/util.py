@@ -304,7 +304,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         Setting to None ignores all return codes.
 
     timeout : number, optional
-        Kill the process if it lasts longer than `timeout` seconds.
+        Kill the process if it does not produce any output in `timeout`
+        seconds. If `None`, there is no timeout.
+        Default: 10 min
 
     dots : bool, optional
         If `True` (default) write a dot to the console to show
@@ -404,7 +406,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         def watcher_run():
             while proc.returncode is None:
                 time.sleep(0.1)
-                if time.time() - start_time[0] > timeout:
+                if timeout is not None and time.time() - start_time[0] > timeout:
                     was_timeout[0] = True
                     proc.send_signal(signal.CTRL_BREAK_EVENT)
 
@@ -451,8 +453,12 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
             while proc.poll() is None:
                 try:
-                    rlist, wlist, xlist = select.select(
-                        list(fds.keys()), [], [], timeout)
+                    if timeout is None:
+                        rlist, wlist, xlist = select.select(
+                            list(fds.keys()), [], [])
+                    else:
+                        rlist, wlist, xlist = select.select(
+                            list(fds.keys()), [], [], timeout)
                 except select.error as err:
                     if err.args[0] == errno.EINTR:
                         # interrupted by signal handler; try again
