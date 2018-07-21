@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import sys
 import base64
 import os
 import zlib
@@ -405,15 +406,31 @@ class Results(object):
         self._benchmark_version[benchmark_name] = benchmark_version
 
         if 'profile' in result and result['profile']:
-            self._profiles[benchmark_name] = base64.b64encode(
+            profile_data = base64.b64encode(
                 zlib.compress(result['profile']))
+            if sys.version_info[0] >= 3:
+                profile_data = profile_data.decode('ascii')
+            self._profiles[benchmark_name] = profile_data
 
     def get_profile(self, benchmark_name):
         """
         Get the profile data for the given benchmark name.
+
+        Parameters
+        ----------
+        benchmark_name : str
+            Name of benchmark
+
+        Returns
+        -------
+        profile_data : bytes
+            Raw profile data
+
         """
-        return zlib.decompress(
-            base64.b64decode(self._profiles[benchmark_name]))
+        profile_data = self._profiles[benchmark_name]
+        if sys.version_info[0] >= 3:
+            profile_data = profile_data.encode('ascii')
+        return zlib.decompress(base64.b64decode(profile_data))
 
     def has_profile(self, benchmark_name):
         """

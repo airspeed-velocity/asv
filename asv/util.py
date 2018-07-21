@@ -643,7 +643,11 @@ def write_json(path, data, api_version=None):
         data = dict(data)
         data['version'] = api_version
 
-    with long_path_open(path, 'w') as fd:
+    open_kwargs = {}
+    if sys.version_info[0] >= 3:
+        open_kwargs['encoding'] = 'utf-8'
+
+    with long_path_open(path, 'w', **open_kwargs) as fd:
         json.dump(data, fd, indent=4, sort_keys=True)
 
 
@@ -656,7 +660,11 @@ def load_json(path, api_version=None, cleanup=True):
 
     path = os.path.abspath(path)
 
-    with long_path_open(path, 'r') as fd:
+    open_kwargs = {}
+    if sys.version_info[0] >= 3:
+        open_kwargs['encoding'] = 'utf-8'
+
+    with long_path_open(path, 'r', **open_kwargs) as fd:
         content = fd.read()
 
     if cleanup:

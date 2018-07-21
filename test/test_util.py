@@ -269,3 +269,13 @@ def test_is_main_thread():
     thread.join()
 
     assert results == [False]
+
+
+def test_json_non_ascii(tmpdir):
+    non_ascii_data = [{'😼': '難', 'ä': 3}]
+
+    fn = os.path.join(str(tmpdir), "nonascii.json")
+    util.write_json(fn, non_ascii_data)
+    data = util.load_json(fn)
+
+    assert data == non_ascii_data
