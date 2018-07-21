@@ -36,6 +36,7 @@ def test_results(tmpdir):
             'suite1.benchmark2': float(i * i * 0.001),
             'suite2.benchmark1': float((i + 1) ** -1)}.items():
             r.add_result(key, val, timestamp1, timestamp2)
+            r.add_profile(key, b'\x00\xff')
         r.save(resultsdir)
 
         r2 = results.Results.load(join(resultsdir, r._filename))
@@ -46,6 +47,7 @@ def test_results(tmpdir):
         assert r2._filename == r._filename
         assert r.started_at == r._started_at
         assert r.ended_at == r._ended_at
+        assert r2.get_profile('suite1.benchmark1') == b'\x00\xff'
 
 
 def test_get_result_hash_from_prefix(tmpdir):

@@ -88,7 +88,7 @@ def test_run_publish(capfd, basic_conf):
 
     # Tests a typical complete run/publish workflow
     tools.run_asv_with_conf(conf, 'run', "master~5..master", '--steps=2',
-                            '--quick', '--show-stderr',
+                            '--quick', '--show-stderr', '--profile',
                             _machine_file=machine_file)
     text, err = capfd.readouterr()
 
