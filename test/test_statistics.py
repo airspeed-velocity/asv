@@ -30,14 +30,15 @@ except ImportError:
 def test_compute_stats():
     np.random.seed(1)
 
-    assert statistics.compute_stats([]) == (None, None)
-    assert statistics.compute_stats([15.0]) == (15.0, None)
+    assert statistics.compute_stats([], 1) == (None, None)
+    assert statistics.compute_stats([15.0], 1) == (15.0, None)
 
     for nsamples, true_mean in product([10, 50, 250], [0, 0.3, 0.6]):
         samples = np.random.randn(nsamples) + true_mean
-        result, stats = statistics.compute_stats(samples)
+        result, stats = statistics.compute_stats(samples, 42)
 
-        assert np.allclose(stats['n'], len(samples))
+        assert stats['repeat'] == len(samples)
+        assert stats['number'] == 42
         assert np.allclose(stats['mean'], np.mean(samples))
         assert np.allclose(stats['q_25'], np.percentile(samples, 25))
         assert np.allclose(stats['q_75'], np.percentile(samples, 75))
@@ -64,8 +65,8 @@ def test_is_different():
     for true_mean, n, significant in [(0.05, 10, False), (0.05, 100, True), (0.1, 10, True)]:
         samples_a = 0 + 0.1 * np.random.rand(n)
         samples_b = true_mean + 0.1 * np.random.rand(n)
-        result_a, stats_a = statistics.compute_stats(samples_a)
-        result_b, stats_b = statistics.compute_stats(samples_b)
+        result_a, stats_a = statistics.compute_stats(samples_a, 1)
+        result_b, stats_b = statistics.compute_stats(samples_b, 1)
         assert statistics.is_different(stats_a, stats_b) == significant
 
 

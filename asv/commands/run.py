@@ -307,7 +307,6 @@ class Run(Command):
                         for benchmark_name, d in six.iteritems(results):
                             if not record_samples:
                                 d['samples'] = None
-                                d['number'] = None
 
                             benchmark_version = benchmarks[benchmark_name]['version']
                             result.add_result(benchmark_name, d, benchmark_version)

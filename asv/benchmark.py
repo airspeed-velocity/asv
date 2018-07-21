@@ -470,10 +470,12 @@ class TimeBenchmark(Benchmark):
         samples = [s/number for s in samples]
         return {'samples': samples, 'number': number}
 
-    def benchmark_timing(self, timer, repeat, warmup_time, number=0):
+    def benchmark_timing(self, timer, repeat, warmup_time, number=0,
+                         min_timeit_count=2):
         sample_time = self.sample_time
 
         start_time = time.time()
+        timeit_count = 0
 
         if repeat == 0:
             # automatic number of samples: 10 is large enough to
@@ -483,6 +485,8 @@ class TimeBenchmark(Benchmark):
 
             def too_slow(timing):
                 # stop taking samples if limits exceeded
+                if timeit_count < min_timeit_count:
+                    return False
                 if default_number:
                     t = 1.3*sample_time
                     max_time = start_time + min(warmup_time + repeat * t,
@@ -508,6 +512,7 @@ class TimeBenchmark(Benchmark):
                 timing = timer.timeit(number)
                 wall_time = time.time() - start
                 actual_timing = max(wall_time, timing)
+                min_timeit_count += 1
 
                 if actual_timing >= sample_time:
                     if time.time() > start_time + warmup_time:
@@ -526,8 +531,10 @@ class TimeBenchmark(Benchmark):
             while True:
                 self._redo_setup_next = False
                 timing = timer.timeit(number)
+                min_timeit_count += 1
                 if time.time() >= start_time + warmup_time:
                     break
+
             if too_slow(timing):
                 return [timing], number
 
@@ -535,6 +542,7 @@ class TimeBenchmark(Benchmark):
         samples = []
         for j in range(repeat):
             timing = timer.timeit(number)
+            min_timeit_count += 1
             samples.append(timing)
 
             if too_slow(timing):

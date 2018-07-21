@@ -81,8 +81,6 @@ def run_benchmark(benchmark, root, env, show_stderr=False,
         - `samples`: List of lists of sampled raw data points, if benchmark produces
           those and was successful.
 
-        - `number`: Repeact count associated with each sample.
-
         - `stats`: List of results of statistical analysis of data.
 
         - `profile`: If `profile` is `True` and run was at least partially successful, 
@@ -126,8 +124,8 @@ def run_benchmark(benchmark, root, env, show_stderr=False,
             if (selected_idx is not None and benchmark['params']
                     and param_idx not in selected_idx):
                 # Use NaN to mark the result as skipped
-                bench_results.append(dict(samples=None, number=None,
-                                          result=float('nan'), stats=None))
+                bench_results.append(dict(samples=None, result=float('nan'),
+                                          stats=None))
                 bench_profiles.append(None)
                 continue
             success, data, profile_data, err, out, errcode = \
@@ -139,14 +137,13 @@ def run_benchmark(benchmark, root, env, show_stderr=False,
             total_count += 1
             if success:
                 if isinstance(data, dict) and 'samples' in data:
-                    value, stats = statistics.compute_stats(data['samples'])
+                    value, stats = statistics.compute_stats(data['samples'],
+                                                            data['number'])
                     result_data = dict(samples=data['samples'],
-                                       number=data['number'],
                                        result=value,
                                        stats=stats)
                 else:
                     result_data = dict(samples=None,
-                                       number=None,
                                        result=data,
                                        stats=None)
 
@@ -155,7 +152,7 @@ def run_benchmark(benchmark, root, env, show_stderr=False,
                     bench_profiles.append(profile_data)
             else:
                 failure_count += 1
-                bench_results.append(dict(samples=None, number=None, result=None, stats=None))
+                bench_results.append(dict(samples=None, result=None, stats=None))
                 bench_profiles.append(None)
                 if data is not None:
                     bad_output = data
@@ -181,7 +178,7 @@ def run_benchmark(benchmark, root, env, show_stderr=False,
                 result['stderr'] += err
 
         # Produce result
-        for key in ['samples', 'number', 'result', 'stats']:
+        for key in ['samples', 'result', 'stats']:
             result[key] = [x[key] for x in bench_results]
 
         if benchmark['params']:
