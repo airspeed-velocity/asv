@@ -122,6 +122,16 @@ print(os.environ['TEST_ASV_BAR'])
     assert output.splitlines() == ['foo', 'bar']
 
 
+def test_no_timeout():
+    # Check that timeout=None is allowed.
+    code = "import time; time.sleep(0.05)"
+    out, err, retcode = util.check_output([sys.executable, "-c", code], timeout=None,
+                                          return_stderr=True)
+    assert out == ''
+    assert err == ''
+    assert retcode == 0
+
+
 # This *does* seem to work, only seems untestable somehow...
 # def test_dots(capsys):
 #     code = r"""
