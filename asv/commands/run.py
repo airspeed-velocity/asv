@@ -204,7 +204,7 @@ class Run(Command):
             "Running {0} total benchmarks "
             "({1} commits * {2} environments * {3} benchmarks)".format(
                 steps, len(commit_hashes),
-                len(environments), len(benchmarks)), "green")
+                len(environments), len(benchmarks)))
         log.set_nitems(steps)
 
         parallel, multiprocessing = util.get_multiprocessing(parallel)
