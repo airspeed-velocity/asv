@@ -705,7 +705,7 @@ def load_json(path, api_version=None, cleanup=True):
     return d
 
 
-def update_json(cls, path, api_version):
+def update_json(cls, path, api_version, cleanup=True):
     """
     Perform JSON file format updates.
 
@@ -724,7 +724,7 @@ def update_json(cls, path, api_version):
     # Hide traceback from expected exceptions in pytest reports
     __tracebackhide__ = operator.methodcaller('errisinstance', UserError)
 
-    d = load_json(path)
+    d = load_json(path, cleanup=cleanup)
     if 'version' not in d:
         raise UserError(
             "No version specified in {0}.".format(path))
