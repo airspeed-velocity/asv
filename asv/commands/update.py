@@ -31,12 +31,12 @@ class Update(Command):
         return parser
 
     @classmethod
-    def run_from_args(cls, args):
-        return cls.run(args.config)
+    def run_from_args(cls, args, _machine_file=None):
+        return cls.run(args.config, _machine_file=_machine_file)
 
     @classmethod
-    def run(cls, config_path):
-        MachineCollection.update()
+    def run(cls, config_path, _machine_file=None):
+        MachineCollection.update(_path=_machine_file)
         Config.update(config_path)
 
         conf = Config.load(config_path)
