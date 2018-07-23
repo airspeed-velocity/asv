@@ -598,7 +598,7 @@ class Results(object):
 
     @classmethod
     def update(cls, path):
-        util.update_json(cls, path, cls.api_version)
+        util.update_json(cls, path, cls.api_version, cleanup=False)
 
     @property
     def env_name(self):
