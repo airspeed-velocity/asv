@@ -390,3 +390,10 @@ def test_code_extraction(tmpdir):
     if sys.version_info[:2] != (3, 2):
         # Python 3.2 doesn't have __qualname__
         assert bench['code'] == expected_code
+
+
+def test_asv_benchmark_timings():
+    # Check the benchmark runner runs
+    util.check_call([sys.executable, '-masv.benchmark', 'timing',
+                     '--setup=import time',
+                     'time.sleep(0)'])
