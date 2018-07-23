@@ -5,11 +5,12 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
+import re
 
 from . import Command
 from ..config import Config
 from ..machine import Machine, MachineCollection
-from ..results import Results
+from ..results import Results, get_filename
 from ..benchmarks import Benchmarks
 from ..console import log
 from .. import util
@@ -51,6 +52,20 @@ class Update(Command):
                     pass
                 elif filename.endswith('.json'):
                     Results.update(path)
+
+                    # Rename files if necessary
+                    m = re.match(r'^([0-9a-f]+)-(.*)\.json$', os.path.basename(path), re.I)
+                    if m:
+                        new_path = get_filename(root, m.group(1), m.group(2))
+                        if new_path != path:
+                            try:
+                                if os.path.exists(new_path):
+                                    raise OSError()
+                                os.rename(path, new_path)
+                            except OSError:
+                                log.warn("{}: should be renamed to {}".format(path, new_path))
+                    else:
+                        log.warn("{}: unrecognized file name".format(path))
 
         # Check benchmarks.json
         log.info("Updating benchmarks.json...")
