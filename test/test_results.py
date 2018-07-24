@@ -188,3 +188,11 @@ def test_iter_results(capsys, tmpdir):
     assert len(res) == 0
     out, err = capsys.readouterr()
     assert "machine.json" in out
+
+
+def test_filename_format():
+    r = results.Results({'machine': 'foo'}, [], "commit", 0, "", "env")
+    assert r._filename == join("foo", "commit-env.json")
+
+    r = results.Results({'machine': 'foo'}, [], "hash", 0, "", "a"*128)
+    assert r._filename == join("foo", "hash-env-e510683b3f5ffe4093d021808bc6ff70.json")

@@ -59,10 +59,10 @@ except ImportError:
 WAIT_TIME = 20.0
 
 
-def run_asv(*argv):
+def run_asv(*argv, **kwargs):
     parser, subparsers = commands.make_argparser()
     args = parser.parse_args(argv)
-    return args.func(args)
+    return args.func(args, **kwargs)
 
 
 def run_asv_with_conf(conf, *argv, **kwargs):
