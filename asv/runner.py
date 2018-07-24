@@ -81,6 +81,7 @@ class BenchmarkRunner(object):
             self.extra_params['number'] = 1
             self.extra_params['repeat'] = 1
             self.extra_params['warmup_time'] = 0
+            self.extra_params['processes'] = 1
 
     def plan(self):
         # Find all setup_cache routines needed
@@ -108,9 +109,10 @@ class BenchmarkRunner(object):
 
         for setup_cache_key, benchmark_set in six.iteritems(benchmark_order):
             for name, benchmark in benchmark_set:
-                processes = benchmark.get('processes', 1)
-                if self.quick:
-                    processes = 1
+                if 'processes' in self.extra_params:
+                    processes = int(self.extra_params['processes'])
+                else:
+                    processes = int(benchmark.get('processes', 1))
                 insert_stack.append((name, benchmark, processes, setup_cache_key))
                 cache_users.setdefault(setup_cache_key, []).append(name)
 
