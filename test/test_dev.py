@@ -75,7 +75,7 @@ def test_dev(capsys, basic_conf):
 
     # time_with_warnings failure case
     assert re.search("File.*time_exception.*RuntimeError", text, re.S)
-    assert re.search(r"Running time_secondary.track_value\s+42.0", text)
+    assert re.search(r"time_secondary.track_value\s+42.0", text)
 
     # Check that it did not clone or install
     assert "Cloning" not in text
@@ -95,7 +95,7 @@ def test_dev_with_repo_subdir(capsys, basic_conf_with_subdir):
     text, err = capsys.readouterr()
 
     # Benchmarks were found and run
-    assert re.search(r"Running time_secondary.track_value\s+42.0", text)
+    assert re.search(r"time_secondary.track_value\s+42.0", text)
 
     # Check that it did not clone or install
     assert "Cloning" not in text
@@ -113,7 +113,7 @@ def test_run_python_same(capsys, basic_conf):
     text, err = capsys.readouterr()
 
     assert re.search("time_exception.*failed", text, re.S)
-    assert re.search(r"Running time_secondary.track_value\s+42.0", text)
+    assert re.search(r"time_secondary.track_value\s+42.0", text)
 
     # Check that it did not clone or install
     assert "Cloning" not in text
