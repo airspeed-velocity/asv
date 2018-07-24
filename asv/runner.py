@@ -286,40 +286,44 @@ class LaunchBenchmarkJob(object):
         - `errcode`: Error return code.
     """
 
-    def __init__(self, name, benchmark, benchmark_dir, profile, extra_params,
+    def __init__(self, name, benchmark, benchmark_dir, profile=False, extra_params=None,
                  cache_job=None, prev_job=None, partial=False, selected_idx=None):
         """
         Parameters
         ----------
+        name : str
+            Name of the benchmark
+
         benchmark : Benchmark object
 
-        root : str
+        benchmark_dir : str
             Path to benchmark directory in which to find the benchmark
 
-        show_stderr : bool
-            When `True`, write the stderr out to the console.
-
-        quick : bool, optional
-            When `True`, run the benchmark function exactly once.
-
-        profile : bool, optional
+        profile : bool
             When `True`, run the benchmark through the `cProfile` profiler
             and save the results.
 
-        prev_result : dict, optional
-            Result from a previous run. If given, any raw measurement samples present
-            are included in the results (if successful). Nothing else is retained.
+        extra_params : dict, optional
+            Benchmark attribute overrides.
 
-        result_message : str, optional
-            Message to display instead of the measurement results.
-            If not given, display the measurement results.
+        cache_job : SetupCacheJob, optional
+            Job that sets up the required setup cache
+
+        prev_job : LaunchBenchmarkJob, optional
+            Previous job for this benchmark, whose result to combine
+
+        partial : bool, optional
+            Whether this is the final run for this benchmark, or intermediate one.
+
+        selected_idx : list of int, optional
+            Which items to run in a parametrized bencmark.
 
         """
         self.name = name
         self.benchmark = benchmark
         self.benchmark_dir = benchmark_dir
         self.profile = profile
-        self.extra_params = extra_params
+        self.extra_params = extra_params if extra_params is not None else {}
         self.cache_job = cache_job
         self.prev_job = prev_job
         self.partial = partial
@@ -470,9 +474,6 @@ class LaunchBenchmarkJob(object):
         result['ended_at'] = datetime.datetime.utcnow()
 
         self.result = result
-
-    def _format_result():
-        pass
 
 
 class SetupCacheJob(object):
