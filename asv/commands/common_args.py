@@ -49,11 +49,65 @@ def add_show_stderr(parser):
         help="""Display the stderr output from the benchmarks.""")
 
 
+class DictionaryArgAction(argparse.Action):
+    """
+    Parses multiple key=value assignments into a dictionary.
+    """
+    def __init__(self, option_strings, dest, converters=None, choices=None, **kwargs):
+        if converters is None:
+            converters = {}
+        self.converters = converters
+        self.__choices = choices
+        super(DictionaryArgAction, self).__init__(option_strings, dest, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # Parse and check value
+        try:
+            key, value = values.split("=", 1)
+        except ValueError:
+            raise argparse.ArgumentError(self,
+                                         "{!r} is not a key=value assignment".format(values))
+
+        if self.__choices is not None and key not in self.__choices:
+            raise argparse.ArgumentError(self,
+                                         "{!r} cannot be set".format(key))
+
+        conv = self.converters.get(key, None)
+        if conv is not None:
+            try:
+                value = conv(value)
+            except ValueError as exc:
+                raise argparse.ArgumentError(self,
+                                             "{!r}: {}".format(key, exc))
+
+        # Store value
+        result = getattr(namespace, self.dest, None)
+        if result is None:
+            result = {}
+        result[key] = value
+        setattr(namespace, self.dest, result)
+
+
 def add_bench(parser):
     parser.add_argument(
         "--bench", "-b", type=str, action="append",
         help="""Regular expression(s) for benchmark to run.  When not
         provided, all benchmarks are run.""")
+
+    converters = {
+        'timeout': float,
+        'version': str,
+        'warmup_time': float,
+        'repeat': int,
+        'number': int,
+        'processes': int,
+        'sample_time': float
+    }
+
+    parser.add_argument(
+        "--attribute", "-a", action=DictionaryArgAction,
+        choices=tuple(converters.keys()), converters=converters,
+        help="""Override a benchmark attribute, e.g. `-a repeat=10`.""")
 
 
 def add_machine(parser):

@@ -248,7 +248,7 @@ class Benchmarks(dict):
                                  "regenerate benchmarks.json".format(str(err)))
 
     def run_benchmarks(self, env, show_stderr=False, quick=False, profile=False,
-                       skip=None):
+                       skip=None, extra_params=None):
         """
         Run all of the benchmarks in the given `Environment`.
 
@@ -272,6 +272,9 @@ class Benchmarks(dict):
 
         skip : set, optional
             Benchmark names to skip.
+
+        extra_params : dict, optional
+            Override values for benchmark attributes.
 
         Returns
         -------
@@ -311,6 +314,7 @@ class Benchmarks(dict):
                                                   self._benchmark_dir,
                                                   show_stderr=show_stderr,
                                                   quick=quick,
+                                                  extra_params=extra_params,
                                                   profile=profile,
                                                   selected_idx=self._benchmark_selection)
         jobs = benchmark_runner.plan()

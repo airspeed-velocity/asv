@@ -56,14 +56,16 @@ class Continuous(Command):
     def run_from_conf_args(cls, conf, args, **kwargs):
         return cls.run(
             conf=conf, branch=args.branch, base=args.base, factor=args.factor,
-            show_stderr=args.show_stderr, bench=args.bench, machine=args.machine,
+            show_stderr=args.show_stderr, bench=args.bench, attribute=args.attribute,
+            machine=args.machine,
             env_spec=args.env_spec, record_samples=args.record_samples,
             quick=args.quick, **kwargs
         )
 
     @classmethod
     def run(cls, conf, branch=None, base=None, factor=None, show_stderr=False, bench=None,
-            machine=None, env_spec=None, record_samples=False, quick=False, _machine_file=None):
+            attribute=None, machine=None, env_spec=None, record_samples=False, quick=False,
+            _machine_file=None):
         repo = get_repo(conf)
         repo.pull()
 
@@ -80,7 +82,7 @@ class Continuous(Command):
         run_objs = {}
 
         result = Run.run(
-            conf, range_spec=commit_hashes, bench=bench,
+            conf, range_spec=commit_hashes, bench=bench, attribute=attribute,
             show_stderr=show_stderr, machine=machine, env_spec=env_spec,
             record_samples=record_samples, quick=quick,
             _returns=run_objs, _machine_file=_machine_file)
