@@ -159,6 +159,7 @@ class BenchmarkRunner(object):
         times = {}
 
         name_max_width = max(16, util.get_terminal_width() - 33)
+        partial_info_printed = False
 
         try:
             with log.indent():
@@ -168,16 +169,26 @@ class BenchmarkRunner(object):
                     short_name = truncate_left(job.name, name_max_width)
 
                     if isinstance(job, SetupCacheJob):
+                        partial_info_printed = False
                         self._log_initial("Setting up {0}".format(short_name))
                         job.run(env)
                         self._log_cache_result(job)
                     elif isinstance(job, LaunchBenchmarkJob):
-                        self._log_initial('Running {0}'.format(short_name))
+                        if job.partial:
+                            if partial_info_printed:
+                                log.add(".")
+                            else:
+                                self._log_initial('Running benchmarks...')
+                            partial_info_printed = True
+                        else:
+                            self._log_initial('{0}'.format(short_name))
+                            partial_info_printed = False
                         job.run(env)
                         self._log_benchmark_result(job)
                         if job.result is not None:
                             times[job.name] = job.result
                     else:
+                        partial_info_printed = False
                         self._log_initial("Cleaning up {0}".format(short_name))
                         job.run(env)
                         self._log_cache_result(job)
@@ -206,7 +217,6 @@ class BenchmarkRunner(object):
 
     def _log_benchmark_result(self, job):
         if job.partial:
-            self._log_result("...")
             return
 
         # Display status
