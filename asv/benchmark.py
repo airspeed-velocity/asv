@@ -1,9 +1,24 @@
 # -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
+"""\
+Usage: python -masv.benchmark COMMAND [...]
 
-"""
 Manage a single benchmark and, when run from the commandline, report
 its runtime to a file.
+
+commands:
+
+  timing [...]
+      Run timing benchmark for given Python statement.
+
+internal commands:
+
+  discover BENCHMARK_DIR RESULT_FILE
+      Discover benchmarks in a given directory and store result to a file.
+  setup_cache BENCHMARK_DIR BENCHMARK_ID
+      Run setup_cache for given benchmark.
+  run BENCHMARK_DIR BENCHMARK_ID QUICK PROFILE_PATH RESULT_FILE
+      Run a given benchmark, and store result in a file.
 """
 
 # !!!!!!!!!!!!!!!!!!!! NOTE !!!!!!!!!!!!!!!!!!!!
@@ -17,7 +32,9 @@ its runtime to a file.
 # sys.path[0] on start which can shadow other modules
 import sys
 if __name__ == "__main__":
-    sys.path.pop(0)
+    _old_sys_path_head = sys.path.pop(0)
+else:
+    _old_sys_path_head = None
 
 import copy
 try:
@@ -868,14 +885,76 @@ def main_run(args):
         json.dump(result, fp)
 
 
+def main_timing(argv):
+    import argparse
+    import asv.statistics
+    import asv.util
+    import asv.console
+
+    if (_old_sys_path_head is not None and
+        os.path.abspath(_old_sys_path_head) != os.path.abspath(os.path.dirname(__file__))):
+        sys.path.insert(0, _old_sys_path_head)
+
+    parser = argparse.ArgumentParser(usage="python -masv.benchmark timing [options] STATEMENT")
+    parser.add_argument("--setup", action="store", default=None)
+    parser.add_argument("--number", action="store", type=int, default=0)
+    parser.add_argument("--repeat", action="store", type=int, default=0)
+    parser.add_argument("--timer", action="store", choices=("process_time", "perf_counter"),
+                        default="process_time")
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("statement")
+    args = parser.parse_args(argv)
+
+    timer_func = {
+        "process_time": process_time,
+        "perf_counter": timeit.default_timer,
+    }[args.timer]
+
+    class AttrSource:
+        pass
+
+    attrs = AttrSource()
+    attrs.repeat = args.repeat
+    attrs.number = args.number
+    attrs.timer = timer_func
+
+    bench = TimeBenchmark("tmp", args.statement, [attrs])
+    bench.redo_setup = args.setup
+    result = bench.run()
+
+    value, stats = asv.statistics.compute_stats(result['samples'], result['number'])
+    formatted = asv.util.human_time(value, asv.statistics.get_err(value, stats))
+
+    if not args.json:
+        asv.console.color_print(formatted, 'red')
+        asv.console.color_print("", 'default')
+        asv.console.color_print("\n".join("{}: {}".format(k, v) for k, v in sorted(stats.items())), 'default')
+        asv.console.color_print("samples: {}".format(result['samples']), 'default')
+    else:
+        json.dump({'result': value,
+                   'samples': result['samples'],
+                   'stats': stats}, sys.stdout)
+
+
+def main_help(args):
+    print(__doc__)
+
+
 commands = {
     'discover': main_discover,
     'setup_cache': main_setup_cache,
-    'run': main_run
+    'run': main_run,
+    'timing': main_timing,
+    '-h': main_help,
+    '--help': main_help,
 }
 
 
-if __name__ == '__main__':
+def main():
+    if len(sys.argv) < 2:
+        main_help([])
+        sys.exit(1)
+
     mode = sys.argv[1]
     args = sys.argv[2:]
 
@@ -885,3 +964,6 @@ if __name__ == '__main__':
     else:
         sys.stderr.write("Unknown mode {0}\n".format(mode))
         sys.exit(1)
+
+if __name__ == '__main__':
+    main()
