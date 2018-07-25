@@ -498,7 +498,7 @@ class TimeBenchmark(Benchmark):
         if repeat == 0:
             # automatic number of samples: 10 is large enough to
             # estimate the median confidence interval
-            repeat = -(-10//self.processes)  # ceildiv
+            repeat = 5 if self.processes > 1 else 10
             default_number = (number == 0)
 
             def too_slow(timing):
