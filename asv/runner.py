@@ -166,8 +166,6 @@ class BenchmarkRunner(object):
         try:
             with log.indent():
                 for job in jobs:
-                    log.step()
-
                     short_name = truncate_left(job.name, name_max_width)
 
                     if isinstance(job, SetupCacheJob):
@@ -183,6 +181,7 @@ class BenchmarkRunner(object):
                                 self._log_initial('Running benchmarks...')
                             partial_info_printed = True
                         else:
+                            log.step()
                             self._log_initial('{0}'.format(short_name))
                             partial_info_printed = False
                         job.run(env)
