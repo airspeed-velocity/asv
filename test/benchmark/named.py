@@ -12,7 +12,7 @@ class Suite:
     named_method.benchmark_name = 'custom.track_method'
 
 
-def named_function(self):
+def named_function():
     pass
 
 
@@ -20,7 +20,7 @@ named_function.benchmark_name = 'custom.time_function'
 named_function.pretty_name = 'My Custom Function'
 
 
-def track_custom_pretty_name(self):
+def track_custom_pretty_name():
     return 42
 
 
@@ -29,7 +29,7 @@ track_custom_pretty_name.pretty_name = 'this.is/the.answer'
 
 class BaseSuite:
 
-    def some_func():
+    def some_func(self):
         return 0
 
 

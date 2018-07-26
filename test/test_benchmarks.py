@@ -17,6 +17,7 @@ import textwrap
 from hashlib import sha256
 
 from asv import benchmarks
+from asv import runner
 from asv import config
 from asv import environment
 from asv import util
@@ -148,6 +149,7 @@ def test_find_benchmarks(tmpdir):
     assert times['params_examples.ParamSuite.track_value']['result'] == [1+0, 2+0, 3+0]
 
     assert isinstance(times['params_examples.TuningTest.time_it']['result'][0], float)
+    assert isinstance(times['params_examples.TuningTest.time_it']['result'][1], float)
 
     assert isinstance(times['params_examples.time_skip']['result'][0], float)
     assert isinstance(times['params_examples.time_skip']['result'][1], float)
@@ -212,7 +214,7 @@ def test_table_formatting():
     benchmark = {'params': [], 'param_names': [], 'unit': 's'}
     result = []
     expected = ["[]"]
-    assert benchmarks._format_benchmark_result(result, benchmark) == expected
+    assert runner._format_benchmark_result(result, benchmark) == expected
 
     benchmark = {'params': [['a', 'b', 'c']], 'param_names': ['param1'], "unit": "seconds"}
     result = list(zip([1e-6, 2e-6, 3e-6], [3e-6, 2e-6, 1e-6]))
@@ -223,7 +225,7 @@ def test_table_formatting():
                 "   b      2.00\u00b12\u03bcs \n"
                 "   c      3.00\u00b11\u03bcs \n"
                 "======== ==========")
-    table = "\n".join(benchmarks._format_benchmark_result(result, benchmark, max_width=80))
+    table = "\n".join(runner._format_benchmark_result(result, benchmark, max_width=80))
     assert table == expected
 
     benchmark = {'params': [["'a'", "'b'", "'c'"], ["[1]", "[2]"]], 'param_names': ['param1', 'param2'], "unit": "seconds"}
@@ -237,7 +239,7 @@ def test_table_formatting():
                 "   b      failed   4.00s \n"
                 "   c      5.00s     n/a  \n"
                 "======== ======== =======")
-    table = "\n".join(benchmarks._format_benchmark_result(result, benchmark, max_width=80))
+    table = "\n".join(runner._format_benchmark_result(result, benchmark, max_width=80))
     assert table == expected
 
     expected = ("======== ======== ========\n"
@@ -250,7 +252,7 @@ def test_table_formatting():
                 "   c       [1]     5.00s  \n"
                 "   c       [2]      n/a   \n"
                 "======== ======== ========")
-    table = "\n".join(benchmarks._format_benchmark_result(result, benchmark, max_width=0))
+    table = "\n".join(runner._format_benchmark_result(result, benchmark, max_width=0))
     assert table == expected
 
 
@@ -284,7 +286,7 @@ def track_this():
     d.update(ASV_CONF_JSON)
     d['env_dir'] = "env"
     d['benchmark_dir'] = 'benchmark'
-    d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
+    d['repo'] = tools.generate_test_repo(tmpdir, [[0, 1]]).path
     conf = config.Config.from_json(d)
 
     repo = get_repo(conf)

@@ -120,7 +120,7 @@ class Run(Command):
     def run_from_conf_args(cls, conf, args, **kwargs):
         return cls.run(
             conf=conf, range_spec=args.range, steps=args.steps,
-            bench=args.bench, parallel=args.parallel,
+            bench=args.bench, attribute=args.attribute, parallel=args.parallel,
             show_stderr=args.show_stderr, quick=args.quick,
             profile=args.profile, env_spec=args.env_spec,
             dry_run=args.dry_run, machine=args.machine,
@@ -133,7 +133,7 @@ class Run(Command):
         )
 
     @classmethod
-    def run(cls, conf, range_spec=None, steps=None, bench=None, parallel=1,
+    def run(cls, conf, range_spec=None, steps=None, bench=None, attribute=None, parallel=1,
             show_stderr=False, quick=False, profile=False, env_spec=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
             skip_failed=False, skip_existing_commits=False, record_samples=False,
@@ -198,7 +198,8 @@ class Run(Command):
                 log.error("No benchmarks selected")
                 return 1
 
-        steps = len(commit_hashes) * len(benchmarks) * len(environments)
+        benchmark_count = len(benchmarks)
+        steps = len(commit_hashes) * benchmark_count * len(environments)
 
         log.info(
             "Running {0} total benchmarks "
@@ -289,7 +290,8 @@ class Run(Command):
                         if success:
                             results = benchmarks.run_benchmarks(
                                 env, show_stderr=show_stderr, quick=quick,
-                                profile=profile, skip=skipped_benchmarks[env.name])
+                                profile=profile, skip=skipped_benchmarks[env.name],
+                                extra_params=attribute)
                         else:
                             results = benchmarks.skip_benchmarks(env)
 

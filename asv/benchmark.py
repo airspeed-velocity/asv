@@ -446,6 +446,7 @@ class TimeBenchmark(Benchmark):
         self.type = "time"
         self.unit = "seconds"
         self._attr_sources = attr_sources
+        self.processes = int(_get_first_attr(self._attr_sources, 'processes', 2))
         self._load_vars()
 
     def _load_vars(self):
@@ -497,7 +498,7 @@ class TimeBenchmark(Benchmark):
         if repeat == 0:
             # automatic number of samples: 10 is large enough to
             # estimate the median confidence interval
-            repeat = 10
+            repeat = 5 if self.processes > 1 else 10
             default_number = (number == 0)
 
             def too_slow(timing):
@@ -745,7 +746,7 @@ def disc_benchmarks(root):
                     yield benchmark
 
 
-def get_benchmark_from_name(root, name, quick=False):
+def get_benchmark_from_name(root, name, extra_params=None):
     """
     Create a benchmark from a fully-qualified benchmark name.
 
@@ -808,11 +809,12 @@ def get_benchmark_from_name(root, name, quick=False):
     if param_idx is not None:
         benchmark.set_param_idx(param_idx)
 
-    if quick:
-        class QuickBenchmarkAttrs:
-            repeat = 1
-            number = 1
-        benchmark._attr_sources.insert(0, QuickBenchmarkAttrs)
+    if extra_params:
+        class ExtraBenchmarkAttrs:
+            pass
+        for key, value in extra_params.items():
+            setattr(ExtraBenchmarkAttrs, key, value)
+        benchmark._attr_sources.insert(0, ExtraBenchmarkAttrs)
 
     return benchmark
 
@@ -854,13 +856,15 @@ def main_setup_cache(args):
 
 
 def main_run(args):
-    (benchmark_dir, benchmark_id, quick, profile_path, result_file) = args
-    quick = (quick == 'True')
+    (benchmark_dir, benchmark_id, params_str, profile_path, result_file) = args
+
+    extra_params = json.loads(params_str)
+
     if profile_path == 'None':
         profile_path = None
 
     benchmark = get_benchmark_from_name(
-        benchmark_dir, benchmark_id, quick=quick)
+        benchmark_dir, benchmark_id, extra_params=extra_params)
 
     if benchmark.setup_cache_key is not None:
         with open("cache.pickle", "rb") as fd:
