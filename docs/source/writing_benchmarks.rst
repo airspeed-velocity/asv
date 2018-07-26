@@ -315,7 +315,12 @@ by the ``number`` and ``repeat`` attributes, as explained below.
   benchmark. If not specified, ``warmup_time`` defaults to 0.1 seconds
   (on PyPy, the default is 1.0 sec).
 
-- ``repeat``: The number measurement samples to collect. Each sample
+- ``processes``: How many processes to launch for running the benchmarks
+  (default: 2). The processes run benchmarks in an interleaved order,
+  allowing to sample over longer periods of background performance
+  variations (e.g. CPU power levels).
+
+- ``repeat``: The number measurement samples to collect per process. Each sample
   consists of running the benchmark ``number`` times.  The median
   time from all of these repetitions is used as the final measurement
   result. When not provided (``repeat`` set to 0), the number of samples
