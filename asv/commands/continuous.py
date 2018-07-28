@@ -93,6 +93,8 @@ class Continuous(Command):
         if result:
             return result
 
+        log.flush()
+
         def results_iter(commit_hash):
             for env in run_objs['environments']:
                 machine_name = run_objs['machine_params']['machine']

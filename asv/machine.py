@@ -12,7 +12,7 @@ import sys
 import textwrap
 
 from . import console
-from .console import color_print
+from .console import log, color_print
 from . import util
 
 
@@ -155,6 +155,8 @@ class Machine(object):
             raise util.UserError(
                 "Run asv at the console the first time to generate "
                 "one, or run `asv machine --yes`.")
+
+        log.flush()
 
         color_print(
             "I will now ask you some questions about this machine to "
