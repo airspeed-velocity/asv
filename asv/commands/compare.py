@@ -11,6 +11,7 @@ from ..machine import iter_machine_files
 from ..results import iter_results_for_machine_and_hash
 from ..util import human_value, load_json
 from ..console import color_print
+from ..environment import get_environments
 from .. import util
 from .. import statistics
 
@@ -105,6 +106,8 @@ class Compare(Command):
             '--machine', '-m', type=str, default=None,
             help="""The machine to compare the revisions for.""")
 
+        common_args.add_environment(parser)
+
         parser.set_defaults(func=cls.run_from_args)
 
         return parser
@@ -115,10 +118,18 @@ class Compare(Command):
                        hash_1=args.revision1,
                        hash_2=args.revision2,
                        factor=args.factor, split=args.split,
-                       machine=args.machine)
+                       machine=args.machine,
+                       env_spec=args.env_spec)
 
     @classmethod
-    def run(cls, conf, hash_1, hash_2, factor=None, split=False, machine=None):
+    def run(cls, conf, hash_1, hash_2, factor=None, split=False, machine=None,
+            env_spec=None):
+
+        if env_spec:
+            env_names = ([env.name for env in get_environments(conf, env_spec, verbose=False)]
+                         + list(env_spec))
+        else:
+            env_names = None
 
         machines = []
         for path in iter_machine_files(conf.results_dir):
@@ -140,12 +151,13 @@ class Compare(Command):
                 "Results for machine '{0} not found".format(machine))
 
         cls.print_table(conf, hash_1, hash_2, factor=factor, machine=machine,
-                        split=split)
+                        split=split, env_names=env_names)
 
     @classmethod
     def print_table(cls, conf, hash_1, hash_2, factor, split,
                     resultset_1=None, resultset_2=None, machine=None,
-                    sort_by_ratio=False, only_changed=False, use_stats=True):
+                    sort_by_ratio=False, only_changed=False, use_stats=True,
+                    env_names=None):
         results_1 = {}
         results_2 = {}
         stats_1 = {}
@@ -156,6 +168,8 @@ class Compare(Command):
         def results_default_iter(commit_hash):
             for result in iter_results_for_machine_and_hash(
                     conf.results_dir, machine, commit_hash):
+                if env_names is not None and result.env_name not in env_names:
+                    continue
                 for key in result.get_all_result_keys():
                     params = result.get_result_params(key)
                     result_value = result.get_result_value(key, params)
