@@ -190,9 +190,7 @@ class BenchmarkRunner(object):
                             times[job.name] = job.result
                     else:
                         partial_info_printed = False
-                        self._log_initial("Cleaning up {0}".format(short_name))
                         job.run(env)
-                        self._log_cache_result(job)
         finally:
             for job in jobs:
                 if isinstance(job, SetupCacheCleanupJob):
