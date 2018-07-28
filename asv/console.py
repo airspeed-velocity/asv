@@ -374,4 +374,14 @@ class Log(object):
         _write_with_fallback(msg, sys.stdout.write, sys.stdout)
         sys.stdout.flush()
 
+    def flush(self):
+        """
+        Flush any trailing newlines. Needs to be called before printing
+        to stdout via other means, after using Log.
+        """
+        if self._needs_newline:
+            color_print('')
+            self._needs_newline = False
+        sys.stdout.flush()
+
 log = Log()

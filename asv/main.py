@@ -38,10 +38,9 @@ def main():
         result = args.func(args)
     except util.UserError as e:
         log.error(six.text_type(e))
-        sys.stdout.write('\n')
         sys.exit(1)
-
-    sys.stdout.write('\n')
+    finally:
+        log.flush()
 
     if result is None:
         result = 0

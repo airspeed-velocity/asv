@@ -10,7 +10,7 @@ from . import Command
 from ..machine import iter_machine_files
 from ..results import iter_results_for_machine_and_hash
 from ..util import human_value, load_json
-from ..console import color_print
+from ..console import log, color_print
 from ..environment import get_environments
 from .. import util
 from .. import statistics
@@ -328,6 +328,8 @@ class Compare(Command):
         titles['red'] = "Benchmarks that have got worse:"
         titles['lightgrey'] = "Benchmarks that are not comparable:"
         titles['all'] = "All benchmarks:"
+
+        log.flush()
 
         for key in keys:
 
