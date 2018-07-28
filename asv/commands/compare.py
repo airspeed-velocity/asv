@@ -11,6 +11,7 @@ from ..machine import iter_machine_files
 from ..results import iter_results_for_machine_and_hash
 from ..util import human_value, load_json
 from ..console import color_print
+from ..environment import get_environments
 from .. import util
 from .. import statistics
 
@@ -94,16 +95,13 @@ class Compare(Command):
             'revision2',
             help="""The revision being compared.""")
 
-        common_args.add_factor(parser)
-
-        parser.add_argument(
-           '--split', '-s', action='store_true',
-           help="""Split the output into a table of benchmarks that have
-           improved, stayed the same, and gotten worse.""")
+        common_args.add_compare(parser, sort_default='name', only_changed_default=False)
 
         parser.add_argument(
             '--machine', '-m', type=str, default=None,
             help="""The machine to compare the revisions for.""")
+
+        common_args.add_environment(parser)
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -115,10 +113,19 @@ class Compare(Command):
                        hash_1=args.revision1,
                        hash_2=args.revision2,
                        factor=args.factor, split=args.split,
-                       machine=args.machine)
+                       only_changed=args.only_changed, sort=args.sort,
+                       machine=args.machine,
+                       env_spec=args.env_spec)
 
     @classmethod
-    def run(cls, conf, hash_1, hash_2, factor=None, split=False, machine=None):
+    def run(cls, conf, hash_1, hash_2, factor=None, split=False, only_changed=False,
+            sort='name', machine=None, env_spec=None):
+
+        if env_spec:
+            env_names = ([env.name for env in get_environments(conf, env_spec, verbose=False)]
+                         + list(env_spec))
+        else:
+            env_names = None
 
         machines = []
         for path in iter_machine_files(conf.results_dir):
@@ -139,13 +146,14 @@ class Compare(Command):
             raise util.UserError(
                 "Results for machine '{0} not found".format(machine))
 
-        cls.print_table(conf, hash_1, hash_2, factor=factor, machine=machine,
-                        split=split)
+        cls.print_table(conf, hash_1, hash_2, factor=factor, split=split,
+                        only_changed=only_changed, sort=sort,
+                        machine=machine, env_names=env_names)
 
     @classmethod
     def print_table(cls, conf, hash_1, hash_2, factor, split,
                     resultset_1=None, resultset_2=None, machine=None,
-                    sort_by_ratio=False, only_changed=False, use_stats=True):
+                    only_changed=False, sort='name', use_stats=True, env_names=None):
         results_1 = {}
         results_2 = {}
         stats_1 = {}
@@ -156,12 +164,15 @@ class Compare(Command):
         def results_default_iter(commit_hash):
             for result in iter_results_for_machine_and_hash(
                     conf.results_dir, machine, commit_hash):
+                if env_names is not None and result.env_name not in env_names:
+                    continue
                 for key in result.get_all_result_keys():
                     params = result.get_result_params(key)
                     result_value = result.get_result_value(key, params)
                     result_stats = result.get_result_stats(key, params)
                     result_version = result.benchmark_version.get(key)
-                    yield key, params, result_value, result_stats, result_version
+                    yield (key, params, result_value, result_stats, result_version,
+                           result.params['machine'], result.env_name)
 
         if resultset_1 is None:
             resultset_1 = results_default_iter(hash_1)
@@ -169,17 +180,23 @@ class Compare(Command):
         if resultset_2 is None:
             resultset_2 = results_default_iter(hash_2)
 
-        for key, params, value, stats, version in resultset_1:
-            for name, value, stats in unroll_result(key, params, value, stats):
-                results_1[name] = value
-                stats_1[name] = stats
-                versions_1[name] = version
+        machine_env_names = set()
 
-        for key, params, value, stats, version in resultset_2:
+        for key, params, value, stats, version, machine, env_name in resultset_1:
+            machine_env_name = "{}/{}".format(machine, env_name)
+            machine_env_names.add(machine_env_name)
             for name, value, stats in unroll_result(key, params, value, stats):
-                results_2[name] = value
-                stats_2[name] = stats
-                versions_2[name] = version
+                results_1[(name, machine_env_name)] = value
+                stats_1[(name, machine_env_name)] = stats
+                versions_1[(name, machine_env_name)] = version
+
+        for key, params, value, stats, version, machine, env_name in resultset_2:
+            machine_env_name = "{}/{}".format(machine, env_name)
+            machine_env_names.add(machine_env_name)
+            for name, value, stats in unroll_result(key, params, value, stats):
+                results_2[(name, machine_env_name)] = value
+                stats_2[(name, machine_env_name)] = stats
+                versions_2[(name, machine_env_name)] = version
 
         if len(results_1) == 0:
             raise util.UserError(
@@ -324,11 +341,20 @@ class Compare(Command):
             color_print("       before           after         ratio")
             color_print("     [{0:8s}]       [{1:8s}]".format(hash_1[:8], hash_2[:8]))
 
-            if sort_by_ratio:
+            if sort == 'ratio':
                 bench[key].sort(key=lambda v: v[3], reverse=True)
+            elif sort == 'name':
+                bench[key].sort(key=lambda v: v[2])
+            else:
+                raise ValueError("Unknown 'sort'")
 
             for color, details, benchmark, ratio in bench[key]:
+                if len(machine_env_names) > 1:
+                    benchmark_name = "{} [{}]".format(*benchmark)
+                else:
+                    benchmark_name = benchmark[0]
+
                 color_print(details, color, end='')
-                color_print(benchmark)
+                color_print(benchmark_name)
 
         return worsened, improved

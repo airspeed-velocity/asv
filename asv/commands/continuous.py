@@ -43,7 +43,7 @@ class Continuous(Command):
             run only once.  This is useful to find basic errors in the
             benchmark functions faster.  The results are unlikely to
             be useful, and thus are not saved.""")
-        common_args.add_factor(parser)
+        common_args.add_compare(parser, sort_default='ratio', only_changed_default=True)
         common_args.add_show_stderr(parser)
         common_args.add_bench(parser)
         common_args.add_machine(parser)
@@ -55,7 +55,9 @@ class Continuous(Command):
     @classmethod
     def run_from_conf_args(cls, conf, args, **kwargs):
         return cls.run(
-            conf=conf, branch=args.branch, base=args.base, factor=args.factor,
+            conf=conf, branch=args.branch, base=args.base,
+            factor=args.factor, split=args.split,
+            only_changed=args.only_changed, sort=args.sort,
             show_stderr=args.show_stderr, bench=args.bench, attribute=args.attribute,
             machine=args.machine,
             env_spec=args.env_spec, record_samples=args.record_samples,
@@ -63,7 +65,9 @@ class Continuous(Command):
         )
 
     @classmethod
-    def run(cls, conf, branch=None, base=None, factor=None, show_stderr=False, bench=None,
+    def run(cls, conf, branch=None, base=None,
+            factor=None, split=False, only_changed=True, sort='ratio',
+            show_stderr=False, bench=None,
             attribute=None, machine=None, env_spec=None, record_samples=False, quick=False,
             _machine_file=None):
         repo = get_repo(conf)
@@ -107,13 +111,13 @@ class Continuous(Command):
 
                     value = result.get_result_value(name, params)
                     stats = result.get_result_stats(name, params)
-                    yield name, params, value, stats, version
+                    yield name, params, value, stats, version, machine_name, env.name
 
         status = Compare.print_table(conf, parent, head,
                                      resultset_1=results_iter(parent),
                                      resultset_2=results_iter(head),
-                                     factor=factor, split=False, only_changed=True,
-                                     sort_by_ratio=True)
+                                     factor=factor, split=split,
+                                     only_changed=only_changed, sort=sort)
         worsened, improved = status
 
         color_print("")
