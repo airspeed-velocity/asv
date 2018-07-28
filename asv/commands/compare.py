@@ -95,12 +95,7 @@ class Compare(Command):
             'revision2',
             help="""The revision being compared.""")
 
-        common_args.add_factor(parser)
-
-        parser.add_argument(
-           '--split', '-s', action='store_true',
-           help="""Split the output into a table of benchmarks that have
-           improved, stayed the same, and gotten worse.""")
+        common_args.add_compare(parser, sort_default='name', only_changed_default=False)
 
         parser.add_argument(
             '--machine', '-m', type=str, default=None,
@@ -118,12 +113,13 @@ class Compare(Command):
                        hash_1=args.revision1,
                        hash_2=args.revision2,
                        factor=args.factor, split=args.split,
+                       only_changed=args.only_changed, sort=args.sort,
                        machine=args.machine,
                        env_spec=args.env_spec)
 
     @classmethod
-    def run(cls, conf, hash_1, hash_2, factor=None, split=False, machine=None,
-            env_spec=None):
+    def run(cls, conf, hash_1, hash_2, factor=None, split=False, only_changed=False,
+            sort='name', machine=None, env_spec=None):
 
         if env_spec:
             env_names = ([env.name for env in get_environments(conf, env_spec, verbose=False)]
@@ -150,14 +146,14 @@ class Compare(Command):
             raise util.UserError(
                 "Results for machine '{0} not found".format(machine))
 
-        cls.print_table(conf, hash_1, hash_2, factor=factor, machine=machine,
-                        split=split, env_names=env_names)
+        cls.print_table(conf, hash_1, hash_2, factor=factor, split=split,
+                        only_changed=only_changed, sort=sort,
+                        machine=machine, env_names=env_names)
 
     @classmethod
     def print_table(cls, conf, hash_1, hash_2, factor, split,
                     resultset_1=None, resultset_2=None, machine=None,
-                    sort_by_ratio=False, only_changed=False, use_stats=True,
-                    env_names=None):
+                    only_changed=False, sort='name', use_stats=True, env_names=None):
         results_1 = {}
         results_2 = {}
         stats_1 = {}
@@ -345,8 +341,12 @@ class Compare(Command):
             color_print("       before           after         ratio")
             color_print("     [{0:8s}]       [{1:8s}]".format(hash_1[:8], hash_2[:8]))
 
-            if sort_by_ratio:
+            if sort == 'ratio':
                 bench[key].sort(key=lambda v: v[3], reverse=True)
+            elif sort == 'name':
+                bench[key].sort(key=lambda v: v[2])
+            else:
+                raise ValueError("Unknown 'sort'")
 
             for color, details, benchmark, ratio in bench[key]:
                 if len(machine_env_names) > 1:

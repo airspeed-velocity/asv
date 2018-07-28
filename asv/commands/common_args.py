@@ -34,13 +34,28 @@ def add_global_arguments(parser, suppress_defaults=True):
         **suppressor)
 
 
-def add_factor(parser):
+def add_compare(parser, only_changed_default=False, sort_default='name'):
     parser.add_argument(
         '--factor', "-f", type=float, default=1.1,
         help="""The factor above or below which a result is considered
         problematic.  For example, with a factor of 1.1 (the default
         value), if a benchmark gets 10%% slower or faster, it will
         be displayed in the results list.""")
+
+    parser.add_argument(
+        '--split', '-s', action='store_true',
+        help="""Split the output into a table of benchmarks that have
+        improved, stayed the same, and gotten worse.""")
+
+    parser.add_argument(
+        '--only-changed', action='store_true', default=only_changed_default,
+        help="""Whether to show only changed results.""")
+
+    parser.add_argument('--no-only-changed', dest='only_changed', action='store_false')
+
+    parser.add_argument(
+        '--sort', action='store', type=str, choices=('name', 'ratio'),
+        default=sort_default, help="""Sort order""")
 
 
 def add_show_stderr(parser):

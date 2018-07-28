@@ -153,7 +153,7 @@ def test_compare(capsys, tmpdir):
 
     # Check print_table output as called from Continuous
     status = Compare.print_table(conf, '22b920c6', 'fcf8c079', factor=2, machine='cheetah',
-                                 split=False, only_changed=True, sort_by_ratio=True,
+                                 split=False, only_changed=True, sort='ratio',
                                  env_names=["py2.7-numpy1.8"])
     worsened, improved = status
     assert worsened
@@ -163,6 +163,6 @@ def test_compare(capsys, tmpdir):
 
     # Check table with multiple environments
     status = Compare.print_table(conf, '22b920c6', 'fcf8c079', factor=2, machine='cheetah',
-                                 split=False, only_changed=True, sort_by_ratio=True)
+                                 split=False, only_changed=True, sort='ratio')
     text, err = capsys.readouterr()
     assert text.strip() == REFERENCE_ONLY_CHANGED_MULTIENV.strip()
