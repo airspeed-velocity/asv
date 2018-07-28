@@ -34,9 +34,7 @@ class Continuous(Command):
         parser.add_argument(
             'branch', default=None,
             help="""The commit/branch to test. By default, the first configured branch.""")
-        parser.add_argument(
-            "--record-samples", action="store_true",
-            help="""Store raw measurement samples, not only statistics""")
+        common_args.add_record_samples(parser)
         parser.add_argument(
             "--quick", "-q", action="store_true",
             help="""Do a "quick" run, where each benchmark function is
@@ -61,6 +59,7 @@ class Continuous(Command):
             show_stderr=args.show_stderr, bench=args.bench, attribute=args.attribute,
             machine=args.machine,
             env_spec=args.env_spec, record_samples=args.record_samples,
+            append_samples=args.append_samples,
             quick=args.quick, **kwargs
         )
 
@@ -68,8 +67,8 @@ class Continuous(Command):
     def run(cls, conf, branch=None, base=None,
             factor=None, split=False, only_changed=True, sort='ratio',
             show_stderr=False, bench=None,
-            attribute=None, machine=None, env_spec=None, record_samples=False, quick=False,
-            _machine_file=None):
+            attribute=None, machine=None, env_spec=None, record_samples=False, append_samples=False,
+            quick=False, _machine_file=None):
         repo = get_repo(conf)
         repo.pull()
 
@@ -88,7 +87,7 @@ class Continuous(Command):
         result = Run.run(
             conf, range_spec=commit_hashes, bench=bench, attribute=attribute,
             show_stderr=show_stderr, machine=machine, env_spec=env_spec,
-            record_samples=record_samples, quick=quick,
+            record_samples=record_samples, append_samples=append_samples, quick=quick,
             _returns=run_objs, _machine_file=_machine_file)
         if result:
             return result
