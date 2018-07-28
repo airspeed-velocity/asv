@@ -161,7 +161,8 @@ class Compare(Command):
                     result_value = result.get_result_value(key, params)
                     result_stats = result.get_result_stats(key, params)
                     result_version = result.benchmark_version.get(key)
-                    yield key, params, result_value, result_stats, result_version
+                    yield (key, params, result_value, result_stats, result_version,
+                           result.params['machine'], result.env_name)
 
         if resultset_1 is None:
             resultset_1 = results_default_iter(hash_1)
@@ -169,17 +170,23 @@ class Compare(Command):
         if resultset_2 is None:
             resultset_2 = results_default_iter(hash_2)
 
-        for key, params, value, stats, version in resultset_1:
-            for name, value, stats in unroll_result(key, params, value, stats):
-                results_1[name] = value
-                stats_1[name] = stats
-                versions_1[name] = version
+        machine_env_names = set()
 
-        for key, params, value, stats, version in resultset_2:
+        for key, params, value, stats, version, machine, env_name in resultset_1:
+            machine_env_name = "{}/{}".format(machine, env_name)
+            machine_env_names.add(machine_env_name)
             for name, value, stats in unroll_result(key, params, value, stats):
-                results_2[name] = value
-                stats_2[name] = stats
-                versions_2[name] = version
+                results_1[(name, machine_env_name)] = value
+                stats_1[(name, machine_env_name)] = stats
+                versions_1[(name, machine_env_name)] = version
+
+        for key, params, value, stats, version, machine, env_name in resultset_2:
+            machine_env_name = "{}/{}".format(machine, env_name)
+            machine_env_names.add(machine_env_name)
+            for name, value, stats in unroll_result(key, params, value, stats):
+                results_2[(name, machine_env_name)] = value
+                stats_2[(name, machine_env_name)] = stats
+                versions_2[(name, machine_env_name)] = version
 
         if len(results_1) == 0:
             raise util.UserError(
@@ -328,7 +335,12 @@ class Compare(Command):
                 bench[key].sort(key=lambda v: v[3], reverse=True)
 
             for color, details, benchmark, ratio in bench[key]:
+                if len(machine_env_names) > 1:
+                    benchmark_name = "{} [{}]".format(*benchmark)
+                else:
+                    benchmark_name = benchmark[0]
+
                 color_print(details, color, end='')
-                color_print(benchmark)
+                color_print(benchmark_name)
 
         return worsened, improved

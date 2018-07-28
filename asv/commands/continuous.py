@@ -107,7 +107,7 @@ class Continuous(Command):
 
                     value = result.get_result_value(name, params)
                     stats = result.get_result_stats(name, params)
-                    yield name, params, value, stats, version
+                    yield name, params, value, stats, version, machine_name, env.name
 
         status = Compare.print_table(conf, parent, head,
                                      resultset_1=results_iter(parent),
