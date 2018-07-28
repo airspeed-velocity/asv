@@ -9,7 +9,7 @@ import six
 
 from . import Command
 from .run import Run
-from .compare import Compare
+from .compare import print_table
 
 from ..repo import get_repo
 from ..console import color_print, log
@@ -109,11 +109,11 @@ class Continuous(Command):
                     stats = result.get_result_stats(name, params)
                     yield name, params, value, stats, version
 
-        status = Compare.print_table(conf, parent, head,
-                                     resultset_1=results_iter(parent),
-                                     resultset_2=results_iter(head),
-                                     factor=factor, split=False, only_changed=True,
-                                     sort_by_ratio=True)
+        status = print_table(conf, parent, head,
+                             resultset_1=_results_iter(parent),
+                             resultset_2=_results_iter(head),
+                             factor=factor, split=False, only_changed=True,
+                             sort_by_ratio=True)
         worsened, improved = status
 
         color_print("")
