@@ -9,6 +9,7 @@ __pycache__
 # Other generated files
 MANIFEST
 asv/_version.py
+asv/www/vendor
 
 # Sphinx
 _build
@@ -29,7 +30,9 @@ develop-eggs
 distribute-*.tar.gz
 
 # Other
+.asv
 .cache
+.pytest_cache
 .tox
 .*.swp
 *~

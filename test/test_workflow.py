@@ -73,7 +73,7 @@ def generate_basic_conf(tmpdir, repo_subdir=''):
         'project': 'asv',
         'matrix': {
             "six": [""],
-            "colorama": ["0.3.7", "0.3.9"],
+            "colorama": tools.COLORAMA_VERSIONS,
         },
     }
     if repo_subdir:
@@ -102,7 +102,8 @@ def test_run_publish(capfd, basic_conf):
 
     # Tests a typical complete run/publish workflow
     tools.run_asv_with_conf(conf, 'run', "master~5..master", '--steps=2',
-                            '--quick', '--show-stderr',
+                            '--quick', '--show-stderr', '--profile',
+                            '-a', 'warmup_time=0',
                             _machine_file=machine_file)
     text, err = capfd.readouterr()
 
@@ -119,7 +120,8 @@ def test_run_publish(capfd, basic_conf):
 
     # Check parameterized test json data format
     filename = glob.glob(join(tmpdir, 'html', 'graphs', 'arch-x86_64', 'branch-master',
-                              'colorama-0.3.9',  'cpu-Blazingly fast', 'machine-orangutan',
+                              'colorama-' + tools.COLORAMA_VERSIONS[1],
+                              'cpu-Blazingly fast', 'machine-orangutan',
                               'os-GNU_Linux', 'python-*', 'ram-128GB',
                               'six', 'params_examples.time_skip.json'))[0]
     with open(filename, 'r') as fp:
@@ -136,9 +138,11 @@ def test_run_publish(capfd, basic_conf):
     capfd.readouterr()
     tools.run_asv_with_conf(conf, 'run', "master~5..master", '--steps=2',
                             '--quick', '--skip-existing-successful',
+                            '--bench=time_secondary.track_value',
                             '--skip-existing-failed',
                             _machine_file=join(tmpdir, 'asv-machine.json'))
     tools.run_asv_with_conf(conf, 'run', "master~5..master", '--steps=2',
+                            '--bench=time_secondary.track_value',
                             '--quick', '--skip-existing-commits',
                             _machine_file=join(tmpdir, 'asv-machine.json'))
     text, err = capfd.readouterr()
@@ -149,7 +153,9 @@ def test_run_publish(capfd, basic_conf):
         env_spec = ("-E", "conda:{0[0]}.{0[1]}".format(sys.version_info))
     else:
         env_spec = ("-E", "virtualenv:{0[0]}.{0[1]}".format(sys.version_info))
-    tools.run_asv_with_conf(conf, 'run', "EXISTING", '--quick', *env_spec,
+    tools.run_asv_with_conf(conf, 'run', "EXISTING", '--quick',
+                            '--bench=time_secondary.track_value',
+                            *env_spec,
                             _machine_file=machine_file)
 
     # Remove the benchmarks.json file and check publish fails
@@ -170,6 +176,8 @@ def test_continuous(capfd, basic_conf):
 
     # Check that asv continuous runs
     tools.run_asv_with_conf(conf, 'continuous', "master^", '--show-stderr',
+                            '--bench=params_examples.track_find_test',
+                            '--bench=params_examples.track_param',
                             *env_spec, _machine_file=machine_file)
 
     text, err = capfd.readouterr()
@@ -245,7 +253,7 @@ def test_run_spec(basic_conf):
 
         expected = set(['machine.json'])
         for commit in expected_commits:
-            for psver in ['0.3.7', '0.3.9']:
+            for psver in tools.COLORAMA_VERSIONS:
                 expected.add('{0}-{1}-py{2}-colorama{3}-six.json'.format(
                     commit[:8], tool_name, pyver, psver))
 
@@ -341,3 +349,30 @@ def test_run_with_repo_subdir(basic_conf_with_subdir):
     data = util.load_json(fn_results)
     assert data['results'][bench_name] == {'params': [['1', '2']],
                                            'result': [6, 6]}
+
+
+def test_benchmark_param_selection(basic_conf):
+    tmpdir, local, conf, machine_file = basic_conf
+    conf.matrix = {}
+    tools.generate_test_repo(tmpdir, values=[(1, 2, 3)])
+    tools.run_asv_with_conf(conf, 'run', 'master^!',
+                            '--quick', '--show-stderr',
+                            '--bench', 'track_param_selection\(.*, 3\)',
+                            _machine_file=machine_file)
+
+    def get_results():
+        results = util.load_json(glob.glob(join(
+            tmpdir, 'results_workflow', 'orangutan', '*-*.json'))[0])
+        # replacing NaN by 'n/a' make assertions easier
+        return ['n/a' if util.is_nan(item) else item
+                for item in results['results'][
+                    'params_examples.track_param_selection']['result']]
+
+    assert get_results() == [4, 'n/a', 5, 'n/a']
+    tools.run_asv_with_conf(conf, 'run', '--show-stderr',
+                            '--bench', 'track_param_selection\(1, ',
+                            _machine_file=machine_file)
+    assert get_results() == [4, 6, 5, 'n/a']
+    tools.run_asv_with_conf(conf, 'run', '--show-stderr',
+                            '--bench', 'track_param_selection',
+                            _machine_file=machine_file)

@@ -28,13 +28,15 @@ class Dev(Run):
 
     @classmethod
     def run_from_conf_args(cls, conf, args, **kwargs):
-        return cls.run(conf, bench=args.bench, machine=args.machine, env_spec=args.env_spec,
+        return cls.run(conf, bench=args.bench, attribute=args.attribute,
+                       machine=args.machine, env_spec=args.env_spec,
                        **kwargs)
 
     @classmethod
-    def run(cls, conf, bench=None, env_spec=None, machine=None, _machine_file=None):
+    def run(cls, conf, bench=None, attribute=None, env_spec=None, machine=None, _machine_file=None):
         if not env_spec:
             env_spec = ["existing:same"]
-        return super(cls, Dev).run(conf=conf, bench=bench, show_stderr=True, quick=True,
+        return super(cls, Dev).run(conf=conf, bench=bench, attribute=attribute,
+                                   show_stderr=True, quick=True,
                                    env_spec=env_spec, machine=machine, dry_run=True,
                                    _machine_file=_machine_file)

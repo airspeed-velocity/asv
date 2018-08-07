@@ -308,13 +308,14 @@ def detect_steps(y):
 
     Returns
     -------
-    steps : list of (left_pos, right_pos, value, err_est)
+    steps : list of (left_pos, right_pos, value, min_value, err_est)
         List containing a decomposition of the input data to a piecewise
         constant function. Each element contains the left (inclusive) and
         right (exclusive) bounds of a segment, the average value on 
-        the segment and the l1 error estimate, <|Y - avg|>. Missing data
-        points are not necessarily contained in any segment; right_pos-1
-        is the last non-missing data point.
+        the segment, the minimum value in the segment, and the l1 error 
+        estimate, <|Y - avg|>. Missing data points are not necessarily
+        contained in any segment; right_pos-1 is the last non-missing data
+        point.
 
     """
 

@@ -8,6 +8,13 @@ from __future__ import (absolute_import, division, print_function,
 from . import util
 
 
+class NoSuchNameError(RuntimeError):
+    """
+    Exception raised if requested branch or commit does not exist.
+    """
+    pass
+
+
 class Repo(object):
     """
     Base class for repository handlers.

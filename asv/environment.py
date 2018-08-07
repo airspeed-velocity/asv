@@ -186,7 +186,7 @@ def get_env_name(tool_name, python, requirements):
     return util.sanitize_filename('-'.join(name))
 
 
-def get_environments(conf, env_specifiers):
+def get_environments(conf, env_specifiers, verbose=True):
     """
     Iterator returning `Environment` objects for all of the
     permutations of the given versions of Python and a matrix of
@@ -202,18 +202,20 @@ def get_environments(conf, env_specifiers):
         it. If *python_spec* is missing, use those listed in the
         configuration file. Alternatively, can be the name given
         by *Environment.name* if the environment is in the matrix.
+    verbose : bool, optional
+        Whether to display warnings about unknown environment types etc.
 
     """
 
     if not env_specifiers:
         all_environments = ()
         env_specifiers = [conf.environment_type]
-        if not conf.environment_type:
+        if not conf.environment_type and verbose:
             log.warn(
                 "No `environment_type` specified in asv.conf.json. "
                 "This will be required in the future.")
     else:
-        all_environments = list(get_environments(conf, None))
+        all_environments = list(get_environments(conf, None, verbose=verbose))
 
     for env_spec in env_specifiers:
         env_name_found = False
@@ -257,7 +259,8 @@ def get_environments(conf, env_specifiers):
 
                 yield cls(conf, python, requirements)
             except EnvironmentUnavailable as err:
-                log.warn(str(err))
+                if verbose:
+                    log.warn(str(err))
 
 
 def get_environment_class(conf, python):

@@ -64,7 +64,7 @@ class ClassLevelCacheTimeout:
 
 
 class ClassLevelCacheTimeoutSuccess:
-    timeout = 1.0
+    timeout = 2.0
 
     def setup_cache(self):
         time.sleep(2.0)

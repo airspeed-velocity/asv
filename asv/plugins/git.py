@@ -12,7 +12,7 @@ import os
 import re
 
 from ..console import log
-from ..repo import Repo
+from ..repo import Repo, NoSuchNameError
 from .. import util
 
 
@@ -41,7 +41,7 @@ class Git(Repo):
     @classmethod
     def is_local_repo(cls, path):
         return os.path.isdir(path) and (
-            os.path.isdir(os.path.join(path, '.git')) or
+            os.path.exists(os.path.join(path, '.git')) or
             os.path.isdir(os.path.join(path, 'objects')))
 
     @classmethod
@@ -64,7 +64,13 @@ class Git(Repo):
         if cwd is True:
             cwd = self._path
         kwargs['cwd'] = cwd
-        return util.check_output([self._git] + args, **kwargs)
+        env = dict(kwargs.pop('env', os.environ))
+        if cwd is not None:
+            prev = env.get('GIT_CEILING_DIRECTORIES')
+            env['GIT_CEILING_DIRECTORIES'] = os.pathsep.join(
+                [os.path.join(os.path.abspath(cwd), os.pardir)]
+                + ([prev] if prev is not None else []))
+        return util.check_output([self._git] + args, env=env, **kwargs)
 
     def get_new_range_spec(self, latest_result, branch=None):
         return '{0}..{1}'.format(latest_result, self.get_branch_name(branch))
@@ -121,8 +127,15 @@ class Git(Repo):
     def get_hash_from_name(self, name):
         if name is None:
             name = self.get_branch_name()
-        return self._run_git(['rev-parse', name],
-                             dots=False).strip().split()[0]
+
+        try:
+            return self._run_git(['rev-parse', name],
+                                 dots=False).strip().split()[0]
+        except util.ProcessError as err:
+            if err.stdout.strip() == name:
+                # Name does not exist
+                raise NoSuchNameError(name)
+            raise
 
     def get_hash_from_parent(self, name):
         return self.get_hash_from_name(name + '^')

@@ -36,6 +36,18 @@ from asv.repo import get_repo
 from asv.results import Results
 
 
+# Two Python versions for testing
+PYTHON_VER1 = "{0[0]}.{0[1]}".format(sys.version_info)
+if sys.version_info < (3,):
+    PYTHON_VER2 = "3.6"
+else:
+    PYTHON_VER2 = "2.7"
+
+# Installable library versions to use in tests
+SIX_VERSION = "1.10"
+COLORAMA_VERSIONS = ["0.3.7", "0.3.9"]
+
+
 try:
     import selenium
     from selenium.common.exceptions import TimeoutException
@@ -44,10 +56,13 @@ except ImportError:
     HAVE_WEBDRIVER = False
 
 
-def run_asv(*argv):
+WAIT_TIME = 20.0
+
+
+def run_asv(*argv, **kwargs):
     parser, subparsers = commands.make_argparser()
     args = parser.parse_args(argv)
-    return args.func(args)
+    return args.func(args, **kwargs)
 
 
 def run_asv_with_conf(conf, *argv, **kwargs):
@@ -395,7 +410,7 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
             "param_names": param_names or [],
             "version": benchmark_version,
         }
-    }, api_version=1)
+    }, api_version=2)
     return conf
 
 
@@ -438,8 +453,8 @@ def browser(request, pytestconfig):
     browser = create_driver()
 
     # Set timeouts
-    browser.set_page_load_timeout(10)
-    browser.set_script_timeout(10)
+    browser.set_page_load_timeout(WAIT_TIME)
+    browser.set_script_timeout(WAIT_TIME)
 
     # Clean up on fixture finalization
     def fin():
@@ -447,7 +462,7 @@ def browser(request, pytestconfig):
     request.addfinalizer(fin)
 
     # Set default time to wait for AJAX requests to complete
-    browser.implicitly_wait(5)
+    browser.implicitly_wait(WAIT_TIME)
 
     return browser
 

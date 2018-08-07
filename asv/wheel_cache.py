@@ -5,7 +5,6 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 
 
 import os
-import shutil
 
 from . import util
 
@@ -84,10 +83,17 @@ class WheelCache(object):
         build_root = env.build_project(repo, commit_hash)
         cache_path = self._create_wheel_cache_path(commit_hash)
 
+        # Disable pip build isolation --- it doesn't make sense for
+        # this command, because we used "setup.py build" to build the
+        # project above.
+        environ = dict(os.environ,
+                       PIP_NO_BUILD_ISOLATION="false")  # [sic!]
+
         try:
             env.run_executable(
                 'pip', ['wheel', '--wheel-dir', cache_path,
-                        '--no-deps', '--no-index', build_root])
+                        '--no-deps', '--no-index', build_root],
+                env=environ)
         except util.ProcessError:
             # failed -- clean up
             util.long_path_rmtree(cache_path)

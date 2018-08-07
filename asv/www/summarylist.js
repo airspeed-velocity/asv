@@ -241,7 +241,12 @@ $(document).ready(function() {
             });
             benchmark_base_url = $.asv.format_hash_string(benchmark_url_args);
             if (row.idx !== null) {
-                benchmark_url_args.params.idx = [row.idx];
+                var benchmark = $.asv.master_json.benchmarks[row.name];
+                $.each($.asv.param_selection_from_flat_idx(benchmark.params, row.idx).slice(1),
+                       function(i, param_values) {
+                           benchmark_url_args.params['p-'+benchmark.param_names[i]]
+                               = [benchmark.params[i][param_values[0]]];
+                       });
             }
             benchmark_full_url = $.asv.format_hash_string(benchmark_url_args);
 

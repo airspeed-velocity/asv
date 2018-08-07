@@ -120,7 +120,7 @@ class Run(Command):
     def run_from_conf_args(cls, conf, args, **kwargs):
         return cls.run(
             conf=conf, range_spec=args.range, steps=args.steps,
-            bench=args.bench, parallel=args.parallel,
+            bench=args.bench, attribute=args.attribute, parallel=args.parallel,
             show_stderr=args.show_stderr, quick=args.quick,
             profile=args.profile, env_spec=args.env_spec,
             dry_run=args.dry_run, machine=args.machine,
@@ -133,7 +133,7 @@ class Run(Command):
         )
 
     @classmethod
-    def run(cls, conf, range_spec=None, steps=None, bench=None, parallel=1,
+    def run(cls, conf, range_spec=None, steps=None, bench=None, attribute=None, parallel=1,
             show_stderr=False, quick=False, profile=False, env_spec=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
             skip_failed=False, skip_existing_commits=False, record_samples=False,
@@ -192,19 +192,20 @@ class Run(Command):
                                          commit_hashes, regex=bench)
         benchmarks.save()
         if len(benchmarks) == 0:
-            log.error("No benchmarks selected")
             if bench == ["just-discover"]:
                 return 0
             else:
+                log.error("No benchmarks selected")
                 return 1
 
-        steps = len(commit_hashes) * len(benchmarks) * len(environments)
+        benchmark_count = len(benchmarks)
+        steps = len(commit_hashes) * benchmark_count * len(environments)
 
         log.info(
             "Running {0} total benchmarks "
             "({1} commits * {2} environments * {3} benchmarks)".format(
                 steps, len(commit_hashes),
-                len(environments), len(benchmarks)), "green")
+                len(environments), len(benchmarks)))
         log.set_nitems(steps)
 
         parallel, multiprocessing = util.get_multiprocessing(parallel)
@@ -268,13 +269,16 @@ class Run(Command):
                     with log.indent():
                         args = [(env, conf, repo, commit_hash) for env in subenv]
                         if parallel != 1:
-                            pool = multiprocessing.Pool(parallel)
                             try:
-                                successes = pool.map(_do_build_multiprocess, args)
+                                pool = multiprocessing.Pool(parallel)
+                                try:
+                                    successes = pool.map(_do_build_multiprocess, args)
+                                    pool.close()
+                                    pool.join()
+                                finally:
+                                    pool.terminate()
                             except util.ParallelFailure as exc:
                                 exc.reraise()
-                            finally:
-                                pool.close()
                         else:
                             successes = map(_do_build, args)
 
@@ -286,7 +290,8 @@ class Run(Command):
                         if success:
                             results = benchmarks.run_benchmarks(
                                 env, show_stderr=show_stderr, quick=quick,
-                                profile=profile, skip=skipped_benchmarks[env.name])
+                                profile=profile, skip=skipped_benchmarks[env.name],
+                                extra_params=attribute)
                         else:
                             results = benchmarks.skip_benchmarks(env)
 
@@ -304,7 +309,6 @@ class Run(Command):
                         for benchmark_name, d in six.iteritems(results):
                             if not record_samples:
                                 d['samples'] = None
-                                d['number'] = None
 
                             benchmark_version = benchmarks[benchmark_name]['version']
                             result.add_result(benchmark_name, d, benchmark_version)

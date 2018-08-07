@@ -13,24 +13,12 @@ import json
 from asv import config
 from asv import environment
 from asv import util
+from asv.repo import get_repo
+
+from .tools import PYTHON_VER1, PYTHON_VER2, COLORAMA_VERSIONS, SIX_VERSION, generate_test_repo
 
 
 WIN = (os.name == "nt")
-
-
-try:
-    util.which('python2.7')
-    HAS_PYTHON_27 = True
-except (RuntimeError, IOError):
-    HAS_PYTHON_27 = (sys.version_info[:2] == (2, 7))
-
-
-try:
-    util.which('python3.4')
-    HAS_PYTHON_34 = True
-except (RuntimeError, IOError):
-    HAS_PYTHON_34 = (sys.version_info[:2] == (3, 4))
-
 
 try:
     util.which('pypy')
@@ -40,7 +28,7 @@ except (RuntimeError, IOError):
 
 
 try:
-    # Conda can install Python 2.7 and 3.4 on demand
+    # Conda can install required Python versions on demand
     util.which('conda')
     HAS_CONDA = True
 except (RuntimeError, IOError):
@@ -54,17 +42,24 @@ except ImportError:
     HAS_VIRTUALENV = False
 
 
-@pytest.mark.skipif(not ((HAS_PYTHON_27 and HAS_PYTHON_34) or HAS_CONDA),
-                    reason="Requires Python 2.7 and 3.4")
+try:
+    util.which('python{}'.format(PYTHON_VER2))
+    HAS_PYTHON_VER2 = True
+except (RuntimeError, IOError):
+    HAS_PYTHON_VER2 = False
+
+
+@pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
+                    reason="Requires two usable Python versions")
 def test_matrix_environments(tmpdir):
     conf = config.Config()
 
     conf.env_dir = six.text_type(tmpdir.join("env"))
 
-    conf.pythons = ["2.7", "3.4"]
+    conf.pythons = [PYTHON_VER1, PYTHON_VER2]
     conf.matrix = {
-        "six": ["1.10", None],
-        "colorama": ["0.3.7", "0.3.9"]
+        "six": [SIX_VERSION, None],
+        "colorama": COLORAMA_VERSIONS
     }
     environments = list(environment.get_environments(conf, None))
 
@@ -86,8 +81,6 @@ def test_matrix_environments(tmpdir):
         assert output.startswith(six.text_type(env._requirements['colorama']))
 
 
-@pytest.mark.skipif(not (HAS_PYTHON_27 or HAS_CONDA),
-                    reason="Requires Python 2.7")
 def test_large_environment_matrix(tmpdir):
     # As seen in issue #169, conda can't handle using really long
     # directory names in its environment.  This creates an environment
@@ -96,7 +89,7 @@ def test_large_environment_matrix(tmpdir):
     conf = config.Config()
 
     conf.env_dir = six.text_type(tmpdir.join("env"))
-    conf.pythons = ["2.7"]
+    conf.pythons = [PYTHON_VER1]
     for i in range(25):
         conf.matrix['foo{0}'.format(i)] = []
 
@@ -114,14 +107,12 @@ def test_large_environment_matrix(tmpdir):
         env.create()
 
 
-@pytest.mark.skipif(not (HAS_PYTHON_27 or HAS_CONDA),
-                    reason="Requires Python 2.7")
 def test_presence_checks(tmpdir):
     conf = config.Config()
 
     conf.env_dir = six.text_type(tmpdir.join("env"))
 
-    conf.pythons = ["2.7"]
+    conf.pythons = [PYTHON_VER1]
     conf.matrix = {}
     environments = list(environment.get_environments(conf, None))
 
@@ -132,12 +123,12 @@ def test_presence_checks(tmpdir):
         # Check env is recreated when info file is clobbered
         info_fn = os.path.join(env._path, 'asv-env-info.json')
         data = util.load_json(info_fn)
-        data['python'] = '3.4'
+        data['python'] = '0'
         data = util.write_json(info_fn, data)
         env._is_setup = False
         env.create()
         data = util.load_json(info_fn)
-        assert data['python'] == '2.7'
+        assert data['python'] == PYTHON_VER1
         env.run(['-c', 'import os'])
 
         # Check env is recreated if crucial things are missing
@@ -197,7 +188,7 @@ def test_matrix_expand_include():
     conf.pythons = ["2.6"]
     conf.matrix = {'a': '1'}
     conf.include = [
-        {'python': '3.4', 'b': '2'},
+        {'python': '3.5', 'b': '2'},
         {'sys_platform': sys.platform, 'python': '2.7', 'b': '3'},
         {'sys_platform': sys.platform + 'nope', 'python': '2.7', 'b': '3'},
         {'environment_type': 'nope', 'python': '2.7', 'b': '4'},
@@ -208,7 +199,7 @@ def test_matrix_expand_include():
         conf.environment_type, conf.pythons, conf))
     expected = _sorted_dict_list([
         {'python': '2.6', 'a': '1'},
-        {'python': '3.4', 'b': '2'},
+        {'python': '3.5', 'b': '2'},
         {'python': '2.7', 'b': '3'},
         {'python': '2.7', 'b': '5'}
     ])
@@ -221,22 +212,20 @@ def test_matrix_expand_include():
         list(environment.iter_requirement_matrix(conf.environment_type, conf.pythons, conf))
 
 
-@pytest.mark.skipif(not (HAS_PYTHON_27 or HAS_CONDA),
-                    reason="Requires Python 2.7")
 def test_matrix_expand_include_detect_env_type():
     conf = config.Config()
     conf.environment_type = None
-    conf.pythons = ["2.7"]
+    conf.pythons = [PYTHON_VER1]
     conf.matrix = {}
     conf.exclude = [{}]
     conf.include = [
-        {'sys_platform': sys.platform, 'python': '2.7'},
+        {'sys_platform': sys.platform, 'python': PYTHON_VER1},
     ]
 
     combinations = _sorted_dict_list(environment.iter_requirement_matrix(
         conf.environment_type, conf.pythons, conf))
     expected = _sorted_dict_list([
-        {'python': '2.7'},
+        {'python': PYTHON_VER1},
     ])
     assert combinations == expected
 
@@ -316,8 +305,7 @@ def test_matrix_expand_exclude():
     assert combinations == expected
 
 
-@pytest.mark.skipif((not HAS_CONDA),
-                    reason="Requires conda")
+@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
 def test_conda_pip_install(tmpdir):
     # test that we can install with pip into a conda environment.
     conf = config.Config()
@@ -325,9 +313,9 @@ def test_conda_pip_install(tmpdir):
     conf.env_dir = six.text_type(tmpdir.join("env"))
 
     conf.environment_type = "conda"
-    conf.pythons = ["3.4"]
+    conf.pythons = [PYTHON_VER1]
     conf.matrix = {
-        "pip+colorama": ["0.3.9"]
+        "pip+colorama": [COLORAMA_VERSIONS[0]]
     }
     environments = list(environment.get_environments(conf, None))
 
@@ -344,7 +332,7 @@ def test_conda_pip_install(tmpdir):
 def test_environment_select():
     conf = config.Config()
     conf.environment_type = "conda"
-    conf.pythons = ["2.7", "3.4"]
+    conf.pythons = ["2.7", "3.5"]
     conf.matrix = {
         "six": ["1.10"],
     }
@@ -355,23 +343,23 @@ def test_environment_select():
     # Check default environment config
     environments = list(environment.get_environments(conf, None))
     items = sorted([(env.tool_name, env.python) for env in environments])
-    assert items == [('conda', '1.9'), ('conda', '2.7'), ('conda', '3.4')]
+    assert items == [('conda', '1.9'), ('conda', '2.7'), ('conda', '3.5')]
 
-    if HAS_PYTHON_27 and HAS_VIRTUALENV:
+    if HAS_VIRTUALENV:
         # Virtualenv plugin fails on initialization if not available,
         # so these tests pass only if virtualenv is present
 
-        conf.pythons = ["2.7"]
+        conf.pythons = [PYTHON_VER1]
 
         # Check default python specifiers
         environments = list(environment.get_environments(conf, ["conda", "virtualenv"]))
         items = sorted((env.tool_name, env.python) for env in environments)
-        assert items == [('conda', '1.9'), ('conda', '2.7'), ('virtualenv', '2.7')]
+        assert items == [('conda', '1.9'), ('conda', PYTHON_VER1), ('virtualenv', PYTHON_VER1)]
 
         # Check specific python specifiers
-        environments = list(environment.get_environments(conf, ["conda:3.4", "virtualenv:2.7"]))
+        environments = list(environment.get_environments(conf, ["conda:3.5", "virtualenv:"+PYTHON_VER1]))
         items = sorted((env.tool_name, env.python) for env in environments)
-        assert items == [('conda', '3.4'), ('virtualenv', '2.7')]
+        assert items == [('conda', '3.5'), ('virtualenv', PYTHON_VER1)]
 
     # Check same specifier
     environments = list(environment.get_environments(conf, ["existing:same", ":same", "existing"]))
@@ -390,6 +378,7 @@ def test_environment_select():
         assert os.path.normcase(os.path.abspath(env._executable)) == os.path.normcase(os.path.abspath(sys.executable))
 
     # Select by environment name
+    conf.pythons = ["2.7"]
     environments = list(environment.get_environments(conf, ["conda-py2.7-six1.10"]))
     assert len(environments) == 1
     assert environments[0].python == "2.7"
@@ -406,46 +395,44 @@ def test_environment_select():
     assert len(environments) == 1
 
 
-@pytest.mark.skipif(not ((HAS_PYTHON_27 and HAS_VIRTUALENV) or HAS_CONDA),
-                    reason="Requires Python 2.7")
 def test_environment_select_autodetect():
     conf = config.Config()
     conf.environment_type = "conda"
-    conf.pythons = ["3.4"]
+    conf.pythons = [PYTHON_VER1]
     conf.matrix = {
         "six": ["1.10"],
     }
 
     # Check autodetect
-    environments = list(environment.get_environments(conf, [":2.7"]))
+    environments = list(environment.get_environments(conf, [":" + PYTHON_VER1]))
     assert len(environments) == 1
-    assert environments[0].python == "2.7"
+    assert environments[0].python == PYTHON_VER1
     assert environments[0].tool_name in ("virtualenv", "conda")
 
     # Check interaction with exclude
     conf.exclude = [{'environment_type': 'matches nothing'}]
-    environments = list(environment.get_environments(conf, [":2.7"]))
+    environments = list(environment.get_environments(conf, [":" + PYTHON_VER1]))
     assert len(environments) == 1
 
     conf.exclude = [{'environment_type': 'virtualenv|conda'}]
-    environments = list(environment.get_environments(conf, [":2.7"]))
+    environments = list(environment.get_environments(conf, [":" + PYTHON_VER1]))
     assert len(environments) == 1
 
     conf.exclude = [{'environment_type': 'conda'}]
-    environments = list(environment.get_environments(conf, ["conda:2.7"]))
+    environments = list(environment.get_environments(conf, ["conda:" + PYTHON_VER1]))
     assert len(environments) == 1
 
 
 def test_matrix_empty():
     conf = config.Config()
     conf.environment_type = ""
-    conf.pythons = ["2.7"]
+    conf.pythons = [PYTHON_VER1]
     conf.matrix = {}
 
     # Check default environment config
     environments = list(environment.get_environments(conf, None))
     items = [env.python for env in environments]
-    assert items == ['2.7']
+    assert items == [PYTHON_VER1]
 
 
 def test_matrix_existing():
@@ -481,7 +468,7 @@ def test_conda_channel_addition(tmpdir,
     conf = config.Config()
     conf.env_dir = six.text_type(tmpdir.join("env"))
     conf.environment_type = "conda"
-    conf.pythons = ["2.7", "3.6"]
+    conf.pythons = [PYTHON_VER1]
     conf.matrix = {}
     # these have to be valid channels
     # available for online access
@@ -489,9 +476,9 @@ def test_conda_channel_addition(tmpdir,
     environments = list(environment.get_environments(conf, None))
 
     # should have one environment per Python version
-    assert len(environments) == 2
+    assert len(environments) == 1
 
-    # create the two environments
+    # create the environments
     for env in environments:
         env.create()
         # generate JSON output from conda list
@@ -510,8 +497,9 @@ def test_conda_channel_addition(tmpdir,
         json_package_list = json.loads(out_str)
         for installed_package in json_package_list:
             # check only explicitly installed packages
-            if installed_package['name'] not in ('python', 'pip', 'wheel'):
+            if installed_package['name'] not in ('python',):
                 continue
+            print(installed_package)
             assert installed_package['channel'] == expected_channel
 
 @pytest.mark.skipif(not (HAS_PYPY and HAS_VIRTUALENV), reason="Requires pypy and virtualenv")
@@ -537,7 +525,7 @@ def test_pypy_virtualenv(tmpdir):
 def test_environment_name_sanitization():
     conf = config.Config()
     conf.environment_type = "conda"
-    conf.pythons = ["3.4"]
+    conf.pythons = ["3.5"]
     conf.matrix = {
         "pip+git+http://github.com/space-telescope/asv.git": [],
     }
@@ -545,7 +533,7 @@ def test_environment_name_sanitization():
     # Check name sanitization
     environments = list(environment.get_environments(conf, []))
     assert len(environments) == 1
-    assert environments[0].name == "conda-py3.4-pip+git+http___github.com_space-telescope_asv.git"
+    assert environments[0].name == "conda-py3.5-pip+git+http___github.com_space-telescope_asv.git"
 
 
 @pytest.mark.parametrize("environment_type", [
@@ -557,10 +545,7 @@ def test_environment_environ_path(environment_type, tmpdir):
     conf = config.Config()
     conf.env_dir = six.text_type(tmpdir.join("env"))
     conf.environment_type = environment_type
-    if environment_type == "virtualenv":
-        conf.pythons = ["{0[0]}.{0[1]}".format(sys.version_info)]
-    else:
-        conf.pythons = ["3.5"]
+    conf.pythons = [PYTHON_VER1]
     conf.matrix = {}
 
     env, = environment.get_environments(conf, [])
@@ -573,3 +558,34 @@ def test_environment_environ_path(environment_type, tmpdir):
     output = env.run(['-c', 'import site; print(site.ENABLE_USER_SITE)'])
     usersite_in_syspath = output.strip()
     assert usersite_in_syspath == "False"
+
+
+def test_build_isolation(tmpdir):
+    # build should not fail with wheel_cache on projects that have pyproject.toml
+    tmpdir = six.text_type(tmpdir)
+
+    # Create installable repository with pyproject.toml in it
+    dvcs = generate_test_repo(tmpdir, [0], dvcs_type='git')
+    fn = os.path.join(dvcs.path, 'pyproject.toml')
+    with open(fn, 'w') as f:
+        f.write('[build-system]\n'
+                'requires = ["wheel", "setuptools"]')
+    dvcs.add(fn)
+    dvcs.commit("Add pyproject.toml")
+    commit_hash = dvcs.get_hash("master")
+
+    # Setup config
+    conf = config.Config()
+    conf.env_dir = os.path.join(tmpdir, "env")
+    conf.pythons = [PYTHON_VER1]
+    conf.matrix = {}
+    conf.repo = os.path.abspath(dvcs.path)
+    conf.wheel_cache_size = 8
+
+    repo = get_repo(conf)
+
+    env = list(environment.get_environments(conf, None))[0]
+    env.create()
+
+    # Project installation should succeed
+    env.install_project(conf, repo, commit_hash)

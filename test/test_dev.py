@@ -68,13 +68,14 @@ def basic_conf_with_subdir(tmpdir):
 def test_dev(capsys, basic_conf):
     tmpdir, local, conf = basic_conf
 
-    # Test Dev runs
-    tools.run_asv_with_conf(conf, 'dev', _machine_file=join(tmpdir, 'asv-machine.json'))
+    # Test Dev runs (with full benchmark suite)
+    tools.run_asv_with_conf(conf, 'dev',
+                            _machine_file=join(tmpdir, 'asv-machine.json'))
     text, err = capsys.readouterr()
 
     # time_with_warnings failure case
     assert re.search("File.*time_exception.*RuntimeError", text, re.S)
-    assert re.search(r"Running time_secondary.track_value\s+42.0", text)
+    assert re.search(r"time_secondary.track_value\s+42.0", text)
 
     # Check that it did not clone or install
     assert "Cloning" not in text
@@ -88,11 +89,13 @@ def test_dev_with_repo_subdir(capsys, basic_conf_with_subdir):
     tmpdir, local, conf = basic_conf_with_subdir
 
     # Test Dev runs
-    tools.run_asv_with_conf(conf, 'dev', _machine_file=join(tmpdir, 'asv-machine.json'))
+    tools.run_asv_with_conf(conf, 'dev',
+                            '--bench=time_secondary.track_value',
+                            _machine_file=join(tmpdir, 'asv-machine.json'))
     text, err = capsys.readouterr()
 
     # Benchmarks were found and run
-    assert re.search(r"Running time_secondary.track_value\s+42.0", text)
+    assert re.search(r"time_secondary.track_value\s+42.0", text)
 
     # Check that it did not clone or install
     assert "Cloning" not in text
@@ -103,11 +106,14 @@ def test_run_python_same(capsys, basic_conf):
     tmpdir, local, conf = basic_conf
 
     # Test Run runs with python=same
-    tools.run_asv_with_conf(conf, 'run', '--python=same', _machine_file=join(tmpdir, 'asv-machine.json'))
+    tools.run_asv_with_conf(conf, 'run', '--python=same',
+                            '--bench=time_secondary.TimeSecondary.time_exception',
+                            '--bench=time_secondary.track_value',
+                            _machine_file=join(tmpdir, 'asv-machine.json'))
     text, err = capsys.readouterr()
 
     assert re.search("time_exception.*failed", text, re.S)
-    assert re.search(r"Running time_secondary.track_value\s+42.0", text)
+    assert re.search(r"time_secondary.track_value\s+42.0", text)
 
     # Check that it did not clone or install
     assert "Cloning" not in text

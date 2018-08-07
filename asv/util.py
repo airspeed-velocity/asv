@@ -33,6 +33,7 @@ from .extern import minify_json
 
 
 nan = float('nan')
+inf = float('inf')
 
 WIN = (os.name == 'nt')
 
@@ -374,7 +375,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         Setting to None ignores all return codes.
 
     timeout : number, optional
-        Kill the process if it lasts longer than `timeout` seconds.
+        Kill the process if it does not produce any output in `timeout`
+        seconds. If `None`, there is no timeout.
+        Default: 10 min
 
     dots : bool, optional
         If `True` (default) write a dot to the console to show
@@ -474,7 +477,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         def watcher_run():
             while proc.returncode is None:
                 time.sleep(0.1)
-                if time.time() - start_time[0] > timeout:
+                if timeout is not None and time.time() - start_time[0] > timeout:
                     was_timeout[0] = True
                     proc.send_signal(signal.CTRL_BREAK_EVENT)
 
@@ -503,7 +506,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         is_timeout = was_timeout[0]
     else:
         try:
-            if posix:
+            if posix and is_main_thread():
                 # Forward signals related to Ctrl-Z handling; the child
                 # process is in a separate process group so it won't receive
                 # these automatically from the terminal
@@ -521,8 +524,12 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
             while proc.poll() is None:
                 try:
-                    rlist, wlist, xlist = select.select(
-                        list(fds.keys()), [], [], timeout)
+                    if timeout is None:
+                        rlist, wlist, xlist = select.select(
+                            list(fds.keys()), [], [])
+                    else:
+                        rlist, wlist, xlist = select.select(
+                            list(fds.keys()), [], [], timeout)
                 except select.error as err:
                     if err.args[0] == errno.EINTR:
                         # interrupted by signal handler; try again
@@ -543,7 +550,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                         dots()
                     last_dot_time = time.time()
         finally:
-            if posix:
+            if posix and is_main_thread():
                 # Restore signal handlers
                 signal.signal(signal.SIGTSTP, signal.SIG_DFL)
                 signal.signal(signal.SIGCONT, signal.SIG_DFL)
@@ -618,6 +625,16 @@ def _killpg_safe(pgid, signo):
             raise
 
 
+def is_main_thread():
+    """
+    Return True if the current thread is the main thread.
+    """
+    if sys.version_info[0] >= 3:
+        return threading.current_thread() == threading.main_thread()
+    else:
+        return isinstance(threading.current_thread(), threading._MainThread)
+
+
 def write_json(path, data, api_version=None):
     """
     Writes JSON to the given path, including indentation and sorting.
@@ -632,7 +649,11 @@ def write_json(path, data, api_version=None):
         data = dict(data)
         data['version'] = api_version
 
-    with long_path_open(path, 'w') as fd:
+    open_kwargs = {}
+    if sys.version_info[0] >= 3:
+        open_kwargs['encoding'] = 'utf-8'
+
+    with long_path_open(path, 'w', **open_kwargs) as fd:
         json.dump(data, fd, indent=4, sort_keys=True)
 
 
@@ -645,7 +666,11 @@ def load_json(path, api_version=None, cleanup=True):
 
     path = os.path.abspath(path)
 
-    with long_path_open(path, 'r') as fd:
+    open_kwargs = {}
+    if sys.version_info[0] >= 3:
+        open_kwargs['encoding'] = 'utf-8'
+
+    with long_path_open(path, 'r', **open_kwargs) as fd:
         content = fd.read()
 
     if cleanup:
@@ -680,7 +705,7 @@ def load_json(path, api_version=None, cleanup=True):
     return d
 
 
-def update_json(cls, path, api_version):
+def update_json(cls, path, api_version, cleanup=True):
     """
     Perform JSON file format updates.
 
@@ -699,7 +724,7 @@ def update_json(cls, path, api_version):
     # Hide traceback from expected exceptions in pytest reports
     __tracebackhide__ = operator.methodcaller('errisinstance', UserError)
 
-    d = load_json(path)
+    d = load_json(path, cleanup=cleanup)
     if 'version' not in d:
         raise UserError(
             "No version specified in {0}.".format(path))
@@ -710,8 +735,10 @@ def update_json(cls, path, api_version):
         write_json(path, d, api_version)
     elif d['version'] > api_version:
         raise UserError(
-            "version of {0} is newer than understood by this version of "
-            "asv. Upgrade asv in order to use or add to these results.")
+            "{0} is stored in a format that is newer than "
+            "what this version of asv understands. "
+            "Upgrade asv in order to use or add to "
+            "these results.".format(path))
 
 
 def iter_chunks(s, n):

@@ -11,6 +11,7 @@ import sys
 import shutil
 import pickle
 import multiprocessing
+import threading
 import traceback
 import six
 import pytest
@@ -250,3 +251,31 @@ def test_human_file_size():
         assert got == expected, item
         got = util.human_value(item[1], 'bytes', *item[2:])
         assert got == expected, item
+
+
+def test_is_main_thread():
+    if sys.version_info[0] >= 3:
+        # NB: the test itself doesn't necessarily run in main thread...
+        is_main = (threading.current_thread() == threading.main_thread())
+        assert util.is_main_thread() == is_main
+
+    results = []
+
+    def worker():
+        results.append(util.is_main_thread())
+
+    thread = threading.Thread(target=worker)
+    thread.start()
+    thread.join()
+
+    assert results == [False]
+
+
+def test_json_non_ascii(tmpdir):
+    non_ascii_data = [{'😼': '難', 'ä': 3}]
+
+    fn = os.path.join(str(tmpdir), "nonascii.json")
+    util.write_json(fn, non_ascii_data)
+    data = util.load_json(fn)
+
+    assert data == non_ascii_data

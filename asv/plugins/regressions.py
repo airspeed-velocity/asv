@@ -7,9 +7,6 @@ import os
 import re
 import itertools
 import datetime
-import multiprocessing
-import time
-import traceback
 import six
 
 from six.moves.urllib.parse import urlencode
@@ -17,7 +14,7 @@ from six.moves.urllib.parse import urlencode
 from ..results import iter_results
 from ..console import log
 from ..publishing import OutputPublisher
-from ..step_detect import detect_regressions, detect_steps
+from ..step_detect import detect_regressions
 
 from .. import util
 from .. import feed

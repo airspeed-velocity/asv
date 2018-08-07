@@ -1,9 +1,24 @@
 # -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
+"""\
+Usage: python -masv.benchmark COMMAND [...]
 
-"""
 Manage a single benchmark and, when run from the commandline, report
 its runtime to a file.
+
+commands:
+
+  timing [...]
+      Run timing benchmark for given Python statement.
+
+internal commands:
+
+  discover BENCHMARK_DIR RESULT_FILE
+      Discover benchmarks in a given directory and store result to a file.
+  setup_cache BENCHMARK_DIR BENCHMARK_ID
+      Run setup_cache for given benchmark.
+  run BENCHMARK_DIR BENCHMARK_ID QUICK PROFILE_PATH RESULT_FILE
+      Run a given benchmark, and store result in a file.
 """
 
 # !!!!!!!!!!!!!!!!!!!! NOTE !!!!!!!!!!!!!!!!!!!!
@@ -17,7 +32,9 @@ its runtime to a file.
 # sys.path[0] on start which can shadow other modules
 import sys
 if __name__ == "__main__":
-    sys.path.pop(0)
+    _old_sys_path_head = sys.path.pop(0)
+else:
+    _old_sys_path_head = None
 
 import copy
 try:
@@ -429,6 +446,7 @@ class TimeBenchmark(Benchmark):
         self.type = "time"
         self.unit = "seconds"
         self._attr_sources = attr_sources
+        self.processes = int(_get_first_attr(self._attr_sources, 'processes', 2))
         self._load_vars()
 
     def _load_vars(self):
@@ -445,12 +463,6 @@ class TimeBenchmark(Benchmark):
         return result
 
     def run(self, *param):
-        number = self.number
-        repeat = self.repeat
-
-        if repeat == 0:
-            repeat = 10
-
         warmup_time = self.warmup_time
         if warmup_time < 0:
             if '__pypy__' in sys.modules:
@@ -470,22 +482,40 @@ class TimeBenchmark(Benchmark):
             setup=self.redo_setup,
             timer=self.timer)
 
-        samples, number = self.benchmark_timing(timer, repeat, warmup_time, number=number)
+        samples, number = self.benchmark_timing(timer, self.repeat, warmup_time,
+                                                number=self.number)
 
         samples = [s/number for s in samples]
         return {'samples': samples, 'number': number}
 
-    def benchmark_timing(self, timer, repeat, warmup_time, number=0):
+    def benchmark_timing(self, timer, repeat, warmup_time, number=0,
+                         min_timeit_count=2):
         sample_time = self.sample_time
 
         start_time = time.time()
+        timeit_count = 0
 
-        max_time = start_time + min(warmup_time + 1.3 * repeat * sample_time,
-                                    self.timeout - 1.3 * sample_time)
+        if repeat == 0:
+            # automatic number of samples: 10 is large enough to
+            # estimate the median confidence interval
+            repeat = 5 if self.processes > 1 else 10
+            default_number = (number == 0)
 
-        def too_slow():
-            # too slow, don't take more samples
-            return time.time() > max_time
+            def too_slow(timing):
+                # stop taking samples if limits exceeded
+                if timeit_count < min_timeit_count:
+                    return False
+                if default_number:
+                    t = 1.3*sample_time
+                    max_time = start_time + min(warmup_time + repeat * t,
+                                                self.timeout - t)
+                else:
+                    max_time = start_time + self.timeout - 2*timing
+                return time.time() > max_time
+        else:
+            # take exactly the number of samples requested
+            def too_slow(timing):
+                return False
 
         if number == 0:
             # Select number & warmup.
@@ -500,6 +530,7 @@ class TimeBenchmark(Benchmark):
                 timing = timer.timeit(number)
                 wall_time = time.time() - start
                 actual_timing = max(wall_time, timing)
+                min_timeit_count += 1
 
                 if actual_timing >= sample_time:
                     if time.time() > start_time + warmup_time:
@@ -511,25 +542,28 @@ class TimeBenchmark(Benchmark):
                         p = 10.0
                     number = max(number + 1, int(p * number))
 
-            if too_slow():
+            if too_slow(timing):
                 return [timing], number
         elif warmup_time > 0:
             # Warmup
             while True:
                 self._redo_setup_next = False
                 timing = timer.timeit(number)
+                min_timeit_count += 1
                 if time.time() >= start_time + warmup_time:
                     break
-            if too_slow():
+
+            if too_slow(timing):
                 return [timing], number
 
         # Collect samples
         samples = []
         for j in range(repeat):
             timing = timer.timeit(number)
+            min_timeit_count += 1
             samples.append(timing)
 
-            if too_slow():
+            if too_slow(timing):
                 break
 
         return samples, number
@@ -712,7 +746,7 @@ def disc_benchmarks(root):
                     yield benchmark
 
 
-def get_benchmark_from_name(root, name, quick=False):
+def get_benchmark_from_name(root, name, extra_params=None):
     """
     Create a benchmark from a fully-qualified benchmark name.
 
@@ -775,11 +809,12 @@ def get_benchmark_from_name(root, name, quick=False):
     if param_idx is not None:
         benchmark.set_param_idx(param_idx)
 
-    if quick:
-        class QuickBenchmarkAttrs:
-            repeat = 1
-            number = 1
-        benchmark._attr_sources.insert(0, QuickBenchmarkAttrs)
+    if extra_params:
+        class ExtraBenchmarkAttrs:
+            pass
+        for key, value in extra_params.items():
+            setattr(ExtraBenchmarkAttrs, key, value)
+        benchmark._attr_sources.insert(0, ExtraBenchmarkAttrs)
 
     return benchmark
 
@@ -821,13 +856,15 @@ def main_setup_cache(args):
 
 
 def main_run(args):
-    (benchmark_dir, benchmark_id, quick, profile_path, result_file) = args
-    quick = (quick == 'True')
+    (benchmark_dir, benchmark_id, params_str, profile_path, result_file) = args
+
+    extra_params = json.loads(params_str)
+
     if profile_path == 'None':
         profile_path = None
 
     benchmark = get_benchmark_from_name(
-        benchmark_dir, benchmark_id, quick=quick)
+        benchmark_dir, benchmark_id, extra_params=extra_params)
 
     if benchmark.setup_cache_key is not None:
         with open("cache.pickle", "rb") as fd:
@@ -852,14 +889,76 @@ def main_run(args):
         json.dump(result, fp)
 
 
+def main_timing(argv):
+    import argparse
+    import asv.statistics
+    import asv.util
+    import asv.console
+
+    if (_old_sys_path_head is not None and
+        os.path.abspath(_old_sys_path_head) != os.path.abspath(os.path.dirname(__file__))):
+        sys.path.insert(0, _old_sys_path_head)
+
+    parser = argparse.ArgumentParser(usage="python -masv.benchmark timing [options] STATEMENT")
+    parser.add_argument("--setup", action="store", default=None)
+    parser.add_argument("--number", action="store", type=int, default=0)
+    parser.add_argument("--repeat", action="store", type=int, default=0)
+    parser.add_argument("--timer", action="store", choices=("process_time", "perf_counter"),
+                        default="process_time")
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("statement")
+    args = parser.parse_args(argv)
+
+    timer_func = {
+        "process_time": process_time,
+        "perf_counter": timeit.default_timer,
+    }[args.timer]
+
+    class AttrSource:
+        pass
+
+    attrs = AttrSource()
+    attrs.repeat = args.repeat
+    attrs.number = args.number
+    attrs.timer = timer_func
+
+    bench = TimeBenchmark("tmp", args.statement, [attrs])
+    bench.redo_setup = args.setup
+    result = bench.run()
+
+    value, stats = asv.statistics.compute_stats(result['samples'], result['number'])
+    formatted = asv.util.human_time(value, asv.statistics.get_err(value, stats))
+
+    if not args.json:
+        asv.console.color_print(formatted, 'red')
+        asv.console.color_print("", 'default')
+        asv.console.color_print("\n".join("{}: {}".format(k, v) for k, v in sorted(stats.items())), 'default')
+        asv.console.color_print("samples: {}".format(result['samples']), 'default')
+    else:
+        json.dump({'result': value,
+                   'samples': result['samples'],
+                   'stats': stats}, sys.stdout)
+
+
+def main_help(args):
+    print(__doc__)
+
+
 commands = {
     'discover': main_discover,
     'setup_cache': main_setup_cache,
-    'run': main_run
+    'run': main_run,
+    'timing': main_timing,
+    '-h': main_help,
+    '--help': main_help,
 }
 
 
-if __name__ == '__main__':
+def main():
+    if len(sys.argv) < 2:
+        main_help([])
+        sys.exit(1)
+
     mode = sys.argv[1]
     args = sys.argv[2:]
 
@@ -869,3 +968,6 @@ if __name__ == '__main__':
     else:
         sys.stderr.write("Unknown mode {0}\n".format(mode))
         sys.exit(1)
+
+if __name__ == '__main__':
+    main()

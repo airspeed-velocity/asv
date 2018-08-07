@@ -17,7 +17,7 @@ except ImportError as exc:
     hglib = None
 
 from ..console import log
-from ..repo import Repo
+from ..repo import Repo, NoSuchNameError
 from .. import util
 
 
@@ -135,15 +135,19 @@ class Hg(Repo):
         rev = self._repo.log(self._encode(hash))[0]
         return int(rev.date.strftime("%s")) * 1000
 
-    def get_hashes_from_range(self, range_spec):
+    def get_hashes_from_range(self, range_spec, **kwargs):
         range_spec = self._encode("sort({0}, -rev)".format(range_spec))
-        return [self._decode(rev.node) for rev in self._repo.log(range_spec,
-                                                                 followfirst=True)]
+        return [self._decode(rev.node) for rev in self._repo.log(range_spec, **kwargs)]
 
     def get_hash_from_name(self, name):
         if name is None:
             name = self.get_branch_name()
-        return self._decode(self._repo.log(self._encode(name))[0].node)
+        try:
+            return self._decode(self._repo.log(self._encode(name))[0].node)
+        except hglib.error.CommandError as err:
+            if b'unknown revision' in err.err:
+                raise NoSuchNameError(name)
+            raise
 
     def get_hash_from_parent(self, name):
         return self.get_hash_from_name('p1({0})'.format(name))
@@ -158,7 +162,8 @@ class Hg(Repo):
         return self.get_date(name)
 
     def get_branch_commits(self, branch):
-        return self.get_hashes_from_range("ancestors({0})".format(self.get_branch_name(branch)))
+        return self.get_hashes_from_range("ancestors({0})".format(self.get_branch_name(branch)),
+                                          followfirst=True)
 
     def get_revisions(self, commits):
         revisions = {}

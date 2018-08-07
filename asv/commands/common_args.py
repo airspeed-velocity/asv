@@ -34,13 +34,28 @@ def add_global_arguments(parser, suppress_defaults=True):
         **suppressor)
 
 
-def add_factor(parser):
+def add_compare(parser, only_changed_default=False, sort_default='name'):
     parser.add_argument(
         '--factor', "-f", type=float, default=1.1,
         help="""The factor above or below which a result is considered
         problematic.  For example, with a factor of 1.1 (the default
         value), if a benchmark gets 10%% slower or faster, it will
         be displayed in the results list.""")
+
+    parser.add_argument(
+        '--split', '-s', action='store_true',
+        help="""Split the output into a table of benchmarks that have
+        improved, stayed the same, and gotten worse.""")
+
+    parser.add_argument(
+        '--only-changed', action='store_true', default=only_changed_default,
+        help="""Whether to show only changed results.""")
+
+    parser.add_argument('--no-only-changed', dest='only_changed', action='store_false')
+
+    parser.add_argument(
+        '--sort', action='store', type=str, choices=('name', 'ratio'),
+        default=sort_default, help="""Sort order""")
 
 
 def add_show_stderr(parser):
@@ -49,11 +64,65 @@ def add_show_stderr(parser):
         help="""Display the stderr output from the benchmarks.""")
 
 
+class DictionaryArgAction(argparse.Action):
+    """
+    Parses multiple key=value assignments into a dictionary.
+    """
+    def __init__(self, option_strings, dest, converters=None, choices=None, **kwargs):
+        if converters is None:
+            converters = {}
+        self.converters = converters
+        self.__choices = choices
+        super(DictionaryArgAction, self).__init__(option_strings, dest, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # Parse and check value
+        try:
+            key, value = values.split("=", 1)
+        except ValueError:
+            raise argparse.ArgumentError(self,
+                                         "{!r} is not a key=value assignment".format(values))
+
+        if self.__choices is not None and key not in self.__choices:
+            raise argparse.ArgumentError(self,
+                                         "{!r} cannot be set".format(key))
+
+        conv = self.converters.get(key, None)
+        if conv is not None:
+            try:
+                value = conv(value)
+            except ValueError as exc:
+                raise argparse.ArgumentError(self,
+                                             "{!r}: {}".format(key, exc))
+
+        # Store value
+        result = getattr(namespace, self.dest, None)
+        if result is None:
+            result = {}
+        result[key] = value
+        setattr(namespace, self.dest, result)
+
+
 def add_bench(parser):
     parser.add_argument(
         "--bench", "-b", type=str, action="append",
         help="""Regular expression(s) for benchmark to run.  When not
         provided, all benchmarks are run.""")
+
+    converters = {
+        'timeout': float,
+        'version': str,
+        'warmup_time': float,
+        'repeat': int,
+        'number': int,
+        'processes': int,
+        'sample_time': float
+    }
+
+    parser.add_argument(
+        "--attribute", "-a", action=DictionaryArgAction,
+        choices=tuple(converters.keys()), converters=converters,
+        help="""Override a benchmark attribute, e.g. `-a repeat=10`.""")
 
 
 def add_machine(parser):

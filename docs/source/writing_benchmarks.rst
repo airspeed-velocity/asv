@@ -315,11 +315,17 @@ by the ``number`` and ``repeat`` attributes, as explained below.
   benchmark. If not specified, ``warmup_time`` defaults to 0.1 seconds
   (on PyPy, the default is 1.0 sec).
 
-- ``repeat``: The number measurement samples to collect. Each sample
+- ``processes``: How many processes to launch for running the benchmarks
+  (default: 2). The processes run benchmarks in an interleaved order,
+  allowing to sample over longer periods of background performance
+  variations (e.g. CPU power levels).
+
+- ``repeat``: The number measurement samples to collect per process. Each sample
   consists of running the benchmark ``number`` times.  The median
   time from all of these repetitions is used as the final measurement
-  result. When not provided, ``repeat`` defaults to 10. Setup and
-  teardown are before and after each sample.
+  result. When not provided (``repeat`` set to 0), the number of samples
+  defaults to 10 (or less if benchmark appears slow). Setup and teardown
+  are run before and after each sample.
 
 - ``number``: Manually choose the number of iterations in each sample.
   If ``number`` is specified, ``sample_time`` is ignored.
@@ -428,3 +434,17 @@ garbage collector at a given state::
 
 - ``unit``: The unit of the values returned by the benchmark.  Used
   for display in the web interface.
+
+
+Environment variables
+---------------------
+
+When ``asv`` runs benchmarks or project installation commands, the
+following environment variables are available:
+
+- ``ASV``: has the value ``true``
+- ``ASV_PROJECT``: the value specified for ``project`` in the configuration
+- ``ASV_ENV_NAME``: the long name for the active Python environment
+- ``ASV_ENV_PATH``: full path to the root of the active Python environment
+- ``ASV_ENV_TYPE``: type of the active environment (e.g. ``virtualenv`` or ``conda``)
+- ``ASV_COMMIT``: currently checked out commit in the working directory (if any)
