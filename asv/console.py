@@ -278,7 +278,9 @@ class Log(object):
         color_print('·' * self._indent, end='')
         color_print(' ', end='')
 
-        if record.levelno < logging.DEBUG:
+        if hasattr(record, 'color'):
+            color = record.color
+        elif record.levelno < logging.DEBUG:
             color = 'default'
         elif record.levelno < logging.INFO:
             color = 'default'
