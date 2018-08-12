@@ -35,6 +35,68 @@ BENCHMARK_RUN_SCRIPT = os.path.join(
 JSON_ERROR_RETCODE = -257
 
 
+BenchmarkResult = util.namedtuple_with_doc(
+    'BenchmarkResult',
+    ['result', 'samples', 'stats', 'params', 'errcode', 'stderr', 'profile',
+     'started_at', 'ended_at'],
+    """
+    Postprocessed benchmark result
+
+    Attributes
+    ----------
+    result : {list of object, None}
+        List of numeric values of the benchmarks (one for each parameter
+        combination), either returned directly or obtained from `samples` via
+        statistical analysis.
+        Values are `None` if benchmark failed or NaN if it was skipped.
+        The whole value can be None if benchmark could not be run at all.
+    samples : {list of float, None}
+        List of lists of sampled raw data points, if benchmark produces
+        those and was successful. None if no data.
+    stats : {list of dict, None}
+        List of results of statistical analysis of data.
+    params : list
+        Same as `benchmark['params']`. Empty list if non-parameterized.
+    errcode : int
+        Process exit code
+    stderr : str
+        Process stdout/stderr output
+    profile : bytes
+        If `profile` is `True` and run was at least partially successful,
+        this key will be a byte string containing the cProfile data.
+        Otherwise, None.
+    started_at : datetime.datetime
+        Benchmark start time
+    ended_at : datetime.datetime
+        Benchmark end time
+    """)
+
+
+RawBenchmarkResult = util.namedtuple_with_doc(
+    'RawBenchmarkResult',
+    ['result', 'samples', 'number', 'errcode', 'stderr', 'profile'],
+    """
+    Unprocessed benchmark result for a single run
+
+    Attributes
+    ----------
+    result : object
+        Benchmark result (None indicates failure)
+    samples : {list of float, None}
+        Benchmark measurement samples (or None,
+        if not applicable)
+    number : {int, None}
+        Compute benchmark 'number' attribute (if
+        applicable)
+    errcode : int
+        Process exit code
+    stderr : str
+        Process stdout/stderr output
+    profile : bytes
+        Profile data
+    """)
+
+
 class BenchmarkRunner(object):
     """
     Control and plan running of a set of benchmarks.
@@ -223,12 +285,12 @@ class BenchmarkRunner(object):
         if job.partial:
             return
 
-        if job.result['result'] is None:
+        if job.result.result is None:
             total_count = 1
             failure_count = 1
         else:
-            total_count = len(job.result['result'])
-            failure_count = sum(r is None for r in job.result['result'])
+            total_count = len(job.result.result)
+            failure_count = sum(r is None for r in job.result.result)
 
         # Display status
         if failure_count > 0:
@@ -245,29 +307,29 @@ class BenchmarkRunner(object):
                 log.add_padded("ok")
 
             display_result = [(v, statistics.get_err(v, s) if s is not None else None)
-                              for v, s in zip(job.result['result'], job.result['stats'])]
+                              for v, s in zip(job.result.result, job.result.stats)]
             display = _format_benchmark_result(display_result, job.benchmark)
             display = "\n".join(display).strip()
             log.info(display, color='default')
         else:
             if failure_count == 0:
                 # Failure already shown above
-                if not job.result['result']:
+                if not job.result.result:
                     display = "[]"
                 else:
-                    if job.result['stats'][0]:
-                        err = statistics.get_err(job.result['result'][0], job.result['stats'][0])
+                    if job.result.stats[0]:
+                        err = statistics.get_err(job.result.result[0], job.result.stats[0])
                     else:
                         err = None
-                    display = util.human_value(job.result['result'][0], job.benchmark['unit'], err=err)
-                    if len(job.result['result']) > 1:
+                    display = util.human_value(job.result.result[0], job.benchmark['unit'], err=err)
+                    if len(job.result.result) > 1:
                         display += ";..."
                 log.add_padded(display)
 
         # Dump program output
-        if self.show_stderr and job.result.get('stderr'):
+        if self.show_stderr and job.result.stderr:
             with log.indent():
-                log.error(job.result['stderr'])
+                log.error(job.result.stderr)
 
 
 class LaunchBenchmarkJob(object):
@@ -276,31 +338,9 @@ class LaunchBenchmarkJob(object):
 
     Attributes
     ----------
-    result : dict
-        Present after completing the job (successfully or unsuccessfully).
-        A dictionary with the following keys:
+    result : {BenchmarkResult, None}
+        Job result (None if job was not yet run).
 
-        - `result`: List of numeric values of the benchmarks (one for each parameter
-          combination), either returned directly or obtained from `samples` via 
-          statistical analysis.
-
-          Values are `None` if benchmark failed or NaN if it was skipped.
-
-          If benchmark is not parameterized, the list contains a single number.
-
-        - `params`: Same as `benchmark['params']`. Empty list if non-parameterized.
-
-        - `samples`: List of lists of sampled raw data points, if benchmark produces
-          those and was successful.
-
-        - `stats`: List of results of statistical analysis of data.
-
-        - `profile`: If `profile` is `True` and run was at least partially successful, 
-          this key will be a byte string containing the cProfile data. Otherwise, None.
-
-        - `stderr`: Output produced.
-
-        - `errcode`: Error return code.
     """
 
     def __init__(self, name, benchmark, benchmark_dir, profile=False, extra_params=None,
@@ -360,7 +400,7 @@ class LaunchBenchmarkJob(object):
                     errcode=self.cache_job.errcode)
             return
 
-        if self.prev_job is not None and self.prev_job.result['result'] is None:
+        if self.prev_job is not None and self.prev_job.result.result is None:
             # Previous job in a multi-process benchmark failed, so skip this job
             self.result = self.prev_job.result
             return
@@ -370,10 +410,14 @@ class LaunchBenchmarkJob(object):
         else:
             cache_dir = None
 
-        result = {}
-        result['started_at'] = datetime.datetime.utcnow()
+        started_at = datetime.datetime.utcnow()
 
-        bench_results = []
+        result = []
+        samples = []
+        stats = []
+        profiles = []
+        stderr = ''
+        errcode = 0
 
         if self.benchmark['params']:
             param_iter = enumerate(itertools.product(*self.benchmark['params']))
@@ -385,18 +429,19 @@ class LaunchBenchmarkJob(object):
                     self.benchmark['params'] and
                     param_idx not in self.selected_idx):
                 # Use NaN to mark the result as skipped
-                bench_results.append(dict(result=util.nan, samples=None,
-                                          stats=None, stderr='', errcode=0,
-                                          profile=None))
+                result.append(util.nan)
+                samples.append(None)
+                stats.append(None)
+                profiles.append(None)
                 continue
 
             cur_extra_params = dict(self.extra_params)
 
             if self.prev_job:
-                prev_stats = self.prev_job.result['stats'][param_idx]
+                prev_stats = self.prev_job.result.stats[param_idx]
                 if prev_stats is not None:
                     cur_extra_params['number'] = prev_stats['number']
-                prev_samples = self.prev_job.result['samples'][param_idx]
+                prev_samples = self.prev_job.result.samples[param_idx]
             else:
                 prev_samples = None
 
@@ -405,47 +450,40 @@ class LaunchBenchmarkJob(object):
                 extra_params=cur_extra_params, profile=self.profile,
                 cwd=cache_dir)
 
-            if res['samples']:
+            if res.samples is not None:
                 # Compute statistics
-                samples, number = res['samples']
                 if prev_samples is not None:
-                    samples = prev_samples + samples
-                res['result'], res['stats'] = statistics.compute_stats(samples, number)
-                res['samples'] = samples
+                    cur_samples = prev_samples + res.samples
+                else:
+                    cur_samples = res.samples
+                r, s = statistics.compute_stats(cur_samples, res.number)
+                result.append(r)
+                stats.append(s)
             else:
-                res['stats'] = None
+                result.append(res.result)
+                stats.append(None)
 
-            bench_results.append(res)
+            samples.append(res.samples)
+            profiles.append(res.profile)
 
-        # Produce result
-        for key in ['result', 'samples', 'stats']:
-            result[key] = [x[key] for x in bench_results]
-
-        stderr = ''
-        for item in bench_results:
-            if item['stderr']:
+            if res.stderr:
                 stderr += "\n\n"
-                stderr += item['stderr']
-        result['stderr'] = stderr.strip()
+                stderr += res.stderr
 
-        if self.benchmark['params']:
-            result['params'] = self.benchmark['params']
-        else:
-            result['params'] = []
+            if res.errcode != 0:
+                errcode = res.errcode
 
-        result['errcode'] = 0
-        for item in bench_results:
-            if item['errcode'] != 0:
-                result['errcode'] = item['errcode']
-
-        # Combine profile data
-        profile_data = _combine_profile_data([x['profile'] for x in bench_results])
-        if profile_data is not None:
-            result['profile'] = profile_data
-
-        result['ended_at'] = datetime.datetime.utcnow()
-
-        self.result = result
+        self.result = BenchmarkResult(
+            result=result,
+            samples=samples,
+            stats=stats,
+            params=self.benchmark['params'] if self.benchmark['params'] else [],
+            errcode=errcode,
+            stderr=stderr.strip(),
+            profile=_combine_profile_data(profiles),
+            started_at=started_at,
+            ended_at=datetime.datetime.utcnow()
+        )
 
 
 class SetupCacheJob(object):
@@ -526,14 +564,15 @@ def get_failed_benchmark_result(name, benchmark, selected_idx=None,
     else:
         result = None
 
-    return {'result': result,
-            'samples': None,
-            'stats': None,
-            'params': benchmark['params'],
-            'errcode': errcode,
-            'stderr': stderr,
-            'started_at': timestamp,
-            'ended_at': timestamp}
+    return BenchmarkResult(result=result,
+                           samples=None,
+                           stats=None,
+                           params=benchmark['params'],
+                           errcode=errcode,
+                           stderr=stderr,
+                           profile=None,
+                           started_at=timestamp,
+                           ended_at=timestamp)
 
 
 def run_benchmark_single(benchmark, benchmark_dir, env, param_idx, profile, extra_params, cwd):
@@ -561,31 +600,8 @@ def run_benchmark_single(benchmark, benchmark_dir, env, param_idx, profile, extr
 
     Returns
     -------
-    result : dict
-        Result data. Dictionary with keys
-
-        result : object
-            Benchmark result (None indicates failure)
-        samples : {([sample, ...], number), None}
-            Benchmark measurement samples (or None,
-            if not applicable)
-        errcode : int
-            Process exit code
-        stderr : str
-            Process stdout/stderr output
-        profile : bytes
-            Profile data
-
-    success : bool
-        Whether test was successful
-    data
-        If success, the parsed JSON data. If failure, unparsed json data.
-    profile_data
-        Collected profiler data
-    out
-        Process output
-    errcode
-        Process return value
+    result : RawBenchmarkResult
+        Result data.
 
     """
     name = benchmark['name']
@@ -616,15 +632,13 @@ def run_benchmark_single(benchmark, benchmark_dir, env, param_idx, profile, extr
             display_error=False, return_stderr=True, redirect_stderr=True,
             valid_return_codes=None, cwd=real_cwd)
 
-        result = {}
-        result['errcode'] = errcode
-
         if errcode != 0:
             if errcode == util.TIMEOUT_RETCODE:
                 out += "\n\nasv: benchmark timed out (timeout {0}s)\n".format(benchmark['timeout'])
 
-            result['result'] = None
-            result['samples'] = None
+            result = None
+            samples = None
+            number = None
         else:
             with open(result_file.name, 'r') as stream:
                 data = stream.read()
@@ -633,34 +647,39 @@ def run_benchmark_single(benchmark, benchmark_dir, env, param_idx, profile, extr
                 data = json.loads(data)
             except ValueError as exc:
                 data = None
-                result['errcode'] = JSON_ERROR_RETCODE
+                errcode = JSON_ERROR_RETCODE
                 out += "\n\nasv: failed to parse benchmark result: {0}\n".format(exc)
 
             # Special parsing for timing benchmark results
             if isinstance(data, dict) and 'samples' in data and 'number' in data:
-                result['result'] = None
-                result['samples'] = (data['samples'], data['number'])
+                result = None
+                samples = data['samples']
+                number = data['number']
             else:
-                result['result'] = data
-                result['samples'] = None
-
-        out = out.strip()
+                result = data
+                samples = None
+                number = None
 
         if benchmark['params'] and out:
             params, = itertools.islice(itertools.product(*benchmark['params']),
                                        param_idx, param_idx + 1)
             out = "For parameters: {0}\n{1}".format(", ".join(params), out)
 
-        result['stderr'] = out
-
         if profile:
             with io.open(profile_path, 'rb') as profile_fd:
                 profile_data = profile_fd.read()
-            result['profile'] = profile_data if profile_data else None
+            profile_data = profile_data if profile_data else None
         else:
-            result['profile'] = None
+            profile_data = None
 
-        return result
+        return RawBenchmarkResult(
+            result=result,
+            samples=samples,
+            number=number,
+            errcode=errcode,
+            stderr=out.strip(),
+            profile=profile_data)
+
     finally:
         os.remove(result_file.name)
         if profile:

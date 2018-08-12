@@ -11,7 +11,7 @@ from os.path import join
 
 import six
 
-from asv import results, util
+from asv import results, runner, util
 import pytest
 
 
@@ -46,9 +46,13 @@ def test_results(tmpdir):
 
         for key, val in values.items():
             val = dict(val)
-            val['started_at'] = timestamp1
-            val['ended_at'] = timestamp2
-            r.add_result(key, val, val.pop("version"))
+            version = val.pop('version')
+            val = runner.BenchmarkResult(started_at=timestamp1,
+                                         ended_at=timestamp2,
+                                         errcode=0,
+                                         stderr='',
+                                         **val)
+            r.add_result(key, val, version, record_samples=True)
 
         # Save / add_existing_results roundtrip
         r.save(resultsdir)
@@ -143,14 +147,17 @@ def test_json_timestamp(tmpdir):
 
     r = results.Results({'machine': 'mach'}, {}, 'aaaa', util.datetime_to_timestamp(stamp0),
                         'py', 'env')
-    value = {
-        'result': [42],
-        'params': [],
-        'stats': None,
-        'samples': None,
-        'started_at': stamp1,
-        'ended_at': stamp2
-    }
+    value = runner.BenchmarkResult(
+        result=[42],
+        params=[],
+        stats=None,
+        samples=None,
+        started_at=stamp1,
+        ended_at=stamp2,
+        profile=None,
+        errcode=0,
+        stderr=''
+    )
     r.add_result('some_benchmark', value, "some version")
     r.save(tmpdir)
 

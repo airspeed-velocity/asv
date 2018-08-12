@@ -24,6 +24,7 @@ import threading
 import shutil
 import stat
 import operator
+import collections
 
 import six
 from six.moves import xrange
@@ -1101,3 +1102,12 @@ def sanitize_filename(filename):
         filename = filename + "_"
 
     return filename
+
+
+def namedtuple_with_doc(name, slots, doc):
+    cls = collections.namedtuple(name, slots)
+    if sys.version_info[0] >= 3:
+        cls.__doc__ = doc
+        return cls
+    else:
+        return type(name, (cls,), {'__doc__': doc})

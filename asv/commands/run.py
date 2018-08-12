@@ -308,10 +308,8 @@ class Run(Command):
                             env.name)
 
                         for benchmark_name, d in six.iteritems(results):
-                            if not record_samples:
-                                d['samples'] = None
-
                             benchmark_version = benchmarks[benchmark_name]['version']
-                            result.add_result(benchmark_name, d, benchmark_version)
+                            result.add_result(benchmark_name, d, benchmark_version,
+                                              record_samples=record_samples)
 
                         result.update_save(conf.results_dir)

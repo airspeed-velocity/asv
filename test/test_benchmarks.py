@@ -114,81 +114,79 @@ def test_find_benchmarks(tmpdir):
 
     assert len(times) == len(b)
     assert times[
-        'time_examples.TimeSuite.time_example_benchmark_1']['result'] != [None]
-    assert isinstance(times['time_examples.TimeSuite.time_example_benchmark_1']['stats'][0]['std'], float)
+        'time_examples.TimeSuite.time_example_benchmark_1'].result != [None]
+    assert isinstance(times['time_examples.TimeSuite.time_example_benchmark_1'].stats[0]['std'], float)
     # The exact number of samples may vary if the calibration is not fully accurate
-    assert len(times['time_examples.TimeSuite.time_example_benchmark_1']['samples'][0]) >= 4
+    assert len(times['time_examples.TimeSuite.time_example_benchmark_1'].samples[0]) >= 4
     # Benchmarks that raise exceptions should have a time of "None"
     assert times[
-        'time_secondary.TimeSecondary.time_exception']['result'] == [None]
+        'time_secondary.TimeSecondary.time_exception'].result == [None]
     assert times[
-        'subdir.time_subdir.time_foo']['result'] != [None]
+        'subdir.time_subdir.time_foo'].result != [None]
     if not ON_PYPY:
         # XXX: the memory benchmarks don't work on Pypy, since asizeof
         # is CPython-only
         assert times[
-            'mem_examples.mem_list']['result'][0] > 1000
+            'mem_examples.mem_list'].result[0] > 1000
     assert times[
-        'time_secondary.track_value']['result'] == [42.0]
-    assert 'profile' in times[
-        'time_secondary.track_value']
-    assert 'stderr' in times[
-        'time_examples.time_with_warnings']
-    assert times['time_examples.time_with_warnings']['errcode'] != 0
+        'time_secondary.track_value'].result == [42.0]
+    assert times['time_secondary.track_value'].profile is not None
+    assert isinstance(times['time_examples.time_with_warnings'].stderr, str)
+    assert times['time_examples.time_with_warnings'].errcode != 0
 
-    assert times['time_examples.TimeWithBadTimer.time_it']['result'] == [0.0]
+    assert times['time_examples.TimeWithBadTimer.time_it'].result == [0.0]
 
-    assert times['params_examples.track_param']['params'] == [["<class 'benchmark.params_examples.ClassOne'>",
+    assert times['params_examples.track_param'].params == [["<class 'benchmark.params_examples.ClassOne'>",
                                                                "<class 'benchmark.params_examples.ClassTwo'>"]]
-    assert times['params_examples.track_param']['result'] == [42, 42]
+    assert times['params_examples.track_param'].result == [42, 42]
 
-    assert times['params_examples.mem_param']['params'] == [['10', '20'], ['2', '3']]
-    assert len(times['params_examples.mem_param']['result']) == 2*2
+    assert times['params_examples.mem_param'].params == [['10', '20'], ['2', '3']]
+    assert len(times['params_examples.mem_param'].result) == 2*2
 
-    assert times['params_examples.ParamSuite.track_value']['params'] == [["'a'", "'b'", "'c'"]]
-    assert times['params_examples.ParamSuite.track_value']['result'] == [1+0, 2+0, 3+0]
+    assert times['params_examples.ParamSuite.track_value'].params == [["'a'", "'b'", "'c'"]]
+    assert times['params_examples.ParamSuite.track_value'].result == [1+0, 2+0, 3+0]
 
-    assert isinstance(times['params_examples.TuningTest.time_it']['result'][0], float)
-    assert isinstance(times['params_examples.TuningTest.time_it']['result'][1], float)
+    assert isinstance(times['params_examples.TuningTest.time_it'].result[0], float)
+    assert isinstance(times['params_examples.TuningTest.time_it'].result[1], float)
 
-    assert isinstance(times['params_examples.time_skip']['result'][0], float)
-    assert isinstance(times['params_examples.time_skip']['result'][1], float)
-    assert util.is_nan(times['params_examples.time_skip']['result'][2])
+    assert isinstance(times['params_examples.time_skip'].result[0], float)
+    assert isinstance(times['params_examples.time_skip'].result[1], float)
+    assert util.is_nan(times['params_examples.time_skip'].result[2])
 
-    assert times['peakmem_examples.peakmem_list']['result'][0] >= 4 * 2**20
+    assert times['peakmem_examples.peakmem_list'].result[0] >= 4 * 2**20
 
-    assert times['cache_examples.ClassLevelSetup.track_example']['result'] == [500]
-    assert times['cache_examples.ClassLevelSetup.track_example2']['result'] == [500]
+    assert times['cache_examples.ClassLevelSetup.track_example'].result == [500]
+    assert times['cache_examples.ClassLevelSetup.track_example2'].result == [500]
 
-    assert times['cache_examples.track_cache_foo']['result'] == [42]
-    assert times['cache_examples.track_cache_bar']['result'] == [12]
-    assert times['cache_examples.track_my_cache_foo']['result'] == [0]
+    assert times['cache_examples.track_cache_foo'].result == [42]
+    assert times['cache_examples.track_cache_bar'].result == [12]
+    assert times['cache_examples.track_my_cache_foo'].result == [0]
 
-    assert times['cache_examples.ClassLevelSetupFail.track_fail']['result'] == None
-    assert 'raise RuntimeError()' in times['cache_examples.ClassLevelSetupFail.track_fail']['stderr']
+    assert times['cache_examples.ClassLevelSetupFail.track_fail'].result == None
+    assert 'raise RuntimeError()' in times['cache_examples.ClassLevelSetupFail.track_fail'].stderr
 
-    assert times['cache_examples.ClassLevelCacheTimeout.track_fail']['result'] == None
-    assert times['cache_examples.ClassLevelCacheTimeoutSuccess.track_success']['result'] == [0]
+    assert times['cache_examples.ClassLevelCacheTimeout.track_fail'].result == None
+    assert times['cache_examples.ClassLevelCacheTimeoutSuccess.track_success'].result == [0]
 
     profile_path = join(tmpdir, 'test.profile')
     with open(profile_path, 'wb') as fd:
-        fd.write(times['time_secondary.track_value']['profile'])
+        fd.write(times['time_secondary.track_value'].profile)
     pstats.Stats(profile_path)
 
     # Check for running setup on each repeat (one extra run from profile)
     # The output would contain error messages if the asserts in the benchmark fail.
     expected = ["<%d>" % j for j in range(1, 12)]
-    assert times['time_examples.TimeWithRepeat.time_it']['stderr'].split() == expected
+    assert times['time_examples.TimeWithRepeat.time_it'].stderr.split() == expected
 
     # Calibration of iterations should not rerun setup
     expected = (['setup']*2, ['setup']*3)
-    assert times['time_examples.TimeWithRepeatCalibrate.time_it']['stderr'].split() in expected
+    assert times['time_examples.TimeWithRepeatCalibrate.time_it'].stderr.split() in expected
 
     # Check run time timestamps
     for name, result in times.items():
-        assert result['started_at'] >= start_timestamp
-        assert result['ended_at'] >= result['started_at']
-        assert result['ended_at'] <= end_timestamp
+        assert result.started_at >= start_timestamp
+        assert result.ended_at >= result.started_at
+        assert result.ended_at <= end_timestamp
 
 
 def test_invalid_benchmark_tree(tmpdir):
@@ -326,7 +324,7 @@ def test_quick(tmpdir):
     # Check that the benchmark was run only once. The result for quick==False
     # is tested above in test_find_benchmarks
     expected = ["<1>"]
-    assert times['time_examples.TimeWithRepeat.time_it']['stderr'].split() == expected
+    assert times['time_examples.TimeWithRepeat.time_it'].stderr.split() == expected
 
 
 def test_code_extraction(tmpdir):
@@ -420,6 +418,6 @@ def test_skip_param_selection():
     b = benchmarks.Benchmarks(conf, d, [r'test_nonparam', r'test_param\([23]\)'])
     result = b.skip_benchmarks(DummyEnv())
 
-    assert result['test_nonparam']['result'] == None
-    assert util.is_nan(result['test_param']['result'][0])
-    assert result['test_param']['result'][1:] == [None, None]
+    assert result['test_nonparam'].result == None
+    assert util.is_nan(result['test_param'].result[0])
+    assert result['test_param'].result[1:] == [None, None]
