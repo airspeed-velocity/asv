@@ -476,10 +476,11 @@ class LaunchBenchmarkJob(object):
                 result.append(r)
                 stats.append(s)
             else:
+                cur_samples = res.samples
                 result.append(res.result)
                 stats.append(None)
 
-            samples.append(res.samples)
+            samples.append(cur_samples)
             profiles.append(res.profile)
 
             if res.stderr:
