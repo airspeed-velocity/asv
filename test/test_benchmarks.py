@@ -400,3 +400,26 @@ def test_asv_benchmark_timings():
     util.check_call([sys.executable, '-masv.benchmark', 'timing',
                      '--setup=import time',
                      'time.sleep(0)'])
+
+
+def test_skip_param_selection():
+    d = {'repo': 'foo'}
+    d.update(ASV_CONF_JSON)
+    conf = config.Config.from_json(d)
+
+    class DummyEnv(object):
+        name = 'env'
+
+    d = [
+        {'name': 'test_nonparam', 'params': []},
+        {'name': 'test_param',
+         'params': [['1', '2', '3']],
+         'param_names': ['n']}
+    ]
+
+    b = benchmarks.Benchmarks(conf, d, [r'test_nonparam', r'test_param\([23]\)'])
+    result = b.skip_benchmarks(DummyEnv())
+
+    assert result['test_nonparam']['result'] == None
+    assert util.is_nan(result['test_param']['result'][0])
+    assert result['test_param']['result'][1:] == [None, None]

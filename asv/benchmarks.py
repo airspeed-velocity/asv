@@ -344,14 +344,10 @@ class Benchmarks(dict):
         log.warn("Skipping {0}".format(env.name))
         with log.indent():
             times = {}
-            for name in self:
+            for name, benchmark in six.iteritems(self):
                 log.step()
                 log.warn('Benchmark {0} skipped'.format(name))
-                timestamp = datetime.datetime.utcnow()
-                times[name] = {'result': None,
-                               'samples': None,
-                               'stats': None,
-                               'params': [],
-                               'started_at': timestamp,
-                               'ended_at': timestamp}
+                times[name] = runner.get_failed_benchmark_result(
+                    name, benchmark, self._benchmark_selection.get(name))
+
         return times

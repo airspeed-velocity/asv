@@ -216,8 +216,12 @@ class BenchmarkRunner(object):
         if job.partial:
             return
 
-        total_count = len(job.result['result'])
-        failure_count = sum(r is None for r in job.result['result'])
+        if job.result['result'] is None:
+            total_count = 1
+            failure_count = 1
+        else:
+            total_count = len(job.result['result'])
+            failure_count = sum(r is None for r in job.result['result'])
 
         # Display status
         if failure_count > 0:
@@ -343,14 +347,10 @@ class LaunchBenchmarkJob(object):
     def run(self, env):
         if self.cache_job is not None and self.cache_job.cache_dir is None:
             # Our setup_cache failed, so skip this job
-            timestamp = datetime.datetime.utcnow()
-            self.result = {'result': None,
-                           'samples': None,
-                           'stats': None,
-                           'params': [],
-                           'stderr': self.cache_job.stderr,
-                           'started_at': timestamp,
-                           'ended_at': timestamp}
+            self.result = get_failed_benchmark_result(
+                    self.name, self.benchmark, self.selected_idx,
+                    stderr=self.cache_job.stderr,
+                    errcode=self.cache_job.errcode)
             return
 
         if self.prev_job is not None and self.prev_job.result['result'] is None:
@@ -477,6 +477,8 @@ class SetupCacheJob(object):
             redirect_stderr=True,
             cwd=cache_dir, timeout=self.timeout)
 
+        self.errcode = errcode
+
         if errcode == 0:
             self.stderr = None
             self.cache_dir = cache_dir
@@ -503,6 +505,28 @@ class SetupCacheCleanupJob(object):
 
     def run(self, env):
         self.cache_job.clean()
+
+
+def get_failed_benchmark_result(name, benchmark, selected_idx=None,
+                                stderr='', errcode=1):
+    timestamp = datetime.datetime.utcnow()
+
+    if benchmark['params'] and selected_idx is not None:
+        # Mark only selected parameter combinations skipped
+        params = itertools.product(*benchmark['params'])
+        result = [None if idx in selected_idx else util.nan
+                  for idx, _ in enumerate(params)]
+    else:
+        result = None
+
+    return {'result': result,
+            'samples': None,
+            'stats': None,
+            'params': benchmark['params'],
+            'errcode': errcode,
+            'stderr': stderr,
+            'started_at': timestamp,
+            'ended_at': timestamp}
 
 
 def run_benchmark_single(benchmark, benchmark_dir, env, param_idx, profile, extra_params, cwd):
