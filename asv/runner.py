@@ -402,7 +402,7 @@ class LaunchBenchmarkJob(object):
                 cwd = self.cache_job.cache_dir
 
             try:
-                success, data, profile_data, err, out, errcode = \
+                success, data, profile_data, out, errcode = \
                     run_benchmark_single(
                         self.benchmark, self.benchmark_dir, env, param_idx,
                         extra_params=extra_params, profile=self.profile,
@@ -438,25 +438,23 @@ class LaunchBenchmarkJob(object):
                 if data is not None:
                     self.bad_output = data
 
-            err = err.strip()
             out = out.strip()
 
             if errcode:
                 if errcode == util.TIMEOUT_RETCODE:
-                    if err:
-                        err += "\n\n"
-                    err += "asv: benchmark timed out (timeout {0}s)\n".format(self.benchmark['timeout'])
+                    if out:
+                        out += "\n\n"
+                    out += "asv: benchmark timed out (timeout {0}s)\n".format(self.benchmark['timeout'])
                 result['errcode'] = errcode
 
-            if err or out:
-                err += out
+            if out:
                 if self.benchmark['params']:
                     head_msg = "\n\nFor parameters: %s\n" % (", ".join(params),)
                 else:
                     head_msg = ''
 
                 result['stderr'] += head_msg
-                result['stderr'] += err
+                result['stderr'] += out
 
         # Produce result
         for key in ['samples', 'result', 'stats']:
@@ -513,13 +511,14 @@ class SetupCacheJob(object):
              self.benchmark_id],
             dots=False, display_error=False,
             return_stderr=True, valid_return_codes=None,
+            redirect_stderr=True,
             cwd=cache_dir, timeout=self.timeout)
 
         if errcode == 0:
             self.stderr = None
             self.cache_dir = cache_dir
         else:
-            self.stderr = err
+            self.stderr = out
             self.clean()
 
     def clean(self):
@@ -556,10 +555,8 @@ def run_benchmark_single(benchmark, root, env, param_idx, profile, extra_params,
         If success, the parsed JSON data. If failure, unparsed json data.
     profile_data
         Collected profiler data
-    err
-        Stderr content
     out
-        Stdout content
+        Stdout/stderr content
     errcode
         Process return value
 
@@ -586,6 +583,7 @@ def run_benchmark_single(benchmark, root, env, param_idx, profile, extra_params,
              name, params_str, profile_path, result_file.name],
             dots=False, timeout=benchmark['timeout'],
             display_error=False, return_stderr=True,
+            redirect_stderr=True,
             valid_return_codes=None, cwd=cwd)
 
         if errcode:
@@ -608,7 +606,7 @@ def run_benchmark_single(benchmark, root, env, param_idx, profile, extra_params,
         else:
             profile_data = None
 
-        return success, parsed, profile_data, err, out, errcode
+        return success, parsed, profile_data, out, errcode
     finally:
         os.remove(result_file.name)
         if profile:
