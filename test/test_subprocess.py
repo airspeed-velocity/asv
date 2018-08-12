@@ -132,6 +132,21 @@ def test_no_timeout():
     assert retcode == 0
 
 
+def test_stderr_redirect():
+    # Check redirecting stderr to stdout works
+    code = ("import sys;"
+            "sys.stdout.write('OUT\\n');"
+            "sys.stdout.flush();"
+            "sys.stderr.write('ERR\\n')")
+    out = util.check_output([sys.executable, "-c", code], redirect_stderr=True)
+    assert out.splitlines() == ['OUT', 'ERR']
+    out, err, retcode = util.check_output([sys.executable, "-c", code],
+                                          return_stderr=True, redirect_stderr=True)
+    assert out.splitlines() == ['OUT', 'ERR']
+    assert err == ''
+    assert retcode == 0
+
+
 # This *does* seem to work, only seems untestable somehow...
 # def test_dots(capsys):
 #     code = r"""

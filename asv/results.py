@@ -381,7 +381,8 @@ class Results(object):
         # Remove version (may be missing)
         self._benchmark_version.pop(key, None)
 
-    def add_result(self, benchmark_name, result, benchmark_version):
+    def add_result(self, benchmark_name, result, benchmark_version,
+                   record_samples=False):
         """
         Add benchmark result.
 
@@ -390,21 +391,23 @@ class Results(object):
         benchmark_name : str
             Name of benchmark
 
-        result : dict
-            Result of the benchmark, as returned by `benchmarks.run_benchmark`.
+        result : runner.BenchmarkResult
+            Result of the benchmark.
 
         """
-        self._results[benchmark_name] = result['result']
-        self._samples[benchmark_name] = result['samples']
-        self._stats[benchmark_name] = result['stats']
-        self._benchmark_params[benchmark_name] = result['params']
-        self._started_at[benchmark_name] = util.datetime_to_js_timestamp(result['started_at'])
-        self._ended_at[benchmark_name] = util.datetime_to_js_timestamp(result['ended_at'])
+        self._results[benchmark_name] = result.result
+        if record_samples:
+            self._samples[benchmark_name] = result.samples
+        else:
+            self._samples[benchmark_name] = None
+        self._stats[benchmark_name] = result.stats
+        self._benchmark_params[benchmark_name] = result.params
+        self._started_at[benchmark_name] = util.datetime_to_js_timestamp(result.started_at)
+        self._ended_at[benchmark_name] = util.datetime_to_js_timestamp(result.ended_at)
         self._benchmark_version[benchmark_name] = benchmark_version
 
-        if 'profile' in result and result['profile']:
-            profile_data = base64.b64encode(
-                zlib.compress(result['profile']))
+        if result.profile:
+            profile_data = base64.b64encode(zlib.compress(result.profile))
             if sys.version_info[0] >= 3:
                 profile_data = profile_data.decode('ascii')
             self._profiles[benchmark_name] = profile_data

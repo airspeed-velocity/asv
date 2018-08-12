@@ -123,7 +123,7 @@ class Find(Command):
             env.install_project(conf, repo, commit_hash)
             x = benchmarks.run_benchmarks(
                 env, show_stderr=show_stderr)
-            result = list(x.values())[0]['result']
+            result = list(x.values())[0].result
 
             results[i] = result
 

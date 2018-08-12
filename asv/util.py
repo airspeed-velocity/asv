@@ -24,11 +24,11 @@ import threading
 import shutil
 import stat
 import operator
+import collections
 
 import six
 from six.moves import xrange
 
-from .console import log
 from .extern import minify_json
 
 
@@ -363,7 +363,7 @@ def check_call(args, valid_return_codes=(0,), timeout=600, dots=True,
 
 def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                  display_error=True, shell=False, return_stderr=False,
-                 env=None, cwd=None):
+                 env=None, cwd=None, redirect_stderr=False):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.  Returns stdout as a string on success.
@@ -403,7 +403,18 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
     cwd : str, optional
         Specify the current working directory to use when running the
         process.
+
+    redirect_stderr : bool, optional
+        Whether to redirect stderr to stdout. In this case the returned
+        ``stderr`` (when return_stderr == True) is an empty string.
+
+    Returns
+    -------
+    stdout, stderr, retcode : when return_stderr == True
+    stdout : otherwise
     """
+    from .console import log
+
     # Hide traceback from expected exceptions in pytest reports
     __tracebackhide__ = operator.methodcaller('errisinstance', ProcessError)
 
@@ -411,13 +422,18 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         content = []
         if header is not None:
             content.append(header)
-        content.extend([
-            'STDOUT -------->',
-            stdout[:-1],
-            'STDERR -------->',
-            stderr[:-1]
-        ])
-
+        if redirect_stderr:
+            content.extend([
+                'OUTPUT -------->',
+                stdout[:-1]
+            ])
+        else:
+            content.extend([
+                'STDOUT -------->',
+                stdout[:-1],
+                'STDERR -------->',
+                stderr[:-1]
+            ])
         return '\n'.join(content)
 
     if isinstance(args, six.string_types):
@@ -433,6 +449,8 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     kwargs = dict(shell=shell, env=env, cwd=cwd,
                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if redirect_stderr:
+        kwargs['stderr'] = subprocess.STDOUT
     if WIN:
         kwargs['close_fds'] = False
         kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
@@ -487,8 +505,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         stdout_reader = threading.Thread(target=stdout_reader_run)
         stdout_reader.start()
 
-        stderr_reader = threading.Thread(target=stderr_reader_run)
-        stderr_reader.start()
+        if not redirect_stderr:
+            stderr_reader = threading.Thread(target=stderr_reader_run)
+            stderr_reader.start()
 
         try:
             proc.wait()
@@ -497,11 +516,13 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                 proc.terminate()
                 proc.wait()
             watcher.join()
-            stderr_reader.join()
+            if not redirect_stderr:
+                stderr_reader.join()
             stdout_reader.join()
 
             proc.stdout.close()
-            proc.stderr.close()
+            if not redirect_stderr:
+                proc.stderr.close()
 
         is_timeout = was_timeout[0]
     else:
@@ -518,9 +539,10 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                 signal.signal(signal.SIGCONT, sig_forward)
 
             fds = {
-                proc.stdout.fileno(): stdout_chunks,
-                proc.stderr.fileno(): stderr_chunks
+                proc.stdout.fileno(): stdout_chunks
                 }
+            if not redirect_stderr:
+                fds[proc.stderr.fileno()] = stderr_chunks
 
             while proc.poll() is None:
                 try:
@@ -574,13 +596,16 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                 proc.wait()
 
         proc.stdout.flush()
-        proc.stderr.flush()
+        if not redirect_stderr:
+            proc.stderr.flush()
 
         stdout_chunks.append(proc.stdout.read())
-        stderr_chunks.append(proc.stderr.read())
+        if not redirect_stderr:
+            stderr_chunks.append(proc.stderr.read())
 
         proc.stdout.close()
-        proc.stderr.close()
+        if not redirect_stderr:
+            proc.stderr.close()
 
     stdout = b''.join(stdout_chunks)
     stderr = b''.join(stderr_chunks)
@@ -1011,6 +1036,11 @@ def geom_mean_na(values):
         return None
 
 
+def ceildiv(numerator, denominator):
+    """Ceiling division"""
+    return -((-numerator)//denominator)
+
+
 if not WIN:
     long_path_open = open
     long_path_rmtree = shutil.rmtree
@@ -1073,3 +1103,12 @@ def sanitize_filename(filename):
         filename = filename + "_"
 
     return filename
+
+
+def namedtuple_with_doc(name, slots, doc):
+    cls = collections.namedtuple(name, slots)
+    if sys.version_info[0] >= 3:
+        cls.__doc__ = doc
+        return cls
+    else:
+        return type(str(name), (cls,), {'__doc__': doc})

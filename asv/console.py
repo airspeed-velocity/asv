@@ -21,6 +21,9 @@ import time
 import six
 from six.moves import xrange, input
 
+from . import util
+
+
 WIN = (os.name == "nt")
 
 
@@ -278,7 +281,9 @@ class Log(object):
         color_print('·' * self._indent, end='')
         color_print(' ', end='')
 
-        if record.levelno < logging.DEBUG:
+        if hasattr(record, 'color'):
+            color = record.color
+        elif record.levelno < logging.DEBUG:
             color = 'default'
         elif record.levelno < logging.INFO:
             color = 'default'
@@ -325,17 +330,30 @@ class Log(object):
 
     def set_nitems(self, n):
         """
-        Set the number of items in a lengthy process.  Each of these
+        Set the number of remaining items to process.  Each of these
         steps should be incremented through using `step`.
+
+        Can be called multiple times. The progress percentage is ensured
+        to be non-decreasing, except if 100% was already reached in which
+        case it is restarted from 0%.
         """
-        self._total = n
+        try:
+            # Ensure count/total is nondecreasing
+            self._total = util.ceildiv(n * self._total, self._total - self._count)
+            self._count = self._total - n
+        except ZeroDivisionError:
+            # Reset counting from start
+            self._total = n
+            self._count = 0
 
     def step(self):
         """
         Write that a step has been completed.  A percentage is
         displayed along with it.
+
+        If we are stepping beyond the number of items, stop counting.
         """
-        self._count += 1
+        self._count = min(self._total, self._count + 1)
 
     def enable(self, verbose=False):
         sh = logging.StreamHandler()
@@ -358,21 +376,54 @@ class Log(object):
     def is_debug_enabled(self):
         return self._logger.getEffectiveLevel() <= logging.DEBUG
 
+    def _message(self, routine, message, reserve_space=False, color=None):
+        kwargs = {}
+        if color is not None:
+            kwargs['extra'] = dict(color=color)
+
+        if reserve_space:
+            max_width = max(16, util.get_terminal_width() - 33)
+            message = truncate_left(message, max_width)
+            self._prev_message = message
+
+        routine(message, **kwargs)
+
     def info(self, *args, **kwargs):
-        self._logger.info(*args, **kwargs)
+        self._message(self._logger.info, *args, **kwargs)
 
     def warn(self, *args, **kwargs):
-        self._logger.warn(*args, **kwargs)
+        self._message(self._logger.warn, *args, **kwargs)
 
     def debug(self, *args, **kwargs):
-        self._logger.debug(*args, **kwargs)
+        self._message(self._logger.debug, *args, **kwargs)
 
     def error(self, *args, **kwargs):
-        self._logger.error(*args, **kwargs)
+        self._message(self._logger.error, *args, **kwargs)
 
     def add(self, msg):
-        _write_with_fallback(msg, sys.stdout.write, sys.stdout)
-        sys.stdout.flush()
+        if self._needs_newline:
+            _write_with_fallback(msg, sys.stdout.write, sys.stdout)
+            sys.stdout.flush()
+        else:
+            self.info(msg)
+
+    def add_padded(self, msg):
+        """
+        Final part of two-part info message.
+        Should be preceded by a call to info/warn/...(msg, reserve_space=True)
+        """
+        if self._prev_message is None:
+            # No previous part: print as an info message
+            self.info(msg)
+            return
+
+        padding_length = util.get_terminal_width() - len(self._prev_message) - 14 - 1 - len(msg)
+        if WIN:
+            padding_length -= 1
+        padding = " "*padding_length
+
+        self._prev_message = None
+        self.add(" {0}{1}".format(padding, msg))
 
     def flush(self):
         """
@@ -383,5 +434,6 @@ class Log(object):
             color_print('')
             self._needs_newline = False
         sys.stdout.flush()
+
 
 log = Log()

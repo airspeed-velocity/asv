@@ -185,7 +185,7 @@ class Profile(Command):
                 results = benchmarks.run_benchmarks(
                     env, show_stderr=True, quick=False, profile=True)
 
-                profile_data = results[benchmark]['profile']
+                profile_data = results[benchmark].profile
 
         if gui is not None:
             log.debug("Opening gui {0}".format(gui))

@@ -31,6 +31,7 @@ except ImportError as exc:
 from asv import util
 from asv import commands
 from asv import config
+from asv import runner
 from asv.commands.preview import create_httpd
 from asv.repo import get_repo
 from asv.results import Results
@@ -388,15 +389,17 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
             params = value["params"]
         result = Results({"machine": "tarzan"}, {}, commit,
                          repo.get_date_from_name(commit), "2.7", None)
-        value = {
-            'result': [value],
-            'params': [],
-            'started_at': timestamp,
-            'ended_at': timestamp,
-            'stats': None,
-            'samples': None,
-            'number': None,
-        }
+        value = runner.BenchmarkResult(
+            result=[value],
+            samples=None,
+            stats=None,
+            params=[],
+            errcode=0,
+            stderr='',
+            profile=None,
+            started_at=timestamp,
+            ended_at=timestamp
+        )
         result.add_result("time_func", value, benchmark_version)
         result.save(result_dir)
 

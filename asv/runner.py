@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import shutil
+import time
 import tempfile
 import itertools
 import datetime
@@ -31,6 +32,71 @@ BENCHMARK_RUN_SCRIPT = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "benchmark.py")
 
 
+JSON_ERROR_RETCODE = -257
+
+
+BenchmarkResult = util.namedtuple_with_doc(
+    'BenchmarkResult',
+    ['result', 'samples', 'stats', 'params', 'errcode', 'stderr', 'profile',
+     'started_at', 'ended_at'],
+    """
+    Postprocessed benchmark result
+
+    Attributes
+    ----------
+    result : {list of object, None}
+        List of numeric values of the benchmarks (one for each parameter
+        combination), either returned directly or obtained from `samples` via
+        statistical analysis.
+        Values are `None` if benchmark failed or NaN if it was skipped.
+        The whole value can be None if benchmark could not be run at all.
+    samples : {list of float, None}
+        List of lists of sampled raw data points, if benchmark produces
+        those and was successful. None if no data.
+    stats : {list of dict, None}
+        List of results of statistical analysis of data.
+    params : list
+        Same as `benchmark['params']`. Empty list if non-parameterized.
+    errcode : int
+        Process exit code
+    stderr : str
+        Process stdout/stderr output
+    profile : bytes
+        If `profile` is `True` and run was at least partially successful,
+        this key will be a byte string containing the cProfile data.
+        Otherwise, None.
+    started_at : datetime.datetime
+        Benchmark start time
+    ended_at : datetime.datetime
+        Benchmark end time
+    """)
+
+
+RawBenchmarkResult = util.namedtuple_with_doc(
+    'RawBenchmarkResult',
+    ['result', 'samples', 'number', 'errcode', 'stderr', 'profile'],
+    """
+    Unprocessed benchmark result for a single run
+
+    Attributes
+    ----------
+    result : object
+        Benchmark result (None indicates failure)
+    samples : {list of float, None}
+        Benchmark measurement samples (or None,
+        if not applicable)
+    number : {int, None}
+        Compute benchmark 'number' attribute (if
+        applicable)
+    errcode : int
+        Process exit code
+    stderr : str
+        Process stdout/stderr output
+    profile : bytes
+        Profile data
+    """)
+
+
 class BenchmarkRunner(object):
     """
     Control and plan running of a set of benchmarks.
@@ -46,25 +112,26 @@ class BenchmarkRunner(object):
     which the `run` method then runs.
     """
 
-    def __init__(self, benchmarks, benchmark_dir, show_stderr=False, quick=False,
-                 profile=False, extra_params=None, selected_idx=None):
+    def __init__(self, benchmarks, show_stderr=False, quick=False,
+                 profile=False, extra_params=None):
         """
         Initialize BenchmarkRunner.
 
         Parameters
         ----------
-        benchmarks : dict, {benchmark_name: Benchmark}
+        benchmarks : Benchmarks
             Set of benchmarks to run.
-        benchmark_dir : str
-            Root directory for the benchmark suite.
-        show_stderr : bool
+        show_stderr : bool, optional
             Whether to dump output stream from benchmark program.
-        quick : bool
+        quick : bool, optional
             Whether to force a 'quick' run.
+        profile : bool, optional
+            Whether to run with profiling data collection
+        extra_params : dict, optional
+            Attribute overrides for benchmarks.
 
         """
         self.benchmarks = benchmarks
-        self.benchmark_dir = benchmark_dir
         self.show_stderr = show_stderr
         self.quick = quick
         self.profile = profile
@@ -72,10 +139,6 @@ class BenchmarkRunner(object):
             self.extra_params = {}
         else:
             self.extra_params = dict(extra_params)
-        if selected_idx is None:
-            selected_idx = {}
-        else:
-            self.selected_idx = selected_idx
 
         if quick:
             self.extra_params['number'] = 1
@@ -83,106 +146,126 @@ class BenchmarkRunner(object):
             self.extra_params['warmup_time'] = 0
             self.extra_params['processes'] = 1
 
-    def plan(self):
-        # Find all setup_cache routines needed
-        setup_caches = {}
-        setup_cache_timeout = {}
+    def _get_processes(self, benchmark):
+        """Get number of processes to use for a job"""
+        if 'processes' in self.extra_params:
+            return int(self.extra_params['processes'])
+        else:
+            return int(benchmark.get('processes', 1))
 
-        for name, benchmark in self.benchmarks:
+    def plan(self):
+        """
+        Compute required Job objects
+
+        Yields
+        ------
+        job : *Job
+            A job object to run.
+        """
+        # Find all setup_cache routines needed
+        setup_cache_timeout = {}
+        benchmark_order = {}
+        cache_users = {}
+        max_processes = 0
+
+        for name, benchmark in sorted(six.iteritems(self.benchmarks)):
             key = benchmark.get('setup_cache_key')
             setup_cache_timeout[key] = max(benchmark.get('setup_cache_timeout',
                                                          benchmark['timeout']),
                                            setup_cache_timeout.get(key, 0))
+            benchmark_order.setdefault(key, []).append((name, benchmark))
+            max_processes = max(max_processes, self._get_processes(benchmark))
+            cache_users.setdefault(key, set()).add(name)
 
         # Interleave benchmark runs, in setup_cache order
-        jobs = []
+        def iter_run_items():
+            for run_round in range(max_processes):
+                for setup_cache_key, benchmark_set in six.iteritems(benchmark_order):
+                    for name, benchmark in benchmark_set:
+                        processes = self._get_processes(benchmark)
+                        if run_round >= processes:
+                            continue
+                        is_final = (run_round + 1 >= processes)
+                        yield name, benchmark, setup_cache_key, is_final
 
-        insert_stack = []
-        benchmark_order = {}
-        cache_users = {}
+        # Produce job objects
         setup_cache_jobs = {None: None}
         prev_runs = {}
 
-        for name, benchmark in self.benchmarks:
-            key = benchmark.get('setup_cache_key')
-            benchmark_order.setdefault(key, []).append((name, benchmark))
-
-        for setup_cache_key, benchmark_set in six.iteritems(benchmark_order):
-            for name, benchmark in benchmark_set:
-                if 'processes' in self.extra_params:
-                    processes = int(self.extra_params['processes'])
-                else:
-                    processes = int(benchmark.get('processes', 1))
-                insert_stack.append((name, benchmark, processes, setup_cache_key))
-                cache_users.setdefault(setup_cache_key, []).append(name)
-
-        while insert_stack:
-            name, benchmark, processes, setup_cache_key = insert_stack.pop(0)
-
+        for name, benchmark, setup_cache_key, is_final in iter_run_items():
             # Setup cache first, if needed
             if setup_cache_key is None:
                 setup_cache_job = None
             elif setup_cache_key in setup_cache_jobs:
                 setup_cache_job = setup_cache_jobs[setup_cache_key]
             else:
-                setup_cache_job = SetupCacheJob(self.benchmark_dir,
+                setup_cache_job = SetupCacheJob(self.benchmarks.benchmark_dir,
                                                 name,
                                                 setup_cache_key,
                                                 setup_cache_timeout[setup_cache_key])
                 setup_cache_jobs[setup_cache_key] = setup_cache_job
-                jobs.append(setup_cache_job)
+                yield setup_cache_job
 
             # Run benchmark
             prev_job = prev_runs.get(name, None)
-            job = LaunchBenchmarkJob(name, benchmark, self.benchmark_dir,
+            job = LaunchBenchmarkJob(name, benchmark, self.benchmarks.benchmark_dir,
                                      self.profile, self.extra_params,
                                      cache_job=setup_cache_job, prev_job=prev_job,
-                                     partial=(processes > 1),
-                                     selected_idx=self.selected_idx.get(name))
-            prev_runs[name] = job
-            jobs.append(job)
-
-            # Interleave remaining runs
-            if processes > 1:
-                insert_stack.append((name, benchmark, processes - 1, setup_cache_key))
+                                     partial=not is_final,
+                                     selected_idx=self.benchmarks.benchmark_selection.get(name))
+            if self._get_processes(benchmark) > 1:
+                prev_runs[name] = job
+            yield job
 
             # Cleanup setup cache, if no users left
-            if setup_cache_job is not None and processes == 1:
+            if setup_cache_job is not None and is_final:
                 cache_users[setup_cache_key].remove(name)
                 if not cache_users[setup_cache_key]:
                     # No users of this cache left, perform cleanup
-                    job = SetupCacheCleanupJob(setup_cache_job)
-                    jobs.append(job)
+                    yield SetupCacheCleanupJob(setup_cache_job)
+                    del setup_cache_jobs[setup_cache_key]
                     del cache_users[setup_cache_key]
 
-        return jobs
+        # Cleanup any dangling caches
+        for job in setup_cache_jobs.values():
+            if job is not None:
+                yield SetupCacheCleanupJob(job)
 
-    def run(self, jobs, env):
+    def run(self, env):
         times = {}
+
+        jobs = self.plan()
 
         name_max_width = max(16, util.get_terminal_width() - 33)
         partial_info_printed = False
 
+        log.info("Benchmarking {0}".format(env.name))
+
         try:
             with log.indent():
+                prev_run_info_time = time.time()
+
                 for job in jobs:
                     short_name = truncate_left(job.name, name_max_width)
 
                     if isinstance(job, SetupCacheJob):
                         partial_info_printed = False
-                        self._log_initial("Setting up {0}".format(short_name))
+                        log.info("Setting up {0}".format(short_name))
                         job.run(env)
-                        self._log_cache_result(job)
                     elif isinstance(job, LaunchBenchmarkJob):
                         if job.partial:
+                            if time.time() > prev_run_info_time + 30:
+                                partial_info_printed = False
+
                             if partial_info_printed:
                                 log.add(".")
                             else:
-                                self._log_initial('Running benchmarks...')
+                                log.info('Running ({0}--)'.format(short_name))
+                                prev_run_info_time = time.time()
                             partial_info_printed = True
                         else:
                             log.step()
-                            self._log_initial('{0}'.format(short_name))
+                            log.info(short_name, reserve_space=True)
                             partial_info_printed = False
                         job.run(env)
                         self._log_benchmark_result(job)
@@ -198,68 +281,55 @@ class BenchmarkRunner(object):
 
         return times
 
-    def _log_initial(self, msg):
-        self._initial_message = msg
-        log.info(msg)
-
-    def _log_result(self, msg):
-        assert self._initial_message is not None
-        padding_length = util.get_terminal_width() - len(self._initial_message) - 14 - 1 - len(msg)
-        self._initial_message = None
-        if WIN:
-            padding_length -= 1
-        padding = " "*padding_length
-        log.add(" {0}{1}".format(padding, msg))
-
-    def _log_cache_result(self, item):
-        pass
-
     def _log_benchmark_result(self, job):
         if job.partial:
             return
 
+        if job.result.result is None:
+            total_count = 1
+            failure_count = 1
+        else:
+            total_count = len(job.result.result)
+            failure_count = sum(r is None for r in job.result.result)
+
         # Display status
-        if job.failure_count > 0:
-            if job.bad_output is None:
-                if job.failure_count == job.total_count:
-                    self._log_result("failed")
-                else:
-                    self._log_result("{0}/{1} failed".format(job.failure_count,
-                                                             job.total_count))
+        if failure_count > 0:
+            if failure_count == total_count:
+                log.add_padded("failed")
             else:
-                self._log_result("invalid output")
-                with log.indent():
-                    log.debug(job.bad_output)
+                log.add_padded("{0}/{1} failed".format(failure_count,
+                                                       total_count))
 
         # Display results
         if job.benchmark['params'] and self.show_stderr:
             # Long format display
-            if job.failure_count == 0:
-                self._log_result("ok")
+            if failure_count == 0:
+                log.add_padded("ok")
 
             display_result = [(v, statistics.get_err(v, s) if s is not None else None)
-                              for v, s in zip(job.result['result'], job.result['stats'])]
+                              for v, s in zip(job.result.result, job.result.stats)]
             display = _format_benchmark_result(display_result, job.benchmark)
-            log.info("\n" + "\n".join(display))
+            display = "\n".join(display).strip()
+            log.info(display, color='default')
         else:
-            if job.failure_count == 0:
+            if failure_count == 0:
                 # Failure already shown above
-                if not job.result['result']:
+                if not job.result.result:
                     display = "[]"
                 else:
-                    if job.result['stats'][0]:
-                        err = statistics.get_err(job.result['result'][0], job.result['stats'][0])
+                    if job.result.stats[0]:
+                        err = statistics.get_err(job.result.result[0], job.result.stats[0])
                     else:
                         err = None
-                    display = util.human_value(job.result['result'][0], job.benchmark['unit'], err=err)
-                    if len(job.result['result']) > 1:
+                    display = util.human_value(job.result.result[0], job.benchmark['unit'], err=err)
+                    if len(job.result.result) > 1:
                         display += ";..."
-                self._log_result(display)
+                log.add_padded(display)
 
         # Dump program output
-        if self.show_stderr and job.result.get('stderr'):
+        if self.show_stderr and job.result.stderr:
             with log.indent():
-                log.error(job.result['stderr'])
+                log.error(job.result.stderr)
 
 
 class LaunchBenchmarkJob(object):
@@ -268,31 +338,9 @@ class LaunchBenchmarkJob(object):
 
     Attributes
     ----------
-    result : dict
-        Present after completing the job (successfully or unsuccessfully).
-        A dictionary with the following keys:
+    result : {BenchmarkResult, None}
+        Job result (None if job was not yet run).
 
-        - `result`: List of numeric values of the benchmarks (one for each parameter
-          combination), either returned directly or obtained from `samples` via 
-          statistical analysis.
-
-          Values are `None` if benchmark failed or NaN if it was skipped.
-
-          If benchmark is not parameterized, the list contains a single number.
-
-        - `params`: Same as `benchmark['params']`. Empty list if non-parameterized.
-
-        - `samples`: List of lists of sampled raw data points, if benchmark produces
-          those and was successful.
-
-        - `stats`: List of results of statistical analysis of data.
-
-        - `profile`: If `profile` is `True` and run was at least partially successful, 
-          this key will be a byte string containing the cProfile data. Otherwise, None.
-
-        - `stderr`: Output produced.
-
-        - `errcode`: Error return code.
     """
 
     def __init__(self, name, benchmark, benchmark_dir, profile=False, extra_params=None,
@@ -339,9 +387,6 @@ class LaunchBenchmarkJob(object):
         self.selected_idx = selected_idx
 
         self.result = None
-        self.bad_output = None
-        self.failure_count = 0
-        self.total_count = 0
 
     def __repr__(self):
         return "<asv.runner.LaunchBenchmarkJob '{}' at 0x{:x}>".format(self.name, id(self))
@@ -349,140 +394,96 @@ class LaunchBenchmarkJob(object):
     def run(self, env):
         if self.cache_job is not None and self.cache_job.cache_dir is None:
             # Our setup_cache failed, so skip this job
-            timestamp = datetime.datetime.utcnow()
-            self.result = {'result': None,
-                           'samples': None,
-                           'stats': None,
-                           'params': [],
-                           'stderr': self.cache_job.stderr,
-                           'started_at': timestamp,
-                           'ended_at': timestamp}
+            self.result = get_failed_benchmark_result(
+                    self.name, self.benchmark, self.selected_idx,
+                    stderr=self.cache_job.stderr,
+                    errcode=self.cache_job.errcode)
             return
 
-        if self.prev_job is not None and self.prev_job.result['result'] is None:
+        if self.prev_job is not None and self.prev_job.result.result is None:
             # Previous job in a multi-process benchmark failed, so skip this job
             self.result = self.prev_job.result
             return
 
-        result = {"stderr": "", "errcode": 0}
+        if self.cache_job:
+            cache_dir = self.cache_job.cache_dir
+        else:
+            cache_dir = None
 
-        extra_params = dict(self.extra_params)
+        started_at = datetime.datetime.utcnow()
+
+        result = []
+        samples = []
+        stats = []
+        profiles = []
+        stderr = ''
+        errcode = 0
 
         if self.benchmark['params']:
             param_iter = enumerate(itertools.product(*self.benchmark['params']))
         else:
-            param_iter = [(None, None)]
-
-        self.bad_output = None
-
-        result['started_at'] = datetime.datetime.utcnow()
-
-        bench_results = []
-        bench_profiles = []
+            param_iter = [(0, None)]
 
         for param_idx, params in param_iter:
             if (self.selected_idx is not None and
                     self.benchmark['params'] and
                     param_idx not in self.selected_idx):
                 # Use NaN to mark the result as skipped
-                bench_results.append(dict(samples=None, result=float('nan'),
-                                          stats=None))
-                bench_profiles.append(None)
+                result.append(util.nan)
+                samples.append(None)
+                stats.append(None)
+                profiles.append(None)
                 continue
 
+            cur_extra_params = dict(self.extra_params)
+
             if self.prev_job:
-                idx = param_idx
-                if idx is None:
-                    idx = 0
-                prev_stats = self.prev_job.result['stats'][idx]
+                prev_stats = self.prev_job.result.stats[param_idx]
                 if prev_stats is not None:
-                    extra_params['number'] = prev_stats['number']
-                prev_samples = self.prev_job.result['samples'][idx]
+                    cur_extra_params['number'] = prev_stats['number']
+                prev_samples = self.prev_job.result.samples[param_idx]
             else:
                 prev_samples = None
 
-            if self.cache_job is None:
-                cwd = tempfile.mkdtemp()
-            else:
-                cwd = self.cache_job.cache_dir
+            res = run_benchmark_single(
+                self.benchmark, self.benchmark_dir, env, param_idx,
+                extra_params=cur_extra_params, profile=self.profile,
+                cwd=cache_dir)
 
-            try:
-                success, data, profile_data, err, out, errcode = \
-                    run_benchmark_single(
-                        self.benchmark, self.benchmark_dir, env, param_idx,
-                        extra_params=extra_params, profile=self.profile,
-                        cwd=cwd)
-            finally:
-                if self.cache_job is None:
-                    shutil.rmtree(cwd, True)
-
-            self.total_count += 1
-            if success:
-                if isinstance(data, dict) and 'samples' in data:
-                    if prev_samples is not None:
-                        # Combine samples
-                        data['samples'] = prev_samples + data['samples']
-
-                    value, stats = statistics.compute_stats(data['samples'],
-                                                            data['number'])
-                    result_data = dict(samples=data['samples'],
-                                       result=value,
-                                       stats=stats)
+            if res.samples is not None:
+                # Compute statistics
+                if prev_samples is not None:
+                    cur_samples = prev_samples + res.samples
                 else:
-                    result_data = dict(samples=None,
-                                       result=data,
-                                       stats=None)
-
-                bench_results.append(result_data)
-                if self.profile:
-                    bench_profiles.append(profile_data)
+                    cur_samples = res.samples
+                r, s = statistics.compute_stats(cur_samples, res.number)
+                result.append(r)
+                stats.append(s)
             else:
-                self.failure_count += 1
-                bench_results.append(dict(samples=None, result=None, stats=None))
-                bench_profiles.append(None)
-                if data is not None:
-                    self.bad_output = data
+                result.append(res.result)
+                stats.append(None)
 
-            err = err.strip()
-            out = out.strip()
+            samples.append(res.samples)
+            profiles.append(res.profile)
 
-            if errcode:
-                if errcode == util.TIMEOUT_RETCODE:
-                    if err:
-                        err += "\n\n"
-                    err += "asv: benchmark timed out (timeout {0}s)\n".format(self.benchmark['timeout'])
-                result['errcode'] = errcode
+            if res.stderr:
+                stderr += "\n\n"
+                stderr += res.stderr
 
-            if err or out:
-                err += out
-                if self.benchmark['params']:
-                    head_msg = "\n\nFor parameters: %s\n" % (", ".join(params),)
-                else:
-                    head_msg = ''
+            if res.errcode != 0:
+                errcode = res.errcode
 
-                result['stderr'] += head_msg
-                result['stderr'] += err
-
-        # Produce result
-        for key in ['samples', 'result', 'stats']:
-            result[key] = [x[key] for x in bench_results]
-
-        if self.benchmark['params']:
-            result['params'] = self.benchmark['params']
-        else:
-            result['params'] = []
-
-        # Combine profile data
-        if self.prev_job and 'profile' in self.prev_job.result:
-            bench_profiles.append(self.prev_job.result['profile'])
-
-        profile_data = _combine_profile_data(bench_profiles)
-        if profile_data is not None:
-            result['profile'] = profile_data
-
-        result['ended_at'] = datetime.datetime.utcnow()
-
-        self.result = result
+        self.result = BenchmarkResult(
+            result=result,
+            samples=samples,
+            stats=stats,
+            params=self.benchmark['params'] if self.benchmark['params'] else [],
+            errcode=errcode,
+            stderr=stderr.strip(),
+            profile=_combine_profile_data(profiles),
+            started_at=started_at,
+            ended_at=datetime.datetime.utcnow()
+        )
 
 
 class SetupCacheJob(object):
@@ -518,13 +519,16 @@ class SetupCacheJob(object):
              self.benchmark_id],
             dots=False, display_error=False,
             return_stderr=True, valid_return_codes=None,
+            redirect_stderr=True,
             cwd=cache_dir, timeout=self.timeout)
+
+        self.errcode = errcode
 
         if errcode == 0:
             self.stderr = None
             self.cache_dir = cache_dir
         else:
-            self.stderr = err
+            self.stderr = out
             self.clean()
 
     def clean(self):
@@ -548,29 +552,60 @@ class SetupCacheCleanupJob(object):
         self.cache_job.clean()
 
 
-def run_benchmark_single(benchmark, root, env, param_idx, profile, extra_params, cwd):
+def get_failed_benchmark_result(name, benchmark, selected_idx=None,
+                                stderr='', errcode=1):
+    timestamp = datetime.datetime.utcnow()
+
+    if benchmark['params'] and selected_idx is not None:
+        # Mark only selected parameter combinations skipped
+        params = itertools.product(*benchmark['params'])
+        result = [None if idx in selected_idx else util.nan
+                  for idx, _ in enumerate(params)]
+    else:
+        result = None
+
+    return BenchmarkResult(result=result,
+                           samples=None,
+                           stats=None,
+                           params=benchmark['params'],
+                           errcode=errcode,
+                           stderr=stderr,
+                           profile=None,
+                           started_at=timestamp,
+                           ended_at=timestamp)
+
+
+def run_benchmark_single(benchmark, benchmark_dir, env, param_idx, profile, extra_params, cwd):
     """
     Run a benchmark, for single parameter combination index in case it
     is parameterized
 
+    Parameters
+    ----------
+    benchmark : dict
+        Benchmark object dict
+    benchmark_dir : str
+        Benchmark directory root
+    env : Environment
+        Environment to run in
+    param_idx : {int, None}
+        Parameter index to run benchmark for
+    profile : bool
+        Whether to run with profile
+    extra_params : dict
+        Additional parameters to pass to the benchmark
+    cwd : {str, None}
+        Working directory to run the benchmark in.
+        If None, run in a temporary directory.
+
     Returns
     -------
-    success : bool
-        Whether test was successful
-    data
-        If success, the parsed JSON data. If failure, unparsed json data.
-    profile_data
-        Collected profiler data
-    err
-        Stderr content
-    out
-        Stdout content
-    errcode
-        Process return value
+    result : RawBenchmarkResult
+        Result data.
 
     """
     name = benchmark['name']
-    if param_idx is not None:
+    if benchmark['params']:
         name += '-%d' % (param_idx,)
 
     if profile:
@@ -579,45 +614,78 @@ def run_benchmark_single(benchmark, root, env, param_idx, profile, extra_params,
     else:
         profile_path = 'None'
 
+    params_str = json.dumps(extra_params)
+
+    if cwd is None:
+        real_cwd = tempfile.mkdtemp()
+    else:
+        real_cwd = cwd
+
     result_file = tempfile.NamedTemporaryFile(delete=False)
     try:
         result_file.close()
 
-        success = True
-        params_str = json.dumps(extra_params)
-
-        out, err, errcode = env.run(
-            [BENCHMARK_RUN_SCRIPT, 'run', os.path.abspath(root),
+        out, _, errcode = env.run(
+            [BENCHMARK_RUN_SCRIPT, 'run', os.path.abspath(benchmark_dir),
              name, params_str, profile_path, result_file.name],
             dots=False, timeout=benchmark['timeout'],
-            display_error=False, return_stderr=True,
-            valid_return_codes=None, cwd=cwd)
+            display_error=False, return_stderr=True, redirect_stderr=True,
+            valid_return_codes=None, cwd=real_cwd)
 
-        if errcode:
-            success = False
-            parsed = None
+        if errcode != 0:
+            if errcode == util.TIMEOUT_RETCODE:
+                out += "\n\nasv: benchmark timed out (timeout {0}s)\n".format(benchmark['timeout'])
+
+            result = None
+            samples = None
+            number = None
         else:
             with open(result_file.name, 'r') as stream:
                 data = stream.read()
+
             try:
-                parsed = json.loads(data)
-            except:
-                success = False
-                parsed = data
+                data = json.loads(data)
+            except ValueError as exc:
+                data = None
+                errcode = JSON_ERROR_RETCODE
+                out += "\n\nasv: failed to parse benchmark result: {0}\n".format(exc)
+
+            # Special parsing for timing benchmark results
+            if isinstance(data, dict) and 'samples' in data and 'number' in data:
+                result = None
+                samples = data['samples']
+                number = data['number']
+            else:
+                result = data
+                samples = None
+                number = None
+
+        if benchmark['params'] and out:
+            params, = itertools.islice(itertools.product(*benchmark['params']),
+                                       param_idx, param_idx + 1)
+            out = "For parameters: {0}\n{1}".format(", ".join(params), out)
 
         if profile:
             with io.open(profile_path, 'rb') as profile_fd:
                 profile_data = profile_fd.read()
-            if not profile_data:
-                profile_data = None
+            profile_data = profile_data if profile_data else None
         else:
             profile_data = None
 
-        return success, parsed, profile_data, err, out, errcode
+        return RawBenchmarkResult(
+            result=result,
+            samples=samples,
+            number=number,
+            errcode=errcode,
+            stderr=out.strip(),
+            profile=profile_data)
+
     finally:
         os.remove(result_file.name)
         if profile:
             os.remove(profile_path)
+        if cwd is None:
+            util.long_path_rmtree(real_cwd, True)
 
 
 def _combine_profile_data(datasets):

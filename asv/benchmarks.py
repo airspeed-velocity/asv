@@ -73,6 +73,41 @@ class Benchmarks(dict):
                 if not regex or any(re.search(reg, benchmark['name']) for reg in regex):
                     self[benchmark['name']] = benchmark
 
+    @property
+    def benchmark_selection(self):
+        """
+        Active sets of parameterized benchmarks.
+        """
+        return self._benchmark_selection
+
+    @property
+    def benchmark_dir(self):
+        """
+        Benchmark directory.
+        """
+        return self._benchmark_dir
+
+    def filter_out(self, skip):
+        """
+        Return a new Benchmarks object, with some benchmarks filtered out.
+        """
+        benchmarks = super(Benchmarks, self).__new__(self.__class__)
+        benchmarks._conf = self._conf
+        benchmarks._benchmark_dir = self._benchmark_dir
+        benchmarks._all_benchmarks = self._all_benchmarks
+
+        selected_idx = {}
+
+        for name, benchmark in six.iteritems(self):
+            if name not in skip:
+                benchmarks[name] = benchmark
+                if name in self._benchmark_selection:
+                    selected_idx[name] = self._benchmark_selection[name]
+
+        benchmarks._benchmark_selection = selected_idx
+
+        return benchmarks
+
     @classmethod
     def discover(cls, conf, repo, environments, commit_hash, regex=None):
         """
@@ -248,7 +283,7 @@ class Benchmarks(dict):
                                  "regenerate benchmarks.json".format(str(err)))
 
     def run_benchmarks(self, env, show_stderr=False, quick=False, profile=False,
-                       skip=None, extra_params=None):
+                       extra_params=None):
         """
         Run all of the benchmarks in the given `Environment`.
 
@@ -269,9 +304,6 @@ class Benchmarks(dict):
         profile : bool, optional
             When `True`, run the benchmark through the `cProfile`
             profiler.
-
-        skip : set, optional
-            Benchmark names to skip.
 
         extra_params : dict, optional
             Override values for benchmark attributes.
@@ -298,29 +330,12 @@ class Benchmarks(dict):
             - `profile`: If `profile` is `True`, this key will exist,
               and be a byte string containing the cProfile data.
         """
-        log.info("Benchmarking {0}".format(env.name))
-
-        benchmarks = sorted(list(six.iteritems(self)))
-
-        # Remove skipped benchmarks
-        if skip:
-            benchmarks = [
-                (name, benchmark) for (name, benchmark) in
-                benchmarks if name not in skip]
-
         # Setup runner and run benchmarks
-        times = {}
-        benchmark_runner = runner.BenchmarkRunner(benchmarks,
-                                                  self._benchmark_dir,
-                                                  show_stderr=show_stderr,
-                                                  quick=quick,
-                                                  extra_params=extra_params,
-                                                  profile=profile,
-                                                  selected_idx=self._benchmark_selection)
-        jobs = benchmark_runner.plan()
-        times = benchmark_runner.run(jobs, env)
-
-        return times
+        return runner.BenchmarkRunner(self,
+                                      show_stderr=show_stderr,
+                                      quick=quick,
+                                      extra_params=extra_params,
+                                      profile=profile).run(env)
 
     def skip_benchmarks(self, env):
         """
@@ -329,14 +344,10 @@ class Benchmarks(dict):
         log.warn("Skipping {0}".format(env.name))
         with log.indent():
             times = {}
-            for name in self:
+            for name, benchmark in six.iteritems(self):
                 log.step()
                 log.warn('Benchmark {0} skipped'.format(name))
-                timestamp = datetime.datetime.utcnow()
-                times[name] = {'result': None,
-                               'samples': None,
-                               'stats': None,
-                               'params': [],
-                               'started_at': timestamp,
-                               'ended_at': timestamp}
+                times[name] = runner.get_failed_benchmark_result(
+                    name, benchmark, self._benchmark_selection.get(name))
+
         return times
