@@ -49,25 +49,26 @@ class BenchmarkRunner(object):
     which the `run` method then runs.
     """
 
-    def __init__(self, benchmarks, benchmark_dir, show_stderr=False, quick=False,
-                 profile=False, extra_params=None, selected_idx=None):
+    def __init__(self, benchmarks, show_stderr=False, quick=False,
+                 profile=False, extra_params=None):
         """
         Initialize BenchmarkRunner.
 
         Parameters
         ----------
-        benchmarks : dict, {benchmark_name: Benchmark}
+        benchmarks : Benchmarks
             Set of benchmarks to run.
-        benchmark_dir : str
-            Root directory for the benchmark suite.
-        show_stderr : bool
+        show_stderr : bool, optional
             Whether to dump output stream from benchmark program.
-        quick : bool
+        quick : bool, optional
             Whether to force a 'quick' run.
+        profile : bool, optional
+            Whether to run with profiling data collection
+        extra_params : dict, optional
+            Attribute overrides for benchmarks.
 
         """
         self.benchmarks = benchmarks
-        self.benchmark_dir = benchmark_dir
         self.show_stderr = show_stderr
         self.quick = quick
         self.profile = profile
@@ -75,10 +76,6 @@ class BenchmarkRunner(object):
             self.extra_params = {}
         else:
             self.extra_params = dict(extra_params)
-        if selected_idx is None:
-            selected_idx = {}
-        else:
-            self.selected_idx = selected_idx
 
         if quick:
             self.extra_params['number'] = 1
@@ -108,7 +105,7 @@ class BenchmarkRunner(object):
         cache_users = {}
         max_processes = 0
 
-        for name, benchmark in self.benchmarks:
+        for name, benchmark in sorted(six.iteritems(self.benchmarks)):
             key = benchmark.get('setup_cache_key')
             setup_cache_timeout[key] = max(benchmark.get('setup_cache_timeout',
                                                          benchmark['timeout']),
@@ -139,7 +136,7 @@ class BenchmarkRunner(object):
             elif setup_cache_key in setup_cache_jobs:
                 setup_cache_job = setup_cache_jobs[setup_cache_key]
             else:
-                setup_cache_job = SetupCacheJob(self.benchmark_dir,
+                setup_cache_job = SetupCacheJob(self.benchmarks.benchmark_dir,
                                                 name,
                                                 setup_cache_key,
                                                 setup_cache_timeout[setup_cache_key])
@@ -148,11 +145,11 @@ class BenchmarkRunner(object):
 
             # Run benchmark
             prev_job = prev_runs.get(name, None)
-            job = LaunchBenchmarkJob(name, benchmark, self.benchmark_dir,
+            job = LaunchBenchmarkJob(name, benchmark, self.benchmarks.benchmark_dir,
                                      self.profile, self.extra_params,
                                      cache_job=setup_cache_job, prev_job=prev_job,
                                      partial=not is_final,
-                                     selected_idx=self.selected_idx.get(name))
+                                     selected_idx=self.benchmarks.benchmark_selection.get(name))
             if self._get_processes(benchmark) > 1:
                 prev_runs[name] = job
             yield job
@@ -171,11 +168,15 @@ class BenchmarkRunner(object):
             if job is not None:
                 yield SetupCacheCleanupJob(job)
 
-    def run(self, jobs, env):
+    def run(self, env):
         times = {}
+
+        jobs = self.plan()
 
         name_max_width = max(16, util.get_terminal_width() - 33)
         partial_info_printed = False
+
+        log.info("Benchmarking {0}".format(env.name))
 
         try:
             with log.indent():

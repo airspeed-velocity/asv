@@ -318,7 +318,8 @@ def test_quick(tmpdir):
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
     skip_names = [name for name in b.keys() if name != 'time_examples.TimeWithRepeat.time_it']
-    times = b.run_benchmarks(envs[0], quick=True, show_stderr=True, skip=skip_names)
+    b2 = b.filter_out(skip_names)
+    times = b2.run_benchmarks(envs[0], quick=True, show_stderr=True)
 
     assert len(times) == 1
 

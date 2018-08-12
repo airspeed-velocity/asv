@@ -287,13 +287,14 @@ class Run(Command):
                         params['python'] = env.python
                         params.update(env.requirements)
 
+                        benchmark_set = benchmarks.filter_out(skipped_benchmarks[env.name])
+
                         if success:
-                            results = benchmarks.run_benchmarks(
+                            results = benchmark_set.run_benchmarks(
                                 env, show_stderr=show_stderr, quick=quick,
-                                profile=profile, skip=skipped_benchmarks[env.name],
-                                extra_params=attribute)
+                                profile=profile, extra_params=attribute)
                         else:
-                            results = benchmarks.skip_benchmarks(env)
+                            results = benchmark_set.skip_benchmarks(env)
 
                         if dry_run or isinstance(env, environment.ExistingEnvironment):
                             continue
