@@ -83,42 +83,53 @@ class BenchmarkRunner(object):
             self.extra_params['warmup_time'] = 0
             self.extra_params['processes'] = 1
 
+    def _get_processes(self, benchmark):
+        """Get number of processes to use for a job"""
+        if 'processes' in self.extra_params:
+            return int(self.extra_params['processes'])
+        else:
+            return int(benchmark.get('processes', 1))
+
     def plan(self):
+        """
+        Compute required Job objects
+
+        Yields
+        ------
+        job : *Job
+            A job object to run.
+        """
         # Find all setup_cache routines needed
-        setup_caches = {}
         setup_cache_timeout = {}
+        benchmark_order = {}
+        cache_users = {}
+        max_processes = 0
 
         for name, benchmark in self.benchmarks:
             key = benchmark.get('setup_cache_key')
             setup_cache_timeout[key] = max(benchmark.get('setup_cache_timeout',
                                                          benchmark['timeout']),
                                            setup_cache_timeout.get(key, 0))
+            benchmark_order.setdefault(key, []).append((name, benchmark))
+            max_processes = max(max_processes, self._get_processes(benchmark))
+            cache_users.setdefault(key, set()).add(name)
 
         # Interleave benchmark runs, in setup_cache order
-        jobs = []
+        def iter_run_items():
+            for run_round in range(max_processes):
+                for setup_cache_key, benchmark_set in six.iteritems(benchmark_order):
+                    for name, benchmark in benchmark_set:
+                        processes = self._get_processes(benchmark)
+                        if run_round >= processes:
+                            continue
+                        is_final = (run_round + 1 >= processes)
+                        yield name, benchmark, setup_cache_key, is_final
 
-        insert_stack = []
-        benchmark_order = {}
-        cache_users = {}
+        # Produce job objects
         setup_cache_jobs = {None: None}
         prev_runs = {}
 
-        for name, benchmark in self.benchmarks:
-            key = benchmark.get('setup_cache_key')
-            benchmark_order.setdefault(key, []).append((name, benchmark))
-
-        for setup_cache_key, benchmark_set in six.iteritems(benchmark_order):
-            for name, benchmark in benchmark_set:
-                if 'processes' in self.extra_params:
-                    processes = int(self.extra_params['processes'])
-                else:
-                    processes = int(benchmark.get('processes', 1))
-                insert_stack.append((name, benchmark, processes, setup_cache_key))
-                cache_users.setdefault(setup_cache_key, []).append(name)
-
-        while insert_stack:
-            name, benchmark, processes, setup_cache_key = insert_stack.pop(0)
-
+        for name, benchmark, setup_cache_key, is_final in iter_run_items():
             # Setup cache first, if needed
             if setup_cache_key is None:
                 setup_cache_job = None
@@ -130,32 +141,32 @@ class BenchmarkRunner(object):
                                                 setup_cache_key,
                                                 setup_cache_timeout[setup_cache_key])
                 setup_cache_jobs[setup_cache_key] = setup_cache_job
-                jobs.append(setup_cache_job)
+                yield setup_cache_job
 
             # Run benchmark
             prev_job = prev_runs.get(name, None)
             job = LaunchBenchmarkJob(name, benchmark, self.benchmark_dir,
                                      self.profile, self.extra_params,
                                      cache_job=setup_cache_job, prev_job=prev_job,
-                                     partial=(processes > 1),
+                                     partial=not is_final,
                                      selected_idx=self.selected_idx.get(name))
-            prev_runs[name] = job
-            jobs.append(job)
-
-            # Interleave remaining runs
-            if processes > 1:
-                insert_stack.append((name, benchmark, processes - 1, setup_cache_key))
+            if self._get_processes(benchmark) > 1:
+                prev_runs[name] = job
+            yield job
 
             # Cleanup setup cache, if no users left
-            if setup_cache_job is not None and processes == 1:
+            if setup_cache_job is not None and is_final:
                 cache_users[setup_cache_key].remove(name)
                 if not cache_users[setup_cache_key]:
                     # No users of this cache left, perform cleanup
-                    job = SetupCacheCleanupJob(setup_cache_job)
-                    jobs.append(job)
+                    yield SetupCacheCleanupJob(setup_cache_job)
+                    del setup_cache_jobs[setup_cache_key]
                     del cache_users[setup_cache_key]
 
-        return jobs
+        # Cleanup any dangling caches
+        for job in setup_cache_jobs.values():
+            if job is not None:
+                yield SetupCacheCleanupJob(job)
 
     def run(self, jobs, env):
         times = {}
