@@ -251,7 +251,8 @@ class BenchmarkRunner(object):
             display_result = [(v, statistics.get_err(v, s) if s is not None else None)
                               for v, s in zip(job.result['result'], job.result['stats'])]
             display = _format_benchmark_result(display_result, job.benchmark)
-            log.info("\n" + "\n".join(display))
+            display = "\n".join(display).strip()
+            log.info(display, extra=dict(color='default'))
         else:
             if job.failure_count == 0:
                 # Failure already shown above
