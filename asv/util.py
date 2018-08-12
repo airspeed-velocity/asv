@@ -29,7 +29,6 @@ import collections
 import six
 from six.moves import xrange
 
-from .console import log
 from .extern import minify_json
 
 
@@ -414,6 +413,8 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
     stdout, stderr, retcode : when return_stderr == True
     stdout : otherwise
     """
+    from .console import log
+
     # Hide traceback from expected exceptions in pytest reports
     __tracebackhide__ = operator.methodcaller('errisinstance', ProcessError)
 
@@ -1110,4 +1111,4 @@ def namedtuple_with_doc(name, slots, doc):
         cls.__doc__ = doc
         return cls
     else:
-        return type(name, (cls,), {'__doc__': doc})
+        return type(str(name), (cls,), {'__doc__': doc})

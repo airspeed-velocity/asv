@@ -131,7 +131,7 @@ def test_find_benchmarks(tmpdir):
     assert times[
         'time_secondary.track_value'].result == [42.0]
     assert times['time_secondary.track_value'].profile is not None
-    assert isinstance(times['time_examples.time_with_warnings'].stderr, str)
+    assert isinstance(times['time_examples.time_with_warnings'].stderr, type(''))
     assert times['time_examples.time_with_warnings'].errcode != 0
 
     assert times['time_examples.TimeWithBadTimer.time_it'].result == [0.0]
