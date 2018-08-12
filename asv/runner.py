@@ -181,19 +181,18 @@ class BenchmarkRunner(object):
 
                     if isinstance(job, SetupCacheJob):
                         partial_info_printed = False
-                        self._log_initial("Setting up {0}".format(short_name))
+                        log.info("Setting up {0}".format(short_name))
                         job.run(env)
-                        self._log_cache_result(job)
                     elif isinstance(job, LaunchBenchmarkJob):
                         if job.partial:
                             if partial_info_printed:
                                 log.add(".")
                             else:
-                                self._log_initial('Running benchmarks...')
+                                log.info('Running benchmarks...')
                             partial_info_printed = True
                         else:
                             log.step()
-                            self._log_initial('{0}'.format(short_name))
+                            log.info(short_name, reserve_space=True)
                             partial_info_printed = False
                         job.run(env)
                         self._log_benchmark_result(job)
@@ -209,22 +208,6 @@ class BenchmarkRunner(object):
 
         return times
 
-    def _log_initial(self, msg):
-        self._initial_message = msg
-        log.info(msg)
-
-    def _log_result(self, msg):
-        assert self._initial_message is not None
-        padding_length = util.get_terminal_width() - len(self._initial_message) - 14 - 1 - len(msg)
-        self._initial_message = None
-        if WIN:
-            padding_length -= 1
-        padding = " "*padding_length
-        log.add(" {0}{1}".format(padding, msg))
-
-    def _log_cache_result(self, item):
-        pass
-
     def _log_benchmark_result(self, job):
         if job.partial:
             return
@@ -233,12 +216,12 @@ class BenchmarkRunner(object):
         if job.failure_count > 0:
             if job.bad_output is None:
                 if job.failure_count == job.total_count:
-                    self._log_result("failed")
+                    log.add_padded("failed")
                 else:
-                    self._log_result("{0}/{1} failed".format(job.failure_count,
-                                                             job.total_count))
+                    log.add_padded("{0}/{1} failed".format(job.failure_count,
+                                                           job.total_count))
             else:
-                self._log_result("invalid output")
+                log.add_padded("invalid output")
                 with log.indent():
                     log.debug(job.bad_output)
 
@@ -246,13 +229,13 @@ class BenchmarkRunner(object):
         if job.benchmark['params'] and self.show_stderr:
             # Long format display
             if job.failure_count == 0:
-                self._log_result("ok")
+                log.add_padded("ok")
 
             display_result = [(v, statistics.get_err(v, s) if s is not None else None)
                               for v, s in zip(job.result['result'], job.result['stats'])]
             display = _format_benchmark_result(display_result, job.benchmark)
             display = "\n".join(display).strip()
-            log.info(display, extra=dict(color='default'))
+            log.info(display, color='default')
         else:
             if job.failure_count == 0:
                 # Failure already shown above
@@ -266,7 +249,7 @@ class BenchmarkRunner(object):
                     display = util.human_value(job.result['result'][0], job.benchmark['unit'], err=err)
                     if len(job.result['result']) > 1:
                         display += ";..."
-                self._log_result(display)
+                log.add_padded(display)
 
         # Dump program output
         if self.show_stderr and job.result.get('stderr'):

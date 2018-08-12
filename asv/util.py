@@ -1034,6 +1034,11 @@ def geom_mean_na(values):
         return None
 
 
+def ceildiv(numerator, denominator):
+    """Ceiling division"""
+    return -((-numerator)//denominator)
+
+
 if not WIN:
     long_path_open = open
     long_path_rmtree = shutil.rmtree
