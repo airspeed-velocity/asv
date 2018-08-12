@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import shutil
+import time
 import tempfile
 import itertools
 import datetime
@@ -180,6 +181,8 @@ class BenchmarkRunner(object):
 
         try:
             with log.indent():
+                prev_run_info_time = time.time()
+
                 for job in jobs:
                     short_name = truncate_left(job.name, name_max_width)
 
@@ -189,10 +192,14 @@ class BenchmarkRunner(object):
                         job.run(env)
                     elif isinstance(job, LaunchBenchmarkJob):
                         if job.partial:
+                            if time.time() > prev_run_info_time + 30:
+                                partial_info_printed = False
+
                             if partial_info_printed:
                                 log.add(".")
                             else:
-                                log.info('Running benchmarks...')
+                                log.info('Running ({0}--)'.format(short_name))
+                                prev_run_info_time = time.time()
                             partial_info_printed = True
                         else:
                             log.step()
