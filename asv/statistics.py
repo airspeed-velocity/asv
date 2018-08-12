@@ -33,8 +33,6 @@ def compute_stats(samples, number):
 
     if len(samples) < 1:
         return None, None
-    elif len(samples) == 1:
-        return samples[0], None
 
     Y = list(samples)
 

@@ -283,7 +283,7 @@ class Benchmarks(dict):
                                  "regenerate benchmarks.json".format(str(err)))
 
     def run_benchmarks(self, env, show_stderr=False, quick=False, profile=False,
-                       extra_params=None):
+                       extra_params=None, prev_samples=None):
         """
         Run all of the benchmarks in the given `Environment`.
 
@@ -307,6 +307,10 @@ class Benchmarks(dict):
 
         extra_params : dict, optional
             Override values for benchmark attributes.
+
+        prev_samples : dict, optional
+            Previous benchmark result sets.
+            ``prev_samples[benchmark_name] = [(samples, number), ...]``
 
         Returns
         -------
@@ -335,7 +339,8 @@ class Benchmarks(dict):
                                       show_stderr=show_stderr,
                                       quick=quick,
                                       extra_params=extra_params,
-                                      profile=profile).run(env)
+                                      profile=profile,
+                                      prev_samples=prev_samples).run(env)
 
     def skip_benchmarks(self, env):
         """

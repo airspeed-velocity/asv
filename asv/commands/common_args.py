@@ -192,6 +192,17 @@ def add_parallel(parser):
         number of cores on this machine.""")
 
 
+def add_record_samples(parser):
+    parser.add_argument(
+        "--record-samples", action="store_true",
+        help="""Store raw measurement samples, not only statistics""")
+    parser.add_argument(
+        "--append-samples", action="store_true",
+        help="""Combine new measurement samples with previous results,
+        instead of discarding old results. Implies --record-samples.
+        The previous run must also have been run with --record/append-samples.""")
+
+
 def positive_int(string):
     try:
         value = int(string)

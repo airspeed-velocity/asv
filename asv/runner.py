@@ -113,7 +113,7 @@ class BenchmarkRunner(object):
     """
 
     def __init__(self, benchmarks, show_stderr=False, quick=False,
-                 profile=False, extra_params=None):
+                 profile=False, extra_params=None, prev_samples=None):
         """
         Initialize BenchmarkRunner.
 
@@ -129,12 +129,16 @@ class BenchmarkRunner(object):
             Whether to run with profiling data collection
         extra_params : dict, optional
             Attribute overrides for benchmarks.
+        prev_samples : dict, optional
+            Previous benchmark result sets.
+            ``prev_samples[benchmark_name] = [(samples, number), ...]``
 
         """
         self.benchmarks = benchmarks
         self.show_stderr = show_stderr
         self.quick = quick
         self.profile = profile
+        self.prev_samples = prev_samples if prev_samples is not None else {}
         if extra_params is None:
             self.extra_params = {}
         else:
@@ -212,7 +216,8 @@ class BenchmarkRunner(object):
                                      self.profile, self.extra_params,
                                      cache_job=setup_cache_job, prev_job=prev_job,
                                      partial=not is_final,
-                                     selected_idx=self.benchmarks.benchmark_selection.get(name))
+                                     selected_idx=self.benchmarks.benchmark_selection.get(name),
+                                     prev_samples=self.prev_samples.get(name))
             if self._get_processes(benchmark) > 1:
                 prev_runs[name] = job
             yield job
@@ -344,7 +349,8 @@ class LaunchBenchmarkJob(object):
     """
 
     def __init__(self, name, benchmark, benchmark_dir, profile=False, extra_params=None,
-                 cache_job=None, prev_job=None, partial=False, selected_idx=None):
+                 cache_job=None, prev_job=None, partial=False, selected_idx=None,
+                 prev_samples=None):
         """
         Parameters
         ----------
@@ -375,6 +381,9 @@ class LaunchBenchmarkJob(object):
         selected_idx : list of int, optional
             Which items to run in a parametrized bencmark.
 
+        prev_samples : list of (samples, number), optional
+            Previous samples to insert
+
         """
         self.name = name
         self.benchmark = benchmark
@@ -385,6 +394,7 @@ class LaunchBenchmarkJob(object):
         self.prev_job = prev_job
         self.partial = partial
         self.selected_idx = selected_idx
+        self.prev_samples = prev_samples
 
         self.result = None
 
@@ -442,6 +452,12 @@ class LaunchBenchmarkJob(object):
                 if prev_stats is not None:
                     cur_extra_params['number'] = prev_stats['number']
                 prev_samples = self.prev_job.result.samples[param_idx]
+            elif self.prev_samples:
+                # Append to explicitly provided previous results, if any
+                samp, num = self.prev_samples[param_idx]
+                if samp is not None and num is not None:
+                    prev_samples = samp
+                    cur_extra_params['number'] = num
             else:
                 prev_samples = None
 
@@ -460,10 +476,11 @@ class LaunchBenchmarkJob(object):
                 result.append(r)
                 stats.append(s)
             else:
+                cur_samples = res.samples
                 result.append(res.result)
                 stats.append(None)
 
-            samples.append(res.samples)
+            samples.append(cur_samples)
             profiles.append(res.profile)
 
             if res.stderr:

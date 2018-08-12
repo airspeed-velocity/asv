@@ -41,8 +41,8 @@ else:
     ON_PYPY = False
 
 
-@pytest.mark.flaky(reruns=1, reruns_delay=5)
-def test_find_benchmarks(tmpdir):
+@pytest.fixture
+def benchmarks_fixture(tmpdir):
     tmpdir = six.text_type(tmpdir)
     os.chdir(tmpdir)
 
@@ -53,21 +53,28 @@ def test_find_benchmarks(tmpdir):
     d['env_dir'] = "env"
     d['benchmark_dir'] = 'benchmark'
     d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
-    d['branches'] = ["master", "some-missing-branch"]  # missing branches ignored
+    d['branches'] = ["master"]
     conf = config.Config.from_json(d)
 
     repo = get_repo(conf)
-
     envs = list(environment.get_environments(conf, None))
-
     commit_hash = repo.get_hash_from_name(repo.get_branch_name())
+
+    return conf, repo, envs, commit_hash
+
+
+def test_discover_benchmarks(benchmarks_fixture):
+    conf, repo, envs, commit_hash = benchmarks_fixture
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                                        regex='secondary')
     assert len(b) == 3
 
+    old_branches = conf.branches
+    conf.branches = ["master", "some-missing-branch"]  # missing branches ignored
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                                        regex='example')
+    conf.branches = old_branches
     assert len(b) == 26
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
@@ -105,10 +112,17 @@ def test_find_benchmarks(tmpdir):
 
     assert 'named.OtherSuite.track_some_func' in b
 
+
+@pytest.mark.flaky(reruns=1, reruns_delay=5)
+def test_run_benchmarks(benchmarks_fixture, tmpdir):
+    conf, repo, envs, commit_hash = benchmarks_fixture
+
     start_timestamp = datetime.datetime.utcnow()
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
-    times = b.run_benchmarks(envs[0], profile=True, show_stderr=True)
+    times = b.run_benchmarks(
+        envs[0], profile=True, show_stderr=True,
+        prev_samples={'time_examples.TimeSuite.time_example_benchmark_1': [([42.0, 24.0], 1)]})
 
     end_timestamp = datetime.datetime.utcnow()
 
@@ -118,6 +132,8 @@ def test_find_benchmarks(tmpdir):
     assert isinstance(times['time_examples.TimeSuite.time_example_benchmark_1'].stats[0]['std'], float)
     # The exact number of samples may vary if the calibration is not fully accurate
     assert len(times['time_examples.TimeSuite.time_example_benchmark_1'].samples[0]) >= 4
+    # Explicitly provided 'prev_samples` should come first
+    assert times['time_examples.TimeSuite.time_example_benchmark_1'].samples[0][:2] == [42.0, 24.0]
     # Benchmarks that raise exceptions should have a time of "None"
     assert times[
         'time_secondary.TimeSecondary.time_exception'].result == [None]
@@ -168,7 +184,7 @@ def test_find_benchmarks(tmpdir):
     assert times['cache_examples.ClassLevelCacheTimeout.track_fail'].result == None
     assert times['cache_examples.ClassLevelCacheTimeoutSuccess.track_success'].result == [0]
 
-    profile_path = join(tmpdir, 'test.profile')
+    profile_path = join(six.text_type(tmpdir), 'test.profile')
     with open(profile_path, 'wb') as fd:
         fd.write(times['time_secondary.track_value'].profile)
     pstats.Stats(profile_path)
