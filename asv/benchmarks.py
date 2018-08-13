@@ -352,7 +352,7 @@ class Benchmarks(dict):
             for name, benchmark in six.iteritems(self):
                 log.step()
                 log.warn('Benchmark {0} skipped'.format(name))
-                times[name] = runner.get_failed_benchmark_result(
-                    name, benchmark, self._benchmark_selection.get(name))
+                times[name] = runner.fail_benchmark(
+                    benchmark, self._benchmark_selection.get(name))
 
         return times

@@ -404,8 +404,8 @@ class LaunchBenchmarkJob(object):
     def run(self, env):
         if self.cache_job is not None and self.cache_job.cache_dir is None:
             # Our setup_cache failed, so skip this job
-            self.result = get_failed_benchmark_result(
-                    self.name, self.benchmark, self.selected_idx,
+            self.result = fail_benchmark(
+                    self.benchmark, self.selected_idx,
                     stderr=self.cache_job.stderr,
                     errcode=self.cache_job.errcode)
             return
@@ -415,92 +415,19 @@ class LaunchBenchmarkJob(object):
             self.result = self.prev_job.result
             return
 
+        prev_result = self.prev_job.result if self.prev_job else None
+
         if self.cache_job:
             cache_dir = self.cache_job.cache_dir
         else:
             cache_dir = None
 
-        started_at = datetime.datetime.utcnow()
-
-        result = []
-        samples = []
-        stats = []
-        profiles = []
-        stderr = ''
-        errcode = 0
-
-        if self.benchmark['params']:
-            param_iter = enumerate(itertools.product(*self.benchmark['params']))
-        else:
-            param_iter = [(0, None)]
-
-        for param_idx, params in param_iter:
-            if (self.selected_idx is not None and
-                    self.benchmark['params'] and
-                    param_idx not in self.selected_idx):
-                # Use NaN to mark the result as skipped
-                result.append(util.nan)
-                samples.append(None)
-                stats.append(None)
-                profiles.append(None)
-                continue
-
-            cur_extra_params = dict(self.extra_params)
-
-            if self.prev_job:
-                prev_stats = self.prev_job.result.stats[param_idx]
-                if prev_stats is not None:
-                    cur_extra_params['number'] = prev_stats['number']
-                prev_samples = self.prev_job.result.samples[param_idx]
-            elif self.prev_samples:
-                # Append to explicitly provided previous results, if any
-                samp, num = self.prev_samples[param_idx]
-                if samp is not None and num is not None:
-                    prev_samples = samp
-                    cur_extra_params['number'] = num
-            else:
-                prev_samples = None
-
-            res = run_benchmark_single(
-                self.benchmark, self.benchmark_dir, env, param_idx,
-                extra_params=cur_extra_params, profile=self.profile,
-                cwd=cache_dir)
-
-            if res.samples is not None:
-                # Compute statistics
-                if prev_samples is not None:
-                    cur_samples = prev_samples + res.samples
-                else:
-                    cur_samples = res.samples
-                r, s = statistics.compute_stats(cur_samples, res.number)
-                result.append(r)
-                stats.append(s)
-            else:
-                cur_samples = res.samples
-                result.append(res.result)
-                stats.append(None)
-
-            samples.append(cur_samples)
-            profiles.append(res.profile)
-
-            if res.stderr:
-                stderr += "\n\n"
-                stderr += res.stderr
-
-            if res.errcode != 0:
-                errcode = res.errcode
-
-        self.result = BenchmarkResult(
-            result=result,
-            samples=samples,
-            stats=stats,
-            params=self.benchmark['params'] if self.benchmark['params'] else [],
-            errcode=errcode,
-            stderr=stderr.strip(),
-            profile=_combine_profile_data(profiles),
-            started_at=started_at,
-            ended_at=datetime.datetime.utcnow()
-        )
+        self.result = run_benchmark(self.benchmark, self.benchmark_dir,
+                                    env, self.profile, self.selected_idx,
+                                    extra_params=self.extra_params,
+                                    cwd=cache_dir,
+                                    prev_result=prev_result,
+                                    prev_samples=self.prev_samples)
 
 
 class SetupCacheJob(object):
@@ -569,8 +496,10 @@ class SetupCacheCleanupJob(object):
         self.cache_job.clean()
 
 
-def get_failed_benchmark_result(name, benchmark, selected_idx=None,
-                                stderr='', errcode=1):
+def fail_benchmark(benchmark, selected_idx=None, stderr='', errcode=1):
+    """
+    Return a BenchmarkResult describing a failed benchmark.
+    """
     timestamp = datetime.datetime.utcnow()
 
     if benchmark['params'] and selected_idx is not None:
@@ -592,7 +521,133 @@ def get_failed_benchmark_result(name, benchmark, selected_idx=None,
                            ended_at=timestamp)
 
 
-def run_benchmark_single(benchmark, benchmark_dir, env, param_idx, profile, extra_params, cwd):
+def run_benchmark(benchmark, benchmark_dir, env, profile,
+                  selected_idx=None,
+                  extra_params=None,
+                  cwd=None,
+                  prev_result=None,
+                  prev_samples=None):
+    """
+    Run a benchmark.
+
+    Parameters
+    ----------
+    benchmark : dict
+        Benchmark object dict
+    benchmark_dir : str
+        Benchmark directory root
+    env : Environment
+        Environment to run in
+    profile : bool
+        Whether to run with profile
+    selected_idx : set, optional
+        Set of parameter indices to run for.
+    extra_params : dict, optional
+        Additional parameters to pass to the benchmark
+    cwd : str, optional
+        Working directory to run the benchmark in.
+        If None, run in a temporary directory.
+    prev_result : BenchmarkResult, optional
+        Previous benchmark result to append new samples to.
+    prev_samples : list of list, optional
+
+    Returns
+    -------
+    result : BenchmarkResult
+        Result data.
+
+    """
+
+    if extra_params is None:
+        extra_params = {}
+
+    started_at = datetime.datetime.utcnow()
+
+    result = []
+    samples = []
+    stats = []
+    profiles = []
+    stderr = ''
+    errcode = 0
+
+    if benchmark['params']:
+        param_iter = enumerate(itertools.product(*benchmark['params']))
+    else:
+        param_iter = [(0, None)]
+
+    for param_idx, params in param_iter:
+        if (selected_idx is not None and
+                benchmark['params'] and
+                param_idx not in selected_idx):
+            # Use NaN to mark the result as skipped
+            result.append(util.nan)
+            samples.append(None)
+            stats.append(None)
+            profiles.append(None)
+            continue
+
+        cur_extra_params = dict(extra_params)
+
+        # Append to explicitly provided previous results, if any.
+        # Take new samples using the same 'number' attribute so that
+        # they are comparable.
+        if prev_result is not None:
+            prev_stats = prev_result.stats[param_idx]
+            if prev_stats is not None:
+                cur_extra_params['number'] = prev_stats['number']
+            old_samples = prev_result.samples[param_idx]
+        elif prev_samples is not None:
+            samp, num = prev_samples[param_idx]
+            if samp is not None and num is not None:
+                old_samples = samp
+                cur_extra_params['number'] = num
+        else:
+            old_samples = None
+
+        res = run_benchmark_single_param(
+            benchmark, benchmark_dir, env, param_idx,
+            extra_params=cur_extra_params, profile=profile,
+            cwd=cwd)
+
+        if res.samples is not None:
+            # Compute statistics
+            if prev_samples is not None:
+                cur_samples = old_samples + res.samples
+            else:
+                cur_samples = res.samples
+            r, s = statistics.compute_stats(cur_samples, res.number)
+            result.append(r)
+            stats.append(s)
+        else:
+            cur_samples = res.samples
+            result.append(res.result)
+            stats.append(None)
+
+        samples.append(cur_samples)
+        profiles.append(res.profile)
+
+        if res.stderr:
+            stderr += "\n\n"
+            stderr += res.stderr
+
+        if res.errcode != 0:
+            errcode = res.errcode
+
+    return BenchmarkResult(
+        result=result,
+        samples=samples,
+        stats=stats,
+        params=benchmark['params'] if benchmark['params'] else [],
+        errcode=errcode,
+        stderr=stderr.strip(),
+        profile=_combine_profile_data(profiles),
+        started_at=started_at,
+        ended_at=datetime.datetime.utcnow()
+    )
+
+
+def run_benchmark_single_param(benchmark, benchmark_dir, env, param_idx,
+                               profile, extra_params, cwd):
     """
     Run a benchmark, for single parameter combination index in case it
     is parameterized
