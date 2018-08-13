@@ -22,6 +22,7 @@ from asv import config
 from asv import environment
 from asv import util
 from asv.repo import get_repo
+from asv.results import Results
 
 from . import tools
 
@@ -120,9 +121,25 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     start_timestamp = datetime.datetime.utcnow()
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
-    times = b.run_benchmarks(
-        envs[0], profile=True, show_stderr=True,
-        prev_samples={'time_examples.TimeSuite.time_example_benchmark_1': [([42.0, 24.0], 1)]})
+
+    # Old results to append to
+    results = Results({'machine': 'x'}, {}, '', None, '', '')
+    name = 'time_examples.TimeSuite.time_example_benchmark_1'
+    results.add_result(name,
+                       runner.BenchmarkResult(result=[1],
+                                              samples=[[42.0, 24.0]],
+                                              stats=[{'number': 1}],
+                                              params=b[name]['params'],
+                                              errcode=0, stderr='', profile=None,
+                                              started_at=start_timestamp,
+                                              ended_at=start_timestamp),
+                       b[name]['version'],
+                       record_samples=True)
+
+    # Run
+    times = runner.run_benchmarks(
+        b, envs[0], profile=True, show_stderr=True,
+        results=results, append_samples=True)
 
     end_timestamp = datetime.datetime.utcnow()
 
@@ -333,7 +350,7 @@ def test_quick(tmpdir):
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
     skip_names = [name for name in b.keys() if name != 'time_examples.TimeWithRepeat.time_it']
     b2 = b.filter_out(skip_names)
-    times = b2.run_benchmarks(envs[0], quick=True, show_stderr=True)
+    times = runner.run_benchmarks(b2, envs[0], quick=True, show_stderr=True)
 
     assert len(times) == 1
 
@@ -432,7 +449,7 @@ def test_skip_param_selection():
     ]
 
     b = benchmarks.Benchmarks(conf, d, [r'test_nonparam', r'test_param\([23]\)'])
-    result = b.skip_benchmarks(DummyEnv())
+    result = runner.skip_benchmarks(b, DummyEnv())
 
     assert result['test_nonparam'].result == None
     assert util.is_nan(result['test_param'].result[0])

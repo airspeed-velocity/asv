@@ -228,8 +228,15 @@ class Results(object):
         self._ended_at = {}
         self._benchmark_version = {}
 
-        self._filename = get_filename(
-            params['machine'], self._commit_hash, env_name)
+        if commit_hash is not None:
+            self._filename = get_filename(
+                params['machine'], self._commit_hash, env_name)
+        else:
+            self._filename = None
+
+    @classmethod
+    def unnamed(cls):
+        return cls({}, {}, None, None, None, None)
 
     @property
     def commit_hash(self):
@@ -395,12 +402,40 @@ class Results(object):
             Result of the benchmark.
 
         """
-        self._results[benchmark_name] = result.result
-        if record_samples:
-            self._samples[benchmark_name] = result.samples
-        else:
-            self._samples[benchmark_name] = None
-        self._stats[benchmark_name] = result.stats
+        new_result = result.result
+        new_stats = result.stats
+        new_samples = result.samples
+
+        if not record_samples:
+            if new_result is None:
+                new_samples = None
+            else:
+                new_samples = [None] * len(new_result)
+
+        if (result.result is not None and
+                benchmark_name in self._results and
+                benchmark_version == self._benchmark_version.get(benchmark_name)):
+            # Retain old result when the new benchmark is skipped
+            merge_idx = [j for j, r in enumerate(result.result) if util.is_nan(r)]
+            if merge_idx:
+                new_result = list(new_result)
+                new_stats = list(new_stats)
+                new_samples = list(new_samples)
+                old_result = self.get_result_value(benchmark_name, result.params)
+                old_stats = self.get_result_stats(benchmark_name, result.params)
+                old_samples = self.get_result_samples(benchmark_name, result.params)
+                for j in merge_idx:
+                    if old_result is not None:
+                        new_result[j] = old_result[j]
+                    if old_stats is not None:
+                        new_stats[j] = old_stats[j]
+                    if old_samples is not None:
+                        new_samples[j] = old_samples
+
+        self._results[benchmark_name] = new_result
+        self._stats[benchmark_name] = new_stats
+        self._samples[benchmark_name] = new_samples
+
         self._benchmark_params[benchmark_name] = result.params
         self._started_at[benchmark_name] = util.datetime_to_js_timestamp(result.started_at)
         self._ended_at[benchmark_name] = util.datetime_to_js_timestamp(result.ended_at)
@@ -447,6 +482,9 @@ class Results(object):
         result_dir : str
             Path to root of results tree.
         """
+        if self._filename is None:
+            raise ValueError("Cannot save unnamed Results")
+
         path = os.path.join(result_dir, self._filename)
 
         results = {}
@@ -481,22 +519,21 @@ class Results(object):
 
         util.write_json(path, data, self.api_version)
 
-    def update_save(self, result_dir):
+    def load_data(self, result_dir):
         """
-        Save the results to disk, adding to any existing results.
+        Load previous results for the current parameters (if any).
+        """
+        if self._filename is None:
+            raise ValueError("Cannot load unnamed Results")
 
-        Parameters
-        ----------
-        result_dir : str
-            Path to root of results tree.
-        """
         path = os.path.join(result_dir, self._filename)
 
         if os.path.isfile(path):
-            old_results = self.load(path)
-            self.add_existing_results(old_results)
-
-        self.save(result_dir)
+            old = self.load(path)
+            for dict_name in ('_results', '_samples', '_stats',
+                              '_benchmark_params', '_profiles', '_started_at',
+                              '_ended_at', '_benchmark_version'):
+                setattr(self, dict_name, getattr(old, dict_name))
 
     @classmethod
     def load(cls, path, machine_name=None):
@@ -570,38 +607,10 @@ class Results(object):
 
         return obj
 
-    def add_existing_results(self, old):
-        """
-        Add any existing old results that aren't overridden by the
-        current results.
-        """
-        for dict_name in ('_samples', '_stats',
-                          '_benchmark_params', '_profiles', '_started_at',
-                          '_ended_at', '_benchmark_version'):
-            old_dict = getattr(old, dict_name)
-            new_dict = getattr(self, dict_name)
-            for key, val in six.iteritems(old_dict):
-                if key not in new_dict:
-                    new_dict[key] = val
-        new_results = self._results
-        old_results = old._results
-        for key, val in six.iteritems(old_results):
-            if key not in new_results:
-                new_results[key] = val
-            elif self._benchmark_params[key]:
-                old_benchmark_results = {}
-                for idx, param_set in enumerate(itertools.product(
-                        *old._benchmark_params[key])):
-                    old_benchmark_results[param_set] = val[idx]
-                for idx, param_set in enumerate(itertools.product(
-                        *self._benchmark_params[key])):
-                    # when new result is skipped (NaN), keep previous result.
-                    if (util.is_nan(new_results[key][idx]) and
-                            old_benchmark_results.get(param_set) is not None):
-                        new_results[key][idx] = (
-                            old_benchmark_results[param_set])
-
     def rm(self, result_dir):
+        if self._filename is None:
+            raise ValueError("Cannot remove unnamed Results")
+
         path = os.path.join(result_dir, self._filename)
         os.remove(path)
 

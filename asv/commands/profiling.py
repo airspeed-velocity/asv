@@ -19,6 +19,7 @@ from ..machine import Machine
 from ..profiling import ProfilerGui
 from ..repo import get_repo
 from ..results import iter_results_for_machine
+from ..runner import run_benchmarks
 from ..util import hash_equal, iter_subclasses
 from .. import util
 
@@ -182,8 +183,8 @@ class Profile(Command):
             with log.indent():
                 env.install_project(conf, repo, commit_hash)
 
-                results = benchmarks.run_benchmarks(
-                    env, show_stderr=True, quick=False, profile=True)
+                results = run_benchmarks(
+                    benchmarks, env, show_stderr=True, quick=False, profile=True)
 
                 profile_data = results[benchmark].profile
 

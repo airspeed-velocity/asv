@@ -62,8 +62,8 @@ def test_results(tmpdir):
         assert r2.commit_hash == r.commit_hash
         assert r2._filename == r._filename
 
-        r3 = results.Results({'machine': 'bar'}, {}, 'a'*8, 123, '3.5', 'something')
-        r3.add_existing_results(r)
+        r3 = results.Results(r.params, r._requirements, r.commit_hash, r.date, r._python, r.env_name)
+        r3.load_data(resultsdir)
 
         for rr in [r2, r3]:
             assert rr._results == r._results

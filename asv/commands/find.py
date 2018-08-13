@@ -11,6 +11,7 @@ from ..benchmarks import Benchmarks
 from ..console import log
 from ..machine import Machine
 from ..repo import get_repo
+from ..runner import run_benchmarks
 from .. import util
 
 from .setup import Setup
@@ -121,8 +122,9 @@ class Find(Command):
                     conf.project, commit_hash[:8]))
 
             env.install_project(conf, repo, commit_hash)
-            x = benchmarks.run_benchmarks(
-                env, show_stderr=show_stderr)
+
+            x = run_benchmarks(
+                benchmarks, env, show_stderr=show_stderr)
             result = list(x.values())[0].result
 
             results[i] = result

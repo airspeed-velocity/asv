@@ -97,6 +97,71 @@ RawBenchmarkResult = util.namedtuple_with_doc(
     """)
 
 
+def run_benchmarks(benchmarks, env, show_stderr=False, quick=False, profile=False,
+                   extra_params=None,
+                   results=None, record_samples=False, append_samples=False):
+    """
+    Run all of the benchmarks in the given `Environment`.
+
+    Parameters
+    ----------
+    benchmarks : Benchmarks
+        Benchmarks to run
+
+    env : Environment object
+        Environment in which to run the benchmarks.
+
+    show_stderr : bool, optional
+        When `True`, display any stderr emitted by the benchmark.
+
+    quick : bool, optional
+        When `True`, run each benchmark function exactly once.
+        This is useful to quickly find errors in the benchmark
+        functions, without taking the time necessary to get
+        accurate timings.
+
+    profile : bool, optional
+        When `True`, run the benchmark through the `cProfile`
+        profiler.
+
+    extra_params : dict, optional
+        Override values for benchmark attributes.
+
+    results : Result object
+        Object to store results in
+
+    """
+    runner = BenchmarkRunner(benchmarks,
+                             show_stderr=show_stderr,
+                             quick=quick,
+                             extra_params=extra_params,
+                             profile=profile)
+
+    return runner.run(env, results=results,
+                      record_samples=record_samples or append_samples,
+                      append_samples=append_samples)
+
+
+def skip_benchmarks(benchmarks, env, results=None):
+    """
+    Mark benchmarks as skipped.
+    """
+    items = {}
+    
+    log.warn("Skipping {0}".format(env.name))
+    with log.indent():
+        for name, benchmark in six.iteritems(benchmarks):
+            log.step()
+            log.warn('Benchmark {0} skipped'.format(name))
+
+            r = fail_benchmark(benchmark, benchmarks.benchmark_selection.get(name))
+            items[name] = r
+
+            if results is not None:
+                results.add_result(name, r, benchmark['version'])
+
+    return items
+
 class BenchmarkRunner(object):
     """
     Control and plan running of a set of benchmarks.
@@ -113,7 +178,7 @@ class BenchmarkRunner(object):
     """
 
     def __init__(self, benchmarks, show_stderr=False, quick=False,
-                 profile=False, extra_params=None, prev_samples=None):
+                 profile=False, extra_params=None):
         """
         Initialize BenchmarkRunner.
 
@@ -129,16 +194,12 @@ class BenchmarkRunner(object):
             Whether to run with profiling data collection
         extra_params : dict, optional
             Attribute overrides for benchmarks.
-        prev_samples : dict, optional
-            Previous benchmark result sets.
-            ``prev_samples[benchmark_name] = [(samples, number), ...]``
 
         """
         self.benchmarks = benchmarks
         self.show_stderr = show_stderr
         self.quick = quick
         self.profile = profile
-        self.prev_samples = prev_samples if prev_samples is not None else {}
         if extra_params is None:
             self.extra_params = {}
         else:
@@ -157,7 +218,7 @@ class BenchmarkRunner(object):
         else:
             return int(benchmark.get('processes', 1))
 
-    def plan(self):
+    def plan(self, results=None):
         """
         Compute required Job objects
 
@@ -196,6 +257,11 @@ class BenchmarkRunner(object):
         setup_cache_jobs = {None: None}
         prev_runs = {}
 
+        if results is not None:
+            results_keys = results.get_result_keys(self.benchmarks)
+        else:
+            results_keys = set()
+
         for name, benchmark, setup_cache_key, is_final in iter_run_items():
             # Setup cache first, if needed
             if setup_cache_key is None:
@@ -210,14 +276,26 @@ class BenchmarkRunner(object):
                 setup_cache_jobs[setup_cache_key] = setup_cache_job
                 yield setup_cache_job
 
-            # Run benchmark
+            # Find previous results to append to, if any
             prev_job = prev_runs.get(name, None)
+            prev_result = None
+
+            if prev_job is None and name in results_keys:
+                prev_result = BenchmarkResult(
+                    result=results.get_result_value(name, benchmark['params']),
+                    stats=results.get_result_stats(name, benchmark['params']),
+                    samples=results.get_result_samples(name, benchmark['params']),
+                    params=benchmark['params'],
+                    errcode=0, stderr='', profile=None,
+                    started_at=None, ended_at=None)
+
+            # Run benchmark
             job = LaunchBenchmarkJob(name, benchmark, self.benchmarks.benchmark_dir,
                                      self.profile, self.extra_params,
                                      cache_job=setup_cache_job, prev_job=prev_job,
                                      partial=not is_final,
                                      selected_idx=self.benchmarks.benchmark_selection.get(name),
-                                     prev_samples=self.prev_samples.get(name))
+                                     prev_result=prev_result)
             if self._get_processes(benchmark) > 1:
                 prev_runs[name] = job
             yield job
@@ -236,15 +314,18 @@ class BenchmarkRunner(object):
             if job is not None:
                 yield SetupCacheCleanupJob(job)
 
-    def run(self, env):
-        times = {}
-
-        jobs = self.plan()
+    def run(self, env, results=None, record_samples=False, append_samples=False):
+        if append_samples:
+            jobs = self.plan(results)
+        else:
+            jobs = self.plan()
 
         name_max_width = max(16, util.get_terminal_width() - 33)
         partial_info_printed = False
 
         log.info("Benchmarking {0}".format(env.name))
+
+        times = {}
 
         try:
             with log.indent():
@@ -273,8 +354,14 @@ class BenchmarkRunner(object):
                             log.info(short_name, reserve_space=True)
                             partial_info_printed = False
                         job.run(env)
+
                         self._log_benchmark_result(job)
-                        if job.result is not None:
+
+                        if not job.partial:
+                            if results is not None:
+                                results.add_result(job.name, job.result,
+                                                   job.benchmark['version'],
+                                                   record_samples=record_samples)
                             times[job.name] = job.result
                     else:
                         partial_info_printed = False
@@ -350,7 +437,7 @@ class LaunchBenchmarkJob(object):
 
     def __init__(self, name, benchmark, benchmark_dir, profile=False, extra_params=None,
                  cache_job=None, prev_job=None, partial=False, selected_idx=None,
-                 prev_samples=None):
+                 prev_result=None):
         """
         Parameters
         ----------
@@ -381,7 +468,7 @@ class LaunchBenchmarkJob(object):
         selected_idx : list of int, optional
             Which items to run in a parametrized bencmark.
 
-        prev_samples : list of (samples, number), optional
+        prev_result : BenchmarkResult, optional
             Previous samples to insert
 
         """
@@ -394,7 +481,7 @@ class LaunchBenchmarkJob(object):
         self.prev_job = prev_job
         self.partial = partial
         self.selected_idx = selected_idx
-        self.prev_samples = prev_samples
+        self.prev_result = prev_result
 
         self.result = None
 
@@ -415,7 +502,7 @@ class LaunchBenchmarkJob(object):
             self.result = self.prev_job.result
             return
 
-        prev_result = self.prev_job.result if self.prev_job else None
+        prev_result = self.prev_job.result if self.prev_job else self.prev_result
 
         if self.cache_job:
             cache_dir = self.cache_job.cache_dir
@@ -426,8 +513,7 @@ class LaunchBenchmarkJob(object):
                                     env, self.profile, self.selected_idx,
                                     extra_params=self.extra_params,
                                     cwd=cache_dir,
-                                    prev_result=prev_result,
-                                    prev_samples=self.prev_samples)
+                                    prev_result=prev_result)
 
 
 class SetupCacheJob(object):
@@ -507,12 +593,16 @@ def fail_benchmark(benchmark, selected_idx=None, stderr='', errcode=1):
         params = itertools.product(*benchmark['params'])
         result = [None if idx in selected_idx else util.nan
                   for idx, _ in enumerate(params)]
+        samples = [None] * len(result)
+        stats = [None] * len(result)
     else:
         result = None
+        samples = None
+        stats = None
 
     return BenchmarkResult(result=result,
-                           samples=None,
-                           stats=None,
+                           samples=samples,
+                           stats=stats,
                            params=benchmark['params'],
                            errcode=errcode,
                            stderr=stderr,
@@ -525,8 +615,7 @@ def run_benchmark(benchmark, benchmark_dir, env, profile,
                   selected_idx=None,
                   extra_params=None,
                   cwd=None,
-                  prev_result=None,
-                  prev_samples=None):
+                  prev_result=None):
     """
     Run a benchmark.
 
@@ -549,7 +638,6 @@ def run_benchmark(benchmark, benchmark_dir, env, profile,
         If None, run in a temporary directory.
     prev_result : BenchmarkResult, optional
         Previous benchmark result to append new samples to.
-    prev_samples : list of list, optional
 
     Returns
     -------
@@ -595,14 +683,9 @@ def run_benchmark(benchmark, benchmark_dir, env, profile,
             prev_stats = prev_result.stats[param_idx]
             if prev_stats is not None:
                 cur_extra_params['number'] = prev_stats['number']
-            old_samples = prev_result.samples[param_idx]
-        elif prev_samples is not None:
-            samp, num = prev_samples[param_idx]
-            if samp is not None and num is not None:
-                old_samples = samp
-                cur_extra_params['number'] = num
+            prev_samples = prev_result.samples[param_idx]
         else:
-            old_samples = None
+            prev_samples = None
 
         res = run_benchmark_single_param(
             benchmark, benchmark_dir, env, param_idx,
@@ -612,7 +695,7 @@ def run_benchmark(benchmark, benchmark_dir, env, profile,
         if res.samples is not None:
             # Compute statistics
             if prev_samples is not None:
-                cur_samples = old_samples + res.samples
+                cur_samples = prev_samples + res.samples
             else:
                 cur_samples = res.samples
             r, s = statistics.compute_stats(cur_samples, res.number)
