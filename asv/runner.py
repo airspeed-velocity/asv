@@ -19,6 +19,7 @@ import pstats
 import six
 
 from .console import log, truncate_left
+from .results import Results
 from . import util
 from . import statistics
 
@@ -97,9 +98,30 @@ RawBenchmarkResult = util.namedtuple_with_doc(
     """)
 
 
-def run_benchmarks(benchmarks, env, show_stderr=False, quick=False, profile=False,
+def skip_benchmarks(benchmarks, env, results=None):
+    """
+    Mark benchmarks as skipped.
+    """
+    if results is None:
+        results = Results.unnamed()
+
+    log.warn("Skipping {0}".format(env.name))
+    with log.indent():
+        for name, benchmark in six.iteritems(benchmarks):
+            log.step()
+            log.warn('{0} skipped'.format(name))
+
+            r = fail_benchmark(benchmark, benchmarks.benchmark_selection.get(name))
+            results.add_result(name, r, benchmark['version'])
+
+    return results
+
+
+def run_benchmarks(benchmarks, env, results=None,
+                   show_stderr=False, quick=False, profile=False,
                    extra_params=None,
-                   results=None, record_samples=False, append_samples=False):
+                   record_samples=False, append_samples=False,
+                   results_dict=None):
     """
     Run all of the benchmarks in the given `Environment`.
 
@@ -110,6 +132,9 @@ def run_benchmarks(benchmarks, env, show_stderr=False, quick=False, profile=Fals
 
     env : Environment object
         Environment in which to run the benchmarks.
+
+    results : Result object, optional
+        Object to store results in
 
     show_stderr : bool, optional
         When `True`, display any stderr emitted by the benchmark.
@@ -127,160 +152,116 @@ def run_benchmarks(benchmarks, env, show_stderr=False, quick=False, profile=Fals
     extra_params : dict, optional
         Override values for benchmark attributes.
 
-    results : Result object
-        Object to store results in
-
-    """
-    runner = BenchmarkRunner(benchmarks,
-                             show_stderr=show_stderr,
-                             quick=quick,
-                             extra_params=extra_params,
-                             profile=profile)
-
-    return runner.run(env, results=results,
-                      record_samples=record_samples or append_samples,
-                      append_samples=append_samples)
-
-
-def skip_benchmarks(benchmarks, env, results=None):
-    """
-    Mark benchmarks as skipped.
-    """
-    items = {}
-    
-    log.warn("Skipping {0}".format(env.name))
-    with log.indent():
-        for name, benchmark in six.iteritems(benchmarks):
-            log.step()
-            log.warn('Benchmark {0} skipped'.format(name))
-
-            r = fail_benchmark(benchmark, benchmarks.benchmark_selection.get(name))
-            items[name] = r
-
-            if results is not None:
-                results.add_result(name, r, benchmark['version'])
-
-    return items
-
-class BenchmarkRunner(object):
-    """
-    Control and plan running of a set of benchmarks.
-
-    Takes care of:
-
-    - setup_cache
-    - distributing benchmarks to multiple processes
-    - launching benchmarks
-    - logging messages and displaying results
-
-    The `plan` method generates a sequence of Job objects,
-    which the `run` method then runs.
     """
 
-    def __init__(self, benchmarks, show_stderr=False, quick=False,
-                 profile=False, extra_params=None):
-        """
-        Initialize BenchmarkRunner.
+    if extra_params is None:
+        extra_params = {}
+    else:
+        extra_params = dict(extra_params)
 
-        Parameters
-        ----------
-        benchmarks : Benchmarks
-            Set of benchmarks to run.
-        show_stderr : bool, optional
-            Whether to dump output stream from benchmark program.
-        quick : bool, optional
-            Whether to force a 'quick' run.
-        profile : bool, optional
-            Whether to run with profiling data collection
-        extra_params : dict, optional
-            Attribute overrides for benchmarks.
+    if quick:
+        extra_params['number'] = 1
+        extra_params['repeat'] = 1
+        extra_params['warmup_time'] = 0
+        extra_params['processes'] = 1
 
-        """
-        self.benchmarks = benchmarks
-        self.show_stderr = show_stderr
-        self.quick = quick
-        self.profile = profile
-        if extra_params is None:
-            self.extra_params = {}
-        else:
-            self.extra_params = dict(extra_params)
+    if results is None:
+        results = Results.unnamed()
 
-        if quick:
-            self.extra_params['number'] = 1
-            self.extra_params['repeat'] = 1
-            self.extra_params['warmup_time'] = 0
-            self.extra_params['processes'] = 1
+    if append_samples:
+        record_samples = True
 
-    def _get_processes(self, benchmark):
+    # Find all setup_cache routines needed
+    setup_cache_timeout = {}
+    benchmark_order = {}
+    cache_users = {}
+    max_processes = 0
+
+    def get_processes(benchmark):
         """Get number of processes to use for a job"""
-        if 'processes' in self.extra_params:
-            return int(self.extra_params['processes'])
+        if 'processes' in extra_params:
+            return int(extra_params['processes'])
         else:
             return int(benchmark.get('processes', 1))
 
-    def plan(self, results=None):
-        """
-        Compute required Job objects
+    for name, benchmark in sorted(six.iteritems(benchmarks)):
+        key = benchmark.get('setup_cache_key')
+        setup_cache_timeout[key] = max(benchmark.get('setup_cache_timeout',
+                                                     benchmark['timeout']),
+                                       setup_cache_timeout.get(key, 0))
+        benchmark_order.setdefault(key, []).append((name, benchmark))
+        max_processes = max(max_processes, get_processes(benchmark))
+        cache_users.setdefault(key, set()).add(name)
 
-        Yields
-        ------
-        job : *Job
-            A job object to run.
-        """
-        # Find all setup_cache routines needed
-        setup_cache_timeout = {}
-        benchmark_order = {}
-        cache_users = {}
-        max_processes = 0
+    # Interleave benchmark runs, in setup_cache order
+    def iter_run_items():
+        for run_round in range(max_processes):
+            for setup_cache_key, benchmark_set in six.iteritems(benchmark_order):
+                for name, benchmark in benchmark_set:
+                    processes = get_processes(benchmark)
+                    if run_round >= processes:
+                        continue
+                    is_final = (run_round + 1 >= processes)
+                    yield name, benchmark, setup_cache_key, is_final
 
-        for name, benchmark in sorted(six.iteritems(self.benchmarks)):
-            key = benchmark.get('setup_cache_key')
-            setup_cache_timeout[key] = max(benchmark.get('setup_cache_timeout',
-                                                         benchmark['timeout']),
-                                           setup_cache_timeout.get(key, 0))
-            benchmark_order.setdefault(key, []).append((name, benchmark))
-            max_processes = max(max_processes, self._get_processes(benchmark))
-            cache_users.setdefault(key, set()).add(name)
+    # Run benchmarks in order
+    cache_dirs = {None: None}
+    failed_benchmarks = set()
+    failed_setup_cache = {}
 
-        # Interleave benchmark runs, in setup_cache order
-        def iter_run_items():
-            for run_round in range(max_processes):
-                for setup_cache_key, benchmark_set in six.iteritems(benchmark_order):
-                    for name, benchmark in benchmark_set:
-                        processes = self._get_processes(benchmark)
-                        if run_round >= processes:
-                            continue
-                        is_final = (run_round + 1 >= processes)
-                        yield name, benchmark, setup_cache_key, is_final
+    if append_samples:
+        previous_result_keys = results.get_result_keys(benchmarks)
+    else:
+        previous_result_keys = set()
 
-        # Produce job objects
-        setup_cache_jobs = {None: None}
-        prev_runs = {}
+    log.info("Benchmarking {0}".format(env.name))
 
-        if results is not None:
-            results_keys = results.get_result_keys(self.benchmarks)
-        else:
-            results_keys = set()
+    partial_info_time = None
+    indent = log.indent()
+    indent.__enter__()
 
+    try:
         for name, benchmark, setup_cache_key, is_final in iter_run_items():
+            if is_final:
+                log.step()
+
+            # Don't try to rerun failed benchmarks
+            if name in failed_benchmarks:
+                continue
+
             # Setup cache first, if needed
             if setup_cache_key is None:
-                setup_cache_job = None
-            elif setup_cache_key in setup_cache_jobs:
-                setup_cache_job = setup_cache_jobs[setup_cache_key]
-            else:
-                setup_cache_job = SetupCacheJob(self.benchmarks.benchmark_dir,
-                                                name,
-                                                setup_cache_key,
-                                                setup_cache_timeout[setup_cache_key])
-                setup_cache_jobs[setup_cache_key] = setup_cache_job
-                yield setup_cache_job
+                cache_dir = None
+            elif setup_cache_key in cache_dirs:
+                cache_dir = cache_dirs[setup_cache_key]
+            elif setup_cache_key not in failed_setup_cache:
+                partial_info_time = None
+                log.info("Setting up {0}".format(setup_cache_key), reserve_space=True)
+                cache_dir, stderr = create_setup_cache(name, benchmarks.benchmark_dir, env,
+                                                       setup_cache_timeout[setup_cache_key])
+                if cache_dir is not None:
+                    log.add_padded('ok')
+                    cache_dirs[setup_cache_key] = cache_dir
+                else:
+                    log.error(stderr)
+                    failed_setup_cache[setup_cache_key] = stderr
+
+            if setup_cache_key in failed_setup_cache:
+                # Mark benchmark as failed
+                partial_info_time = None
+                log.warn('{0} skipped (setup_cache failed)'.format(name))
+                stderr = 'asv: setup_cache failed\n\n{}'.format(failed_setup_cache[setup_cache_key])
+                res = fail_benchmark(benchmark, benchmarks.benchmark_selection.get(name),
+                                     stderr=stderr)
+                results.add_result(name, res, benchmark['version'],
+                                   record_samples=record_samples)
+                if results_dict is not None:
+                    results_dict[name] = res
+                failed_benchmarks.add(name)
+                continue
 
             # Find previous results to append to, if any
-            prev_job = prev_runs.get(name, None)
-            prev_result = None
-
-            if prev_job is None and name in results_keys:
+            if name in previous_result_keys:
                 prev_result = BenchmarkResult(
                     result=results.get_result_value(name, benchmark['params']),
                     stats=results.get_result_stats(name, benchmark['params']),
@@ -288,298 +269,124 @@ class BenchmarkRunner(object):
                     params=benchmark['params'],
                     errcode=0, stderr='', profile=None,
                     started_at=None, ended_at=None)
+            else:
+                prev_result = None
 
             # Run benchmark
-            job = LaunchBenchmarkJob(name, benchmark, self.benchmarks.benchmark_dir,
-                                     self.profile, self.extra_params,
-                                     cache_job=setup_cache_job, prev_job=prev_job,
-                                     partial=not is_final,
-                                     selected_idx=self.benchmarks.benchmark_selection.get(name),
-                                     prev_result=prev_result)
-            if self._get_processes(benchmark) > 1:
-                prev_runs[name] = job
-            yield job
+            if is_final:
+                partial_info_time = None
+                log.info(name, reserve_space=True)
+            elif partial_info_time is None or time.time() > partial_info_time + 30:
+                partial_info_time = time.time()
+                log.info('Running ({0}--)'.format(name))
+
+            res = run_benchmark(benchmark, benchmarks.benchmark_dir, env,
+                                profile=profile,
+                                selected_idx=benchmarks.benchmark_selection.get(name),
+                                extra_params=extra_params,
+                                cwd=cache_dir,
+                                prev_result=prev_result)
+
+            # Save result
+            results.add_result(name, res, benchmark['version'],
+                               record_samples=(not is_final or record_samples))
+            if results_dict is not None:
+                results_dict[name] = res
+            previous_result_keys.add(name)
+            if res.errcode != 0:
+                failed_benchmarks.add(name)
+
+            # Log result
+            if res.errcode != 0 or is_final:
+                partial_info_time = None
+                if not is_final:
+                    log.info(name, reserve_space=True)
+                log_benchmark_result(benchmark, res, show_stderr=show_stderr)
+            else:
+                log.add('.')
 
             # Cleanup setup cache, if no users left
-            if setup_cache_job is not None and is_final:
+            if cache_dir is not None and is_final:
                 cache_users[setup_cache_key].remove(name)
                 if not cache_users[setup_cache_key]:
                     # No users of this cache left, perform cleanup
-                    yield SetupCacheCleanupJob(setup_cache_job)
-                    del setup_cache_jobs[setup_cache_key]
-                    del cache_users[setup_cache_key]
-
+                    util.long_path_rmtree(cache_dir, True)
+                    del cache_dirs[setup_cache_key]
+    finally:
         # Cleanup any dangling caches
-        for job in setup_cache_jobs.values():
-            if job is not None:
-                yield SetupCacheCleanupJob(job)
+        for cache_dir in cache_dirs.values():
+            if cache_dir is not None:
+                util.long_path_rmtree(cache_dir, True)
+        indent.__exit__(None, None, None)
 
-    def run(self, env, results=None, record_samples=False, append_samples=False):
-        if append_samples:
-            jobs = self.plan(results)
+    return results
+
+
+def log_benchmark_result(benchmark, result, show_stderr=False):
+    if result.result is None:
+        total_count = 1
+        failure_count = 1
+    else:
+        total_count = len(result.result)
+        failure_count = sum(r is None for r in result.result)
+
+    # Display status
+    if failure_count > 0:
+        if failure_count == total_count:
+            log.add_padded("failed")
         else:
-            jobs = self.plan()
+            log.add_padded("{0}/{1} failed".format(failure_count,
+                                                   total_count))
 
-        name_max_width = max(16, util.get_terminal_width() - 33)
-        partial_info_printed = False
+    # Display results
+    if benchmark['params'] and show_stderr:
+        # Long format display
+        if failure_count == 0:
+            log.add_padded("ok")
 
-        log.info("Benchmarking {0}".format(env.name))
-
-        times = {}
-
-        try:
-            with log.indent():
-                prev_run_info_time = time.time()
-
-                for job in jobs:
-                    short_name = truncate_left(job.name, name_max_width)
-
-                    if isinstance(job, SetupCacheJob):
-                        partial_info_printed = False
-                        log.info("Setting up {0}".format(short_name))
-                        job.run(env)
-                    elif isinstance(job, LaunchBenchmarkJob):
-                        if job.partial:
-                            if time.time() > prev_run_info_time + 30:
-                                partial_info_printed = False
-
-                            if partial_info_printed:
-                                log.add(".")
-                            else:
-                                log.info('Running ({0}--)'.format(short_name))
-                                prev_run_info_time = time.time()
-                            partial_info_printed = True
-                        else:
-                            log.step()
-                            log.info(short_name, reserve_space=True)
-                            partial_info_printed = False
-                        job.run(env)
-
-                        self._log_benchmark_result(job)
-
-                        if not job.partial:
-                            if results is not None:
-                                results.add_result(job.name, job.result,
-                                                   job.benchmark['version'],
-                                                   record_samples=record_samples)
-                            times[job.name] = job.result
-                    else:
-                        partial_info_printed = False
-                        job.run(env)
-        finally:
-            for job in jobs:
-                if isinstance(job, SetupCacheCleanupJob):
-                    job.run(env)
-
-        return times
-
-    def _log_benchmark_result(self, job):
-        if job.partial:
-            return
-
-        if job.result.result is None:
-            total_count = 1
-            failure_count = 1
-        else:
-            total_count = len(job.result.result)
-            failure_count = sum(r is None for r in job.result.result)
-
-        # Display status
-        if failure_count > 0:
-            if failure_count == total_count:
-                log.add_padded("failed")
+        display_result = [(v, statistics.get_err(v, s) if s is not None else None)
+                          for v, s in zip(result.result, result.stats)]
+        display = _format_benchmark_result(display_result, benchmark)
+        display = "\n".join(display).strip()
+        log.info(display, color='default')
+    else:
+        if failure_count == 0:
+            # Failure already shown above
+            if not result.result:
+                display = "[]"
             else:
-                log.add_padded("{0}/{1} failed".format(failure_count,
-                                                       total_count))
-
-        # Display results
-        if job.benchmark['params'] and self.show_stderr:
-            # Long format display
-            if failure_count == 0:
-                log.add_padded("ok")
-
-            display_result = [(v, statistics.get_err(v, s) if s is not None else None)
-                              for v, s in zip(job.result.result, job.result.stats)]
-            display = _format_benchmark_result(display_result, job.benchmark)
-            display = "\n".join(display).strip()
-            log.info(display, color='default')
-        else:
-            if failure_count == 0:
-                # Failure already shown above
-                if not job.result.result:
-                    display = "[]"
+                if result.stats[0]:
+                    err = statistics.get_err(result.result[0], result.stats[0])
                 else:
-                    if job.result.stats[0]:
-                        err = statistics.get_err(job.result.result[0], job.result.stats[0])
-                    else:
-                        err = None
-                    display = util.human_value(job.result.result[0], job.benchmark['unit'], err=err)
-                    if len(job.result.result) > 1:
-                        display += ";..."
-                log.add_padded(display)
+                    err = None
+                display = util.human_value(result.result[0], benchmark['unit'], err=err)
+                if len(result.result) > 1:
+                    display += ";..."
+            log.add_padded(display)
 
-        # Dump program output
-        if self.show_stderr and job.result.stderr:
-            with log.indent():
-                log.error(job.result.stderr)
+    # Dump program output
+    if show_stderr and result.stderr:
+        with log.indent():
+            log.error(result.stderr)
 
 
-class LaunchBenchmarkJob(object):
-    """
-    Job launching a benchmarking process and parsing its results.
+def create_setup_cache(benchmark_id, benchmark_dir, env, timeout):
+    cache_dir = tempfile.mkdtemp()
 
-    Attributes
-    ----------
-    result : {BenchmarkResult, None}
-        Job result (None if job was not yet run).
+    out, _, errcode = env.run(
+        [BENCHMARK_RUN_SCRIPT, 'setup_cache',
+         os.path.abspath(benchmark_dir),
+         benchmark_id],
+        dots=False, display_error=False,
+        return_stderr=True, valid_return_codes=None,
+        redirect_stderr=True,
+        cwd=cache_dir, timeout=timeout)
 
-    """
-
-    def __init__(self, name, benchmark, benchmark_dir, profile=False, extra_params=None,
-                 cache_job=None, prev_job=None, partial=False, selected_idx=None,
-                 prev_result=None):
-        """
-        Parameters
-        ----------
-        name : str
-            Name of the benchmark
-
-        benchmark : Benchmark object
-
-        benchmark_dir : str
-            Path to benchmark directory in which to find the benchmark
-
-        profile : bool
-            When `True`, run the benchmark through the `cProfile` profiler
-            and save the results.
-
-        extra_params : dict, optional
-            Benchmark attribute overrides.
-
-        cache_job : SetupCacheJob, optional
-            Job that sets up the required setup cache
-
-        prev_job : LaunchBenchmarkJob, optional
-            Previous job for this benchmark, whose result to combine
-
-        partial : bool, optional
-            Whether this is the final run for this benchmark, or intermediate one.
-
-        selected_idx : list of int, optional
-            Which items to run in a parametrized bencmark.
-
-        prev_result : BenchmarkResult, optional
-            Previous samples to insert
-
-        """
-        self.name = name
-        self.benchmark = benchmark
-        self.benchmark_dir = benchmark_dir
-        self.profile = profile
-        self.extra_params = extra_params if extra_params is not None else {}
-        self.cache_job = cache_job
-        self.prev_job = prev_job
-        self.partial = partial
-        self.selected_idx = selected_idx
-        self.prev_result = prev_result
-
-        self.result = None
-
-    def __repr__(self):
-        return "<asv.runner.LaunchBenchmarkJob '{}' at 0x{:x}>".format(self.name, id(self))
-
-    def run(self, env):
-        if self.cache_job is not None and self.cache_job.cache_dir is None:
-            # Our setup_cache failed, so skip this job
-            self.result = fail_benchmark(
-                    self.benchmark, self.selected_idx,
-                    stderr=self.cache_job.stderr,
-                    errcode=self.cache_job.errcode)
-            return
-
-        if self.prev_job is not None and self.prev_job.result.result is None:
-            # Previous job in a multi-process benchmark failed, so skip this job
-            self.result = self.prev_job.result
-            return
-
-        prev_result = self.prev_job.result if self.prev_job else self.prev_result
-
-        if self.cache_job:
-            cache_dir = self.cache_job.cache_dir
-        else:
-            cache_dir = None
-
-        self.result = run_benchmark(self.benchmark, self.benchmark_dir,
-                                    env, self.profile, self.selected_idx,
-                                    extra_params=self.extra_params,
-                                    cwd=cache_dir,
-                                    prev_result=prev_result)
-
-
-class SetupCacheJob(object):
-    """
-    Job for running setup_cache and managing its results.
-    """
-
-    def __init__(self, benchmark_dir, benchmark_id, setup_cache_key, timeout):        
-        if setup_cache_key is None:
-            raise ValueError()
-
-        self.benchmark_dir = benchmark_dir
-        self.benchmark_id = benchmark_id
-        self.setup_cache_key = setup_cache_key
-        self.timeout = timeout
-
-        self.cache_dir = None
-
-    @property
-    def name(self):
-        name = os.path.split(self.setup_cache_key)
-        return name[-1]
-
-    def __repr__(self):
-        return "<asv.runner.SetupCacheJob '{}' at 0x{:x}>".format(self.name, id(self))
-
-    def run(self, env):
-        cache_dir = tempfile.mkdtemp()
-
-        out, err, errcode = env.run(
-            [BENCHMARK_RUN_SCRIPT, 'setup_cache',
-             os.path.abspath(self.benchmark_dir),
-             self.benchmark_id],
-            dots=False, display_error=False,
-            return_stderr=True, valid_return_codes=None,
-            redirect_stderr=True,
-            cwd=cache_dir, timeout=self.timeout)
-
-        self.errcode = errcode
-
-        if errcode == 0:
-            self.stderr = None
-            self.cache_dir = cache_dir
-        else:
-            self.stderr = out
-            self.clean()
-
-    def clean(self):
-        if self.cache_dir is not None:
-            util.long_path_rmtree(self.cache_dir, True)
-            self.cache_dir = None
-
-
-class SetupCacheCleanupJob(object):
-    def __init__(self, cache_job):
-        self.cache_job = cache_job
-
-    @property
-    def name(self):
-        return self.cache_job.name
-
-    def __repr__(self):
-        return "<asv.runner.SetupCacheCleanupJob '{}' at 0x{:x}>".format(self.name, id(self))
-
-    def run(self, env):
-        self.cache_job.clean()
+    if errcode == 0:
+        return cache_dir, None
+    else:
+        util.long_path_rmtree(cache_dir, True)
+        return None, out
 
 
 def fail_benchmark(benchmark, selected_idx=None, stderr='', errcode=1):

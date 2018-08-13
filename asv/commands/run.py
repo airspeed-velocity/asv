@@ -303,12 +303,13 @@ class Run(Command):
 
                         if success:
                             run_benchmarks(
-                                benchmark_set, env, show_stderr=show_stderr, quick=quick,
+                                benchmark_set, env, results=result,
+                                show_stderr=show_stderr, quick=quick,
                                 profile=profile, extra_params=attribute,
-                                results=result, record_samples=record_samples,
+                                record_samples=record_samples,
                                 append_samples=append_samples)
                         else:
-                            skip_benchmarks(benchmark_set, env, result)
+                            skip_benchmarks(benchmark_set, env, results=result)
 
                         if not skip_save:
                             result.save(conf.results_dir)

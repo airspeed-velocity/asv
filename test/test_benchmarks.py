@@ -123,7 +123,7 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
 
     # Old results to append to
-    results = Results({'machine': 'x'}, {}, '', None, '', '')
+    results = Results.unnamed()
     name = 'time_examples.TimeSuite.time_example_benchmark_1'
     results.add_result(name,
                        runner.BenchmarkResult(result=[1],
@@ -137,9 +137,10 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
                        record_samples=True)
 
     # Run
-    times = runner.run_benchmarks(
+    times = {}
+    runner.run_benchmarks(
         b, envs[0], profile=True, show_stderr=True,
-        results=results, append_samples=True)
+        results=results, append_samples=True, results_dict=times)
 
     end_timestamp = datetime.datetime.utcnow()
 
@@ -350,9 +351,11 @@ def test_quick(tmpdir):
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
     skip_names = [name for name in b.keys() if name != 'time_examples.TimeWithRepeat.time_it']
     b2 = b.filter_out(skip_names)
-    times = runner.run_benchmarks(b2, envs[0], quick=True, show_stderr=True)
 
-    assert len(times) == 1
+    times = {}
+    results = runner.run_benchmarks(b2, envs[0], quick=True, show_stderr=True, results_dict=times)
+
+    assert len(results.get_result_keys(b2)) == 1
 
     # Check that the benchmark was run only once. The result for quick==False
     # is tested above in test_find_benchmarks
@@ -442,15 +445,17 @@ def test_skip_param_selection():
         name = 'env'
 
     d = [
-        {'name': 'test_nonparam', 'params': []},
+        {'name': 'test_nonparam', 'params': [], 'version': '1'},
         {'name': 'test_param',
          'params': [['1', '2', '3']],
-         'param_names': ['n']}
+         'param_names': ['n'],
+         'version': '1'}
     ]
 
+    results = Results.unnamed()
     b = benchmarks.Benchmarks(conf, d, [r'test_nonparam', r'test_param\([23]\)'])
-    result = runner.skip_benchmarks(b, DummyEnv())
+    runner.skip_benchmarks(b, DummyEnv(), results)
 
-    assert result['test_nonparam'].result == None
-    assert util.is_nan(result['test_param'].result[0])
-    assert result['test_param'].result[1:] == [None, None]
+    assert results._results.get('test_nonparam') == None
+    assert util.is_nan(results._results['test_param'][0])
+    assert results._results['test_param'][1:] == [None, None]

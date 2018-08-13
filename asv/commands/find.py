@@ -101,6 +101,8 @@ class Find(Command):
             log.error("'{0}' matches more than one benchmark".format(bench))
             return 1
 
+        benchmark_name, = benchmarks.keys()
+
         steps = int(math.log(len(commit_hashes)) / math.log(2))
 
         log.info(
@@ -123,9 +125,11 @@ class Find(Command):
 
             env.install_project(conf, repo, commit_hash)
 
-            x = run_benchmarks(
+            res = run_benchmarks(
                 benchmarks, env, show_stderr=show_stderr)
-            result = list(x.values())[0].result
+
+            result = res.get_result_value(benchmark_name,
+                                          benchmarks[benchmark_name]['params'])
 
             results[i] = result
 
