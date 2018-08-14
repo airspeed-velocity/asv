@@ -391,16 +391,13 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
                          repo.get_date_from_name(commit), "2.7", None)
         value = runner.BenchmarkResult(
             result=[value],
-            samples=None,
-            stats=None,
-            params=[],
+            samples=[None],
+            number=[None],
             errcode=0,
             stderr='',
-            profile=None,
-            started_at=timestamp,
-            ended_at=timestamp
-        )
-        result.add_result("time_func", value, benchmark_version)
+            profile=None)
+        result.add_result({"name": "time_func", "version": benchmark_version, "params": []},
+                          value, started_at=timestamp, ended_at=timestamp)
         result.save(result_dir)
 
     if params:

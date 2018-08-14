@@ -10,6 +10,7 @@ import os
 import zlib
 import itertools
 import hashlib
+import datetime
 
 import six
 from six.moves import zip as izip
@@ -17,6 +18,7 @@ from six.moves import zip as izip
 from . import environment
 from .console import log
 from .machine import Machine
+from . import statistics
 from . import util
 
 
@@ -167,7 +169,7 @@ def _compatible_results(result, result_params, params):
     """
     if result is None:
         # All results missing, eg. build failure
-        return None
+        return [None for param in itertools.product(*params)]
 
     # Pick results for those parameters that also appear in the
     # current benchmark
@@ -228,6 +230,10 @@ class Results(object):
         self._ended_at = {}
         self._benchmark_version = {}
 
+        # Note: stderr and errcode are not saved to files
+        self._stderr = {}
+        self._errcode = {}
+
         if commit_hash is not None:
             self._filename = get_filename(
                 params['machine'], self._commit_hash, env_name)
@@ -261,6 +267,14 @@ class Results(object):
     @property
     def benchmark_version(self):
         return self._benchmark_version
+
+    @property
+    def stderr(self):
+        return self._stderr
+
+    @property
+    def errcode(self):
+        return self._errcode
 
     def get_all_result_keys(self):
         """
@@ -388,58 +402,109 @@ class Results(object):
         # Remove version (may be missing)
         self._benchmark_version.pop(key, None)
 
-    def add_result(self, benchmark_name, result, benchmark_version,
-                   record_samples=False):
+    def add_result(self, benchmark, result,
+                   started_at=None, ended_at=None,
+                   record_samples=False,
+                   append_samples=False,
+                   selected_idx=None):
         """
         Add benchmark result.
 
         Parameters
         ----------
-        benchmark_name : str
-            Name of benchmark
+        benchmark : dict
+            Benchmark object
 
         result : runner.BenchmarkResult
             Result of the benchmark.
 
+        started_at : datetime.datetime, optional
+            Benchmark start time.
+
+        ended_at : datetime.datetime, optional
+            Benchmark end time.
+
+        record_samples : bool, optional
+            Whether to save samples.
+
+        append_samples : bool, optional
+            Whether to combine new samples with old.
+
+        selected_idx : set, optional
+            Which indices in a parametrized benchmark to update
+
         """
-        new_result = result.result
-        new_stats = result.stats
-        new_samples = result.samples
+        new_result = list(result.result)
+        new_samples = list(result.samples)
+        new_number = result.number
 
-        if not record_samples:
-            if new_result is None:
-                new_samples = None
-            else:
-                new_samples = [None] * len(new_result)
+        benchmark_name = benchmark['name']
+        benchmark_version = benchmark['version']
 
-        if (result.result is not None and
-                benchmark_name in self._results and
+        if started_at is None:
+            started_at = datetime.datetime.utcnow()
+
+        if ended_at is None:
+            ended_at = started_at
+
+        new_stats = [None] * len(new_result)
+
+        if (benchmark_name in self._results and
                 benchmark_version == self._benchmark_version.get(benchmark_name)):
-            # Retain old result when the new benchmark is skipped
-            merge_idx = [j for j, r in enumerate(result.result) if util.is_nan(r)]
-            if merge_idx:
-                new_result = list(new_result)
-                new_stats = list(new_stats)
-                new_samples = list(new_samples)
-                old_result = self.get_result_value(benchmark_name, result.params)
-                old_stats = self.get_result_stats(benchmark_name, result.params)
-                old_samples = self.get_result_samples(benchmark_name, result.params)
-                for j in merge_idx:
-                    if old_result is not None:
-                        new_result[j] = old_result[j]
-                    if old_stats is not None:
-                        new_stats[j] = old_stats[j]
-                    if old_samples is not None:
-                        new_samples[j] = old_samples
 
+            # Append to old samples, if requested
+            if append_samples:
+                old_samples = self.get_result_samples(benchmark_name, benchmark['params'])
+                for j in range(len(new_samples)):
+                    if old_samples[j] is not None and new_samples[j] is not None:
+                        new_samples[j] = old_samples[j] + new_samples[j]
+
+            # Retain old result where requested
+            merge_idx = [j for j in range(len(new_result))
+                         if selected_idx is not None and j not in selected_idx]
+            if merge_idx:
+                old_result = self.get_result_value(benchmark_name, benchmark['params'])
+                old_samples = self.get_result_samples(benchmark_name, benchmark['params'])
+                old_stats = self.get_result_stats(benchmark_name, benchmark['params'])
+                for j in merge_idx:
+                    new_result[j] = old_result[j]
+                    new_samples[j] = old_samples[j]
+                    new_stats[j] = old_stats[j]
+
+        # Recompute stats for updated entries (and drop unnecessary data)
+        for j, (r, s, n) in enumerate(zip(new_result, new_samples, new_number)):
+            if util.is_na(r):
+                new_samples[j] = None
+                new_stats[j] = None
+                continue
+
+            if n is not None:
+                new_result[j], new_stats[j] = statistics.compute_stats(s, n)
+
+        # Compress None lists to just None
+        if all(x is None for x in new_result):
+            new_result = None
+        if all(x is None for x in new_samples):
+            new_samples = None
+        if all(x is None for x in new_stats):
+            new_stats = None
+
+        # Drop samples if requested
+        if not record_samples:
+            new_samples = None
+
+        # Store result
         self._results[benchmark_name] = new_result
         self._stats[benchmark_name] = new_stats
         self._samples[benchmark_name] = new_samples
 
-        self._benchmark_params[benchmark_name] = result.params
-        self._started_at[benchmark_name] = util.datetime_to_js_timestamp(result.started_at)
-        self._ended_at[benchmark_name] = util.datetime_to_js_timestamp(result.ended_at)
+        self._benchmark_params[benchmark_name] = benchmark['params'] if benchmark['params'] else []
+        self._started_at[benchmark_name] = util.datetime_to_js_timestamp(started_at)
+        self._ended_at[benchmark_name] = util.datetime_to_js_timestamp(ended_at)
         self._benchmark_version[benchmark_name] = benchmark_version
+
+        self._stderr[benchmark_name] = result.stderr
+        self._errcode[benchmark_name] = result.errcode
 
         if result.profile:
             profile_data = base64.b64encode(zlib.compress(result.profile))

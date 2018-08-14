@@ -14,6 +14,7 @@ import pstats
 import pytest
 import six
 import textwrap
+import collections
 from hashlib import sha256
 
 from asv import benchmarks
@@ -114,6 +115,36 @@ def test_discover_benchmarks(benchmarks_fixture):
     assert 'named.OtherSuite.track_some_func' in b
 
 
+class ResultsWrapper(object):
+    tuple_type = collections.namedtuple('tuple_type', ['result', 'stats', 'samples',
+                                                       'params', 'stderr', 'errcode',
+                                                       'profile', 'started_at', 'ended_at'])
+
+    def __init__(self, results, benchmarks):
+        self.results = results
+        self.benchmarks = benchmarks
+
+    def __len__(self):
+        return len(list(self.results.get_all_result_keys()))
+
+    def items(self):
+        for key in self.results.get_all_result_keys():
+            yield key, self[key]
+
+    def __getitem__(self, key):
+        params = self.benchmarks[key]['params']
+        return self.tuple_type(result=self.results.get_result_value(key, params),
+                               stats=self.results.get_result_stats(key, params),
+                               samples=self.results.get_result_samples(key, params),
+                               stderr=self.results.stderr.get(key),
+                               errcode=self.results.errcode.get(key),
+                               params=params,
+                               profile=(self.results.get_profile(key)
+                                        if self.results.has_profile(key) else None),
+                               started_at=self.results.started_at[key],
+                               ended_at=self.results.ended_at[key])
+
+
 @pytest.mark.flaky(reruns=1, reruns_delay=5)
 def test_run_benchmarks(benchmarks_fixture, tmpdir):
     conf, repo, envs, commit_hash = benchmarks_fixture
@@ -125,33 +156,31 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     # Old results to append to
     results = Results.unnamed()
     name = 'time_examples.TimeSuite.time_example_benchmark_1'
-    results.add_result(name,
+    results.add_result(b[name],
                        runner.BenchmarkResult(result=[1],
                                               samples=[[42.0, 24.0]],
-                                              stats=[{'number': 1}],
-                                              params=b[name]['params'],
-                                              errcode=0, stderr='', profile=None,
-                                              started_at=start_timestamp,
-                                              ended_at=start_timestamp),
-                       b[name]['version'],
+                                              number=[1],
+                                              errcode=0, stderr='', profile=None),
                        record_samples=True)
 
     # Run
-    times = {}
     runner.run_benchmarks(
-        b, envs[0], profile=True, show_stderr=True,
-        results=results, append_samples=True, results_dict=times)
+        b, envs[0], results=results, profile=True, show_stderr=True,
+        append_samples=True, record_samples=True)
+    times = ResultsWrapper(results, b)
 
     end_timestamp = datetime.datetime.utcnow()
 
     assert len(times) == len(b)
     assert times[
         'time_examples.TimeSuite.time_example_benchmark_1'].result != [None]
-    assert isinstance(times['time_examples.TimeSuite.time_example_benchmark_1'].stats[0]['std'], float)
+    stats = results.get_result_stats(name, b[name]['params'])
+    assert isinstance(stats[0]['std'], float)
     # The exact number of samples may vary if the calibration is not fully accurate
-    assert len(times['time_examples.TimeSuite.time_example_benchmark_1'].samples[0]) >= 4
+    samples = results.get_result_samples(name, b[name]['params'])
+    assert len(samples[0]) >= 4
     # Explicitly provided 'prev_samples` should come first
-    assert times['time_examples.TimeSuite.time_example_benchmark_1'].samples[0][:2] == [42.0, 24.0]
+    assert samples[0][:2] == [42.0, 24.0]
     # Benchmarks that raise exceptions should have a time of "None"
     assert times[
         'time_secondary.TimeSecondary.time_exception'].result == [None]
@@ -196,10 +225,10 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     assert times['cache_examples.track_cache_bar'].result == [12]
     assert times['cache_examples.track_my_cache_foo'].result == [0]
 
-    assert times['cache_examples.ClassLevelSetupFail.track_fail'].result == None
+    assert times['cache_examples.ClassLevelSetupFail.track_fail'].result == [None]
     assert 'raise RuntimeError()' in times['cache_examples.ClassLevelSetupFail.track_fail'].stderr
 
-    assert times['cache_examples.ClassLevelCacheTimeout.track_fail'].result == None
+    assert times['cache_examples.ClassLevelCacheTimeout.track_fail'].result == [None]
     assert times['cache_examples.ClassLevelCacheTimeoutSuccess.track_success'].result == [0]
 
     profile_path = join(six.text_type(tmpdir), 'test.profile')
@@ -218,9 +247,9 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
 
     # Check run time timestamps
     for name, result in times.items():
-        assert result.started_at >= start_timestamp
+        assert result.started_at >= util.datetime_to_js_timestamp(start_timestamp)
         assert result.ended_at >= result.started_at
-        assert result.ended_at <= end_timestamp
+        assert result.ended_at <= util.datetime_to_js_timestamp(end_timestamp)
 
 
 def test_invalid_benchmark_tree(tmpdir):
@@ -352,8 +381,8 @@ def test_quick(tmpdir):
     skip_names = [name for name in b.keys() if name != 'time_examples.TimeWithRepeat.time_it']
     b2 = b.filter_out(skip_names)
 
-    times = {}
-    results = runner.run_benchmarks(b2, envs[0], quick=True, show_stderr=True, results_dict=times)
+    results = runner.run_benchmarks(b2, envs[0], quick=True, show_stderr=True)
+    times = ResultsWrapper(results, b2)
 
     assert len(results.get_result_keys(b2)) == 1
 
@@ -454,8 +483,12 @@ def test_skip_param_selection():
 
     results = Results.unnamed()
     b = benchmarks.Benchmarks(conf, d, [r'test_nonparam', r'test_param\([23]\)'])
+
+    results.add_result(b['test_param'],
+                       runner.BenchmarkResult(result=[1, 2, 3], samples=[None]*3, number=[None]*3,
+                                              errcode=0, stderr='', profile=None))
+
     runner.skip_benchmarks(b, DummyEnv(), results)
 
     assert results._results.get('test_nonparam') == None
-    assert util.is_nan(results._results['test_param'][0])
-    assert results._results['test_param'][1:] == [None, None]
+    assert results._results['test_param'] == [1, None, None]
