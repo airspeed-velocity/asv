@@ -170,9 +170,13 @@ class Profile(Command):
             benchmarks = Benchmarks.discover(conf, repo, environments,
                                              [commit_hash],
                                              regex='^{0}$'.format(benchmark))
-            if len(benchmarks) != 1:
-                raise util.UserError(
-                    "Could not find benchmark {0}".format(benchmark))
+
+            if len(benchmarks) == 0:
+                raise util.UserError("'{0}' benchmark not found".format(benchmark))
+            elif len(benchmarks) > 1:
+                raise util.UserError("'{0}' matches more than one benchmark".format(benchmark))
+
+            benchmark_name, = benchmarks.keys()
 
             if not force:
                 log.info(
@@ -186,7 +190,7 @@ class Profile(Command):
                 results = run_benchmarks(
                     benchmarks, env, show_stderr=True, quick=False, profile=True)
 
-                profile_data = results.get_profile(benchmark)
+                profile_data = results.get_profile(benchmark_name)
 
         if gui is not None:
             log.debug("Opening gui {0}".format(gui))
