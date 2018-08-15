@@ -307,8 +307,9 @@ class Run(Command):
 
             if commit_hash:
                 if interleave_processes:
-                    round_info = " ({}/{})".format(max_processes - run_rounds[0] + 1,
-                                                   max_processes)
+                    round_info = " (round {}/{})".format(
+                        max_processes - run_rounds[0] + 1,
+                        max_processes)
                 else:
                     round_info = ""
 
