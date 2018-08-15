@@ -232,14 +232,18 @@ def run_benchmarks(benchmarks, env, results=None,
                 cache_dir = cache_dirs[setup_cache_key]
             elif setup_cache_key not in failed_setup_cache:
                 partial_info_time = None
-                log.info("Setting up {0}".format(setup_cache_key), reserve_space=True)
+                short_key = os.path.relpath(setup_cache_key, benchmarks.benchmark_dir)
+                log.info("Setting up {0}".format(short_key), reserve_space=True)
                 cache_dir, stderr = create_setup_cache(name, benchmarks.benchmark_dir, env,
                                                        setup_cache_timeout[setup_cache_key])
                 if cache_dir is not None:
                     log.add_padded('ok')
                     cache_dirs[setup_cache_key] = cache_dir
                 else:
-                    log.error(stderr)
+                    log.add_padded('failed')
+                    if stderr and show_stderr:
+                        with log.indent():
+                            log.error(stderr)
                     failed_setup_cache[setup_cache_key] = stderr
 
             if setup_cache_key in failed_setup_cache:
@@ -390,7 +394,7 @@ def create_setup_cache(benchmark_id, benchmark_dir, env, timeout):
         return cache_dir, None
     else:
         util.long_path_rmtree(cache_dir, True)
-        return None, out
+        return None, out.strip()
 
 
 def fail_benchmark(benchmark, stderr='', errcode=1):
