@@ -147,6 +147,14 @@ def test_stderr_redirect():
     assert retcode == 0
 
 
+def test_popen():
+    # Check that timeout=None is allowed.
+    popen = util.check_output([sys.executable, "-c", "pass"], return_popen=True)
+    popen.wait()
+
+    assert popen.returncode == 0
+
+
 # This *does* seem to work, only seems untestable somehow...
 # def test_dots(capsys):
 #     code = r"""
