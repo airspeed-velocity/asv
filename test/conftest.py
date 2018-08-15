@@ -15,6 +15,7 @@ def pytest_addoption(parser):
 
 
 def pytest_sessionstart(session):
+    os.environ['PIP_NO_INDEX'] = '1'
+
     if session.config.getoption('offline'):
-        os.environ['PIP_NO_INDEX'] = '1'
         os.environ['CONDA_OFFLINE'] = 'True'

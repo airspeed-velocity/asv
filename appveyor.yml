@@ -34,8 +34,7 @@ install:
     - "python -mpip install pytest-rerunfailures"
 
     # Pre-download all necessary packages
-    - "python .continuous-integration/download_reqs.py --conda --pip=pip-cache"
-    - "set PIP_FIND_LINKS=file:///projects/asv/pip-cache"
+    - "python .continuous-integration/download_reqs.py"
 
     # Tell conda to not use hardlinks: on Windows it's not possible
     # to delete hard links to files in use, which causes problem when
