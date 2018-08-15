@@ -281,14 +281,22 @@ class Run(Command):
             if commit_hash in skipped_benchmarks:
                 for env in environments:
                     for bench in benchmarks:
-                        log.step()
+                        if interleave_processes:
+                            log.step()
+                        else:
+                            for j in range(max_processes):
+                                log.step()
                 continue
 
             for env in environments:
                 skip_list = skipped_benchmarks[(commit_hash, env.name)]
                 for bench in benchmarks:
                     if bench in skip_list:
-                        log.step()
+                        if interleave_processes:
+                            log.step()
+                        else:
+                            for j in range(max_processes):
+                                log.step()
 
             active_environments = [env for env in environments
                                    if set(six.iterkeys(benchmarks))
