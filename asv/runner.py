@@ -8,8 +8,6 @@ import io
 import json
 import os
 import re
-import sys
-import shutil
 import time
 import tempfile
 import itertools
@@ -18,10 +16,10 @@ import pstats
 
 import six
 
-from .console import log, truncate_left
+from .console import log
 from .results import Results
-from . import util
 from . import statistics
+from . import util
 
 
 WIN = (os.name == "nt")
@@ -108,7 +106,8 @@ def skip_benchmarks(benchmarks, env, results=None):
 def run_benchmarks(benchmarks, env, results=None,
                    show_stderr=False, quick=False, profile=False,
                    extra_params=None,
-                   record_samples=False, append_samples=False):
+                   record_samples=False, append_samples=False,
+                   run_rounds=None):
     """
     Run all of the benchmarks in the given `Environment`.
 
@@ -138,6 +137,9 @@ def run_benchmarks(benchmarks, env, results=None,
     append_samples : bool, optional
         Whether to retain any previously measured result samples
         and use them in statistics computations.
+    run_rounds : sequence of int, optional
+        Run rounds for benchmarks with multiple processes.
+        If None, run all rounds.
 
     Returns
     -------
@@ -159,9 +161,6 @@ def run_benchmarks(benchmarks, env, results=None,
 
     if results is None:
         results = Results.unnamed()
-
-    if append_samples:
-        record_samples = True
 
     # Find all setup_cache routines needed
     setup_cache_timeout = {}
@@ -185,14 +184,32 @@ def run_benchmarks(benchmarks, env, results=None,
         max_processes = max(max_processes, get_processes(benchmark))
         cache_users.setdefault(key, set()).add(name)
 
+    if run_rounds is None:
+        run_rounds = list(range(1, max_processes + 1))
+
     # Interleave benchmark runs, in setup_cache order
+    existing_results = results.get_result_keys(benchmarks)
+
     def iter_run_items():
-        for run_round in range(max_processes, 0, -1):
+        for run_round in run_rounds[::-1]:
             for setup_cache_key, benchmark_set in six.iteritems(benchmark_order):
                 for name, benchmark in benchmark_set:
+                    log.step()
+
                     processes = get_processes(benchmark)
+
                     if run_round > processes:
+                        if (not append_samples and
+                                run_round == run_rounds[-1] and
+                                name in existing_results):
+                            # We need to remove samples here so that
+                            # append_samples=False has an effect on all
+                            # benchmarks regardless of whether they were
+                            # run this round.
+                            selected_idx = benchmarks.benchmark_selection.get(name)
+                            results.remove_samples(name, selected_idx)
                         continue
+
                     is_final = (run_round == 1)
                     yield name, benchmark, setup_cache_key, is_final
 
@@ -204,7 +221,7 @@ def run_benchmarks(benchmarks, env, results=None,
     started_at = datetime.datetime.utcnow()
 
     if append_samples:
-        previous_result_keys = results.get_result_keys(benchmarks)
+        previous_result_keys = existing_results
     else:
         previous_result_keys = set()
 
@@ -216,9 +233,6 @@ def run_benchmarks(benchmarks, env, results=None,
 
     try:
         for name, benchmark, setup_cache_key, is_final in iter_run_items():
-            if is_final:
-                log.step()
-
             selected_idx = benchmarks.benchmark_selection.get(name)
 
             # Don't try to rerun failed benchmarks

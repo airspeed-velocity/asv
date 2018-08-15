@@ -4,11 +4,13 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import six
-
 import logging
 import traceback
+import itertools
+
 from collections import defaultdict
+
+import six
 
 from . import Command
 from ..benchmarks import Benchmarks
@@ -108,6 +110,13 @@ class Run(Command):
             or failed results""")
         common_args.add_record_samples(parser)
         parser.add_argument(
+            "--interleave-processes", action="store_true", default=False,
+            help="""Interleave benchmarks with multiple processes across
+            commits. This can avoid measurement biases from commit ordering,
+            can take longer.""")
+        parser.add_argument(
+            "--no-interleave-processes", action="store_false", dest="interleave_processes")
+        parser.add_argument(
             "--no-pull", action="store_true",
             help="Do not pull the repository")
 
@@ -127,7 +136,7 @@ class Run(Command):
             skip_failed=args.skip_existing_failed or args.skip_existing,
             skip_existing_commits=args.skip_existing_commits,
             record_samples=args.record_samples, append_samples=args.append_samples,
-            pull=not args.no_pull,
+            pull=not args.no_pull, interleave_processes=args.interleave_processes,
             **kwargs
         )
 
@@ -136,7 +145,7 @@ class Run(Command):
             show_stderr=False, quick=False, profile=False, env_spec=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
             skip_failed=False, skip_existing_commits=False, record_samples=False,
-            append_samples=False, pull=True, _returns={}):
+            append_samples=False, pull=True, interleave_processes=False, _returns={}):
         machine_params = Machine.load(
             machine_name=machine,
             _path=_machine_file, interactive=True)
@@ -147,6 +156,22 @@ class Run(Command):
         if environment.is_existing_only(environments):
             # No repository required, so skip using it
             conf.dvcs = "none"
+
+        has_existing_env = any(isinstance(env, environment.ExistingEnvironment)
+                               for env in environments)
+
+        if interleave_processes:
+            if dry_run:
+                raise util.UserError("--interleave-commits and --dry-run cannot be used together")
+            if has_existing_env:
+                raise util.UserError("--interleave-commits cannot be used with existing environment "
+                                     "(or python=same)")
+        elif interleave_processes is None:
+            # Enable if possible
+            interleave_processes = not (dry_run or has_existing_env)
+
+        if append_samples:
+            record_samples = True
 
         repo = get_repo(conf)
         if pull:
@@ -205,7 +230,6 @@ class Run(Command):
             "({1} commits * {2} environments * {3} benchmarks)".format(
                 steps, len(commit_hashes),
                 len(environments), len(benchmarks)))
-        log.set_nitems(steps)
 
         parallel, multiprocessing = util.get_multiprocessing(parallel)
 
@@ -213,16 +237,24 @@ class Run(Command):
         _returns['environments'] = environments
         _returns['machine_params'] = machine_params.__dict__
 
-        for commit_hash in commit_hashes:
-            skipped_benchmarks = defaultdict(lambda: set())
+        if attribute and 'processes' in attribute:
+            max_processes = int(attribute['processes'])
+        else:
+            max_processes = max(b.get('processes', 1)
+                                for b in six.itervalues(benchmarks))
 
+        log.set_nitems(steps * max_processes)
+
+        skipped_benchmarks = defaultdict(lambda: set())
+
+        for commit_hash in commit_hashes:
             if skip_successful or skip_failed or skip_existing_commits:
                 try:
                     for result in iter_results_for_machine_and_hash(
                             conf.results_dir, machine_params.machine, commit_hash):
 
                         if skip_existing_commits:
-                            skipped_benchmarks[result.env_name].update(benchmarks)
+                            skipped_benchmarks[commit_hash] = True
                             break
 
                         for key in result.get_result_keys(benchmarks):
@@ -234,28 +266,47 @@ class Run(Command):
                             failed = value is None or (isinstance(value, list) and None in value)
 
                             if skip_failed and failed:
-                                skipped_benchmarks[result.env_name].add(key)
+                                skipped_benchmarks[(commit_hash, result.env_name)].add(key)
                             if skip_successful and not failed:
-                                skipped_benchmarks[result.env_name].add(key)
+                                skipped_benchmarks[(commit_hash, result.env_name)].add(key)
                 except IOError:
                     pass
 
+        if interleave_processes:
+            run_round_set = [[j] for j in range(max_processes, 0, -1)]
+        else:
+            run_round_set = [None]
+
+        for run_rounds, commit_hash in itertools.product(run_round_set, commit_hashes):
+            if commit_hash in skipped_benchmarks:
+                for env in environments:
+                    for bench in benchmarks:
+                        log.step()
+                continue
+
             for env in environments:
+                skip_list = skipped_benchmarks[(commit_hash, env.name)]
                 for bench in benchmarks:
-                    if bench in skipped_benchmarks[env.name]:
+                    if bench in skip_list:
                         log.step()
 
             active_environments = [env for env in environments
                                    if set(six.iterkeys(benchmarks))
-                                   .difference(skipped_benchmarks[env.name])]
+                                   .difference(skipped_benchmarks[(commit_hash, env.name)])]
 
             if not active_environments:
                 continue
 
             if commit_hash:
+                if interleave_processes:
+                    round_info = " ({}/{})".format(max_processes - run_rounds[0] + 1,
+                                                   max_processes)
+                else:
+                    round_info = ""
+
                 log.info(
-                    "For {0} commit hash {1}:".format(
-                        conf.project, commit_hash[:8]))
+                    "For {0} commit hash {1}{2}:".format(
+                        conf.project, commit_hash[:8], round_info))
 
             with log.indent():
 
@@ -288,7 +339,8 @@ class Run(Command):
 
                         skip_save = (dry_run or isinstance(env, environment.ExistingEnvironment))
 
-                        benchmark_set = benchmarks.filter_out(skipped_benchmarks[env.name])
+                        skip_list = skipped_benchmarks[(commit_hash, env.name)]
+                        benchmark_set = benchmarks.filter_out(skip_list)
 
                         result = Results(
                             params,
@@ -301,13 +353,23 @@ class Run(Command):
                         if not skip_save:
                             result.load_data(conf.results_dir)
 
+                        # If we are interleaving commits, we need to
+                        # append samples (except for the first round)
+                        # and record samples (except for the final
+                        # round).
+                        force_append_samples = (interleave_processes and
+                                                run_rounds[0] < max_processes)
+                        force_record_samples = (interleave_processes and
+                                                run_rounds[0] > 1)
+
                         if success:
                             run_benchmarks(
                                 benchmark_set, env, results=result,
                                 show_stderr=show_stderr, quick=quick,
                                 profile=profile, extra_params=attribute,
-                                record_samples=record_samples,
-                                append_samples=append_samples)
+                                record_samples=(record_samples or force_record_samples),
+                                append_samples=(append_samples or force_append_samples),
+                                run_rounds=run_rounds)
                         else:
                             skip_benchmarks(benchmark_set, env, results=result)
 
