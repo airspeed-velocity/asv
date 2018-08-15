@@ -451,8 +451,9 @@ class TimeBenchmark(Benchmark):
 
     def _load_vars(self):
         self.repeat = _get_first_attr(self._attr_sources, 'repeat', 0)
+        self.min_run_count = _get_first_attr(self._attr_sources, 'min_run_count', 2)
         self.number = int(_get_first_attr(self._attr_sources, 'number', 0))
-        self.sample_time = _get_first_attr(self._attr_sources, 'sample_time', 0.1)
+        self.sample_time = _get_first_attr(self._attr_sources, 'sample_time', 0.01)
         self.warmup_time = _get_first_attr(self._attr_sources, 'warmup_time', -1)
         self.timer = _get_first_attr(self._attr_sources, 'timer', process_time)
 
@@ -482,40 +483,50 @@ class TimeBenchmark(Benchmark):
             setup=self.redo_setup,
             timer=self.timer)
 
-        samples, number = self.benchmark_timing(timer, self.repeat, warmup_time,
-                                                number=self.number)
+        try:
+            min_repeat, max_repeat, max_time = self.repeat
+        except (ValueError, TypeError):
+            if self.repeat == 0:
+                min_repeat = 1
+                max_repeat = 10
+                max_time = 10.0
+                if self.processes > 1:
+                    max_repeat //= 2
+                    max_time /= 2.0
+            else:
+                min_repeat = self.repeat
+                max_repeat = self.repeat
+                max_time = self.timeout
+
+        min_repeat = int(min_repeat)
+        max_repeat = int(max_repeat)
+        max_time = float(max_time)
+
+        samples, number = self.benchmark_timing(timer, min_repeat, max_repeat,
+                                                max_time=max_time,
+                                                warmup_time=warmup_time,
+                                                number=self.number,
+                                                min_run_count=self.min_run_count)
 
         samples = [s/number for s in samples]
         return {'samples': samples, 'number': number}
 
-    def benchmark_timing(self, timer, repeat, warmup_time, number=0,
-                         min_timeit_count=2):
+    def benchmark_timing(self, timer, min_repeat, max_repeat, max_time, warmup_time,
+                         number, min_run_count):
+
         sample_time = self.sample_time
-
         start_time = time.time()
-        timeit_count = 0
+        run_count = 0
 
-        if repeat == 0:
-            # automatic number of samples: 10 is large enough to
-            # estimate the median confidence interval
-            repeat = 5 if self.processes > 1 else 10
-            default_number = (number == 0)
+        samples = []
 
-            def too_slow(timing):
-                # stop taking samples if limits exceeded
-                if timeit_count < min_timeit_count:
-                    return False
-                if default_number:
-                    t = 1.3*sample_time
-                    max_time = start_time + min(warmup_time + repeat * t,
-                                                self.timeout - t)
-                else:
-                    max_time = start_time + self.timeout - 2*timing
-                return time.time() > max_time
-        else:
-            # take exactly the number of samples requested
-            def too_slow(timing):
+        def too_slow(num_samples):
+            # stop taking samples if limits exceeded
+            if run_count < min_run_count:
                 return False
+            if num_samples < min_repeat:
+                return False
+            return time.time() > start_time + warmup_time + max_time
 
         if number == 0:
             # Select number & warmup.
@@ -530,7 +541,7 @@ class TimeBenchmark(Benchmark):
                 timing = timer.timeit(number)
                 wall_time = time.time() - start
                 actual_timing = max(wall_time, timing)
-                min_timeit_count += 1
+                run_count += number
 
                 if actual_timing >= sample_time:
                     if time.time() > start_time + warmup_time:
@@ -542,28 +553,27 @@ class TimeBenchmark(Benchmark):
                         p = 10.0
                     number = max(number + 1, int(p * number))
 
-            if too_slow(timing):
+            if too_slow(1):
                 return [timing], number
         elif warmup_time > 0:
             # Warmup
             while True:
                 self._redo_setup_next = False
                 timing = timer.timeit(number)
-                min_timeit_count += 1
+                run_count += number
                 if time.time() >= start_time + warmup_time:
                     break
 
-            if too_slow(timing):
+            if too_slow(1):
                 return [timing], number
 
         # Collect samples
-        samples = []
-        for j in range(repeat):
+        while len(samples) < max_repeat:
             timing = timer.timeit(number)
-            min_timeit_count += 1
+            run_count += number
             samples.append(timing)
 
-            if too_slow(timing):
+            if too_slow(len(samples)):
                 break
 
         return samples, number
@@ -900,7 +910,7 @@ def main_timing(argv):
         sys.path.insert(0, _old_sys_path_head)
 
     parser = argparse.ArgumentParser(usage="python -masv.benchmark timing [options] STATEMENT")
-    parser.add_argument("--setup", action="store", default=None)
+    parser.add_argument("--setup", action="store", default=(lambda: None))
     parser.add_argument("--number", action="store", type=int, default=0)
     parser.add_argument("--repeat", action="store", type=int, default=0)
     parser.add_argument("--timer", action="store", choices=("process_time", "perf_counter"),
