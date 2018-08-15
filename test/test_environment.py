@@ -15,7 +15,7 @@ from asv import environment
 from asv import util
 from asv.repo import get_repo
 
-from .tools import (PYTHON_VER1, PYTHON_VER2, COLORAMA_VERSIONS, SIX_VERSION,
+from .tools import (PYTHON_VER1, PYTHON_VER2, COLORAMA_VERSIONS, DOCUTILS_VERSION,
                     generate_test_repo, dummy_packages)
 
 
@@ -59,7 +59,7 @@ def test_matrix_environments(tmpdir, dummy_packages):
 
     conf.pythons = [PYTHON_VER1, PYTHON_VER2]
     conf.matrix = {
-        "six": [SIX_VERSION, None],
+        "docutils": [DOCUTILS_VERSION, None],
         "colorama": COLORAMA_VERSIONS
     }
     environments = list(environment.get_environments(conf, None))
@@ -72,10 +72,10 @@ def test_matrix_environments(tmpdir, dummy_packages):
         env.create()
 
         output = env.run(
-            ['-c', 'import six, sys; sys.stdout.write(six.__version__)'],
+            ['-c', 'import docutils, sys; sys.stdout.write(docutils.__version__)'],
             valid_return_codes=None)
-        if 'six' in env._requirements:
-            assert output.startswith(six.text_type(env._requirements['six']))
+        if 'docutils' in env._requirements:
+            assert output.startswith(six.text_type(env._requirements['docutils']))
 
         output = env.run(
             ['-c', 'import colorama, sys; sys.stdout.write(colorama.__version__)'])

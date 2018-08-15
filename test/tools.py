@@ -48,7 +48,7 @@ else:
     PYTHON_VER2 = "2.7"
 
 # Installable library versions to use in tests
-SIX_VERSION = "1.10"
+DOCUTILS_VERSION = "0.14"
 COLORAMA_VERSIONS = ["0.3.7", "0.3.9"]
 
 
@@ -579,7 +579,7 @@ def dummy_packages(request, monkeypatch):
         os.makedirs(tmpdir)
 
         # Build fake wheels for testing
-        to_build = [('six', SIX_VERSION)]
+        to_build = [('docutils', DOCUTILS_VERSION)]
         to_build += [('colorama', ver) for ver in COLORAMA_VERSIONS]
 
         for name, version in to_build:

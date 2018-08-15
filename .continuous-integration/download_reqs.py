@@ -43,8 +43,8 @@ def do_conda():
     for pyver in PY_VERSIONS:
         subs['ver'] = pyver
         call("""
-        conda create --download-only -n tmp -q --yes --use-index-cache python={ver[0]}.{ver[1]} wheel pip six=1.10 colorama=0.3.7
-        conda create --download-only -n tmp -q --yes --use-index-cache python={ver[0]}.{ver[1]} wheel pip six colorama=0.3.9
+        conda create --download-only -n tmp -q --yes --use-index-cache python={ver[0]}.{ver[1]} wheel pip docutils=0.14 colorama=0.3.7
+        conda create --download-only -n tmp -q --yes --use-index-cache python={ver[0]}.{ver[1]} wheel pip docutils colorama=0.3.9
         """, subs)
 
 

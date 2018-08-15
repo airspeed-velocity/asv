@@ -73,7 +73,7 @@ def generate_basic_conf(tmpdir, repo_subdir=''):
         'dvcs': 'git',
         'project': 'asv',
         'matrix': {
-            "six": [""],
+            "docutils": [""],
             "colorama": tools.COLORAMA_VERSIONS,
         },
     }
@@ -122,9 +122,9 @@ def test_run_publish(capfd, basic_conf):
     # Check parameterized test json data format
     filename = glob.glob(join(tmpdir, 'html', 'graphs', 'arch-x86_64', 'branch-master',
                               'colorama-' + tools.COLORAMA_VERSIONS[1],
-                              'cpu-Blazingly fast', 'machine-orangutan',
+                              'cpu-Blazingly fast', 'docutils', 'machine-orangutan',
                               'os-GNU_Linux', 'python-*', 'ram-128GB',
-                              'six', 'params_examples.time_skip.json'))[0]
+                              'params_examples.time_skip.json'))[0]
     with open(filename, 'r') as fp:
         data = json.load(fp)
         assert len(data) == 2
@@ -255,7 +255,7 @@ def test_run_spec(basic_conf):
         expected = set(['machine.json'])
         for commit in expected_commits:
             for psver in tools.COLORAMA_VERSIONS:
-                expected.add('{0}-{1}-py{2}-colorama{3}-six.json'.format(
+                expected.add('{0}-{1}-py{2}-colorama{3}-docutils.json'.format(
                     commit[:8], tool_name, pyver, psver))
 
         result_files = os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))
