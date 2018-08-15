@@ -11,6 +11,7 @@ from ..benchmarks import Benchmarks
 from ..console import log
 from ..machine import Machine
 from ..repo import get_repo
+from ..runner import run_benchmarks
 from .. import util
 
 from .setup import Setup
@@ -100,6 +101,8 @@ class Find(Command):
             log.error("'{0}' matches more than one benchmark".format(bench))
             return 1
 
+        benchmark_name, = benchmarks.keys()
+
         steps = int(math.log(len(commit_hashes)) / math.log(2))
 
         log.info(
@@ -121,9 +124,12 @@ class Find(Command):
                     conf.project, commit_hash[:8]))
 
             env.install_project(conf, repo, commit_hash)
-            x = benchmarks.run_benchmarks(
-                env, show_stderr=show_stderr)
-            result = list(x.values())[0].result
+
+            res = run_benchmarks(
+                benchmarks, env, show_stderr=show_stderr)
+
+            result = res.get_result_value(benchmark_name,
+                                          benchmarks[benchmark_name]['params'])
 
             results[i] = result
 

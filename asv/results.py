@@ -10,6 +10,7 @@ import os
 import zlib
 import itertools
 import hashlib
+import datetime
 
 import six
 from six.moves import zip as izip
@@ -17,6 +18,7 @@ from six.moves import zip as izip
 from . import environment
 from .console import log
 from .machine import Machine
+from . import statistics
 from . import util
 
 
@@ -167,7 +169,7 @@ def _compatible_results(result, result_params, params):
     """
     if result is None:
         # All results missing, eg. build failure
-        return None
+        return [None for param in itertools.product(*params)]
 
     # Pick results for those parameters that also appear in the
     # current benchmark
@@ -228,8 +230,19 @@ class Results(object):
         self._ended_at = {}
         self._benchmark_version = {}
 
-        self._filename = get_filename(
-            params['machine'], self._commit_hash, env_name)
+        # Note: stderr and errcode are not saved to files
+        self._stderr = {}
+        self._errcode = {}
+
+        if commit_hash is not None:
+            self._filename = get_filename(
+                params['machine'], self._commit_hash, env_name)
+        else:
+            self._filename = None
+
+    @classmethod
+    def unnamed(cls):
+        return cls({}, {}, None, None, None, None)
 
     @property
     def commit_hash(self):
@@ -254,6 +267,14 @@ class Results(object):
     @property
     def benchmark_version(self):
         return self._benchmark_version
+
+    @property
+    def stderr(self):
+        return self._stderr
+
+    @property
+    def errcode(self):
+        return self._errcode
 
     def get_all_result_keys(self):
         """
@@ -381,30 +402,109 @@ class Results(object):
         # Remove version (may be missing)
         self._benchmark_version.pop(key, None)
 
-    def add_result(self, benchmark_name, result, benchmark_version,
-                   record_samples=False):
+    def add_result(self, benchmark, result,
+                   started_at=None, ended_at=None,
+                   record_samples=False,
+                   append_samples=False,
+                   selected_idx=None):
         """
         Add benchmark result.
 
         Parameters
         ----------
-        benchmark_name : str
-            Name of benchmark
+        benchmark : dict
+            Benchmark object
 
         result : runner.BenchmarkResult
             Result of the benchmark.
 
+        started_at : datetime.datetime, optional
+            Benchmark start time.
+
+        ended_at : datetime.datetime, optional
+            Benchmark end time.
+
+        record_samples : bool, optional
+            Whether to save samples.
+
+        append_samples : bool, optional
+            Whether to combine new samples with old.
+
+        selected_idx : set, optional
+            Which indices in a parametrized benchmark to update
+
         """
-        self._results[benchmark_name] = result.result
-        if record_samples:
-            self._samples[benchmark_name] = result.samples
-        else:
-            self._samples[benchmark_name] = None
-        self._stats[benchmark_name] = result.stats
-        self._benchmark_params[benchmark_name] = result.params
-        self._started_at[benchmark_name] = util.datetime_to_js_timestamp(result.started_at)
-        self._ended_at[benchmark_name] = util.datetime_to_js_timestamp(result.ended_at)
+        new_result = list(result.result)
+        new_samples = list(result.samples)
+        new_number = result.number
+
+        benchmark_name = benchmark['name']
+        benchmark_version = benchmark['version']
+
+        if started_at is None:
+            started_at = datetime.datetime.utcnow()
+
+        if ended_at is None:
+            ended_at = started_at
+
+        new_stats = [None] * len(new_result)
+
+        if (benchmark_name in self._results and
+                benchmark_version == self._benchmark_version.get(benchmark_name)):
+
+            # Append to old samples, if requested
+            if append_samples:
+                old_samples = self.get_result_samples(benchmark_name, benchmark['params'])
+                for j in range(len(new_samples)):
+                    if old_samples[j] is not None and new_samples[j] is not None:
+                        new_samples[j] = old_samples[j] + new_samples[j]
+
+            # Retain old result where requested
+            merge_idx = [j for j in range(len(new_result))
+                         if selected_idx is not None and j not in selected_idx]
+            if merge_idx:
+                old_result = self.get_result_value(benchmark_name, benchmark['params'])
+                old_samples = self.get_result_samples(benchmark_name, benchmark['params'])
+                old_stats = self.get_result_stats(benchmark_name, benchmark['params'])
+                for j in merge_idx:
+                    new_result[j] = old_result[j]
+                    new_samples[j] = old_samples[j]
+                    new_stats[j] = old_stats[j]
+
+        # Recompute stats for updated entries (and drop unnecessary data)
+        for j, (r, s, n) in enumerate(zip(new_result, new_samples, new_number)):
+            if util.is_na(r):
+                new_samples[j] = None
+                new_stats[j] = None
+                continue
+
+            if n is not None:
+                new_result[j], new_stats[j] = statistics.compute_stats(s, n)
+
+        # Compress None lists to just None
+        if all(x is None for x in new_result):
+            new_result = None
+        if all(x is None for x in new_samples):
+            new_samples = None
+        if all(x is None for x in new_stats):
+            new_stats = None
+
+        # Drop samples if requested
+        if not record_samples:
+            new_samples = None
+
+        # Store result
+        self._results[benchmark_name] = new_result
+        self._stats[benchmark_name] = new_stats
+        self._samples[benchmark_name] = new_samples
+
+        self._benchmark_params[benchmark_name] = benchmark['params'] if benchmark['params'] else []
+        self._started_at[benchmark_name] = util.datetime_to_js_timestamp(started_at)
+        self._ended_at[benchmark_name] = util.datetime_to_js_timestamp(ended_at)
         self._benchmark_version[benchmark_name] = benchmark_version
+
+        self._stderr[benchmark_name] = result.stderr
+        self._errcode[benchmark_name] = result.errcode
 
         if result.profile:
             profile_data = base64.b64encode(zlib.compress(result.profile))
@@ -447,6 +547,9 @@ class Results(object):
         result_dir : str
             Path to root of results tree.
         """
+        if self._filename is None:
+            raise ValueError("Cannot save unnamed Results")
+
         path = os.path.join(result_dir, self._filename)
 
         results = {}
@@ -481,22 +584,21 @@ class Results(object):
 
         util.write_json(path, data, self.api_version)
 
-    def update_save(self, result_dir):
+    def load_data(self, result_dir):
         """
-        Save the results to disk, adding to any existing results.
+        Load previous results for the current parameters (if any).
+        """
+        if self._filename is None:
+            raise ValueError("Cannot load unnamed Results")
 
-        Parameters
-        ----------
-        result_dir : str
-            Path to root of results tree.
-        """
         path = os.path.join(result_dir, self._filename)
 
         if os.path.isfile(path):
-            old_results = self.load(path)
-            self.add_existing_results(old_results)
-
-        self.save(result_dir)
+            old = self.load(path)
+            for dict_name in ('_results', '_samples', '_stats',
+                              '_benchmark_params', '_profiles', '_started_at',
+                              '_ended_at', '_benchmark_version'):
+                setattr(self, dict_name, getattr(old, dict_name))
 
     @classmethod
     def load(cls, path, machine_name=None):
@@ -570,38 +672,10 @@ class Results(object):
 
         return obj
 
-    def add_existing_results(self, old):
-        """
-        Add any existing old results that aren't overridden by the
-        current results.
-        """
-        for dict_name in ('_samples', '_stats',
-                          '_benchmark_params', '_profiles', '_started_at',
-                          '_ended_at', '_benchmark_version'):
-            old_dict = getattr(old, dict_name)
-            new_dict = getattr(self, dict_name)
-            for key, val in six.iteritems(old_dict):
-                if key not in new_dict:
-                    new_dict[key] = val
-        new_results = self._results
-        old_results = old._results
-        for key, val in six.iteritems(old_results):
-            if key not in new_results:
-                new_results[key] = val
-            elif self._benchmark_params[key]:
-                old_benchmark_results = {}
-                for idx, param_set in enumerate(itertools.product(
-                        *old._benchmark_params[key])):
-                    old_benchmark_results[param_set] = val[idx]
-                for idx, param_set in enumerate(itertools.product(
-                        *self._benchmark_params[key])):
-                    # when new result is skipped (NaN), keep previous result.
-                    if (util.is_nan(new_results[key][idx]) and
-                            old_benchmark_results.get(param_set) is not None):
-                        new_results[key][idx] = (
-                            old_benchmark_results[param_set])
-
     def rm(self, result_dir):
+        if self._filename is None:
+            raise ValueError("Cannot remove unnamed Results")
+
         path = os.path.join(result_dir, self._filename)
         os.remove(path)
 

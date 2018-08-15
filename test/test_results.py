@@ -32,27 +32,32 @@ def test_results(tmpdir):
             '2.7',
             'some-environment-name')
 
+        x1 = float(i * 0.001)
+        x2 = float(i * 0.001)
+        x3 = float((i + 1) ** -1)
+
         values = {
-            'suite1.benchmark1': {'result': [float(i * 0.001)], 'stats': [{'foo': 1}],
-                                  'samples': [[1,2]], 'params': [['a']],
+            'suite1.benchmark1': {'result': [x1], 'number': [1],
+                                  'samples': [[x1,x1]], 'params': [['a']],
                                   'version': "1", 'profile': b'\x00\xff'},
-            'suite1.benchmark2': {'result': [float(i * i * 0.001)], 'stats': [{'foo': 2}],
-                                  'samples': [[3,4]], 'params': [],
+            'suite1.benchmark2': {'result': [x2], 'number': [1],
+                                  'samples': [[x2,x2,x2]], 'params': [],
                                   'version': "1", 'profile': b'\x00\xff'},
-            'suite2.benchmark1': {'result': [float((i + 1) ** -1)], 'stats': [{'foo': 3}],
-                                  'samples': [[5,6]], 'params': [['c']],
+            'suite2.benchmark1': {'result': [x3], 'number': [None],
+                                  'samples': [None], 'params': [['c']],
                                   'version': None, 'profile': b'\x00\xff'}
         }
 
         for key, val in values.items():
-            val = dict(val)
-            version = val.pop('version')
-            val = runner.BenchmarkResult(started_at=timestamp1,
-                                         ended_at=timestamp2,
-                                         errcode=0,
-                                         stderr='',
-                                         **val)
-            r.add_result(key, val, version, record_samples=True)
+            v = runner.BenchmarkResult(result=val['result'],
+                                       samples=val['samples'],
+                                       number=val['number'],
+                                       profile=val['profile'],
+                                       errcode=0,
+                                       stderr='')
+            benchmark = {'name': key, 'version': val['version'], 'params': val['params']}
+            r.add_result(benchmark, v, record_samples=True,
+                         started_at=timestamp1, ended_at=timestamp2)
 
         # Save / add_existing_results roundtrip
         r.save(resultsdir)
@@ -62,8 +67,8 @@ def test_results(tmpdir):
         assert r2.commit_hash == r.commit_hash
         assert r2._filename == r._filename
 
-        r3 = results.Results({'machine': 'bar'}, {}, 'a'*8, 123, '3.5', 'something')
-        r3.add_existing_results(r)
+        r3 = results.Results(r.params, r._requirements, r.commit_hash, r.date, r._python, r.env_name)
+        r3.load_data(resultsdir)
 
         for rr in [r2, r3]:
             assert rr._results == r._results
@@ -81,8 +86,12 @@ def test_results(tmpdir):
             params = r2.get_result_params(bench)
             assert params == values[bench]['params']
             assert r2.get_result_value(bench, params) == values[bench]['result']
-            assert r2.get_result_stats(bench, params) == values[bench]['stats']
             assert r2.get_result_samples(bench, params) == values[bench]['samples']
+            stats = r2.get_result_stats(bench, params)
+            if values[bench]['number'][0] is None:
+                assert stats == [None]
+            else:
+                assert stats[0]['number'] == values[bench]['number'][0]
 
             # Get with different parameters than stored (should return n/a)
             bad_params = [['foo', 'bar']]
@@ -149,16 +158,14 @@ def test_json_timestamp(tmpdir):
                         'py', 'env')
     value = runner.BenchmarkResult(
         result=[42],
-        params=[],
-        stats=None,
-        samples=None,
-        started_at=stamp1,
-        ended_at=stamp2,
+        samples=[None],
+        number=[None],
         profile=None,
         errcode=0,
         stderr=''
     )
-    r.add_result('some_benchmark', value, "some version")
+    benchmark = {'name': 'some_benchmark', 'version': 'some version', 'params': []}
+    r.add_result(benchmark, value, started_at=stamp1, ended_at=stamp2)
     r.save(tmpdir)
 
     r = util.load_json(join(tmpdir, 'mach', 'aaaa-env.json'))

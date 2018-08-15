@@ -17,6 +17,7 @@ from ..machine import Machine
 from ..repo import get_repo
 from ..results import (Results, get_existing_hashes,
                        iter_results_for_machine_and_hash)
+from ..runner import run_benchmarks, skip_benchmarks
 from .. import environment
 from .. import util
 
@@ -214,9 +215,8 @@ class Run(Command):
 
         for commit_hash in commit_hashes:
             skipped_benchmarks = defaultdict(lambda: set())
-            all_prev_samples = defaultdict(lambda: dict())
 
-            if skip_successful or skip_failed or skip_existing_commits or append_samples:
+            if skip_successful or skip_failed or skip_existing_commits:
                 try:
                     for result in iter_results_for_machine_and_hash(
                             conf.results_dir, machine_params.machine, commit_hash):
@@ -232,14 +232,6 @@ class Run(Command):
                             value = result.get_result_value(key, benchmarks[key]['params'])
 
                             failed = value is None or (isinstance(value, list) and None in value)
-
-                            if append_samples:
-                                samples = result.get_result_samples(key, benchmarks[key]['params'])
-                                stats = result.get_result_stats(key, benchmarks[key]['params'])
-                                if samples is not None and stats is not None:
-                                    numbers = [None if stat is None else stat.get('number', None)
-                                               for stat in stats]
-                                    all_prev_samples[result.env_name][key] = list(zip(samples, numbers))
 
                             if skip_failed and failed:
                                 skipped_benchmarks[result.env_name].add(key)
@@ -294,19 +286,9 @@ class Run(Command):
                         params['python'] = env.python
                         params.update(env.requirements)
 
+                        skip_save = (dry_run or isinstance(env, environment.ExistingEnvironment))
+
                         benchmark_set = benchmarks.filter_out(skipped_benchmarks[env.name])
-                        prev_samples = all_prev_samples.get(env.name)
-
-                        if success:
-                            results = benchmark_set.run_benchmarks(
-                                env, show_stderr=show_stderr, quick=quick,
-                                profile=profile, extra_params=attribute,
-                                prev_samples=prev_samples)
-                        else:
-                            results = benchmark_set.skip_benchmarks(env)
-
-                        if dry_run or isinstance(env, environment.ExistingEnvironment):
-                            continue
 
                         result = Results(
                             params,
@@ -316,9 +298,18 @@ class Run(Command):
                             env.python,
                             env.name)
 
-                        for benchmark_name, d in six.iteritems(results):
-                            benchmark_version = benchmarks[benchmark_name]['version']
-                            result.add_result(benchmark_name, d, benchmark_version,
-                                              record_samples=record_samples or append_samples)
+                        if not skip_save:
+                            result.load_data(conf.results_dir)
 
-                        result.update_save(conf.results_dir)
+                        if success:
+                            run_benchmarks(
+                                benchmark_set, env, results=result,
+                                show_stderr=show_stderr, quick=quick,
+                                profile=profile, extra_params=attribute,
+                                record_samples=record_samples,
+                                append_samples=append_samples)
+                        else:
+                            skip_benchmarks(benchmark_set, env, results=result)
+
+                        if not skip_save:
+                            result.save(conf.results_dir)

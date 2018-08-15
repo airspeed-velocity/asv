@@ -19,6 +19,7 @@ from ..machine import Machine
 from ..profiling import ProfilerGui
 from ..repo import get_repo
 from ..results import iter_results_for_machine
+from ..runner import run_benchmarks
 from ..util import hash_equal, iter_subclasses
 from .. import util
 
@@ -169,9 +170,13 @@ class Profile(Command):
             benchmarks = Benchmarks.discover(conf, repo, environments,
                                              [commit_hash],
                                              regex='^{0}$'.format(benchmark))
-            if len(benchmarks) != 1:
-                raise util.UserError(
-                    "Could not find benchmark {0}".format(benchmark))
+
+            if len(benchmarks) == 0:
+                raise util.UserError("'{0}' benchmark not found".format(benchmark))
+            elif len(benchmarks) > 1:
+                raise util.UserError("'{0}' matches more than one benchmark".format(benchmark))
+
+            benchmark_name, = benchmarks.keys()
 
             if not force:
                 log.info(
@@ -182,10 +187,10 @@ class Profile(Command):
             with log.indent():
                 env.install_project(conf, repo, commit_hash)
 
-                results = benchmarks.run_benchmarks(
-                    env, show_stderr=True, quick=False, profile=True)
+                results = run_benchmarks(
+                    benchmarks, env, show_stderr=True, quick=False, profile=True)
 
-                profile_data = results[benchmark].profile
+                profile_data = results.get_profile(benchmark_name)
 
         if gui is not None:
             log.debug("Opening gui {0}".format(gui))
