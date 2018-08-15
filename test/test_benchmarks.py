@@ -77,7 +77,7 @@ def test_discover_benchmarks(benchmarks_fixture):
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                                        regex='example')
     conf.branches = old_branches
-    assert len(b) == 26
+    assert len(b) == 27
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                               regex='time_example_benchmark_1')
@@ -110,7 +110,7 @@ def test_discover_benchmarks(benchmarks_fixture):
     assert b._benchmark_selection['params_examples.track_param_selection'] == [0, 1, 2, 3]
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
-    assert len(b) == 36
+    assert len(b) == 37
 
     assert 'named.OtherSuite.track_some_func' in b
 
@@ -230,6 +230,9 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
 
     assert times['cache_examples.ClassLevelCacheTimeout.track_fail'].result == [None]
     assert times['cache_examples.ClassLevelCacheTimeoutSuccess.track_success'].result == [0]
+
+    assert times['cache_examples.time_fail_second_run'].result == [None]
+    assert times['cache_examples.time_fail_second_run'].samples == [None]
 
     profile_path = join(six.text_type(tmpdir), 'test.profile')
     with open(profile_path, 'wb') as fd:
