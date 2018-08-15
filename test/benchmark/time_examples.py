@@ -98,3 +98,11 @@ class TimeWithBadTimer(object):
 
     def time_it(self):
         pass
+
+
+def time_auto_repeat():
+    pass
+
+time_auto_repeat.number = 1
+time_auto_repeat.processes = 1
+time_auto_repeat.repeat = (2, 4, 10.0)

@@ -159,6 +159,9 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     expected = (['setup']*2, ['setup']*3)
     assert times['time_examples.TimeWithRepeatCalibrate.time_it'].stderr.split() in expected
 
+    # Check tuple-form repeat attribute produced results
+    assert 2 <= len(times['time_examples.time_auto_repeat'].samples[0]) <= 4
+
     # Check run time timestamps
     for name, result in times.items():
         assert result.started_at >= util.datetime_to_js_timestamp(start_timestamp)
