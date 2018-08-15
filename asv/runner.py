@@ -360,7 +360,9 @@ def get_spawner(env, benchmark_dir, launch_method):
     has_fork = hasattr(os, 'fork') and hasattr(socket, 'AF_UNIX')
 
     if launch_method in (None, 'auto'):
-        if has_fork:
+        # Don't use ForkServer as default on OSX, because many Apple
+        # things are not fork-safe
+        if has_fork and sys.platform not in ('darwin',):
             launch_method = "forkserver"
         else:
             launch_method = "spawn"
