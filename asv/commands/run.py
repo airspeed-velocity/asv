@@ -277,7 +277,16 @@ class Run(Command):
         else:
             run_round_set = [None]
 
-        for run_rounds, commit_hash in itertools.product(run_round_set, commit_hashes):
+        def iter_rounds_commits():
+            for run_rounds in run_round_set:
+                if interleave_processes and run_rounds[0] % 2 == 0:
+                    for commit_hash in commit_hashes[::-1]:
+                        yield run_rounds, commit_hash
+                else:
+                    for commit_hash in commit_hashes:
+                        yield run_rounds, commit_hash
+
+        for run_rounds, commit_hash in iter_rounds_commits():
             if commit_hash in skipped_benchmarks:
                 for env in environments:
                     for bench in benchmarks:
