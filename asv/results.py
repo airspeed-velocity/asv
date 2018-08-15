@@ -402,6 +402,19 @@ class Results(object):
         # Remove version (may be missing)
         self._benchmark_version.pop(key, None)
 
+    def remove_samples(self, key, selected_idx=None):
+        """
+        Remove measurement samples from the selected benchmark.
+        """
+        if key not in self._results:
+            raise ValueError(key)
+
+        if selected_idx is None:
+            self._samples[key] = None
+        elif self._samples[key] is not None:
+            for j in selected_idx:
+                self._samples[key][j] = None
+
     def add_result(self, benchmark, result,
                    started_at=None, ended_at=None,
                    record_samples=False,

@@ -210,3 +210,30 @@ def test_filename_format():
 
     r = results.Results({'machine': 'foo'}, [], "hash", 0, "", "a"*128)
     assert r._filename == join("foo", "hash-env-e510683b3f5ffe4093d021808bc6ff70.json")
+
+
+def test_remove_samples():
+    benchmark1 = {'name': 'a', 'version': '1', 'params': []}
+    benchmark2 = {'name': 'b', 'version': '1', 'params': [['1', '2', '3']]}
+
+    r = results.Results.unnamed()
+
+    v1 = runner.BenchmarkResult(result=[True], samples=[[1]], number=[1],
+                                profile=None, errcode=0, stderr='')
+    v2 = runner.BenchmarkResult(result=[True]*3, samples=[[1],[2],[3]], number=[1,1,1],
+                                profile=None, errcode=0, stderr='')
+
+    r.add_result(benchmark1, v1, record_samples=True)
+    r.add_result(benchmark2, v2, record_samples=True)
+
+    assert r.get_result_samples(benchmark1['name'], benchmark1['params']) == v1.samples
+    assert r.get_result_samples(benchmark2['name'], benchmark2['params']) == v2.samples
+
+    r.remove_samples(benchmark1['name'])
+    assert r.get_result_samples(benchmark1['name'], benchmark1['params']) == [None]
+
+    r.remove_samples(benchmark2['name'], selected_idx=[1])
+    assert r.get_result_samples(benchmark2['name'], benchmark2['params']) == [[1], None, [3]]
+
+    r.remove_samples(benchmark2['name'])
+    assert r.get_result_samples(benchmark2['name'], benchmark2['params']) == [None, None, None]
