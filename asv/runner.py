@@ -223,6 +223,11 @@ def run_benchmarks(benchmarks, env, results=None,
 
             # Don't try to rerun failed benchmarks
             if name in failed_benchmarks:
+                if is_final:
+                    partial_info_time = None
+                    log.info(name, reserve_space=True)
+                    log_benchmark_result(benchmark, results,
+                                         show_stderr=show_stderr)
                 continue
 
             # Setup cache first, if needed
@@ -302,10 +307,8 @@ def run_benchmarks(benchmarks, env, results=None,
                 failed_benchmarks.add(name)
 
             # Log result
-            if is_final or name in failed_benchmarks:
+            if is_final:
                 partial_info_time = None
-                if not is_final:
-                    log.info(name, reserve_space=True)
                 log_benchmark_result(benchmark, results,
                                      show_stderr=show_stderr)
             else:
