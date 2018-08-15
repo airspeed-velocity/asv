@@ -937,11 +937,17 @@ def main_run_server(args):
 
     # Read and act on commands from socket
     while True:
-        fd, stdout_file = tempfile.mkstemp()
-        os.close(fd)
+        stdout_file = None
 
-        conn, addr = s.accept()
         try:
+            conn, addr = s.accept()
+        except KeyboardInterrupt:
+            break
+
+        try:
+            fd, stdout_file = tempfile.mkstemp()
+            os.close(fd)
+
             # Read command
             read_size, = struct.unpack('<Q', recvall(conn, 8))
             command_text = recvall(conn, read_size)
@@ -1030,9 +1036,12 @@ def main_run_server(args):
 
             conn.sendall(struct.pack('<Q', len(result_text)))
             conn.sendall(result_text)
+        except KeyboardInterrupt:
+            break
         finally:
             conn.close()
-            os.unlink(stdout_file)
+            if stdout_file is not None:
+                os.unlink(stdout_file)
 
 
 def main_timing(argv):

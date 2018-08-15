@@ -643,6 +643,9 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
             stderr=out.strip(),
             profile=profile_data)
 
+    except KeyboardInterrupt:
+        spawner.interrupt()
+        raise util.UserError("Interrupted.")
     finally:
         os.remove(result_file.name)
         if profile:
@@ -659,6 +662,10 @@ class Spawner(object):
     def __init__(self, env, benchmark_dir):
         self.env = env
         self.benchmark_dir = os.path.abspath(benchmark_dir)
+        self.interrupted = False
+
+    def interrupt(self):
+        self.interrupted = True
 
     def create_setup_cache(self, benchmark_id, timeout):
         cache_dir = tempfile.mkdtemp()
@@ -695,29 +702,39 @@ class ForkServer(Spawner):
     def __init__(self, env, root):
         super(ForkServer, self).__init__(env, root)
 
+        if not (hasattr(os, 'fork') and hasattr(os, 'setpgid')):
+            raise RuntimeError("ForkServer only available on POSIX")
+
         self.tmp_dir = tempfile.mkdtemp(prefix='asv-forkserver-')
         self.socket_name = os.path.join(self.tmp_dir, 'socket')
 
-        def launch():
-            try:
-                env.run([BENCHMARK_RUN_SCRIPT, 'run_server',
-                         self.benchmark_dir, self.socket_name],
-                        timeout=None, dots=False)
-            except BaseException as exc:
-                self.server_exc_info = sys.exc_info()
+        self.server_proc = env.run(
+            [BENCHMARK_RUN_SCRIPT, 'run_server', self.benchmark_dir, self.socket_name],
+            return_popen=True, redirect_stderr=True)
 
-        self.server_exc_info = None
-        self.server_thread = threading.Thread(target=launch)
-        self.server_thread.start()
+        self._server_output = None
+        self.stdout_reader_thread = threading.Thread(target=self._stdout_reader)
+        self.stdout_reader_thread.start()
 
-        while self.server_thread.is_alive():
+        # Wait for the socket to appear
+        while self.stdout_reader_thread.is_alive():
             if os.path.exists(self.socket_name):
                 break
             time.sleep(0.05)
 
         if not os.path.exists(self.socket_name):
             os.rmdir(self.tmp_dir)
-            raise RuntimeError("Failed to start server thread: {}".format(self.server_exc_info))
+            raise RuntimeError("Failed to start server thread")
+
+    def _stdout_reader(self):
+        try:
+            out, _ = self.server_proc.communicate()
+            out = out.decode('utf-8', 'replace')
+        except Exception as exc:
+            import traceback
+            out = traceback.format_exc()
+
+        self._server_output = out
 
     def run(self, name, params_str, profile_path, result_file_name, timeout, cwd):
         msg = {'action': 'run',
@@ -752,20 +769,27 @@ class ForkServer(Spawner):
         return result['out'], result['errcode']
 
     def close(self):
-        # Send command
-        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        s.connect(self.socket_name)
-        try:
-            msg = b'{"action": "quit"}'
-            s.sendall(struct.pack('<Q', len(msg)) + msg)
-        finally:
-            s.close()
+        import signal
 
-        self.server_thread.join()
+        # Check for termination
+        if self.server_proc.poll() is None:
+            util._killpg_safe(self.server_proc.pid, signal.SIGINT)
+
+        if self.server_proc.poll() is None:
+            time.sleep(0.1)
+
+        if self.server_proc.poll() is None:
+            # Kill process group
+            util._killpg_safe(self.server_proc.pid, signal.SIGKILL)
+
+        self.stdout_reader_thread.join()
+
+        if self._server_output and not self.interrupted:
+            with log.indent():
+                log.error("asv: forkserver:")
+                log.error(self._server_output)
+
         util.long_path_rmtree(self.tmp_dir)
-
-        if self.server_exc_info is not None:
-            six.reraise(*self.server_exc_info)
 
 
 def _combine_profile_data(datasets):
