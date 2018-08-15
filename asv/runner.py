@@ -187,13 +187,13 @@ def run_benchmarks(benchmarks, env, results=None,
 
     # Interleave benchmark runs, in setup_cache order
     def iter_run_items():
-        for run_round in range(max_processes):
+        for run_round in range(max_processes, 0, -1):
             for setup_cache_key, benchmark_set in six.iteritems(benchmark_order):
                 for name, benchmark in benchmark_set:
                     processes = get_processes(benchmark)
-                    if run_round >= processes:
+                    if run_round > processes:
                         continue
-                    is_final = (run_round + 1 >= processes)
+                    is_final = (run_round == 1)
                     yield name, benchmark, setup_cache_key, is_final
 
     # Run benchmarks in order
