@@ -16,6 +16,9 @@ import six
 import tempfile
 import textwrap
 import sys
+import shutil
+import subprocess
+
 from os.path import abspath, join, dirname, relpath, isdir
 from contextlib import contextmanager
 from hashlib import sha256
@@ -58,6 +61,37 @@ except ImportError:
 
 
 WAIT_TIME = 20.0
+
+
+class DummyLock(object):
+    def __init__(self, filename):
+        pass
+    def acquire(self, timeout=None):
+        pass
+    def release(self):
+        pass
+
+try:
+    from lockfile import LockFile
+except ImportError:
+    LockFile = DummyLock
+
+
+@contextmanager
+def locked_cache_dir(config, cache_key, timeout=900):
+    if LockFile is DummyLock:
+        cache_key = cache_key + os.environ.get('PYTEST_XDIST_WORKER', '')
+
+    cache_dir = config.cache.makedir(cache_key)
+
+    lockfile = join(six.text_type(cache_dir), 'lock')
+
+    lock = LockFile(lockfile)
+    try:
+        lock.acquire(timeout=timeout)
+        yield cache_dir
+    finally:
+        lock.release()
 
 
 def run_asv(*argv, **kwargs):
@@ -523,3 +557,53 @@ def get_with_retry(browser, url):
             time.sleep(2)
 
     return browser.get(url)
+
+
+@pytest.fixture
+def dummy_packages(request, monkeypatch):
+    """
+    Build dummy wheels for required packages and set PIP_FIND_LINKS
+    """
+
+    with locked_cache_dir(request.config, "asv-wheels", timeout=900) as cache_dir:
+        wheel_dir = join(six.text_type(cache_dir), 'wheels')
+
+        monkeypatch.setenv('PIP_FIND_LINKS', 'file://' + os.path.abspath(wheel_dir))
+
+        if os.path.isdir(wheel_dir):
+            return
+
+        tmpdir = join(six.text_type(cache_dir), "tmp")
+        if os.path.isdir(tmpdir):
+            shutil.rmtree(tmpdir)
+        os.makedirs(tmpdir)
+
+        # Build fake wheels for testing
+        to_build = [('six', SIX_VERSION)]
+        to_build += [('colorama', ver) for ver in COLORAMA_VERSIONS]
+
+        for name, version in to_build:
+            build_dir = join(tmpdir, name + '-' + version)
+            os.makedirs(build_dir)
+
+            with open(join(build_dir, 'setup.py'), 'w') as f:
+                f.write("from setuptools import setup; "
+                        "setup(name='{name}', version='{version}', packages=['{name}'])"
+                        "".format(name=name, version=version))
+            os.makedirs(join(build_dir, name))
+            with open(join(build_dir, name, '__init__.py'), 'w') as f:
+                f.write("__version__ = '{0}'".format(version))
+
+            subprocess.check_call([sys.executable, '-mpip', 'wheel',
+                                   '--build-option=--universal',
+                                   '-w', os.path.abspath(six.text_type(tmpdir)),
+                                   '.'],
+                                  cwd=build_dir)
+
+        try:
+            os.makedirs(wheel_dir)
+            for fn in os.listdir(tmpdir):
+                if fn.lower().endswith('.whl'):
+                    os.rename(join(tmpdir, fn), join(wheel_dir, fn))
+        except:
+            shutil.rmtree(wheel_dir)

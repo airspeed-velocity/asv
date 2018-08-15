@@ -15,7 +15,8 @@ from asv import environment
 from asv import util
 from asv.repo import get_repo
 
-from .tools import PYTHON_VER1, PYTHON_VER2, COLORAMA_VERSIONS, SIX_VERSION, generate_test_repo
+from .tools import (PYTHON_VER1, PYTHON_VER2, COLORAMA_VERSIONS, SIX_VERSION,
+                    generate_test_repo, dummy_packages)
 
 
 WIN = (os.name == "nt")
@@ -51,7 +52,7 @@ except (RuntimeError, IOError):
 
 @pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
                     reason="Requires two usable Python versions")
-def test_matrix_environments(tmpdir):
+def test_matrix_environments(tmpdir, dummy_packages):
     conf = config.Config()
 
     conf.env_dir = six.text_type(tmpdir.join("env"))
@@ -306,7 +307,7 @@ def test_matrix_expand_exclude():
 
 
 @pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
-def test_conda_pip_install(tmpdir):
+def test_conda_pip_install(tmpdir, dummy_packages):
     # test that we can install with pip into a conda environment.
     conf = config.Config()
 

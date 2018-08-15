@@ -85,19 +85,17 @@ install:
       echo -e '\ntravis_retry "$HOME/miniconda3/bin/conda.real" "$@"' >> $HOME/miniconda3/bin/conda;
       chmod +x $HOME/miniconda3/bin/conda;
       if $TRAVIS_PYTHON -c 'import virtualenv'; then echo "ERROR: virtualenv package is installed"; exit 1; fi;
-      $TRAVIS_PYTHON .continuous-integration/download_reqs.py --conda --pip=$HOME/download/pip-cache
+      $TRAVIS_PYTHON .continuous-integration/download_reqs.py
     else
       if $TRAVIS_PYTHON -c 'import sys; sys.exit(0 if "__pypy__" in sys.modules else 1)'; then
         $TRAVIS_PIP install virtualenv;
       else
         $TRAVIS_PIP install virtualenv numpy scipy;
       fi
-      $TRAVIS_PYTHON .continuous-integration/download_reqs.py --pip=$HOME/download/pip-cache
     fi
     $TRAVIS_PIP install selenium six "pytest>=3.5" pytest-xdist pytest-rerunfailures feedparser python-hglib;
     if [[ "$COVERAGE" != '' ]]; then $TRAVIS_PIP install pytest-cov codecov; fi;
   - $TRAVIS_PYTHON setup.py build_ext -i
-  - export PIP_FIND_LINKS=file://$HOME/download/pip-cache
 
 script:
   - $TRAVIS_PYTHON -m pytest -l $COVERAGE -vv --webdriver=FirefoxHeadless -n 3 --offline test

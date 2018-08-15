@@ -19,6 +19,7 @@ from asv import config, environment, util
 from asv.util import check_output, which
 
 from . import tools
+from .tools import dummy_packages
 
 
 try:
@@ -88,12 +89,12 @@ def generate_basic_conf(tmpdir, repo_subdir=''):
 
 
 @pytest.fixture
-def basic_conf(tmpdir):
+def basic_conf(tmpdir, dummy_packages):
     return generate_basic_conf(tmpdir)
 
 
 @pytest.fixture
-def basic_conf_with_subdir(tmpdir):
+def basic_conf_with_subdir(tmpdir, dummy_packages):
     return generate_basic_conf(tmpdir, 'some_subdir')
 
 

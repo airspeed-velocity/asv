@@ -29,41 +29,15 @@ except ImportError:
     pass
 
 from . import tools
-from .tools import browser, get_with_retry, WAIT_TIME
-
-
-class DummyLock(object):
-    def __init__(self, filename):
-        pass
-    def acquire(self, timeout=None):
-        pass
-    def release(self):
-        pass
-
-try:
-    from lockfile import LockFile
-except ImportError:
-    LockFile = DummyLock
+from .tools import browser, get_with_retry, WAIT_TIME, locked_cache_dir
 
 
 @pytest.fixture(scope="session")
 def basic_html(request):
-    cache_key = "asv-test_web-basic_html"
-    if LockFile is DummyLock:
-        cache_key += os.environ.get('PYTEST_XDIST_WORKER', '')
-    cache_dir = request.config.cache.makedir(cache_key)
-
-    tmpdir = join(six.text_type(cache_dir), 'cached')
-    lockfile = join(six.text_type(cache_dir), 'lock')
-
-    lock = LockFile(lockfile)
-    try:
-        lock.acquire(timeout=900)
+    with locked_cache_dir(request.config, "asv-test_web-basic_html", timeout=900) as cache_dir:
+        tmpdir = join(six.text_type(cache_dir), 'cached')
         html_dir, dvcs = _rebuild_basic_html(tmpdir)
-    finally:
-        lock.release()
-
-    return html_dir, dvcs
+        return html_dir, dvcs
 
 
 def _rebuild_basic_html(basedir):
