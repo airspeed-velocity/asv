@@ -58,6 +58,62 @@ If empty or omitted, the project is assumed to be located at the root of
 the repository.
 
 
+``build_command``, ``install_command``, ``uninstall_command``
+-------------------------------------------------------------
+
+Airspeed Velocity rebuilds the project as needed, using these commands.
+
+The defaults are::
+
+  install_command:
+    ["python", "-mpip", "install", "{wheel_file}"]
+
+  uninstall_command:
+    ["python", "-mpip", "uninstall", "-y", "{project}"]
+
+  build_command:
+    [["python", "setup.py", "build"],
+     ["python", "-mpip", "wheel", "--no-deps", "--no-index", "-w", "{build_cache_dir}", "{build_dir}"]]
+
+The install command should install the project in the active Python
+environment (virtualenv/conda), so that it can be used by the
+benchmark code.
+
+The uninstall command should uninstall the project from the
+environment.
+
+The build command can optionally be used to cache build results in the
+cache directory ``{build_cache_dir}``, which is commit and
+environment-specific.  If the cache directory contains any files after
+``build_command`` finishes with exit code 0, ``asv`` assumes it
+contains a cached build.  When a cached build is available, ``asv``
+will only call ``install_command`` but not ``build_command``. (The
+number of cached builds retained at any time is determined by the
+``build_cache_size`` configuration option.)
+
+The ``install_command`` and ``build_command`` are launched in
+``{build_dir}``. The ``uninstall_command`` is launched in the
+environment root directory.
+
+Note that the commands are not run in a shell, so that ``cd`` has no
+effect on subsequent commands.
+
+The commands can be supplied with the arguments:
+
+- ``{project}``: the project name from the configuration file
+- ``{env_name}``: name of the currently active environment
+- ``{env_type}``: type of the currently active environment
+- ``{env_dir}``: full path to the currently active environment root
+- ``{conf_dir}``: full path to the directory where ``asv.conf.json`` is
+- ``{build_dir}``: full path to the build directory (checked-out source path + ``repo_subdir``)
+- ``{build_cache_dir}``: full path to the build cache directory
+- ``{commit}``: commit hash of currently installed project
+- ``{wheel_file}``: absolute path to a ``*.whl`` file in ``{build_cache_dir}``
+  (defined only if there is exactly one existing wheel file in the directory).
+
+Several :doc:`environment variables <env_vars>` are also defined.
+
+
 ``branches``
 ------------
 Branches to generate benchmark results for.
@@ -269,9 +325,9 @@ results, where the full commit hash is always retained.
 -----------
 A list of modules to import containing asv plugins.
 
-``wheel_cache_size``
+``build_cache_size``
 --------------------
-The number of wheels (builds) to cache for each environment.
+The number of builds to cache for each environment.
 
 ``regressions_first_commits``
 -----------------------------

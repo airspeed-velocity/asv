@@ -21,7 +21,7 @@ import six
 
 from .console import log
 from . import util
-from . import wheel_cache
+from . import build_cache
 
 
 WIN = (os.name == "nt")
@@ -365,8 +365,9 @@ class Environment(object):
 
         self._is_setup = False
 
-        self._cache = wheel_cache.WheelCache(conf, self._path)
+        self._cache = build_cache.BuildCache(conf, self._path)
         self._build_root = os.path.abspath(os.path.join(self._path, 'project'))
+
         self._build_command = conf.build_command
         self._install_command = conf.install_command
         self._uninstall_command = conf.uninstall_command
@@ -374,9 +375,27 @@ class Environment(object):
         self._env_vars = {}
         self._env_vars['ASV'] = 'true'
         self._env_vars['ASV_PROJECT'] = conf.project
+        self._env_vars['ASV_CONF_DIR'] = os.path.abspath(os.getcwd())
         self._env_vars['ASV_ENV_NAME'] = self.name
-        self._env_vars['ASV_ENV_PATH'] = self._path
+        self._env_vars['ASV_ENV_DIR'] = self._path
         self._env_vars['ASV_ENV_TYPE'] = self.tool_name
+
+    def _set_commit_hash(self, commit_hash):
+        if commit_hash is None:
+            self._env_vars.pop('ASV_COMMIT', None)
+        else:
+            self._env_vars['ASV_COMMIT'] = commit_hash
+
+    def _set_build_dirs(self, build_dir, cache_dir):
+        if build_dir is None:
+            self._env_vars.pop('ASV_BUILD_DIR', None)
+        else:
+            self._env_vars['ASV_BUILD_DIR'] = build_dir
+
+        if cache_dir is None:
+            self._env_vars.pop('ASV_BUILD_CACHE_DIR', None)
+        else:
+            self._env_vars['ASV_BUILD_CACHE_DIR'] = cache_dir
 
     @classmethod
     def matches(self, python):
@@ -492,35 +511,45 @@ class Environment(object):
         """
         raise NotImplementedError()
 
-    def _interpolate_command(self, command, **kwargs):
-        return [c.format(project=self._project, **kwargs) for c in command]
+    def _interpolate_commands(self, commands):
+        if not commands:
+            return []
 
-    def _install_build(self, build_dir):
-        log.info("Installing into {0}".format(self.name))
-        cmd = self._install_command
-        if cmd is None:
-            # Run pip via python -m pip, so that it works on Windows when
-            # upgrading pip itself, and avoids shebang length limit on Linux
-            cmd = ['python', '-mpip', 'install', '{build_dir}']
-        if cmd:
-            cmd = self._interpolate_command(cmd, build_dir=build_dir)
-            self.run_executable(cmd[0], cmd[1:], timeout=self._install_timeout)
+        if not isinstance(commands[0], list):
+            commands = [commands]
 
-    def _uninstall_project(self):
-        log.info("Uninstalling from {0}".format(self.name))
-        cmd = self._uninstall_command
-        valid_return_codes = {0}
-        if cmd is None:
-            # Run pip via python -m pip, so that it works on Windows when
-            # upgrading pip itself, and avoids shebang length limit on Linux
-            cmd = ['python', '-mpip', 'uninstall', '-y', '{project}']
-            # uninstall may fail if not installed
-            valid_return_codes = None
-        if cmd:
-            cmd = self._interpolate_command(cmd)
-            self.run_executable(cmd[0], cmd[1:],
-                                timeout=self._install_timeout,
-                                valid_return_codes=valid_return_codes)
+        # All environment variables are available as interpolation variables,
+        # lowercased without the prefix.
+        kwargs = dict()
+        for key, value in self._env_vars.items():
+            if key == 'ASV':
+                continue
+            assert key.startswith('ASV_')
+            interp_key = key[4:].lower()
+            kwargs[interp_key] = value
+
+        # There is an additional {wheel_file} interpolation variable
+        if 'build_cache_dir' in kwargs:
+            cache_dir = kwargs['build_cache_dir']
+
+            if os.path.isdir(cache_dir):
+                files = os.listdir(cache_dir)
+                wheels = [fn for fn in files if fn.lower().endswith('.whl')]
+                if len(wheels) == 1:
+                    kwargs['wheel_file'] = os.path.join(cache_dir, wheels[0])
+
+        # Interpolate, and raise useful error message if it fails
+        interpolated = []
+        for command in commands:
+            try:
+                interpolated.append([c.format(**kwargs) for c in command])
+            except KeyError as exc:
+                raise util.UserError("Configuration error: {{{0}}} not available "
+                                     "when substituting into command {1!r} "
+                                     "Available: {2!r}"
+                                     "".format(exc.args[0], commands, kwargs))
+
+        return interpolated
 
     def checkout_project(self, repo, commit_hash):
         """
@@ -529,44 +558,107 @@ class Environment(object):
         self._set_commit_hash(commit_hash)
         repo.checkout(self._build_root, commit_hash)
 
-    def build_project(self, repo, commit_hash):
-        self.checkout_project(repo, commit_hash)
-
-        commit_name = repo.get_decorated_hash(commit_hash, 8)
-        log.info("Building {0} for {1}".format(commit_name, self.name))
-
+    def install_project(self, conf, repo, commit_hash):
+        """
+        Build and install the benchmarked project into the environment.
+        Uninstalls any installed copy of the project first.
+        """
         if self._repo_subdir:
             build_dir = os.path.join(self._build_root, self._repo_subdir)
         else:
             build_dir = self._build_root
 
-        cmd = self._build_command
-        if cmd is None:
-            cmd = ['python', 'setup.py', 'build']
-        if cmd:
-            cmd = self._interpolate_command(cmd)
-            self.run_executable(cmd[0], cmd[1:], cwd=build_dir)
-        return build_dir
+        # Checkout first, so that uninstall can access build_dir
+        # (for e.g. Makefiles)
+        self.checkout_project(repo, commit_hash)
+        self._set_build_dirs(build_dir, None)
 
-    def install_project(self, conf, repo, commit_hash):
-        """
-        Install the benchmarked project into the environment.
-        Uninstalls any installed copy of the project first.
-        """
+        # Uninstall
         self._uninstall_project()
 
-        self._set_commit_hash(commit_hash)
-
-        if self._build_command is None and self._install_command is None:
-            build_root = self._cache.build_project_cached(
-                self, conf, repo, commit_hash)
+        # Build if not in cache
+        cache_dir = self._cache.get_cache_dir(commit_hash)
+        if cache_dir is not None:
+            self._set_build_dirs(build_dir, cache_dir)
         else:
-            build_root = None
+            cache_dir = self._cache.create_cache_dir(commit_hash)
+            self._set_build_dirs(build_dir, cache_dir)
+            self._build_project(repo, commit_hash, build_dir)
 
-        if build_root is None:
-            build_root = self.build_project(repo, commit_hash)
+        # Install
+        self._install_project(repo, commit_hash, build_dir)
 
-        self._install_build(build_root)
+        # Mark cached build as valid
+        self._cache.finalize_cache_dir(commit_hash)
+
+    def _install_project(self, repo, commit_hash, build_dir):
+        """
+        Run install commands
+        """
+        cmd = self._install_command
+        if cmd is None:
+            # Run pip via python -m pip, so that it works on Windows when
+            # upgrading pip itself, and avoids shebang length limit on Linux
+            cmd = ["python", "-mpip", "install", "{wheel_file}"]
+
+        if cmd:
+            commit_name = repo.get_decorated_hash(commit_hash, 8)
+            log.info("Installing {0} into {1}".format(commit_name, self.name))
+
+            for cmd in self._interpolate_commands(cmd):
+                self.run_executable(cmd[0], cmd[1:], timeout=self._install_timeout,
+                                    cwd=build_dir)
+
+    def _uninstall_project(self):
+        """
+        Run uninstall commands
+        """
+        cmd = self._uninstall_command
+        valid_return_codes = {0}
+        if cmd is None:
+            # Run pip via python -m pip, so that it works on Windows when
+            # upgrading pip itself, and avoids shebang length limit on Linux
+            cmd = ['python', '-mpip', 'uninstall', '-y', '{project}']
+            # uninstall may fail if not installed
+            valid_return_codes = None
+
+        if cmd:
+            log.info("Uninstalling from {0}".format(self.name))
+
+            for cmd in self._interpolate_commands(cmd):
+                self.run_executable(cmd[0], cmd[1:],
+                                    cwd=self._env_dir,
+                                    timeout=self._install_timeout,
+                                    valid_return_codes=valid_return_codes)
+
+    def _build_project(self, repo, commit_hash, build_dir):
+        """
+        Run build commands
+        """
+        cmd = self._build_command
+        if cmd is None:
+            cmd = [["python", "setup.py", "build"],
+                   ["python", "-mpip", "wheel", "--no-deps", "--no-index",
+                    "-w", "{build_cache_dir}", "{build_dir}"]]
+
+            # Disable pip build isolation --- it doesn't make sense for
+            # this command, because we used "setup.py build" to build the
+            # project above.
+            #
+            # It could be given as a command-line option, but that's
+            # not available on old pip versions so we set an
+            # environment variable instead.
+            environ = dict(os.environ,
+                           PIP_NO_BUILD_ISOLATION="false")  # [sic!]
+        else:
+            environ = None
+
+        if cmd:
+            commit_name = repo.get_decorated_hash(commit_hash, 8)
+            log.info("Building {0} for {1}".format(commit_name, self.name))
+
+            for c in self._interpolate_commands(cmd):
+                self.run_executable(c[0], c[1:], cwd=build_dir, env=environ)
 
     def can_install_project(self):
         """
@@ -642,9 +734,6 @@ class Environment(object):
         }
         util.write_json(path, content)
 
-    def _set_commit_hash(self, commit_hash):
-        self._env_vars['ASV_COMMIT'] = commit_hash
-
 
 class ExistingEnvironment(Environment):
     tool_name = "existing"
@@ -669,6 +758,7 @@ class ExistingEnvironment(Environment):
         self._requirements = {}
 
         super(ExistingEnvironment, self).__init__(conf, executable, requirements)
+        self._env_vars.pop('ASV_ENV_DIR')
 
     @classmethod
     def matches(cls, python):
