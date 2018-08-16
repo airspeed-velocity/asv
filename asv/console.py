@@ -370,7 +370,8 @@ class Log(object):
     @contextlib.contextmanager
     def set_level(self, level):
         orig_level = self._logger.level
-        self._logger.setLevel(level)
+        if not self.is_debug_enabled():
+            self._logger.setLevel(level)
         try:
             yield
         finally:
