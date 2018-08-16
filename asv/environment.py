@@ -595,11 +595,12 @@ class Environment(object):
         """
         Run install commands
         """
+        # Run pip via python -m pip, avoids shebang length limit on Linux
+        default_cmd = ["python", "-mpip", "install", "{wheel_file}"]
+
         cmd = self._install_command
-        if cmd is None:
-            # Run pip via python -m pip, so that it works on Windows when
-            # upgrading pip itself, and avoids shebang length limit on Linux
-            cmd = ["python", "-mpip", "install", "{wheel_file}"]
+        if cmd is None or cmd == default_cmd:
+            cmd = default_cmd
 
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)
@@ -613,13 +614,14 @@ class Environment(object):
         """
         Run uninstall commands
         """
+        # Run pip via python -m pip, avoids shebang length limit on Linux
+        default_cmd = ['python', '-mpip', 'uninstall', '-y', '{project}']
+
         cmd = self._uninstall_command
         valid_return_codes = {0}
-        if cmd is None:
-            # Run pip via python -m pip, so that it works on Windows when
-            # upgrading pip itself, and avoids shebang length limit on Linux
-            cmd = ['python', '-mpip', 'uninstall', '-y', '{project}']
-            # uninstall may fail if not installed
+        if cmd is None or cmd == default_cmd:
+            # pip uninstall may fail if not installed
+            cmd = default_cmd
             valid_return_codes = None
 
         if cmd:
@@ -635,12 +637,12 @@ class Environment(object):
         """
         Run build commands
         """
-        cmd = self._build_command
-        if cmd is None:
-            cmd = [["python", "setup.py", "build"],
-                   ["python", "-mpip", "wheel", "--no-deps", "--no-index",
-                    "-w", "{build_cache_dir}", "{build_dir}"]]
+        default_cmd = [["python", "setup.py", "build"],
+                       ["python", "-mpip", "wheel", "--no-deps", "--no-index",
+                        "-w", "{build_cache_dir}", "{build_dir}"]]
 
+        cmd = self._build_command
+        if cmd is None or cmd == default_cmd:
             # Disable pip build isolation --- it doesn't make sense for
             # this command, because we used "setup.py build" to build the
             # project above.
@@ -648,6 +650,7 @@ class Environment(object):
             # It could be given as a command-line option, but that's
             # not available on old pip versions so we set an
             # environment variable instead.
+            cmd = default_cmd
             environ = dict(os.environ,
                            PIP_NO_BUILD_ISOLATION="false")  # [sic!]
         else:
