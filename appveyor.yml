@@ -21,6 +21,9 @@ cache:
     - '%LOCALAPPDATA%\pip\Cache'
 
 install:
+    # Init and clone submodules
+    - git submodule update --init --recursive
+
     # Clear tmpdir (sometimes left behind by appveyor?)
     - rmdir /s /q %APPVEYOR_BUILD_FOLDER%\\tmp & exit /b 0
 
