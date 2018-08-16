@@ -7,8 +7,8 @@ from setuptools import setup, Extension, Command
 from setuptools.command.test import test as TestCommand
 
 from distutils.command.build_ext import build_ext
+from distutils.command.sdist import sdist
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
-
 
 import os
 import subprocess
@@ -46,6 +46,34 @@ class PyTest(TestCommand):
             test_args += ['--cov', os.path.abspath('asv')]
         errno = pytest.main(test_args)
         sys.exit(errno)
+
+
+class sdist_checked(sdist):
+    """Check git submodules on sdist to prevent incomplete tarballs"""
+    def run(self):
+        self.__check_submodules()
+        sdist.run(self)
+
+    def __check_submodules(self):
+        """
+        Verify that the submodules are checked out and clean.
+        """
+        if not os.path.exists('.git'):
+            return
+        with open('.gitmodules') as f:
+            for l in f:
+                if 'path' in l:
+                    p = l.split('=')[-1].strip()
+                    if not os.path.exists(p):
+                        raise ValueError('Submodule %s missing' % p)
+
+        proc = subprocess.Popen(['git', 'submodule', 'status'],
+                                stdout=subprocess.PIPE)
+        status, _ = proc.communicate()
+        status = status.decode("ascii", "replace")
+        for line in status.splitlines():
+            if line.startswith('-') or line.startswith('+'):
+                raise ValueError('Submodule not clean: %s' % line)
 
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -225,7 +253,10 @@ def run_setup(build_binary=False):
 
         # py.test testing
         tests_require=['pytest'],
-        cmdclass={'test': PyTest, 'build_ext': optional_build_ext},
+        cmdclass={'test': PyTest,
+                  'build_ext': optional_build_ext,
+                  'sdist': sdist_checked},
+
         author="Michael Droettboom",
         author_email="mdroe@stsci.edu",
         description="Airspeed Velocity: A simple Python history benchmarking tool",
