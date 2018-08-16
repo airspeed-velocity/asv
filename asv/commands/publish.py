@@ -103,14 +103,24 @@ class Publish(Command):
         repo = get_repo(conf)
         benchmarks = Benchmarks.load(conf)
 
+        def copy_ignore(src, names):
+            # Copy only *.js and *.css in vendor dir
+            ignore = [fn for fn in names
+                      if (os.path.basename(src).lower() == 'vendor' and
+                          not fn.lower().endswith('.js') and
+                          not fn.lower().endswith('.css'))]
+            return ignore
+
         template_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), '..', 'www')
-        shutil.copytree(template_dir, conf.html_dir)
+        shutil.copytree(template_dir, conf.html_dir, ignore=copy_ignore)
 
         # Ensure html_dir is writable even if template_dir is on a read-only FS
         os.chmod(conf.html_dir, 0o755)
         for (pre, ds, fs) in os.walk(conf.html_dir):
-            for x in fs + ds:
+            for x in fs:
+                os.chmod(os.path.join(pre, x), 0o644)
+            for x in ds:
                 os.chmod(os.path.join(pre, x), 0o755)
 
         log.step()
