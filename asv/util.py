@@ -23,6 +23,7 @@ import errno
 import threading
 import shutil
 import stat
+import shlex
 import operator
 import collections
 
@@ -1132,3 +1133,86 @@ def recvall(sock, size):
             raise RuntimeError("did not receive data from socket "
                                "(size {}, got only {!r})".format(size, data))
     return data
+
+
+def interpolate_command(command, variables):
+    """
+    Parse a command with interpolated variables to a sequence of commands.
+
+    The command is parsed as in posix-style shell (by shlex) and split to
+    parts. Additional constructs recognized:
+
+    - ``ENVVAR=value <command>``: parsed as declaring an environment variable
+      named 'ENVVAR'.
+    - ``return-code=value <command>``: parsed as declaring valid return codes.
+
+    Parameters
+    ----------
+    command : str
+        Command to execute, posix shell style.
+    variables : dict
+        Interpolation variables.
+
+    Returns
+    -------
+    command : list of str
+        Command arguments.
+    env : dict
+        Environment variables declared in the command.
+    return_codes : {set, int, None}
+        Valid return codes.
+
+    """
+
+    parts = shlex.split(command)
+
+    try:
+        result = [c.format(**variables) for c in parts]
+    except KeyError as exc:
+        raise UserError("Configuration error: {{{0}}} not available "
+                        "when substituting into command {1!r} "
+                        "Available: {2!r}"
+                        "".format(exc.args[0], command, variables))
+
+    env = {}
+
+    return_codes_set = False
+    return_codes = {0}
+
+    while result:
+        m = re.match('^([A-Za-z_][A-Za-z0-9_]*)=(.*)$', result[0])
+        if m:
+            env[m.group(1)] = m.group(2)
+            del result[0]
+            continue
+
+        if result[0].startswith('return-code='):
+            if return_codes_set:
+                raise UserError("Configuration error: multiple return-code specifications "
+                                "in command {0!r} "
+                                "".format(command))
+                break
+
+            if result[0] == 'return-code=any':
+                return_codes = None
+                return_codes_set = True
+                del result[0]
+                continue
+
+            m = re.match('^return-code=([0-9,]+)$', result[0])
+            if m:
+                try:
+                    return_codes = set(int(x) for x in m.group(1).split(","))
+                    return_codes_set = True
+                    del result[0]
+                    continue
+                except ValueError as exc:
+                    pass
+
+            raise UserError("Configuration error: invalid return-code specification "
+                            "{0!r} when substituting into command {1!r} "
+                            "".format(result[0], command))
+
+        break
+
+    return result, env, return_codes

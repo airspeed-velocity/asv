@@ -19,14 +19,13 @@
     // "repo_subdir": "",
 
     // Customizable commands for building, installing, and
-    // uninstalling the project.  These are run in the context of
-    // (PATH, etc) of an environment.
+    // uninstalling the project. See asv.conf.json documentation.
     //
-    // "install_command": ["python", "-mpip", "install", "{wheel_file}"],
-    // "uninstall_command": ["python", "-mpip", "uninstall", "-y", "{project}"],
+    // "install_command": ["python -mpip install {wheel_file}"],
+    // "uninstall_command": ["return-code=any python -mpip uninstall -y {project}"],
     // "build_command": [
-    //     ["python", "setup.py", "build"],
-    //     ["python", "-mpip", "wheel", "--no-deps", "--no-index", "-w", "{cache_dir}", "{build_dir}"]
+    //     "python setup.py build",
+    //     "PIP_NO_BUILD_ISOLATION=false python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}"
     // ],
 
     // List of branches to benchmark. If not provided, defaults to "master"

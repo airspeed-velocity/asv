@@ -13,6 +13,7 @@ import hashlib
 import os
 import re
 import shutil
+import shlex
 import sys
 import itertools
 import subprocess
@@ -512,10 +513,24 @@ class Environment(object):
         raise NotImplementedError()
 
     def _interpolate_commands(self, commands):
+        """
+        Parse a command list with interpolated variables to a sequence of commands.
+
+        Parameters
+        ----------
+        commands : {list of str}
+            Commands to execute
+
+        Returns
+        -------
+        run_commands : list of (cmd, env, return_codes)
+            Parsed commands to run.
+
+        """
         if not commands:
             return []
 
-        if not isinstance(commands[0], list):
+        if not isinstance(commands, list):
             commands = [commands]
 
         # All environment variables are available as interpolation variables,
@@ -539,17 +554,16 @@ class Environment(object):
                     kwargs['wheel_file'] = os.path.join(cache_dir, wheels[0])
 
         # Interpolate, and raise useful error message if it fails
-        interpolated = []
-        for command in commands:
-            try:
-                interpolated.append([c.format(**kwargs) for c in command])
-            except KeyError as exc:
-                raise util.UserError("Configuration error: {{{0}}} not available "
-                                     "when substituting into command {1!r} "
-                                     "Available: {2!r}"
-                                     "".format(exc.args[0], commands, kwargs))
+        return [util.interpolate_command(c, kwargs) for c in commands]
 
-        return interpolated
+    def _interpolate_and_run_commands(self, commands, cwd):
+        interpolated = self._interpolate_commands(commands)
+
+        for cmd, env, return_codes in interpolated:
+            environ = dict(os.environ)
+            environ.update(env)
+            self.run_executable(cmd[0], cmd[1:], timeout=self._install_timeout, cwd=cwd,
+                                env=environ, valid_return_codes=return_codes)
 
     def checkout_project(self, repo, commit_hash):
         """
@@ -595,73 +609,44 @@ class Environment(object):
         """
         Run install commands
         """
-        # Run pip via python -m pip, avoids shebang length limit on Linux
-        default_cmd = ["python", "-mpip", "install", "{wheel_file}"]
-
         cmd = self._install_command
-        if cmd is None or cmd == default_cmd:
-            cmd = default_cmd
+        if cmd is None:
+            # Run pip via python -m pip, avoids shebang length limit on Linux
+            cmd = ["python -mpip install {wheel_file}"]
 
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)
             log.info("Installing {0} into {1}".format(commit_name, self.name))
-
-            for cmd in self._interpolate_commands(cmd):
-                self.run_executable(cmd[0], cmd[1:], timeout=self._install_timeout,
-                                    cwd=build_dir)
+            self._interpolate_and_run_commands(cmd, cwd=build_dir)
 
     def _uninstall_project(self):
         """
         Run uninstall commands
         """
-        # Run pip via python -m pip, avoids shebang length limit on Linux
-        default_cmd = ['python', '-mpip', 'uninstall', '-y', '{project}']
-
         cmd = self._uninstall_command
-        valid_return_codes = {0}
-        if cmd is None or cmd == default_cmd:
-            # pip uninstall may fail if not installed
-            cmd = default_cmd
-            valid_return_codes = None
+        if cmd is None:
+            # Run pip via python -m pip, avoids shebang length limit on Linux
+            # pip uninstall may fail if not installed, so allow any exit code
+            cmd = ['return-code=any python -mpip uninstall -y {project}']
 
         if cmd:
             log.info("Uninstalling from {0}".format(self.name))
-
-            for cmd in self._interpolate_commands(cmd):
-                self.run_executable(cmd[0], cmd[1:],
-                                    cwd=self._env_dir,
-                                    timeout=self._install_timeout,
-                                    valid_return_codes=valid_return_codes)
+            self._interpolate_and_run_commands(cmd, cwd=self._env_dir)
 
     def _build_project(self, repo, commit_hash, build_dir):
         """
         Run build commands
         """
-        default_cmd = [["python", "setup.py", "build"],
-                       ["python", "-mpip", "wheel", "--no-deps", "--no-index",
-                        "-w", "{build_cache_dir}", "{build_dir}"]]
-
         cmd = self._build_command
-        if cmd is None or cmd == default_cmd:
-            # Disable pip build isolation --- it doesn't make sense for
-            # this command, because we used "setup.py build" to build the
-            # project above.
-            #
-            # It could be given as a command-line option, but that's
-            # not available on old pip versions so we set an
-            # environment variable instead.
-            cmd = default_cmd
-            environ = dict(os.environ,
-                           PIP_NO_BUILD_ISOLATION="false")  # [sic!]
-        else:
-            environ = None
+        if cmd is None:
+            cmd = ["python setup.py build",
+                   ("PIP_NO_BUILD_ISOLATION=false "
+                    "python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}")]
 
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)
             log.info("Building {0} for {1}".format(commit_name, self.name))
-
-            for c in self._interpolate_commands(cmd):
-                self.run_executable(c[0], c[1:], cwd=build_dir, env=environ)
+            self._interpolate_and_run_commands(cmd, cwd=build_dir)
 
     def can_install_project(self):
         """

@@ -65,24 +65,24 @@ Airspeed Velocity rebuilds the project as needed, using these commands.
 
 The defaults are::
 
-  install_command:
-    ["python", "-mpip", "install", "{wheel_file}"]
+  "install_command":
+  ["python -mpip install {wheel_file}"],
 
-  uninstall_command:
-    ["python", "-mpip", "uninstall", "-y", "{project}"]
+  "uninstall_command":
+  ["return-code=any python -mpip uninstall -y {project}"],
 
-  build_command:
-    [["python", "setup.py", "build"],
-     ["python", "-mpip", "wheel", "--no-deps", "--no-index", "-w", "{build_cache_dir}", "{build_dir}"]]
+  "build_command":
+  ["python setup.py build",
+   "PIP_NO_BUILD_ISOLATION=false python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}"],
 
-The install command should install the project in the active Python
+The install commands should install the project in the active Python
 environment (virtualenv/conda), so that it can be used by the
 benchmark code.
 
-The uninstall command should uninstall the project from the
+The uninstall commands should uninstall the project from the
 environment.
 
-The build command can optionally be used to cache build results in the
+The build commands can optionally be used to cache build results in the
 cache directory ``{build_cache_dir}``, which is commit and
 environment-specific.  If the cache directory contains any files after
 ``build_command`` finishes with exit code 0, ``asv`` assumes it
@@ -95,8 +95,14 @@ The ``install_command`` and ``build_command`` are launched in
 ``{build_dir}``. The ``uninstall_command`` is launched in the
 environment root directory.
 
-Note that the commands are not run in a shell, so that ``cd`` has no
-effect on subsequent commands.
+The commands are specified in typical POSIX shell syntax (Python
+shlex), but are not run in a shell, so that e.g. ``cd`` has no effect
+on subsequent commands, and wildcard or environment variable
+expansion is not done. The substituted variables ``{variable_name}``
+do not need to be quoted. The commands may contain environment
+variable specifications in in form ``VARNAME=value`` at the beginning.
+In addition, valid return codes can be specified via
+``return-code=0,1,2`` and ``return-code=any``.
 
 The commands can be supplied with the arguments:
 
