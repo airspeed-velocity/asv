@@ -337,7 +337,7 @@ $(document).ready(function() {
                               + $.asv.master_json.revision_to_hash[revs[1]]);
         });
 
-        return ignore_key_prefix + $.md5(ignore_payload);
+        return ignore_key_prefix + md5(ignore_payload);
     }
 
     function is_key_ignored(ignore_key) {
