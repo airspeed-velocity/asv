@@ -1,0 +1,3 @@
+[submodule "asv/www/vendor"]
+	path = asv/www/vendor
+	url = https://github.com/airspeed-velocity/asv-vendor

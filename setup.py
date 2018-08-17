@@ -7,31 +7,13 @@ from setuptools import setup, Extension, Command
 from setuptools.command.test import test as TestCommand
 
 from distutils.command.build_ext import build_ext
+from distutils.command.sdist import sdist
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 
-
 import os
-import shutil
 import subprocess
 import sys
 import ast
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
-
-
-VENDOR_ASSETS = {
-    "jquery-1.11.0.min.js": "https://code.jquery.com/jquery-1.11.0.min.js",
-    "jquery.flot-0.8.2.min.js": "https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.2/jquery.flot.min.js",
-    "jquery.flot-0.8.2.time.min.js": "https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.2/jquery.flot.time.min.js",
-    "jquery.flot-0.8.2.selection.min.js": "https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.2/jquery.flot.selection.min.js",
-    "jquery.flot-0.8.2.categories.min.js": "https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.2/jquery.flot.categories.min.js",
-    "bootstrap-3.1.0.min.js": "https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js",
-    "bootstrap-3.1.0.min.css": "https://netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css"
-}
-
-VENDOR_DIR = os.path.join(os.path.dirname(__file__), 'asv', 'www', 'vendor')
 
 
 # A py.test test command
@@ -64,6 +46,34 @@ class PyTest(TestCommand):
             test_args += ['--cov', os.path.abspath('asv')]
         errno = pytest.main(test_args)
         sys.exit(errno)
+
+
+class sdist_checked(sdist):
+    """Check git submodules on sdist to prevent incomplete tarballs"""
+    def run(self):
+        self.__check_submodules()
+        sdist.run(self)
+
+    def __check_submodules(self):
+        """
+        Verify that the submodules are checked out and clean.
+        """
+        if not os.path.exists('.git'):
+            return
+        with open('.gitmodules') as f:
+            for l in f:
+                if 'path' in l:
+                    p = l.split('=')[-1].strip()
+                    if not os.path.exists(p):
+                        raise ValueError('Submodule %s missing' % p)
+
+        proc = subprocess.Popen(['git', 'submodule', 'status'],
+                                stdout=subprocess.PIPE)
+        status, _ = proc.communicate()
+        status = status.decode("ascii", "replace")
+        for line in status.splitlines():
+            if line.startswith('-') or line.startswith('+'):
+                raise ValueError('Submodule not clean: %s' % line)
 
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -171,29 +181,6 @@ class optional_build_ext(build_ext):
             raise BuildFailed()
 
 
-def download_assets():
-    if not os.path.isdir(VENDOR_DIR):
-        os.makedirs(VENDOR_DIR)
-
-    for fn, asset in sorted(VENDOR_ASSETS.items()):
-        dst = os.path.join(VENDOR_DIR, fn)
-
-        if os.path.isfile(dst):
-            continue
-
-        print("Downloading {0} to asv/www/vendor...".format(asset))
-
-        fsrc = urlopen(asset)
-        try:
-            with open(dst + ".new", 'wb') as fdst:
-                shutil.copyfileobj(fsrc, fdst)
-        finally:
-            fsrc.close()
-
-        # Usually atomic
-        os.rename(dst + ".new", dst)
-
-
 def run_setup(build_binary=False):
     version = get_version()
     git_hash = get_git_hash()
@@ -206,9 +193,6 @@ def run_setup(build_binary=False):
 
     write_version_file(os.path.join(basedir, 'asv', '_version.py'),
                        suffix, git_hash)
-
-    # Download missing assets
-    download_assets()
 
     # Install entry points for making releases with zest.releaser
     entry_points = {}
@@ -269,7 +253,10 @@ def run_setup(build_binary=False):
 
         # py.test testing
         tests_require=['pytest'],
-        cmdclass={'test': PyTest, 'build_ext': optional_build_ext},
+        cmdclass={'test': PyTest,
+                  'build_ext': optional_build_ext,
+                  'sdist': sdist_checked},
+
         author="Michael Droettboom",
         author_email="mdroe@stsci.edu",
         description="Airspeed Velocity: A simple Python history benchmarking tool",
