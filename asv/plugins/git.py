@@ -128,12 +128,15 @@ class Git(Repo):
         if name is None:
             name = self.get_branch_name()
 
+        # In case of annotated tags, return the hash for the commit
+        lookup_name = name + '^{commit}'
+
         try:
-            return self._run_git(['rev-parse', name],
+            return self._run_git(['rev-parse', lookup_name],
                                  display_error=False,
                                  dots=False).strip().split()[0]
         except util.ProcessError as err:
-            if err.stdout.strip() == name:
+            if err.stdout.strip() == lookup_name:
                 # Name does not exist
                 raise NoSuchNameError(name)
             raise
