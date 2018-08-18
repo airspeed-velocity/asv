@@ -14,7 +14,7 @@ from . import Command
 from ..benchmarks import Benchmarks
 from ..console import log
 from ..machine import Machine
-from ..repo import get_repo
+from ..repo import get_repo, NoSuchNameError
 from ..results import (Results, get_existing_hashes,
                        iter_results_for_machine_and_hash)
 from ..runner import run_benchmarks, skip_benchmarks
@@ -153,7 +153,10 @@ class Run(Command):
             repo.pull()
 
         if range_spec is None:
-            commit_hashes = list(set([repo.get_hash_from_name(branch) for branch in conf.branches]))
+            try:
+                commit_hashes = list(set([repo.get_hash_from_name(branch) for branch in conf.branches]))
+            except NoSuchNameError as exc:
+                raise util.UserError('Unknown branch {0} in configuration'.format(exc))
         elif range_spec == 'EXISTING':
             commit_hashes = get_existing_hashes(conf.results_dir)
         elif range_spec == "NEW":
