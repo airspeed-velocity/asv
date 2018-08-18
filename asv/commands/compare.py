@@ -163,20 +163,27 @@ class Compare(Command):
             raise util.UserError(
                 "Results for machine '{0} not found".format(machine))
 
+        commit_names = {hash_1: repo.get_name_from_hash(hash_1),
+                        hash_2: repo.get_name_from_hash(hash_2)}
+
         cls.print_table(conf, hash_1, hash_2, factor=factor, split=split,
                         only_changed=only_changed, sort=sort,
-                        machine=machine, env_names=env_names)
+                        machine=machine, env_names=env_names, commit_names=commit_names)
 
     @classmethod
     def print_table(cls, conf, hash_1, hash_2, factor, split,
                     resultset_1=None, resultset_2=None, machine=None,
-                    only_changed=False, sort='name', use_stats=True, env_names=None):
+                    only_changed=False, sort='name', use_stats=True, env_names=None,
+                    commit_names=None):
         results_1 = {}
         results_2 = {}
         stats_1 = {}
         stats_2 = {}
         versions_1 = {}
         versions_2 = {}
+
+        if commit_names is None:
+            commit_names = {}
 
         def results_default_iter(commit_hash):
             for result in iter_results_for_machine_and_hash(
@@ -359,6 +366,21 @@ class Compare(Command):
                 color_print("")
             color_print("       before           after         ratio")
             color_print("     [{0:8s}]       [{1:8s}]".format(hash_1[:8], hash_2[:8]))
+
+            name_1 = commit_names.get(hash_1)
+            if name_1:
+                name_1 = '<{0}>'.format(name_1)
+            else:
+                name_1 = ''
+
+            name_2 = commit_names.get(hash_2)
+            if name_2:
+                name_2 = '<{0}>'.format(name_2)
+            else:
+                name_2 = ''
+
+            if name_1 or name_2:
+                color_print("     {0:10s}       {1:10s}".format(name_1, name_2))
 
             if sort == 'ratio':
                 bench[key].sort(key=lambda v: v[3], reverse=True)

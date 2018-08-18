@@ -126,11 +126,15 @@ class Continuous(Command):
                     stats = result.get_result_stats(name, params)
                     yield name, params, value, stats, version, machine_name, env.name
 
+        commit_names = {parent: repo.get_name_from_hash(parent),
+                        head: repo.get_name_from_hash(head)}
+
         status = Compare.print_table(conf, parent, head,
                                      resultset_1=results_iter(parent),
                                      resultset_2=results_iter(head),
                                      factor=factor, split=split,
-                                     only_changed=only_changed, sort=sort)
+                                     only_changed=only_changed, sort=sort,
+                                     commit_names=commit_names)
         worsened, improved = status
 
         color_print("")
