@@ -320,12 +320,18 @@ by the ``number`` and ``repeat`` attributes, as explained below.
   allowing to sample over longer periods of background performance
   variations (e.g. CPU power levels).
 
-- ``repeat``: The number measurement samples to collect per process. Each sample
-  consists of running the benchmark ``number`` times.  The median
-  time from all of these repetitions is used as the final measurement
-  result. When not provided (``repeat`` set to 0), the number of samples
-  defaults to 10 (or less if benchmark appears slow). Setup and teardown
-  are run before and after each sample.
+- ``repeat``: The number measurement samples to collect per process.
+  Each sample consists of running the benchmark ``number`` times.
+  The median time from all samples is used as the final measurement
+  result.
+
+  ``repeat`` can be a tuple ``(min_repeat, max_repeat, max_time)``.
+  In this case, the measurement first collects at least ``min_repeat``
+  samples, and continues until either ``max_repeat`` samples are collected
+  or the collection time exceeds ``max_time``.
+
+  When not provided (``repeat`` set to 0), the default value is
+  ``(1, 10, 10.0)`` if ``processes==1`` and ``(1, 5, 5.0)`` otherwise.
 
 - ``number``: Manually choose the number of iterations in each sample.
   If ``number`` is specified, ``sample_time`` is ignored.
@@ -335,7 +341,10 @@ by the ``number`` and ``repeat`` attributes, as explained below.
 
 - ``sample_time``: ``asv`` will automatically select ``number`` so that
   each sample takes approximatively ``sample_time`` seconds.  If not
-  specified, ``sample_time`` defaults to 0.1 seconds.
+  specified, ``sample_time`` defaults to 10 milliseconds.
+
+- ``min_run_count``: the function is run at least this many times during
+  benchmark. Default: 2
 
 - ``timer``: The timing function to use, which can be any source of
   monotonically increasing numbers, such as `time.clock`, `time.time`
