@@ -13,7 +13,7 @@ import tempfile
 
 from . import Command
 from ..benchmarks import Benchmarks
-from ..console import log
+from ..console import log, color_print
 from ..environment import get_environments, is_existing_only
 from ..machine import Machine
 from ..profiling import ProfilerGui
@@ -123,8 +123,10 @@ class Profile(Command):
 
         machine_name = Machine.get_unique_machine_name()
         if revision is None:
-            revision = conf.branches[0]
-        commit_hash = repo.get_hash_from_name(revision)
+            rev = conf.branches[0]
+        else:
+            rev = revision
+        commit_hash = repo.get_hash_from_name(rev)
 
         profile_data = None
         checked_out = set()
@@ -192,6 +194,8 @@ class Profile(Command):
 
                 profile_data = results.get_profile(benchmark_name)
 
+        log.flush()
+
         if gui is not None:
             log.debug("Opening gui {0}".format(gui))
             with temp_profile(profile_data) as profile_path:
@@ -200,6 +204,7 @@ class Profile(Command):
             with io.open(output, 'wb') as fd:
                 fd.write(profile_data)
         else:
+            color_print('')
             with temp_profile(profile_data) as profile_path:
                 stats = pstats.Stats(profile_path)
                 stats.sort_stats('cumulative')
