@@ -76,7 +76,7 @@ def _test_generic_repo(conf, tmpdir, hash_range, master, branch, is_remote=False
         r.get_date_from_name(tag)
 
 
-def _test_branches(conf, branch_commits):
+def _test_branches(conf, branch_commits, require_describe=False):
     r = repo.get_repo(conf)
 
     assert len(conf.branches) == 2
@@ -86,6 +86,13 @@ def _test_branches(conf, branch_commits):
 
         for commit in branch_commits[branch]:
             assert commit in commits
+
+            name = r.get_name_from_hash(commit)
+            if require_describe:
+                assert name is not None
+            if name is not None:
+                assert r.get_hash_from_name(name) == commit
+                assert name in r.get_decorated_hash(commit)
 
 
 def test_repo_git(tmpdir):
@@ -109,7 +116,7 @@ def test_repo_git(tmpdir):
             'master': [dvcs.get_hash('master'), dvcs.get_hash('master~6')],
             'some-branch': [dvcs.get_hash('some-branch'), dvcs.get_hash('some-branch~6')]
         }
-        _test_branches(conf, branch_commits)
+        _test_branches(conf, branch_commits, require_describe=True)
 
     test_it()
 

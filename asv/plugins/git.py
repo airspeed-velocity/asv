@@ -144,6 +144,24 @@ class Git(Repo):
     def get_hash_from_parent(self, name):
         return self.get_hash_from_name(name + '^')
 
+    def get_name_from_hash(self, commit):
+        try:
+            name = self._run_git(["describe", "--exact-match",
+                                  "--all", commit],
+                                 display_error=False).strip()
+        except util.ProcessError as err:
+            if err.retcode == 128:
+                # Nothing found
+                return None
+            raise
+
+        # Return heads and tags without prefix
+        for prefix in ['heads/', 'tags/']:
+            if name.startswith(prefix):
+                return name[len(prefix):]
+
+        return name
+
     def get_tags(self):
         tags = {}
         for tag in self._run_git(["tag", "-l"]).splitlines():
