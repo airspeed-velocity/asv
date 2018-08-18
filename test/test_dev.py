@@ -42,6 +42,7 @@ def generate_basic_conf(tmpdir, repo_subdir=''):
         'html_dir': 'html',
         'repo': repo_path,
         'project': 'asv',
+        'branches': ['master'],
         'matrix': {
             "six": [None],
             "colorama": ["0.3.6", "0.3.7"],

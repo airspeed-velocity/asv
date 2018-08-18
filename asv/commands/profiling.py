@@ -123,8 +123,10 @@ class Profile(Command):
 
         machine_name = Machine.get_unique_machine_name()
         if revision is None:
-            revision = conf.branches[0]
-        commit_hash = repo.get_hash_from_name(revision)
+            rev = conf.branches[0]
+        else:
+            rev = revision
+        commit_hash = repo.get_hash_from_name(rev)
 
         profile_data = None
         checked_out = set()
