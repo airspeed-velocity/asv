@@ -168,12 +168,5 @@ Tracking benchmarks
 Environment variables
 ---------------------
 
-When ``asv`` runs benchmarks or commands, the following environment
-variables are available:
-
-- ``ASV``: has the value ``true``
-- ``ASV_PROJECT``: the value specified for ``project`` in the configuration
-- ``ASV_ENV_NAME``: the long name for the active Python environment
-- ``ASV_ENV_PATH``: full path to the root of the active Python environment
-- ``ASV_ENV_TYPE``: type of the active environment (e.g. ``virtualenv`` or ``conda``)
-- ``ASV_COMMIT``: currently checked out commit in the working directory (if any)
+When ``asv`` runs benchmarks, several environment variables are
+defined, see :doc:`env_vars`.
