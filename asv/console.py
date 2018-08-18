@@ -274,9 +274,13 @@ class Log(object):
         else:
             rest = parts[1]
 
+        indent = self._indent + 1
+
         if self._total:
-            color_print('[{0:6.02f}%] '.format(
-                (float(self._count) / self._total) * 100.0), end='')
+            progress_msg = '[{0:6.02f}%] '.format(
+                (float(self._count) / self._total) * 100.0)
+            color_print(progress_msg, end='')
+            indent += len(progress_msg)
 
         color_print('·' * self._indent, end='')
         color_print(' ', end='')
@@ -299,7 +303,6 @@ class Log(object):
         else:
             color = 'red'
 
-        indent = self._indent + 11
         spaces = ' ' * indent
         color_print(first_line, color, end='')
         if rest is not None:

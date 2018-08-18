@@ -11,7 +11,7 @@ import sys
 import locale
 import itertools
 
-from asv.console import _write_with_fallback, color_print
+from asv.console import _write_with_fallback, color_print, log
 
 
 def test_write_with_fallback(tmpdir, capfd):
@@ -110,3 +110,19 @@ def test_color_print_nofail(capfd):
     assert 'indeed' in out
     assert 'really' in out
     assert 'not really' in out
+
+
+def test_log_indent(capsys):
+    log.set_nitems(0)
+    log.info("First\nSecond")
+
+    out, err = capsys.readouterr()
+    lines = out.lstrip().splitlines()
+    assert lines[0].index('First') == lines[1].index('Second')
+
+    log.set_nitems(1)
+    log.info("First\nSecond")
+
+    out, err = capsys.readouterr()
+    lines = out.lstrip().splitlines()
+    assert lines[0].index('First') == lines[1].index('Second')
