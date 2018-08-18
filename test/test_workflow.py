@@ -4,18 +4,21 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import re
 import glob
 import os
-from os.path import abspath, dirname, join, isfile, relpath
 import shutil
 import sys
 import datetime
+import json
 
 import six
-import json
 import pytest
 
+from os.path import abspath, dirname, join, isfile, relpath
+
 from asv import config, environment, util
+from asv.results import iter_results_for_machine
 from asv.util import check_output, which
 
 from . import tools
@@ -179,12 +182,25 @@ def test_continuous(capfd, basic_conf):
     tools.run_asv_with_conf(conf, 'continuous', "master^", '--show-stderr',
                             '--bench=params_examples.track_find_test',
                             '--bench=params_examples.track_param',
+                            '--bench=time_examples.TimeSuite.time_example_benchmark_1',
+                            '--attribute=repeat=1', '--attribute=number=1',
+                            '--attribute=warmup_time=0',
                             *env_spec, _machine_file=machine_file)
 
     text, err = capfd.readouterr()
     assert "SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY" in text
     assert "+           1.00s            6.00s     6.00  params_examples.track_find_test(2)" in text
     assert "params_examples.ClassOne" in text
+
+    # Check processes were interleaved (timing benchmark was run twice)
+    assert re.search(r"For.*commit hash [a-f0-9]+ \(round 1/2\)", text, re.M)
+
+    result_found = False
+    for results in iter_results_for_machine(conf.results_dir, "orangutan"):
+        result_found = True
+        stats = results.get_result_stats('time_examples.TimeSuite.time_example_benchmark_1', [])
+        assert stats[0]['repeat'] == 2
+    assert result_found
 
 
 def test_find(capfd, basic_conf):
