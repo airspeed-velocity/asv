@@ -9,6 +9,7 @@ import itertools
 from . import Command
 from ..machine import iter_machine_files
 from ..results import iter_results_for_machine_and_hash
+from ..repo import get_repo, NoSuchNameError
 from ..util import human_value, load_json
 from ..console import log, color_print
 from ..environment import get_environments
@@ -125,6 +126,17 @@ class Compare(Command):
     @classmethod
     def run(cls, conf, hash_1, hash_2, factor=None, split=False, only_changed=False,
             sort='name', machine=None, env_spec=None):
+
+        repo = get_repo(conf)
+        try:
+            hash_1 = repo.get_hash_from_name(hash_1)
+        except NoSuchNameError:
+            pass
+
+        try:
+            hash_2 = repo.get_hash_from_name(hash_2)
+        except NoSuchNameError:
+            pass
 
         if env_spec:
             env_names = ([env.name for env in get_environments(conf, env_spec, verbose=False)]
