@@ -6,16 +6,23 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 from os.path import abspath, dirname, join
-import sys
 
 import six
+import pytest
+import shutil
 
 from asv import config
+from asv import util
 
 from asv.commands.compare import Compare
-from argparse import Namespace
 
 from . import tools
+
+try:
+    import hglib
+except ImportError:
+    hglib = None
+
 
 RESULT_DIR = abspath(join(dirname(__file__), 'example_results'))
 MACHINE_FILE = abspath(join(dirname(__file__), 'asv-machine.json'))
@@ -166,3 +173,47 @@ def test_compare(capsys, tmpdir):
                                  split=False, only_changed=True, sort='ratio')
     text, err = capsys.readouterr()
     assert text.strip() == REFERENCE_ONLY_CHANGED_MULTIENV.strip()
+
+
+@pytest.mark.parametrize("dvcs_type", [
+    "git",
+    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg"),
+])
+def test_compare_name_lookup(dvcs_type, capsys, tmpdir):
+    tmpdir = six.text_type(tmpdir)
+    os.chdir(tmpdir)
+
+    repo = tools.generate_test_repo(tmpdir, dvcs_type=dvcs_type)
+    branch_name = 'master' if dvcs_type == 'git' else 'default'
+    commit_hash = repo.get_branch_hashes(branch_name)[0]
+
+    result_dir = os.path.join(tmpdir, 'results')
+
+    src = os.path.join(RESULT_DIR, 'cheetah')
+    dst = os.path.join(result_dir, 'cheetah')
+    os.makedirs(dst)
+
+    for fn in ['feea15ca-py2.7-Cython-numpy1.8.json', 'machine.json']:
+        shutil.copyfile(os.path.join(src, fn), os.path.join(dst, fn))
+
+    # Copy to different commit
+    fn_1 = os.path.join(dst, 'feea15ca-py2.7-Cython-numpy1.8.json')
+    fn_2 = os.path.join(dst, commit_hash[:8] + '-py2.7-Cython-numpy1.8.json')
+    data = util.load_json(fn_1, cleanup=False)
+    data['commit_hash'] = commit_hash
+    util.write_json(fn_2, data)
+
+    conf = config.Config.from_json(
+        {'results_dir': result_dir,
+         'repo': repo.path,
+         'project': 'asv',
+         'environment_type': "shouldn't matter what"})
+
+    # Lookup with symbolic name
+    tools.run_asv_with_conf(conf, 'compare', branch_name, 'feea15ca', '--machine=cheetah',
+                            '--factor=2', '--environment=py2.7-Cython-numpy1.8',
+                            '--only-changed')
+
+    # Nothing should be printed since no results were changed
+    text, err = capsys.readouterr()
+    assert text.strip() == ''

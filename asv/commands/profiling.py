@@ -17,7 +17,7 @@ from ..console import log, color_print
 from ..environment import get_environments, is_existing_only
 from ..machine import Machine
 from ..profiling import ProfilerGui
-from ..repo import get_repo
+from ..repo import get_repo, NoSuchNameError
 from ..results import iter_results_for_machine
 from ..runner import run_benchmarks
 from ..util import hash_equal, iter_subclasses
@@ -126,7 +126,11 @@ class Profile(Command):
             rev = conf.branches[0]
         else:
             rev = revision
-        commit_hash = repo.get_hash_from_name(rev)
+
+        try:
+            commit_hash = repo.get_hash_from_name(rev)
+        except NoSuchNameError as exc:
+            raise util.UserError("Unknown commit {0}".format(exc))
 
         profile_data = None
         checked_out = set()

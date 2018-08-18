@@ -130,6 +130,7 @@ class Git(Repo):
 
         try:
             return self._run_git(['rev-parse', name],
+                                 display_error=False,
                                  dots=False).strip().split()[0]
         except util.ProcessError as err:
             if err.stdout.strip() == name:

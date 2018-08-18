@@ -11,7 +11,7 @@ from . import Command
 from .run import Run
 from .compare import Compare
 
-from ..repo import get_repo
+from ..repo import get_repo, NoSuchNameError
 from ..console import color_print, log
 from .. import results
 from .. import util
@@ -81,12 +81,16 @@ class Continuous(Command):
 
         if branch is None:
             branch = conf.branches[0]
-        head = repo.get_hash_from_name(branch)
 
-        if base is None:
-            parent = repo.get_hash_from_parent(head)
-        else:
-            parent = repo.get_hash_from_name(base)
+        try:
+            head = repo.get_hash_from_name(branch)
+
+            if base is None:
+                parent = repo.get_hash_from_parent(head)
+            else:
+                parent = repo.get_hash_from_name(base)
+        except NoSuchNameError as exc:
+            raise util.UserError("Unknown commit {0}".format(exc))
 
         commit_hashes = [head, parent]
         run_objs = {}
