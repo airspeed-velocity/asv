@@ -276,14 +276,14 @@ The number of wheels (builds) to cache for each environment.
 ``regressions_first_commits``
 -----------------------------
 
-The commits after which the regression search in `asv publish`
+The commits after which the regression search in :ref:`cmd-asv-publish`
 should start looking for regressions.
 
 The value is a dictionary mapping benchmark identifier regexps to
 commits after which to look for regressions. The benchmark identifiers
 are of the form ``benchmark_name(parameters)@branch``, where
 ``(parameters)`` is present only for parameterized benchmarks. If the
-commit identifier is `null`, regression detection for the matching
+commit identifier is *null*, regression detection for the matching
 benchmark is skipped.  The default is to start from the first commit
 with results.
 
@@ -304,7 +304,7 @@ for ``benchmark_2``, regression detection is skipped completely in the
 ``regressions_thresholds``
 --------------------------
 
-The minimum relative change required before `asv publish` reports a
+The minimum relative change required before :ref:`cmd-asv-publish` reports a
 regression.
 
 The value is a dictionary, similar to ``regressions_first_commits``.
