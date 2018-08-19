@@ -227,7 +227,7 @@ def test_find(capfd, basic_conf):
 
 def test_run_spec(basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
-    conf.wheel_cache_size = 5
+    conf.build_cache_size = 5
 
     extra_branches = [('master~1', 'some-branch', [12])]
     dvcs_path = os.path.join(tmpdir, 'test_repo2')

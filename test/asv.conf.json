@@ -30,5 +30,5 @@
 
     "benchmark_dir": "benchmark",
 
-    "wheel_cache_size": 10
+    "build_cache_size": 10
 }

@@ -9,6 +9,7 @@ import sys
 import six
 import pytest
 import json
+import shlex
 
 from asv import config
 from asv import environment
@@ -562,7 +563,7 @@ def test_environment_environ_path(environment_type, tmpdir):
 
 
 def test_build_isolation(tmpdir):
-    # build should not fail with wheel_cache on projects that have pyproject.toml
+    # build should not fail with build_cache on projects that have pyproject.toml
     tmpdir = six.text_type(tmpdir)
 
     # Create installable repository with pyproject.toml in it
@@ -581,7 +582,7 @@ def test_build_isolation(tmpdir):
     conf.pythons = [PYTHON_VER1]
     conf.matrix = {}
     conf.repo = os.path.abspath(dvcs.path)
-    conf.wheel_cache_size = 8
+    conf.build_cache_size = 8
 
     repo = get_repo(conf)
 
@@ -590,3 +591,98 @@ def test_build_isolation(tmpdir):
 
     # Project installation should succeed
     env.install_project(conf, repo, commit_hash)
+
+
+def test_custom_commands(tmpdir):
+    # check custom install/uninstall/build commands work
+    tmpdir = six.text_type(tmpdir)
+
+    dvcs = generate_test_repo(tmpdir, [0], dvcs_type='git')
+
+    build_py = os.path.abspath(os.path.join(tmpdir, 'build.py'))
+    install_py = os.path.abspath(os.path.join(tmpdir, 'install.py'))
+    uninstall_py = os.path.abspath(os.path.join(tmpdir, 'uninstall.py'))
+
+    conf = config.Config()
+    conf.env_dir = os.path.join(tmpdir, "env")
+    conf.pythons = [PYTHON_VER1]
+    conf.repo = os.path.abspath(dvcs.path)
+    conf.matrix = {}
+    conf.build_cache_size = 0
+
+    try:
+        from shlex import quote
+    except ImportError:
+        # Py2
+        def quote(s):
+            return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+    conf.build_command = ["python {0} {{build_cache_dir}}".format(quote(build_py))]
+    conf.install_command = ["python {0} {{env_dir}} {{build_cache_dir}}".format(quote(install_py))]
+    conf.uninstall_command = ["python {0} {{env_dir}}".format(quote(uninstall_py))]
+
+    with open(build_py, 'wb') as f:
+        f.write(b"import os, sys\n"
+                b"assert sys.argv[1] == os.environ['ASV_BUILD_CACHE_DIR']\n"
+                b"f = open(os.path.join(os.environ['ASV_BUILD_CACHE_DIR'], 'cached'), 'wb')\n"
+                b"f.write(b'data')\n"
+                b"f.close()\n")
+
+    with open(install_py, 'wb') as f:
+        f.write(b"import os, sys, shutil\n"
+                b"assert sys.argv[1] == os.environ['ASV_ENV_DIR']\n"
+                b"assert sys.argv[2] == os.environ['ASV_BUILD_CACHE_DIR']\n"
+                b"shutil.copyfile(os.path.join(os.environ['ASV_BUILD_CACHE_DIR'], 'cached'),\n"
+                b"                os.path.join(os.environ['ASV_ENV_DIR'], 'installed'))\n")
+
+    with open(uninstall_py, 'wb') as f:
+        f.write(b"import os, sys\n"
+                b"assert sys.argv[1] == os.environ['ASV_ENV_DIR']\n"
+                b"fn = os.path.join(os.environ['ASV_ENV_DIR'], 'installed')\n"
+                b"if os.path.isfile(fn): os.unlink(fn)\n")
+
+    def get_env():
+        env = list(environment.get_environments(conf, None))[0]
+        env.create()
+        return env
+
+    env = get_env()
+    repo = get_repo(conf)
+    commit_hash = dvcs.get_branch_hashes()[0]
+
+    cache_dir = os.path.join(env._path, 'asv-build-cache')
+    cache_file = os.path.join(cache_dir, commit_hash, 'cached')
+    install_file = os.path.join(env._path, 'installed')
+
+    # Project installation should succeed with cache size 0,
+    # and not leave cache files around
+    env.install_project(conf, repo, commit_hash)
+    assert os.path.isfile(install_file)
+    assert not os.listdir(cache_dir)
+
+    # It should succed with nonzero cache size
+    conf.build_cache_size = 1
+    env = get_env()
+    env.install_project(conf, repo, commit_hash)
+
+    assert os.path.isfile(cache_file)
+    assert os.path.isfile(install_file)
+
+    # Explicitly check uninstall works
+    env._uninstall_project()
+    assert os.path.isfile(cache_file)
+    assert not os.path.isfile(install_file)
+
+    # Check reinstall uses cache and doesn't call build command
+    conf.build_command = ['python -c "import sys; sys.exit(1)"']
+    env = get_env()
+    env.install_project(conf, repo, commit_hash)
+
+    assert os.path.isfile(install_file)
+    assert os.path.isfile(cache_file)
+
+    # Bad install command should cause a failure
+    conf.install_command = ['python -c "import sys; sys.exit(1)"']
+    env = get_env()
+    with pytest.raises(util.ProcessError):
+        env.install_project(conf, repo, commit_hash)
