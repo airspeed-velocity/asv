@@ -57,6 +57,13 @@ API Changes
 - The ``goal_time`` attribute in timing benchmarks is removed (and now
   ignored). See documentation on how to tune timing benchmarks now.
 
+- ``asv publish`` may ask you to run ``asv update`` once after upgrading,
+  to regenerate ``benchmarks.json`` if ``asv run`` was not yet run.
+
+- If you are using ``asv`` plugins, check their compatibility.  The
+  internal APIs in ``asv`` are not guaranteed to be backward
+  compatible.
+
 Bug Fixes
 ^^^^^^^^^
 
