@@ -146,17 +146,20 @@ class Git(Repo):
 
     def get_name_from_hash(self, commit):
         try:
-            name = self._run_git(["describe", "--exact-match",
-                                  "--all", commit],
+            name = self._run_git(["name-rev", "--name-only",
+                                  "--exclude=remotes/*",
+                                  "--no-undefined", commit],
                                  display_error=False).strip()
+            if not name:
+                return None
         except util.ProcessError as err:
             if err.retcode == 128:
                 # Nothing found
                 return None
             raise
-
-        # Return heads and tags without prefix
-        for prefix in ['heads/', 'tags/']:
+ 
+        # Return tags without prefix
+        for prefix in ['tags/']:
             if name.startswith(prefix):
                 return name[len(prefix):]
 
