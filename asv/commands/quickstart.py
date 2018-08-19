@@ -10,7 +10,7 @@ import shutil
 from six.moves import input as raw_input
 
 from . import Command
-from ..console import log
+from ..console import log, color_print
 
 
 class Quickstart(Command):
@@ -28,10 +28,12 @@ class Quickstart(Command):
         grp = parser.add_mutually_exclusive_group()
         grp.add_argument(
             "--top-level", action="store_true", dest="top_level", default=None,
-            help="Benchmarks are on the top level of the project's repository")
+            help="Use layout suitable for putting the benchmark suite on "
+            "the top level of the project's repository")
         grp.add_argument(
             "--no-top-level", action="store_false", dest="top_level", default=None,
-            help="Benchmarks are not in the project's repository top level")
+            help="Use layout suitable for putting the benchmark suite in "
+            "a separate repository")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -43,15 +45,24 @@ class Quickstart(Command):
 
     @classmethod
     def run(cls, dest=".", top_level=None):
+        log.info("Setting up new Airspeed Velocity benchmark suite.")
+
         if top_level is None:
+            log.flush()
+            color_print("")
+            color_print("Which of the following template layouts to use:")
+            color_print("(1) benchmark suite at the top level of the project repository")
+            color_print("(2) benchmark suite in a separate repository")
+            color_print("")
             while True:
-                answer = raw_input("Is this the top level of your project repository? [y/n] ")
-                if answer.lower()[:1] == "y":
+                answer = raw_input("Layout to use? [1/2] ")
+                if answer.lower()[:1] == "1":
                     top_level = True
                     break
-                elif answer.lower()[:1] == "n":
+                elif answer.lower()[:1] == "2":
                     top_level = False
                     break
+            color_print("")
 
         template_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), '..', 'template')
