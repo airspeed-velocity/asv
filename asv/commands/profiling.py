@@ -72,6 +72,7 @@ class Profile(Command):
             help="""Forcibly re-run the profile, even if the data
             already exists in the results database.""")
         common_args.add_environment(parser)
+        common_args.add_launch_method(parser)
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -89,11 +90,12 @@ class Profile(Command):
         return cls.run(
             conf=conf, benchmark=args.benchmark, revision=args.revision,
             gui=args.gui, output=args.output, force=args.force,
-            env_spec=args.env_spec, **kwargs)
+            env_spec=args.env_spec, launch_method=args.launch_method,
+            **kwargs)
 
     @classmethod
     def run(cls, conf, benchmark, revision=None, gui=None, output=None,
-            force=False, env_spec=None,
+            force=False, env_spec=None, launch_method=None,
             _machine_file=None):
         cls.find_guis()
 
@@ -194,7 +196,8 @@ class Profile(Command):
                 env.install_project(conf, repo, commit_hash)
 
                 results = run_benchmarks(
-                    benchmarks, env, show_stderr=True, quick=False, profile=True)
+                    benchmarks, env, show_stderr=True, quick=False, profile=True,
+                    launch_method=launch_method)
 
                 profile_data = results.get_profile(benchmark_name)
 

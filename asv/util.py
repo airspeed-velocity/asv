@@ -363,7 +363,7 @@ def check_call(args, valid_return_codes=(0,), timeout=600, dots=True,
 
 def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                  display_error=True, shell=False, return_stderr=False,
-                 env=None, cwd=None, redirect_stderr=False):
+                 env=None, cwd=None, redirect_stderr=False, return_popen=False):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.  Returns stdout as a string on success.
@@ -407,6 +407,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
     redirect_stderr : bool, optional
         Whether to redirect stderr to stdout. In this case the returned
         ``stderr`` (when return_stderr == True) is an empty string.
+
+    return_popen : bool, optional
+        Whether to return immediately after subprocess.Popen.
 
     Returns
     -------
@@ -466,6 +469,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
             kwargs['preexec_fn'] = lambda: os.setpgid(0, 0)
 
     proc = subprocess.Popen(args, **kwargs)
+
+    if return_popen:
+        return proc
 
     last_dot_time = time.time()
     stdout_chunks = []
@@ -1112,3 +1118,17 @@ def namedtuple_with_doc(name, slots, doc):
         return cls
     else:
         return type(str(name), (cls,), {'__doc__': doc})
+
+
+def recvall(sock, size):
+    """
+    Receive data of given size from a socket connection
+    """
+    data = b""
+    while len(data) < size:
+        s = sock.recv(size - len(data))
+        data += s
+        if not s:
+            raise RuntimeError("did not receive data from socket "
+                               "(size {}, got only {!r})".format(size, data))
+    return data

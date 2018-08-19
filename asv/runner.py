@@ -7,12 +7,16 @@ from __future__ import (absolute_import, division, print_function,
 import io
 import json
 import os
+import sys
 import re
 import time
 import tempfile
 import itertools
 import datetime
 import pstats
+import socket
+import struct
+import threading
 
 import six
 
@@ -107,7 +111,8 @@ def run_benchmarks(benchmarks, env, results=None,
                    show_stderr=False, quick=False, profile=False,
                    extra_params=None,
                    record_samples=False, append_samples=False,
-                   run_rounds=None):
+                   run_rounds=None,
+                   launch_method=None):
     """
     Run all of the benchmarks in the given `Environment`.
 
@@ -140,6 +145,8 @@ def run_benchmarks(benchmarks, env, results=None,
     run_rounds : sequence of int, optional
         Run rounds for benchmarks with multiple processes.
         If None, run all rounds.
+    launch_method : {'auto', 'spawn', 'forkserver'}, optional
+        Benchmark launching method to use.
 
     Returns
     -------
@@ -231,6 +238,9 @@ def run_benchmarks(benchmarks, env, results=None,
     indent = log.indent()
     indent.__enter__()
 
+    spawner = get_spawner(env, benchmarks.benchmark_dir,
+                          launch_method=launch_method)
+
     try:
         for name, benchmark, setup_cache_key, is_final in iter_run_items():
             selected_idx = benchmarks.benchmark_selection.get(name)
@@ -253,8 +263,8 @@ def run_benchmarks(benchmarks, env, results=None,
                 partial_info_time = None
                 short_key = os.path.relpath(setup_cache_key, benchmarks.benchmark_dir)
                 log.info("Setting up {0}".format(short_key), reserve_space=True)
-                cache_dir, stderr = create_setup_cache(name, benchmarks.benchmark_dir, env,
-                                                       setup_cache_timeout[setup_cache_key])
+                cache_dir, stderr = spawner.create_setup_cache(
+                    name, setup_cache_timeout[setup_cache_key])
                 if cache_dir is not None:
                     log.add_padded('ok')
                     cache_dirs[setup_cache_key] = cache_dir
@@ -301,7 +311,7 @@ def run_benchmarks(benchmarks, env, results=None,
                 partial_info_time = time.time()
                 log.info('Running ({0}--)'.format(name))
 
-            res = run_benchmark(benchmark, benchmarks.benchmark_dir, env,
+            res = run_benchmark(benchmark, spawner,
                                 profile=profile,
                                 selected_idx=selected_idx,
                                 extra_params=cur_extra_params,
@@ -341,8 +351,33 @@ def run_benchmarks(benchmarks, env, results=None,
             if cache_dir is not None:
                 util.long_path_rmtree(cache_dir, True)
         indent.__exit__(None, None, None)
+        spawner.close()
 
     return results
+
+
+def get_spawner(env, benchmark_dir, launch_method):
+    has_fork = hasattr(os, 'fork') and hasattr(socket, 'AF_UNIX')
+
+    if launch_method in (None, 'auto'):
+        # Don't use ForkServer as default on OSX, because many Apple
+        # things are not fork-safe
+        if has_fork and sys.platform not in ('darwin',):
+            launch_method = "forkserver"
+        else:
+            launch_method = "spawn"
+
+    if launch_method == "spawn":
+        spawner_cls = Spawner
+    elif launch_method == "forkserver":
+        if not has_fork:
+            raise util.UserError("'forkserver' launch method not available "
+                                 "on this platform")
+        spawner_cls = ForkServer
+    else:
+        raise ValueError("Invalid launch_method: {}".format(launch_method))
+
+    return spawner_cls(env, benchmark_dir)
 
 
 def log_benchmark_result(benchmark, results, show_stderr=False):
@@ -395,25 +430,6 @@ def log_benchmark_result(benchmark, results, show_stderr=False):
             log.error(stderr)
 
 
-def create_setup_cache(benchmark_id, benchmark_dir, env, timeout):
-    cache_dir = tempfile.mkdtemp()
-
-    out, _, errcode = env.run(
-        [BENCHMARK_RUN_SCRIPT, 'setup_cache',
-         os.path.abspath(benchmark_dir),
-         benchmark_id],
-        dots=False, display_error=False,
-        return_stderr=True, valid_return_codes=None,
-        redirect_stderr=True,
-        cwd=cache_dir, timeout=timeout)
-
-    if errcode == 0:
-        return cache_dir, None
-    else:
-        util.long_path_rmtree(cache_dir, True)
-        return None, out.strip()
-
-
 def fail_benchmark(benchmark, stderr='', errcode=1):
     """
     Return a BenchmarkResult describing a failed benchmark.
@@ -437,7 +453,7 @@ def fail_benchmark(benchmark, stderr='', errcode=1):
                            profile=None)
 
 
-def run_benchmark(benchmark, benchmark_dir, env, profile,
+def run_benchmark(benchmark, spawner, profile,
                   selected_idx=None,
                   extra_params=None,
                   cwd=None,
@@ -449,10 +465,8 @@ def run_benchmark(benchmark, benchmark_dir, env, profile,
     ----------
     benchmark : dict
         Benchmark object dict
-    benchmark_dir : str
-        Benchmark directory root
-    env : Environment
-        Environment to run in
+    spawner : Spawner
+        Benchmark process spawner
     profile : bool
         Whether to run with profile
     selected_idx : set, optional
@@ -501,7 +515,7 @@ def run_benchmark(benchmark, benchmark_dir, env, profile,
             cur_extra_params = extra_params
 
         res = _run_benchmark_single_param(
-            benchmark, benchmark_dir, env, param_idx,
+            benchmark, spawner, param_idx,
             extra_params=cur_extra_params, profile=profile,
             cwd=cwd)
 
@@ -528,7 +542,7 @@ def run_benchmark(benchmark, benchmark_dir, env, profile,
     )
 
 
-def _run_benchmark_single_param(benchmark, benchmark_dir, env, param_idx,
+def _run_benchmark_single_param(benchmark, spawner, param_idx,
                                 profile, extra_params, cwd):
     """
     Run a benchmark, for single parameter combination index in case it
@@ -538,10 +552,8 @@ def _run_benchmark_single_param(benchmark, benchmark_dir, env, param_idx,
     ----------
     benchmark : dict
         Benchmark object dict
-    benchmark_dir : str
-        Benchmark directory root
-    env : Environment
-        Environment to run in
+    spawner : Spawner
+        Benchmark process spawner
     param_idx : {int, None}
         Parameter index to run benchmark for
     profile : bool
@@ -579,12 +591,11 @@ def _run_benchmark_single_param(benchmark, benchmark_dir, env, param_idx,
     try:
         result_file.close()
 
-        out, _, errcode = env.run(
-            [BENCHMARK_RUN_SCRIPT, 'run', os.path.abspath(benchmark_dir),
-             name, params_str, profile_path, result_file.name],
-            dots=False, timeout=benchmark['timeout'],
-            display_error=False, return_stderr=True, redirect_stderr=True,
-            valid_return_codes=None, cwd=real_cwd)
+        out, errcode = spawner.run(
+            name=name, params_str=params_str, profile_path=profile_path,
+            result_file_name=result_file.name,
+            timeout=benchmark['timeout'],
+            cwd=real_cwd)
 
         if errcode != 0:
             if errcode == util.TIMEOUT_RETCODE:
@@ -634,12 +645,153 @@ def _run_benchmark_single_param(benchmark, benchmark_dir, env, param_idx,
             stderr=out.strip(),
             profile=profile_data)
 
+    except KeyboardInterrupt:
+        spawner.interrupt()
+        raise util.UserError("Interrupted.")
     finally:
         os.remove(result_file.name)
         if profile:
             os.remove(profile_path)
         if cwd is None:
             util.long_path_rmtree(real_cwd, True)
+
+
+class Spawner(object):
+    """
+    Manage launching individual benchmark.py commands
+    """
+
+    def __init__(self, env, benchmark_dir):
+        self.env = env
+        self.benchmark_dir = os.path.abspath(benchmark_dir)
+        self.interrupted = False
+
+    def interrupt(self):
+        self.interrupted = True
+
+    def create_setup_cache(self, benchmark_id, timeout):
+        cache_dir = tempfile.mkdtemp()
+
+        out, _, errcode = self.env.run(
+            [BENCHMARK_RUN_SCRIPT, 'setup_cache',
+             os.path.abspath(self.benchmark_dir),
+             benchmark_id],
+            dots=False, display_error=False,
+            return_stderr=True, valid_return_codes=None,
+            redirect_stderr=True,
+            cwd=cache_dir, timeout=timeout)
+
+        if errcode == 0:
+            return cache_dir, None
+        else:
+            util.long_path_rmtree(cache_dir, True)
+            return None, out.strip()
+
+    def run(self, name, params_str, profile_path, result_file_name, timeout, cwd):
+        out, _, errcode = self.env.run(
+            [BENCHMARK_RUN_SCRIPT, 'run', os.path.abspath(self.benchmark_dir),
+             name, params_str, profile_path, result_file_name],
+            dots=False, timeout=timeout,
+            display_error=False, return_stderr=True, redirect_stderr=True,
+            valid_return_codes=None, cwd=cwd)
+        return out, errcode
+
+    def close(self):
+        pass
+
+
+class ForkServer(Spawner):
+    def __init__(self, env, root):
+        super(ForkServer, self).__init__(env, root)
+
+        if not (hasattr(os, 'fork') and hasattr(os, 'setpgid')):
+            raise RuntimeError("ForkServer only available on POSIX")
+
+        self.tmp_dir = tempfile.mkdtemp(prefix='asv-forkserver-')
+        self.socket_name = os.path.join(self.tmp_dir, 'socket')
+
+        self.server_proc = env.run(
+            [BENCHMARK_RUN_SCRIPT, 'run_server', self.benchmark_dir, self.socket_name],
+            return_popen=True, redirect_stderr=True)
+
+        self._server_output = None
+        self.stdout_reader_thread = threading.Thread(target=self._stdout_reader)
+        self.stdout_reader_thread.start()
+
+        # Wait for the socket to appear
+        while self.stdout_reader_thread.is_alive():
+            if os.path.exists(self.socket_name):
+                break
+            time.sleep(0.05)
+
+        if not os.path.exists(self.socket_name):
+            os.rmdir(self.tmp_dir)
+            raise RuntimeError("Failed to start server thread")
+
+    def _stdout_reader(self):
+        try:
+            out, _ = self.server_proc.communicate()
+            out = out.decode('utf-8', 'replace')
+        except Exception as exc:
+            import traceback
+            out = traceback.format_exc()
+
+        self._server_output = out
+
+    def run(self, name, params_str, profile_path, result_file_name, timeout, cwd):
+        msg = {'action': 'run',
+               'benchmark_id': name,
+               'params_str': params_str,
+               'profile_path': profile_path,
+               'result_file': result_file_name,
+               'timeout': timeout,
+               'cwd': cwd}
+
+        msg = json.dumps(msg)
+        if sys.version_info[0] >= 3:
+            msg = msg.encode('utf-8')
+
+        # Send command
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.connect(self.socket_name)
+        try:
+            s.sendall(struct.pack('<Q', len(msg)))
+            s.sendall(msg)
+
+            # Read result
+            read_size, = struct.unpack('<Q', util.recvall(s, 8))
+            result_text = util.recvall(s, read_size)
+            if sys.version_info[0] >= 3:
+                result_text = result_text.decode('utf-8')
+            result = json.loads(result_text)
+        finally:
+            s.close()
+
+        # Interpret it
+        return result['out'], result['errcode']
+
+    def close(self):
+        import signal
+
+        # Check for termination
+        if self.server_proc.poll() is None:
+            util._killpg_safe(self.server_proc.pid, signal.SIGINT)
+
+        if self.server_proc.poll() is None:
+            time.sleep(0.1)
+
+        if self.server_proc.poll() is None:
+            # Kill process group
+            util._killpg_safe(self.server_proc.pid, signal.SIGKILL)
+
+        self.stdout_reader_thread.join()
+
+        if self._server_output and not self.interrupted:
+            with log.indent():
+                log.error("asv: forkserver:")
+                log.error(self._server_output)
+
+        util.long_path_rmtree(self.tmp_dir)
 
 
 def _combine_profile_data(datasets):

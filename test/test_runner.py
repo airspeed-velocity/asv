@@ -5,9 +5,13 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import sys
+import os
+import shutil
 import datetime
 import pstats
 import collections
+import socket
+import json
 
 import six
 import pytest
@@ -16,11 +20,12 @@ from os.path import join
 
 from asv import benchmarks
 from asv import config
+from asv import environment
 from asv import runner
 from asv import util
 from asv.results import Results
 
-from .test_benchmarks import benchmarks_fixture, ASV_CONF_JSON
+from .test_benchmarks import benchmarks_fixture, ASV_CONF_JSON, BENCHMARK_DIR
 
 
 ON_PYPY = hasattr(sys, 'pypy_version_info')
@@ -215,6 +220,43 @@ def test_skip_param_selection():
 
     assert results._results.get('test_nonparam') == None
     assert results._results['test_param'] == [1, None, None]
+
+
+@pytest.mark.skipif(not (hasattr(os, 'fork') and hasattr(socket, 'AF_UNIX')),
+                    reason="test requires fork and unix sockets")
+def test_forkserver(tmpdir):
+    tmpdir = six.text_type(tmpdir)
+    os.chdir(tmpdir)
+
+    shutil.copytree(BENCHMARK_DIR, 'benchmark')
+
+    d = {}
+    d.update(ASV_CONF_JSON)
+    d['env_dir'] = "env"
+    d['benchmark_dir'] = 'benchmark'
+    d['repo'] = 'None'
+    conf = config.Config.from_json(d)
+
+    env = environment.ExistingEnvironment(conf, sys.executable, {})
+    spawner = runner.ForkServer(env, os.path.abspath('benchmark'))
+
+    result_file = os.path.join(tmpdir, 'run-result')
+
+    try:
+        out, errcode = spawner.run('time_examples.TimeWithRepeat.time_it', '{}',
+                                   None,
+                                   result_file,
+                                   60,
+                                   os.getcwd())
+    finally:
+        spawner.close()
+
+    assert out.startswith("<1>")
+    assert errcode == 0
+
+    with open(result_file, 'r') as f:
+        data = json.load(f)
+    assert len(data['samples']) >= 1
 
 
 def test_table_formatting():

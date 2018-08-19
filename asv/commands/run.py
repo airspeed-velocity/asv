@@ -87,6 +87,7 @@ class Run(Command):
             benchmark functions faster.  The results are unlikely to
             be useful, and thus are not saved.""")
         common_args.add_environment(parser)
+        common_args.add_launch_method(parser)
         parser.add_argument(
             "--dry-run", "-n", action="store_true",
             default=None,
@@ -137,6 +138,7 @@ class Run(Command):
             skip_existing_commits=args.skip_existing_commits,
             record_samples=args.record_samples, append_samples=args.append_samples,
             pull=not args.no_pull, interleave_processes=args.interleave_processes,
+            launch_method=args.launch_method,
             **kwargs
         )
 
@@ -145,7 +147,8 @@ class Run(Command):
             show_stderr=False, quick=False, profile=False, env_spec=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
             skip_failed=False, skip_existing_commits=False, record_samples=False,
-            append_samples=False, pull=True, interleave_processes=False, _returns={}):
+            append_samples=False, pull=True, interleave_processes=False,
+            launch_method=None, _returns={}):
         machine_params = Machine.load(
             machine_name=machine,
             _path=_machine_file, interactive=True)
@@ -391,7 +394,8 @@ class Run(Command):
                                 profile=profile, extra_params=attribute,
                                 record_samples=(record_samples or force_record_samples),
                                 append_samples=(append_samples or force_append_samples),
-                                run_rounds=run_rounds)
+                                run_rounds=run_rounds,
+                                launch_method=launch_method)
                         else:
                             skip_benchmarks(benchmark_set, env, results=result)
 

@@ -19,6 +19,8 @@ internal commands:
       Run setup_cache for given benchmark.
   run BENCHMARK_DIR BENCHMARK_ID QUICK PROFILE_PATH RESULT_FILE
       Run a given benchmark, and store result in a file.
+  run_server BENCHMARK_DIR SOCKET_FILENAME
+      Run a Unix socket forkserver.
 """
 
 # !!!!!!!!!!!!!!!!!!!! NOTE !!!!!!!!!!!!!!!!!!!!
@@ -55,6 +57,9 @@ import re
 import textwrap
 import timeit
 import time
+import tempfile
+import struct
+
 
 # The best timer we can use is time.process_time, but it is not
 # available in the Python stdlib until Python 3.3.  This is a ctypes
@@ -227,6 +232,20 @@ except ImportError:  # For Python 2.6
             name = _resolve_name(name[level:], package, level)
         __import__(name)
         return sys.modules[name]
+
+
+def recvall(sock, size):
+    """
+    Receive data of given size from a socket connection
+    """
+    data = b""
+    while len(data) < size:
+        s = sock.recv(size - len(data))
+        data += s
+        if not s:
+            raise RuntimeError("did not receive data from socket "
+                               "(size {}, got only {!r})".format(size, data))
+    return data
 
 
 def _get_attr(source, name, ignore_case=False):
@@ -899,6 +918,132 @@ def main_run(args):
         json.dump(result, fp)
 
 
+def main_run_server(args):
+    import io
+    import signal
+    import socket
+
+    benchmark_dir, socket_name, = args
+
+    # Import benchmark suite before forking
+    update_sys_path(benchmark_dir)
+    for benchmark in disc_benchmarks(benchmark_dir):
+        pass
+
+    # Socket I/O
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.bind(socket_name)
+    s.listen(1)
+
+    # Read and act on commands from socket
+    while True:
+        stdout_file = None
+
+        try:
+            conn, addr = s.accept()
+        except KeyboardInterrupt:
+            break
+
+        try:
+            fd, stdout_file = tempfile.mkstemp()
+            os.close(fd)
+
+            # Read command
+            read_size, = struct.unpack('<Q', recvall(conn, 8))
+            command_text = recvall(conn, read_size)
+            if sys.version_info[0] >= 3:
+                command_text = command_text.decode('utf-8')
+
+            # Parse command
+            command = json.loads(command_text)
+            if command.pop('action') == 'quit':
+                break
+
+            benchmark_id = command.pop('benchmark_id')
+            params_str = command.pop('params_str')
+            profile_path = command.pop('profile_path')
+            result_file = command.pop('result_file')
+            timeout = command.pop('timeout')
+            cwd = command.pop('cwd')
+            if command:
+                raise RuntimeError('Command contained unknown data: {!r}'.format(command_text))
+
+            # Spawn benchmark
+            run_args = (benchmark_dir, benchmark_id, params_str, profile_path, result_file)
+            pid = os.fork()
+            if pid == 0:
+                exitcode = 1
+                try:
+                    out_fd = os.open(stdout_file, os.O_WRONLY)
+                    try:
+                        os.chdir(cwd)
+                        stdout_fd = sys.stdout.fileno()
+                        stderr_fd = sys.stderr.fileno()
+
+                        # Redirect I/O
+                        sys.stdout.close()
+                        sys.stderr.close()
+                        sys.stdin.close()
+                        os.dup2(out_fd, stdout_fd)
+                        os.dup2(out_fd, stderr_fd)  # redirect stderr to stdout
+                        if sys.version_info[0] >= 3:
+                            sys.stdout = io.TextIOWrapper(os.fdopen(stdout_fd, 'wb'))
+                            sys.stderr = io.TextIOWrapper(os.fdopen(stderr_fd, 'wb'))
+                        else:
+                            sys.stdout = os.fdopen(stdout_fd, 'wb')
+                            sys.stderr = os.fdopen(stderr_fd, 'wb')
+
+                        main_run(run_args)
+                        exitcode = 0
+                    except BaseException as ec:
+                        import traceback
+                        traceback.print_exc()
+                    finally:
+                        sys.stdout.flush()
+                        sys.stderr.flush()
+                finally:
+                    os._exit(exitcode)
+
+            # Wait for results
+            # (Poll in a loop is simplest --- also used by subprocess.py)
+            start_time = time.time()
+            is_timeout = False
+            while True:
+                res, status = os.waitpid(pid, os.WNOHANG)
+                if res != 0:
+                    break
+
+                if timeout is not None and time.time() > start_time + timeout:
+                    # Timeout
+                    if is_timeout:
+                        os.kill(pid, signal.SIGKILL)
+                    else:
+                        os.kill(pid, signal.SIGTERM)
+                    is_timeout = True
+
+                time.sleep(0.05)
+
+            # Report result
+            with io.open(stdout_file, 'r', errors='replace') as f:
+                out = f.read()
+
+            info = {'out': out,
+                    'errcode': -256 if is_timeout else status}
+
+            result_text = json.dumps(info)
+            if sys.version_info[0] >= 3:
+                result_text = result_text.encode('utf-8')
+
+            conn.sendall(struct.pack('<Q', len(result_text)))
+            conn.sendall(result_text)
+        except KeyboardInterrupt:
+            break
+        finally:
+            conn.close()
+            if stdout_file is not None:
+                os.unlink(stdout_file)
+
+
 def main_timing(argv):
     import argparse
     import asv.statistics
@@ -958,6 +1103,7 @@ commands = {
     'discover': main_discover,
     'setup_cache': main_setup_cache,
     'run': main_run,
+    'run_server': main_run_server,
     'timing': main_timing,
     '-h': main_help,
     '--help': main_help,
