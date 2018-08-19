@@ -148,7 +148,7 @@ int RangeMedian_init(RangeMedianObject *self, PyObject *args, PyObject *kwds)
         // calculation in the cache.
         self->cache = new Cache(37*size + 401);
     }
-    catch (std::bad_alloc) {
+    catch (const std::bad_alloc&) {
         PyErr_SetString(PyExc_MemoryError, "Allocating memory failed");
         return -1;
     }
