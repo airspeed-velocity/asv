@@ -1,17 +1,85 @@
 0.3 (unreleased)
 ----------------
 
+Major release with several new features.
+
 New Features
 ^^^^^^^^^^^^
+
+- Revised timing benchmarking. ``asv`` will display and record the
+  median and interquartile ranges of timing measurement results. The
+  information is also used by ``asv compare`` and ``asv continuous``
+  in determining what changes are significant. The ``asv run`` command
+  has new options for collecting samples. Timing benchmarks have
+  new benchmarking parameters for controlling how timing works,
+  including  ``processes`` attribute for collect data by running
+  benchmarks in different sequential processes.
+  The defaults are adjusted to obtain faster benchmarking.
+  (#698, #695, #689, #683, #665, #652, #575, #503, #493)
+
+- Interleaved benchmark running. Timing benchmarks can be run in
+  interleaved order via ``asv run --interleave-processes``, to obtain
+  better sampling over long-time background performance variations.
+  (#697, #694, #647)
+
+- Launching benchmarks via a fork server (on Unix-based systems).
+  Reduces the import time overheads in launching new
+  benchmarks. Default on Linux. (#666)
+
+- Benchmark versioning. Invalidate old benchmark results when
+  benchmarks change, via a benchmark ``version``
+  attribute. User-configurable, by default based on source
+  code. (#509)
+
+- Setting benchmark attributes on command line, via ``--attribute``.
+  (#647)
+
+- Support for Conda channels. (#539)
+
+- Provide ASV-specific environment variables to launched commands. (#624)
+
+- Show branch/tag names in addition to commit hashes. (#705)
+
+- Support for projects in repository subdirectories. (#611)
+
+- Way to run specific parametrized benchmarks. (#593)
+
+- Group benchmarks in the web benchmark grid (#557)
+
+- Make the web interface URL addresses more copypasteable.
+  (#608, #605, #580)
+
+- Allow customizingn benchmark display names (#484)
 
 API Changes
 ^^^^^^^^^^^
 
+- The ``goal_time`` attribute in timing benchmarks is removed (and now
+  ignored). See documentation on how to tune timing benchmarks now.
+
 Bug Fixes
 ^^^^^^^^^
 
+- Fixes in 0.2.1 and 0.2.2 are also included in 0.3.
+- Make ``asv compare`` accept named commits (#704)
+- Fix ``asv profile --python=same`` (#702)
+- Make ``asv compare`` behave correctly with multiple machines/envs (#687)
+- Avoid making too long result file names (#675)
+- Fix saving profile data (#680)
+- Ignore missing branches during benchmark discovery (#674)
+- Perform benchmark discovery only when necessary (#568)
+- Fix benchmark skipping to operate on a per-environment basis (#603)
+- Miscellaneous minor fixes (#701, #691, #688, #684, #682, #660, #634, #615, #600, #573, #556)
+
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Internal changes. (#700, #681, #663, #662, #637, #613, #606, #572)
+- CI/etc changes. (#585, #570)
+- Added internal debugging command ``asv.benchmarks`` (#685)
+- Make tests not require network connection, except with Conda (#696)
+- Drop support for end-of-lifed Python versions 2.6 & 3.2 & 3.3 (#548)
 
 
 0.2.2 (2018-07-14)
