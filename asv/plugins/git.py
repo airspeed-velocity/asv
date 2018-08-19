@@ -128,18 +128,42 @@ class Git(Repo):
         if name is None:
             name = self.get_branch_name()
 
+        # In case of annotated tags, return the hash for the commit
+        lookup_name = name + '^{commit}'
+
         try:
-            return self._run_git(['rev-parse', name],
+            return self._run_git(['rev-parse', lookup_name],
                                  display_error=False,
                                  dots=False).strip().split()[0]
         except util.ProcessError as err:
-            if err.stdout.strip() == name:
+            if err.stdout.strip() == lookup_name:
                 # Name does not exist
                 raise NoSuchNameError(name)
             raise
 
     def get_hash_from_parent(self, name):
         return self.get_hash_from_name(name + '^')
+
+    def get_name_from_hash(self, commit):
+        try:
+            name = self._run_git(["name-rev", "--name-only",
+                                  "--exclude=remotes/*",
+                                  "--no-undefined", commit],
+                                 display_error=False).strip()
+            if not name:
+                return None
+        except util.ProcessError as err:
+            if err.retcode == 128:
+                # Nothing found
+                return None
+            raise
+ 
+        # Return tags without prefix
+        for prefix in ['tags/']:
+            if name.startswith(prefix):
+                return name[len(prefix):]
+
+        return name
 
     def get_tags(self):
         tags = {}

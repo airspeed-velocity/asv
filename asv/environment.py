@@ -509,7 +509,10 @@ class Environment(object):
 
     def build_project(self, repo, commit_hash):
         self.checkout_project(repo, commit_hash)
-        log.info("Building {0} for {1}".format(commit_hash[:8], self.name))
+
+        commit_name = repo.get_decorated_hash(commit_hash, 8)
+        log.info("Building {0} for {1}".format(commit_name, self.name))
+
         if self._repo_subdir:
             build_dir = os.path.join(self._build_root, self._repo_subdir)
         else:

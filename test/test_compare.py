@@ -105,6 +105,7 @@ x           1.00s            3.00s     3.00  time_with_version_mismatch_other
 REFERENCE_ONLY_CHANGED = """
        before           after         ratio
      [22b920c6]       [fcf8c079]
+     <name1>          <name2>   
 !             n/a           failed      n/a  params_examples.ParamSuite.track_value
 !           454μs           failed      n/a  time_coordinates.time_latitude
 !           3.00s           failed      n/a  time_other.time_parameterized(3)
@@ -161,7 +162,8 @@ def test_compare(capsys, tmpdir):
     # Check print_table output as called from Continuous
     status = Compare.print_table(conf, '22b920c6', 'fcf8c079', factor=2, machine='cheetah',
                                  split=False, only_changed=True, sort='ratio',
-                                 env_names=["py2.7-numpy1.8"])
+                                 env_names=["py2.7-numpy1.8"],
+                                 commit_names={'22b920c6': 'name1', 'fcf8c079': 'name2'})
     worsened, improved = status
     assert worsened
     assert improved

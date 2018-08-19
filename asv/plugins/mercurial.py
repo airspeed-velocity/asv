@@ -152,6 +152,10 @@ class Hg(Repo):
     def get_hash_from_parent(self, name):
         return self.get_hash_from_name('p1({0})'.format(name))
 
+    def get_name_from_hash(self, commit):
+        # XXX: implement
+        return None
+
     def get_tags(self):
         tags = {}
         for item in self._repo.log(b"tag()"):

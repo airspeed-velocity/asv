@@ -129,6 +129,25 @@ class Repo(object):
         """
         raise NotImplementedError()
 
+    def get_name_from_hash(self, commit):
+        """
+        Get a symbolic name for a commit, if it exists.
+        The name is resolvable back to the has via get_hash_form_name.
+        If there is no symbolic name, returns None.
+        """
+        raise NotImplementedError()
+
+    def get_decorated_hash(self, commit, hash_length=8):
+        """
+        Return commit hash with possible branch/tag information added,
+        for displaying to the user.
+        """
+        name = self.get_name_from_hash(commit)
+        if name is not None:
+            return "{0} <{1}>".format(commit[:hash_length], name)
+        else:
+            return commit[:hash_length]
+
     def get_tags(self):
         """
         Get a dict of all of the tags defined in the repo and their
@@ -206,6 +225,9 @@ class NoRepository(Repo):
 
     def get_hash_from_parent(self, name):
         self._raise_error()
+
+    def get_name_from_hash(self, commit):
+        return None
 
     def get_tags(self):
         return {}

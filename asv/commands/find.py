@@ -119,9 +119,10 @@ class Find(Command):
 
             commit_hash = commit_hashes[i]
 
+            commit_name = repo.get_decorated_hash(commit_hash, 8)
             log.info(
-                "For {0} commit hash {1}:".format(
-                    conf.project, commit_hash[:8]))
+                "For {0} commit {1}:".format(
+                    conf.project, commit_name))
 
             env.install_project(conf, repo, commit_hash)
 
@@ -210,6 +211,7 @@ class Find(Command):
 
         result = do_search(0, len(commit_hashes) - 1)
 
-        log.info("Greatest regression found: {0}".format(commit_hashes[result][:8]))
+        commit_name = repo.get_decorated_hash(commit_hashes[result], 8)
+        log.info("Greatest regression found: {0}".format(commit_name))
 
         return 0

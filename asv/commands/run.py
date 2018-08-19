@@ -325,9 +325,10 @@ class Run(Command):
                 else:
                     round_info = ""
 
+                commit_name = repo.get_decorated_hash(commit_hash, 8)
                 log.info(
-                    "For {0} commit hash {1}{2}:".format(
-                        conf.project, commit_hash[:8], round_info))
+                    "For {0} commit {1}{2}:".format(
+                        conf.project, commit_name, round_info))
 
             with log.indent():
 
