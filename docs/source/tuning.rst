@@ -54,3 +54,11 @@ This system tuning also improves results for ``asv``.  To achieve CPU
 affinity pinning with ``asv`` (e.g. to an isolated CPU), you should
 use ``taskset`` to run the commands with ``taskset -c CPUNUMBER asv
 ...``.
+
+It is also useful to note that configuration changes and operating
+system upgrades on the benchmarking machine can change the baseline
+performance of the machine. For absolutely best results, you may then
+want to use a dedicated benchmarking machine that is not used for
+anything else. You may also want to carefully select a long-term
+supported operating system, such that you can only choose to install
+security upgrades.
