@@ -3,11 +3,11 @@
 Writing benchmarks
 ==================
 
-Benchmarks are stored in a collection of ``.py`` files in the
-benchmark suite's ``benchmark`` directory (as defined by
-``benchmark_dir`` in the ``asv.conf.json`` file).  They may be
-arbitrarily nested in subdirectories, and all ``.py`` files will be
-used, regardless of their file name.
+Benchmarks are stored in a Python package, i.e. collection of ``.py``
+files in the benchmark suite's ``benchmark`` directory (as defined by
+``benchmark_dir`` in the ``asv.conf.json`` file).  The package may
+contain arbitrarily nested subpackages, contents of which will also be
+used, regardless of the file names.
 
 Within each ``.py`` file, each benchmark is a function or method.  The
 name of the function must have a special prefix, depending on the type
@@ -63,6 +63,8 @@ Finally, there is a special command, ``asv dev``, that uses all of
 these features and is equivalent to::
 
        asv run --python=same --quick --show-stderr --dry-run
+
+.. _setup-and-teardown:
 
 Setup and teardown functions
 ----------------------------
@@ -120,14 +122,14 @@ only once also for repeated benchmarks and profiling, unlike
 ``setup``.  ``setup_cache`` can persist the data for the benchmarks it
 applies to in two ways:
 
-   - Returning a data structure, which ``asv`` pickles to disk, and
-     then loads and passes it as the first argument to each benchmark.
+- Returning a data structure, which ``asv`` pickles to disk, and
+  then loads and passes it as the first argument to each benchmark.
 
-   - Saving files to the current working directory (which is a
-     temporary directory managed by ``asv``) which are then explicitly
-     loaded in each benchmark process.  It is probably best to load
-     the data in a ``setup`` method so the loading time is not
-     included in the timing of the benchmark.
+- Saving files to the current working directory (which is a
+  temporary directory managed by ``asv``) which are then explicitly
+  loaded in each benchmark process.  It is probably best to load
+  the data in a ``setup`` method so the loading time is not
+  included in the timing of the benchmark.
 
 A separate cache is used for each environment and each commit of the
 project begin tested and is thrown out between benchmark runs.
@@ -186,26 +188,9 @@ class level.  For example, the following are equivalent::
             for i in range(1000):
                 pass
 
-The following attributes are applicable to all benchmark types:
+For the list of attributes, see :doc:`benchmarks`.
 
-- ``timeout``: The amount of time, in seconds, to give the benchmark
-  to run before forcibly killing it.  Defaults to 60 seconds.
-
-- ``benchmark_name``: If given, used as benchmark function name instead of generated one
-  `<module>.<class>.<function>`.
-
-- ``pretty_name``: If given, used to display the benchmark name instead of the
-  benchmark function name.
-
-- ``version``: Used to determine when to invalidate old benchmark
-  results.  Benchmark results produced with a different value of the
-  version than the current value will be ignored.  The value can be
-  any Python string (or other object, ``str()`` will be taken).
-
-  Default (if ``version=None`` or not given): hash of the source code
-  of the benchmark function and setup and setup_cache methods. If the
-  source code of any of these changes, old results become invalidated.
-
+.. _parametrized-benchmarks:
 
 Parameterized benchmarks
 ------------------------
@@ -266,6 +251,8 @@ Note that ``setup_cache`` is not parameterized.
 Benchmark types
 ---------------
 
+.. _timing-benchmarks:
+
 Timing
 ``````
 
@@ -306,67 +293,11 @@ possible, with as much extraneous setup moved to a ``setup`` function::
 
 How ``setup`` and ``teardown`` behave for timing benchmarks
 is similar to the Python ``timeit`` module, and the behavior is controlled
-by the ``number`` and ``repeat`` attributes, as explained below.
+by the ``number`` and ``repeat`` attributes.
 
-**Attributes**:
+For the list of attributes, see :doc:`benchmarks`.
 
-- ``warmup_time``: ``asv`` will spend this time (in seconds) in calling
-  the benchmarked function repeatedly, before starting to run the actual
-  benchmark. If not specified, ``warmup_time`` defaults to 0.1 seconds
-  (on PyPy, the default is 1.0 sec).
-
-- ``processes``: How many processes to launch for running the benchmarks
-  (default: 2). The processes run benchmarks in an interleaved order,
-  allowing to sample over longer periods of background performance
-  variations (e.g. CPU power levels).
-
-- ``repeat``: The number measurement samples to collect per process.
-  Each sample consists of running the benchmark ``number`` times.
-  The median time from all samples is used as the final measurement
-  result.
-
-  ``repeat`` can be a tuple ``(min_repeat, max_repeat, max_time)``.
-  In this case, the measurement first collects at least ``min_repeat``
-  samples, and continues until either ``max_repeat`` samples are collected
-  or the collection time exceeds ``max_time``.
-
-  When not provided (``repeat`` set to 0), the default value is
-  ``(1, 10, 10.0)`` if ``processes==1`` and ``(1, 5, 5.0)`` otherwise.
-
-- ``number``: Manually choose the number of iterations in each sample.
-  If ``number`` is specified, ``sample_time`` is ignored.
-  Note that ``setup`` and ``teardown`` are not run between iterations:
-  ``setup`` runs first, then the timed benchmark routine is called
-  ``number`` times, and after that ``teardown`` runs.
-
-- ``sample_time``: ``asv`` will automatically select ``number`` so that
-  each sample takes approximatively ``sample_time`` seconds.  If not
-  specified, ``sample_time`` defaults to 10 milliseconds.
-
-- ``min_run_count``: the function is run at least this many times during
-  benchmark. Default: 2
-
-- ``timer``: The timing function to use, which can be any source of
-  monotonically increasing numbers, such as `time.clock`, `time.time`
-  or ``time.process_time``.  If it's not provided, it defaults to
-  ``time.process_time`` (or a backported version of it for versions of
-  Python prior to 3.3), but other useful values are
-  `timeit.default_timer` to use the default ``timeit`` behavior on
-  your version of Python.
-
-  On Windows, `time.clock` has microsecond granularity, but
-  `time.time`'s granularity is 1/60th of a second. On Unix,
-  `time.clock` has 1/100th of a second granularity, and `time.time` is
-  much more precise. On either platform, `timeit.default_timer`
-  measures wall clock time, not the CPU time. This means that other
-  processes running on the same computer may interfere with the
-  timing.  That's why the default of ``time.process_time``, which only
-  measures the time used by the current process, is often the best
-  choice.
-
-The ``sample_time``, ``number``, ``repeat``, and ``timer`` attributes
-can be adjusted in the ``setup()`` routine, which can be useful for
-parameterized benchmarks.
+.. _memory-benchmarks:
 
 Memory
 ``````
@@ -388,6 +319,8 @@ which in most cases is probably a more useful indicator of how much
 space *each additional* object will use.  If you need to do something
 more specific, a generic :ref:`tracking` benchmark can be used
 instead.
+
+For details, see :doc:`benchmarks`.
 
 .. note::
 
@@ -421,6 +354,7 @@ memory usage you want to track::
    ``setup`` routine, which may confound the benchmark results. One
    way to avoid this is to use ``setup_cache`` instead.
 
+For details, see :doc:`benchmarks`.
 
 .. _tracking:
 
@@ -439,21 +373,4 @@ garbage collector at a given state::
         return len(gc.get_objects())
     track_num_objects.unit = "objects"
 
-**Attributes**:
-
-- ``unit``: The unit of the values returned by the benchmark.  Used
-  for display in the web interface.
-
-
-Environment variables
----------------------
-
-When ``asv`` runs benchmarks or project installation commands, the
-following environment variables are available:
-
-- ``ASV``: has the value ``true``
-- ``ASV_PROJECT``: the value specified for ``project`` in the configuration
-- ``ASV_ENV_NAME``: the long name for the active Python environment
-- ``ASV_ENV_PATH``: full path to the root of the active Python environment
-- ``ASV_ENV_TYPE``: type of the active environment (e.g. ``virtualenv`` or ``conda``)
-- ``ASV_COMMIT``: currently checked out commit in the working directory (if any)
+For details, see :doc:`benchmarks`.

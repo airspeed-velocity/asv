@@ -2,17 +2,18 @@ Developer Docs
 ==============
 
 This section describes some things that may be of interest to
-developers of ``asv``.
+developers and other people interested in internals of ``asv``.
 
 .. contents::
 
-Benchmark suite layout
-----------------------
+Benchmark suite layout and file formats
+---------------------------------------
 
 A benchmark suite directory has the following layout.  The
 ``$``-prefixed variables refer to values in the ``asv.conf.json`` file.
 
 - ``asv.conf.json``: The configuration file.
+  See :doc:`asv.conf.json`.
 
 - ``$benchmark_dir``: Contains the benchmark code, created by the
   user.  Each subdirectory needs an ``__init__.py``.
@@ -227,17 +228,22 @@ The browser back-end can be selected via::
     python setup.py test -a "--webdriver=PhantomJS"
     py.test --webdriver=PhantomJS
 
-The allowed values include ``PhantomJS`` (default) and ``Chrome``,
-corresponding to:
+The allowed values include ``None`` (default), ``PhantomJS``,
+``Chrome``, ``Firefox``, ``ChromeHeadless``, ``FirefoxHeadless``, or
+arbitrary Python code initializing a Selenium webdriver instance.
 
-* `PhantomJS <http://phantomjs.org/>`__:
-  Headless web browser. Runs without requiring a display.  On
-  Ubuntu, install via ``apt-get install phantomjs``.
+To use them, at least one of the following needs to be installed:
+
+* `Firefox GeckoDriver <https://github.com/mozilla/geckodriver>`__:
+  Firefox-based controllable browser.
 
 * `ChromeDriver <https://code.google.com/p/selenium/wiki/ChromeDriver>`__:
-  Chrome-based controllable browser. Cannot run without a display,
-  and will pop up a window when running. On Ubuntu, install via
-  ``apt-get install chromium-chromedriver``.
+  Chrome-based controllable browser. On Ubuntu, install via
+  ``apt-get install chromium-chromedriver``, on Fedora via
+  ``dnf install chromedriver``.
+
+* `PhantomJS <http://phantomjs.org/>`__:
+  Headless web browser (discontinued, prefer using Firefox or Chrome).
 
 For other options regarding the webdriver to use, see ``py.test --help``.
 

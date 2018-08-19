@@ -5,14 +5,15 @@ Using airspeed velocity
 its lifetime using a given set of benchmarks.  Below, we use the
 phrase "project" to refer to the project being benchmarked, and
 "benchmark suite" to refer to the set of benchmarks -- i.e., little
-snippets of code that are timed -- being run against the project.  The
-benchmark suite may live inside the project's repository, or it may
-reside in a separate repository -- the choice is up to you and is
-primarily a matter of style or policy.  Importantly, the result data
-stored alongside the benchmark suite may grow quite large, which is a
-good reason to not include it in the main project repository.
+snippets of code that are timed -- being run against the project.
 
-The user interacts with **airspeed velocity** through the ``asv``
+The benchmark suite may live inside the project's repository, or it
+may reside in a separate repository -- the choice is up to you and is
+primarily a matter of style or policy.  Note also that the result data
+is stored in JSON files alongside the benchmark suite and may grow
+quite large, and you may want to plan where to store it.
+
+You can interact with **airspeed velocity** through the ``asv``
 command.  Like ``git``, the ``asv`` command has a number of
 "subcommands" for performing various actions on your benchmarking
 project.
@@ -37,12 +38,20 @@ benchmarking suite.  Change to the directory where you would like your
 new benchmarking suite to be created and run::
 
     $ asv quickstart
-    Is this the top level of your project repository? [y/n] n
-    Edit asv.conf.json to get started.
+    · Setting up new Airspeed Velocity benchmark suite.
 
-Answer 'y' if you want a default configuration suitable for putting
+    Which of the following template layouts to use:
+    (1) benchmark suite at the top level of the project repository
+    (2) benchmark suite in a separate repository
+
+    Layout to use? [1/2] 1
+
+    · Edit asv.conf.json to get started.
+
+Answer '1' if you want a default configuration suitable for putting
 the benchmark suite on the top level of the same repository where your
-project is.
+project is, or '2' to get default configuration for putting it in a
+separate repository.
 
 Now that you have the bare bones of a benchmarking suite, let's edit
 the configuration file, ``asv.conf.json``.  Like most files that
@@ -53,7 +62,7 @@ do, and there is also a :ref:`conf-reference` with more details.  The
 values that will most likely need to be changed for any benchmarking
 suite are:
 
-- ``project``: The name of the project being benchmarked.
+- ``project``: The Python package name of the project being benchmarked.
 
 - ``project_url``: The project's homepage.
 
@@ -80,6 +89,9 @@ suite are:
   need, that is the recommended method.  See :ref:`environments` for
   more information.
 
+- ``matrix``: Dependencies you want to preinstall into the environment
+  where benchmarks are run.
+
 The rest of the values can usually be left to their defaults, unless
 you want to benchmark against multiple versions of Python or multiple
 versions of third-party dependencies.
@@ -99,24 +111,29 @@ single example benchmark file already in
             self.d = {}
             for x in range(500):
                 self.d[x] = None
-
+    
         def time_keys(self):
             for key in self.d.keys():
                 pass
-
+    
         def time_iterkeys(self):
             for key in self.d.iterkeys():
                 pass
-
+    
         def time_range(self):
             d = self.d
             for key in range(500):
                 x = d[key]
-
+    
         def time_xrange(self):
             d = self.d
             for key in xrange(500):
                 x = d[key]
+    
+    
+    class MemSuite:
+        def mem_list(self):
+            return [0] * 256
 
 You'll want to replace these benchmarks with your own.  See
 :ref:`writing-benchmarks` for more information.
@@ -202,27 +219,23 @@ installed to support other environment tools.  The
 ``environment_type`` key in ``asv.conf.json`` is used to select the
 tool used to create environments.
 
-``conda`` is a recommended method if it contains the dependencies
-your project needs, because it is faster and in many cases will not
-have to compile the dependencies from scratch.
-
 When using ``virtualenv``, ``asv`` does not build Python interpreters
 for you, but it expects to find each of the Python versions specified
 in the ``asv.conf.json`` file available on the ``PATH``.  For example,
 if the ``asv.conf.json`` file has::
 
-  "pythons": ["2.7", "3.3"]
+  "pythons": ["2.7", "3.6"]
 
 then it will use the executables named ``python2.7`` and
-``python3.3`` on the path.  There are many ways to get multiple
+``python3.6`` on the path.  There are many ways to get multiple
 versions of Python installed -- your package manager, ``apt-get``,
 ``yum``, ``MacPorts`` or ``homebrew`` probably has them, or you
 can also use `pyenv <https://github.com/yyuu/pyenv>`__.
 
 The ``virtualenv`` environment also supports PyPy_. You can specify
 ``"pypy"`` or ``"pypy3"`` as a Python version number in the
-``"pythons"`` list.  Note that PyPy must be installed and available on
-your ``PATH``.
+``"pythons"`` list.  Note that PyPy must also be installed and
+available on your ``PATH``.
 
 .. _PyPy: http://pypy.org/
 
@@ -233,35 +246,30 @@ Finally, the benchmarks are run::
 
     $ asv run
     · Cloning project.
-    · Fetching recent changes..
-    · Creating environments
-    ·· Creating conda environment for py2.7
-    ·· Creating conda environment for py3.4
-    · Installing dependencies..
+    · Fetching recent changes
+    · Creating environments......
     · Discovering benchmarks
-    ·· Creating conda environment for py2.7
-    ·· Uninstalling project from py2.7
-    ·· Installing project into py2.7.
+    ·· Uninstalling from virtualenv-py2.7
+    ·· Building 4238c44d <master> for virtualenv-py2.7
+    ·· Installing into virtualenv-py2.7.
     · Running 10 total benchmarks (1 commits * 2 environments * 5 benchmarks)
-    [  0.00%] · For project commit hash ac71c70d:
-    [  0.00%] ·· Building for py2.7
-    [  0.00%] ··· Uninstalling project from py2.7
-    [  0.00%] ··· Installing project into py2.7.
-    [  0.00%] ·· Benchmarking py2.7
-    [ 10.00%] ··· Running benchmarks.MemSuite.mem_list                               2.4k
-    [ 20.00%] ··· Running benchmarks.TimeSuite.time_iterkeys                  9.27±0.01μs
-    [ 30.00%] ··· Running benchmarks.TimeSuite.time_keys                      10.74±0.1μs
-    [ 40.00%] ··· Running benchmarks.TimeSuite.time_range                    42.20±0.05μs
-    [ 50.00%] ··· Running benchmarks.TimeSuite.time_xrange                   32.94±0.09μs
-    [ 50.00%] ·· Building for py3.4
-    [ 50.00%] ··· Uninstalling project from py3.4
-    [ 50.00%] ··· Installing project into py3.4..
-    [ 50.00%] ·· Benchmarking py3.4
-    [ 60.00%] ··· Running benchmarks.MemSuite.mem_list                               2.4k
-    [ 70.00%] ··· Running benchmarks.TimeSuite.time_iterkeys                       failed
-    [ 80.00%] ··· Running benchmarks.TimeSuite.time_keys                      7.29±0.07μs
-    [ 90.00%] ··· Running benchmarks.TimeSuite.time_range                    30.41±0.04μs
-    [100.00%] ··· Running benchmarks.TimeSuite.time_xrange                         failed
+    [  0.00%] · For project commit 4238c44d <master>:
+    [  0.00%] ·· Building for virtualenv-py2.7.
+    [  0.00%] ·· Benchmarking virtualenv-py2.7
+    [ 10.00%] ··· Running (benchmarks.TimeSuite.time_iterkeys--)....
+    [ 30.00%] ··· benchmarks.MemSuite.mem_list                                 2.42k
+    [ 35.00%] ··· benchmarks.TimeSuite.time_iterkeys                     11.1±0.01μs
+    [ 40.00%] ··· benchmarks.TimeSuite.time_keys                         11.2±0.01μs
+    [ 45.00%] ··· benchmarks.TimeSuite.time_range                        32.9±0.01μs
+    [ 50.00%] ··· benchmarks.TimeSuite.time_xrange                       30.3±0.01μs
+    [ 50.00%] ·· Building for virtualenv-py3.6..
+    [ 50.00%] ·· Benchmarking virtualenv-py3.6
+    [ 60.00%] ··· Running (benchmarks.TimeSuite.time_iterkeys--)....
+    [ 80.00%] ··· benchmarks.MemSuite.mem_list                                 2.11k
+    [ 85.00%] ··· benchmarks.TimeSuite.time_iterkeys                          failed
+    [ 90.00%] ··· benchmarks.TimeSuite.time_keys                          9.07±0.5μs
+    [ 95.00%] ··· benchmarks.TimeSuite.time_range                        35.5±0.01μs
+    [100.00%] ··· benchmarks.TimeSuite.time_xrange                            failed
 
 To improve reproducibility, each benchmark is run in its own process.
 
@@ -270,7 +278,7 @@ recorded on disk.  For timing benchmarks, the median and interquartile
 range of collected measurements are displayed.  Note that the results
 may vary on slow time scales due to CPU frequency scaling, heat
 management, and system load, and this variability is not necessarily
-captured by a single run.
+captured by a single run.  How to deal with this is discussed in :doc:`tuning`.
 
 The killer feature of **airspeed velocity** is that it can track the
 benchmark performance of your project over time.  The ``range``
@@ -282,12 +290,11 @@ has a very powerful syntax defined in the `gitrevisions manpage
 `revsets help section <http://www.selenic.com/hg/help/revsets>`_ for Mercurial.
 
 For example, in a Git repository, one can test a range of commits on a
-particular branch since the branch was created::
+particular branch since branching off master::
 
-        asv run mybranch@{u}..mybranch
+        asv run master..mybranch
 
-For example, to benchmark all of the commits since a particular tag
-(``v0.1``)::
+Or, to benchmark all of the commits since a particular tag (``v0.1``)::
 
     asv run v0.1..master
 
@@ -325,14 +332,14 @@ for this machine::
    developing benchmarks, called ``asv dev``.  See
    :ref:`writing-benchmarks` for more information.
 
-The results are stored as a tree of files in the directory
+The results are stored as JSON files in the directory
 ``results/$MACHINE``, where ``$MACHINE`` is the unique machine name
 that was set up in your ``~/.asv-machine.json`` file.  In order to
-combine results from multiple machines, the normal workflow is to
-commit these results to a source code repository alongside the results
-from other machines.  These results are then collated and "published"
-altogether into a single interactive website for viewing (see
-:ref:`viewing-results`).
+combine results from multiple machines, you can for example store the
+results in separate repositories, for example git submodules,
+alongside the results from other machines.  These results are then
+collated and "published" altogether into a single interactive website
+for viewing (see :ref:`viewing-results`).
 
 You can also continue to generate benchmark results for other commits,
 or for new benchmarks and continue to throw them in the ``results``
@@ -361,13 +368,20 @@ can be used to preview the website.  Just run::
 and open the URL that is displayed at the console.  Press Ctrl+C to
 stop serving.
 
-.. image:: screenshot.png
+|screenshot| |screenshot2|
 
-To share the website on the open internet, simply put these files on
-any webserver that can serve static content.  Github Pages works quite
-well, for example.  If using Github Pages, asv includes the
-convenience command ``asv gh-pages`` to automatically publish the
-results to the ``gh-pages`` branch.
+.. |screenshot| image:: screenshot-grid.png
+   :width: 45%
+
+.. |screenshot2| image:: screenshot-bench.png
+   :width: 45%
+
+To share the website on the open internet, simply put the files in the
+``html`` directory on any webserver that can serve static content.  Github Pages
+works quite well, for example.  For using Github Pages, ``asv``
+includes the convenience command ``asv gh-pages`` to put the results
+to the ``gh-pages`` branch and push them to Github. See :ref:`asv gh-pages
+--help <cmd-asv-gh-pages>` for details.
 
 Managing the results database
 -----------------------------
@@ -399,10 +413,7 @@ Note the double quotes around the entry to prevent the shell from
 expanding the ``*`` itself.
 
 The ``asv rm`` command will prompt before performing any operations.
-Passing the ``-y`` option will skip the prompt.  Note that generally
-the results will be stored in a source code repository, so it should
-be possible to undo any of the changes using the DVCS directly as
-well.
+Passing the ``-y`` option will skip the prompt.
 
 Here is a more complex example, to remove all of the benchmarks on
 Python 2.7 and the machine named ``giraffe``::
@@ -414,17 +425,20 @@ Finding a commit that produces a large regression
 -------------------------------------------------
 
 **airspeed velocity** detects statistically significant decreases of
-performance automatically when you run ``asv publish``. The results
-can be inspected via the web interface, clicking the "Show regression"
-button on the summary page.  The results include links to each
-benchmark graph deemed to contain a decrease in performance, the
-commits where the regressions were estimated to occur, and other
-potentially useful information.
+performance automatically based on the available data when you run
+``asv publish``. The results can be inspected via the web interface,
+clicking the "Regressions" tab on the web site.  The results include
+links to each benchmark graph deemed to contain a decrease in
+performance, the commits where the regressions were estimated to
+occur, and other potentially useful information.
+
+.. image:: screenshot-regressions.png
+   :width: 60%
 
 However, since benchmarking can be rather time consuming, it's likely that
 you're only benchmarking a subset of all commits in the repository.
 When you discover from the graph that the runtime between commit A and
-commit B suddenly doubles, you don't know which particular commit in
+commit B suddenly doubles, you don't necessarily know which particular commit in
 that range is the likely culprit.  ``asv find`` can be used to help
 find a commit within that range that produced a large regression using
 a binary search.  You can select a range of commits easily from the
@@ -477,7 +491,7 @@ revision of the project.
     You can also pass the ``--profile`` option to ``asv run``.  In
     addition to running the benchmarks as usual, it also runs them
     again in the `cProfile` profiler and save the results.  ``asv
-    preview`` will use this data, if found, rather than needing to
+    profile`` will use this data, if found, rather than needing to
     profile the benchmark each time.  However, it's important to note
     that profiler data contains absolute paths to the source code, so
     they are generally not portable between machines.
@@ -547,6 +561,8 @@ the ``--gui=runsnake`` to ``asv profile``, the profile is collected
 You can also get the raw profiling data by using the ``--output``
 argument to ``asv profile``.
 
+See :ref:`cmd-asv-profile` for more options.
+
 .. _comparing:
 
 Comparing the benchmarking results for two revisions
@@ -555,27 +571,30 @@ Comparing the benchmarking results for two revisions
 In some cases, you may want to directly compare the results for two specific
 revisions of the project. You can do so with the ``compare`` command::
 
-    $ asv compare 7810d6d7 19aa5743
-    · Fetching recent changes.
-
+    $ asv compare v0.1 v0.2
     All benchmarks:
-
-        before     after       ratio
-      [7810d6d7] [19aa5743]
-    +    1.75ms   152.84ms     87.28  time_quantity.time_quantity_array_conversion
-    +  933.71μs   108.22ms    115.90  time_quantity.time_quantity_init_array
-        83.65μs    55.38μs      0.66  time_quantity.time_quantity_init_scalar
-       281.71μs   146.88μs      0.52  time_quantity.time_quantity_scalar_conversion
-    +    1.31ms     7.75ms      5.91  time_quantity.time_quantity_ufunc_sin
-          5.73m      5.73m      1.00  time_units.mem_unit
-    ...
+    
+           before           after         ratio
+         [3bfda9c6]       [bf719488]
+         <v0.1>           <v0.2>    
+                40.4m            40.4m     1.00  benchmarks.MemSuite.mem_list [amulet.localdomain/virtualenv-py2.7-numpy]
+               failed            35.2m      n/a  benchmarks.MemSuite.mem_list [amulet.localdomain/virtualenv-py3.6-numpy]
+          11.5±0.08μs         11.0±0μs     0.96  benchmarks.TimeSuite.time_iterkeys [amulet.localdomain/virtualenv-py2.7-numpy]
+               failed           failed      n/a  benchmarks.TimeSuite.time_iterkeys [amulet.localdomain/virtualenv-py3.6-numpy]
+             11.5±1μs      11.2±0.02μs     0.97  benchmarks.TimeSuite.time_keys [amulet.localdomain/virtualenv-py2.7-numpy]
+               failed      8.40±0.02μs      n/a  benchmarks.TimeSuite.time_keys [amulet.localdomain/virtualenv-py3.6-numpy]
+          34.6±0.09μs      32.9±0.01μs     0.95  benchmarks.TimeSuite.time_range [amulet.localdomain/virtualenv-py2.7-numpy]
+               failed      35.6±0.05μs      n/a  benchmarks.TimeSuite.time_range [amulet.localdomain/virtualenv-py3.6-numpy]
+           31.6±0.1μs      30.2±0.02μs     0.95  benchmarks.TimeSuite.time_xrange [amulet.localdomain/virtualenv-py2.7-numpy]
+               failed           failed      n/a  benchmarks.TimeSuite.time_xrange [amulet.localdomain/virtualenv-py3.6-numpy]
 
 This will show the times for each benchmark for the first and second
 revision, and the ratio of the second to the first. In addition, the
 benchmarks will be color coded green and red if the benchmark improves
-or worsens more than a certain threshold factor, which defaults to 2
-(that is, benchmarks that improve by more than a factor of 2 or worsen
-by a factor of 2 are color coded). The threshold can be set with the
-``--threshold=value`` option. Finally, the benchmarks can be split
+or worsens more than a certain threshold factor, which defaults to 1.1
+(that is, benchmarks that improve by more than 10% or worsen by 10%
+are color coded). The threshold can be set with the
+``--factor=value`` option. Finally, the benchmarks can be split
 into ones that have improved, stayed the same, and worsened, using the
-same threshold.
+same threshold using the ``--split`` option.
+See :ref:`cmd-asv-compare` for more.

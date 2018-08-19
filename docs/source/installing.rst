@@ -6,11 +6,14 @@ It is known to work with Python 2.7, 3.4, 3.5, and 3.6.
 It works also with PyPy.
 
 **airspeed velocity** is a standard Python package, and the latest
-version may be installed with ``pip install asv``.  The project uses
-``setuptools``, and can also be installed by cloning the repository
-and using:
+released version may be `installed in the standard
+way from PyPI <https://packaging.python.org/tutorials/installing-packages/>`__::
 
-    python setup.py install
+    pip install asv
+
+The development version can be installed by cloning the source
+repository and running ``pip install .`` inside it, or by ``pip
+install git+https://github.com/airspeed-velocity/asv``.
 
 The requirements should be automatically installed.  If they aren't
 installed automatically, for example due to networking restrictions,
@@ -18,10 +21,10 @@ the requirements are:
 
 - `six <http://pythonhosted.org/six/>`__, 1.4 or later
 
-One of the following:
+and one of the following:
 
-- `virtualenv <http://virtualenv.org/>`__, 1.10 or later (this is true
-  even with Python 3.3, where virtualenv is included as venv, since
+- `virtualenv <http://virtualenv.org/>`__, 1.10 or later (it is required
+  also on Python 3, where virtualenv is included as venv, since
   venv is not compatible with other versions of Python).
 
   Note that virtualenv 1.11.0 will not work, as it contains a bug in
@@ -38,8 +41,8 @@ One of the following:
    project involve a lot of compiled C/C++ extensions and are
    available in the ``conda`` repository, since ``conda`` will be able
    to fetch precompiled binaries for these dependencies in many cases.
-   Using ``virtualenv``, these dependencies will have to be compiled
-   every time the environments are set up.
+   Using ``virtualenv``, dependencies without precompiled wheels
+   usually have to be compiled every time the environments are set up.
 
 Optional optimization
 ---------------------
@@ -63,6 +66,3 @@ will be installed automatically.
 To run **airspeed velocity**'s self tests::
 
     python setup.py test
-
-.. todo::
-    Checking out from git/tarball/PyPI  etc.

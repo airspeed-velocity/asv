@@ -97,6 +97,8 @@ def _make_docstring():
     lines = []
 
     for p in six.itervalues(subparsers.choices):
+        lines.append('.. _cmd-{0}:'.format(p.prog.replace(' ', '-')))
+        lines.append('')
         lines.append(p.prog)
         lines.append('-' * len(p.prog))
         lines.append('::')
