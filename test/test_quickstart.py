@@ -33,7 +33,7 @@ def test_quickstart(tmpdir):
     os.makedirs(dest)
 
     try:
-        asv.commands.quickstart.raw_input = lambda msg: 'y'
+        asv.commands.quickstart.raw_input = lambda msg: '1'
         tools.run_asv('quickstart', '--dest', dest)
     finally:
         del asv.commands.quickstart.raw_input
