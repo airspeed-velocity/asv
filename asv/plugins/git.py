@@ -153,11 +153,9 @@ class Git(Repo):
             if not name:
                 return None
         except util.ProcessError as err:
-            if err.retcode == 128:
-                # Nothing found
-                return None
-            raise
- 
+            # Failed to obtain.
+            return None
+
         # Return tags without prefix
         for prefix in ['tags/']:
             if name.startswith(prefix):
