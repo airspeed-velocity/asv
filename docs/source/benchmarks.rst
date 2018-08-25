@@ -120,7 +120,7 @@ Timing benchmarks
   or the collection time exceeds ``max_time``.
 
   When not provided (``repeat`` set to 0), the default value is
-  ``(1, 10, 10.0)`` if ``processes==1`` and ``(1, 5, 5.0)`` otherwise.
+  ``(1, 10, 20.0)`` if ``processes==1`` and ``(1, 5, 10.0)`` otherwise.
 
 - ``number``: Manually choose the number of iterations in each sample.
   If ``number`` is specified, ``sample_time`` is ignored.

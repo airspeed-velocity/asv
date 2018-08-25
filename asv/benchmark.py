@@ -508,7 +508,7 @@ class TimeBenchmark(Benchmark):
             if self.repeat == 0:
                 min_repeat = 1
                 max_repeat = 10
-                max_time = 10.0
+                max_time = 20.0
                 if self.processes > 1:
                     max_repeat //= 2
                     max_time /= 2.0
