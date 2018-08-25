@@ -1,6 +1,9 @@
+- Michael Droettboom (founder)
 - Pauli Virtanen
+- Philippe Pepiot
 - Thomas Robitaille
 - Richard Hattersley
+- Antoine Pitrou
 - Matthew Turk
 - Antoine Pitrou
 - Christoph Deil
@@ -11,3 +14,30 @@
 - MinRK
 - Christopher Whelan
 - Robert T. McGibbon
+- Juan Nunez-Iglesias
+- Andrew Nelson
+- Andreas Fragner
+- Aaron Meurer
+- Boris Feld
+- Erik M. Bray
+- Kacper Kowalik
+- Tyler Reddy
+- Yaroslav Halchenko
+- @wrwrwr
+- Antony Lee
+- Arne Neumann
+- Colin Carroll
+- Edison Gustavo Muenz
+- Elliott Sales de Andrade
+- Eric Dill
+- Hans Moritz Günther
+- John Kirkham
+- Josh Soref
+- Kacper Kowalik (Xarthisius)
+- MinRK
+- Nathan Goldbaum
+- Thomas Pfaff
+- Tom Augspurger
+- @Warbo
+- Wojtek Ruszczewski
+- @jbrockmendel
