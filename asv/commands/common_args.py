@@ -109,11 +109,21 @@ def add_bench(parser):
         help="""Regular expression(s) for benchmark to run.  When not
         provided, all benchmarks are run.""")
 
+    def parse_repeat(value):
+        try:
+            return int(value)
+        except ValueError:
+            pass
+
+        min_repeat, max_repeat, max_time = value.lstrip('(').rstrip(')').split(',')
+        value = (int(min_repeat), int(max_repeat), float(max_time))
+        return value
+
     converters = {
         'timeout': float,
         'version': str,
         'warmup_time': float,
-        'repeat': int,
+        'repeat': parse_repeat,
         'number': int,
         'processes': int,
         'sample_time': float
