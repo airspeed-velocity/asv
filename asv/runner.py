@@ -751,9 +751,19 @@ class ForkServer(Spawner):
         if sys.version_info[0] >= 3:
             msg = msg.encode('utf-8')
 
-        # Send command
+        # Connect (with wait+retry)
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        s.connect(self.socket_name)
+        for retry in range(5, 0, -1):
+            try:
+                s.connect(self.socket_name)
+                break
+            except socket.error:
+                if retry > 1:
+                    time.sleep(0.2)
+                else:
+                    raise
+
+        # Send command
         try:
             s.sendall(struct.pack('<Q', len(msg)))
             s.sendall(msg)
