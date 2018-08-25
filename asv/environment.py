@@ -403,8 +403,10 @@ class Environment(object):
 
     def _set_installed_commit_hash(self, commit_hash):
         # Save status
+        install_checksum = self._get_install_checksum()
         hash_file = os.path.join(self._path, 'asv-install-status.json')
-        util.write_json(hash_file, {'commit_hash': commit_hash}, api_version=1)
+        data = {'commit_hash': commit_hash, 'install_checksum': install_checksum}
+        util.write_json(hash_file, data, api_version=1)
 
     def _get_installed_commit_hash(self):
         hash_file = os.path.join(self._path, 'asv-install-status.json')
@@ -416,7 +418,20 @@ class Environment(object):
             except util.UserError as exc:
                 pass
 
+        # If configuration changed, force reinstall
+        install_checksum = self._get_install_checksum()
+        if data.get('install_checksum', None) != install_checksum:
+            return None
+
         return data.get('commit_hash', None)
+
+    def _get_install_checksum(self):
+        return [self._repo_subdir,
+                self._install_timeout,
+                self._project,
+                self._build_command,
+                self._install_command,
+                self._uninstall_command]
 
     @property
     def installed_commit_hash(self):

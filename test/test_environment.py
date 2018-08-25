@@ -681,7 +681,6 @@ def test_custom_commands(tmpdir):
 
     assert os.path.isfile(install_file)
     assert os.path.isfile(cache_file)
-    env._set_installed_commit_hash(None)
 
     # Bad install command should cause a failure
     conf.install_command = ['python -c "import sys; sys.exit(1)"']
@@ -722,8 +721,16 @@ def test_installed_commit_hash(tmpdir):
     env = get_env()
     assert env.installed_commit_hash == commit_hash
     assert env._env_vars.get('ASV_COMMIT') == commit_hash
+
+    # Configuration change results to reinstall
+    env._project = "something"
+    assert env.installed_commit_hash == None
+
+    # Uninstall resets hash (but not ASV_COMMIT)
+    env = get_env()
     env._uninstall_project()
     assert env.installed_commit_hash == None
+    assert env._env_vars.get('ASV_COMMIT') != None
 
     env = get_env()
     assert env.installed_commit_hash == None
