@@ -22,6 +22,8 @@ New Features
   better sampling over long-time background performance variations.
   (#697, #694, #647)
 
+- Customization of build/install/uninstall commands. (#699)
+
 - Launching benchmarks via a fork server (on Unix-based systems).
   Reduces the import time overheads in launching new
   benchmarks. Default on Linux. (#666)
@@ -76,7 +78,8 @@ Bug Fixes
 - Ignore missing branches during benchmark discovery (#674)
 - Perform benchmark discovery only when necessary (#568)
 - Fix benchmark skipping to operate on a per-environment basis (#603)
-- Miscellaneous minor fixes (#701, #691, #688, #684, #682, #660, #634, #615, #600, #573, #556)
+- Miscellaneous minor fixes (#706, #701, #691, #688, #684, #682, #660,
+  #634, #615, #600, #573, #556)
 
 
 Other Changes and Additions
