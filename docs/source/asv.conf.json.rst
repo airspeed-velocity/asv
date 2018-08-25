@@ -58,6 +58,68 @@ If empty or omitted, the project is assumed to be located at the root of
 the repository.
 
 
+``build_command``, ``install_command``, ``uninstall_command``
+-------------------------------------------------------------
+
+Airspeed Velocity rebuilds the project as needed, using these commands.
+
+The defaults are::
+
+  "install_command":
+  ["python -mpip install {wheel_file}"],
+
+  "uninstall_command":
+  ["return-code=any python -mpip uninstall -y {project}"],
+
+  "build_command":
+  ["python setup.py build",
+   "PIP_NO_BUILD_ISOLATION=false python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}"],
+
+The install commands should install the project in the active Python
+environment (virtualenv/conda), so that it can be used by the
+benchmark code.
+
+The uninstall commands should uninstall the project from the
+environment.
+
+The build commands can optionally be used to cache build results in the
+cache directory ``{build_cache_dir}``, which is commit and
+environment-specific.  If the cache directory contains any files after
+``build_command`` finishes with exit code 0, ``asv`` assumes it
+contains a cached build.  When a cached build is available, ``asv``
+will only call ``install_command`` but not ``build_command``. (The
+number of cached builds retained at any time is determined by the
+``build_cache_size`` configuration option.)
+
+The ``install_command`` and ``build_command`` are launched in
+``{build_dir}``. The ``uninstall_command`` is launched in the
+environment root directory.
+
+The commands are specified in typical POSIX shell syntax (Python
+shlex), but are not run in a shell, so that e.g. ``cd`` has no effect
+on subsequent commands, and wildcard or environment variable
+expansion is not done. The substituted variables ``{variable_name}``
+do not need to be quoted. The commands may contain environment
+variable specifications in in form ``VARNAME=value`` at the beginning.
+In addition, valid return codes can be specified via
+``return-code=0,1,2`` and ``return-code=any``.
+
+The commands can be supplied with the arguments:
+
+- ``{project}``: the project name from the configuration file
+- ``{env_name}``: name of the currently active environment
+- ``{env_type}``: type of the currently active environment
+- ``{env_dir}``: full path to the currently active environment root
+- ``{conf_dir}``: full path to the directory where ``asv.conf.json`` is
+- ``{build_dir}``: full path to the build directory (checked-out source path + ``repo_subdir``)
+- ``{build_cache_dir}``: full path to the build cache directory
+- ``{commit}``: commit hash of currently installed project
+- ``{wheel_file}``: absolute path to a ``*.whl`` file in ``{build_cache_dir}``
+  (defined only if there is exactly one existing wheel file in the directory).
+
+Several :doc:`environment variables <env_vars>` are also defined.
+
+
 ``branches``
 ------------
 Branches to generate benchmark results for.
@@ -269,9 +331,9 @@ results, where the full commit hash is always retained.
 -----------
 A list of modules to import containing asv plugins.
 
-``wheel_cache_size``
+``build_cache_size``
 --------------------
-The number of wheels (builds) to cache for each environment.
+The number of builds to cache for each environment.
 
 ``regressions_first_commits``
 -----------------------------

@@ -279,3 +279,48 @@ def test_json_non_ascii(tmpdir):
     data = util.load_json(fn)
 
     assert data == non_ascii_data
+
+
+def test_interpolate_command():
+    good_items = [
+        ('python {inputs}', dict(inputs='9'),
+         ['python', '9'], {}, {0}),
+
+        ('python "{inputs}"', dict(inputs='9'),
+         ['python', '9'], {}, {0}),
+
+        ('python {inputs}', dict(inputs=''),
+         ['python', ''], {}, {0}),
+
+        ('HELLO="asd" python "{inputs}"', dict(inputs='9'),
+         ['python', '9'], {'HELLO': 'asd'}, {0}),
+
+        ('HELLO="asd" return-code=any python "{inputs}"', dict(inputs='9'),
+         ['python', '9'], {'HELLO': 'asd'}, None),
+
+        ('HELLO="asd" return-code=255 python "{inputs}"', dict(inputs='9'),
+         ['python', '9'], {'HELLO': 'asd'}, {255}),
+
+        ('HELLO="asd" return-code=255 python "{inputs}"', dict(inputs='9'),
+         ['python', '9'], {'HELLO': 'asd'}, {255}),
+    ]
+
+    bad_items = [
+        ('python {foo}', {}),
+        ('HELLO={foo} python', {}),
+        ('return-code=none python', {}),
+        ('return-code= python', {}),
+        ('return-code=, python', {}),
+        ('return-code=1,,2 python', {}),
+        ('return-code=1 return-code=2 python', {}),
+    ]
+
+    for value, variables, e_parts, e_env, e_codes in good_items:
+        parts, env, codes = util.interpolate_command(value, variables)
+        assert parts == e_parts
+        assert env == e_env
+        assert codes == e_codes
+
+    for value, variables in bad_items:
+        with pytest.raises(util.UserError):
+            util.interpolate_command(value, variables)

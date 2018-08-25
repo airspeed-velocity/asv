@@ -1,0 +1,18 @@
+ASV environment variables
+-------------------------
+
+Benchmarking and build commands are run with the following environment
+variables available:
+
+- ``ASV``: ``true``
+- ``ASV_PROJECT``: the project name from the configuration file
+- ``ASV_ENV_NAME``: name of the currently active environment
+- ``ASV_ENV_TYPE``: type of the currently active environment
+- ``ASV_ENV_DIR``: full path to the currently active environment root
+- ``ASV_CONF_DIR``: full path to the directory where ``asv.conf.json`` is
+- ``ASV_BUILD_DIR``: full path to the build directory (checked-out source path + ``repo_subdir``)
+- ``ASV_BUILD_CACHE_DIR``: full path to the build cache directory
+- ``ASV_COMMIT``: commit hash of currently installed project
+
+If there is no asv-managed environment, build, or cache directory, or
+commit hash, those environment variables are unset.
