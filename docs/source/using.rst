@@ -18,13 +18,6 @@ command.  Like ``git``, the ``asv`` command has a number of
 "subcommands" for performing various actions on your benchmarking
 project.
 
-.. note::
-
-   Currently, the project that you want to benchmark needs to be a
-   Python package, and installable via ``setup.py`` in the standard
-   way. If not, you cannot use the features of ``asv`` that depend on
-   building the project.
-
 Setting up a new benchmarking project
 -------------------------------------
 
@@ -94,7 +87,8 @@ suite are:
 
 The rest of the values can usually be left to their defaults, unless
 you want to benchmark against multiple versions of Python or multiple
-versions of third-party dependencies.
+versions of third-party dependencies, or if your package needs
+nonstandard installation commands.
 
 Once you've set up the project's configuration, you'll need to write
 some benchmarks.  The benchmarks live in Python files in the
