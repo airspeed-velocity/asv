@@ -197,16 +197,16 @@ class Benchmarks(dict):
         return benchmarks
 
     @classmethod
-    def check_tree(cls, root):
+    def check_tree(cls, root, require_init_py=True):
         """
         Check the benchmark tree for files with the same name as
         directories.
 
-        Also, ensure that every directory has an __init__.py file.
+        Also, ensure that the top-level directory has an __init__.py file.
 
         Raises
         ------
-        ValueError :
+        UserError
             A .py file and directory with the same name (excluding the
             extension) were found.
         """
@@ -214,8 +214,12 @@ class Benchmarks(dict):
             return
 
         if not os.path.isfile(os.path.join(root, '__init__.py')):
-            raise util.UserError(
-                "No __init__.py file in '{0}'".format(root))
+            # Not a Python package directory
+            if require_init_py:
+                raise util.UserError(
+                    "No __init__.py file in '{0}'".format(root))
+            else:
+                return
 
         # First, check for the case where a .py file and a directory
         # have the same name (without the extension).  This can't be
@@ -235,7 +239,7 @@ class Benchmarks(dict):
                     raise util.UserError(
                         "Found a directory and python file with same name in "
                         "benchmark tree: '{0}'".format(path))
-                cls.check_tree(path)
+                cls.check_tree(path, require_init_py=False)
 
     @classmethod
     def get_benchmark_file_path(cls, results_dir):
