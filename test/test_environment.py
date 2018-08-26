@@ -659,6 +659,7 @@ def test_custom_commands(tmpdir):
     env.install_project(conf, repo, commit_hash)
     assert os.path.isfile(install_file)
     assert not os.listdir(cache_dir)
+    env._set_installed_commit_hash(None)
 
     # It should succed with nonzero cache size
     conf.build_cache_size = 1
@@ -686,3 +687,51 @@ def test_custom_commands(tmpdir):
     env = get_env()
     with pytest.raises(util.ProcessError):
         env.install_project(conf, repo, commit_hash)
+
+
+def test_installed_commit_hash(tmpdir):
+    tmpdir = six.text_type(tmpdir)
+    tmpdir = six.text_type(tmpdir)
+
+    dvcs = generate_test_repo(tmpdir, [0], dvcs_type='git')
+    commit_hash = dvcs.get_branch_hashes()[0]
+
+    conf = config.Config()
+    conf.env_dir = os.path.join(tmpdir, "env")
+    conf.pythons = [PYTHON_VER1]
+    conf.repo = os.path.abspath(dvcs.path)
+    conf.matrix = {}
+    conf.build_cache_size = 0
+
+    repo = get_repo(conf)
+
+    def get_env():
+        return list(environment.get_environments(conf, None))[0]
+
+    env = get_env()
+    env.create()
+
+    # Check updating installed_commit_hash
+    assert env.installed_commit_hash == None
+    assert env._env_vars.get('ASV_COMMIT') == None
+    env.install_project(conf, repo, commit_hash)
+    assert env.installed_commit_hash == commit_hash
+    assert env._env_vars.get('ASV_COMMIT') == commit_hash
+
+    env = get_env()
+    assert env.installed_commit_hash == commit_hash
+    assert env._env_vars.get('ASV_COMMIT') == commit_hash
+
+    # Configuration change results to reinstall
+    env._project = "something"
+    assert env.installed_commit_hash == None
+
+    # Uninstall resets hash (but not ASV_COMMIT)
+    env = get_env()
+    env._uninstall_project()
+    assert env.installed_commit_hash == None
+    assert env._env_vars.get('ASV_COMMIT') != None
+
+    env = get_env()
+    assert env.installed_commit_hash == None
+    assert env._env_vars.get('ASV_COMMIT') == None

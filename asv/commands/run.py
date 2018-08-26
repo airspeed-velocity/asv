@@ -34,8 +34,8 @@ def _do_build(args):
         with log.set_level(logging.WARN):
             env.install_project(conf, repo, commit_hash)
     except util.ProcessError:
-        return False
-    return True
+        return (env.name, False)
+    return (env.name, True)
 
 
 def _do_build_multiprocess(args):
@@ -337,17 +337,23 @@ class Run(Command):
 
                 for subenv in util.iter_chunks(active_environments, parallel):
 
-                    subenv_name = ', '.join([x.name for x in subenv])
+                    successes = dict([(env.name, env.installed_commit_hash == commit_hash)
+                                      for env in subenv])
 
-                    log.info("Building for {0}".format(subenv_name))
+                    subenv_name = ', '.join([x.name for x in subenv
+                                             if not successes.get(env.name)])
+
+                    if subenv_name:
+                        log.info("Building for {0}".format(subenv_name))
 
                     with log.indent():
-                        args = [(env, conf, repo, commit_hash) for env in subenv]
+                        args = [(env, conf, repo, commit_hash) for env in subenv
+                                if not successes.get(env.name)]
                         if parallel != 1:
                             try:
                                 pool = multiprocessing.Pool(parallel)
                                 try:
-                                    successes = pool.map(_do_build_multiprocess, args)
+                                    successes.update(dict(pool.map(_do_build_multiprocess, args)))
                                     pool.close()
                                     pool.join()
                                 finally:
@@ -355,9 +361,11 @@ class Run(Command):
                             except util.ParallelFailure as exc:
                                 exc.reraise()
                         else:
-                            successes = map(_do_build, args)
+                            successes.update(dict(map(_do_build, args)))
 
-                    for env, success in zip(subenv, successes):
+                    for env in subenv:
+                        success = successes[env.name]
+
                         params = dict(machine_params.__dict__)
                         params['python'] = env.python
                         params.update(env.requirements)

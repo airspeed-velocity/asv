@@ -381,6 +381,9 @@ class Environment(object):
         self._env_vars['ASV_ENV_DIR'] = self._path
         self._env_vars['ASV_ENV_TYPE'] = self.tool_name
 
+        installed_commit_hash = self._get_installed_commit_hash()
+        self._set_commit_hash(installed_commit_hash)
+
     def _set_commit_hash(self, commit_hash):
         if commit_hash is None:
             self._env_vars.pop('ASV_COMMIT', None)
@@ -397,6 +400,42 @@ class Environment(object):
             self._env_vars.pop('ASV_BUILD_CACHE_DIR', None)
         else:
             self._env_vars['ASV_BUILD_CACHE_DIR'] = cache_dir
+
+    def _set_installed_commit_hash(self, commit_hash):
+        # Save status
+        install_checksum = self._get_install_checksum()
+        hash_file = os.path.join(self._path, 'asv-install-status.json')
+        data = {'commit_hash': commit_hash, 'install_checksum': install_checksum}
+        util.write_json(hash_file, data, api_version=1)
+
+    def _get_installed_commit_hash(self):
+        hash_file = os.path.join(self._path, 'asv-install-status.json')
+
+        data = {}
+        if os.path.isfile(hash_file):
+            try:
+                data = util.load_json(hash_file, api_version=1, cleanup=False)
+            except util.UserError as exc:
+                pass
+
+        # If configuration changed, force reinstall
+        install_checksum = self._get_install_checksum()
+        if data.get('install_checksum', None) != install_checksum:
+            return None
+
+        return data.get('commit_hash', None)
+
+    def _get_install_checksum(self):
+        return [self._repo_subdir,
+                self._install_timeout,
+                self._project,
+                self._build_command,
+                self._install_command,
+                self._uninstall_command]
+
+    @property
+    def installed_commit_hash(self):
+        return self._get_installed_commit_hash()
 
     @classmethod
     def matches(self, python):
@@ -582,6 +621,13 @@ class Environment(object):
         else:
             build_dir = self._build_root
 
+        # Check first if anything needs to be done
+        installed_commit_hash = self._get_installed_commit_hash()
+        if installed_commit_hash == commit_hash:
+            self._set_commit_hash(installed_commit_hash)
+            self._set_build_dirs(None, None)
+            return
+
         # Checkout first, so that uninstall can access build_dir
         # (for e.g. Makefiles)
         self.checkout_project(repo, commit_hash)
@@ -605,6 +651,9 @@ class Environment(object):
         # Mark cached build as valid
         self._cache.finalize_cache_dir(commit_hash)
 
+        # Mark installation as updated
+        self._set_installed_commit_hash(commit_hash)
+
     def _install_project(self, repo, commit_hash, build_dir):
         """
         Run install commands
@@ -623,6 +672,9 @@ class Environment(object):
         """
         Run uninstall commands
         """
+        # Mark installation invalid first
+        self._set_installed_commit_hash(None)
+
         cmd = self._uninstall_command
         if cmd is None:
             # Run pip via python -m pip, avoids shebang length limit on Linux
@@ -747,6 +799,10 @@ class ExistingEnvironment(Environment):
 
         super(ExistingEnvironment, self).__init__(conf, executable, requirements)
         self._env_vars.pop('ASV_ENV_DIR')
+
+    @property
+    def installed_commit_hash(self):
+        return None
 
     @classmethod
     def matches(cls, python):
