@@ -1077,31 +1077,34 @@ $(document).ready(function() {
         }
 
         var markings = [];
-        $.each($.asv.master_json.tags, function(tag, revision) {
-            var x = get_x_from_revision(revision);
-            markings.push(
-                { color: "#ddd", lineWidth: 1, xaxis: { from: x, to: x } }
-            );
-        });
 
-        if (highlighted_revisions) {
-            $.each(highlighted_revisions, function(i, revs) {
-                var x_values = [];
-                $.each(revs, function(i, rev) {
-                    var x = get_x_from_revision(rev);
-                    markings.push(
-                        { color: '#d00', lineWidth: 2, xaxis: { from: x, to: x } }
-                    );
-                    x_values.push(x);
-                });
-                if (revs.length > 1) {
-                    markings.push(
-                        { color: "rgba(200, 0, 0, 0.2)", alpha: 0.5, lineWidth: 2, 
-                          xaxis: { from: Math.min.apply(null, x_values),
-                                   to: Math.max.apply(null, x_values) }}
-                    );
-                }
+        if (x_coordinate_axis == 0) {
+            $.each($.asv.master_json.tags, function(tag, revision) {
+                var x = get_x_from_revision(revision);
+                markings.push(
+                    { color: "#ddd", lineWidth: 1, xaxis: { from: x, to: x } }
+                );
             });
+
+            if (highlighted_revisions) {
+                $.each(highlighted_revisions, function(i, revs) {
+                    var x_values = [];
+                    $.each(revs, function(i, rev) {
+                        var x = get_x_from_revision(rev);
+                        markings.push(
+                            { color: '#d00', lineWidth: 2, xaxis: { from: x, to: x } }
+                        );
+                        x_values.push(x);
+                    });
+                    if (revs.length > 1) {
+                        markings.push(
+                            { color: "rgba(200, 0, 0, 0.2)", alpha: 0.5, lineWidth: 2, 
+                              xaxis: { from: Math.min.apply(null, x_values),
+                                       to: Math.max.apply(null, x_values) }}
+                        );
+                    }
+                });
+            }
         }
 
         var unit;
@@ -1283,6 +1286,11 @@ $(document).ready(function() {
         }
 
         function update_tags() {
+            if (x_coordinate_axis != 0) {
+                /* Only applies when x-axis is the time axis */
+                return;
+            }
+
             /* Add the tags as vertical grid lines */
             var canvas = plot.getCanvas();
             var xmin = plot.getAxes().xaxis.min;
