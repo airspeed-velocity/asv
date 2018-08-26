@@ -542,7 +542,7 @@ def test_environment_name_sanitization():
     pytest.mark.skipif(not HAS_CONDA, reason="needs conda")("conda"),
     pytest.mark.skipif(not HAS_VIRTUALENV, reason="needs virtualenv")("virtualenv")
 ])
-def test_environment_environ_path(environment_type, tmpdir):
+def test_environment_environ_path(environment_type, tmpdir, monkeypatch):
     # Check that virtualenv binary dirs are in the PATH
     conf = config.Config()
     conf.env_dir = six.text_type(tmpdir.join("env"))
@@ -560,6 +560,15 @@ def test_environment_environ_path(environment_type, tmpdir):
     output = env.run(['-c', 'import site; print(site.ENABLE_USER_SITE)'])
     usersite_in_syspath = output.strip()
     assert usersite_in_syspath == "False"
+
+    # Check PYTHONPATH is ignored
+    monkeypatch.setenv('PYTHONPATH', tmpdir)
+    output = env.run(['-c', 'import os; print(os.environ.get("PYTHONPATH", ""))'])
+    assert output.strip() == ""
+
+    monkeypatch.setenv('ASV_PYTHONPATH', "Hello python path")
+    output = env.run(['-c', 'import os; print(os.environ["PYTHONPATH"])'])
+    assert output.strip() == "Hello python path"
 
 
 def test_build_isolation(tmpdir):

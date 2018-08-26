@@ -748,6 +748,14 @@ class Environment(object):
         else:
             paths.insert(0, os.path.join(self._path, "bin"))
 
+        # Discard PYTHONPATH, which can easily break the environment
+        # isolation
+        if 'ASV_PYTHONPATH' in env:
+            env['PYTHONPATH'] = env['ASV_PYTHONPATH']
+            env.pop('ASV_PYTHONPATH', None)
+        else:
+            env.pop('PYTHONPATH', None)
+
         # When running pip, we need to set PIP_USER to false, as --user (which
         # may have been set from a pip config file) is incompatible with
         # virtualenvs.
