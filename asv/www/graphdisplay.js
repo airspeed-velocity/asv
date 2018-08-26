@@ -227,6 +227,7 @@ $(document).ready(function() {
             $('#log-scale').removeClass('active');
             $('#zoom-y-axis').removeClass('active');
             if (!reference_scale) {
+                reference = 1.0;
                 update_graphs();
             } else {
                 $('#reference').popover({
