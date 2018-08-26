@@ -207,7 +207,7 @@ $(document).ready(function() {
             $('#reference').removeClass('active');
             $('#zoom-y-axis').removeClass('active');
             reference = 1.0;
-            update_state_url({'y-axis': log_scale ? ['log']: []});
+            update_state_url({'y-axis-scale': log_scale ? ['log']: []});
         });
 
         $('#zoom-y-axis').on('click', function(evt) {
@@ -217,7 +217,7 @@ $(document).ready(function() {
             $('#reference').removeClass('active');
             $('#log-scale').removeClass('active');
             reference = 1.0;
-            update_state_url({'y-axis': zoom_y_axis ? ['zoom'] : []});
+            update_state_url({'y-axis-scale': zoom_y_axis ? ['zoom'] : []});
         });
 
         $('#reference').on('click', function(evt) {
@@ -244,14 +244,14 @@ $(document).ready(function() {
             even_spacing = !evt.target.classList.contains("active");
             date_scale = false;
             $('#date-scale').removeClass('active');
-            update_state_url({'x-axis': even_spacing ? ['even'] : []});
+            update_state_url({'x-axis-scale': even_spacing ? ['even'] : []});
         });
 
         $('#date-scale').on('click', function(evt) {
             date_scale = !evt.target.classList.contains("active");
             even_spacing = false;
             $('#even-spacing').removeClass('active');
-            update_state_url({'x-axis': date_scale ? ['date'] : []});
+            update_state_url({'x-axis-scale': date_scale ? ['date'] : []});
         });
 
         tooltip = $("<div></div>");
@@ -374,6 +374,15 @@ $(document).ready(function() {
 
         /* Default plot: time series */
         x_coordinate_axis = 0;
+        if (state_selection['x-axis'] !== undefined &&
+                state_selection['x-axis'] != "commit") {
+            for (var k = 0; k < params.length; ++k) {
+                if (state_selection['x-axis'] == param_names[k]) {
+                    x_coordinate_axis = k + 1;
+                    break;
+                }
+            }
+        }
 
         /* Default plot: up to 8 lines */
         benchmark_param_selection = [[null]];
@@ -536,11 +545,7 @@ $(document).ready(function() {
                 button.on('click', function (evt) {
                     $(evt.target).siblings().removeClass('active');
                     x_coordinate_axis = axis;
-
-                    check_x_coordinate_axis();
-                    replace_benchmark_params_ui();
-                    replace_graphs();
-                    update_graphs();
+                    update_state_url({'x-axis': [text]});
                 });
             });
         }
@@ -917,6 +922,16 @@ $(document).ready(function() {
             if (min == max) {
                 --min;
             }
+            else if (reference_scale) {
+                // Don't allow the reference level to be at graph top/bottom,
+                // as this can look strange.
+                if (min == 0) {
+                    --min;
+                }
+                if (max == 0) {
+                    ++max;
+                }
+            }
 
             var ticks = [];
             for (var x = min; x <= max; ++x) {
@@ -1077,31 +1092,34 @@ $(document).ready(function() {
         }
 
         var markings = [];
-        $.each($.asv.master_json.tags, function(tag, revision) {
-            var x = get_x_from_revision(revision);
-            markings.push(
-                { color: "#ddd", lineWidth: 1, xaxis: { from: x, to: x } }
-            );
-        });
 
-        if (highlighted_revisions) {
-            $.each(highlighted_revisions, function(i, revs) {
-                var x_values = [];
-                $.each(revs, function(i, rev) {
-                    var x = get_x_from_revision(rev);
-                    markings.push(
-                        { color: '#d00', lineWidth: 2, xaxis: { from: x, to: x } }
-                    );
-                    x_values.push(x);
-                });
-                if (revs.length > 1) {
-                    markings.push(
-                        { color: "rgba(200, 0, 0, 0.2)", alpha: 0.5, lineWidth: 2, 
-                          xaxis: { from: Math.min.apply(null, x_values),
-                                   to: Math.max.apply(null, x_values) }}
-                    );
-                }
+        if (x_coordinate_axis == 0) {
+            $.each($.asv.master_json.tags, function(tag, revision) {
+                var x = get_x_from_revision(revision);
+                markings.push(
+                    { color: "#ddd", lineWidth: 1, xaxis: { from: x, to: x } }
+                );
             });
+
+            if (highlighted_revisions) {
+                $.each(highlighted_revisions, function(i, revs) {
+                    var x_values = [];
+                    $.each(revs, function(i, rev) {
+                        var x = get_x_from_revision(rev);
+                        markings.push(
+                            { color: '#d00', lineWidth: 2, xaxis: { from: x, to: x } }
+                        );
+                        x_values.push(x);
+                    });
+                    if (revs.length > 1) {
+                        markings.push(
+                            { color: "rgba(200, 0, 0, 0.2)", alpha: 0.5, lineWidth: 2, 
+                              xaxis: { from: Math.min.apply(null, x_values),
+                                       to: Math.max.apply(null, x_values) }}
+                        );
+                    }
+                });
+            }
         }
 
         var unit;
@@ -1283,6 +1301,11 @@ $(document).ready(function() {
         }
 
         function update_tags() {
+            if (x_coordinate_axis != 0) {
+                /* Only applies when x-axis is the time axis */
+                return;
+            }
+
             /* Add the tags as vertical grid lines */
             var canvas = plot.getCanvas();
             var xmin = plot.getAxes().xaxis.min;
@@ -1325,26 +1348,26 @@ $(document).ready(function() {
             delete params['commits'];
         }
 
-        if (params['y-axis']) {
-            if (params['y-axis'][0] === 'log') {
+        if (params['y-axis-scale']) {
+            if (params['y-axis-scale'][0] === 'log') {
                 $('#log-scale').addClass('active');
                 log_scale = true;
-            } else if (params['y-axis'][0] === 'zoom') {
+            } else if (params['y-axis-scale'][0] === 'zoom') {
                 $('#zoom-y-axis').addClass('active');
                 zoom_y_axis = true;
             }
-            delete params['y-axis'];
+            delete params['y-axis-scale'];
         }
 
-        if (params['x-axis']) {
-            if (params['x-axis'][0] === 'even') {
+        if (params['x-axis-scale']) {
+            if (params['x-axis-scale'][0] === 'even') {
                 $('#even-spacing').addClass('active');
                 even_spacing = true;
-            } else if (params['x-axis'][0] === 'date') {
+            } else if (params['x-axis-scale'][0] === 'date') {
                 $('#date-scale').addClass('active');
                 date_scale = true;
             }
-            delete params['x-axis'];
+            delete params['x-axis-scale'];
         }
 
         if (Object.keys(params).length > 0) {
