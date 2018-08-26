@@ -29,6 +29,7 @@ command_order = [
     'Preview',
     'Profile',
     'Update',
+    'Show',
     'Compare'
 ]
 
