@@ -16,3 +16,11 @@ variables available:
 
 If there is no asv-managed environment, build, or cache directory, or
 commit hash, those environment variables are unset.
+
+The following environment variables controlling Python and other
+behavior are also set:
+
+- ``PATH``: environment-specific binary directories prepended
+- ``PIP_USER``: ``false``
+- ``PYTHONNOUSERSITE``: ``True`` (for conda environments only)
+- ``PYTHONPATH``: unset (if really needed, can be overridden by setting ``ASV_PYTHONPATH``)
