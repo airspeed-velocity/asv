@@ -91,3 +91,9 @@ def track_param_selection(a, b):
 
 track_param_selection.param_names = ['a', 'b']
 track_param_selection.params = [[1, 2], [3, 5]]
+
+
+def track_bytes():
+    return 1000000
+
+track_bytes.unit = "bytes"
