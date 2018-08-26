@@ -59,6 +59,8 @@ import timeit
 import time
 import tempfile
 import struct
+import pkgutil
+from importlib import import_module
 
 
 # The best timer we can use is time.process_time, but it is not
@@ -203,35 +205,6 @@ else:
                 return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
     except ImportError:
         pass
-
-
-try:
-    from importlib import import_module
-except ImportError:  # For Python 2.6
-    def _resolve_name(name, package, level):
-        if not hasattr(package, 'rindex'):
-            raise ValueError("'package' not set to a string")
-        dot = len(package)
-        for x in xrange(level, 1, -1):
-            try:
-                dot = package.rindex('.', 0, dot)
-            except ValueError:
-                raise ValueError("attempted relative import beyond top-level "
-                                  "package")
-        return "%s.%s" % (package[:dot], name)
-
-    def import_module(name, package=None):
-        if name.startswith('.'):
-            if not package:
-                raise TypeError("relative imports require the 'package' argument")
-            level = 0
-            for character in name:
-                if character != '.':
-                    break
-                level += 1
-            name = _resolve_name(name[level:], package, level)
-        __import__(name)
-        return sys.modules[name]
 
 
 def recvall(sock, size):
@@ -699,22 +672,6 @@ def update_sys_path(root):
                                              os.path.dirname(root)))
 
 
-def disc_files(root, package=''):
-    """
-    Iterate over all .py files in a given directory tree.
-    """
-    for filename in os.listdir(root):
-        path = os.path.join(root, filename)
-        if os.path.isfile(path):
-            filename, ext = os.path.splitext(filename)
-            if ext == '.py':
-                module = import_module(package + filename)
-                yield module
-        elif os.path.isdir(path):
-            for x in disc_files(path, package + filename + "."):
-                yield x
-
-
 def _get_benchmark(attr_name, module, klass, func):
     try:
         name = func.benchmark_name
@@ -744,6 +701,25 @@ def _get_benchmark(attr_name, module, klass, func):
     return cls(name, func, sources)
 
 
+def disc_modules(module_name):
+    """
+    Recursively import a module and all sub-modules in the package
+
+    Yields
+    ------
+    module
+        Imported module in the package tree
+
+    """
+    module = import_module(module_name)
+    yield module
+
+    if getattr(module, '__path__', None):
+        for _, name, _ in pkgutil.iter_modules(module.__path__, module_name + '.'):
+            for item in disc_modules(name):
+                yield item
+
+
 def disc_benchmarks(root):
     """
     Discover all benchmarks in a given directory tree, yielding Benchmark
@@ -756,7 +732,9 @@ def disc_benchmarks(root):
     name.
     """
 
-    for module in disc_files(root, os.path.basename(root) + '.'):
+    root_name = os.path.basename(root)
+
+    for module in disc_modules(root_name):
         for attr_name, module_attr in (
             (k, v) for k, v in module.__dict__.items()
             if not k.startswith('_')

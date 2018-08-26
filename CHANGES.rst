@@ -66,6 +66,10 @@ API Changes
   internal APIs in ``asv`` are not guaranteed to be backward
   compatible.
 
+- The benchmark suite is now required to be structured as a valid
+  Python package.  An ``__init__.py`` file needs to be present in each
+  subdirectory that is a part of the benchmark suite.
+
 Bug Fixes
 ^^^^^^^^^
 
