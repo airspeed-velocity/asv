@@ -32,6 +32,7 @@ $(document).ready(function() {
             $('#regressions-body').append(message);
             $.ajax({
                 url: 'regressions.json',
+                dataType: "json",
                 cache: false
             }).done(function (data) {
                 regression_data = data;
@@ -224,14 +225,8 @@ $(document).ready(function() {
                 params: url_params
             });
 
-            if (benchmark.unit == "seconds") {
-                new_value = $.asv.pretty_second(new_value);
-                old_value = $.asv.pretty_second(old_value);
-            }
-            else {
-                new_value = new_value.toPrecision(3);
-                old_value = old_value.toPrecision(3);
-            }
+            new_value = $.asv.pretty_unit(new_value, benchmark.unit);
+            old_value = $.asv.pretty_unit(old_value, benchmark.unit);
 
             var benchmark_link = $('<a/>').attr('href', benchmark_url).text(benchmark_name);
             row.append($('<td/>').append(benchmark_link));

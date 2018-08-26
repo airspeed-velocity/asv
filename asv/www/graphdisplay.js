@@ -287,9 +287,10 @@ $(document).ready(function() {
                     var y = item.datapoint[1];
                     var commit_hash = get_commit_hash(item.datapoint[0]);
                     if (commit_hash) {
+                        var unit = $.asv.master_json.benchmarks[current_benchmark].unit;
                         showTooltip(
                             item.pageX, item.pageY,
-                            $.asv.pretty_second(y) + " @ " + commit_hash);
+                            $.asv.pretty_unit(y, unit) + " @ " + commit_hash);
                     }
                 }
             } else {

@@ -290,6 +290,12 @@ def test_web_summarylist(browser, basic_html):
                      cur_row.text)
         assert m, cur_row.text
 
+        # Check units in row
+        base_link2 = browser.find_element_by_link_text('params_examples.track_bytes')
+        cur_row2 = base_link2.find_element_by_xpath('../..')
+        m = re.match('params_examples.track_bytes\s*1.000M', cur_row2.text)
+        assert m, cur_row2.text
+
         # Check link
         base_href, qs = splitquery(base_link.get_attribute('href'))
         base_url, tag = splittag(base_href)

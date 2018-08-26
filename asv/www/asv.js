@@ -38,6 +38,14 @@ $(document).ready(function() {
         ['C', 'centuries', 60 * 60 * 24 * 7 * 52 * 100]
     ];
 
+    var mem_units = [
+        ['', 1],
+        ['k', 1000],
+        ['M', 1000000],
+        ['G', 1000000000],
+        ['T', 1000000000000]
+    ];
+
     function pretty_second(x) {
         for (var i = 0; i < time_units.length - 1; ++i) {
             if (Math.abs(x) < time_units[i+1][2]) {
@@ -46,6 +54,33 @@ $(document).ready(function() {
         }
 
         return 'inf';
+    }
+
+    function pretty_byte(x) {
+        for (var i = 0; i < mem_units.length - 2; ++i) {
+            if (Math.abs(x) < mem_units[i+1][1]) {
+                break;
+            }
+        }
+        if (i == 0) {
+            return x + '';
+        }
+        return (x / mem_units[i][1]).toFixed(3) + mem_units[i][0];
+    }
+
+    function pretty_unit(x, unit) {
+        if (unit == "seconds") {
+            return pretty_second(x);
+        }
+        else if (unit == "bytes") {
+            return pretty_byte(x);
+        }
+        else if (unit && unit != "unit") {
+            return '' + x.toPrecision(3) + ' ' + unit;
+        }
+        else {
+            return '' + x.toPrecision(3);
+        }
     }
 
     function pad_left(s, c, num) {
@@ -453,7 +488,7 @@ $(document).ready(function() {
 
     this.format_date_yyyymmdd = format_date_yyyymmdd;
     this.format_date_yyyymmdd_hhmm = format_date_yyyymmdd_hhmm;
-    this.pretty_second = pretty_second;
+    this.pretty_unit = pretty_unit;
     this.time_units = time_units;
 
     this.colors = colors;
