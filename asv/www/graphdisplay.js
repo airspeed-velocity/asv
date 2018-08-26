@@ -922,6 +922,16 @@ $(document).ready(function() {
             if (min == max) {
                 --min;
             }
+            else if (reference_scale) {
+                // Don't allow the reference level to be at graph top/bottom,
+                // as this can look strange.
+                if (min == 0) {
+                    --min;
+                }
+                if (max == 0) {
+                    ++max;
+                }
+            }
 
             var ticks = [];
             for (var x = min; x <= max; ++x) {
