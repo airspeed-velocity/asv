@@ -39,11 +39,11 @@ $(document).ready(function() {
     ];
 
     var mem_units = [
-        ['', 1],
-        ['k', 1000],
-        ['M', 1000000],
-        ['G', 1000000000],
-        ['T', 1000000000000]
+        ['', 'bytes', 1],
+        ['k', 'kilobytes', 1000],
+        ['M', 'megaytes', 1000000],
+        ['G', 'gigabytes', 1000000000],
+        ['T', 'terabytes', 1000000000000]
     ];
 
     function pretty_second(x) {
@@ -57,15 +57,15 @@ $(document).ready(function() {
     }
 
     function pretty_byte(x) {
-        for (var i = 0; i < mem_units.length - 2; ++i) {
-            if (Math.abs(x) < mem_units[i+1][1]) {
+        for (var i = 0; i < mem_units.length - 1; ++i) {
+            if (Math.abs(x) < mem_units[i+1][2]) {
                 break;
             }
         }
         if (i == 0) {
             return x + '';
         }
-        return (x / mem_units[i][1]).toFixed(3) + mem_units[i][0];
+        return (x / mem_units[i][2]).toFixed(3) + mem_units[i][0];
     }
 
     function pretty_unit(x, unit) {
@@ -490,6 +490,7 @@ $(document).ready(function() {
     this.format_date_yyyymmdd_hhmm = format_date_yyyymmdd_hhmm;
     this.pretty_unit = pretty_unit;
     this.time_units = time_units;
+    this.mem_units = mem_units;
 
     this.colors = colors;
 
