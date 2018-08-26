@@ -90,14 +90,13 @@ def skip_benchmarks(benchmarks, env, results=None):
     if results is None:
         results = Results.unnamed()
 
-    started_at = datetime.datetime.utcnow()
-
     log.warn("Skipping {0}".format(env.name))
     with log.indent():
         for name, benchmark in six.iteritems(benchmarks):
             log.step()
             log.warn('{0} skipped'.format(name))
 
+            started_at = datetime.datetime.utcnow()
             r = fail_benchmark(benchmark)
             results.add_result(benchmark, r,
                                selected_idx=benchmarks.benchmark_selection.get(name),
@@ -225,8 +224,6 @@ def run_benchmarks(benchmarks, env, results=None,
     failed_benchmarks = set()
     failed_setup_cache = {}
 
-    started_at = datetime.datetime.utcnow()
-
     if append_samples:
         previous_result_keys = existing_results
     else:
@@ -244,6 +241,8 @@ def run_benchmarks(benchmarks, env, results=None,
     try:
         for name, benchmark, setup_cache_key, is_final in iter_run_items():
             selected_idx = benchmarks.benchmark_selection.get(name)
+
+            started_at = datetime.datetime.utcnow()
 
             # Don't try to rerun failed benchmarks
             if name in failed_benchmarks:
