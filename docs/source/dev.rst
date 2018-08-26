@@ -155,10 +155,10 @@ A benchmark suite directory has the following layout.  The
           This key is omitted if there is no statistical analysis.
 
       - ``started_at``: A dictionary from benchmark names to JavaScript
-        time stamps indicating the start time of the benchmark run.
+        time stamps indicating the start time of the last benchmark run.
 
       - ``ended_at``: A dictionary from benchmark names to JavaScript
-        time stamps indicating the end time of the benchmark run.
+        time stamps indicating the end time of the last benchmark run.
 
       - ``benchmark_version``: A dictionary from benchmark names to benchmark
         version identifier (an arbitrary string). Results whose version

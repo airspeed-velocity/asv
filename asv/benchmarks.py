@@ -253,7 +253,7 @@ class Benchmarks(dict):
         util.write_json(path, self._all_benchmarks, self.api_version)
 
     @classmethod
-    def load(cls, conf):
+    def load(cls, conf, regex=None):
         """
         Load the benchmark descriptions from the `benchmarks.json` file.
         If the file is not found, one of the given `environments` will
@@ -263,6 +263,9 @@ class Benchmarks(dict):
         ----------
         conf : Config object
             The project's configuration
+        regex : str or list of str, optional
+            `regex` is a list of regular expressions matching the
+            benchmarks to load. See __init__ docstring.
 
         Returns
         -------
@@ -274,7 +277,7 @@ class Benchmarks(dict):
                 raise util.UserError("Benchmark list file {} missing!".format(path))
             d = util.load_json(path, cleanup=False, api_version=cls.api_version)
             benchmarks = six.itervalues(d)
-            return cls(conf, benchmarks)
+            return cls(conf, benchmarks, regex=regex)
         except util.UserError as err:
             if "asv update" in str(err):
                 # Don't give conflicting instructions

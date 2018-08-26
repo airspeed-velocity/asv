@@ -21,7 +21,7 @@ import threading
 import six
 
 from .console import log
-from .results import Results
+from .results import Results, format_benchmark_result
 from . import statistics
 from . import util
 
@@ -90,14 +90,13 @@ def skip_benchmarks(benchmarks, env, results=None):
     if results is None:
         results = Results.unnamed()
 
-    started_at = datetime.datetime.utcnow()
-
     log.warn("Skipping {0}".format(env.name))
     with log.indent():
         for name, benchmark in six.iteritems(benchmarks):
             log.step()
             log.warn('{0} skipped'.format(name))
 
+            started_at = datetime.datetime.utcnow()
             r = fail_benchmark(benchmark)
             results.add_result(benchmark, r,
                                selected_idx=benchmarks.benchmark_selection.get(name),
@@ -225,8 +224,6 @@ def run_benchmarks(benchmarks, env, results=None,
     failed_benchmarks = set()
     failed_setup_cache = {}
 
-    started_at = datetime.datetime.utcnow()
-
     if append_samples:
         previous_result_keys = existing_results
     else:
@@ -245,12 +242,14 @@ def run_benchmarks(benchmarks, env, results=None,
         for name, benchmark, setup_cache_key, is_final in iter_run_items():
             selected_idx = benchmarks.benchmark_selection.get(name)
 
+            started_at = datetime.datetime.utcnow()
+
             # Don't try to rerun failed benchmarks
             if name in failed_benchmarks:
                 if is_final:
                     partial_info_time = None
                     log.info(name, reserve_space=True)
-                    log_benchmark_result(benchmark, results,
+                    log_benchmark_result(results, benchmark,
                                          show_stderr=show_stderr)
                 continue
 
@@ -333,7 +332,7 @@ def run_benchmarks(benchmarks, env, results=None,
             # Log result
             if is_final:
                 partial_info_time = None
-                log_benchmark_result(benchmark, results,
+                log_benchmark_result(results, benchmark,
                                      show_stderr=show_stderr)
             else:
                 log.add('.')
@@ -380,51 +379,15 @@ def get_spawner(env, benchmark_dir, launch_method):
     return spawner_cls(env, benchmark_dir)
 
 
-def log_benchmark_result(benchmark, results, show_stderr=False):
-    name = benchmark['name']
+def log_benchmark_result(results, benchmark, show_stderr=False):
+    info, details = format_benchmark_result(results, benchmark)
 
-    result = results.get_result_value(name, benchmark['params'])
-    stats = results.get_result_stats(name, benchmark['params'])
-
-    total_count = len(result)
-    failure_count = sum(r is None for r in result)
-
-    # Display status
-    if failure_count > 0:
-        if failure_count == total_count:
-            log.add_padded("failed")
-        else:
-            log.add_padded("{0}/{1} failed".format(failure_count,
-                                                   total_count))
-
-    # Display results
-    if benchmark['params']:
-        # Long format display
-        if failure_count == 0:
-            log.add_padded("ok")
-
-        display_result = [(v, statistics.get_err(v, s) if s is not None else None)
-                          for v, s in zip(result, stats)]
-        display = _format_benchmark_result(display_result, benchmark)
-        display = "\n".join(display).strip()
-        log.info(display, color='default')
-    else:
-        if failure_count == 0:
-            # Failure already shown above
-            if not result:
-                display = "[]"
-            else:
-                if stats[0]:
-                    err = statistics.get_err(result[0], stats[0])
-                else:
-                    err = None
-                display = util.human_value(result[0], benchmark['unit'], err=err)
-                if len(result) > 1:
-                    display += ";..."
-            log.add_padded(display)
+    log.add_padded(info)
+    if details:
+        log.info(details, color='default')
 
     # Dump program output
-    stderr = results.stderr.get(name)
+    stderr = results.stderr.get(benchmark['name'])
     if stderr and show_stderr:
         with log.indent():
             log.error(stderr)
@@ -840,83 +803,3 @@ def _combine_profile_data(datasets):
             return fp.read()
     finally:
         os.remove(f.name)
-
-
-def _format_benchmark_result(result, benchmark, max_width=None):
-    """
-    Format the result from a parameterized benchmark as an ASCII table
-    """
-    if not result:
-        return ['[]']
-
-    def do_formatting(num_column_params):
-        # Fold result to a table
-        if num_column_params > 0:
-            column_params = benchmark['params'][-num_column_params:]
-        else:
-            column_params = []
-
-        rows = []
-        if column_params:
-            row_params = benchmark['params'][:-len(column_params)]
-            header = benchmark['param_names'][:len(row_params)]
-            column_param_permutations = list(itertools.product(*column_params))
-            header += [" / ".join(_format_param_value(value) for value in values)
-                       for values in column_param_permutations]
-            rows.append(header)
-            column_items = len(column_param_permutations)
-            name_header = " / ".join(benchmark['param_names'][len(row_params):])
-        else:
-            column_items = 1
-            row_params = benchmark['params']
-            name_header = ""
-            header = benchmark['param_names']
-            rows.append(header)
-
-        for j, values in enumerate(itertools.product(*row_params)):
-            row_results = [util.human_value(x[0], benchmark['unit'], err=x[1])
-                           for x in result[j*column_items:(j+1)*column_items]]
-            row = [_format_param_value(value) for value in values] + row_results
-            rows.append(row)
-
-        if name_header:
-            display = util.format_text_table(rows, 1,
-                                             top_header_text=name_header,
-                                             top_header_span_start=len(row_params))
-        else:
-            display = util.format_text_table(rows, 1)
-
-        return display.splitlines()
-
-    # Determine how many parameters can be fit to columns
-    if max_width is None:
-        max_width = util.get_terminal_width() * 3//4
-
-    text = do_formatting(0)
-    for j in range(1, len(benchmark['params'])):
-        new_text = do_formatting(j)
-        width = max(len(line) for line in new_text)
-        if width < max_width:
-            text = new_text
-        else:
-            break
-
-    return text
-
-
-def _format_param_value(value_repr):
-    """
-    Format a parameter value for displaying it as test output. The
-    values are string obtained via Python repr.
-
-    """
-    regexs = ["^'(.+)'$",
-              "^u'(.+)'$",
-              "^<class '(.+)'>$"]
-
-    for regex in regexs:
-        m = re.match(regex, value_repr)
-        if m and m.group(1).strip():
-            return m.group(1)
-
-    return value_repr

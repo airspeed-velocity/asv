@@ -997,6 +997,13 @@ def datetime_to_js_timestamp(dt):
     return 1000 * datetime_to_timestamp(dt)
 
 
+def js_timestamp_to_datetime(ts):
+    """
+    Convert a JavaScript timestamp to a Python datetime object.
+    """
+    return datetime.datetime.fromtimestamp(ts / 1000)
+
+
 def is_nan(x):
     """
     Returns `True` if x is a NaN value.

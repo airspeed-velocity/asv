@@ -43,7 +43,7 @@ The following attributes are applicable to all benchmark types:
   to run before forcibly killing it.  Defaults to 60 seconds.
 
 - ``benchmark_name``: If given, used as benchmark function name instead of generated one
-  `<module>.<class>.<function>`.
+  ``<module>.<class>.<function>``.
 
 - ``pretty_name``: If given, used to display the benchmark name instead of the
   benchmark function name.

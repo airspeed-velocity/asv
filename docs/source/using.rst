@@ -347,6 +347,22 @@ on which commits and in which configurations.
 Viewing the results
 -------------------
 
+You can use the :ref:`asv show <cmd-asv-show>` command to display
+results from previous runs on the command line::
+
+    $ asv show master
+    Commit: 4238c44d <master>
+
+    benchmarks.MemSuite.mem_list [mymachine/virtualenv-py2.7]
+      2.42k
+      started: 2018-08-19 18:46:47, duration: 1.00s
+
+    benchmarks.TimeSuite.time_iterkeys [mymachine/virtualenv-py2.7]
+      11.1±0.06μs
+      started: 2018-08-19 18:46:47, duration: 1.00s
+
+    ...
+
 To collate a set of results into a viewable website, run::
 
     asv publish
