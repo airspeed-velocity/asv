@@ -374,6 +374,15 @@ $(document).ready(function() {
 
         /* Default plot: time series */
         x_coordinate_axis = 0;
+        if (state_selection['x-axis'] !== undefined &&
+                state_selection['x-axis'] != "commit") {
+            for (var k = 0; k < params.length; ++k) {
+                if (state_selection['x-axis'] == param_names[k]) {
+                    x_coordinate_axis = k + 1;
+                    break;
+                }
+            }
+        }
 
         /* Default plot: up to 8 lines */
         benchmark_param_selection = [[null]];
@@ -536,11 +545,7 @@ $(document).ready(function() {
                 button.on('click', function (evt) {
                     $(evt.target).siblings().removeClass('active');
                     x_coordinate_axis = axis;
-
-                    check_x_coordinate_axis();
-                    replace_benchmark_params_ui();
-                    replace_graphs();
-                    update_graphs();
+                    update_state_url({'x-axis': [text]});
                 });
             });
         }
