@@ -687,16 +687,16 @@ def _get_benchmark(attr_name, module, klass, func):
     else:
         return
     # relative to benchmark_dir
-    mname = module.__name__.split('.', 1)[1]
+    mname_parts = module.__name__.split('.', 1)[1:]
     if klass is None:
         if name is None:
-            name = ".".join([mname, func.__name__])
+            name = ".".join(mname_parts + [func.__name__])
         sources = [func, module]
     else:
         instance = klass()
         func = getattr(instance, attr_name)
         if name is None:
-            name = ".".join([mname, klass.__name__, attr_name])
+            name = ".".join(mname_parts + [klass.__name__, attr_name])
         sources = [func, instance, module]
     return cls(name, func, sources)
 
