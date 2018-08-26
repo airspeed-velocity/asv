@@ -943,28 +943,49 @@ $(document).ready(function() {
             options.yaxis.min = Math.pow(10, min) * reference;
             options.yaxis.max = Math.pow(10, max) * reference;
 
-        } else if ($.asv.master_json.benchmarks[current_benchmark].unit === 'seconds') {
+            if (!reference_scale) {
+                options.yaxis.axisLabel = $.asv.master_json.benchmarks[current_benchmark].unit;
+            }
+        }
+        else {
+            var unit = $.asv.master_json.benchmarks[current_benchmark].unit;
+            var unit_list = null;
 
-            if (!zoom_y_axis) {
-                options.yaxis.min = 0.0;
-                options.yaxis.max = max * 1.3;
+            if (unit == "seconds") {
+                unit_list = $.asv.time_units;
+            }
+            else if (unit == "bytes") {
+                unit_list = $.asv.mem_units;
             }
 
-            var unit_name = null;
-            var multiplier = null;
-            for (var i = 0; i < $.asv.time_units.length - 1; ++i) {
-                if (min < $.asv.time_units[i+1][2]) {
-                    unit_name = $.asv.time_units[i][1];
-                    multiplier = $.asv.time_units[i][2];
-                    break;
+            if (unit_list !== null) {
+                if (!zoom_y_axis) {
+                    options.yaxis.min = 0.0;
+                    options.yaxis.max = max * 1.3;
                 }
+
+                var unit_name = null;
+                var multiplier = null;
+                for (var i = 0; i < unit_list.length - 1; ++i) {
+                    if (min < unit_list[i+1][2]) {
+                        unit_name = unit_list[i][1];
+                        multiplier = unit_list[i][2];
+                        break;
+                    }
+                }
+            }
+            else {
+                if (unit && unit != "unit") {
+                    unit_name = unit;
+                }
+                multiplier = 1.0;
             }
 
             if (unit_name) {
                 options.yaxis.axisLabel = unit_name;
                 options.yaxis.tickFormatter = function (v, axis) {
                     return (v / multiplier).toPrecision(3);
-                };
+                }
             }
         }
     }
