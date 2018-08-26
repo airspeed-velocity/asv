@@ -171,6 +171,39 @@ def track_this():
     assert len(b) == 1
 
 
+def test_conf_inside_benchmarks_dir(tmpdir):
+    # Test that the configuration file can be inside the benchmark suite
+
+    tmpdir = six.text_type(tmpdir)
+    benchmark_dir = os.path.join(tmpdir, 'benchmark')
+
+    os.makedirs(benchmark_dir)
+    with open(os.path.join(benchmark_dir, '__init__.py'), 'w') as f:
+        # Test also benchmark in top-level __init__.py
+        f.write("def track_this(): pass")
+
+    with open(os.path.join(benchmark_dir, 'bench.py'), 'w') as f:
+        f.write("def track_this(): pass")
+
+    d = {}
+    d.update(ASV_CONF_JSON)
+    d['env_dir'] = "env"
+    d['benchmark_dir'] = '.'
+    d['repo'] = tools.generate_test_repo(tmpdir, [[0, 1]]).path
+    conf = config.Config.from_json(d)
+
+    # NB. conf_dir == getcwd()
+    os.chdir(benchmark_dir)
+
+    repo = get_repo(conf)
+    envs = list(environment.get_environments(conf, None))
+    commit_hash = repo.get_hash_from_name(repo.get_branch_name())
+
+    b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
+                                       regex='track_this')
+    assert set(b.keys()) == {'track_this', 'bench.track_this'}
+
+
 def test_code_extraction(tmpdir):
     tmpdir = six.text_type(tmpdir)
     os.chdir(tmpdir)
