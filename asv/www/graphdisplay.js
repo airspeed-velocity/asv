@@ -207,7 +207,7 @@ $(document).ready(function() {
             $('#reference').removeClass('active');
             $('#zoom-y-axis').removeClass('active');
             reference = 1.0;
-            update_state_url({'y-axis': log_scale ? ['log']: []});
+            update_state_url({'y-axis-scale': log_scale ? ['log']: []});
         });
 
         $('#zoom-y-axis').on('click', function(evt) {
@@ -217,7 +217,7 @@ $(document).ready(function() {
             $('#reference').removeClass('active');
             $('#log-scale').removeClass('active');
             reference = 1.0;
-            update_state_url({'y-axis': zoom_y_axis ? ['zoom'] : []});
+            update_state_url({'y-axis-scale': zoom_y_axis ? ['zoom'] : []});
         });
 
         $('#reference').on('click', function(evt) {
@@ -244,14 +244,14 @@ $(document).ready(function() {
             even_spacing = !evt.target.classList.contains("active");
             date_scale = false;
             $('#date-scale').removeClass('active');
-            update_state_url({'x-axis': even_spacing ? ['even'] : []});
+            update_state_url({'x-axis-scale': even_spacing ? ['even'] : []});
         });
 
         $('#date-scale').on('click', function(evt) {
             date_scale = !evt.target.classList.contains("active");
             even_spacing = false;
             $('#even-spacing').removeClass('active');
-            update_state_url({'x-axis': date_scale ? ['date'] : []});
+            update_state_url({'x-axis-scale': date_scale ? ['date'] : []});
         });
 
         tooltip = $("<div></div>");
@@ -1333,26 +1333,26 @@ $(document).ready(function() {
             delete params['commits'];
         }
 
-        if (params['y-axis']) {
-            if (params['y-axis'][0] === 'log') {
+        if (params['y-axis-scale']) {
+            if (params['y-axis-scale'][0] === 'log') {
                 $('#log-scale').addClass('active');
                 log_scale = true;
-            } else if (params['y-axis'][0] === 'zoom') {
+            } else if (params['y-axis-scale'][0] === 'zoom') {
                 $('#zoom-y-axis').addClass('active');
                 zoom_y_axis = true;
             }
-            delete params['y-axis'];
+            delete params['y-axis-scale'];
         }
 
-        if (params['x-axis']) {
-            if (params['x-axis'][0] === 'even') {
+        if (params['x-axis-scale']) {
+            if (params['x-axis-scale'][0] === 'even') {
                 $('#even-spacing').addClass('active');
                 even_spacing = true;
-            } else if (params['x-axis'][0] === 'date') {
+            } else if (params['x-axis-scale'][0] === 'date') {
                 $('#date-scale').addClass('active');
                 date_scale = true;
             }
-            delete params['x-axis'];
+            delete params['x-axis-scale'];
         }
 
         if (Object.keys(params).length > 0) {
