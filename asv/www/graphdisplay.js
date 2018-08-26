@@ -804,6 +804,7 @@ $(document).ready(function() {
         /* Before loading graphs, remove any that are currently
            active. */
         graphs = [];
+        orig_graphs = [];
 
         var to_load = collect_graphs(current_benchmark, state, benchmark_param_selection);
         var failures = 0;
@@ -825,14 +826,14 @@ $(document).ready(function() {
                                                      x_coordinate_axis,
                                                      graph_content[0],
                                                      $.asv.master_json.benchmarks[current_benchmark].params);
-                    graphs.push({
+                    orig_graphs.push({
                         data: series,
                         label: graph_content[1],
                         bars: { order: count, },
                     });
                     count += 1;
                 });
-                orig_graphs = graphs;
+                graphs = orig_graphs;
                 update_graphs();
             }).fail(function () {
                 failures += 1;
