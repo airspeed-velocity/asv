@@ -57,7 +57,7 @@ $(document).ready(function() {
     }
 
     function pretty_byte(x) {
-        for (var i = 0; i < mem_units.length - 2; ++i) {
+        for (var i = 0; i < mem_units.length - 1; ++i) {
             if (Math.abs(x) < mem_units[i+1][2]) {
                 break;
             }
