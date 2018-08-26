@@ -27,6 +27,22 @@ to be statistically robust and tolerates fair amounts of noise.
 However, if you are planning to use ``asv continuous`` and ``asv
 compare``, accurate results are more important.
 
+Library settings
+----------------
+
+If your code uses 3rd party libraries, you may want to check their
+settings before benchmarking.  In particular, such libraries may use
+automatic multithreading, which may affect runtime performance in
+surprising ways.  If you are using libraries such as OpenBLAS, Intel
+MKL, or OpenMP, benchmark results may become easier to understand by
+forcing single-threaded operation. For these three, this can be
+typically done by setting environment variables::
+
+    OPENBLAS_NUM_THREADS=1
+    MKL_NUM_THREADS=1
+    OMP_NUM_THREADS=1
+
+
 Tuning machines for benchmarking
 --------------------------------
 
