@@ -1078,6 +1078,17 @@ $(document).ready(function() {
                         align: "center"
                     }
                 };
+
+                // deep copy graphs and html-escape x-labels
+                graphs = $.extend(true, [], orig_graphs);
+                $.each(graphs, function(i, graph) {
+                    $.each(graph.data, function(j, point) {
+                        point[0] = $("<span>").text('' + point[0]).html();
+                    });
+                });
+            }
+            else {
+                graphs = orig_graphs;
             }
             var param_names = $.asv.master_json.benchmarks[current_benchmark].param_names;
             options.xaxis.axisLabel = param_names[x_coordinate_axis-1];
