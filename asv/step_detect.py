@@ -408,6 +408,13 @@ def detect_regressions(steps, threshold=0):
         else:
             min_jump = threshold * abs(last_v)
 
+        # Check if nothing to report
+        if best_v + min_jump >= last_v:
+            regression_pos = []
+
+        # Report jumps >= min_jump --- smaller jumps are also reported
+        # in case the best-last difference is not explained by the
+        # larger jumps.
         regression_pos.sort(key=lambda pos: pos[3] - pos[2], reverse=True)
         explained = 0
         for j, pos in enumerate(regression_pos):
