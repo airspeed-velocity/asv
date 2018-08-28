@@ -15,7 +15,7 @@ New Features
   including  ``processes`` attribute for collect data by running
   benchmarks in different sequential processes.
   The defaults are adjusted to obtain faster benchmarking.
-  (#698, #695, #689, #683, #665, #652, #575, #503, #493)
+  (#707, #698, #695, #689, #683, #665, #652, #575, #503, #493)
 
 - Interleaved benchmark running. Timing benchmarks can be run in
   interleaved order via ``asv run --interleave-processes``, to obtain
@@ -26,7 +26,7 @@ New Features
 
 - Launching benchmarks via a fork server (on Unix-based systems).
   Reduces the import time overheads in launching new
-  benchmarks. Default on Linux. (#666)
+  benchmarks. Default on Linux. (#709, #666)
 
 - Benchmark versioning. Invalidate old benchmark results when
   benchmarks change, via a benchmark ``version``
@@ -35,6 +35,8 @@ New Features
 
 - Setting benchmark attributes on command line, via ``--attribute``.
   (#647)
+
+- ``asv show`` command for displaying results on command line. (#711)
 
 - Support for Conda channels. (#539)
 
@@ -51,7 +53,9 @@ New Features
 - Make the web interface URL addresses more copypasteable.
   (#608, #605, #580)
 
-- Allow customizingn benchmark display names (#484)
+- Allow customizing benchmark display names (#484)
+
+- Don't reinstall project if it is already installed (#708)
 
 API Changes
 ^^^^^^^^^^^
@@ -66,10 +70,6 @@ API Changes
   internal APIs in ``asv`` are not guaranteed to be backward
   compatible.
 
-- The benchmark suite is now required to be structured as a valid
-  Python package.  An ``__init__.py`` file needs to be present in each
-  subdirectory that is a part of the benchmark suite.
-
 Bug Fixes
 ^^^^^^^^^
 
@@ -82,14 +82,16 @@ Bug Fixes
 - Ignore missing branches during benchmark discovery (#674)
 - Perform benchmark discovery only when necessary (#568)
 - Fix benchmark skipping to operate on a per-environment basis (#603)
-- Miscellaneous minor fixes (#706, #701, #691, #688, #684, #682, #660,
-  #634, #615, #600, #573, #556)
+- Allow putting ``asv.conf.json`` to benchmark suite directory (#717)
+- Miscellaneous minor fixes (#719, #718, #716, #715, #714, #713, #706,
+  #701, #691, #688, #684, #682, #660, #634, #615, #600, #573, #556)
 
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Internal changes. (#700, #681, #663, #662, #637, #613, #606, #572)
+- www: display regressions separately, one per commit (#720)
+- Internal changes. (#712, #700, #681, #663, #662, #637, #613, #606, #572)
 - CI/etc changes. (#585, #570)
 - Added internal debugging command ``asv.benchmarks`` (#685)
 - Make tests not require network connection, except with Conda (#696)
