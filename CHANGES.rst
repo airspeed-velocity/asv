@@ -1,3 +1,19 @@
+0.3b2 (unreleased)
+------------------
+
+New Features
+^^^^^^^^^^^^
+
+API Changes
+^^^^^^^^^^^
+
+Bug Fixes
+^^^^^^^^^
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
 0.3b1 (2018-08-29)
 ------------------
 
