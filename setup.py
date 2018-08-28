@@ -5,9 +5,9 @@ ez_setup.use_setuptools()
 
 from setuptools import setup, Extension, Command
 from setuptools.command.test import test as TestCommand
+from setuptools.command.sdist import sdist
+from setuptools.command.build_ext import build_ext
 
-from distutils.command.build_ext import build_ext
-from distutils.command.sdist import sdist
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 
 import os
