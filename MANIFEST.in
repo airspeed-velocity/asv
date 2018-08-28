@@ -11,6 +11,7 @@ include docs/Makefile
 recursive-include docs *.rst *.txt *.py *.ico *.html *.png
 
 recursive-include test *.json *.py
+include test/test_repo_template/README
 
 prune docs/build
 prune build
