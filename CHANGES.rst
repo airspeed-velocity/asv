@@ -1,5 +1,5 @@
-0.3 (unreleased)
-----------------
+0.3b1 (2018-08-29)
+------------------
 
 Major release with several new features.
 
