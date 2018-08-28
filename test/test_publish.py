@@ -195,9 +195,9 @@ def test_regression_simple(generate_result_dir):
     conf, repo, commits = generate_result_dir(5 * [1] + 5 * [10])
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
-    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
-        [[None, 5, 1.0, 10.0]], 10.0, 1.0,
-    ]]]}
+    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, 10.0, 1.0,
+        [[None, 5, 1.0, 10.0]]
+    ]]}
     assert regressions == expected
 
 
@@ -205,9 +205,9 @@ def test_regression_range(generate_result_dir):
     conf, repo, commits = generate_result_dir(5 * [1] + 6 * [10], commits_without_result=[5])
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
-    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
-        [[4, 6, 1.0, 10.0]], 10.0, 1.0,
-    ]]]}
+    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, 10.0, 1.0,
+                                 [[4, 6, 1.0, 10.0]],
+    ]]}
     assert regressions == expected
 
 
@@ -223,9 +223,9 @@ def test_regression_double(generate_result_dir):
     conf, repo, commits = generate_result_dir(5 * [1] + 5 * [10] + 5 * [15])
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
-    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
-        [[None, 5, 1.0, 10.0], [None, 10, 10.0, 15.0]], 15.0, 1.0,
-    ]]]}
+    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, 15.0, 1.0,
+        [[None, 5, 1.0, 10.0], [None, 10, 10.0, 15.0]],
+    ]]}
     assert regressions == expected
 
 
@@ -247,9 +247,9 @@ def test_regression_first_commits(generate_result_dir):
     conf.regressions_first_commits = {"^time_*": commits[2]}
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
-    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
-        [[None, 5, 1.0, 10.0]], 10.0, 1.0,
-    ]]]}
+    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, 10.0, 1.0,
+                                 [[None, 5, 1.0, 10.0]]
+    ]]}
     assert regressions == expected
 
 
@@ -264,13 +264,13 @@ def test_regression_parameterized(generate_result_dir):
         _graph_path(repo.dvcs),
         {},
         0,
-        [[[None, 5, 5.0, 6.0]], 6.0, 5.0],
+        6.0, 5.0, [[None, 5, 5.0, 6.0]],
     ], [
         'time_func(c)',
         _graph_path(repo.dvcs),
         {},
         2,
-        [[[None, 5, 1.0, 10.0]], 10.0, 1.0],
+        10.0, 1.0, [[None, 5, 1.0, 10.0]],
     ]]}
     assert regressions == expected
 
@@ -323,7 +323,7 @@ def test_regression_multiple_branches(dvcs_type, tmpdir):
     # Regression occur on 5th commit of stable branch
     revision = repo.get_revisions(commit_values.keys())[branches["stable"][5]]
     expected = {'regressions': [['time_func', graph_path, {'branch': 'stable'}, None,
-                                 [[[None, revision, 1.0, 2.0]], 2.0, 1.0]]]}
+                                 2.0, 1.0, [[None, revision, 1.0, 2.0]]]]}
     assert regressions == expected
 
 
@@ -348,7 +348,7 @@ def test_regression_non_monotonic(dvcs_type, tmpdir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {'regressions': [['time_func', _graph_path(dvcs_type), {}, None,
-                                 [[[None, 5, 1.0, 2.0]], 2.0, 1.0]]]}
+                                 2.0, 1.0, [[None, 5, 1.0, 2.0]]]]}
     assert regressions == expected
 
 
@@ -358,17 +358,17 @@ def test_regression_threshold(generate_result_dir):
     conf.regressions_thresholds = {'.*': 0}
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
-    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
-        [[None, 5, 1.0, 1.1], [None, 10, 1.1, 2.0]], 2.0, 1.0,
-    ]]]}
+    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None,
+                                  2.0, 1.0, [[None, 5, 1.0, 1.1], [None, 10, 1.1, 2.0]],
+    ]]}
     assert regressions == expected
 
     conf.regressions_thresholds = {'.*': 0, 'time_func.*': 0.2}
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
-    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, [
-        [[None, 10, 1.1, 2.0]], 2.0, 1.0,
-    ]]]}
+    expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, 2.0, 1.0,
+                                 [[None, 10, 1.1, 2.0]]
+    ]]}
     assert regressions == expected
 
 

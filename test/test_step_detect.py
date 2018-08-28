@@ -255,3 +255,12 @@ def test_regression_threshold():
     assert latest == None
     assert best == None
     assert pos == None
+
+    steps = [(0, 1,   1.0, 1.0, 0.0),
+             (1, 2,   1.3, 1.3, 0.0),
+             (2, 3,   1.1, 1.1, 0.0)]
+
+    latest, best, pos = detect_regressions(steps, threshold=0.2)
+    assert latest == None
+    assert best == None
+    assert pos == None

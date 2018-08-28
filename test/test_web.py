@@ -210,8 +210,8 @@ def test_web_regressions(browser, basic_html):
         assert re.match(r'^\d\d\d\d-\d\d-\d\d \d\d:\d\d$', cols1[1])
         assert re.match(r'^\d\d\d\d-\d\d-\d\d \d\d:\d\d$', cols2[1])
 
-        assert cols1[2:] == [bad_commit_hash[:8], '2.00x', '1.00', '2.00', 'Ignore']
-        assert cols2[2:] == [bad_commit_hash[:8], '2.00x', '1.00', '2.00', 'Ignore']
+        assert cols1[2:] == [bad_commit_hash[:8], '3.00x', '1.00', '3.00', 'Ignore']
+        assert cols2[2:] == [bad_commit_hash[:8], '3.00x', '1.00', '3.00', 'Ignore']
 
         # Check that the ignore buttons work as expected
         buttons = [button for button in browser.find_elements_by_xpath('//button')

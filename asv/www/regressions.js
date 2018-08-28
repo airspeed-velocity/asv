@@ -156,10 +156,10 @@ $(document).ready(function() {
         var table_head = $('<thead><tr>' +
                            '<th data-sort="string">Benchmark</th>' +
                            '<th data-sort="string">Date</th>' +
-                           '<th data-sort="string">Commit(s)</th>' +
+                           '<th data-sort="string">Commit</th>' +
                            '<th data-sort="factor">Factor</th>' +
-                           '<th data-sort="value">Best</th>' +
-                           '<th data-sort="value">Current</th>' +
+                           '<th data-sort="value">Before</th>' +
+                           '<th data-sort="value">After</th>' +
                            '<th></th>' +
                            '</tr></thead>');
 
@@ -176,24 +176,17 @@ $(document).ready(function() {
             var graph_url = item[1];
             var param_dict = item[2];
             var parameter_idx = item[3];
-            var regression = item[4];
+            var last_value = item[4];
+            var best_value = item[5];
+            var jumps = item[6];  // [[rev1, rev2, before, after], ...]
 
-            if (regression === null) {
+            if (jumps === null) {
                 return;
             }
 
             if (branch !== null && param_dict['branch'] != branch) {
                 return;
             }
-            var revisions = regression[0];
-            var new_value = regression[1];
-            var old_value = regression[2];
-
-            var factor = new_value / old_value;
-            var last_revision = revisions[revisions.length - 1];
-            var date_fmt = new Date($.asv.master_json.revision_to_date[last_revision[1]]);
-
-            var row = $('<tr/>');
 
             var benchmark_basename = benchmark_name.replace(/\(.*/, '');
             var benchmark = $.asv.master_json.benchmarks[benchmark_basename];
@@ -203,42 +196,46 @@ $(document).ready(function() {
                 url_params[key] = [value];
             });
 
-            url_params.commits = [];
-            $.each(revisions, function(i, revs) {
-                var commit_b = $.asv.get_commit_hash(revs[1]);
-                if (revs[0] !== null) {
-                    var commit_a = $.asv.get_commit_hash(revs[0]);
-                    url_params.commits.push(commit_a + '-' + commit_b);
-                }
-                else {
-                    url_params.commits.push(commit_b);
-                }
-            });
-
             if (parameter_idx !== null) {
                 $.each($.asv.param_selection_from_flat_idx(benchmark.params, parameter_idx).slice(1), function(i, param_values) {
                     url_params['p-'+benchmark.param_names[i]] = [benchmark.params[i][param_values[0]]];
                 });
             }
-            var benchmark_url = $.asv.format_hash_string({
-                location: [benchmark_basename],
-                params: url_params
-            });
 
-            new_value = $.asv.pretty_unit(new_value, benchmark.unit);
-            old_value = $.asv.pretty_unit(old_value, benchmark.unit);
+            $.each(jumps, function(i, revs) {
+                var row = $('<tr/>');
 
-            var benchmark_link = $('<a/>').attr('href', benchmark_url).text(benchmark_name);
-            row.append($('<td/>').append(benchmark_link));
-            row.append($('<td class="date"/>').text($.asv.format_date_yyyymmdd_hhmm(date_fmt)));
-
-            var commit_td = $('<td/>');
-            $.each(revisions, function(i, revs) {
                 var commit_a = $.asv.get_commit_hash(revs[0]);
                 var commit_b = $.asv.get_commit_hash(revs[1]);
-                if (i > 0) {
-                    commit_td.append($('<span>, </span>'));
+
+                var old_value = revs[2];
+                var new_value = revs[3];
+
+                var factor = new_value / old_value;
+
+                if (commit_a) {
+                    url_params.commits = [commit_a + '-' + commit_b];
                 }
+                else {
+                    url_params.commits = [commit_b];
+                }
+
+                var benchmark_url = $.asv.format_hash_string({
+                    location: [benchmark_basename],
+                    params: url_params
+                });
+
+                new_value = $.asv.pretty_unit(new_value, benchmark.unit);
+                old_value = $.asv.pretty_unit(old_value, benchmark.unit);
+
+                var benchmark_link = $('<a/>').attr('href', benchmark_url).text(benchmark_name);
+                row.append($('<td/>').append(benchmark_link));
+
+                var date_fmt = new Date($.asv.master_json.revision_to_date[revs[1]]);
+                row.append($('<td class="date"/>').text($.asv.format_date_yyyymmdd_hhmm(date_fmt)));
+
+                var commit_td = $('<td/>');
+
                 if (commit_a) {
                     if ($.asv.master_json.show_commit_url.match(/.*\/\/github.com\//)) {
                         var commit_url = ($.asv.master_json.show_commit_url + '../compare/'
@@ -255,52 +252,53 @@ $(document).ready(function() {
                     commit_td.append(
                         $('<a/>').attr('href', commit_url).text(commit_b));
                 }
-            });
-            row.append(commit_td);
 
-            row.append($('<td/>').text(factor.toFixed(2) + 'x'));
-            row.append($('<td/>').text(old_value));
-            row.append($('<td/>').text(new_value));
+                row.append(commit_td);
 
-            /* html5 local storage has limited size, so store hashes
-               rather than potentially long strings */
-            var ignore_key = get_ignore_key(item);
-            all_ignored_keys[ignore_key] = 1;
+                row.append($('<td/>').text(factor.toFixed(2) + 'x'));
+                row.append($('<td/>').text(old_value));
+                row.append($('<td/>').text(new_value));
 
-            var is_ignored = is_key_ignored(ignore_key);
-            var ignore_button = $('<button class="btn btn-small"/>');
+                /* html5 local storage has limited size, so store hashes
+                   rather than potentially long strings */
+                var ignore_key = get_ignore_key(item, revs);
+                all_ignored_keys[ignore_key] = 1;
 
-            row.attr('id', ignore_key);
+                var is_ignored = is_key_ignored(ignore_key);
+                var ignore_button = $('<button class="btn btn-small"/>');
 
-            ignore_button.on('click', function(evt) {
-                if (is_key_ignored(ignore_key)) {
-                    set_key_ignore_status(ignore_key, false);
-                    var item = ignored_table_body.find('#' + ignore_key).detach();
+                row.attr('id', ignore_key);
+
+                ignore_button.on('click', function(evt) {
+                    if (is_key_ignored(ignore_key)) {
+                        set_key_ignore_status(ignore_key, false);
+                        var item = ignored_table_body.find('#' + ignore_key).detach();
+                        ignore_button.text('Ignore');
+                        table_body.append(item);
+                    }
+                    else {
+                        set_key_ignore_status(ignore_key, true);
+                        var item = table_body.find('#' + ignore_key).detach();
+                        ignore_button.text('Unignore');
+                        ignored_table_body.append(item);
+                    }
+                    update_ignore_conf_sample(data, ignored_conf_sample_div, branch);
+                });
+
+                row.append($('<td/>').append(ignore_button));
+
+                if (!is_ignored) {
                     ignore_button.text('Ignore');
-                    table_body.append(item);
+                    table_body.append(row);
                 }
                 else {
-                    set_key_ignore_status(ignore_key, true);
-                    var item = table_body.find('#' + ignore_key).detach();
                     ignore_button.text('Unignore');
-                    ignored_table_body.append(item);
+                    ignored_table_body.append(row);
                 }
-                update_ignore_conf_sample(data, ignored_conf_sample_div, branch);
+
+                /* Show a graph as a popup */
+                $.asv.ui.hover_graph(benchmark_link, graph_url, benchmark_basename, parameter_idx, [revs]);
             });
-
-            row.append($('<td/>').append(ignore_button));
-
-            if (!is_ignored) {
-                ignore_button.text('Ignore');
-                table_body.append(row);
-            }
-            else {
-                ignore_button.text('Unignore');
-                ignored_table_body.append(row);
-            }
-
-            /* Show a graph as a popup */
-            $.asv.ui.hover_graph(benchmark_link, graph_url, benchmark_basename, parameter_idx, revisions);
         });
 
         display_table.append(table_body);
@@ -310,27 +308,19 @@ $(document).ready(function() {
         setup_sort(params, ignored_table);
     }
 
-    function get_ignore_key(item) {
+    function get_ignore_key(item, revs) {
         var benchmark_name = item[0];
-        var regression = item[4];
-
-        if (regression === null) {
-            return null;
-        }
-        var revisions = regression[0];
         var ignore_payload = benchmark_name;
 
-        $.each(revisions, function (i, revs) {
-            if (revs[0] === null) {
-                ignore_payload = ignore_payload + ',';
-            }
-            else {
-                ignore_payload = (ignore_payload + ','
-                                  + $.asv.master_json.revision_to_hash[revs[0]]);
-            }
+        if (revs[0] === null) {
+            ignore_payload = ignore_payload + ',';
+        }
+        else {
             ignore_payload = (ignore_payload + ','
-                              + $.asv.master_json.revision_to_hash[revs[1]]);
-        });
+                              + $.asv.master_json.revision_to_hash[revs[0]]);
+        }
+        ignore_payload = (ignore_payload + ','
+                          + $.asv.master_json.revision_to_hash[revs[1]]);
 
         return ignore_key_prefix + md5(ignore_payload);
     }
@@ -378,19 +368,17 @@ $(document).ready(function() {
                 return;
             }
 
-            var ignore_key = get_ignore_key(item);
-            if (is_key_ignored(ignore_key)) {
-                var benchmark_name = item[0];
-                var regression = item[4];
-                if (regression === null) {
-                    return;
+            $.each(item[6], function (i, revs) {
+                var ignore_key = get_ignore_key(item, revs);
+
+                if (is_key_ignored(ignore_key)) {
+                    var benchmark_name = item[0];
+                    var benchmark_name_re = (benchmark_name + branch_suffix).replace(/[.?*+^$[\]\\(){}|-]/g, "\\\\$&");
+                    var commit = $.asv.get_commit_hash(revs[1]);
+                    var entry = "        \"^" + benchmark_name_re + "$\": \"" + commit + "\",\n";
+                    entries[entry] = 1;
                 }
-                var benchmark_name_re = (benchmark_name + branch_suffix).replace(/[.?*+^$[\]\\(){}|-]/g, "\\\\$&");
-                var revisions = regression[0];
-                var last_commit = $.asv.get_commit_hash(revisions[revisions.length-1][1]);
-                var entry = "        \"^" + benchmark_name_re + "$\": \"" + last_commit + "\",\n";
-                entries[entry] = 1;
-            }
+            });
         });
 
         entries = Object.keys(entries);

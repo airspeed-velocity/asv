@@ -32,7 +32,6 @@ class Regressions(OutputPublisher):
         # it's easier to work with than the results directly
 
         regressions = []
-        seen = {}
         revision_to_hash = dict((r, h) for h, r in six.iteritems(revisions))
 
         data_filter = _GraphDataFilter(conf, repo, revisions)
@@ -51,23 +50,29 @@ class Regressions(OutputPublisher):
             log.dot()
 
             for graph_data in data_filter.get_graph_data(graph, benchmark):
-                cls._process_regression(regressions, seen, revision_to_hash, repo, all_params,
+                cls._process_regression(regressions, revision_to_hash, repo, all_params,
                                         graph_data, graph)
 
         cls._save(conf, {'regressions': regressions})
         cls._save_feed(conf, benchmarks, regressions, revisions, revision_to_hash)
 
     @classmethod
-    def _process_regression(cls, regressions, seen, revision_to_hash, repo, all_params,
+    def _process_regression(cls, regressions, revision_to_hash, repo, all_params,
                            graph_data, graph):
         j, entry_name, steps, threshold = graph_data
 
-        v, best_v, jumps = detect_regressions(steps, threshold)
+        last_v, best_v, jumps = detect_regressions(steps, threshold)
 
-        if v is None:
+        if last_v is None:
             return
 
-        result = (jumps, v, best_v)
+        # Select unique graph params
+        graph_params = {}
+        for name, value in six.iteritems(graph.params):
+            if len(all_params[name]) > 1:
+                graph_params[name] = value
+
+        graph_path = graph.path + '.json'
 
         # Check which ranges are a single commit
         for k, jump in enumerate(jumps):
@@ -78,27 +83,9 @@ class Regressions(OutputPublisher):
             if len(commits) == 1:
                 jumps[k] = (None, jump[1], jump[2], jump[3])
 
-        # Select unique graph params
-        graph_params = {}
-        for name, value in six.iteritems(graph.params):
-            if len(all_params[name]) > 1:
-                graph_params[name] = value
-
-        graph_path = graph.path + '.json'
-
-        # Produce output -- report only one result for each
-        # benchmark for each branch
-        regression = [entry_name, graph_path, graph_params, j, result]
-        key = (entry_name, graph_params.get('branch'))
-        if key not in seen:
-            regressions.append(regression)
-            seen[key] = regression
-        else:
-            # Pick the worse regression
-            old_regression = seen[key]
-            prev_result = old_regression[-1]
-            if abs(prev_result[1]*result[2]) < abs(result[1]*prev_result[2]):
-                old_regression[:] = regression
+        # Produce output
+        regression = [entry_name, graph_path, graph_params, j, last_v, best_v, jumps]
+        regressions.append(regression)
 
     @classmethod
     def _save(cls, conf, data):
@@ -138,7 +125,7 @@ class Regressions(OutputPublisher):
         # Generate feed entries
         entries = []
 
-        for name, graph_path, graph_params, idx, info in data:
+        for name, graph_path, graph_params, idx, last_value, best_value, jumps in data:
             if '(' in name:
                 benchmark_name = name[:name.index('(')]
             else:
@@ -154,8 +141,6 @@ class Regressions(OutputPublisher):
                                                  idx, idx + 1)
                 for k, v in zip(benchmark['param_names'], param_values):
                     graph_params['p-' + k] = v
-
-            jumps, last_value, best_value = info
 
             for rev1, rev2, value1, value2 in jumps:
                 timestamps = (run_timestamps[benchmark_name, t] for t in (rev1, rev2) if t is not None)
