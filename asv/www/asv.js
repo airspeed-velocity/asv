@@ -260,11 +260,14 @@ $(document).ready(function() {
             } else {
                 part = key;
             }
-            parts.push(encodeURIComponent(sanitize_filename('' + part)));
+            parts.push(sanitize_filename('' + part));
         });
         parts.sort();
         parts.splice(0, 0, "graphs");
-        parts.push(encodeURIComponent(sanitize_filename(benchmark_name)));
+        parts.push(sanitize_filename(benchmark_name));
+
+        /* Escape URI components */
+        parts = $.map(parts, function (val) { return encodeURIComponent(val); });
         return parts.join('/') + ".json";
     }
 
