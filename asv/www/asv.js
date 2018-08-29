@@ -260,11 +260,11 @@ $(document).ready(function() {
             } else {
                 part = key;
             }
-            parts.push(sanitize_filename('' + part));
+            parts.push(encodeURIComponent(sanitize_filename('' + part)));
         });
         parts.sort();
         parts.splice(0, 0, "graphs");
-        parts.push(sanitize_filename(benchmark_name));
+        parts.push(encodeURIComponent(sanitize_filename(benchmark_name)));
         return parts.join('/') + ".json";
     }
 
