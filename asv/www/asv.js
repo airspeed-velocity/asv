@@ -239,6 +239,7 @@ $(document).ready(function() {
                          "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8",
                          "LPT9"];
         name = name.replace(bad_re, "_");
+        name = name.replace("#", "%23");
         if (bad_names.indexOf(name.toUpperCase()) != -1) {
             name = name + "_";
         }
