@@ -325,7 +325,7 @@ $(document).ready(function() {
                 if (part.length != 2) {
                     continue;
                 }
-                var key = part[0];
+                var key = decodeURIComponent(part[0].replace(/\+/g, " "));
                 var value = decodeURIComponent(part[1].replace(/\+/g, " "));
                 if (value == '[none]') {
                     value = null;
@@ -362,7 +362,7 @@ $(document).ready(function() {
                     if (value === null) {
                         value = '[none]';
                     }
-                    str = str + key + '=' + encodeURIComponent(value);
+                    str = str + encodeURIComponent(key) + '=' + encodeURIComponent(value);
                     first = false;
                 });
             });
