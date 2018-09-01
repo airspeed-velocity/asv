@@ -7,6 +7,7 @@ from __future__ import (absolute_import, division, print_function,
 import itertools
 
 from . import Command
+from ..benchmarks import Benchmarks
 from ..machine import iter_machine_files
 from ..results import iter_results_for_machine_and_hash
 from ..repo import get_repo, NoSuchNameError
@@ -181,6 +182,9 @@ class Compare(Command):
         stats_2 = {}
         versions_1 = {}
         versions_2 = {}
+        units = {}
+
+        benchmarks = Benchmarks.load(conf)
 
         if commit_names is None:
             commit_names = {}
@@ -210,6 +214,7 @@ class Compare(Command):
             machine_env_name = "{}/{}".format(machine, env_name)
             machine_env_names.add(machine_env_name)
             for name, value, stats in unroll_result(key, params, value, stats):
+                units[(name, machine_env_name)] = benchmarks.get(key, {}).get('unit')
                 results_1[(name, machine_env_name)] = value
                 stats_1[(name, machine_env_name)] = stats
                 versions_1[(name, machine_env_name)] = version
@@ -218,6 +223,7 @@ class Compare(Command):
             machine_env_name = "{}/{}".format(machine, env_name)
             machine_env_names.add(machine_env_name)
             for name, value, stats in unroll_result(key, params, value, stats):
+                units[(name, machine_env_name)] = benchmarks.get(key, {}).get('unit')
                 results_2[(name, machine_env_name)] = value
                 stats_2[(name, machine_env_name)] = stats
                 versions_2[(name, machine_env_name)] = version
@@ -300,7 +306,7 @@ class Compare(Command):
                 improved = True
             elif time_1 is None and time_2 is None:
                 # both failed
-                color = 'red'
+                color = 'default'
                 mark = ' '
             elif _isna(time_1) or _isna(time_2):
                 # either one was skipped
@@ -330,10 +336,12 @@ class Compare(Command):
             if only_changed and mark in (' ', 'x'):
                 continue
 
+            unit = units[benchmark]
+
             details = "{0:1s} {1:>15s}  {2:>15s} {3:>8s}  ".format(
                 mark,
-                human_value(time_1, "seconds", err=err_1),
-                human_value(time_2, "seconds", err=err_2),
+                human_value(time_1, unit, err=err_1),
+                human_value(time_2, unit, err=err_2),
                 ratio)
 
             if split:
