@@ -265,18 +265,20 @@ stolen from IPython's `%timeit
 magic function.  This means that in most cases the benchmark function
 itself will be run many times to achieve accurate timing.
 
-The default timing function is the POSIX ``CLOCK_PROCESS_CPUTIME``,
-which measures the CPU time used only by the current process.  This is
-available as ``time.process_time`` in Python 3.3 and later, but a
-backport is included with ``asv`` for earlier versions of Python.
+The default timing function is `time.process_time` (POSIX
+``CLOCK_PROCESS_CPUTIME``), which measures the CPU time used only by
+the current process.  You can change the timer by setting the
+benchmark's ``timer`` attribute, for example to `timeit.default_timer`
+to measure wall clock time.
 
 .. note::
 
-   One consequence of using ``CLOCK_PROCESS_CPUTIME`` is that the time
-   spent in child processes of the benchmark is not included.  If your
-   benchmark spawns other processes, you may get more accurate results
-   by setting the ``timer`` attribute on the benchmark to
-   `timeit.default_timer`.
+   One consequence of using `time.process_time` is that the time
+   spent in child processes of the benchmark is not included.
+   Multithreaded benchmarks also return the total CPU time
+   counting all CPUs. In these cases you may want to measure the
+   wall clock time, by setting the
+   ``timer = timeit.default_timer`` benchmark attribute.
 
 For best results, the benchmark function should contain as little as
 possible, with as much extraneous setup moved to a ``setup`` function::
