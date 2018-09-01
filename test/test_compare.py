@@ -69,6 +69,7 @@ Benchmarks that have stayed the same:
 
        before           after         ratio
      [22b920c6]       [fcf8c079]
+           failed           failed      n/a  time_AAA_failure
               n/a              n/a      n/a  time_AAA_skip
           1.00±1s          3.00±1s    ~3.00  time_ci_big
             1.00s            1.00s     1.00  time_other.time_parameterized(1)
@@ -85,7 +86,6 @@ Benchmarks that have got worse:
        before           after         ratio
      [22b920c6]       [fcf8c079]
 !             n/a           failed      n/a  params_examples.ParamSuite.track_value
-           failed           failed      n/a  time_AAA_failure
 +         1.00±0s          3.00±0s     3.00  time_ci_small
 !           454μs           failed      n/a  time_coordinates.time_latitude
 !           3.00s           failed      n/a  time_other.time_parameterized(3)

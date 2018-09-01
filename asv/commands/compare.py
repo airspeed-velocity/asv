@@ -306,7 +306,7 @@ class Compare(Command):
                 improved = True
             elif time_1 is None and time_2 is None:
                 # both failed
-                color = 'red'
+                color = 'default'
                 mark = ' '
             elif _isna(time_1) or _isna(time_2):
                 # either one was skipped
