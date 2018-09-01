@@ -37,7 +37,8 @@
 	"time_ci_big": {"result": 1, "stats": [{"ci_99": [0.5, 2.5], "q_25": 0.5, "q_75": 2.5}]},
 	"time_with_version_match": 1,
 	"time_with_version_mismatch_bench": 1,
-	"time_with_version_mismatch_other": 1
+	"time_with_version_mismatch_other": 1,
+	"time_secondary.track_value": 42
     },
     "benchmark_version": {
     	"time_with_version_match": "1",
