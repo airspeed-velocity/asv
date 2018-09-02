@@ -667,9 +667,21 @@ def is_main_thread():
         return isinstance(threading.current_thread(), threading._MainThread)
 
 
-def write_json(path, data, api_version=None):
+def write_json(path, data, api_version=None, compact=False):
     """
     Writes JSON to the given path, including indentation and sorting.
+
+    Parameters
+    ----------
+    path : str
+        File name to write
+    data : object
+        Data to serialize as JSON
+    api_version : int, optional
+        API version number
+    compact : bool, optional
+        Whether to produce compact, non-human readable JSON.
+        Disables sorting and indentation.
     """
     path = os.path.abspath(path)
 
@@ -686,7 +698,10 @@ def write_json(path, data, api_version=None):
         open_kwargs['encoding'] = 'utf-8'
 
     with long_path_open(path, 'w', **open_kwargs) as fd:
-        json.dump(data, fd, indent=4, sort_keys=True)
+        if not compact:
+            json.dump(data, fd, indent=4, sort_keys=True)
+        else:
+            json.dump(data, fd)
 
 
 def load_json(path, api_version=None, cleanup=True):
