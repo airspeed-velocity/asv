@@ -261,7 +261,7 @@ class Publish(Command):
             'machines': machines,
             'tags': tags,
             'pages': pages,
-        })
+        }, compact=True)
 
         util.write_json(os.path.join(conf.html_dir, "info.json"), {
             'asv-version': __version__,

@@ -114,4 +114,5 @@ class SummaryList(OutputPublisher):
         # Write results to files
         for path, data in six.iteritems(results):
             filename = os.path.join(conf.html_dir, path)
-            util.write_json(filename, sorted(data, key=lambda x: (x['name'], x['idx'])))
+            util.write_json(filename, sorted(data, key=lambda x: (x['name'], x['idx'])),
+                            compact=True)
