@@ -46,6 +46,7 @@ All benchmarks:
            83.6μs           55.4μs     0.66  time_quantity.time_quantity_init_scalar
             282μs            147μs     0.52  time_quantity.time_quantity_scalar_conversion
 +          1.31ms           7.75ms     5.91  time_quantity.time_quantity_ufunc_sin
+               42               42     1.00  time_secondary.track_value
             5.73m            5.73m     1.00  time_units.mem_unit
 +           125μs           3.81ms    30.42  time_units.time_simple_unit_parse
            1.64ms           1.53ms     0.93  time_units.time_unit_compose
@@ -68,12 +69,14 @@ Benchmarks that have stayed the same:
 
        before           after         ratio
      [22b920c6]       [fcf8c079]
+           failed           failed      n/a  time_AAA_failure
               n/a              n/a      n/a  time_AAA_skip
           1.00±1s          3.00±1s    ~3.00  time_ci_big
             1.00s            1.00s     1.00  time_other.time_parameterized(1)
             2.00s            4.00s     2.00  time_other.time_parameterized(2)
            83.6μs           55.4μs     0.66  time_quantity.time_quantity_init_scalar
             282μs            147μs     0.52  time_quantity.time_quantity_scalar_conversion
+               42               42     1.00  time_secondary.track_value
             5.73m            5.73m     1.00  time_units.mem_unit
            1.64ms           1.53ms     0.93  time_units.time_unit_compose
            11.9μs           13.1μs     1.10  time_units.time_very_simple_unit_parse
@@ -83,7 +86,6 @@ Benchmarks that have got worse:
        before           after         ratio
      [22b920c6]       [fcf8c079]
 !             n/a           failed      n/a  params_examples.ParamSuite.track_value
-           failed           failed      n/a  time_AAA_failure
 +         1.00±0s          3.00±0s     3.00  time_ci_small
 !           454μs           failed      n/a  time_coordinates.time_latitude
 !           3.00s           failed      n/a  time_other.time_parameterized(3)
@@ -197,6 +199,9 @@ def test_compare_name_lookup(dvcs_type, capsys, tmpdir):
 
     for fn in ['feea15ca-py2.7-Cython-numpy1.8.json', 'machine.json']:
         shutil.copyfile(os.path.join(src, fn), os.path.join(dst, fn))
+
+    shutil.copyfile(os.path.join(RESULT_DIR, 'benchmarks.json'),
+                    os.path.join(result_dir, 'benchmarks.json'))
 
     # Copy to different commit
     fn_1 = os.path.join(dst, 'feea15ca-py2.7-Cython-numpy1.8.json')

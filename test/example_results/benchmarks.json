@@ -203,7 +203,7 @@
         "param_names": [], 
         "params": [], 
         "timeout": 60.0, 
-        "type": "time", 
+        "type": "track", 
         "unit": "unit"
     },
     "time_AAA_failure": {
@@ -213,7 +213,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_AAA_skip": {
         "code": "foo\n", 
@@ -222,7 +222,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_coordinates.time_latitude": {
         "code": "foo\n", 
@@ -231,7 +231,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_quantity.time_quantity_array_conversion": {
         "code": "foo\n", 
@@ -240,7 +240,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_quantity.time_quantity_init_array": {
         "code": "foo\n", 
@@ -249,7 +249,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_quantity.time_quantity_init_scalar": {
         "code": "foo\n", 
@@ -258,7 +258,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_quantity.time_quantity_scalar_conversion": {
         "code": "foo\n", 
@@ -267,7 +267,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_quantity.time_quantity_ufunc_sin": {
         "code": "foo\n", 
@@ -276,7 +276,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_units.mem_unit": {
         "code": "foo\n", 
@@ -285,7 +285,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_units.time_simple_unit_parse": {
         "code": "foo\n", 
@@ -294,7 +294,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_units.time_unit_compose": {
         "code": "foo\n", 
@@ -303,7 +303,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_units.time_unit_parse": {
         "code": "foo\n", 
@@ -312,7 +312,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_units.time_unit_to": {
         "code": "foo\n", 
@@ -321,7 +321,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_units.time_very_simple_unit_parse": {
         "code": "foo\n", 
@@ -330,7 +330,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_other.time_parameterized": {
         "code": "foo\n", 
@@ -339,7 +339,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_ci_small": {
         "code": "foo\n", 
@@ -348,7 +348,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_ci_big": {
         "code": "foo\n", 
@@ -357,16 +357,16 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit"
+        "unit": "seconds"
     },
     "time_with_version_match": {
         "code": "foo\n", 
-        "name": "time_with_version", 
+        "name": "time_with_version_match", 
         "param_names": [], 
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit",
+        "unit": "seconds",
         "version": "1"
     },
     "time_with_version_mismatch_bench": {
@@ -376,7 +376,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit",
+        "unit": "seconds",
         "version": "2"
     },
     "time_with_version_mismatch_other": {
@@ -386,7 +386,7 @@
         "params": [], 
         "timeout": 60.0, 
         "type": "time", 
-        "unit": "unit",
+        "unit": "seconds",
         "version": "1"
     },
     "version": 2

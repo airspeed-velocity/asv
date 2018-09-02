@@ -39,7 +39,7 @@ def test_show(capsys, tmpdir):
 
     tools.run_asv_with_conf(conf, 'show', 'fcf8c079')
     text, err = capsys.readouterr()
-    assert "time_ci_small [cheetah/py2.7-numpy1.8]\n  3±0\n\n" in text
+    assert "time_ci_small [cheetah/py2.7-numpy1.8]\n  3.00±0s\n\n" in text
 
     tools.run_asv_with_conf(conf, 'show', 'fcf8c079', '--machine=cheetah',
                             '--bench=time_ci', '--details')
@@ -48,11 +48,11 @@ def test_show(capsys, tmpdir):
     Commit: fcf8c079
 
     time_ci_big [cheetah/py2.7-numpy1.8]
-      3±1
-      ci_99: (1.5, 3.5)
+      3.00±1s
+      ci_99: (1.50s, 3.50s)
 
     time_ci_small [cheetah/py2.7-numpy1.8]
-      3±0
-      ci_99: (3.9, 3.1)
+      3.00±0s
+      ci_99: (3.10s, 3.90s)
     """)
     assert text.strip() == expected.strip()
