@@ -3,6 +3,7 @@
 $(document).ready(function() {
     /* GLOBAL STATE */
     /* The index.json content as returned from the server */
+    var master_timestamp = '';
     var master_json = {};
     /* Extra pages: {name: show_function} */
     var loaded_pages = {};
@@ -283,9 +284,9 @@ $(document).ready(function() {
         }
         else {
             $.ajax({
-                url: url,
+                url: url + '?timestamp=' + $.asv.master_timestamp,
                 dataType: "json",
-                cache: false
+                cache: true
             }).done(function(data) {
                 if (Object.keys(graph_cache).length > graph_cache_max_size) {
                     $.each(Object.keys(graph_cache), function (i, key) {
@@ -436,13 +437,13 @@ $(document).ready(function() {
         return rev;
     }
 
-    function init() {
+    function init_index() {
         /* Fetch the master index.json and then set up the page elements
            based on it. */
         $.ajax({
-            url: "index.json",
+            url: "index.json" + '?timestamp=' + $.asv.master_timestamp,
             dataType: "json",
-            cache: false
+            cache: true
         }).done(function (index) {
             master_json = index;
             $.asv.master_json = index;
@@ -462,6 +463,21 @@ $(document).ready(function() {
             $('#summarylist-display').hide();
 
             hashchange();
+        }).fail(function () {
+            $.asv.ui.network_error();
+        });
+    }
+
+    function init() {
+        /* Fetch the info.json */
+        $.ajax({
+            url: "info.json",
+            dataType: "json",
+            cache: false
+        }).done(function (info) {
+            master_timestamp = info['timestamp'];
+            $.asv.master_timestamp = master_timestamp;
+            init_index();
         }).fail(function () {
             $.asv.ui.network_error();
         });
@@ -487,6 +503,7 @@ $(document).ready(function() {
     this.get_commit_hash = get_commit_hash;
     this.get_revision = get_revision;
 
+    this.master_timestamp = master_timestamp; /* Updated after info.json loads */
     this.master_json = master_json; /* Updated after index.json loads */
 
     this.format_date_yyyymmdd = format_date_yyyymmdd;
