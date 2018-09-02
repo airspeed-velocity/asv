@@ -975,26 +975,27 @@ def format_text_table(rows, num_headers=0,
     return "\n".join(result)
 
 
+def _datetime_to_timestamp(dt, divisor):
+    delta = dt - datetime.datetime(1970, 1, 1)
+    microseconds = (delta.days * 86400 + delta.seconds) * 10**6 + delta.microseconds
+    value, remainder = divmod(microseconds, divisor)
+    if remainder >= divisor//2:
+        value += 1
+    return value
+
+
 def datetime_to_timestamp(dt):
     """
     Convert a Python datetime object to a UNIX timestamp.
     """
-    if sys.version_info[:2] < (2, 7):
-        def total_seconds(td):
-            return (td.microseconds +
-                    (td.seconds + td.days * 24 * 3600) * 1e6) / 1e6
-    else:
-        def total_seconds(td):
-            return td.total_seconds()
-
-    return int(total_seconds(dt - datetime.datetime(1970, 1, 1)))
+    return _datetime_to_timestamp(dt, 10**6)
 
 
 def datetime_to_js_timestamp(dt):
     """
     Convert a Python datetime object to a JavaScript timestamp.
     """
-    return 1000 * datetime_to_timestamp(dt)
+    return _datetime_to_timestamp(dt, 10**3)
 
 
 def js_timestamp_to_datetime(ts):

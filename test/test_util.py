@@ -13,6 +13,8 @@ import pickle
 import multiprocessing
 import threading
 import traceback
+import time
+import datetime
 import six
 import pytest
 
@@ -324,3 +326,38 @@ def test_interpolate_command():
     for value, variables in bad_items:
         with pytest.raises(util.UserError):
             util.interpolate_command(value, variables)
+
+
+def test_datetime_to_js_timestamp():
+    tss = [0, 0.5, -0.5, 12345.6789, -12345.6789,
+           1535910708.7767508]
+    for ts in tss:
+        t = datetime.datetime.utcfromtimestamp(ts)
+        ts2 = util.datetime_to_js_timestamp(t)
+        assert abs(ts * 1000 - ts2) <= 0.5
+
+    # Check sub-second precision
+    ms = 50
+    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 1000*ms)
+    assert util.datetime_to_js_timestamp(ts) == ms
+
+    # Check rounding
+    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 500)
+    assert util.datetime_to_js_timestamp(ts) == 1
+    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 499)
+    assert util.datetime_to_js_timestamp(ts) == 0
+
+
+def test_datetime_to_timestamp():
+    tss = [0, 0.5, -0.5, 12345.6789, -12345.6789,
+           1535910708.7767508]
+    for ts in tss:
+        t = datetime.datetime.utcfromtimestamp(ts)
+        ts2 = util.datetime_to_timestamp(t)
+        assert abs(ts - ts2) <= 0.5
+
+    # Check rounding
+    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 500000)
+    assert util.datetime_to_timestamp(ts) == 1
+    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 500000 - 1)
+    assert util.datetime_to_timestamp(ts) == 0
