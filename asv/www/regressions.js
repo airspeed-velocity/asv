@@ -31,9 +31,9 @@ $(document).ready(function() {
             var message = $('<div>Loading...</div>');
             $('#regressions-body').append(message);
             $.ajax({
-                url: 'regressions.json',
+                url: 'regressions.json' + '?timestamp=' + $.asv.master_timestamp,
                 dataType: "json",
-                cache: false
+                cache: true
             }).done(function (data) {
                 regression_data = data;
                 var main_div = display_data(data, params);
