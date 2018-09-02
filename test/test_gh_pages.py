@@ -55,7 +55,11 @@ def test_gh_pages(rewrite, tmpdir, generate_result_dir, monkeypatch):
     tools.run_asv_with_conf(conf, "gh-pages", "--no-push", *rewrite_args)
     dvcs.checkout('gh-pages')
     assert os.path.isfile(os.path.join(dvcs_dir, 'index.html'))
-    assert len(dvcs.run_git(['rev-list', 'gh-pages']).splitlines()) == 1
+    if rewrite:
+        assert len(dvcs.run_git(['rev-list', 'gh-pages']).splitlines()) == 1
+    else:
+        # Timestamp may have changed
+        assert len(dvcs.run_git(['rev-list', 'gh-pages']).splitlines()) <= 2
     dvcs.checkout('master')
 
     # Check with existing (not checked out) gh-pages branch, with some changes
@@ -64,11 +68,12 @@ def test_gh_pages(rewrite, tmpdir, generate_result_dir, monkeypatch):
     data['time_func']['pretty_name'] = 'something changed'
     asv.util.write_json(benchmarks_json, data)
 
+    prev_len = len(dvcs.run_git(['rev-list', 'gh-pages']).splitlines())
     tools.run_asv_with_conf(conf, "gh-pages", "--no-push", *rewrite_args)
     if not rewrite:
-        assert len(dvcs.run_git(['rev-list', 'gh-pages']).splitlines()) == 2
+        assert len(dvcs.run_git(['rev-list', 'gh-pages']).splitlines()) == prev_len + 1
     else:
-        assert len(dvcs.run_git(['rev-list', 'gh-pages']).splitlines()) == 1
+        assert len(dvcs.run_git(['rev-list', 'gh-pages']).splitlines()) == prev_len
 
     # Check that the push option works
     dvcs.run_git(['branch', '-D', 'gh-pages'])

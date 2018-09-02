@@ -7,6 +7,7 @@ from __future__ import (absolute_import, division, print_function,
 import os
 import shutil
 import multiprocessing
+import datetime
 
 import six
 
@@ -19,6 +20,7 @@ from ..repo import get_repo
 from ..results import iter_results
 from ..publishing import OutputPublisher
 from .. import util
+from .. import __version__
 
 
 def check_benchmark_params(name, benchmark):
@@ -259,4 +261,9 @@ class Publish(Command):
             'machines': machines,
             'tags': tags,
             'pages': pages,
+        })
+
+        util.write_json(os.path.join(conf.html_dir, "info.json"), {
+            'asv-version': __version__,
+            'timestamp': util.datetime_to_js_timestamp(datetime.datetime.utcnow())
         })
