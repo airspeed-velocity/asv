@@ -237,6 +237,9 @@ def test_forkserver(tmpdir):
     d['repo'] = 'None'
     conf = config.Config.from_json(d)
 
+    with open(os.path.join('benchmark', '__init__.py'), 'w') as f:
+        f.write("import sys; sys.stdout.write('import-time print')")
+
     env = environment.ExistingEnvironment(conf, sys.executable, {})
     spawner = runner.ForkServer(env, os.path.abspath('benchmark'))
 
@@ -251,7 +254,7 @@ def test_forkserver(tmpdir):
     finally:
         spawner.close()
 
-    assert out.startswith("<1>")
+    assert out.startswith("import-time print<1>")
     assert errcode == 0
 
     with open(result_file, 'r') as f:

@@ -60,6 +60,7 @@ import time
 import tempfile
 import struct
 import pkgutil
+import contextlib
 from importlib import import_module
 
 
@@ -896,6 +897,44 @@ def main_run(args):
         json.dump(result, fp)
 
 
+@contextlib.contextmanager
+def posix_redirect_output(filename=None, permanent=True):
+    """
+    Redirect stdout/stderr to a file, using posix dup2.
+    """
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+    stdout_fd = sys.stdout.fileno()
+    stderr_fd = sys.stderr.fileno()
+
+    if not permanent:
+        stdout_fd_copy = os.dup(stdout_fd)
+        stderr_fd_copy = os.dup(stderr_fd)
+
+    if filename is None:
+        out_fd, filename = tempfile.mkstemp()
+    else:
+        out_fd = os.open(filename, os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
+
+    try:
+        # Redirect stdout and stderr to file
+        os.dup2(out_fd, stdout_fd)
+        os.dup2(out_fd, stderr_fd)
+
+        yield filename
+    finally:
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os.close(out_fd)
+
+        if not permanent:
+            os.dup2(stdout_fd_copy, stdout_fd)
+            os.dup2(stderr_fd_copy, stderr_fd)
+            os.close(stdout_fd_copy)
+            os.close(stderr_fd_copy)
+
+
 def main_run_server(args):
     import io
     import signal
@@ -903,10 +942,12 @@ def main_run_server(args):
 
     benchmark_dir, socket_name, = args
 
-    # Import benchmark suite before forking
+    # Import benchmark suite before forking.
+    # Capture I/O to a file during import.
     update_sys_path(benchmark_dir)
-    for benchmark in disc_benchmarks(benchmark_dir):
-        pass
+    with posix_redirect_output(permanent=False) as import_out_file:
+        for benchmark in disc_benchmarks(benchmark_dir):
+            pass
 
     # Socket I/O
     s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -950,35 +991,18 @@ def main_run_server(args):
             run_args = (benchmark_dir, benchmark_id, params_str, profile_path, result_file)
             pid = os.fork()
             if pid == 0:
+                conn.close()
+                sys.stdin.close()
                 exitcode = 1
                 try:
-                    out_fd = os.open(stdout_file, os.O_WRONLY)
-                    try:
-                        os.chdir(cwd)
-                        stdout_fd = sys.stdout.fileno()
-                        stderr_fd = sys.stderr.fileno()
-
-                        # Redirect I/O
-                        sys.stdout.close()
-                        sys.stderr.close()
-                        sys.stdin.close()
-                        os.dup2(out_fd, stdout_fd)
-                        os.dup2(out_fd, stderr_fd)  # redirect stderr to stdout
-                        if sys.version_info[0] >= 3:
-                            sys.stdout = io.TextIOWrapper(os.fdopen(stdout_fd, 'wb'))
-                            sys.stderr = io.TextIOWrapper(os.fdopen(stderr_fd, 'wb'))
-                        else:
-                            sys.stdout = os.fdopen(stdout_fd, 'wb')
-                            sys.stderr = os.fdopen(stderr_fd, 'wb')
-
-                        main_run(run_args)
-                        exitcode = 0
-                    except BaseException as ec:
-                        import traceback
-                        traceback.print_exc()
-                    finally:
-                        sys.stdout.flush()
-                        sys.stderr.flush()
+                    with posix_redirect_output(stdout_file, permanent=True):
+                        try:
+                            os.chdir(cwd)
+                            main_run(run_args)
+                            exitcode = 0
+                        except BaseException as ec:
+                            import traceback
+                            traceback.print_exc()
                 finally:
                     os._exit(exitcode)
 
@@ -1002,8 +1026,10 @@ def main_run_server(args):
                 time.sleep(0.05)
 
             # Report result
-            with io.open(stdout_file, 'r', errors='replace') as f:
+            with io.open(import_out_file, 'r', errors='replace') as f:
                 out = f.read()
+            with io.open(stdout_file, 'r', errors='replace') as f:
+                out += f.read()
 
             info = {'out': out,
                     'errcode': -256 if is_timeout else status}
