@@ -369,6 +369,38 @@ def check_call(args, valid_return_codes=(0,), timeout=600, dots=True,
         cwd=cwd)
 
 
+class DebugLogBuffer(object):
+    def __init__(self, log):
+        self.buf = []
+        self.first = True
+        self.linebreak_re = re.compile(b'.*\n')
+        self.log = log
+
+    def __call__(self, c):
+        if c is None:
+            text = b"".join(self.buf)
+            del self.buf[:]
+        elif b'\n' in c:
+            m = self.linebreak_re.match(c)
+            j = m.end()
+            self.buf.append(c[:j])
+            text = b"".join(self.buf)
+            self.buf[:] = [c[j:]]
+        else:
+            self.buf.append(c)
+            return
+
+        text = text.decode('utf-8', 'replace')
+        if text.endswith('\n'):
+            text = text[:-1]
+
+        if text:
+            if self.first:
+                self.log.debug('OUTPUT -------->', continued=True)
+                self.first = False
+            self.log.debug(text, continued=True)
+
+
 def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                  display_error=True, shell=False, return_stderr=False,
                  env=None, cwd=None, redirect_stderr=False, return_popen=False):
@@ -486,6 +518,11 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
     stderr_chunks = []
     is_timeout = False
 
+    if log.is_debug_enabled():
+        debug_log = DebugLogBuffer(log)
+    else:
+        debug_log = lambda c: None
+
     if WIN:
         start_time = [time.time()]
         was_timeout = [False]
@@ -497,6 +534,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                     break
                 start_time[0] = time.time()
                 stdout_chunks.append(c)
+                debug_log(c)
 
         def stderr_reader_run():
             while True:
@@ -505,6 +543,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                     break
                 start_time[0] = time.time()
                 stderr_chunks.append(c)
+                debug_log(c)
 
         def watcher_run():
             while proc.returncode is None:
@@ -579,6 +618,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                 for f in rlist:
                     output = os.read(f, PIPE_BUF)
                     fds[f].append(output)
+                    debug_log(output)
                 if dots and time.time() - last_dot_time > 0.5:
                     if dots is True:
                         log.dot()
@@ -621,6 +661,8 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         if not redirect_stderr:
             proc.stderr.close()
 
+    debug_log(None)
+
     stdout = b''.join(stdout_chunks)
     stderr = b''.join(stderr_chunks)
 
@@ -635,13 +677,12 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
     if valid_return_codes is not None and retcode not in valid_return_codes:
         header = 'Error running {0}'.format(' '.join(args))
         if display_error:
-            log.error(get_content(header))
-        else:
             if log.is_debug_enabled():
-                log.debug(get_content(header))
+                # Output was already printed
+                log.error(header)
+            else:
+                log.error(get_content(header))
         raise ProcessError(args, retcode, stdout, stderr)
-    elif log.is_debug_enabled():
-        log.debug(get_content())
 
     if return_stderr:
         return (stdout, stderr, retcode)

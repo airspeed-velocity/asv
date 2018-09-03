@@ -275,15 +275,20 @@ class Log(object):
             rest = parts[1]
 
         indent = self._indent + 1
+        continued = getattr(record, 'continued', False)
 
         if self._total:
             progress_msg = '[{0:6.02f}%] '.format(
                 (float(self._count) / self._total) * 100.0)
-            color_print(progress_msg, end='')
+            if not continued:
+                color_print(progress_msg, end='')
             indent += len(progress_msg)
 
-        color_print('·' * self._indent, end='')
-        color_print(' ', end='')
+        if not continued:
+            color_print('·' * self._indent, end='')
+            color_print(' ', end='')
+        else:
+            color_print(' ' * indent, end='')
 
         if hasattr(record, 'color'):
             color = record.color
@@ -380,10 +385,16 @@ class Log(object):
     def is_debug_enabled(self):
         return self._logger.getEffectiveLevel() <= logging.DEBUG
 
-    def _message(self, routine, message, reserve_space=False, color=None):
+    def _message(self, routine, message, reserve_space=False, color=None,
+                 continued=False):
         kwargs = {}
+        extra = {}
         if color is not None:
-            kwargs['extra'] = dict(color=color)
+            extra['color'] = color
+        if continued:
+            extra['continued'] = True
+        if extra:
+            kwargs['extra'] = extra
 
         if reserve_space:
             max_width = max(16, util.get_terminal_width() - 33)
