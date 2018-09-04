@@ -183,6 +183,11 @@ def test_web_regressions(browser, basic_html):
         regressions_btn = browser.find_element_by_link_text('Regressions')
         regressions_btn.click()
 
+        # Wait for element to appear in the table
+        WebDriverWait(browser, WAIT_TIME).until(EC.text_to_be_present_in_element(
+            ('xpath', '//table[1]/tbody/tr[2]/td[1]'), 'params_examples.track_find_test'
+            ))
+
         # Check that the expected links appear in the table
         regression_1 = browser.find_element_by_link_text('params_examples.track_find_test(1)')
         regression_2 = browser.find_element_by_link_text('params_examples.track_find_test(2)')

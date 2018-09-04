@@ -90,7 +90,7 @@ class Regressions(OutputPublisher):
     @classmethod
     def _save(cls, conf, data):
         fn = os.path.join(conf.html_dir, 'regressions.json')
-        util.write_json(fn, data)
+        util.write_json(fn, data, compact=True)
 
     @classmethod
     def _save_feed(cls, conf, benchmarks, data, revisions, revision_to_hash):

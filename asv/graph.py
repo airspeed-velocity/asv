@@ -217,7 +217,7 @@ class Graph(object):
 
         val = self.get_data()
 
-        util.write_json(filename, val)
+        util.write_json(filename, val, compact=True)
 
     def detect_steps(self, pool=None):
         """
