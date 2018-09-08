@@ -119,6 +119,7 @@ def _rebuild_basic_html(basedir):
     return conf.html_dir, dvcs
 
 
+@pytest.mark.flaky(reruns=1, reruns_delay=5)
 def test_web_summarygrid(browser, basic_html):
     html_dir, dvcs = basic_html
 
@@ -170,6 +171,7 @@ def test_web_summarygrid(browser, basic_html):
         assert not error_box.is_displayed()
 
 
+@pytest.mark.flaky(reruns=1, reruns_delay=5)
 def test_web_regressions(browser, basic_html):
     html_dir, dvcs = basic_html
 
@@ -272,6 +274,7 @@ def test_web_regressions(browser, basic_html):
         flotplot = browser.find_element_by_css_selector('canvas.flot-base')
 
 
+@pytest.mark.flaky(reruns=1, reruns_delay=5)
 def test_web_summarylist(browser, basic_html):
     ignore_exc = (NoSuchElementException, StaleElementReferenceException)
 
