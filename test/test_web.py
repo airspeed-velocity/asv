@@ -119,6 +119,7 @@ def _rebuild_basic_html(basedir):
     return conf.html_dir, dvcs
 
 
+@pytest.mark.flaky(reruns=1, reruns_delay=5)
 def test_web_summarygrid(browser, basic_html):
     html_dir, dvcs = basic_html
 
@@ -170,6 +171,7 @@ def test_web_summarygrid(browser, basic_html):
         assert not error_box.is_displayed()
 
 
+@pytest.mark.flaky(reruns=1, reruns_delay=5)
 def test_web_regressions(browser, basic_html):
     html_dir, dvcs = basic_html
 
@@ -272,6 +274,7 @@ def test_web_regressions(browser, basic_html):
         flotplot = browser.find_element_by_css_selector('canvas.flot-base')
 
 
+@pytest.mark.flaky(reruns=1, reruns_delay=5)
 def test_web_summarylist(browser, basic_html):
     ignore_exc = (NoSuchElementException, StaleElementReferenceException)
 
@@ -298,7 +301,7 @@ def test_web_summarylist(browser, basic_html):
         # Check units in row
         base_link2 = browser.find_element_by_link_text('params_examples.track_bytes')
         cur_row2 = base_link2.find_element_by_xpath('../..')
-        m = re.match('params_examples.track_bytes\s*1.000M', cur_row2.text)
+        m = re.match(r'params_examples.track_bytes\s*1.000M', cur_row2.text)
         assert m, cur_row2.text
 
         # Check link

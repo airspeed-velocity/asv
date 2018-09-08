@@ -30,4 +30,4 @@ By using the following markdown::
 License: `BSD three-clause license
 <http://opensource.org/licenses/BSD-3-Clause>`__.
 
-Author: Michael Droettboom
+Authors: Michael Droettboom, Pauli Virtanen

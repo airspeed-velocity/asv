@@ -167,7 +167,7 @@ class Benchmarks(dict):
                 env.create()
 
                 if last_err is not None:
-                    log.warn("Build failed: trying different commit")
+                    log.warning("Build failed: trying different commit")
 
                 try:
                     env.install_project(conf, repo, commit_hash)

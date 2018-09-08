@@ -38,7 +38,4 @@ Development: https://github.com/airspeed-velocity/asv
 Credits
 -------
 
-Michael Droettboom would like to thank the following contributors to
-asv:
-
 .. include:: credits.txt

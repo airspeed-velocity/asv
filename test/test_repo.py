@@ -203,10 +203,10 @@ def test_repo_hg(tmpdir):
 
 @pytest.fixture(params=[
     "git",
-    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg"),
+    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib")),
 ])
 def two_branch_repo_case(request, tmpdir):
-    """
+    r"""
     This test ensure we follow the first parent in case of merges
 
     The revision graph looks like this:
@@ -408,7 +408,7 @@ def test_git_submodule(tmpdir):
 
 @pytest.mark.parametrize('dvcs_type', [
     "git",
-    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg")
+    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))
 ])
 def test_root_ceiling(dvcs_type, tmpdir):
     # Check that git/hg does not try to look for repository in parent
@@ -445,7 +445,7 @@ def test_root_ceiling(dvcs_type, tmpdir):
 
 @pytest.mark.parametrize('dvcs_type', [
     "git",
-    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg")
+    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))
 ])
 def test_no_such_name_error(dvcs_type, tmpdir):
     tmpdir = six.text_type(tmpdir)

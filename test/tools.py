@@ -193,6 +193,12 @@ class Hg(object):
     def __init__(self, path):
         self._fake_date = datetime.datetime.now()
         self.path = abspath(path)
+        self._repo = None
+
+    def __del__(self):
+        if self._repo is not None:
+            self._repo.close()
+            self._repo = None
 
     def init(self):
         hglib.init(self.path)

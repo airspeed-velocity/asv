@@ -181,7 +181,7 @@ def test_compare(capsys, tmpdir):
 
 @pytest.mark.parametrize("dvcs_type", [
     "git",
-    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg"),
+    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))
 ])
 def test_compare_name_lookup(dvcs_type, capsys, tmpdir):
     tmpdir = six.text_type(tmpdir)

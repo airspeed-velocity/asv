@@ -151,7 +151,7 @@ def test_publish(tmpdir):
 
 @pytest.fixture(params=[
     "git",
-    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg"),
+    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib")),
 ])
 def generate_result_dir(request, tmpdir):
     tmpdir = six.text_type(tmpdir)
@@ -277,7 +277,7 @@ def test_regression_parameterized(generate_result_dir):
 
 @pytest.mark.parametrize("dvcs_type", [
     "git",
-    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg"),
+    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib")),
 ])
 def test_regression_multiple_branches(dvcs_type, tmpdir):
     tmpdir = six.text_type(tmpdir)
@@ -329,7 +329,7 @@ def test_regression_multiple_branches(dvcs_type, tmpdir):
 
 @pytest.mark.parametrize("dvcs_type", [
     "git",
-    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg"),
+    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))
 ])
 def test_regression_non_monotonic(dvcs_type, tmpdir):
     tmpdir = six.text_type(tmpdir)
@@ -405,7 +405,7 @@ def test_regression_atom_feed(generate_result_dir):
 
 @pytest.mark.parametrize("dvcs_type", [
     "git",
-    pytest.mark.skipif(hglib is None, reason="needs hglib")("hg"),
+    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))
 ])
 def test_regression_atom_feed_update(dvcs_type, tmpdir):
     # Check that adding new commits which only change values preserves

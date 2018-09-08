@@ -248,6 +248,7 @@ names such as "param1", "param2".
 
 Note that ``setup_cache`` is not parameterized.
 
+
 Benchmark types
 ---------------
 
@@ -376,3 +377,28 @@ garbage collector at a given state::
     track_num_objects.unit = "objects"
 
 For details, see :doc:`benchmarks`.
+
+
+Benchmark versioning
+--------------------
+
+When you edit benchmark's code in the benchmark suite, this often
+changes what is measured, and previously measured results should be
+discarded.
+
+Airspeed Velocity records with each benchmark measurement a "version
+number" for the benchmark. By default, it is computed by hashing the
+benchmark source code text, including any ``setup`` and
+``setup_cache`` routines.  If there are changes in the source code of
+the benchmark in the benchmark suite, the version number changes, and
+``asv`` will ignore results whose version number is different from the
+current one.
+
+It is also possible to control the versioning of benchmark results
+manually, by setting the ``.version`` attribute for the benchmark. The
+version number, i.e. content of the attribute, can be any Python
+string. ``asv`` only checks whether the version recorded with a
+measurement matches the current version, so you can use any versioning
+scheme.
+
+See :doc:`benchmarks` for reference documentation.
