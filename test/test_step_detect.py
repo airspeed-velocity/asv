@@ -28,7 +28,7 @@ except ImportError:
 
 @pytest.fixture(params=[
     "python",
-    pytest.mark.skipif(not HAVE_RANGEMEDIAN, reason="compiled asv._rangemedian required")("rangemedian")
+    pytest.param("rangemedian", marks=pytest.mark.skipif(not HAVE_RANGEMEDIAN, reason="compiled asv._rangemedian required"))
 ])
 def use_rangemedian(request):
     if request.param == "rangemedian":
