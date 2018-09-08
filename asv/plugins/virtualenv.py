@@ -111,11 +111,11 @@ class Virtualenv(environment.Environment):
             return False
         else:
             if LooseVersion(virtualenv.__version__) == LooseVersion('1.11.0'):
-                log.warn(
+                log.warning(
                     "asv is not compatible with virtualenv 1.11 due to a bug in "
                     "setuptools.")
             if LooseVersion(virtualenv.__version__) < LooseVersion('1.10'):
-                log.warn(
+                log.warning(
                     "If using virtualenv, it much be at least version 1.10")
 
         executable = Virtualenv._find_python(python)

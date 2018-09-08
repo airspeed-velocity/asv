@@ -305,7 +305,7 @@ class _GraphDataFilter(object):
                             break
                     else:
                         # Commit not found in the branch --- warn and ignore.
-                        log.warn(("Commit {0} specified in `regressions_first_commits` "
+                        log.warning(("Commit {0} specified in `regressions_first_commits` "
                                   "not found in branch").format(start_commit))
                         self._start_revisions[key] = -1
 

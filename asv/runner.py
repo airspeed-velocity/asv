@@ -90,11 +90,11 @@ def skip_benchmarks(benchmarks, env, results=None):
     if results is None:
         results = Results.unnamed()
 
-    log.warn("Skipping {0}".format(env.name))
+    log.warning("Skipping {0}".format(env.name))
     with log.indent():
         for name, benchmark in six.iteritems(benchmarks):
             log.step()
-            log.warn('{0} skipped'.format(name))
+            log.warning('{0} skipped'.format(name))
 
             started_at = datetime.datetime.utcnow()
             r = fail_benchmark(benchmark)
@@ -277,7 +277,7 @@ def run_benchmarks(benchmarks, env, results=None,
             if setup_cache_key in failed_setup_cache:
                 # Mark benchmark as failed
                 partial_info_time = None
-                log.warn('{0} skipped (setup_cache failed)'.format(name))
+                log.warning('{0} skipped (setup_cache failed)'.format(name))
                 stderr = 'asv: setup_cache failed\n\n{}'.format(failed_setup_cache[setup_cache_key])
                 res = fail_benchmark(benchmark, stderr=stderr)
                 results.add_result(benchmark, res,

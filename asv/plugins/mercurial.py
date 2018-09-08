@@ -58,6 +58,11 @@ class Hg(Repo):
 
         self._repo = hglib.open(self._encode_filename(self._path))
 
+    def __del__(self):
+        if self._repo is not None:
+            self._repo.close()
+            self._repo = None
+
     def _decode(self, item):
         return item.decode(self._encoding)
 

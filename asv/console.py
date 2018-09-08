@@ -395,8 +395,8 @@ class Log(object):
     def info(self, *args, **kwargs):
         self._message(self._logger.info, *args, **kwargs)
 
-    def warn(self, *args, **kwargs):
-        self._message(self._logger.warn, *args, **kwargs)
+    def warning(self, *args, **kwargs):
+        self._message(self._logger.warning, *args, **kwargs)
 
     def debug(self, *args, **kwargs):
         self._message(self._logger.debug, *args, **kwargs)

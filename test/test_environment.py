@@ -539,8 +539,8 @@ def test_environment_name_sanitization():
 
 
 @pytest.mark.parametrize("environment_type", [
-    pytest.mark.skipif(not HAS_CONDA, reason="needs conda")("conda"),
-    pytest.mark.skipif(not HAS_VIRTUALENV, reason="needs virtualenv")("virtualenv")
+    pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="needs conda")),
+    pytest.param("virtualenv", marks=pytest.mark.skipif(not HAS_VIRTUALENV, reason="needs virtualenv"))
 ])
 def test_environment_environ_path(environment_type, tmpdir, monkeypatch):
     # Check that virtualenv binary dirs are in the PATH

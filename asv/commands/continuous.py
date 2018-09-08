@@ -118,7 +118,7 @@ class Continuous(Command):
                 try:
                     result = results.Results.load(filename, machine_name)
                 except util.UserError as err:
-                    log.warn(six.text_type(err))
+                    log.warning(six.text_type(err))
                     continue
 
                 for name, benchmark in six.iteritems(run_objs['benchmarks']):
