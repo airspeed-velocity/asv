@@ -147,9 +147,13 @@ $(document).ready(function() {
         var cursor = [];
         var stack = [tree];
 
-        /* Note: this relies on the fact that the benchmark names are
-           sorted. */
-        $.each($.asv.master_json.benchmarks, function(bm_name, bm) {
+        /* Sort keys for tree construction */
+        var benchmark_keys = Object.keys($.asv.master_json.benchmarks);
+        benchmark_keys.sort();
+
+        /* Build tree */
+        $.each(benchmark_keys, function(i, bm_name) {
+            var bm = $.asv.master_json.benchmarks[bm_name];
             var parts = bm_name.split('.');
             var i = 0;
             var j;
