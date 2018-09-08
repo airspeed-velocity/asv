@@ -26,7 +26,7 @@ New Features
 
 - Launching benchmarks via a fork server (on Unix-based systems).
   Reduces the import time overheads in launching new
-  benchmarks. Default on Linux. (#709, #666)
+  benchmarks. Default on Linux. (#666, #709, #730)
 
 - Benchmark versioning. Invalidate old benchmark results when
   benchmarks change, via a benchmark ``version``
@@ -83,8 +83,9 @@ Bug Fixes
 - Perform benchmark discovery only when necessary (#568)
 - Fix benchmark skipping to operate on a per-environment basis (#603)
 - Allow putting ``asv.conf.json`` to benchmark suite directory (#717)
-- Miscellaneous minor fixes (#719, #718, #716, #715, #714, #713, #706,
-  #701, #691, #688, #684, #682, #660, #634, #615, #600, #573, #556)
+- Miscellaneous minor fixes (#735, #734, #733, #729, #728, #727, #726,
+  #723, #721, #719, #718, #716, #715, #714, #713, #706, #701, #691, #688,
+  #684, #682, #660, #634, #615, #600, #573, #556)
 
 
 Other Changes and Additions
@@ -131,7 +132,8 @@ Bug Fixes
 - Add a min-height on graphs to avoid a flot traceback (#596)
 - Escape label html text in plot legends (#614)
 - Disable pip build isolation in wheel_cache (#670)
-- Fixup CI, test, etc issues (#616, #552, #601, #586, #554, #549, #571, #527, #560, #565)
+- Fixup CI, test, etc issues (#616, #552, #601, #586, #554, #549,
+  #571, #527, #560, #565)
 
 0.2.2rc1 (2018-07-09)
 ---------------------
