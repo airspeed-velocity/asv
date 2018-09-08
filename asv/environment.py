@@ -73,7 +73,7 @@ def iter_requirement_matrix(environment_type, pythons, conf, explicit_selection=
                 try:
                     target['environment_type'] = get_env_type(target['python'])
                 except EnvironmentUnavailable as err:
-                    log.warn(str(err))
+                    log.warning(str(err))
                     continue
 
             for rule in conf.exclude:
@@ -109,7 +109,7 @@ def iter_requirement_matrix(environment_type, pythons, conf, explicit_selection=
             try:
                 target['environment_type'] = get_env_type(include['python'])
             except EnvironmentUnavailable as err:
-                log.warn(str(err))
+                log.warning(str(err))
                 continue
 
         rule = {}
@@ -212,7 +212,7 @@ def get_environments(conf, env_specifiers, verbose=True):
         all_environments = ()
         env_specifiers = [conf.environment_type]
         if not conf.environment_type and verbose:
-            log.warn(
+            log.warning(
                 "No `environment_type` specified in asv.conf.json. "
                 "This will be required in the future.")
     else:
@@ -261,7 +261,7 @@ def get_environments(conf, env_specifiers, verbose=True):
                 yield cls(conf, python, requirements)
             except EnvironmentUnavailable as err:
                 if verbose:
-                    log.warn(str(err))
+                    log.warning(str(err))
 
 
 def get_environment_class(conf, python):

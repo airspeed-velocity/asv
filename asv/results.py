@@ -51,7 +51,7 @@ def iter_results_paths(results):
             if filename not in skip_files and filename.endswith('.json'):
                 if machine_json_err is not None:
                     # Show the warning only if there are some files to load
-                    log.warn(machine_json_err)
+                    log.warning(machine_json_err)
                     break
 
                 yield (root, filename, machine_name)
@@ -65,7 +65,7 @@ def iter_results(results):
         try:
             yield Results.load(os.path.join(root, filename), machine_name=machine_name)
         except util.UserError as exc:
-            log.warn(six.text_type(exc))
+            log.warning(six.text_type(exc))
 
 
 def iter_results_for_machine(results, machine_name):
@@ -89,7 +89,7 @@ def iter_results_for_machine_and_hash(results, machine_name, commit):
             try:
                 yield Results.load(os.path.join(root, filename), machine_name=machine_name)
             except util.UserError as exc:
-                log.warn(six.text_type(exc))
+                log.warning(six.text_type(exc))
 
 
 def iter_existing_hashes(results):
@@ -127,7 +127,7 @@ def get_result_hash_from_prefix(results, machine_name, commit_prefix):
 
     for (root, filename, r_machine_name) in iter_results_paths(path):
         if r_machine_name != machine_name:
-            log.warn("Skipping results '{0}': machine name is not '{1}'".format(
+            log.warning("Skipping results '{0}': machine name is not '{1}'".format(
                 os.path.join(root, filename), machine_name))
             continue
 

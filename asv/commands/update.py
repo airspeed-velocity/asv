@@ -63,9 +63,9 @@ class Update(Command):
                                     raise OSError()
                                 os.rename(path, new_path)
                             except OSError:
-                                log.warn("{}: should be renamed to {}".format(path, new_path))
+                                log.warning("{}: should be renamed to {}".format(path, new_path))
                     else:
-                        log.warn("{}: unrecognized file name".format(path))
+                        log.warning("{}: unrecognized file name".format(path))
 
         # Check benchmarks.json
         log.info("Updating benchmarks.json...")
