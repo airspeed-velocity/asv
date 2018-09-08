@@ -106,6 +106,13 @@ def human_float(value, significant=3, truncate_small=None, significant_zeros=Fal
     """
     if value == 0:
         return "0"
+    elif math.isinf(value) or math.isnan(value):
+        return "{}".format(value)
+    elif value < 0:
+        sign = "-"
+        value = -value
+    else:
+        sign = ""
 
     logv = math.log10(value)
     magnitude = int(math.floor(logv)) + 1
@@ -127,7 +134,7 @@ def human_float(value, significant=3, truncate_small=None, significant_zeros=Fal
     else:
         fmt = "{{0:.{0}f}}".format(num_digits)
 
-    formatted = fmt.format(value)
+    formatted = sign + fmt.format(value)
 
     if not significant_zeros and '.' in formatted and 'e' not in fmt:
         formatted = formatted.rstrip('0')
