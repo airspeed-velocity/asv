@@ -1,5 +1,5 @@
-0.3rc1 (unreleased)
-------------------
+0.3 (2018-09-09)
+----------------
 
 Major release with several new features.
 
