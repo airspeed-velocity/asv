@@ -405,7 +405,7 @@ def detect_regressions(steps, threshold=0):
 # Fitting piecewise constant functions to noisy data
 #
 
-def solve_potts(y, gamma, p=2, min_size=2, max_size=None,
+def solve_potts(y, gamma, p=2, min_size=1, max_size=None,
                 min_pos=None, max_pos=None, mu_dist=None):
     """Fit penalized stepwise constant function (Potts model) to data.
 
@@ -615,7 +615,7 @@ def solve_potts_autogamma(y, beta=None, **kw):
     return best_r[0], best_v[0], best_d[0], best_gamma[0]
 
 
-def solve_potts_approx(y, gamma=None, p=2, min_size=2, **kw):
+def solve_potts_approx(y, gamma=None, p=2, min_size=1, **kw):
     """
     Fit penalized stepwise constant function (Potts model) to data
     approximatively, in linear time.
