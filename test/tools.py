@@ -31,6 +31,7 @@ try:
 except ImportError as exc:
     hglib = None
 
+import asv
 from asv import util
 from asv import commands
 from asv import config
@@ -38,6 +39,7 @@ from asv import runner
 from asv.commands.preview import create_httpd
 from asv.repo import get_repo
 from asv.results import Results
+from asv.plugins.conda import _find_conda
 
 
 # Two Python versions for testing
@@ -48,8 +50,39 @@ else:
     PYTHON_VER2 = "2.7"
 
 # Installable library versions to use in tests
-DOCUTILS_VERSION = "0.14"
-COLORAMA_VERSIONS = ["0.3.7", "0.3.9"]
+DUMMY1_VERSION = "0.14"
+DUMMY2_VERSIONS = ["0.3.7", "0.3.9"]
+
+
+WIN = (os.name == "nt")
+
+try:
+    util.which('pypy')
+    HAS_PYPY = True
+except (RuntimeError, IOError):
+    HAS_PYPY = hasattr(sys, 'pypy_version_info') and (sys.version_info[:2] == (2, 7))
+
+
+try:
+    # Conda can install required Python versions on demand
+    _find_conda()
+    HAS_CONDA = True
+except (RuntimeError, IOError):
+    HAS_CONDA = False
+
+
+try:
+    import virtualenv
+    HAS_VIRTUALENV = True
+except ImportError:
+    HAS_VIRTUALENV = False
+
+
+try:
+    util.which('python{}'.format(PYTHON_VER2))
+    HAS_PYTHON_VER2 = True
+except (RuntimeError, IOError):
+    HAS_PYTHON_VER2 = False
 
 
 try:
@@ -78,18 +111,36 @@ except ImportError:
 
 
 @contextmanager
-def locked_cache_dir(config, cache_key, timeout=900):
+def locked_cache_dir(config, cache_key, timeout=900, tag=None):
     if LockFile is DummyLock:
         cache_key = cache_key + os.environ.get('PYTEST_XDIST_WORKER', '')
 
-    cache_dir = config.cache.makedir(cache_key)
+    base_dir = config.cache.makedir(cache_key)
 
-    lockfile = join(six.text_type(cache_dir), 'lock')
+    lockfile = join(six.text_type(base_dir), 'lock')
+    cache_dir = join(six.text_type(base_dir), 'cache')
 
     lock = LockFile(lockfile)
     try:
         lock.acquire(timeout=timeout)
+
+        # Clear cache dir contents if it was generated with different
+        # asv version
+        tag_fn = join(six.text_type(base_dir), 'tag.json')
+        tag_content = [asv.__version__, repr(tag)]
+        if os.path.isdir(cache_dir):
+            try:
+                if util.load_json(tag_fn) != tag_content:
+                    raise ValueError()
+            except (IOError, ValueError, util.UserError):
+                shutil.rmtree(cache_dir)
+
+        if not os.path.isdir(cache_dir):
+            os.makedirs(cache_dir)
+
         yield cache_dir
+
+        util.write_json(tag_fn, tag_content)
     finally:
         lock.release()
 
@@ -565,13 +616,20 @@ def get_with_retry(browser, url):
 @pytest.fixture
 def dummy_packages(request, monkeypatch):
     """
-    Build dummy wheels for required packages and set PIP_FIND_LINKS
+    Build dummy wheels for required packages and set PIP_FIND_LINKS + CONDARC
     """
+    to_build = [('asv_dummy_test_package_1', DUMMY1_VERSION)]
+    to_build += [('asv_dummy_test_package_2', ver) for ver in DUMMY2_VERSIONS]
 
-    with locked_cache_dir(request.config, "asv-wheels", timeout=900) as cache_dir:
-        wheel_dir = join(six.text_type(cache_dir), 'wheels')
+    tag = [PYTHON_VER1, PYTHON_VER2, to_build]
 
-        monkeypatch.setenv('PIP_FIND_LINKS', 'file://' + os.path.abspath(wheel_dir))
+    with locked_cache_dir(request.config, "asv-wheels", timeout=900, tag=tag) as cache_dir:
+        wheel_dir = os.path.abspath(join(six.text_type(cache_dir), 'wheels'))
+
+        monkeypatch.setenv('PIP_FIND_LINKS', 'file://' + wheel_dir)
+
+        condarc = join(wheel_dir, 'condarc')
+        monkeypatch.setenv('CONDARC', condarc)
 
         if os.path.isdir(wheel_dir):
             return
@@ -581,32 +639,83 @@ def dummy_packages(request, monkeypatch):
             shutil.rmtree(tmpdir)
         os.makedirs(tmpdir)
 
-        # Build fake wheels for testing
-        to_build = [('docutils', DOCUTILS_VERSION)]
-        to_build += [('colorama', ver) for ver in COLORAMA_VERSIONS]
-
-        for name, version in to_build:
-            build_dir = join(tmpdir, name + '-' + version)
-            os.makedirs(build_dir)
-
-            with open(join(build_dir, 'setup.py'), 'w') as f:
-                f.write("from setuptools import setup; "
-                        "setup(name='{name}', version='{version}', packages=['{name}'])"
-                        "".format(name=name, version=version))
-            os.makedirs(join(build_dir, name))
-            with open(join(build_dir, name, '__init__.py'), 'w') as f:
-                f.write("__version__ = '{0}'".format(version))
-
-            subprocess.check_call([sys.executable, '-mpip', 'wheel',
-                                   '--build-option=--universal',
-                                   '-w', os.path.abspath(six.text_type(tmpdir)),
-                                   '.'],
-                                  cwd=build_dir)
-
         try:
             os.makedirs(wheel_dir)
-            for fn in os.listdir(tmpdir):
-                if fn.lower().endswith('.whl'):
-                    os.rename(join(tmpdir, fn), join(wheel_dir, fn))
+            _build_dummy_wheels(tmpdir, wheel_dir, to_build, build_conda=HAS_CONDA)
         except:
             shutil.rmtree(wheel_dir)
+            raise
+
+        # Conda packages were installed in a local channel
+        wheel_dir_str = wheel_dir.replace("\\", "\\\\")
+
+        with open(condarc, 'w') as f:
+            f.write("channels:\n"
+                    "- defaults\n"
+                    "- file://{0}".format(wheel_dir_str))
+
+
+def _build_dummy_wheels(tmpdir, wheel_dir, to_build, build_conda=False):
+    # Build fake wheels for testing
+
+    for name, version in to_build:
+        build_dir = join(tmpdir, name + '-' + version)
+        os.makedirs(build_dir)
+
+        with open(join(build_dir, 'setup.py'), 'w') as f:
+            f.write("from setuptools import setup; "
+                    "setup(name='{name}', version='{version}', packages=['{name}'])"
+                    "".format(name=name, version=version))
+        os.makedirs(join(build_dir, name))
+        with open(join(build_dir, name, '__init__.py'), 'w') as f:
+            f.write("__version__ = '{0}'".format(version))
+
+        subprocess.check_call([sys.executable, '-mpip', 'wheel',
+                               '--build-option=--universal',
+                               '-w', wheel_dir,
+                               '.'],
+                              cwd=build_dir)
+
+        if build_conda:
+            _build_dummy_conda_pkg(name, version, build_dir, wheel_dir)
+
+
+def _build_dummy_conda_pkg(name, version, build_dir, dst):
+    # Build fake conda packages for testing
+
+    subprocess.check_call([sys.executable, 'setup.py', 'sdist', '--formats', 'gztar'],
+                          cwd=build_dir)
+
+    sdist = os.path.abspath(join(build_dir, 'dist', '{0}-{1}.tar.gz'.format(name, version)))
+    sdist = sdist.replace("\\", "\\\\")
+
+    with open(join(build_dir, 'meta.yaml'), 'w') as f:
+        f.write(textwrap.dedent("""\
+        package:
+          name: "{name}"
+          version: "{version}"
+        source:
+          url: "file://{sdist}"
+        build:
+          number: 0
+          script: "python -m pip install . --no-deps --ignore-installed "
+        requirements:
+          host:
+            - pip
+            - python
+          run:
+            - python
+        about:
+          license: BSD
+          summary: Dummy test package
+        """.format(name=name, version=version, sdist=sdist)))
+
+    conda = _find_conda()
+
+    for pyver in [PYTHON_VER1, PYTHON_VER2]:
+        subprocess.check_call([conda, 'build',
+                               '--output-folder=' + dst,
+                               '--no-anaconda-upload',
+                               '--python=' + pyver,
+                               '.'],
+                              cwd=build_dir)

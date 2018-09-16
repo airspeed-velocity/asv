@@ -37,14 +37,13 @@ def do_conda():
     subs = dict(index_cache='', ver=sys.version_info)
 
     call("""
-    conda create --download-only -n tmp --channel conda-forge -q --yes python={ver[0]}.{ver[1]}
+    conda create --download-only -n tmp --channel conda-forge -q --yes python={ver[0]}.{ver[1]} conda-build
     """, subs)
 
     for pyver in PY_VERSIONS:
         subs['ver'] = pyver
         call("""
-        conda create --download-only -n tmp -q --yes --use-index-cache python={ver[0]}.{ver[1]} wheel pip docutils=0.14 colorama=0.3.7
-        conda create --download-only -n tmp -q --yes --use-index-cache python={ver[0]}.{ver[1]} wheel pip docutils colorama=0.3.9
+        conda create --download-only -n tmp -q --yes --use-index-cache python={ver[0]}.{ver[1]} wheel pip conda-build
         """, subs)
 
 

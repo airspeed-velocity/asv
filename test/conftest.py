@@ -11,7 +11,7 @@ def pytest_addoption(parser):
 
     parser.addoption("--offline", action="store_true", default=False,
                      help=("Do not download items from internet. Use if you have predownloaded "
-                           "packages and set PIP_FIND_LINKS."))
+                           "packages with Conda. (Virtualenv tests are always offline.)"))
 
 
 def pytest_sessionstart(session):

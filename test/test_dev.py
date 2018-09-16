@@ -44,8 +44,8 @@ def generate_basic_conf(tmpdir, repo_subdir=''):
         'project': 'asv',
         'branches': ['master'],
         'matrix': {
-            "six": [None],
-            "colorama": ["0.3.6", "0.3.7"],
+            "asv-dummy-test-package-1": [None],
+            "asv-dummy-test-package-2": tools.DUMMY2_VERSIONS,
         },
     }
     if repo_subdir:

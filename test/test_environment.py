@@ -16,39 +16,9 @@ from asv import environment
 from asv import util
 from asv.repo import get_repo
 
-from .tools import (PYTHON_VER1, PYTHON_VER2, COLORAMA_VERSIONS, DOCUTILS_VERSION,
+from .tools import (PYTHON_VER1, PYTHON_VER2, DUMMY1_VERSION, DUMMY2_VERSIONS,
+                    WIN, HAS_PYPY, HAS_CONDA, HAS_VIRTUALENV, HAS_PYTHON_VER2,
                     generate_test_repo, dummy_packages)
-
-
-WIN = (os.name == "nt")
-
-try:
-    util.which('pypy')
-    HAS_PYPY = True
-except (RuntimeError, IOError):
-    HAS_PYPY = hasattr(sys, 'pypy_version_info') and (sys.version_info[:2] == (2, 7))
-
-
-try:
-    # Conda can install required Python versions on demand
-    util.which('conda')
-    HAS_CONDA = True
-except (RuntimeError, IOError):
-    HAS_CONDA = False
-
-
-try:
-    import virtualenv
-    HAS_VIRTUALENV = True
-except ImportError:
-    HAS_VIRTUALENV = False
-
-
-try:
-    util.which('python{}'.format(PYTHON_VER2))
-    HAS_PYTHON_VER2 = True
-except (RuntimeError, IOError):
-    HAS_PYTHON_VER2 = False
 
 
 @pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
@@ -60,8 +30,8 @@ def test_matrix_environments(tmpdir, dummy_packages):
 
     conf.pythons = [PYTHON_VER1, PYTHON_VER2]
     conf.matrix = {
-        "docutils": [DOCUTILS_VERSION, None],
-        "colorama": COLORAMA_VERSIONS
+        "asv_dummy_test_package_1": [DUMMY1_VERSION, None],
+        "asv_dummy_test_package_2": DUMMY2_VERSIONS
     }
     environments = list(environment.get_environments(conf, None))
 
@@ -73,14 +43,14 @@ def test_matrix_environments(tmpdir, dummy_packages):
         env.create()
 
         output = env.run(
-            ['-c', 'import docutils, sys; sys.stdout.write(docutils.__version__)'],
+            ['-c', 'import asv_dummy_test_package_1 as p, sys; sys.stdout.write(p.__version__)'],
             valid_return_codes=None)
-        if 'docutils' in env._requirements:
-            assert output.startswith(six.text_type(env._requirements['docutils']))
+        if 'asv_dummy_test_package_1' in env._requirements:
+            assert output.startswith(six.text_type(env._requirements['asv_dummy_test_package_1']))
 
         output = env.run(
-            ['-c', 'import colorama, sys; sys.stdout.write(colorama.__version__)'])
-        assert output.startswith(six.text_type(env._requirements['colorama']))
+            ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)'])
+        assert output.startswith(six.text_type(env._requirements['asv_dummy_test_package_2']))
 
 
 def test_large_environment_matrix(tmpdir):
@@ -317,7 +287,7 @@ def test_conda_pip_install(tmpdir, dummy_packages):
     conf.environment_type = "conda"
     conf.pythons = [PYTHON_VER1]
     conf.matrix = {
-        "pip+colorama": [COLORAMA_VERSIONS[0]]
+        "pip+asv_dummy_test_package_2": [DUMMY2_VERSIONS[0]]
     }
     environments = list(environment.get_environments(conf, None))
 
@@ -327,8 +297,8 @@ def test_conda_pip_install(tmpdir, dummy_packages):
         env.create()
 
         output = env.run(
-            ['-c', 'import colorama, sys; sys.stdout.write(colorama.__version__)'])
-        assert output.startswith(six.text_type(env._requirements['pip+colorama']))
+            ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)'])
+        assert output.startswith(six.text_type(env._requirements['pip+asv_dummy_test_package_2']))
 
 
 def test_environment_select():

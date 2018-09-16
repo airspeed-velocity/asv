@@ -45,16 +45,9 @@ def _rebuild_basic_html(basedir):
     cwd = os.getcwd()
 
     if os.path.isdir(basedir):
-        # Cached result found
-        try:
-            if util.load_json(join(basedir, 'tag.json')) != [asv.__version__]:
-                raise ValueError()
-
-            html_dir = join(basedir, 'html')
-            dvcs = tools.Git(join(basedir, 'repo'))
-            return html_dir, dvcs
-        except (IOError, ValueError):
-            shutil.rmtree(basedir)
+        html_dir = join(basedir, 'html')
+        dvcs = tools.Git(join(basedir, 'repo'))
+        return html_dir, dvcs
 
     os.makedirs(basedir)
     os.chdir(basedir)
@@ -113,8 +106,6 @@ def _rebuild_basic_html(basedir):
         shutil.rmtree(join(basedir, 'env'))
     finally:
         os.chdir(cwd)
-
-    util.write_json(join(basedir, 'tag.json'), [asv.__version__])
 
     return conf.html_dir, dvcs
 
