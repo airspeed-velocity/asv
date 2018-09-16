@@ -37,13 +37,13 @@ def do_conda():
     subs = dict(index_cache='', ver=sys.version_info)
 
     call("""
-    conda create --download-only -n tmp --channel conda-forge -q --yes python={ver[0]}.{ver[1]} conda-build
+    conda create --download-only -n tmp --channel conda-forge -q --yes python={ver[0]}.{ver[1]} conda-build bzip2
     """, subs)
 
     for pyver in PY_VERSIONS:
         subs['ver'] = pyver
         call("""
-        conda create --download-only -n tmp -q --yes --use-index-cache python={ver[0]}.{ver[1]} wheel pip conda-build
+        conda create --download-only -n tmp -q --yes --use-index-cache python={ver[0]}.{ver[1]} wheel pip conda-build bzip2
         """, subs)
 
 
