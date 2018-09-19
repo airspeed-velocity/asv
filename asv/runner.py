@@ -728,7 +728,7 @@ class ForkServer(Spawner):
 
     def _stdout_reader(self):
         try:
-            out, _ = self.server_proc.communicate()
+            out = self.server_proc.stdout.read()
             out = out.decode('utf-8', 'replace')
         except Exception as exc:
             import traceback
@@ -815,6 +815,7 @@ class ForkServer(Spawner):
             # Kill process group
             util._killpg_safe(self.server_proc.pid, signal.SIGKILL)
 
+        self.server_proc.wait()
         self.stdout_reader_thread.join()
 
         if self._server_output and not self.interrupted:
