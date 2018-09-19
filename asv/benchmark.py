@@ -60,6 +60,7 @@ import time
 import tempfile
 import struct
 import pkgutil
+import traceback
 import contextlib
 from importlib import import_module
 
@@ -702,7 +703,7 @@ def _get_benchmark(attr_name, module, klass, func):
     return cls(name, func, sources)
 
 
-def disc_modules(module_name):
+def disc_modules(module_name, ignore_import_errors=False):
     """
     Recursively import a module and all sub-modules in the package
 
@@ -712,16 +713,24 @@ def disc_modules(module_name):
         Imported module in the package tree
 
     """
-    module = import_module(module_name)
+    if not ignore_import_errors:
+        module = import_module(module_name)
+    else:
+        try:
+            module = import_module(module_name)
+        except BaseException:
+            traceback.print_exc()
+            return
+
     yield module
 
     if getattr(module, '__path__', None):
         for _, name, _ in pkgutil.iter_modules(module.__path__, module_name + '.'):
-            for item in disc_modules(name):
+            for item in disc_modules(name, ignore_import_errors=ignore_import_errors):
                 yield item
 
 
-def disc_benchmarks(root):
+def disc_benchmarks(root, ignore_import_errors=False):
     """
     Discover all benchmarks in a given directory tree, yielding Benchmark
     objects
@@ -735,7 +744,7 @@ def disc_benchmarks(root):
 
     root_name = os.path.basename(root)
 
-    for module in disc_modules(root_name):
+    for module in disc_modules(root_name, ignore_import_errors=ignore_import_errors):
         for attr_name, module_attr in (
             (k, v) for k, v in module.__dict__.items()
             if not k.startswith('_')
@@ -942,12 +951,7 @@ def main_run_server(args):
 
     benchmark_dir, socket_name, = args
 
-    # Import benchmark suite before forking.
-    # Capture I/O to a file during import.
     update_sys_path(benchmark_dir)
-    with posix_redirect_output(permanent=False) as import_out_file:
-        for benchmark in disc_benchmarks(benchmark_dir):
-            pass
 
     # Socket I/O
     s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -975,8 +979,26 @@ def main_run_server(args):
 
             # Parse command
             command = json.loads(command_text)
-            if command.pop('action') == 'quit':
+            action = command.pop('action')
+
+            if action == 'quit':
                 break
+            elif action == 'preimport':
+                # Import benchmark suite before forking.
+                # Capture I/O to a file during import.
+                with posix_redirect_output(stdout_file, permanent=False):
+                    for benchmark in disc_benchmarks(benchmark_dir, ignore_import_errors=True):
+                        pass
+
+                # Report result
+                with io.open(stdout_file, 'r', errors='replace') as f:
+                    out = f.read()
+                out = json.dumps(out)
+                if sys.version_info[0] >= 3:
+                    out = out.encode('utf-8')
+                conn.sendall(struct.pack('<Q', len(out)))
+                conn.sendall(out)
+                continue
 
             benchmark_id = command.pop('benchmark_id')
             params_str = command.pop('params_str')
@@ -984,6 +1006,7 @@ def main_run_server(args):
             result_file = command.pop('result_file')
             timeout = command.pop('timeout')
             cwd = command.pop('cwd')
+
             if command:
                 raise RuntimeError('Command contained unknown data: {!r}'.format(command_text))
 
@@ -1026,10 +1049,8 @@ def main_run_server(args):
                 time.sleep(0.05)
 
             # Report result
-            with io.open(import_out_file, 'r', errors='replace') as f:
-                out = f.read()
             with io.open(stdout_file, 'r', errors='replace') as f:
-                out += f.read()
+                out = f.read()
 
             info = {'out': out,
                     'errcode': -256 if is_timeout else status}

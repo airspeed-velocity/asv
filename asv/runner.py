@@ -17,6 +17,7 @@ import pstats
 import socket
 import struct
 import threading
+import traceback
 
 import six
 
@@ -239,6 +240,37 @@ def run_benchmarks(benchmarks, env, results=None,
                           launch_method=launch_method)
 
     try:
+        # Preimport benchmark suite (if using forkserver)
+        success, out = spawner.preimport()
+
+        if success:
+            if show_stderr and out:
+                log.info("Importing benchmark suite produced output:")
+                with log.indent():
+                    log.error(out.rstrip())
+        else:
+            log.warning("Importing benchmark suite failed (skipping all benchmarks).")
+            if show_stderr and out:
+                with log.indent():
+                    log.error(out)
+
+            stderr = 'asv: benchmark suite import failed'
+            for name, benchmark, setup_cache_key, is_final in iter_run_items():
+                if name in failed_benchmarks:
+                    continue
+
+                selected_idx = benchmarks.benchmark_selection.get(name)
+                started_at = datetime.datetime.utcnow()
+                res = fail_benchmark(benchmark, stderr=stderr)
+                results.add_result(benchmark, res,
+                                   selected_idx=selected_idx,
+                                   started_at=started_at,
+                                   ended_at=datetime.datetime.utcnow(),
+                                   record_samples=record_samples)
+                failed_benchmarks.add(name)
+            return results
+
+        # Run benchmarks
         for name, benchmark, setup_cache_key, is_final in iter_run_items():
             selected_idx = benchmarks.benchmark_selection.get(name)
 
@@ -659,6 +691,9 @@ class Spawner(object):
             valid_return_codes=None, cwd=cwd)
         return out, errcode
 
+    def preimport(self):
+        return True, ""
+
     def close(self):
         pass
 
@@ -709,7 +744,26 @@ class ForkServer(Spawner):
                'result_file': result_file_name,
                'timeout': timeout,
                'cwd': cwd}
+        result = self._send_command(msg)
+        return result['out'], result['errcode']
 
+    def preimport(self):
+        success = True
+        out = ""
+        try:
+            out = self._send_command({'action': 'preimport'})
+        except Exception as exc:
+            success = False
+            out = "asv: benchmark runner crashed\n"
+            if isinstance(exc, util.UserError):
+                out += str(exc)
+            else:
+                out += traceback.format_exc()
+            out = out.rstrip()
+
+        return success, out
+
+    def _send_command(self, msg):
         msg = json.dumps(msg)
         if sys.version_info[0] >= 3:
             msg = msg.encode('utf-8')
@@ -737,11 +791,15 @@ class ForkServer(Spawner):
             if sys.version_info[0] >= 3:
                 result_text = result_text.decode('utf-8')
             result = json.loads(result_text)
+        except Exception:
+            exitcode = self.server_proc.poll()
+            if exitcode is not None:
+                raise util.UserError("Process exited with code {0}".format(exitcode))
+            raise
         finally:
             s.close()
 
-        # Interpret it
-        return result['out'], result['errcode']
+        return result
 
     def close(self):
         import signal

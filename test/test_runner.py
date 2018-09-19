@@ -240,6 +240,9 @@ def test_forkserver(tmpdir):
     with open(os.path.join('benchmark', '__init__.py'), 'w') as f:
         f.write("import sys; sys.stdout.write('import-time print')")
 
+    with open(os.path.join('benchmark', 'unimportable.py'), 'w') as f:
+        f.write("raise RuntimeError('not importable')")
+
     env = environment.ExistingEnvironment(conf, sys.executable, {})
     spawner = runner.ForkServer(env, os.path.abspath('benchmark'))
 
@@ -260,3 +263,149 @@ def test_forkserver(tmpdir):
     with open(result_file, 'r') as f:
         data = json.load(f)
     assert len(data['samples']) >= 1
+
+
+needs_unix_socket_mark = pytest.mark.skipif(
+    not (hasattr(os, 'fork') and hasattr(socket, 'AF_UNIX')),
+    reason="test requires fork and unix sockets")
+
+
+@needs_unix_socket_mark
+def test_forkserver_preimport(tmpdir):
+    tmpdir = six.text_type(tmpdir)
+    os.chdir(tmpdir)
+
+    os.makedirs('benchmark')
+
+    d = {}
+    d.update(ASV_CONF_JSON)
+    d['env_dir'] = "env"
+    d['benchmark_dir'] = 'benchmark'
+    d['repo'] = 'None'
+    conf = config.Config.from_json(d)
+
+    env = environment.ExistingEnvironment(conf, sys.executable, {})
+
+    #
+    # Normal benchmark suite
+    #
+
+    with open(os.path.join('benchmark', '__init__.py'), 'w') as f:
+        f.write("print('message')")
+
+    spawner = runner.ForkServer(env, os.path.abspath('benchmark'))
+    try:
+        success, out = spawner.preimport()
+    finally:
+        spawner.close()
+
+    assert success == True
+    assert out.rstrip() == "message"
+
+
+    #
+    # Benchmark suite that crashes the forkserver
+    #
+
+    with open(os.path.join('benchmark', '__init__.py'), 'w') as f:
+        f.write("import os, sys; print('message'); sys.stdout.flush(); os._exit(0)")
+
+    spawner = runner.ForkServer(env, os.path.abspath('benchmark'))
+    try:
+        success, out = spawner.preimport()
+    finally:
+        spawner.close()
+
+    assert success == False
+    assert out.startswith('asv: benchmark runner crashed')
+
+    #
+    # Benchmark suite that has an unimportable file
+    #
+
+    with open(os.path.join('benchmark', '__init__.py'), 'w') as f:
+        pass
+
+    with open(os.path.join('benchmark', 'bad.py'), 'w') as f:
+        f.write("raise RuntimeError()")
+
+    spawner = runner.ForkServer(env, os.path.abspath('benchmark'))
+    try:
+        success, out = spawner.preimport()
+    finally:
+        spawner.close()
+
+    assert success == True
+    assert out.startswith('Traceback')
+
+
+@pytest.mark.parametrize('launch_method', [
+    'spawn',
+    pytest.param('forkserver', marks=needs_unix_socket_mark)
+])
+def test_run_import_failure(capsys, benchmarks_fixture, launch_method):
+    conf, repo, envs, commit_hash = benchmarks_fixture
+
+    with open(os.path.join('benchmark', 'unimportable.py'), 'w') as f:
+        f.write('def track_unimportable(): pass')
+
+    b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
+
+    skip_names = [name for name in b.keys()
+                  if name not in ('time_secondary.track_value', 'unimportable.track_unimportable')]
+    b2 = b.filter_out(skip_names)
+
+    #
+    # Module with import raising an exception
+    #
+
+    with open(os.path.join('benchmark', 'unimportable.py'), 'w') as f:
+        f.write('import sys; sys.stderr.write("hello import"); sys.stderr.flush()\n')
+        f.write('raise SystemExit(0)')
+
+    results = runner.run_benchmarks(b2, envs[0], show_stderr=False, launch_method=launch_method)
+    times = ResultsWrapper(results, b2)
+
+    assert times['time_secondary.track_value'].errcode == 0
+    assert times['time_secondary.track_value'].result == [42]
+
+    assert times['unimportable.track_unimportable'].errcode != 0
+    err = times['unimportable.track_unimportable'].stderr
+    assert 'hello import' in err
+
+    text, err = capsys.readouterr()
+    assert 'hello import' not in text
+
+    #
+    # Module with import crashing the process
+    #
+
+    with open(os.path.join('benchmark', 'unimportable.py'), 'w') as f:
+        f.write('import sys; sys.stderr.write("hello import"); sys.stderr.flush()\n')
+        f.write('import os; os._exit(0)')
+
+    results = runner.run_benchmarks(b2, envs[0], show_stderr=True, launch_method=launch_method)
+    times = ResultsWrapper(results, b2)
+
+    assert times['unimportable.track_unimportable'].errcode != 0
+    assert times['unimportable.track_unimportable'].stderr
+
+    # track_value may run (spawn) or not (forkserver), so don't check for it
+
+    text, err = capsys.readouterr()
+
+    #
+    # Module with import printing output
+    #
+
+    with open(os.path.join('benchmark', 'unimportable.py'), 'w') as f:
+        f.write('import sys; sys.stderr.write("hello import"); sys.stderr.flush()\n')
+
+    results = runner.run_benchmarks(b2, envs[0], show_stderr=True, launch_method=launch_method)
+    times = ResultsWrapper(results, b2)
+
+    assert times['time_secondary.track_value'].errcode == 0
+    assert times['unimportable.track_unimportable'].errcode != 0
+
+    text, err = capsys.readouterr()
+    assert 'hello import' in text
