@@ -270,6 +270,19 @@ needs_unix_socket_mark = pytest.mark.skipif(
     reason="test requires fork and unix sockets")
 
 
+def clear_pyc(path):
+    for fn in os.listdir(path):
+        fn = join(path, fn)
+        if not os.path.isfile(fn):
+            continue
+        if fn.lower().endswith('.pyc'):
+            os.unlink(fn)
+
+    dn = join(path, '__pycache__')
+    if os.path.isdir(dn):
+        shutil.rmtree(dn)
+
+
 @needs_unix_socket_mark
 def test_forkserver_preimport(tmpdir):
     tmpdir = six.text_type(tmpdir)
@@ -302,13 +315,16 @@ def test_forkserver_preimport(tmpdir):
     assert success == True
     assert out.rstrip() == "message"
 
-
     #
     # Benchmark suite that crashes the forkserver
     #
 
+    # NOTE: the .pyc files need to be removed, as Python 2 pyc caching
+    # has problems with overwriting files rapidly
+    clear_pyc('benchmark')
+
     with open(os.path.join('benchmark', '__init__.py'), 'w') as f:
-        f.write("import os, sys; print('message'); sys.stdout.flush(); os._exit(0)")
+        f.write("import os, sys; print('egassem'); sys.stdout.flush(); os._exit(0)")
 
     spawner = runner.ForkServer(env, os.path.abspath('benchmark'))
     try:
@@ -322,6 +338,8 @@ def test_forkserver_preimport(tmpdir):
     #
     # Benchmark suite that has an unimportable file
     #
+
+    clear_pyc('benchmark')
 
     with open(os.path.join('benchmark', '__init__.py'), 'w') as f:
         pass
@@ -380,6 +398,8 @@ def test_run_import_failure(capsys, benchmarks_fixture, launch_method):
     # Module with import crashing the process
     #
 
+    clear_pyc('benchmark')
+
     with open(os.path.join('benchmark', 'unimportable.py'), 'w') as f:
         f.write('import sys; sys.stderr.write("hello import"); sys.stderr.flush()\n')
         f.write('import os; os._exit(0)')
@@ -397,6 +417,8 @@ def test_run_import_failure(capsys, benchmarks_fixture, launch_method):
     #
     # Module with import printing output
     #
+
+    clear_pyc('benchmark')
 
     with open(os.path.join('benchmark', 'unimportable.py'), 'w') as f:
         f.write('import sys; sys.stderr.write("hello import"); sys.stderr.flush()\n')
