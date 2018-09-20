@@ -171,6 +171,44 @@ def track_this():
     assert len(b) == 1
 
 
+def test_import_failure_retry(tmpdir):
+    # Test that a different commit is tried on import failure
+
+    tmpdir = six.text_type(tmpdir)
+    os.chdir(tmpdir)
+
+    os.makedirs('benchmark')
+    with open(os.path.join('benchmark', '__init__.py'), 'w') as f:
+        f.write(textwrap.dedent("""
+        import asv_test_repo
+
+        def time_foo():
+            pass
+
+        time_foo.number = asv_test_repo.dummy_value
+
+        if asv_test_repo.dummy_value == 0:
+            raise RuntimeError("fail discovery")
+        """))
+
+    dvcs = tools.generate_test_repo(tmpdir, [2, 1, 0])
+
+    d = {}
+    d.update(ASV_CONF_JSON)
+    d['env_dir'] = "env"
+    d['benchmark_dir'] = 'benchmark'
+    d['repo'] = dvcs.path
+    conf = config.Config.from_json(d)
+
+    repo = get_repo(conf)
+    envs = list(environment.get_environments(conf, None))
+    commit_hashes = dvcs.get_branch_hashes()
+
+    b = benchmarks.Benchmarks.discover(conf, repo, envs, commit_hashes)
+    assert len(b) == 1
+    assert b['time_foo']['number'] == 1
+
+
 def test_conf_inside_benchmarks_dir(tmpdir):
     # Test that the configuration file can be inside the benchmark suite
 
