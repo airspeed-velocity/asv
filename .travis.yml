@@ -20,6 +20,10 @@ addons:
 
 matrix:
   include:
+    - python: 3.7
+      dist: xenial
+      sudo: true
+
     - python: 2.7
       env:
         - USE_CONDA=true
@@ -56,9 +60,9 @@ before_install:
     set -e
     mkdir -p $HOME/download
     pushd $HOME/download
-    wget -nc https://github.com/mozilla/geckodriver/releases/download/v0.19.1/geckodriver-v0.19.1-linux64.tar.gz
+    wget -nc https://github.com/mozilla/geckodriver/releases/download/v0.22.0/geckodriver-v0.22.0-linux64.tar.gz
     mkdir $HOME/geckodriver
-    tar -xzf geckodriver-v0.19.1-linux64.tar.gz -C $HOME/geckodriver
+    tar -xzf geckodriver-v0.22.0-linux64.tar.gz -C $HOME/geckodriver
     popd
     export PATH="$PATH:$HOME/geckodriver"
 

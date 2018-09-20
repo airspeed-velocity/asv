@@ -148,51 +148,71 @@ class Benchmarks(dict):
         if len(environments) == 0:
             raise util.UserError("No available environments")
 
-        # Append default commit hashes, to make it probably the
-        # discovery usually succeeds
-        commit_hashes = list(commit_hashes)
-        for branch in conf.branches:
-            try:
-                branch_hash = repo.get_hash_from_name(branch)
-            except NoSuchNameError:
-                continue
+        # Try several different commits:
+        #
+        # - First of commit_hashes provided
+        # - Tips of branches from configuration file
+        # - Rest of the commit_hashes
+        #
 
-            if branch_hash not in commit_hashes:
-                commit_hashes.append(branch_hash)
+        def iter_hashes():
+            for h in commit_hashes[:1]:
+                yield h
+            for branch in conf.branches:
+                try:
+                    yield repo.get_hash_from_name(branch)
+                except NoSuchNameError:
+                    continue
+            for h in commit_hashes[1:]:
+                yield h
+
+        def iter_unique(iter):
+            seen = set()
+            for item in iter:
+                if item not in seen:
+                    seen.add(item)
+                    yield item
+
+        try_hashes = iter_unique(iter_hashes())
 
         log.info("Discovering benchmarks")
         with log.indent():
             last_err = None
-            for env, commit_hash in itertools.product(environments, commit_hashes):
+            for env, commit_hash in itertools.product(environments, try_hashes):
                 env.create()
 
                 if last_err is not None:
-                    log.warning("Build failed: trying different commit")
+                    log.warning("Failed: trying different commit/environment")
 
+                result_dir = tempfile.mkdtemp()
                 try:
                     env.install_project(conf, repo, commit_hash)
+
+                    result_file = os.path.join(result_dir, 'result.json')
+                    env.run(
+                        [runner.BENCHMARK_RUN_SCRIPT, 'discover',
+                         os.path.abspath(root),
+                         os.path.abspath(result_file)],
+                        cwd=result_dir,
+                        dots=False)
+
+                    try:
+                        with open(result_file, 'r') as fp:
+                            benchmarks = json.load(fp)
+                    except (IOError, ValueError) as exc:
+                        log.error("Invalid discovery output")
+                        raise util.UserError()
+
                     break
-                except util.ProcessError as err:
-                    # Installation failed
+                except (util.UserError, util.ProcessError) as err:
                     last_err = err
+                    continue
+                except KeyboardInterrupt:
+                    raise util.UserError("Interrupted.")
+                finally:
+                    util.long_path_rmtree(result_dir)
             else:
-                log.error(str(last_err))
-                raise util.UserError("Failed to build the project.")
-
-            result_dir = tempfile.mkdtemp()
-            try:
-                result_file = os.path.join(result_dir, 'result.json')
-                env.run(
-                    [runner.BENCHMARK_RUN_SCRIPT, 'discover',
-                     os.path.abspath(root),
-                     os.path.abspath(result_file)],
-                    cwd=result_dir,
-                    dots=False)
-
-                with open(result_file, 'r') as fp:
-                    benchmarks = json.load(fp)
-            finally:
-                util.long_path_rmtree(result_dir)
+                raise util.UserError("Failed to build the project and import the benchmark suite.")
 
         return benchmarks
 
