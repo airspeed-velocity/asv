@@ -566,6 +566,10 @@ def solve_potts_autogamma(y, beta=None, **kw):
 
     gamma_0 = dist(0, n-1)
 
+    if gamma_0 == 0:
+        # Zero variance
+        gamma_0 = 1.0
+
     best_r = [None]
     best_v = [None]
     best_d = [None]
