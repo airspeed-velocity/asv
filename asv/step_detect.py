@@ -344,8 +344,12 @@ def detect_steps(y):
 
 
 def detect_regressions(steps, threshold=0):
-    """
-    Detect regressions in a (noisy) signal.
+    """Detect regressions in a (noisy) signal.
+
+    A regression means an upward step in the signal.  The value
+    'before' a regression is the value immediately preceding the
+    upward step.  The value 'after' a regression is the minimum of
+    values after the upward step.
 
     Parameters
     ----------
@@ -368,68 +372,33 @@ def detect_regressions(steps, threshold=0):
         corresponds to the last position at which the best value was obtained.
 
     """
-    # Find best value and compare to the most recent one
-    best_v = None
-    best_err = None
-    cur_err = None
-    cur_v = None
-
-    prev_v = None
-    prev_err = None
-
-    if steps:
-        last_v = steps[-1][2]
-    else:
-        last_v = None
+    if not steps:
+        # No data: no regressions
+        return None, None, None
 
     regression_pos = []
 
-    prev_r = None
-    for l, r, cur_v, cur_min, cur_err in steps:
-        if best_v is None or cur_min <= best_v + best_err:
-            # Found best value (modulo errors)
+    last_v = steps[-1][2]
+    best_v = last_v
+    best_err = steps[-1][4]
+    prev_l = None
+
+    # Find upward steps that resulted to worsened value afterward
+    for l, r, cur_v, cur_min, cur_err in reversed(steps):
+        if best_v - cur_v > max(cur_err, best_err, threshold * cur_v):
+            regression_pos.append((r - 1, prev_l, cur_v, best_v))
+        prev_l = l
+        if cur_v < best_v:
             best_v = cur_v
             best_err = cur_err
-            regression_pos = []
-        elif (not regression_pos or (prev_v is not None and
-                cur_v > prev_v + max(cur_err, prev_err) and
-                prev_v < last_v - max(cur_err, prev_err))):
-            # Found an upward jump
-            regression_pos.append((prev_r - 1, l, prev_v, cur_v))
 
-        prev_r = r
-        prev_v = cur_v
-        prev_err = cur_err
-
-    # Apply threshold
-    if best_v is not None:
-        if best_v != 0:
-            min_jump = threshold * abs(best_v)
-        else:
-            min_jump = threshold * abs(last_v)
-
-        # Check if nothing to report
-        if best_v + min_jump >= last_v:
-            regression_pos = []
-
-        # Report jumps >= min_jump --- smaller jumps are also reported
-        # in case the best-last difference is not explained by the
-        # larger jumps.
-        regression_pos.sort(key=lambda pos: pos[3] - pos[2], reverse=True)
-        explained = 0
-        for j, pos in enumerate(regression_pos):
-            jump = pos[3] - pos[2]
-            if jump < min_jump and explained >= last_v - best_v - min_jump:
-                regression_pos = regression_pos[:j]
-                break
-            explained += jump
-        regression_pos.sort(key=lambda pos: pos[0])
+    regression_pos.reverse()
 
     # Return results
-    if cur_v is None or best_v is None or cur_v <= best_v + max(cur_err, best_err) or not regression_pos:
-        return (None, None, None)
+    if regression_pos:
+        return (last_v, best_v, regression_pos)
     else:
-        return (cur_v, best_v, regression_pos)
+        return (None, None, None)
 
 
 #
