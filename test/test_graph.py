@@ -201,7 +201,7 @@ def test_summary_graph_loop():
 
 def test_graph_steps():
     vals = [(1, 1), (5, 1), (6, 1), (7, 1), (8, 1),
-            (11, 2), (15, 2), (16, 2.001), (17, 2), (18, 2)]
+            (11, 2), (15, 2), (16, 2 + 1e-5), (17, 2), (18, 2)]
 
     g = Graph('foo', {})
     for x, y in vals:
@@ -209,7 +209,7 @@ def test_graph_steps():
 
     steps = g.get_steps()
     lastval = steps[1][4]
-    assert abs(lastval - 0.001/5.0) < 1e-10
+    assert abs(lastval - 1e-5/5.0) < 1e-10
     assert steps == [(1, 8+1, 1.0, 1.0, 0), (11, 18+1, 2.0, 2.0, lastval)]
 
     multi_g = Graph('foo', {})

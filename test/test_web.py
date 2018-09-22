@@ -332,6 +332,11 @@ def test_web_summarylist(browser, basic_html):
                          for link in visible_links]
             row_texts.sort()
 
-            return row_texts == ['params_examples.track_find_test (1) 2.00',
-                                 'params_examples.track_find_test (2) 2.00']
+            if len(row_texts) != 2:
+                return False
+
+            ok = (re.match(r'^params_examples\.track_find_test \(1\) 2\.00 .*\(-1\.00\).*$', row_texts[0]) and
+                  re.match(r'^params_examples\.track_find_test \(2\) 2\.00 .*\(-1\.00\).*$', row_texts[1]))
+            return ok
+
         WebDriverWait(browser, WAIT_TIME, ignored_exceptions=ignore_exc).until(check)
