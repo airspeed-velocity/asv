@@ -127,6 +127,13 @@ def test_autocorrelated():
     assert right == [500, 1000]
 
 
+def test_zero_variance():
+    # Should not choke on this data
+    y = [1.0]*1000
+    right, values, dists, gamma = solve_potts_autogamma(y, p=1)
+    assert right == [1000]
+
+
 @pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
 def test_detect_regressions(use_rangemedian):
     try:

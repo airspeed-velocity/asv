@@ -89,7 +89,7 @@ The optimal :math:`k` comes from Bayesian reasoning:
 :math:`\hat{k} = \mathop{\mathrm{argmax}}_k P(k|\{y\})`, where
 
 .. math::
-   :label:
+   :label: p-k-prob
 
    P(k|\{y\}) = \frac{\pi(k)}{\pi(\{y\})}\int d\sigma (d\mu)^k \sum_{\{j\}}
    P(\{y\}|\sigma,k,\{\mu\},\{j\}) \pi(\sigma, \{\mu\},\{j\}|k)
@@ -224,6 +224,55 @@ it appears such Bayesian information criterion provides a reasonable
 way for selecting a suitable :math:`\gamma`.
 
 
+Overfitting
+-----------
+
+It's possible to fit any data perfectly by choosing size-1 intervals,
+one per each data point.  For such a fit, the logarithm :eq:`bic-form`
+gives :math:`-\infty` which then always minimizes SC.  This artifact
+of the model above needs special handling.
+
+Indeed, for :math:`\sigma\to0`, :eq:`prob-model` reduces to
+
+.. math::
+   :label: prob-model-2
+
+   P(\{y_i\}_{i=1}^m|\sigma,k,\{\mu_i\}_{i=1}^k,\{j_i\}_{i=1}^{k-1})
+   =
+   \prod_{r=1}^k \prod_{i=j_{r-1} + 1}^{j_r} \delta(y_i - \mu_r)
+
+which in :eq:`p-k-prob` gives a contribution (assuming no repeated y-values)
+
+.. math::
+   :label: p-k-prob-2
+
+   P(k|\{y\}) = \frac{\pi(n)}{\pi(\{y\})}\delta_{n,k}\int d\sigma
+   \pi(\sigma, \{y\},\{i\}|n) f(\sigma)
+   +
+   \ldots
+
+with :math:`f(\sigma)\to1` for :math:`\sigma\to0`.  A similar situation
+occurs also in other cases where perfect fitting occurs (repeated
+y-values).  With the flat, scale-free prior
+:math:`\pi(\ldots)\propto1/\sigma` used above, the result is
+undefined.
+
+A simple fix is to give up complete scale free-ness of the results,
+i.e., fixing a minimal noise level
+:math:`\pi(\sigma,\{\mu\},\{j\}|k)\propto\theta(\sigma-\sigma_0)/\sigma` with some
+:math:`\sigma_0(\{\mu\},\{j\},k)>0`. The effect in the
+:math:`\sigma` integral is cutting off the log-divergence, so that
+with sufficient accuracy we can in :eq:`bic-form` replace
+
+.. math::
+   :label: bic-form-2
+
+   \ln \sigma \mapsto \ln(\sigma_0 + \sigma)
+
+Here, we fix a measurement accuracy floor with the following guess:
+``sigma_0 = 0.1 * min(abs(diff(mu)))`` and ``sigma_0 = 0.001 *
+abs(mu)`` when there is only a single interval.
+
 Autocorrelated noise
 --------------------
 
@@ -277,6 +326,12 @@ Postprocessing
 For the purposes of regression detection, we do not report all steps
 the above approach provides. For details, see
 ``asv.step_detect.detect_regressions``.
+
+Making use of measured variance
+-------------------------------
+
+``asv`` measures also variance in the timings.  This information is
+currently not used in the step detection, although it could be used.
 
 """
 
@@ -405,7 +460,7 @@ def detect_regressions(steps, threshold=0):
 # Fitting piecewise constant functions to noisy data
 #
 
-def solve_potts(y, gamma, p=2, min_size=2, max_size=None,
+def solve_potts(y, gamma, p=2, min_size=1, max_size=None,
                 min_pos=None, max_pos=None, mu_dist=None):
     """Fit penalized stepwise constant function (Potts model) to data.
 
@@ -566,6 +621,10 @@ def solve_potts_autogamma(y, beta=None, **kw):
 
     gamma_0 = dist(0, n-1)
 
+    if gamma_0 == 0:
+        # Zero variance
+        gamma_0 = 1.0
+
     best_r = [None]
     best_v = [None]
     best_d = [None]
@@ -595,8 +654,18 @@ def solve_potts_autogamma(y, beta=None, **kw):
         rho_best = golden_search(lambda rho: sigma_star(r, v, rho), -1, 1,
                                  xatol=0.05, expand_bounds=True)
 
+        # Measurement noise floor
+        if len(v) > 2:
+            absdiff = [abs(v[j+1] - v[j]) for j in range(len(v) - 1)]
+            sigma_0 = 0.1 * min(absdiff)
+        else:
+            absv = [abs(z) for z in v]
+            sigma_0 = 0.001 * min(absv)
+        sigma_0 = max(1e-300, sigma_0)
+
         # Objective function
-        obj = beta*len(r) + math.log(1e-300 + sigma_star(r, v, rho_best))
+        s = sigma_star(r, v, rho_best)
+        obj = beta*len(r) + math.log(sigma_0 + s)
 
         # Done
         if obj < best_obj[0]:
@@ -615,7 +684,7 @@ def solve_potts_autogamma(y, beta=None, **kw):
     return best_r[0], best_v[0], best_d[0], best_gamma[0]
 
 
-def solve_potts_approx(y, gamma=None, p=2, min_size=2, **kw):
+def solve_potts_approx(y, gamma=None, p=2, min_size=1, **kw):
     """
     Fit penalized stepwise constant function (Potts model) to data
     approximatively, in linear time.
