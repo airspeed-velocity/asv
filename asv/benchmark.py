@@ -47,7 +47,10 @@ import ctypes
 from ctypes.util import find_library
 from hashlib import sha256
 import errno
-import imp
+if sys.version_info[0] >= 3:
+    import importlib.machinery
+else:
+    import imp
 import inspect
 import itertools
 import json
@@ -591,7 +594,10 @@ class MemBenchmark(Benchmark):
         # the asv package in the benchmarking process.
         path = os.path.join(
             os.path.dirname(__file__), 'extern', 'asizeof.py')
-        asizeof = imp.load_source('asizeof', path)
+        if sys.version_info[0] >= 3:
+            asizeof = importlib.machinery.SourceFileLoader('asizeof', path).load_module()
+        else:
+            asizeof = imp.load_source('asizeof', path)
 
         obj = self.func(*param)
 
@@ -659,14 +665,23 @@ class SpecificImporter(object):
         self._name = name
         self._root = root
 
-    def find_module(self, fullname, path=None):
-        if fullname == self._name:
-            return self
-        return None
+    if sys.version_info[0] >= 3:
+        def find_spec(self, fullname, path, target):
+            if fullname == self._name:
+                if path is not None:
+                    raise ValueError()
+                finder = importlib.machinery.PathFinder()
+                return finder.find_spec(fullname, [self._root], target)
+            return None
+    else:
+        def find_module(self, fullname, path=None):
+            if fullname == self._name:
+                return self
+            return None
 
-    def load_module(self, fullname):
-        file, pathname, desc = imp.find_module(fullname, [self._root])
-        return imp.load_module(fullname, file, pathname, desc)
+        def load_module(self, fullname):
+            file, pathname, desc = imp.find_module(fullname, [self._root])
+            return imp.load_module(fullname, file, pathname, desc)
 
 
 def update_sys_path(root):
