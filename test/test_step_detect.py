@@ -127,6 +127,13 @@ def test_autocorrelated():
     assert right == [500, 1000]
 
 
+def test_zero_variance():
+    # Should not choke on this data
+    y = [1.0]*1000
+    right, values, dists, gamma = solve_potts_autogamma(y, p=1)
+    assert right == [1000]
+
+
 @pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
 def test_detect_regressions(use_rangemedian):
     try:
@@ -170,8 +177,10 @@ def test_detect_regressions(use_rangemedian):
 
         # Check detect_regressions
         new_value, best_value, regression_pos = detect_regressions(steps)
-        assert regression_pos == [(3233 + (seed % 123), (3233 + (seed % 123) + 1), steps_v[1], steps_v[2]),
-                                  (3499 + (seed % 71), 3499 + (seed % 71) + 1, steps_v[4], steps_v[5])]
+        assert regression_pos == [(3233 + (seed % 123), (3233 + (seed % 123) + 1),
+                                   steps_v[1], min(steps_v[2:])),
+                                  (3499 + (seed % 71), 3499 + (seed % 71) + 1,
+                                   steps_v[4], min(steps_v[5:]))]
         assert np.allclose(best_value, 0.7/2 - 0.3, rtol=0.3, atol=0)
         assert np.allclose(new_value, 0.7/2 - 0.3 + 2, rtol=0.3, atol=0)
 
@@ -246,7 +255,7 @@ def test_regression_threshold():
     assert best == 1
     assert pos == [(1, 2, 1.1, 2.0)]
 
-    latest, best, pos = detect_regressions(steps, threshold=0.9)
+    latest, best, pos = detect_regressions(steps, threshold=0.8)
     assert latest == 2
     assert best == 1
     assert pos == [(1, 2, 1.1, 2.0)]

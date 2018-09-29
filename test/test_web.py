@@ -45,16 +45,9 @@ def _rebuild_basic_html(basedir):
     cwd = os.getcwd()
 
     if os.path.isdir(basedir):
-        # Cached result found
-        try:
-            if util.load_json(join(basedir, 'tag.json')) != [asv.__version__]:
-                raise ValueError()
-
-            html_dir = join(basedir, 'html')
-            dvcs = tools.Git(join(basedir, 'repo'))
-            return html_dir, dvcs
-        except (IOError, ValueError):
-            shutil.rmtree(basedir)
+        html_dir = join(basedir, 'html')
+        dvcs = tools.Git(join(basedir, 'repo'))
+        return html_dir, dvcs
 
     os.makedirs(basedir)
     os.chdir(basedir)
@@ -113,8 +106,6 @@ def _rebuild_basic_html(basedir):
         shutil.rmtree(join(basedir, 'env'))
     finally:
         os.chdir(cwd)
-
-    util.write_json(join(basedir, 'tag.json'), [asv.__version__])
 
     return conf.html_dir, dvcs
 
@@ -217,8 +208,8 @@ def test_web_regressions(browser, basic_html):
         assert re.match(r'^\d\d\d\d-\d\d-\d\d \d\d:\d\d$', cols1[1])
         assert re.match(r'^\d\d\d\d-\d\d-\d\d \d\d:\d\d$', cols2[1])
 
-        assert cols1[2:] == [bad_commit_hash[:8], '3.00x', '1.00', '3.00', 'Ignore']
-        assert cols2[2:] == [bad_commit_hash[:8], '3.00x', '1.00', '3.00', 'Ignore']
+        assert cols1[2:] == [bad_commit_hash[:8], '2.00x', '1.00', '2.00', 'Ignore']
+        assert cols2[2:] == [bad_commit_hash[:8], '2.00x', '1.00', '2.00', 'Ignore']
 
         # Check that the ignore buttons work as expected
         buttons = [button for button in browser.find_elements_by_xpath('//button')
@@ -332,6 +323,11 @@ def test_web_summarylist(browser, basic_html):
                          for link in visible_links]
             row_texts.sort()
 
-            return row_texts == ['params_examples.track_find_test (1) 2.00',
-                                 'params_examples.track_find_test (2) 2.00']
+            if len(row_texts) != 2:
+                return False
+
+            ok = (re.match(r'^params_examples\.track_find_test \(1\) 2\.00 .*\(-1\.00\).*$', row_texts[0]) and
+                  re.match(r'^params_examples\.track_find_test \(2\) 2\.00 .*\(-1\.00\).*$', row_texts[1]))
+            return ok
+
         WebDriverWait(browser, WAIT_TIME, ignored_exceptions=ignore_exc).until(check)
