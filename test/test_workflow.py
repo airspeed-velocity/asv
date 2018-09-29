@@ -76,8 +76,8 @@ def generate_basic_conf(tmpdir, repo_subdir=''):
         'dvcs': 'git',
         'project': 'asv',
         'matrix': {
-            "docutils": [""],
-            "colorama": tools.COLORAMA_VERSIONS,
+            "asv_dummy_test_package_1": [""],
+            "asv_dummy_test_package_2": tools.DUMMY2_VERSIONS,
         },
     }
     if repo_subdir:
@@ -123,9 +123,11 @@ def test_run_publish(capfd, basic_conf):
     assert isfile(join(tmpdir, 'html', 'asv.css'))
 
     # Check parameterized test json data format
-    filename = glob.glob(join(tmpdir, 'html', 'graphs', 'arch-x86_64', 'branch-master',
-                              'colorama-' + tools.COLORAMA_VERSIONS[1],
-                              'cpu-Blazingly fast', 'docutils', 'machine-orangutan',
+    filename = glob.glob(join(tmpdir, 'html', 'graphs', 'arch-x86_64',
+                              'asv_dummy_test_package_1',
+                              'asv_dummy_test_package_2-' + tools.DUMMY2_VERSIONS[1],
+                              'branch-master',
+                              'cpu-Blazingly fast', 'machine-orangutan',
                               'os-GNU_Linux', 'python-*', 'ram-128GB',
                               'params_examples.time_skip.json'))[0]
     with open(filename, 'r') as fp:
@@ -270,8 +272,8 @@ def test_run_spec(basic_conf):
 
         expected = set(['machine.json'])
         for commit in expected_commits:
-            for psver in tools.COLORAMA_VERSIONS:
-                expected.add('{0}-{1}-py{2}-colorama{3}-docutils.json'.format(
+            for psver in tools.DUMMY2_VERSIONS:
+                expected.add('{0}-{1}-py{2}-asv_dummy_test_package_1-asv_dummy_test_package_2{3}.json'.format(
                     commit[:8], tool_name, pyver, psver))
 
         result_files = os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))
@@ -399,7 +401,7 @@ def test_run_append_samples(basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
     # Only one environment
-    conf.matrix['colorama'] = conf.matrix['colorama'][:1]
+    conf.matrix['asv_dummy_test_package_2'] = conf.matrix['asv_dummy_test_package_2'][:1]
 
     # Tests multiple calls to "asv run --append-samples"
     def run_it():

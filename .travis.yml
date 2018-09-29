@@ -82,6 +82,7 @@ install:
       export PATH=$HOME/miniconda3/bin:$PATH;
       conda update --yes conda;
       conda info
+      conda install --yes conda-build bzip2
       . $HOME/miniconda3/etc/profile.d/conda.sh  # enable conda bash function
       mv $HOME/miniconda3/bin/conda $HOME/miniconda3/bin/conda.real;
       echo -e '#!/bin/bash\n' > $HOME/miniconda3/bin/conda;
