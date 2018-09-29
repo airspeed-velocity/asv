@@ -621,7 +621,7 @@ def dummy_packages(request, monkeypatch):
     to_build = [('asv_dummy_test_package_1', DUMMY1_VERSION)]
     to_build += [('asv_dummy_test_package_2', ver) for ver in DUMMY2_VERSIONS]
 
-    tag = [PYTHON_VER1, PYTHON_VER2, to_build]
+    tag = [PYTHON_VER1, PYTHON_VER2, to_build, HAS_CONDA]
 
     with locked_cache_dir(request.config, "asv-wheels", timeout=900, tag=tag) as cache_dir:
         wheel_dir = os.path.abspath(join(six.text_type(cache_dir), 'wheels'))
@@ -647,12 +647,15 @@ def dummy_packages(request, monkeypatch):
             raise
 
         # Conda packages were installed in a local channel
-        wheel_dir_str = wheel_dir.replace("\\", "\\\\")
+        if not WIN:
+            wheel_dir_str = "file://{0}".format(wheel_dir)
+        else:
+            wheel_dir_str = wheel_dir
 
         with open(condarc, 'w') as f:
             f.write("channels:\n"
                     "- defaults\n"
-                    "- file://{0}".format(wheel_dir_str))
+                    "- {0}".format(wheel_dir_str))
 
 
 def _build_dummy_wheels(tmpdir, wheel_dir, to_build, build_conda=False):
@@ -683,11 +686,7 @@ def _build_dummy_wheels(tmpdir, wheel_dir, to_build, build_conda=False):
 def _build_dummy_conda_pkg(name, version, build_dir, dst):
     # Build fake conda packages for testing
 
-    subprocess.check_call([sys.executable, 'setup.py', 'sdist', '--formats', 'gztar'],
-                          cwd=build_dir)
-
-    sdist = os.path.abspath(join(build_dir, 'dist', '{0}-{1}.tar.gz'.format(name, version)))
-    sdist = sdist.replace("\\", "\\\\")
+    build_dir = os.path.abspath(build_dir)
 
     with open(join(build_dir, 'meta.yaml'), 'w') as f:
         f.write(textwrap.dedent("""\
@@ -695,7 +694,7 @@ def _build_dummy_conda_pkg(name, version, build_dir, dst):
           name: "{name}"
           version: "{version}"
         source:
-          url: "file://{sdist}"
+          path: {build_dir}
         build:
           number: 0
           script: "python -m pip install . --no-deps --ignore-installed "
@@ -708,7 +707,9 @@ def _build_dummy_conda_pkg(name, version, build_dir, dst):
         about:
           license: BSD
           summary: Dummy test package
-        """.format(name=name, version=version, sdist=sdist)))
+        """.format(name=name,
+                   version=version,
+                   build_dir=util.shlex_quote(build_dir))))
 
     conda = _find_conda()
 

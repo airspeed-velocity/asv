@@ -15,6 +15,7 @@ from asv import config
 from asv import environment
 from asv import util
 from asv.repo import get_repo
+from asv.util import shlex_quote as quote
 
 from .tools import (PYTHON_VER1, PYTHON_VER2, DUMMY1_VERSION, DUMMY2_VERSIONS,
                     WIN, HAS_PYPY, HAS_CONDA, HAS_VIRTUALENV, HAS_PYTHON_VER2,
@@ -588,13 +589,6 @@ def test_custom_commands(tmpdir):
     conf.repo = os.path.abspath(dvcs.path)
     conf.matrix = {}
     conf.build_cache_size = 0
-
-    try:
-        from shlex import quote
-    except ImportError:
-        # Py2
-        def quote(s):
-            return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
     conf.build_command = ["python {0} {{build_cache_dir}}".format(quote(build_py))]
     conf.install_command = ["python {0} {{env_dir}} {{build_cache_dir}}".format(quote(install_py))]
