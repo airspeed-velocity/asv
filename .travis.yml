@@ -109,3 +109,6 @@ after_script:
       $TRAVIS_PYTHON -m coverage xml;
       codecov;
     fi
+
+notifications:
+  email: false
