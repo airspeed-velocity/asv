@@ -1,17 +1,15 @@
 0.3.1 (unreleased)
 ------------------
 
-New Features
-^^^^^^^^^^^^
+Minor bugfixes and improvements.
 
-API Changes
-^^^^^^^^^^^
-
-Bug Fixes
-^^^^^^^^^
-
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- Detect also single-commit regressions, if significant. (#745)
+- In asv test suite, use dummy conda packages. (#738)
+- Use importlib instead of imp on Python 3. (#746)
+- Use a better regression "badness" measure. (#744)
+- Fix handling of benchmark suite import failures in forkserver and
+  benchmark discovery. (#743, #742)
+- Fix forkserver child process handling.
 
 
 0.3 (2018-09-09)
