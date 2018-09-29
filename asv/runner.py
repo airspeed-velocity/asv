@@ -729,6 +729,7 @@ class ForkServer(Spawner):
     def _stdout_reader(self):
         try:
             out = self.server_proc.stdout.read()
+            self.server_proc.stdout.close()
             out = out.decode('utf-8', 'replace')
         except Exception as exc:
             import traceback
