@@ -121,9 +121,8 @@ def locked_cache_dir(config, cache_key, timeout=900, tag=None):
     cache_dir = join(six.text_type(base_dir), 'cache')
 
     lock = LockFile(lockfile)
+    lock.acquire(timeout=timeout)
     try:
-        lock.acquire(timeout=timeout)
-
         # Clear cache dir contents if it was generated with different
         # asv version
         tag_fn = join(six.text_type(base_dir), 'tag.json')
