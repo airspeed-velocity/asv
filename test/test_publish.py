@@ -208,7 +208,7 @@ def generate_branched_result_dir(request, tmpdir):
             commit_values[commit] = i
 
         conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
-        conf.branches = ['master']
+        conf.branches = [master]
         repo = get_repo(conf)
 
         return conf, repo, commits
