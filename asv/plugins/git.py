@@ -47,8 +47,8 @@ class Git(Repo):
     @classmethod
     def url_match(cls, url):
         regexes = [
-            '^https?://.*?\.git$',
-            '^git@.*?\.git$']
+            r'^https?://.*?\.git$',
+            r'^git@.*?\.git$']
 
         for regex in regexes:
             if re.match(regex, url):

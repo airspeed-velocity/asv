@@ -15,7 +15,7 @@ Contributers:
 import re
 
 def json_minify(string, strip_space=True):
-    tokenizer = re.compile('"|(/\*)|(\*/)|(//)|\n|\r')
+    tokenizer = re.compile(r'"|(/\*)|(\*/)|(//)|\n|\r')
     in_string = False
     in_multi = False
     in_single = False

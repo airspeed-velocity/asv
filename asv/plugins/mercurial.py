@@ -80,9 +80,9 @@ class Hg(Repo):
     @classmethod
     def url_match(cls, url):
         regexes = [
-            '^hg\+https?://.*$',
-            '^https?://.*?\.hg$',
-            '^ssh://hg@.*$']
+            r'^hg\+https?://.*$',
+            r'^https?://.*?\.hg$',
+            r'^ssh://hg@.*$']
 
         for regex in regexes:
             if re.match(regex, url):
