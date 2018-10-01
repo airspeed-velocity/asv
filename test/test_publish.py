@@ -168,8 +168,52 @@ def generate_result_dir(request, tmpdir):
                 commit_values[commit] = value
         conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
         repo = get_repo(conf)
+
         return conf, repo, commits
     return _generate_result_dir
+
+@pytest.fixture(params=[
+    "git",
+    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib")),
+])
+def generate_branched_result_dir(request, tmpdir):
+    tmpdir = six.text_type(tmpdir)
+    dvcs_type = request.param
+
+    def _generate_branched_result_dir():
+        if dvcs_type == "git":
+            master = "master"
+        elif dvcs_type == "hg":
+            master = "default"
+
+        # from test_repo.py
+        dvcs = tools.generate_repo_from_ops(tmpdir, dvcs_type, [
+            ("commit", 1),
+            ("checkout", "stable", master),
+            ("commit", 2),
+            ("checkout", master),
+            ("commit", 3),
+            ("merge", "stable"),
+            ("commit", 4),
+            ("checkout", "stable"),
+            ("merge", master, "Merge master"),
+            ("commit", 5),
+            ("checkout", master),
+            ("commit", 6),
+        ])
+
+        commits = list(reversed(dvcs.get_branch_hashes()))
+        commit_values = {}
+        for i, commit in enumerate(commits):
+            commit_values[commit] = i
+
+        conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
+        conf.branches = ['master']
+        repo = get_repo(conf)
+
+        return conf, repo, commits
+    return _generate_branched_result_dir
+
 
 def _graph_path(dvcs_type):
     if dvcs_type == "git":
