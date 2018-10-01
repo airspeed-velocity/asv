@@ -232,8 +232,21 @@ def test_publish_range_spec(generate_result_dir):
     ):
         tools.run_asv_with_conf(conf, "publish", range_spec)
         data = util.load_json(join(conf.html_dir, 'index.json'))
+
         assert set(data['revision_to_hash'].values()) == expected
 
+@pytest.mark.parametrize('filter_commits', (False, True))
+def test_publish_filtered(filter_commits, generate_branched_result_dir):
+    conf, repo, commits = generate_branched_result_dir()
+
+    args = [] if filter_commits else ['--no-commit-filtering']
+    tools.run_asv_with_conf(conf, "publish", *args)
+
+    data = util.load_json(join(conf.html_dir, _graph_path(repo.dvcs)))
+    if filter_commits:
+        assert len(data) == 5
+    else:
+        assert len(data) == 6
 
 def test_regression_simple(generate_result_dir):
     conf, repo, commits = generate_result_dir(5 * [1] + 5 * [10])
