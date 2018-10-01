@@ -376,7 +376,7 @@ def test_benchmark_param_selection(basic_conf):
     tools.generate_test_repo(tmpdir, values=[(1, 2, 3)])
     tools.run_asv_with_conf(conf, 'run', 'master^!',
                             '--quick', '--show-stderr',
-                            '--bench', 'track_param_selection\(.*, 3\)',
+                            '--bench', r'track_param_selection\(.*, 3\)',
                             _machine_file=machine_file)
 
     def get_results():
@@ -389,7 +389,7 @@ def test_benchmark_param_selection(basic_conf):
 
     assert get_results() == [4, 'n/a', 5, 'n/a']
     tools.run_asv_with_conf(conf, 'run', '--show-stderr',
-                            '--bench', 'track_param_selection\(1, ',
+                            '--bench', r'track_param_selection\(1, ',
                             _machine_file=machine_file)
     assert get_results() == [4, 6, 5, 'n/a']
     tools.run_asv_with_conf(conf, 'run', '--show-stderr',

@@ -92,11 +92,11 @@ def test_discover_benchmarks(benchmarks_fixture):
 
     # benchmark param selection with regex
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
-                                       regex='track_param_selection\(.*, 3\)')
+                                       regex=r'track_param_selection\(.*, 3\)')
     assert list(b.keys()) == ['params_examples.track_param_selection']
     assert b._benchmark_selection['params_examples.track_param_selection'] == [0, 2]
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
-                                       regex='track_param_selection\(1, ')
+                                       regex=r'track_param_selection\(1, ')
     assert list(b.keys()) == ['params_examples.track_param_selection']
     assert b._benchmark_selection['params_examples.track_param_selection'] == [0, 1]
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
