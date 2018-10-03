@@ -125,7 +125,7 @@ class Conda(environment.Environment):
 
         # create a temporary environment.yml file
         # and use that to generate the env for benchmarking
-        env_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
+        env_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=".yml")
         try:
             env_file.write('name: {0}\n'
                            'channels:\n'.format(self.name))
