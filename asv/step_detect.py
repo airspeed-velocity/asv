@@ -1,21 +1,36 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 # -*- coding: utf-8 -*-
-r"""
-Regression detection in ASV is based on detecting stepwise changes in
-the graphs. The assumptions on the data are as follows: the curves are
-piecewise constant plus random noise. We don't know the variance of
-the noise nor the scaling of the data, but we assume the noise
-amplitude is constant in time.
+r"""Regression detection in ASV is based on detecting stepwise changes
+in the graphs. The assumptions on the data are as follows: the curves
+are piecewise constant plus random noise. We don't know the scaling of
+the data or the amplitude of the noise, but assume the relative weight
+of the noise amplitude is known for each data point.
 
-Luckily, step detection is a well-studied problem. In this
-implementation, we mainly follow a variant of the approach outlined in
-[Friedrich2008]_ and elsewhere. This provides a fast algorithm for
-solving the piecewise fitting problem
+ASV measures the noise amplitude of each data point, based on a number
+of samples. We use this information for weighting the different data
+points:
+
+.. math::
+
+   \sigma_j = \sigma \mathrm{CI}_{99} = \sigma / w_j
+
+i.e., we assume the uncertainty in each measurement point is
+proportional to the estimated confidence interval for each data point.
+Their inverses are taken as the relative weights ``w_j``. If ``w_j=0``
+or undefined, we replace it with the median weight, or with ``1`` if
+all are undefined. The step detection algorithm determines the
+absolute noise amplitude itself based on all available data, which is
+more robust than relying on the individual measurements.
+
+Step detection is a well-studied problem. In this implementation, we
+mainly follow a variant of the approach outlined in [Friedrich2008]_
+and elsewhere. This provides a fast algorithm for solving the
+piecewise weighted fitting problem
 
 .. math::
    :label: gamma-opt
 
-   \mathop{\mathrm{argmin}}_{k,\{j\},\{\mu\}} \gamma k + \sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} |y_i - \mu_r|
+   \mathop{\mathrm{argmin}}_{k,\{j\},\{\mu\}} \gamma k + \sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} w_i |y_i - \mu_r|
 
 The differences are: as we do not need exact solutions, we add
 additional heuristics to work around the :math:`{\mathcal O}(n^2)`
@@ -31,7 +46,6 @@ a variant of the information criterion problem discussed in
    ''Complexity Penalized M-Estimation: Fast Computation'',
    Journal of Computational and Graphical Statistics 17.1, 201-224 (2008).
    http://dx.doi.org/10.1198/106186008X285591
-   https://www.nativesystems.inf.ethz.ch/pub/Main/FelixFriedrichPublications/mestimation.pdf
 
 .. [Yao1988] Y.-C. Yao,
    ''Estimating the number of change-points via Schwarz criterion'',
@@ -72,7 +86,7 @@ We assume a Bayesian model:
    N
    \sigma^{-m}
    \exp(
-   -\sigma^{-1}\sum_{r=1}^k\sum_{i=j_{r-1}+1}^{j_r} |y_i - \mu_r|
+   -\sigma^{-1}\sum_{r=1}^k\sum_{i=j_{r-1}+1}^{j_r} w_i |y_i - \mu_r|
    )
 
 Here, :math:`y_i` are the :math:`m` data points at hand, :math:`k` is
@@ -101,16 +115,16 @@ doing this rigorously here, although it might be done in the literature.
 
 Consider first saddle-point integration over :math:`\{\mu\}`,
 expanding around the max-likelihood values :math:`\mu_r^*`.
-The max-likelihood estimates are medians of the data points in each interval.
+The max-likelihood estimates are the weighted medians of the data points in each interval.
 Change in the exponent when :math:`\mu` is perturbed is
 
 .. math::
    :label:
 
-   \Delta = -\sigma^{-1}\sum_{r=1}^k \sum_{i=j_{r-1}+1}^{j_r}[|y_i-\mu^*_r - \delta\mu_r| - |y_i-\mu^*_r|]
+   \Delta = -\sigma^{-1}\sum_{r=1}^k \sum_{i=j_{r-1}+1}^{j_r}w_i[|y_i-\mu^*_r - \delta\mu_r| - |y_i-\mu^*_r|]
 
 Note that :math:`\sum_{i=j_{r-1}+1}^{j_r}
-\mathrm{sgn}(y_i-\mu^*_r)=0`, so that response to small variations
+w_i\mathrm{sgn}(y_i-\mu^*_r)=0`, so that response to small variations
 :math:`\delta\mu_r` is :math:`m`-independent. For larger variations, we have
 
 .. math::
@@ -118,17 +132,17 @@ Note that :math:`\sum_{i=j_{r-1}+1}^{j_r}
 
    \Delta = -\sigma^{-1}\sum_{r=1}^k N_r(\delta \mu_r) |\delta \mu_r|
 
-where :math:`N_r(\delta\mu)=|\#\text{above}-\#\text{below}|` is the
-difference in the number of points in the interval above vs. below the
-perturbed median. Let us assume that in a typical case,
-:math:`N_r(\delta\mu)\sim{}m_r\delta\mu/\sigma` where :math:`m_r` is
-the number of points in the interval. This recovers a result we would
+where :math:`N_r(\delta\mu)=\sum_{i} w_i s_i` where :math:`s_i = \pm1` depending on whether
+:math:`y_i` is above or below the perturbed median. Let us assume that in a typical case,
+:math:`N_r(\delta\mu)\sim{}m_r\bar{W}_r^2\delta\mu/\sigma` where :math:`\bar{W}_r = \frac{1}{m_r}\sum_i w_i` is
+the average weight of the interval and :math:`m_r` the number of points in the interval.
+This recovers a result we would
 have obtained in the gaussian noise case
 
 .. math::
    :label:
 
-   \Delta \sim -\sigma^{-2} \sum_r m_r |\delta \mu_r|^2
+   \Delta \sim -\sigma^{-2} \sum_r W_r^2 m_r |\delta \mu_r|^2
 
 For the gaussian case, this would not have required any questionable assumptions.
 After integration over :math:`\{\delta\mu\}` we are left with
@@ -139,7 +153,7 @@ After integration over :math:`\{\delta\mu\}` we are left with
    \int(\ldots)
    \propto
    \int d\sigma \sum_{\{j\}}
-   (2\pi)^{k/2}\sigma^k [m_1\cdots m_k]^{-1/2}
+   (2\pi)^{k/2}\sigma^k [\bar{W}_1\cdots \bar{W}_k]^{-1} [m_1\cdots m_k]^{-1/2}
    P(\{y\}|\sigma,k,\{\mu_*\},\{j\})
    \pi(\sigma, \{j\}|k)
 
@@ -153,7 +167,7 @@ max-likelihood terms, and assume :math:`m_j^*\sim{}m/k`. Then,
    &\simeq
    C_1(m) + C_2(k)
    +
-   \frac{k}{2}\ln(2\pi) + k \ln \sigma_* - \frac{k}{2}\ln(m/k)
+   \frac{k}{2}\ln(2\pi) - \frac{k}{2} \ln(m/k) - k \ln \bar{W}
    +
    \ln P(\{y\}|\sigma_*,k,\{\mu_*\},\{j_*\})
    \\
@@ -178,7 +192,7 @@ Substituting in the max-likelihood value
 .. math::
    :label:
 
-    \sigma_* = \frac{1}{m} \sum_{r=1}^k\sum_{i=j_{r-1}^*+1}^{j_r^*} |y_i - \mu_r^*|
+    \sigma_* = \frac{1}{m} \sum_{r=1}^k\sum_{i=j_{r-1}^*+1}^{j_r^*} w_i|y_i - \mu_r^*|
 
 we get
 
@@ -191,17 +205,20 @@ we get
    -
    \frac{k}{2} \ln m
    -
-   m \ln\sum_{r=1}^k\sum_{i=j_{r-1}^*}^{j_r^*} |y_i - \mu_r^*|
+   m \ln\sum_{r=1}^k\sum_{i=j_{r-1}^*}^{j_r^*} w_i |y_i - \mu_r^*|
 
-This is now similar to :eq:`ic-form`, apart from numerical prefactors. The
-final fitting problem then becomes
+This is now similar to :eq:`ic-form`, apart from numerical prefactors.
+The final fitting problem then becomes
 
 .. math::
    :label: bic-form
 
-   \mathop{\mathrm{argmin}}_{k,\{j\},\{\mu\}} r(m) k + \ln\sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} |y_i - \mu_r|
+   \mathop{\mathrm{argmin}}_{k,\{j\},\{\mu\}} r(m) k + \ln\sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} w_i |y_i - \mu_r|
 
-with :math:`r(m) = \frac{\ln m}{2m}`. As we know this function
+with :math:`r(m) = \frac{\ln m}{2m}`.
+Note that it is invariant vs. rescaling of weights :math:`w_i\mapsto{}\alpha{}w_i`,
+i.e., the invariance of the original problem is retained.
+As we know this function
 :math:`r(m)` is not necessarily completely correct, and it seems doing
 the calculation rigorously requires more effort than can be justified
 by the requirements of the application, we now take a pragmatic view and
@@ -270,8 +287,9 @@ with sufficient accuracy we can in :eq:`bic-form` replace
    \ln \sigma \mapsto \ln(\sigma_0 + \sigma)
 
 Here, we fix a measurement accuracy floor with the following guess:
-``sigma_0 = 0.1 * min(abs(diff(mu)))`` and ``sigma_0 = 0.001 *
-abs(mu)`` when there is only a single interval.
+``sigma_0 = 0.1 * w0 * min(abs(diff(mu)))`` and ``sigma_0 = 0.001 * w0
+* abs(mu)`` when there is only a single interval. Here, ``w0`` is the
+median weight.
 
 Autocorrelated noise
 --------------------
