@@ -30,6 +30,18 @@ class GithubPages(Command):
             "--rewrite", action="store_true",
             help=("Rewrite gh-pages branch to contain only a single commit, "
                   "instead of adding a new commit"))
+        parser.add_argument(
+            "--first-parent", action="store_true", default=True, dest="first_parent",
+            help="""Use git's --first-parent or hg's --follow-first options for associating
+            commits with branches.  Each commit will be assigned to the first branch that
+            it occurred on, not to any later branches that may have that commit merged in.""")
+        parser.add_argument(
+            "--no-first-parent", action="store_false", dest="first_parent",
+            help="""Do not use git's --first-parent or hg's --follow-first options for
+            associating commits with branches.  Use this if you have merged older feature
+            branches into your main branch, and you want to show all the old commits in the
+            context of the new branch.  If you have commits that are not appearing in a
+            plot of your main branch, try this.""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -37,14 +49,15 @@ class GithubPages(Command):
 
     @classmethod
     def run_from_conf_args(cls, conf, args):
-        return cls.run(conf=conf, no_push=args.no_push, rewrite=args.rewrite)
+        return cls.run(conf=conf, no_push=args.no_push, rewrite=args.rewrite,
+                       first_parent=args.first_parent)
 
     @classmethod
-    def run(cls, conf, no_push, rewrite):
+    def run(cls, conf, no_push, rewrite, first_parent=True):
         git = util.which('git')
 
         # Publish
-        Publish.run(conf)
+        Publish.run(conf, first_parent=first_parent)
 
         cwd = os.path.abspath(os.getcwd())
 

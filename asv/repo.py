@@ -161,14 +161,14 @@ class Repo(object):
         """
         raise NotImplementedError()
 
-    def get_branch_commits(self, branch):
+    def get_branch_commits(self, branch, first_parent=True):
         """
         Returns the ordered list (last commit first) of all commits in
         `branch` following first parent in case of merge
         """
         raise NotImplementedError()
 
-    def get_new_branch_commits(self, branches, existing):
+    def get_new_branch_commits(self, branches, existing, first_parent=True):
         """
         Return a set of new commits on `branches` that are successors of all
         `existing` commits
@@ -176,7 +176,7 @@ class Repo(object):
         new = set()
         new_commits = []
         for branch in branches:
-            for commit in self.get_branch_commits(branch):
+            for commit in self.get_branch_commits(branch, first_parent=first_parent):
                 if commit in existing:
                     break
                 if commit not in new:
@@ -242,7 +242,7 @@ class NoRepository(Repo):
     def get_branch_commits(self, branch):
         self._raise_error()
 
-    def get_new_branch_commits(self, branches, existing):
+    def get_new_branch_commits(self, branches, existing, first_parent=True):
         self._raise_error()
 
 

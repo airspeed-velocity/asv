@@ -117,8 +117,10 @@ class Git(Repo):
             ['rev-list', '-n', '1', '--format=%at', hash],
             valid_return_codes=(0, 1), dots=False).strip().split()[-1]) * 1000
 
-    def get_hashes_from_range(self, range_spec):
-        args = ['rev-list', '--first-parent']
+    def get_hashes_from_range(self, range_spec, first_parent=True):
+        args = ['rev-list']
+        if first_parent:
+            args.append('--first-parent')
         if range_spec != "":
             args += range_spec.split()
         output = self._run_git(args, valid_return_codes=(0, 1), dots=False)
@@ -172,11 +174,12 @@ class Git(Repo):
     def get_date_from_name(self, name):
         return self.get_date(name + "^{commit}")
 
-    def get_branch_commits(self, branch):
-        return self.get_hashes_from_range(self.get_branch_name(branch))
+    def get_branch_commits(self, branch, first_parent=True):
+        return self.get_hashes_from_range(self.get_branch_name(branch), first_parent=first_parent)
 
     def get_revisions(self, commits):
         revisions = {}
+
         for i, commit in enumerate(self._run_git([
             "rev-list", "--all", "--date-order", "--reverse",
         ]).splitlines()):
