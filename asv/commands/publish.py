@@ -66,6 +66,18 @@ class Publish(Command):
             '--html-dir', '-o', default=None, help=(
                 "Optional output directory. Default is 'html_dir' "
                 "from asv config"))
+        parser.add_argument(
+            "--first-parent", action="store_true", default=True, dest="first_parent",
+            help="""Use git's --first-parent or hg's --follow-first options for associating
+            commits with branches.  Each commit will be assigned to the first branch that
+            it occurred on, not to any later branches that may have that commit merged in.""")
+        parser.add_argument(
+            "--no-first-parent", action="store_false", dest="first_parent",
+            help="""Do not use git's --first-parent or hg's --follow-first options for
+            associating commits with branches.  Use this if you have merged older feature
+            branches into your main branch, and you want to show all the old commits in the
+            context of the new branch.  If you have commits that are not appearing in a
+            plot of your main branch, try this.""")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -75,7 +87,8 @@ class Publish(Command):
     def run_from_conf_args(cls, conf, args):
         if args.html_dir is not None:
             conf.html_dir = args.html_dir
-        return cls.run(conf=conf, range_spec=args.range, pull=not args.no_pull)
+        return cls.run(conf=conf, range_spec=args.range, pull=not args.no_pull,
+                       first_parent=args.first_parent)
 
     @staticmethod
     def iter_results(conf, repo, range_spec=None):
@@ -91,7 +104,7 @@ class Publish(Command):
                 yield result
 
     @classmethod
-    def run(cls, conf, range_spec=None, pull=True):
+    def run(cls, conf, range_spec=None, pull=True, first_parent=True):
         params = {}
         graphs = GraphSet()
         machines = {}
@@ -160,7 +173,7 @@ class Publish(Command):
             revision_to_date = dict((r, hash_to_date[h]) for h, r in six.iteritems(revisions))
 
             branches = dict(
-                (branch, repo.get_branch_commits(branch))
+                (branch, repo.get_branch_commits(branch, first_parent=first_parent))
                 for branch in conf.branches)
 
         log.step()

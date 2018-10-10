@@ -170,9 +170,9 @@ class Hg(Repo):
     def get_date_from_name(self, name):
         return self.get_date(name)
 
-    def get_branch_commits(self, branch):
+    def get_branch_commits(self, branch, first_parent=True):
         return self.get_hashes_from_range("ancestors({0})".format(self.get_branch_name(branch)),
-                                          followfirst=True)
+                                          followfirst=first_parent)
 
     def get_revisions(self, commits):
         revisions = {}
