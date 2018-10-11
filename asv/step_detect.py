@@ -370,7 +370,7 @@ except ImportError:
 # Detecting regressions
 #
 
-def detect_steps(y):
+def detect_steps(y, w=None):
     """
     Detect steps in a (noisy) signal.
 
@@ -378,6 +378,9 @@ def detect_steps(y):
     ----------
     y : list of float, none or nan
         Single benchmark result series, with possible missing data
+    w : list of float, none or nan
+        Data point relative weights. Missing weights are set equal
+        to the median weight.
 
     Returns
     -------
@@ -401,8 +404,23 @@ def detect_steps(y):
         index_map[len(y_filtered)] = j
         y_filtered.append(x)
 
+    # Weights
+    if w is None:
+        w_filtered = [1]*len(y_filtered)
+    else:
+        w_valid = [ww for ww in w if ww is not None and ww == ww]
+        if w_valid:
+            w_median = median(w_valid)
+        else:
+            w_median = 1.0
+
+        w_filtered = list(w)
+        for j in range(len(w)):
+            if w[j] is None or w[j] != w[j]:
+                w_filtered[j] = w_median
+
     # Find piecewise segments
-    right, values, dists, gamma = solve_potts_autogamma(y_filtered, p=1)
+    right, values, dists, gamma = solve_potts_autogamma(y_filtered, w=w_filtered)
 
     # Extract the steps, mapping indices back etc.
     steps = []
@@ -478,7 +496,7 @@ def detect_regressions(steps, threshold=0):
 # Fitting piecewise constant functions to noisy data
 #
 
-def solve_potts(y, gamma, p=2, min_size=1, max_size=None,
+def solve_potts(y, w, gamma, min_size=1, max_size=None,
                 min_pos=None, max_pos=None, mu_dist=None):
     """Fit penalized stepwise constant function (Potts model) to data.
 
@@ -493,12 +511,7 @@ def solve_potts(y, gamma, p=2, min_size=1, max_size=None,
     programming to find an exact solution to the problem (within the
     constraints specified).
 
-    For p=2 norm, the performance is O(n**2), or
-    O((max_pos-min_pos)*(min_size-max_size+1)) if constrained.
-
-    For p=1 norm, it is O(n**2 log n) and the constants in front are
-    bigger, due to the somewhat sub-optimal (= in Python) way median
-    and absolute sum computations are done.
+    Computation work is ~ O(n**2 log n).
 
     Parameters
     ----------
@@ -543,16 +556,18 @@ def solve_potts(y, gamma, p=2, min_size=1, max_size=None,
     if min_pos is None:
         min_pos = 0
 
+    if len(y) != len(w):
+        raise ValueError("y and w must have same size")
+
     if max_pos is None:
         max_pos = len(y)
 
     if mu_dist is None:
-        mu_dist = get_mu_dist(y, p)
+        mu_dist = get_mu_dist(y, w)
 
     if max_size is None:
         max_size = len(y)
 
-    mu_dist.precompute(max_size, min_pos, max_pos)
     mu, dist = mu_dist.mu, mu_dist.dist
 
     if min_size >= max_pos - min_pos:
@@ -608,7 +623,7 @@ def solve_potts(y, gamma, p=2, min_size=1, max_size=None,
     return right, values, dists
 
 
-def solve_potts_autogamma(y, beta=None, **kw):
+def solve_potts_autogamma(y, w, beta=None, **kw):
     """Solve Potts problem with automatically determined gamma.
 
     The optimal value is determined by minimizing the information measure::
@@ -631,7 +646,7 @@ def solve_potts_autogamma(y, beta=None, **kw):
     if n == 0:
         return [], [], [], None
 
-    mu_dist = get_mu_dist(y, kw.get('p', 2))
+    mu_dist = get_mu_dist(y, w)
     mu, dist = mu_dist.mu, mu_dist.dist
 
     if beta is None:
@@ -651,7 +666,7 @@ def solve_potts_autogamma(y, beta=None, **kw):
 
     def f(x):
         gamma = gamma_0 * math.exp(x)
-        r, v, d = solve_potts_approx(y, gamma=gamma, mu_dist=mu_dist, **kw)
+        r, v, d = solve_potts_approx(y, w, gamma=gamma, mu_dist=mu_dist, **kw)
 
         # MLE fit noise correlation
         def sigma_star(rights, values, rho):
@@ -702,7 +717,7 @@ def solve_potts_autogamma(y, beta=None, **kw):
     return best_r[0], best_v[0], best_d[0], best_gamma[0]
 
 
-def solve_potts_approx(y, gamma=None, p=2, min_size=1, **kw):
+def solve_potts_approx(y, w, gamma=None, min_size=1, **kw):
     """
     Fit penalized stepwise constant function (Potts model) to data
     approximatively, in linear time.
@@ -718,7 +733,7 @@ def solve_potts_approx(y, gamma=None, p=2, min_size=1, **kw):
 
     mu_dist = kw.get('mu_dist')
     if mu_dist is None:
-        mu_dist = get_mu_dist(y, p=p)
+        mu_dist = get_mu_dist(y, w)
         kw['mu_dist'] = mu_dist
 
     if gamma is None:
@@ -730,8 +745,7 @@ def solve_potts_approx(y, gamma=None, p=2, min_size=1, **kw):
     else:
         max_size = min_size + 50
 
-    right, values, dists = solve_potts(y, gamma, p=p, min_size=min_size, max_size=max_size,
-                                       **kw)
+    right, values, dists = solve_potts(y, w, gamma, min_size=min_size, max_size=max_size, **kw)
     return merge_pieces(gamma, right, values, dists, mu_dist, max_size=max_size)
 
 
@@ -805,8 +819,8 @@ class L1Dist(object):
     """
     Fast computations for::
 
-        mu(l, r) = median(y[l:r+1])
-        dist(l, r) = sum(abs(x - mu(l, r)) for x in y[l:r+1])
+        mu(l, r) = median(y[l:r+1], weights=w[l:r+1])
+        dist(l, r) = sum(w*abs(x - mu(l, r)) for x, w in zip(y[l:r+1], weights[l:r+1]))
 
     We do not use here an approach that has asymptotically optimal
     performance; at least O(n**2 * log(n)) would be achievable, whereas
@@ -816,13 +830,14 @@ class L1Dist(object):
     prefactors, which for Python means minimal code.
 
     """
-    def __init__(self, y):
+    def __init__(self, y, w):
         self.y = y
+        self.w = w
 
         class mu_dict(collections.defaultdict):
             def __missing__(self, a):
                 l, r = a
-                v = median(y[l:r+1])
+                v = weighted_median(y[l:r+1], w[l:r+1])
                 self[a] = v
                 return v
 
@@ -832,7 +847,7 @@ class L1Dist(object):
             def __missing__(self, a):
                 l, r = a
                 m = mu[l, r]
-                v = sum(abs(x - m) for x in y[l:r+1])
+                v = sum(wx*abs(x - m) for x, wx in zip(y[l:r+1], w[l:r+1]))
                 self[a] = v
                 return v
 
@@ -845,80 +860,12 @@ class L1Dist(object):
     def dist(self, *a):
         return self.dist_memo[a]
 
-    def precompute(self, max_size, min_pos, max_pos):
-        y = self.y
 
-        if (min_pos, min_pos+max_size) in self.mu_memo:
-            # The entries were likely already precomputed
-            return
-
-        # Precompute interval medians. Does not matter much for
-        # solve_potts_approx, but doesn't hurt either.
-        for j in range(min_pos, max_pos):
-            median_dev = rolling_median_dev(y[j:min(max_pos,(j+(max_size+1)))])
-            for p, (m, d) in enumerate(median_dev):
-                if j+p > j+max_size:
-                    break
-                self.mu_memo[j,j+p] = m
-                self.dist_memo[j,j+p] = d
-
-
-class L2Dist(object):
-    """
-    Fast computations for::
-
-        mu(l, r) = mean(y[l:r+1])
-        dist(l, r) = sum((x - mu(l, r))**2 for x in y[l:r+1])
-
-    """
-    def __init__(self, y):
-        self.y = y
-        self.cum_y = None
-        self.cum_y2 = None
-        self.precompute(None, None, None)
-
-    def precompute(self, max_size, min_pos, max_pos):
-        if self.cum_y is not None:
-            return
-
-        cum_y = [0]
-        cum_y2 = [0]
-        s = 0
-        s2 = 0
-        for x in self.y:
-            s += x
-            s2 += x**2
-            cum_y.append(s)
-            cum_y2.append(s2)
-
-        self.cum_y = cum_y
-        self.cum_y2 = cum_y2
-
-    def mu(self, l, r):
-        """
-        mean(y[l:r+1])
-        """
-        return (self.cum_y[r+1] - self.cum_y[l]) / (r + 1 - l)
-
-    def dist(self, l, r):
-        """
-        sum((y[l:r+1] - mean(y[l:r+1]))**2)
-        """
-        # This way to compute it is in principle susceptible
-        # to rounding errors, but we have to be O(1) fast here
-        return abs(self.cum_y2[r+1] - self.cum_y2[l] - (self.cum_y[r+1] - self.cum_y[l])**2 / (r + 1 - l))
-
-
-def get_mu_dist(y, p):
-    if p == 1:
-        if _rangemedian is not None:
-            return _rangemedian.RangeMedian(y)
-        else:
-            return L1Dist(y)
-    elif p == 2:
-        return L2Dist(y)
+def get_mu_dist(y, w):
+    if _rangemedian is not None:
+        return _rangemedian.RangeMedian(y, w)
     else:
-        raise ValueError("invalid value for p")
+        return L1Dist(y, w)
 
 
 def median(items):
@@ -967,6 +914,29 @@ def rolling_median_dev(items):
             yield ((max_heap[0] - min_heap[0])/2, d)
     except StopIteration:
         return
+
+
+def weighted_median(y, w):
+    """
+    Compute weighted median of `y` with weights `w`.
+    """
+    items = sorted(zip(y, w))
+    midpoint = sum(w) / 2
+
+    yvals = []
+    wsum = 0
+
+    for yy, ww in items:
+        wsum += ww
+        if wsum > midpoint:
+            yvals.append(yy)
+            break
+        elif wsum == midpoint:
+            yvals.append(yy)
+    else:
+        yvals = y
+
+    return sum(yvals) / len(yvals)
 
 
 def golden_search(f, a, b, xatol=1e-6, ftol=1e-8, expand_bounds=False):
