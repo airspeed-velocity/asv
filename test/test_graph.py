@@ -11,27 +11,27 @@ from asv.graph import Graph, RESAMPLED_POINTS, make_summary_graph
 
 def test_graph_single():
     vals = [
-        (1, 1),
-        (2, 2),
-        (3, 3),
-        (4, 4),
-        (5, 5),
-        (6, None),
-        (7, float('nan')),
+        (1, 1, None),
+        (2, 2, 1),
+        (3, 3, None),
+        (4, 4, 7),
+        (5, 5, None),
+        (6, None, None),
+        (7, float('nan'), None),
     ]
 
     # Should give same data back, excluding missing values at edges
     g = Graph('foo', {})
-    for k, v in vals:
-        g.add_data_point(k, v)
+    for k, v, dv in vals:
+        g.add_data_point(k, v, dv)
     data = g.get_data()
     assert data == vals[:-2]
 
     # Should average duplicate values
     g = Graph('foo', {})
     g.add_data_point(4, 3)
-    for k, v in vals:
-        g.add_data_point(k, v)
+    for k, v, dv in vals:
+        g.add_data_point(k, v, dv)
     g.add_data_point(4, 5)
     data = g.get_data()
     assert data[3][0] == 4
@@ -39,27 +39,28 @@ def test_graph_single():
 
     # Summary graph should be the same as the main graph
     g = Graph('foo', {})
-    for k, v in vals:
-        g.add_data_point(k, v)
+    for k, v, dv in vals:
+        g.add_data_point(k, v, dv)
     g = make_summary_graph([g])
     data = g.get_data()
     assert len(data) == len(vals) - 2
     for v, d in zip(vals, data):
-        kv, xv = v
-        kd, xd = d
+        kv, xv, dv = v
+        kd, xd, dd = d
         assert kv == kd
+        assert dd is None
         assert abs(xv - xd) < 1e-10
 
 
 def test_graph_multi():
     vals = [
-        (0, [None, None, None]),
-        (1, [1, None, float('nan')]),
-        (2, [2,    5, 4]),
-        (3, [3,    4, -60]),
-        (4, [4,    3, 2]),
-        (5, [None, 2, None]),
-        (6, [6,    1, None])
+        (0, [None, None, None], [None]*3),
+        (1, [1, None, float('nan')], [None]*3),
+        (2, [2,    5, 4], [1]*3),
+        (3, [3,    4, -60], [None]*3),
+        (4, [4,    3, 2], [None]*3),
+        (5, [None, 2, None], [None]*3),
+        (6, [6,    1, None], [None]*3)
     ]
 
     filled_vals = [
@@ -73,17 +74,17 @@ def test_graph_multi():
 
     # Should give same data back, with missing data at edges removed
     g = Graph('foo', {})
-    for k, v in vals:
-        g.add_data_point(k, v)
+    for k, v, dv in vals:
+        g.add_data_point(k, v, dv)
     data = g.get_data()
-    assert data[0] == (1, [1, None, None])
+    assert data[0] == (1, [1, None, None], [None, None, None])
     assert data[1:] == vals[2:]
 
     # Should average duplicate values
     g = Graph('foo', {})
     g.add_data_point(4, [1, 2, 3])
-    for k, v in vals:
-        g.add_data_point(k, v)
+    for k, v, dv in vals:
+        g.add_data_point(k, v, dv)
     g.add_data_point(4, [3, 2, 1])
     data = g.get_data()
     assert data[3][0] == 4
@@ -93,14 +94,14 @@ def test_graph_multi():
 
     # The summary graph is obtained by geometric mean of filled data
     g = Graph('foo', {})
-    for k, v in vals:
-        g.add_data_point(k, v)
+    for k, v, dv in vals:
+        g.add_data_point(k, v, dv)
     g = make_summary_graph([g])
     data = g.get_data()
 
     for v, d in zip(filled_vals, data):
         kv, xvs = v
-        kd, xd = d
+        kd, xd, dd = d
         assert kv == kd
 
         # geom mean, with some sign convention
@@ -112,10 +113,10 @@ def test_graph_multi():
     g0 = Graph('foo', {})
     g1 = Graph('foo', {})
     g2 = Graph('foo', {})
-    for k, v in vals:
-        g0.add_data_point(k, v)
-        g1.add_data_point(k, v[0])
-        g2.add_data_point(k, v[1:])
+    for k, v, dv in vals:
+        g0.add_data_point(k, v, dv)
+        g1.add_data_point(k, v[0], dv[0])
+        g2.add_data_point(k, v[1:], dv[1:])
 
     data0 = make_summary_graph([g0]).get_data()
     data = make_summary_graph([g1, g2]).get_data()
@@ -159,7 +160,7 @@ def test_nan():
     g.add_data_point(3, 3)
     g.add_data_point(4, float('nan'))
     data = g.get_data()
-    assert data == [(1, 1), (2, 2), (3, 3)]
+    assert data == [(1, 1, None), (2, 2, None), (3, 3, None)]
 
     g = Graph('foo', {})
     g.add_data_point(1, None)
@@ -168,7 +169,7 @@ def test_nan():
     g.add_data_point(3, [float('nan'), float('nan')])
     g.add_data_point(4, [None, float('nan')])
     data = g.get_data()
-    assert data == [(1, [1, None]), (2, [2, 2])]
+    assert data == [(1, [1, None], [None, None]), (2, [2, 2], [None, None])]
 
 
 def test_summary_graph():
