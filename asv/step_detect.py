@@ -408,16 +408,20 @@ def detect_steps(y, w=None):
     if w is None:
         w_filtered = [1]*len(y_filtered)
     else:
+        # Fill-in and normalize weights
         w_valid = [ww for ww in w if ww is not None and ww == ww]
         if w_valid:
             w_median = median(w_valid)
+            if w_median == 0:
+                w_median = 1.0
         else:
             w_median = 1.0
 
-        w_filtered = list(w)
-        for j in range(len(w)):
-            if w[j] is None or w[j] != w[j]:
-                w_filtered[j] = w_median
+        w_filtered = [1.0]*len(y_filtered)
+        for j in range(len(w_filtered)):
+            jj = index_map[j]
+            if w[jj] is not None and w[jj] == w[jj]:
+                w_filtered[j] = w[jj] / w_median
 
     # Find piecewise segments
     right, values, dists, gamma = solve_potts_autogamma(y_filtered, w=w_filtered)
@@ -636,9 +640,9 @@ def solve_potts_autogamma(y, w, beta=None, **kw):
     Parameters
     ----------
     beta : float or 'bic'
-         Penalty parameter. Default is 5*ln(n)/n, similar to Bayesian
+         Penalty parameter. Default is 4*ln(n)/n, similar to Bayesian
          information criterion for gaussian model with unknown variance
-         assuming 5 DOF per breakpoint.
+         assuming 4 DOF per breakpoint.
 
     """
     n = len(y)
