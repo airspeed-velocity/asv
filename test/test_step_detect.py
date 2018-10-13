@@ -132,6 +132,44 @@ def test_zero_variance():
 
 
 @pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
+def test_weighted():
+    t = np.arange(100)
+    y0 = (+ 0.4 * (t >= 5)
+          + 0.9 * (t >= 10)
+          - 0.2 * (t >= 20)
+          + 0.2 * (t >= 50)
+          + 1.1 * (t >= 70))
+    y = y0 + 0.05 * np.random.rand(y0.size)
+
+    y = y.tolist()
+    w = [1]*len(y)
+
+    y[15] = 2
+    right, values, dists = solve_potts(y, w=w, gamma=0.1)
+    assert right == [5, 10, 15, 16, 20, 50, 70, 100]
+
+    steps = detect_steps(y, w=w)
+    steps_pos = [s[0] for s in steps]
+    assert steps_pos == [0, 5, 10, 15, 16, 20, 50, 70]
+
+    w[15] = 0.1
+    right, values, dists = solve_potts(y, w=w, gamma=0.1)
+    assert right == [5, 10, 20, 50, 70, 100]
+
+    steps = detect_steps(y, w=w)
+    steps_pos = [s[0] for s in steps]
+    assert steps_pos == [0, 5, 10, 20, 50, 70]
+
+    # Missing weights and data should be handled properly
+    y[35] = None
+    w[23] = None
+
+    steps = detect_steps(y, w=w)
+    steps_pos = [s[0] for s in steps]
+    assert steps_pos == [0, 5, 10, 20, 50, 70]
+
+
+@pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
 def test_detect_regressions(use_rangemedian):
     try:
         np.random.seed(1234)
@@ -220,6 +258,7 @@ def test_l1dist(use_rangemedian):
     datasets = [
         ([1, 1, 10, 3, 5, 1, -16, -3, 4, 9], [1]*10),
         ([random.gauss(0, 1) for j in range(50)], [1]*50),
+        ([1, 2, 3, 4], [1, 2, 1, 2])
     ]
 
     def median_iter(y, w):
