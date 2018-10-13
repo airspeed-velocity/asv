@@ -19,6 +19,7 @@ from ..machine import iter_machine_files
 from ..repo import get_repo
 from ..results import iter_results
 from ..publishing import OutputPublisher
+from .. import statistics
 from .. import util
 from .. import __version__
 
@@ -175,8 +176,11 @@ class Publish(Command):
                     b_params = b['params']
 
                     result = results.get_result_value(key, b_params)
+                    err = [statistics.get_weight(s)
+                           for s in results.get_result_stats(key, b_params)]
                     if not b_params:
                         result = result[0]
+                        err = err[0]
 
                     benchmark_names.add(key)
 
@@ -200,7 +204,7 @@ class Publish(Command):
 
                         # Create graph
                         graph = graphs.get_graph(key, cur_params)
-                        graph.add_data_point(revisions[results.commit_hash], result)
+                        graph.add_data_point(revisions[results.commit_hash], result, err)
 
             # Get the parameter sets for all graphs
             graph_param_list = []

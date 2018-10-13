@@ -108,6 +108,7 @@ class Graph(object):
         self.benchmark_name = benchmark_name
         self.params = params
         self.data_points = {}
+        self.data_errors = {}
 
         self.path = self.get_file_path(self.params, benchmark_name)
         self.n_series = None
@@ -136,7 +137,7 @@ class Graph(object):
         parts.append(util.sanitize_filename(benchmark_name))
         return os.path.join(*parts)
 
-    def add_data_point(self, revision, value):
+    def add_data_point(self, revision, value, err=None):
         """
         Add a data point to the graph.
 
@@ -148,11 +149,17 @@ class Graph(object):
         value : float or list
             The value(s) to plot in the benchmark.
 
+        err : float or list or None
+            Errors corresponding to the values.
+            Missing estimates are indicated with None.
+
         """
         self.data_points.setdefault(revision, [])
+        self.data_errors.setdefault(revision, [])
         if not is_na(value):
             if not hasattr(value, '__len__'):
                 value = [value]
+                err = [err]
             else:
                 self.scalar_series = False
 
@@ -161,11 +168,15 @@ class Graph(object):
             elif len(value) != self.n_series:
                 raise ValueError("Mismatching number of data series in graph")
 
+            if err is None:
+                err = [None]*len(value)
+
             self.data_points[revision].append(value)
+            self.data_errors[revision].append(err)
 
     def get_data(self):
         """
-        Get the sorted and reduced data.
+        Get the sorted and reduced data and errors.
         """
 
         if self.n_series is None:
@@ -179,8 +190,11 @@ class Graph(object):
                     for j in xrange(self.n_series)]
 
         # Average data over commit log
-        val = [(k, mean_axis0(v)) for (k, v) in
-               six.iteritems(self.data_points)]
+        val = []
+        for k in six.iterkeys(self.data_points):
+            v = mean_axis0(self.data_points[k])
+            dv = mean_axis0(self.data_errors[k])
+            val.append((k, v, dv))
         val.sort()
 
         # Discard missing data at edges
@@ -200,7 +214,7 @@ class Graph(object):
 
         # Single-element series
         if self.scalar_series:
-            val = [(k, v[0]) for k, v in val]
+            val = [(k, v[0], dv[0]) for k, v, dv in val]
 
         return val
 
@@ -246,7 +260,7 @@ class Graph(object):
         if self.scalar_series:
             items = [val]
         else:
-            items = [[(v[0], v[1][j]) for v in val] for j in range(self.n_series)]
+            items = [[(v[0], v[1][j], v[2][j]) for v in val] for j in range(self.n_series)]
 
         if pool is None:
             self._steps = [_compute_graph_steps(item, reraise=False) for item in items]
@@ -285,8 +299,9 @@ def _compute_graph_steps(data, reraise=True):
     try:
         x = [d[0] for d in data]
         y = [d[1] for d in data]
+        dy = [d[2] for d in data]
 
-        steps = step_detect.detect_steps(y)
+        steps = step_detect.detect_steps(y, dy)
         new_steps = []
 
         for left, right, cur_val, cur_min, cur_err in steps:
@@ -391,7 +406,7 @@ def _combine_graph_data(graphs):
 
     for graph in graphs:
         series = graph.get_data()
-        for k, v in series:
+        for k, v, dv in series:
             prev = all_data.get(k, template)
             if graph.scalar_series:
                 v = [v]
