@@ -66,12 +66,13 @@ def test_is_different():
     np.random.seed(1)
 
     # Smoke test is_different
-    for true_mean, n, significant in [(0.05, 10, False), (0.05, 100, True), (0.1, 10, True)]:
+    for true_mean, n, significant in [(0.01, 10, False), (0.05, 100, True), (0.1, 10, True)]:
         samples_a = 0 + 0.1 * np.random.rand(n)
         samples_b = true_mean + 0.1 * np.random.rand(n)
         result_a, stats_a = statistics.compute_stats(samples_a, 1)
         result_b, stats_b = statistics.compute_stats(samples_b, 1)
-        assert statistics.is_different(stats_a, stats_b) == significant
+        assert statistics.is_different(None, None, stats_a, stats_b) == significant
+        assert statistics.is_different(samples_a, samples_b, stats_a, stats_b) == significant
 
 
 def _check_ci(estimator, sampler, nsamples=300):

@@ -64,21 +64,22 @@ def _isna(value):
     return value is None or value != value
 
 
-def _is_result_better(a, b, a_stats, b_stats, factor, use_stats=True):
+def _is_result_better(a, b, a_ss, b_ss, factor, use_stats=True):
     """
     Check if result 'a' is better than 'b' by the given factor,
     possibly taking confidence intervals into account.
 
     """
 
-    if use_stats and a_stats and b_stats and (
-            a_stats.get('repeat', 0) != 1 and b_stats.get('repeat', 0) != 1):
+    if use_stats and a_ss and b_ss and a_ss[0] and b_ss[0] and (
+            a_ss[0].get('repeat', 0) != 1 and b_ss[0].get('repeat', 0) != 1):
         # Return False if estimates don't differ.
         #
         # Special-case the situation with only one sample, in which
         # case we do the comparison only based on `factor` as there's
         # not enough data to do statistics.
-        if not statistics.is_different(a_stats, b_stats):
+        if not statistics.is_different(a_ss[1], b_ss[1],
+                                       a_ss[0], b_ss[0]):
             return False
 
     return a < b / factor
@@ -178,8 +179,8 @@ class Compare(Command):
                     commit_names=None):
         results_1 = {}
         results_2 = {}
-        stats_1 = {}
-        stats_2 = {}
+        ss_1 = {}
+        ss_2 = {}
         versions_1 = {}
         versions_2 = {}
         units = {}
@@ -198,9 +199,10 @@ class Compare(Command):
                     params = result.get_result_params(key)
                     result_value = result.get_result_value(key, params)
                     result_stats = result.get_result_stats(key, params)
+                    result_samples = result.get_result_samples(key, params)
                     result_version = result.benchmark_version.get(key)
-                    yield (key, params, result_value, result_stats, result_version,
-                           result.params['machine'], result.env_name)
+                    yield (key, params, result_value, result_stats, result_samples,
+                           result_version, result.params['machine'], result.env_name)
 
         if resultset_1 is None:
             resultset_1 = results_default_iter(hash_1)
@@ -210,22 +212,22 @@ class Compare(Command):
 
         machine_env_names = set()
 
-        for key, params, value, stats, version, machine, env_name in resultset_1:
+        for key, params, value, stats, samples, version, machine, env_name in resultset_1:
             machine_env_name = "{}/{}".format(machine, env_name)
             machine_env_names.add(machine_env_name)
-            for name, value, stats in unroll_result(key, params, value, stats):
+            for name, value, stats, samples in unroll_result(key, params, value, stats, samples):
                 units[(name, machine_env_name)] = benchmarks.get(key, {}).get('unit')
                 results_1[(name, machine_env_name)] = value
-                stats_1[(name, machine_env_name)] = stats
+                ss_1[(name, machine_env_name)] = (stats, samples)
                 versions_1[(name, machine_env_name)] = version
 
-        for key, params, value, stats, version, machine, env_name in resultset_2:
+        for key, params, value, stats, samples, version, machine, env_name in resultset_2:
             machine_env_name = "{}/{}".format(machine, env_name)
             machine_env_names.add(machine_env_name)
-            for name, value, stats in unroll_result(key, params, value, stats):
+            for name, value, stats, samples in unroll_result(key, params, value, stats, samples):
                 units[(name, machine_env_name)] = benchmarks.get(key, {}).get('unit')
                 results_2[(name, machine_env_name)] = value
-                stats_2[(name, machine_env_name)] = stats
+                ss_2[(name, machine_env_name)] = (stats, samples)
                 versions_2[(name, machine_env_name)] = version
 
         if len(results_1) == 0:
@@ -265,13 +267,13 @@ class Compare(Command):
             else:
                 time_2 = float("nan")
 
-            if benchmark in stats_1 and stats_1[benchmark]:
-                err_1 = statistics.get_err(time_1, stats_1[benchmark])
+            if benchmark in ss_1 and ss_1[benchmark][0]:
+                err_1 = statistics.get_err(time_1, ss_1[benchmark][0])
             else:
                 err_1 = None
 
-            if benchmark in stats_2 and stats_2[benchmark]:
-                err_2 = statistics.get_err(time_2, stats_2[benchmark])
+            if benchmark in ss_2 and ss_2[benchmark][0]:
+                err_2 = statistics.get_err(time_2, ss_2[benchmark][0])
             else:
                 err_2 = None
 
@@ -313,13 +315,13 @@ class Compare(Command):
                 color = 'default'
                 mark = ' '
             elif _is_result_better(time_2, time_1,
-                                   stats_2.get(benchmark), stats_1.get(benchmark),
+                                   ss_2.get(benchmark), ss_1.get(benchmark),
                                    factor, use_stats=use_stats):
                 color = 'green'
                 mark = '-'
                 improved = True
             elif _is_result_better(time_1, time_2,
-                                   stats_1.get(benchmark), stats_2.get(benchmark),
+                                   ss_1.get(benchmark), ss_2.get(benchmark),
                                    factor, use_stats=use_stats):
                 color = 'red'
                 mark = '+'

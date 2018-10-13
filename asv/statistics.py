@@ -9,7 +9,7 @@ from __future__ import (absolute_import, division, print_function,
 import math
 import operator
 
-from .util import inf, nan
+from .util import inf, nan, is_na
 
 
 def compute_stats(samples, number):
@@ -88,23 +88,39 @@ def get_err(result, stats):
     return (b - a)/2
 
 
-def is_different(stats_a, stats_b):
+def is_different(samples_a, samples_b, stats_a, stats_b, p_threshold=0.002):
     """Check whether the samples are statistically different.
 
-    This is a pessimistic check --- if it returns True, then the
-    difference is statistically significant. If it returns False,
-    there might still might be difference.
+    If sample data is not provided, or the sample is too small, falls
+    back to a pessimistic CI-based check. If it returns True, then the
+    difference is statistically significant. If it returns False, it
+    might or might not be statistically significant.
 
     Parameters
     ----------
     samples_a, samples_b
         Input samples
-    p : float, optional
-        Threshold p-value
+    stats_a, stats_b
+        Input stats data
 
     """
 
-    # If confidence intervals overlap, reject
+    if samples_a is not None and samples_b is not None:
+        # Raw data present: Mann-Whitney U test, but only if there's
+        # enough data so that the test can return True
+        a = [x for x in samples_a if not is_na(x)]
+        b = [x for x in samples_b if not is_na(x)]
+
+        p_min = 1 / binom(len(a) + len(b), min(len(a), len(b)))
+        if p_min < p_threshold:
+            _, p = mann_whitney_u(a, b)
+            return p < p_threshold
+
+    # If confidence intervals overlap, reject.
+    # Corresponds to a test with ill-specified threshold p-value,
+    # which generally can be significantly smaller than p <= 0.01
+    # depending on the actual data. For normal test (known variance),
+    # 0.00027 <= p <= 0.01.
     ci_a = stats_a['ci_99']
     ci_b = stats_b['ci_99']
 
