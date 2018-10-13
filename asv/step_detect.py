@@ -606,6 +606,8 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
                     B[r+1-i0] = b
                     p[r-i0] = l - 1
 
+            mu_dist.cleanup_cache()
+
     # Routine "Segmentation from partition" in [1]
     # Convert interval representation computed above
     # to a list of intervals and values.
@@ -863,6 +865,14 @@ class L1Dist(object):
 
     def dist(self, *a):
         return self.dist_memo[a]
+
+    def cleanup_cache(self):
+        # Reset cache if it is too big
+        if len(self.mu_memo) < 500000:
+            return
+
+        self.mu_memo.clear()
+        self.dist_memo.clear()
 
 
 def get_mu_dist(y, w):
