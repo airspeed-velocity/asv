@@ -349,7 +349,7 @@ Making use of measured variance
 -------------------------------
 
 ``asv`` measures also variance in the timings.  This information is
-currently not used in the step detection, although it could be used.
+currently used to provide relative data weighting (see above).
 
 """
 
