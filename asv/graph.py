@@ -195,6 +195,7 @@ class Graph(object):
             v = mean_axis0(self.data_points[k])
             dv = mean_axis0(self.data_errors[k])
             val.append((k, v, dv))
+            del v, dv
         val.sort()
 
         # Discard missing data at edges
