@@ -7,6 +7,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import math
+import operator
 
 from .util import inf, nan
 
@@ -210,6 +211,140 @@ def quantile(x, q):
     return m
 
 
+_mann_whitney_u_memo = {}
+
+def mann_whitney_u(x, y, method='auto'):
+    """
+    Mann-Whitney U test
+
+    Ties are handled conservatively, returning the least significant
+    tie breaking.
+
+    Parameters
+    ----------
+    x, y : list of float
+        Samples to test
+    method : {'auto', 'exact', 'normal'}
+        Whether to compute p-value exactly of via normal approximation.
+        The option 'auto' switches to approximation for sample size > 20.
+
+    Returns
+    -------
+    u : int
+        U-statistic
+    p : float
+        p-value for two-sided alternative
+
+    References
+    ----------
+    .. [1] Mann & Whitney, Ann. Math. Statist. 18, 50 (1947).
+    .. [2] Gibbons & Chakraborti, "Nonparametric statistical inference". (2003)
+
+    """
+    memo = _mann_whitney_u_memo
+    if len(memo) > 100000:
+        memo.clear()
+
+    m = len(x)
+    n = len(y)
+
+    if method == 'auto':
+        if max(m, n) > 20:
+            method = 'normal'
+        else:
+            method = 'exact'
+
+    u, ties = mann_whitney_u_u(x, y)
+
+    # Conservative tie breaking
+    if u <= m*n//2 and u + ties >= m*n//2:
+        ties = m*n//2 - u
+
+    ux1 = min(u, m*n - u)
+    ux2 = min(u + ties, m*n - (u + ties))
+
+    if ux1 >= ux2:
+        ux = ux1
+    else:
+        u = u + ties
+        ux = ux2
+
+    # Get p-value
+    if method == 'exact':
+        p1 = mann_whitney_u_cdf(m, n, ux, memo)
+        p2 = 1.0 - mann_whitney_u_cdf(m, n, m*n - ux, memo)
+        p = p1 + p2
+    elif method == 'normal':
+        N = m + n
+        var = m*n*(N + 1) / 12
+        z = (ux - m*n/2) / math.sqrt(var)
+        cdf = 0.5 * math.erfc(-z / math.sqrt(2))
+        p = 2 * cdf
+    else:
+        raise ValueError("Unknown method {!r}".format(method))
+
+    return u, p
+
+
+def mann_whitney_u_u(x, y):
+    u = 0
+    ties = 0
+    for xx in x:
+        for yy in y:
+            if xx > yy:
+                u += 1
+            elif xx == yy:
+                ties += 1
+    return u, ties
+
+
+def mann_whitney_u_cdf(m, n, u, memo=None):
+    if memo is None:
+        memo = {}
+    cdf = 0
+    for uu in range(u + 1):
+         cdf += mann_whitney_u_pmf(m, n, uu, memo)
+    return cdf
+
+
+def mann_whitney_u_pmf(m, n, u, memo=None):
+    if memo is None:
+        memo = {}
+    return mann_whitney_u_r(m, n, u, memo) / binom(m + n, m)
+
+
+def mann_whitney_u_r(m, n, u, memo=None):
+    """
+    Number of orderings in Mann-Whitney U test.
+
+    The PMF of U for samples of sizes (m, n) is given by
+    p(u) = r(m, n, u) / binom(m + n, m).
+
+    References
+    ----------
+    .. [1] Mann & Whitney, Ann. Math. Statist. 18, 50 (1947).
+    """
+    if u < 0:
+        value = 0
+    elif m == 0 or n == 0:
+        value = 1 if u == 0 else 0
+    else:
+        # Don't bother figuring out table construction, memoization
+        # sorts it out
+        if memo is None:
+            memo = {}
+        key = (m, n, u)
+        value = memo.get(key)
+        if value is not None:
+            return value
+
+        value = (mann_whitney_u_r(m, n - 1, u, memo)
+                 + mann_whitney_u_r(m - 1, n, u - n, memo))
+
+        memo[key] = value
+    return value
+
+
 def binom_pmf(n, k, p):
     """Binomial pmf = (n choose k) p**k (1 - p)**(n - k)"""
     if not (0 <= k <= n):
@@ -252,6 +387,23 @@ def lgamma(x):
 
     # Would need full implementation
     return nan
+
+
+def binom(n, k):
+    """
+    Binomial coefficient (n over k)
+    """
+    n = operator.index(n)
+    k = operator.index(k)
+    if not 0 <= k <= n:
+        return 0
+    m = n + 1
+    num = 1
+    den = 1
+    for j in range(1, min(k, n - k) + 1):
+        num *= m - j
+        den *= j
+    return num // den
 
 
 class LaplacePosterior(object):
