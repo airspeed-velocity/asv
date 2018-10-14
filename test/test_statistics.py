@@ -6,6 +6,8 @@ from __future__ import (absolute_import, division, print_function,
 
 import warnings
 from itertools import product
+import math
+
 import pytest
 
 from asv.util import inf
@@ -64,12 +66,13 @@ def test_is_different():
     np.random.seed(1)
 
     # Smoke test is_different
-    for true_mean, n, significant in [(0.05, 10, False), (0.05, 100, True), (0.1, 10, True)]:
+    for true_mean, n, significant in [(0.01, 10, False), (0.05, 100, True), (0.1, 10, True)]:
         samples_a = 0 + 0.1 * np.random.rand(n)
         samples_b = true_mean + 0.1 * np.random.rand(n)
         result_a, stats_a = statistics.compute_stats(samples_a, 1)
         result_b, stats_b = statistics.compute_stats(samples_b, 1)
-        assert statistics.is_different(stats_a, stats_b) == significant
+        assert statistics.is_different(None, None, stats_a, stats_b) == significant
+        assert statistics.is_different(samples_a, samples_b, stats_a, stats_b) == significant
 
 
 def _check_ci(estimator, sampler, nsamples=300):
@@ -329,3 +332,92 @@ def test_laplace_posterior_cdf():
             x = c.cdf(t)
             assert abs(x - num_cdf(t)) < 1e-5
             assert abs(c.ppf(x) - t) < 1e-5
+
+
+def test_mann_whitney_u_cdf():
+    memo = {}
+
+    def check_table(m, tbl):
+        for u, row in enumerate(tbl):
+            for nx, p in enumerate(row):
+                n = nx + 1
+                if p is None:
+                    continue
+
+                p2 = statistics.mann_whitney_u_cdf(m, n, u, memo=memo)
+                assert p2 == pytest.approx(p, abs=1e-3, rel=0), (m, n, u, p2, p)
+
+    # Tables from Mann & Whitney, Ann. Math. Statist. 18, 50 (1947).
+    tbl = [[.250, .100, .050],
+           [.500, .200, .100],
+           [.750, .400, .200],
+           [None, .600, .350],
+           [None, None, .500],
+           [None, None, .650]]
+    check_table(3, tbl)
+
+    tbl = [[.200, .067, .028, .014],
+           [.400, .133, .057, .029],
+           [.600, .267, .114, .057],
+           [None, .400, .200, .100],
+           [None, .600, .314, .171],
+           [None, None, .429, .243],
+           [None, None, .571, .343],
+           [None, None, None, .443],
+           [None, None, None, .557]]
+    check_table(4, tbl)
+
+    tbl = [[.167, .047, .018, .008, .004],
+           [.333, .095, .036, .016, .008],
+           [.500, .190, .071, .032, .016],
+           [.667, .286, .125, .056, .028],
+           [None, .429, .196, .095, .048],
+           [None, .571, .286, .143, .075],
+           [None, None, .393, .206, .111],
+           [None, None, .500, .278, .155],
+           [None, None, .607, .365, .210],
+           [None, None, None, .452, .274],
+           [None, None, None, .548, .345],
+           [None, None, None, None, .421],
+           [None, None, None, None, .500],
+           [None, None, None, None, .579]]
+    check_table(5, tbl)
+
+
+@pytest.mark.skipif(not HAS_SCIPY, reason="Requires scipy")
+def test_mann_whitney_u_scipy():
+    # Scipy only has the large-sample limit...
+
+    def check(x, y):
+        u0, p0 = stats.mannwhitneyu(x, y, alternative='two-sided', use_continuity=False)
+
+        u, p = statistics.mann_whitney_u(x.tolist(), y.tolist(), method='normal')
+        assert u == u0
+        assert p == pytest.approx(p0, rel=1e-9, abs=0)
+
+        u, p = statistics.mann_whitney_u(x.tolist(), y.tolist(), method='exact')
+        assert u == u0
+        assert p == pytest.approx(p0, rel=5e-2, abs=5e-3)
+
+        u, p = statistics.mann_whitney_u(x.tolist(), y.tolist())
+        assert u == u0
+        assert p == pytest.approx(p0, rel=5e-2, abs=5e-3)
+
+    np.random.seed(1)
+    x = np.random.randn(22)
+    y = np.random.randn(23)
+
+    check(x, y)
+    check(x, y + 0.5)
+    check(x, y - 2.5)
+
+
+def test_binom():
+    for n in range(10):
+        for k in range(10):
+            p = statistics.binom(n, k)
+            if 0 <= k <= n:
+                p2 = math.factorial(n) / math.factorial(k) / math.factorial(n - k)
+            else:
+                p2 = 0
+            assert p == p2
