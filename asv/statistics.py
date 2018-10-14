@@ -88,6 +88,19 @@ def get_err(result, stats):
     return (b - a)/2
 
 
+def get_weight(stats):
+    """
+    Return a data point weight for the result.
+    """
+    if stats is None or 'ci_99' not in stats:
+        return None
+
+    try:
+        return 2 / abs(stats['ci_99'][1] - stats['ci_99'][0])
+    except ZeroDivisionError:
+        return None
+
+
 def is_different(samples_a, samples_b, stats_a, stats_b, p_threshold=0.002):
     """Check whether the samples are statistically different.
 

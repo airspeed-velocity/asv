@@ -1,21 +1,36 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 # -*- coding: utf-8 -*-
-r"""
-Regression detection in ASV is based on detecting stepwise changes in
-the graphs. The assumptions on the data are as follows: the curves are
-piecewise constant plus random noise. We don't know the variance of
-the noise nor the scaling of the data, but we assume the noise
-amplitude is constant in time.
+r"""Regression detection in ASV is based on detecting stepwise changes
+in the graphs. The assumptions on the data are as follows: the curves
+are piecewise constant plus random noise. We don't know the scaling of
+the data or the amplitude of the noise, but assume the relative weight
+of the noise amplitude is known for each data point.
 
-Luckily, step detection is a well-studied problem. In this
-implementation, we mainly follow a variant of the approach outlined in
-[Friedrich2008]_ and elsewhere. This provides a fast algorithm for
-solving the piecewise fitting problem
+ASV measures the noise amplitude of each data point, based on a number
+of samples. We use this information for weighting the different data
+points:
+
+.. math::
+
+   \sigma_j = \sigma \mathrm{CI}_{99} = \sigma / w_j
+
+i.e., we assume the uncertainty in each measurement point is
+proportional to the estimated confidence interval for each data point.
+Their inverses are taken as the relative weights ``w_j``. If ``w_j=0``
+or undefined, we replace it with the median weight, or with ``1`` if
+all are undefined. The step detection algorithm determines the
+absolute noise amplitude itself based on all available data, which is
+more robust than relying on the individual measurements.
+
+Step detection is a well-studied problem. In this implementation, we
+mainly follow a variant of the approach outlined in [Friedrich2008]_
+and elsewhere. This provides a fast algorithm for solving the
+piecewise weighted fitting problem
 
 .. math::
    :label: gamma-opt
 
-   \mathop{\mathrm{argmin}}_{k,\{j\},\{\mu\}} \gamma k + \sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} |y_i - \mu_r|
+   \mathop{\mathrm{argmin}}_{k,\{j\},\{\mu\}} \gamma k + \sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} w_i |y_i - \mu_r|
 
 The differences are: as we do not need exact solutions, we add
 additional heuristics to work around the :math:`{\mathcal O}(n^2)`
@@ -31,7 +46,6 @@ a variant of the information criterion problem discussed in
    ''Complexity Penalized M-Estimation: Fast Computation'',
    Journal of Computational and Graphical Statistics 17.1, 201-224 (2008).
    http://dx.doi.org/10.1198/106186008X285591
-   https://www.nativesystems.inf.ethz.ch/pub/Main/FelixFriedrichPublications/mestimation.pdf
 
 .. [Yao1988] Y.-C. Yao,
    ''Estimating the number of change-points via Schwarz criterion'',
@@ -72,7 +86,7 @@ We assume a Bayesian model:
    N
    \sigma^{-m}
    \exp(
-   -\sigma^{-1}\sum_{r=1}^k\sum_{i=j_{r-1}+1}^{j_r} |y_i - \mu_r|
+   -\sigma^{-1}\sum_{r=1}^k\sum_{i=j_{r-1}+1}^{j_r} w_i |y_i - \mu_r|
    )
 
 Here, :math:`y_i` are the :math:`m` data points at hand, :math:`k` is
@@ -101,16 +115,16 @@ doing this rigorously here, although it might be done in the literature.
 
 Consider first saddle-point integration over :math:`\{\mu\}`,
 expanding around the max-likelihood values :math:`\mu_r^*`.
-The max-likelihood estimates are medians of the data points in each interval.
+The max-likelihood estimates are the weighted medians of the data points in each interval.
 Change in the exponent when :math:`\mu` is perturbed is
 
 .. math::
    :label:
 
-   \Delta = -\sigma^{-1}\sum_{r=1}^k \sum_{i=j_{r-1}+1}^{j_r}[|y_i-\mu^*_r - \delta\mu_r| - |y_i-\mu^*_r|]
+   \Delta = -\sigma^{-1}\sum_{r=1}^k \sum_{i=j_{r-1}+1}^{j_r}w_i[|y_i-\mu^*_r - \delta\mu_r| - |y_i-\mu^*_r|]
 
 Note that :math:`\sum_{i=j_{r-1}+1}^{j_r}
-\mathrm{sgn}(y_i-\mu^*_r)=0`, so that response to small variations
+w_i\mathrm{sgn}(y_i-\mu^*_r)=0`, so that response to small variations
 :math:`\delta\mu_r` is :math:`m`-independent. For larger variations, we have
 
 .. math::
@@ -118,17 +132,17 @@ Note that :math:`\sum_{i=j_{r-1}+1}^{j_r}
 
    \Delta = -\sigma^{-1}\sum_{r=1}^k N_r(\delta \mu_r) |\delta \mu_r|
 
-where :math:`N_r(\delta\mu)=|\#\text{above}-\#\text{below}|` is the
-difference in the number of points in the interval above vs. below the
-perturbed median. Let us assume that in a typical case,
-:math:`N_r(\delta\mu)\sim{}m_r\delta\mu/\sigma` where :math:`m_r` is
-the number of points in the interval. This recovers a result we would
+where :math:`N_r(\delta\mu)=\sum_{i} w_i s_i` where :math:`s_i = \pm1` depending on whether
+:math:`y_i` is above or below the perturbed median. Let us assume that in a typical case,
+:math:`N_r(\delta\mu)\sim{}m_r\bar{W}_r^2\delta\mu/\sigma` where :math:`\bar{W}_r = \frac{1}{m_r}\sum_i w_i` is
+the average weight of the interval and :math:`m_r` the number of points in the interval.
+This recovers a result we would
 have obtained in the gaussian noise case
 
 .. math::
    :label:
 
-   \Delta \sim -\sigma^{-2} \sum_r m_r |\delta \mu_r|^2
+   \Delta \sim -\sigma^{-2} \sum_r W_r^2 m_r |\delta \mu_r|^2
 
 For the gaussian case, this would not have required any questionable assumptions.
 After integration over :math:`\{\delta\mu\}` we are left with
@@ -139,7 +153,7 @@ After integration over :math:`\{\delta\mu\}` we are left with
    \int(\ldots)
    \propto
    \int d\sigma \sum_{\{j\}}
-   (2\pi)^{k/2}\sigma^k [m_1\cdots m_k]^{-1/2}
+   (2\pi)^{k/2}\sigma^k [\bar{W}_1\cdots \bar{W}_k]^{-1} [m_1\cdots m_k]^{-1/2}
    P(\{y\}|\sigma,k,\{\mu_*\},\{j\})
    \pi(\sigma, \{j\}|k)
 
@@ -153,7 +167,7 @@ max-likelihood terms, and assume :math:`m_j^*\sim{}m/k`. Then,
    &\simeq
    C_1(m) + C_2(k)
    +
-   \frac{k}{2}\ln(2\pi) + k \ln \sigma_* - \frac{k}{2}\ln(m/k)
+   \frac{k}{2}\ln(2\pi) - \frac{k}{2} \ln(m/k) - k \ln \bar{W}
    +
    \ln P(\{y\}|\sigma_*,k,\{\mu_*\},\{j_*\})
    \\
@@ -178,7 +192,7 @@ Substituting in the max-likelihood value
 .. math::
    :label:
 
-    \sigma_* = \frac{1}{m} \sum_{r=1}^k\sum_{i=j_{r-1}^*+1}^{j_r^*} |y_i - \mu_r^*|
+    \sigma_* = \frac{1}{m} \sum_{r=1}^k\sum_{i=j_{r-1}^*+1}^{j_r^*} w_i|y_i - \mu_r^*|
 
 we get
 
@@ -191,17 +205,20 @@ we get
    -
    \frac{k}{2} \ln m
    -
-   m \ln\sum_{r=1}^k\sum_{i=j_{r-1}^*}^{j_r^*} |y_i - \mu_r^*|
+   m \ln\sum_{r=1}^k\sum_{i=j_{r-1}^*}^{j_r^*} w_i |y_i - \mu_r^*|
 
-This is now similar to :eq:`ic-form`, apart from numerical prefactors. The
-final fitting problem then becomes
+This is now similar to :eq:`ic-form`, apart from numerical prefactors.
+The final fitting problem then becomes
 
 .. math::
    :label: bic-form
 
-   \mathop{\mathrm{argmin}}_{k,\{j\},\{\mu\}} r(m) k + \ln\sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} |y_i - \mu_r|
+   \mathop{\mathrm{argmin}}_{k,\{j\},\{\mu\}} r(m) k + \ln\sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} w_i |y_i - \mu_r|
 
-with :math:`r(m) = \frac{\ln m}{2m}`. As we know this function
+with :math:`r(m) = \frac{\ln m}{2m}`.
+Note that it is invariant vs. rescaling of weights :math:`w_i\mapsto{}\alpha{}w_i`,
+i.e., the invariance of the original problem is retained.
+As we know this function
 :math:`r(m)` is not necessarily completely correct, and it seems doing
 the calculation rigorously requires more effort than can be justified
 by the requirements of the application, we now take a pragmatic view and
@@ -270,8 +287,9 @@ with sufficient accuracy we can in :eq:`bic-form` replace
    \ln \sigma \mapsto \ln(\sigma_0 + \sigma)
 
 Here, we fix a measurement accuracy floor with the following guess:
-``sigma_0 = 0.1 * min(abs(diff(mu)))`` and ``sigma_0 = 0.001 *
-abs(mu)`` when there is only a single interval.
+``sigma_0 = 0.1 * w0 * min(abs(diff(mu)))`` and ``sigma_0 = 0.001 * w0
+* abs(mu)`` when there is only a single interval. Here, ``w0`` is the
+median weight.
 
 Autocorrelated noise
 --------------------
@@ -331,7 +349,7 @@ Making use of measured variance
 -------------------------------
 
 ``asv`` measures also variance in the timings.  This information is
-currently not used in the step detection, although it could be used.
+currently used to provide relative data weighting (see above).
 
 """
 
@@ -352,7 +370,7 @@ except ImportError:
 # Detecting regressions
 #
 
-def detect_steps(y):
+def detect_steps(y, w=None):
     """
     Detect steps in a (noisy) signal.
 
@@ -360,6 +378,9 @@ def detect_steps(y):
     ----------
     y : list of float, none or nan
         Single benchmark result series, with possible missing data
+    w : list of float, none or nan
+        Data point relative weights. Missing weights are set equal
+        to the median weight.
 
     Returns
     -------
@@ -383,8 +404,27 @@ def detect_steps(y):
         index_map[len(y_filtered)] = j
         y_filtered.append(x)
 
+    # Weights
+    if w is None:
+        w_filtered = [1]*len(y_filtered)
+    else:
+        # Fill-in and normalize weights
+        w_valid = [ww for ww in w if ww is not None and ww == ww]
+        if w_valid:
+            w_median = median(w_valid)
+            if w_median == 0:
+                w_median = 1.0
+        else:
+            w_median = 1.0
+
+        w_filtered = [1.0]*len(y_filtered)
+        for j in range(len(w_filtered)):
+            jj = index_map[j]
+            if w[jj] is not None and w[jj] == w[jj]:
+                w_filtered[j] = w[jj] / w_median
+
     # Find piecewise segments
-    right, values, dists, gamma = solve_potts_autogamma(y_filtered, p=1)
+    right, values, dists, gamma = solve_potts_autogamma(y_filtered, w=w_filtered)
 
     # Extract the steps, mapping indices back etc.
     steps = []
@@ -460,7 +500,7 @@ def detect_regressions(steps, threshold=0):
 # Fitting piecewise constant functions to noisy data
 #
 
-def solve_potts(y, gamma, p=2, min_size=1, max_size=None,
+def solve_potts(y, w, gamma, min_size=1, max_size=None,
                 min_pos=None, max_pos=None, mu_dist=None):
     """Fit penalized stepwise constant function (Potts model) to data.
 
@@ -475,12 +515,7 @@ def solve_potts(y, gamma, p=2, min_size=1, max_size=None,
     programming to find an exact solution to the problem (within the
     constraints specified).
 
-    For p=2 norm, the performance is O(n**2), or
-    O((max_pos-min_pos)*(min_size-max_size+1)) if constrained.
-
-    For p=1 norm, it is O(n**2 log n) and the constants in front are
-    bigger, due to the somewhat sub-optimal (= in Python) way median
-    and absolute sum computations are done.
+    Computation work is ~ O(n**2 log n).
 
     Parameters
     ----------
@@ -525,16 +560,18 @@ def solve_potts(y, gamma, p=2, min_size=1, max_size=None,
     if min_pos is None:
         min_pos = 0
 
+    if len(y) != len(w):
+        raise ValueError("y and w must have same size")
+
     if max_pos is None:
         max_pos = len(y)
 
     if mu_dist is None:
-        mu_dist = get_mu_dist(y, p)
+        mu_dist = get_mu_dist(y, w)
 
     if max_size is None:
         max_size = len(y)
 
-    mu_dist.precompute(max_size, min_pos, max_pos)
     mu, dist = mu_dist.mu, mu_dist.dist
 
     if min_size >= max_pos - min_pos:
@@ -569,6 +606,8 @@ def solve_potts(y, gamma, p=2, min_size=1, max_size=None,
                     B[r+1-i0] = b
                     p[r-i0] = l - 1
 
+            mu_dist.cleanup_cache()
+
     # Routine "Segmentation from partition" in [1]
     # Convert interval representation computed above
     # to a list of intervals and values.
@@ -590,7 +629,7 @@ def solve_potts(y, gamma, p=2, min_size=1, max_size=None,
     return right, values, dists
 
 
-def solve_potts_autogamma(y, beta=None, **kw):
+def solve_potts_autogamma(y, w, beta=None, **kw):
     """Solve Potts problem with automatically determined gamma.
 
     The optimal value is determined by minimizing the information measure::
@@ -603,9 +642,9 @@ def solve_potts_autogamma(y, beta=None, **kw):
     Parameters
     ----------
     beta : float or 'bic'
-         Penalty parameter. Default is 5*ln(n)/n, similar to Bayesian
+         Penalty parameter. Default is 4*ln(n)/n, similar to Bayesian
          information criterion for gaussian model with unknown variance
-         assuming 5 DOF per breakpoint.
+         assuming 4 DOF per breakpoint.
 
     """
     n = len(y)
@@ -613,7 +652,7 @@ def solve_potts_autogamma(y, beta=None, **kw):
     if n == 0:
         return [], [], [], None
 
-    mu_dist = get_mu_dist(y, kw.get('p', 2))
+    mu_dist = get_mu_dist(y, w)
     mu, dist = mu_dist.mu, mu_dist.dist
 
     if beta is None:
@@ -633,7 +672,7 @@ def solve_potts_autogamma(y, beta=None, **kw):
 
     def f(x):
         gamma = gamma_0 * math.exp(x)
-        r, v, d = solve_potts_approx(y, gamma=gamma, mu_dist=mu_dist, **kw)
+        r, v, d = solve_potts_approx(y, w, gamma=gamma, mu_dist=mu_dist, **kw)
 
         # MLE fit noise correlation
         def sigma_star(rights, values, rho):
@@ -684,7 +723,7 @@ def solve_potts_autogamma(y, beta=None, **kw):
     return best_r[0], best_v[0], best_d[0], best_gamma[0]
 
 
-def solve_potts_approx(y, gamma=None, p=2, min_size=1, **kw):
+def solve_potts_approx(y, w, gamma=None, min_size=1, **kw):
     """
     Fit penalized stepwise constant function (Potts model) to data
     approximatively, in linear time.
@@ -700,7 +739,7 @@ def solve_potts_approx(y, gamma=None, p=2, min_size=1, **kw):
 
     mu_dist = kw.get('mu_dist')
     if mu_dist is None:
-        mu_dist = get_mu_dist(y, p=p)
+        mu_dist = get_mu_dist(y, w)
         kw['mu_dist'] = mu_dist
 
     if gamma is None:
@@ -712,8 +751,7 @@ def solve_potts_approx(y, gamma=None, p=2, min_size=1, **kw):
     else:
         max_size = min_size + 50
 
-    right, values, dists = solve_potts(y, gamma, p=p, min_size=min_size, max_size=max_size,
-                                       **kw)
+    right, values, dists = solve_potts(y, w, gamma, min_size=min_size, max_size=max_size, **kw)
     return merge_pieces(gamma, right, values, dists, mu_dist, max_size=max_size)
 
 
@@ -787,8 +825,8 @@ class L1Dist(object):
     """
     Fast computations for::
 
-        mu(l, r) = median(y[l:r+1])
-        dist(l, r) = sum(abs(x - mu(l, r)) for x in y[l:r+1])
+        mu(l, r) = median(y[l:r+1], weights=w[l:r+1])
+        dist(l, r) = sum(w*abs(x - mu(l, r)) for x, w in zip(y[l:r+1], weights[l:r+1]))
 
     We do not use here an approach that has asymptotically optimal
     performance; at least O(n**2 * log(n)) would be achievable, whereas
@@ -798,13 +836,14 @@ class L1Dist(object):
     prefactors, which for Python means minimal code.
 
     """
-    def __init__(self, y):
+    def __init__(self, y, w):
         self.y = y
+        self.w = w
 
         class mu_dict(collections.defaultdict):
             def __missing__(self, a):
                 l, r = a
-                v = median(y[l:r+1])
+                v = weighted_median(y[l:r+1], w[l:r+1])
                 self[a] = v
                 return v
 
@@ -814,7 +853,7 @@ class L1Dist(object):
             def __missing__(self, a):
                 l, r = a
                 m = mu[l, r]
-                v = sum(abs(x - m) for x in y[l:r+1])
+                v = sum(wx*abs(x - m) for x, wx in zip(y[l:r+1], w[l:r+1]))
                 self[a] = v
                 return v
 
@@ -827,80 +866,20 @@ class L1Dist(object):
     def dist(self, *a):
         return self.dist_memo[a]
 
-    def precompute(self, max_size, min_pos, max_pos):
-        y = self.y
-
-        if (min_pos, min_pos+max_size) in self.mu_memo:
-            # The entries were likely already precomputed
+    def cleanup_cache(self):
+        # Reset cache if it is too big
+        if len(self.mu_memo) < 500000:
             return
 
-        # Precompute interval medians. Does not matter much for
-        # solve_potts_approx, but doesn't hurt either.
-        for j in range(min_pos, max_pos):
-            median_dev = rolling_median_dev(y[j:min(max_pos,(j+(max_size+1)))])
-            for p, (m, d) in enumerate(median_dev):
-                if j+p > j+max_size:
-                    break
-                self.mu_memo[j,j+p] = m
-                self.dist_memo[j,j+p] = d
+        self.mu_memo.clear()
+        self.dist_memo.clear()
 
 
-class L2Dist(object):
-    """
-    Fast computations for::
-
-        mu(l, r) = mean(y[l:r+1])
-        dist(l, r) = sum((x - mu(l, r))**2 for x in y[l:r+1])
-
-    """
-    def __init__(self, y):
-        self.y = y
-        self.cum_y = None
-        self.cum_y2 = None
-        self.precompute(None, None, None)
-
-    def precompute(self, max_size, min_pos, max_pos):
-        if self.cum_y is not None:
-            return
-
-        cum_y = [0]
-        cum_y2 = [0]
-        s = 0
-        s2 = 0
-        for x in self.y:
-            s += x
-            s2 += x**2
-            cum_y.append(s)
-            cum_y2.append(s2)
-
-        self.cum_y = cum_y
-        self.cum_y2 = cum_y2
-
-    def mu(self, l, r):
-        """
-        mean(y[l:r+1])
-        """
-        return (self.cum_y[r+1] - self.cum_y[l]) / (r + 1 - l)
-
-    def dist(self, l, r):
-        """
-        sum((y[l:r+1] - mean(y[l:r+1]))**2)
-        """
-        # This way to compute it is in principle susceptible
-        # to rounding errors, but we have to be O(1) fast here
-        return abs(self.cum_y2[r+1] - self.cum_y2[l] - (self.cum_y[r+1] - self.cum_y[l])**2 / (r + 1 - l))
-
-
-def get_mu_dist(y, p):
-    if p == 1:
-        if _rangemedian is not None:
-            return _rangemedian.RangeMedian(y)
-        else:
-            return L1Dist(y)
-    elif p == 2:
-        return L2Dist(y)
+def get_mu_dist(y, w):
+    if _rangemedian is not None:
+        return _rangemedian.RangeMedian(y, w)
     else:
-        raise ValueError("invalid value for p")
+        return L1Dist(y, w)
 
 
 def median(items):
@@ -949,6 +928,29 @@ def rolling_median_dev(items):
             yield ((max_heap[0] - min_heap[0])/2, d)
     except StopIteration:
         return
+
+
+def weighted_median(y, w):
+    """
+    Compute weighted median of `y` with weights `w`.
+    """
+    items = sorted(zip(y, w))
+    midpoint = sum(w) / 2
+
+    yvals = []
+    wsum = 0
+
+    for yy, ww in items:
+        wsum += ww
+        if wsum > midpoint:
+            yvals.append(yy)
+            break
+        elif wsum == midpoint:
+            yvals.append(yy)
+    else:
+        yvals = y
+
+    return sum(yvals) / len(yvals)
 
 
 def golden_search(f, a, b, xatol=1e-6, ftol=1e-8, expand_bounds=False):

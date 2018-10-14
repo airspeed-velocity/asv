@@ -15,6 +15,7 @@
 #include <limits>
 #include <map>
 #include <algorithm>
+#include <utility>
 
 #include <Python.h>
 
@@ -27,31 +28,54 @@
 //
 
 template <class const_iterator>
-void compute_median(const_iterator start, const_iterator end, double *mu, double *dist)
+void compute_weighted_median(const_iterator start, const_iterator end,
+                             double *mu, double *dist)
 {
-    size_t n = end - start;
-    std::vector<double> tmp;
-    std::vector<double>::iterator nth;
-    tmp.insert(tmp.end(), start, end);
+    std::vector<std::pair<double,double> > tmp;
+    std::vector<std::pair<double,double> >::iterator it;
+    double midpoint, wsum;
 
-    if (start >= end) {
+    if (start == end) {
         *mu = 0;
+        *dist = 0;
+        return;
+    }
+
+    tmp.insert(tmp.end(), start, end);
+    std::sort(tmp.begin(), tmp.end());
+
+    midpoint = 0;
+    for (it = tmp.begin(); it != tmp.end(); ++it) {
+        midpoint += it->second;
+    }
+    midpoint /= 2;
+
+    wsum = 0;
+    for (it = tmp.begin(); it != tmp.end(); ++it) {
+        wsum += it->second;
+        if (wsum >= midpoint) {
+            break;
+        }
+    }
+
+    if (it != tmp.end()) {
+        *mu = it->first;
+        if (wsum == midpoint) {
+            ++it;
+            if (it != tmp.end()) {
+                *mu = (it->first + *mu) / 2;
+            }
+        }
     }
     else {
-        nth = tmp.begin() + n/2;
-        std::nth_element(tmp.begin(), nth, tmp.end());
-
-        if (n % 2 == 0) {
-            *mu = (*nth + *std::max_element(tmp.begin(), nth)) / 2;
-        }
-        else {
-            *mu = *nth;
-        }
+        // Error condition, maybe some floating point summation issue
+        --it;
+        *mu = it->first;
     }
 
     *dist = 0;
     for (const_iterator it = start; it < end; ++it) {
-        *dist += fabs(*it - *mu);
+        *dist += it->second * fabs(it->first - *mu);
     }
 }
 
@@ -112,7 +136,7 @@ public:
 
 typedef struct {
     PyObject_HEAD
-    std::vector<double> *y;
+    std::vector<std::pair<double,double> > *y;
     Cache *cache;
 } RangeMedianObject;
 
@@ -129,19 +153,26 @@ PyObject *RangeMedian_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 int RangeMedian_init(RangeMedianObject *self, PyObject *args, PyObject *kwds)
 {
-    static const char *kwlist[] = {"y", NULL};
-    PyObject *y_obj;
-    Py_ssize_t size, k;
+    static const char *kwlist[] = {"y", "w", NULL};
+    PyObject *y_obj, *w_obj;
+    Py_ssize_t size, wsize, k;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!", (char**)kwlist,
-                                     &PyList_Type, &y_obj)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!O!", (char**)kwlist,
+                                     &PyList_Type, &y_obj,
+                                     &PyList_Type, &w_obj)) {
         return -1;
     }
 
     size = PyList_GET_SIZE(y_obj);
+    wsize = PyList_GET_SIZE(w_obj);
+
+    if (wsize != size) {
+        PyErr_SetString(PyExc_ValueError, "y and w must have same length");
+        return -1;
+    }
 
     try {
-        self->y = new std::vector<double>(size);
+        self->y = new std::vector<std::pair<double,double> >(size);
 
         // Multiplier based on hardcoded constant sizes in step_detect.py, about
         // this many accesses expected --- but prefer primes due to a modulo
@@ -154,15 +185,25 @@ int RangeMedian_init(RangeMedianObject *self, PyObject *args, PyObject *kwds)
     }
 
     for (k = 0; k < size; ++k) {
-        PyObject *x;
+        PyObject *x, *wx;
 
         x = PyNumber_Float(PyList_GET_ITEM(y_obj, k));
         if (x == NULL || !PyFloat_Check(x)) {
             Py_XDECREF(x);
             return -1;
         }
-        (*self->y)[k] = PyFloat_AS_DOUBLE(x);
+
+        wx = PyNumber_Float(PyList_GET_ITEM(w_obj, k));
+        if (wx == NULL || !PyFloat_Check(wx)) {
+            Py_XDECREF(x);
+            Py_XDECREF(wx);
+            return -1;
+        }
+
+        (*self->y)[k] = std::make_pair(PyFloat_AS_DOUBLE(x),
+                                       PyFloat_AS_DOUBLE(wx));
         Py_DECREF(x);
+        Py_DECREF(wx);
     }
 
     return 0;
@@ -188,7 +229,7 @@ static int RangeMedian_mu_dist(RangeMedianObject *self, Py_ssize_t left, Py_ssiz
     }
 
     if (!self->cache->get(left, right, mu, dist)) {
-        compute_median(self->y->begin() + left, self->y->begin() + right + 1, mu, dist);
+        compute_weighted_median(self->y->begin() + left, self->y->begin() + right + 1, mu, dist);
         self->cache->set(left, right, *mu, *dist);
     }
 
@@ -227,20 +268,6 @@ static PyObject *RangeMedian_dist(RangeMedianObject *self, PyObject *args)
     }
 
     return PyFloat_FromDouble(dist);
-}
-
-
-static PyObject *RangeMedian_precompute(RangeMedianObject *self, PyObject *args)
-{
-    Py_ssize_t max_size, min_pos, max_pos;
-
-    if (!PyArg_ParseTuple(args, "nnn", &max_size, &min_pos, &max_pos)) {
-        return NULL;
-    }
-
-    // noop
-
-    Py_RETURN_NONE;
 }
 
 
@@ -319,7 +346,6 @@ static PyObject *RangeMedian_find_best_partition(RangeMedianObject *self, PyObje
 static PyMethodDef RangeMedian_methods[] = {
     {"mu", (PyCFunction)RangeMedian_mu, METH_VARARGS, NULL},
     {"dist", (PyCFunction)RangeMedian_dist, METH_VARARGS, NULL},
-    {"precompute", (PyCFunction)RangeMedian_precompute, METH_VARARGS, NULL},
     {"find_best_partition", (PyCFunction)RangeMedian_find_best_partition, METH_VARARGS, NULL},
     {NULL, NULL}
 };
