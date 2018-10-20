@@ -1,4 +1,4 @@
-0.3.1 (unreleased)
+0.3.1 (2018-10-20)
 ------------------
 
 Minor bugfixes and improvements.
