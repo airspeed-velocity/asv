@@ -584,7 +584,8 @@ def preview(base_path):
         except:
             import traceback
             traceback.print_exc()
-            return
+        finally:
+            httpd.server_close()
 
     thread = threading.Thread(target=run)
     thread.daemon = True
