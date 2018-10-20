@@ -6,7 +6,7 @@
 # <http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/546530>
 # <http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/544288>
 
-'''
+r'''
 This module exposes 9 functions and 2 classes to obtain lengths and
 sizes of Python objects (for Python 2.2 or later [#test]_).
 

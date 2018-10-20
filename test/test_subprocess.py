@@ -154,6 +154,9 @@ def test_popen():
 
     assert popen.returncode == 0
 
+    # close handles
+    popen.communicate()
+
 
 # This *does* seem to work, only seems untestable somehow...
 # def test_dots(capsys):

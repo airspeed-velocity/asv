@@ -127,7 +127,8 @@ class Continuous(Command):
 
                     value = result.get_result_value(name, params)
                     stats = result.get_result_stats(name, params)
-                    yield name, params, value, stats, version, machine_name, env.name
+                    samples = result.get_result_samples(name, params)
+                    yield name, params, value, stats, samples, version, machine_name, env.name
 
         commit_names = {parent: repo.get_name_from_hash(parent),
                         head: repo.get_name_from_hash(head)}

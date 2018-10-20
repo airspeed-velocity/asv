@@ -29,11 +29,11 @@ install:
 
     # Install miniconda using a powershell script.
     - "powershell .continuous-integration/appveyor/install-miniconda.ps1"
-    - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+    - "%PYTHON%\\Scripts\\activate.bat"
 
     # Install the build and runtime dependencies of the project.
     - "conda update -q --yes conda"
-    - "conda install -q --yes python=%PYTHON_VERSION% conda six pip pytest pytest-xdist lockfile selenium conda-build bzip2"
+    - "conda install -q --yes python=%PYTHON_VERSION% conda six pip pytest pytest-xdist!=1.23.1,!=1.23.2 lockfile selenium conda-build bzip2"
     - "python -mpip install pytest-rerunfailures"
 
     # Pre-download all necessary packages

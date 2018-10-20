@@ -15,8 +15,9 @@ from asv import step_detect
 
 try:
     import numpy as np
+    np.random.seed
     HAVE_NUMPY = True
-except ImportError:
+except (ImportError, NameError):
     HAVE_NUMPY = False
 
 try:
@@ -32,7 +33,7 @@ except ImportError:
 ])
 def use_rangemedian(request):
     if request.param == "rangemedian":
-        assert isinstance(step_detect.get_mu_dist([0], p=1), _rangemedian.RangeMedian)
+        assert isinstance(step_detect.get_mu_dist([0], [1]), _rangemedian.RangeMedian)
         return True
     else:
         step_detect._rangemedian = None
@@ -42,31 +43,26 @@ def use_rangemedian(request):
                 step_detect._rangemedian = _rangemedian
         request.addfinalizer(restore)
 
-        assert isinstance(step_detect.get_mu_dist([0], p=1), L1Dist)
+        assert isinstance(step_detect.get_mu_dist([0], [1]), L1Dist)
         return False
 
 
 @pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
 def test_solve_potts(use_rangemedian):
-    try:
-        np.random.seed(1234)
-    except NameError:
-        # work around a bug in old pypy/pytest
-        pytest.skip("test needs numpy")
-        return
+    np.random.seed(1234)
 
     # Easy case, exact solver
     y = [1, 1, 1, 2, 2, 2, 3, 3, 3]
-    right, values, dists = solve_potts(y, gamma=0.1)
+    right, values, dists = solve_potts(y, w=[1]*len(y), gamma=0.1)
     assert right == [3, 6, 9]
     assert np.allclose(values, [1, 2, 3], atol=0)
 
-    right, values, dists = solve_potts(y, gamma=8.0)
+    right, values, dists = solve_potts(y, w=[1]*len(y), gamma=8.0)
     assert right == [9]
     assert np.allclose(values, [2], atol=0)
 
     # l1 norm
-    right, values, dists = solve_potts(y, gamma=0.1, p=1)
+    right, values, dists = solve_potts(y, w=[1]*len(y), gamma=0.1)
     assert right == [3, 6, 9]
     assert np.allclose(values, [1, 2, 3], atol=0)
 
@@ -77,12 +73,12 @@ def test_solve_potts(use_rangemedian):
           - 0.2 * (t >= 20)
           + 0.2 * (t >= 50)
           + 1.1 * (t >= 70))
-    y = y0 + 0.1 * np.random.rand(y0.size)
-    right, values, dists = solve_potts(y.tolist(), gamma=0.1)
+    y = y0 + 0.05 * np.random.rand(y0.size)
+    right, values, dists = solve_potts(y.tolist(), w=[1]*len(y), gamma=0.1)
     assert right == [5, 10, 20, 50, 70, 100]
 
     # Bigger case, approximative solver
-    right, values, dists = solve_potts_approx(y.tolist(), gamma=0.1)
+    right, values, dists = solve_potts_approx(y.tolist(), w=[1]*len(y), gamma=0.1)
     assert right == [5, 10, 20, 50, 70, 100]
 
     # Larger case
@@ -96,25 +92,22 @@ def test_solve_potts(use_rangemedian):
 
     # Small amount of noise shouldn't disturb step finding
     y = y0 + 0.05 * np.random.randn(y0.size)
-    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), p=1)
-    assert right == [10, 30, 200, 600, 2500, 2990, 3000]
-    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), p=2)
+    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), w=[1]*len(y))
     assert right == [10, 30, 200, 600, 2500, 2990, 3000]
 
     # Large noise should prevent finding any steps
     y = y0 + 5.0 * np.random.randn(y0.size)
-    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), p=1)
-    assert right == [3000]
-    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), p=2)
+    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), w=[1]*len(y))
     assert right == [3000]
 
-    # The routine shouldn't choke on datasets with 50k+ points.
+    # The routine shouldn't choke on datasets with 10k points.
     # Appending noisy data to weakly noisy data should retain the
     # steps in the former
-    y = y0 + 0.05 * np.random.rand(y.size)
-    ypad = 0.05 * np.random.randn(50000 - 3000)
-    right, values, dists, gamma = solve_potts_autogamma(y.tolist() + ypad.tolist(), p=2)
-    assert right == [10, 30, 200, 600, 2500, 2990, 3000, 50000]
+    y = y0 + 0.025 * np.random.rand(y.size)
+    ypad = 0.025 * np.random.randn(10000 - 3000)
+    right, values, dists, gamma = solve_potts_autogamma(y.tolist() + ypad.tolist(),
+                                                        w=[1]*(len(y)+len(ypad)))
+    assert right == [10, 30, 200, 600, 2500, 2990, 3000, 10000]
 
 
 @pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
@@ -123,25 +116,60 @@ def test_autocorrelated():
     # multiple steps
     j = np.arange(1000)
     y = 0.2 * np.cos(j/100.0) + 1.0 * (j >= 500)
-    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), p=1)
+    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), w=[1]*len(y))
     assert right == [500, 1000]
 
 
 def test_zero_variance():
     # Should not choke on this data
     y = [1.0]*1000
-    right, values, dists, gamma = solve_potts_autogamma(y, p=1)
+    right, values, dists, gamma = solve_potts_autogamma(y, w=[1]*len(y))
     assert right == [1000]
 
 
 @pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
+def test_weighted():
+    np.random.seed(1234)
+
+    t = np.arange(100)
+    y0 = (+ 0.4 * (t >= 5)
+          + 0.9 * (t >= 10)
+          - 0.2 * (t >= 20)
+          + 0.2 * (t >= 50)
+          + 1.1 * (t >= 70))
+    y = y0 + 0.05 * np.random.rand(y0.size)
+
+    y = y.tolist()
+    w = [1]*len(y)
+
+    y[15] = 2
+    right, values, dists = solve_potts(y, w=w, gamma=0.1)
+    assert right == [5, 10, 15, 16, 20, 50, 70, 100]
+
+    steps = detect_steps(y, w=w)
+    steps_pos = [s[0] for s in steps]
+    assert steps_pos == [0, 5, 10, 15, 16, 20, 50, 70]
+
+    w[15] = 0.1
+    right, values, dists = solve_potts(y, w=w, gamma=0.1)
+    assert right == [5, 10, 20, 50, 70, 100]
+
+    steps = detect_steps(y, w=w)
+    steps_pos = [s[0] for s in steps]
+    assert steps_pos == [0, 5, 10, 20, 50, 70]
+
+    # Missing weights and data should be handled properly
+    y[35] = None
+    w[23] = None
+
+    steps = detect_steps(y, w=w)
+    steps_pos = [s[0] for s in steps]
+    assert steps_pos == [0, 5, 10, 20, 50, 70]
+
+
+@pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
 def test_detect_regressions(use_rangemedian):
-    try:
-        np.random.seed(1234)
-    except NameError:
-        # work around a bug in old pypy/pytest
-        pytest.skip("test needs numpy")
-        return
+    np.random.seed(1234)
 
     for seed in [1234, 5678, 8901, 2345]:
         np.random.seed(seed)
@@ -221,16 +249,26 @@ def test_l1dist(use_rangemedian):
     random.seed(1)
 
     datasets = [
-        [1, 1, 10, 3, 5, 1, -16, -3, 4, 9],
-        [random.gauss(0, 1) for j in range(50)]
+        ([1, 1, 10, 3, 5, 1, -16, -3, 4, 9], [1]*10),
+        ([random.gauss(0, 1) for j in range(50)], [1]*50),
+        ([1, 2, 3, 4], [1, 2, 1, 2])
     ]
 
-    for dataset in datasets:
-        dist = step_detect.get_mu_dist(dataset, p=1)
-        dist.precompute(len(dataset)//2, 0, len(dataset)//2)
+    def median_iter(y, w):
+        if all(ww == w[0] for ww in w):
+            for m, d in rolling_median_dev(y):
+                yield m, d
+        else:
+            for j in range(1, len(y) + 1):
+                m = step_detect.weighted_median(y[:j], w[:j])
+                d = sum(ww*abs(yy - m) for yy, ww in zip(y[:j], w[:j]))
+                yield m, d
 
-        for i in range(len(dataset)):
-            for p, (m2, d2) in enumerate(rolling_median_dev(dataset[i:])):
+    for y, w in datasets:
+        dist = step_detect.get_mu_dist(y, w)
+
+        for i in range(len(y)):
+            for p, (m2, d2) in enumerate(median_iter(y[i:], w[i:])):
                 j = i + p
 
                 m = dist.mu(i, j)

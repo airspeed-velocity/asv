@@ -533,7 +533,7 @@ def test_environment_environ_path(environment_type, tmpdir, monkeypatch):
     assert usersite_in_syspath == "False"
 
     # Check PYTHONPATH is ignored
-    monkeypatch.setenv('PYTHONPATH', tmpdir)
+    monkeypatch.setenv('PYTHONPATH', six.text_type(tmpdir))
     output = env.run(['-c', 'import os; print(os.environ.get("PYTHONPATH", ""))'])
     assert output.strip() == ""
 
