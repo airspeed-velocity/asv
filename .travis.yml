@@ -12,8 +12,7 @@ python:
   - 3.4
   - 3.5
   - 3.6
-  - pypy
-  # - pypy3
+  - pypy3.5-5.10.1
 
 addons:
   firefox: "61.0.1"
