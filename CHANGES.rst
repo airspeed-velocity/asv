@@ -3,8 +3,9 @@
 
 Minor bugfixes and improvements.
 
+- Use measured uncertainties to weigh step detection. (#753)
 - Detect also single-commit regressions, if significant. (#745)
-- Use importlib instead of imp on Python 3. (#746)
+- Use proper two-sample test when raw results available. (#754)
 - Use a better regression "badness" measure. (#744)
 - Display verbose command output immediately, not when command
   completes. (#747)
@@ -12,6 +13,7 @@ Minor bugfixes and improvements.
   benchmark discovery. (#743, #742)
 - Fix forkserver child process handling.
 - In asv test suite, use dummy conda packages. (#738)
+- Other minor fixes (#756, #750, #749, #746)
 
 
 0.3 (2018-09-09)
