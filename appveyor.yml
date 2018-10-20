@@ -29,7 +29,7 @@ install:
 
     # Install miniconda using a powershell script.
     - "powershell .continuous-integration/appveyor/install-miniconda.ps1"
-    - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+    - "%PYTHON%\\Scripts\\activate.bat"
 
     # Install the build and runtime dependencies of the project.
     - "conda update -q --yes conda"
