@@ -412,6 +412,28 @@ def test_mann_whitney_u_scipy():
     check(x, y - 2.5)
 
 
+def test_mann_whitney_u_R():
+    # wilcox.test(a, b, exact=TRUE)
+
+    a = [1, 2, 3, 4]
+    b = [0.9, 1.1, 0.7]
+    u, p = statistics.mann_whitney_u(a, b, method='exact')
+    assert u == 11
+    assert p == pytest.approx(0.11428571428571428, abs=0, rel=1e-10)
+
+    a = [1, 2]
+    b = [1.5]
+    u, p = statistics.mann_whitney_u(a, b, method='exact')
+    assert u == 1
+    assert p == 1.0
+
+    a = [1, 2]
+    b = [2.5]
+    u, p = statistics.mann_whitney_u(a, b, method='exact')
+    assert u == 0
+    assert p == pytest.approx(2/3, abs=0, rel=1e-10)
+
+
 def test_binom():
     for n in range(10):
         for k in range(10):
