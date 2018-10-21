@@ -301,7 +301,7 @@ def mann_whitney_u(x, y, method='auto'):
     # Get p-value
     if method == 'exact':
         p1 = mann_whitney_u_cdf(m, n, ux, memo)
-        p2 = 1.0 - mann_whitney_u_cdf(m, n, m*n - ux, memo)
+        p2 = 1.0 - mann_whitney_u_cdf(m, n, max(m*n//2, m*n - ux - 1), memo)
         p = p1 + p2
     elif method == 'normal':
         N = m + n
