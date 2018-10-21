@@ -7,6 +7,7 @@ from __future__ import (absolute_import, division, print_function,
 import warnings
 from itertools import product
 import math
+import random
 
 import pytest
 
@@ -26,6 +27,13 @@ try:
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
+
+
+try:
+    from rpy2 import robjects
+    HAS_RPY2 = True
+except ImportError:
+    HAS_RPY2 = False
 
 
 @pytest.mark.skipif(not HAS_NUMPY, reason="Requires numpy")
@@ -412,9 +420,8 @@ def test_mann_whitney_u_scipy():
     check(x, y - 2.5)
 
 
-def test_mann_whitney_u_R():
+def test_mann_whitney_u_basic():
     # wilcox.test(a, b, exact=TRUE)
-
     a = [1, 2, 3, 4]
     b = [0.9, 1.1, 0.7]
     u, p = statistics.mann_whitney_u(a, b, method='exact')
@@ -432,6 +439,28 @@ def test_mann_whitney_u_R():
     u, p = statistics.mann_whitney_u(a, b, method='exact')
     assert u == 0
     assert p == pytest.approx(2/3, abs=0, rel=1e-10)
+
+
+@pytest.mark.skipif(not HAS_RPY2, reason="Requires rpy2")
+def test_mann_whitney_u_R():
+    random.seed(1)
+
+    a = list(range(10))
+    b = [x + 0.1 for x in a]
+    random.shuffle(a)
+    random.shuffle(b)
+
+    wilcox_test = robjects.r('wilcox.test')
+
+    for m in range(1, len(a) + 1):
+        for n in range(1, len(b) + 1):
+            u, p = statistics.mann_whitney_u(a[:m], b[:n])
+
+            r = wilcox_test(robjects.FloatVector(a[:m]),
+                            robjects.FloatVector(b[:n]))
+
+            assert u == r.rx('statistic')[0][0]
+            assert p == pytest.approx(r.rx('p.value')[0][0], abs=0, rel=1e-10)
 
 
 def test_binom():
