@@ -119,6 +119,11 @@ class Machine(object):
          including its speed and class.  For example, 'Intel(R)
          Core(TM) i5-2520M CPU @ 2.50GHz (4 cores)'."""),
 
+        ("ncores",
+         """
+         The number of CPUs in the system. For example,
+         4."""),
+
         ("ram",
          """
          The amount of physical RAM on this machine.  For example,
@@ -144,6 +149,7 @@ class Machine(object):
         return {
             'machine': node,
             'os': "{0} {1}".format(system, release),
+            'ncores': os.cpu_count(),
             'arch': platform.machine(),
             'cpu': cpu,
             'ram': ram
