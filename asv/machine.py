@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function,
 import six
 
 import os
-import multiprocessing
+import multiprocessing as mp
 import platform
 import sys
 import textwrap
@@ -147,7 +147,7 @@ class Machine(object):
 
         ram = six.text_type(util.get_memsize())
 
-        num_cpu = six.text_type(multiprocessing.cpu_count())
+        num_cpu = six.text_type(mp.cpu_count())
 
         return {
             'machine': node,
