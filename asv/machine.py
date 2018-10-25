@@ -7,6 +7,7 @@ from __future__ import (absolute_import, division, print_function,
 import six
 
 import os
+import multiprocessing
 import platform
 import sys
 import textwrap
@@ -119,10 +120,10 @@ class Machine(object):
          including its speed and class.  For example, 'Intel(R)
          Core(TM) i5-2520M CPU @ 2.50GHz (4 cores)'."""),
 
-        ("ncores",
+        ("num_cpu",
          """
          The number of CPUs in the system. For example,
-         4."""),
+         '4'."""),
 
         ("ram",
          """
@@ -146,10 +147,12 @@ class Machine(object):
 
         ram = six.text_type(util.get_memsize())
 
+        num_cpu = six.text_type(multiprocessing.cpu_count())
+
         return {
             'machine': node,
             'os': "{0} {1}".format(system, release),
-            'ncores': os.cpu_count(),
+            'num_cpu': num_cpu,
             'arch': platform.machine(),
             'cpu': cpu,
             'ram': ram
