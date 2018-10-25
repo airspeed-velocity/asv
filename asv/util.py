@@ -27,10 +27,9 @@ import shlex
 import operator
 import collections
 
+import json_minify
 import six
 from six.moves import xrange
-
-from .extern import minify_json
 
 
 nan = float('nan')
@@ -769,7 +768,7 @@ def load_json(path, api_version=None, cleanup=True):
         content = fd.read()
 
     if cleanup:
-        content = minify_json.json_minify(content)
+        content = json_minify.json_minify(content)
         content = content.replace(",]", "]")
         content = content.replace(",}", "}")
 

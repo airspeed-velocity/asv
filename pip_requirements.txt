@@ -1,3 +1,4 @@
+JSON_minify
 sphinx
 sphinx_bootstrap_theme
 six

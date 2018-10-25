@@ -224,7 +224,8 @@ def run_setup(build_binary=False):
         ext_modules = ext_modules,
 
         install_requires=[
-            str('six>=1.4')
+            str('JSON_minify'),
+            str('six>=1.4'),
         ],
 
         extras_require={
