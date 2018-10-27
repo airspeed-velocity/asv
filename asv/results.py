@@ -627,7 +627,7 @@ class Results(object):
             If given, check that the results file is for the given machine.
 
         """
-        d = util.load_json(path, cls.api_version, cleanup=False)
+        d = util.load_json(path, cls.api_version)
 
         try:
             obj = cls(
@@ -695,7 +695,7 @@ class Results(object):
 
     @classmethod
     def update(cls, path):
-        util.update_json(cls, path, cls.api_version, cleanup=False)
+        util.update_json(cls, path, cls.api_version)
 
     @property
     def env_name(self):

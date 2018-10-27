@@ -56,7 +56,7 @@ class Config(object):
         if not os.path.isfile(path):
             raise util.UserError("Config file {0} not found.".format(path))
 
-        d = util.load_json(path, cls.api_version)
+        d = util.load_json(path, cls.api_version, js_comments=True)
         try:
             return cls.from_json(d)
         except ValueError:
@@ -79,13 +79,3 @@ class Config(object):
                 "No branches specified in config file.")
 
         return conf
-
-    @classmethod
-    def update(cls, path=None):
-        if not path:
-            path = "asv.conf.json"
-
-        if not os.path.isfile(path):
-            raise util.UserError("Config file {0} not found.".format(path))
-
-        util.update_json(cls, path, cls.api_version)

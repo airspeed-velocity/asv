@@ -206,7 +206,7 @@ def test_compare_name_lookup(dvcs_type, capsys, tmpdir):
     # Copy to different commit
     fn_1 = os.path.join(dst, 'feea15ca-py2.7-Cython-numpy1.8.json')
     fn_2 = os.path.join(dst, commit_hash[:8] + '-py2.7-Cython-numpy1.8.json')
-    data = util.load_json(fn_1, cleanup=False)
+    data = util.load_json(fn_1)
     data['commit_hash'] = commit_hash
     util.write_json(fn_2, data)
 

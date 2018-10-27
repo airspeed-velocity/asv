@@ -57,7 +57,7 @@ def test_publish(tmpdir):
         src = join(RESULT_DIR, 'cheetah', fn)
         dst = join(result_dir, 'cheetah', commit[:8] + fn[8:])
         try:
-            data = util.load_json(src, cleanup=False)
+            data = util.load_json(src)
         except util.UserError:
             # intentionally malformed file, ship it as is
             shutil.copyfile(src, dst)
@@ -100,7 +100,7 @@ def test_publish(tmpdir):
                   'cpu-Intel(R) Core(TM) i5-2520M CPU @ 2.50GHz (4 cores)',
                   'machine-cheetah', 'numpy-1.8', 'os-Linux (Fedora 20)', 'python-2.7', 'ram-8.2G',
                   'time_coordinates.time_latitude.json')
-        data = util.load_json(fn, cleanup=False)
+        data = util.load_json(fn)
         data_commits = [revision_to_hash[x[0]] for x in data]
         if branch == "master":
             assert all(c in master_commits for c in data_commits)

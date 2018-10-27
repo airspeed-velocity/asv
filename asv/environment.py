@@ -414,7 +414,7 @@ class Environment(object):
         data = {}
         if os.path.isfile(hash_file):
             try:
-                data = util.load_json(hash_file, api_version=1, cleanup=False)
+                data = util.load_json(hash_file, api_version=1)
             except util.UserError as exc:
                 pass
 

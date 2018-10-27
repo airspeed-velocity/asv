@@ -24,7 +24,7 @@ def test_quickstart(tmpdir):
 
     assert isfile(join(dest, 'asv.conf.json'))
     assert isfile(join(dest, 'benchmarks', 'benchmarks.py'))
-    conf = util.load_json(join(dest, 'asv.conf.json'))
+    conf = util.load_json(join(dest, 'asv.conf.json'), js_comments=True)
     assert 'env_dir' not in conf
     assert 'html_dir' not in conf
     assert 'results_dir' not in conf
@@ -40,7 +40,7 @@ def test_quickstart(tmpdir):
 
     assert isfile(join(dest, 'asv.conf.json'))
     assert isfile(join(dest, 'benchmarks', 'benchmarks.py'))
-    conf = util.load_json(join(dest, 'asv.conf.json'))
+    conf = util.load_json(join(dest, 'asv.conf.json'), js_comments=True)
     assert conf['env_dir'] != 'env'
     assert conf['html_dir'] != 'html'
     assert conf['results_dir'] != 'results'

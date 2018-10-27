@@ -299,7 +299,7 @@ class Benchmarks(dict):
             path = cls.get_benchmark_file_path(conf.results_dir)
             if not os.path.isfile(path):
                 raise util.UserError("Benchmark list file {} missing!".format(path))
-            d = util.load_json(path, cleanup=False, api_version=cls.api_version)
+            d = util.load_json(path, api_version=cls.api_version)
             benchmarks = six.itervalues(d)
             return cls(conf, benchmarks, regex=regex)
         except util.UserError as err:
