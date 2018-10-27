@@ -22,7 +22,7 @@ from asv.results import iter_results_for_machine
 from asv.util import check_output, which
 
 from . import tools
-from .tools import dummy_packages
+from .tools import dummy_packages, conda_lock
 
 
 try:

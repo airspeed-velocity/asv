@@ -99,7 +99,7 @@ WAIT_TIME = 20.0
 class DummyLock(object):
     def __init__(self, filename):
         pass
-    def acquire(self, timeout=None):
+    def acquire(self):
         pass
     def release(self):
         pass
@@ -111,7 +111,7 @@ except ImportError:
 
 
 @contextmanager
-def locked_cache_dir(config, cache_key, timeout=900, tag=None):
+def locked_cache_dir(config, cache_key, tag=None):
     if LockFile is DummyLock:
         cache_key = cache_key + os.environ.get('PYTEST_XDIST_WORKER', '')
 
@@ -121,7 +121,7 @@ def locked_cache_dir(config, cache_key, timeout=900, tag=None):
     cache_dir = join(six.text_type(base_dir), 'cache')
 
     lock = LockFile(lockfile)
-    lock.acquire(timeout=timeout)
+    lock.acquire()
     try:
         # Clear cache dir contents if it was generated with different
         # asv version
@@ -614,7 +614,20 @@ def get_with_retry(browser, url):
 
 
 @pytest.fixture
-def dummy_packages(request, monkeypatch):
+def conda_lock(request):
+    if not HAS_CONDA:
+        return
+
+    lock = locked_cache_dir(request.config, "asv-conda-lock")
+    lock.__enter__()
+
+    def fin():
+        lock.__exit__(None, None, None)
+    request.addfinalizer(fin)
+
+
+@pytest.fixture
+def dummy_packages(request, monkeypatch, conda_lock):
     """
     Build dummy wheels for required packages and set PIP_FIND_LINKS + CONDARC
     """
@@ -623,7 +636,7 @@ def dummy_packages(request, monkeypatch):
 
     tag = [PYTHON_VER1, PYTHON_VER2, to_build, HAS_CONDA]
 
-    with locked_cache_dir(request.config, "asv-wheels", timeout=900, tag=tag) as cache_dir:
+    with locked_cache_dir(request.config, "asv-wheels", tag=tag) as cache_dir:
         wheel_dir = os.path.abspath(join(six.text_type(cache_dir), 'wheels'))
 
         monkeypatch.setenv('PIP_FIND_LINKS', 'file://' + wheel_dir)

@@ -29,12 +29,12 @@ except ImportError:
     pass
 
 from . import tools
-from .tools import browser, get_with_retry, WAIT_TIME, locked_cache_dir
+from .tools import browser, get_with_retry, WAIT_TIME, locked_cache_dir, conda_lock
 
 
-@pytest.fixture(scope="session")
-def basic_html(request):
-    with locked_cache_dir(request.config, "asv-test_web-basic_html", timeout=900) as cache_dir:
+@pytest.fixture
+def basic_html(request, conda_lock):
+    with locked_cache_dir(request.config, "asv-test_web-basic_html") as cache_dir:
         tmpdir = join(six.text_type(cache_dir), 'cached')
         html_dir, dvcs = _rebuild_basic_html(tmpdir)
         return html_dir, dvcs

@@ -19,7 +19,7 @@ from asv.util import shlex_quote as quote
 
 from .tools import (PYTHON_VER1, PYTHON_VER2, DUMMY1_VERSION, DUMMY2_VERSIONS,
                     WIN, HAS_PYPY, HAS_CONDA, HAS_VIRTUALENV, HAS_PYTHON_VER2,
-                    generate_test_repo, dummy_packages)
+                    generate_test_repo, dummy_packages, conda_lock)
 
 
 @pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
@@ -54,7 +54,7 @@ def test_matrix_environments(tmpdir, dummy_packages):
         assert output.startswith(six.text_type(env._requirements['asv_dummy_test_package_2']))
 
 
-def test_large_environment_matrix(tmpdir):
+def test_large_environment_matrix(tmpdir, conda_lock):
     # As seen in issue #169, conda can't handle using really long
     # directory names in its environment.  This creates an environment
     # with many dependencies in order to ensure it still works.
@@ -80,7 +80,7 @@ def test_large_environment_matrix(tmpdir):
         env.create()
 
 
-def test_presence_checks(tmpdir):
+def test_presence_checks(tmpdir, conda_lock):
     conf = config.Config()
 
     conf.env_dir = six.text_type(tmpdir.join("env"))
@@ -434,7 +434,8 @@ def test_matrix_existing():
     ])
 def test_conda_channel_addition(tmpdir,
                                 channel_list,
-                                expected_channel):
+                                expected_channel,
+                                conda_lock):
     # test that we can add conda channels to environments
     # and that we respect the specified priority order
     # of channels
@@ -513,7 +514,7 @@ def test_environment_name_sanitization():
     pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="needs conda")),
     pytest.param("virtualenv", marks=pytest.mark.skipif(not HAS_VIRTUALENV, reason="needs virtualenv"))
 ])
-def test_environment_environ_path(environment_type, tmpdir, monkeypatch):
+def test_environment_environ_path(environment_type, tmpdir, monkeypatch, conda_lock):
     # Check that virtualenv binary dirs are in the PATH
     conf = config.Config()
     conf.env_dir = six.text_type(tmpdir.join("env"))
@@ -542,7 +543,7 @@ def test_environment_environ_path(environment_type, tmpdir, monkeypatch):
     assert output.strip() == "Hello python path"
 
 
-def test_build_isolation(tmpdir):
+def test_build_isolation(tmpdir, conda_lock):
     # build should not fail with build_cache on projects that have pyproject.toml
     tmpdir = six.text_type(tmpdir)
 
@@ -573,7 +574,7 @@ def test_build_isolation(tmpdir):
     env.install_project(conf, repo, commit_hash)
 
 
-def test_custom_commands(tmpdir):
+def test_custom_commands(tmpdir, conda_lock):
     # check custom install/uninstall/build commands work
     tmpdir = six.text_type(tmpdir)
 
@@ -662,7 +663,7 @@ def test_custom_commands(tmpdir):
         env.install_project(conf, repo, commit_hash)
 
 
-def test_installed_commit_hash(tmpdir):
+def test_installed_commit_hash(tmpdir, conda_lock):
     tmpdir = six.text_type(tmpdir)
     tmpdir = six.text_type(tmpdir)
 
