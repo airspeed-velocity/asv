@@ -8,10 +8,14 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import sys
+import os
+import shutil
 import argparse
 import subprocess
 import shlex
 import time
+import textwrap
+import tempfile
 
 
 PY_VERSIONS = [sys.version_info]
@@ -46,8 +50,38 @@ def do_conda():
         conda create --download-only -n tmp -q --yes --use-index-cache python={ver[0]}.{ver[1]} wheel pip conda-build bzip2
         """, subs)
 
+        # Ensure conda-build dependencies are downloaded
+        tmpd = tempfile.mkdtemp()
+        try:
+            with open(os.path.join(tmpd, 'meta.yaml'), 'w') as f:
+                f.write(textwrap.dedent("""\
+                package:
+                  name: "foo"
+                  version: "1.0.0"
+                source:
+                  path: {path}
+                build:
+                  number: 0
+                  script: "python -c pass"
+                requirements:
+                  host:
+                    - pip
+                    - python {{{{ python }}}}
+                  run:
+                    - python
+                about:
+                  license: BSD
+                  summary: Dummy test package
+                """.format(path=tmpd)))
 
-def call(cmds, subs=None):
+            call("""
+            conda build --output-folder=xxx --no-anaconda-upload --python={ver[0]}.{ver[1]} .
+            """, subs, cwd=tmpd)
+        finally:
+            shutil.rmtree(tmpd)
+
+
+def call(cmds, subs=None, **kwargs):
     if subs is None:
         subs = {}
     cmds = cmds.splitlines()
@@ -59,7 +93,7 @@ def call(cmds, subs=None):
         parts = [x for x in parts if x]
         print("$ {}".format(" ".join(parts)))
         sys.stdout.flush()
-        subprocess.check_call(parts)
+        subprocess.check_call(parts, **kwargs)
 
 
 if __name__ == "__main__":
