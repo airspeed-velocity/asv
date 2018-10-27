@@ -504,7 +504,7 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
     return conf
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def browser(request, pytestconfig):
     """
     Fixture for Selenium WebDriver browser interface
