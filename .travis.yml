@@ -81,6 +81,9 @@ install:
       . $HOME/miniconda3/etc/profile.d/conda.sh  # enable conda bash function
       conda activate
       conda install --yes conda conda-build bzip2
+      mv $HOME/miniconda3/bin/conda $HOME/miniconda3/bin/conda.real;
+      echo -e '#!/bin/sh\nexec flock $HOME/miniconda3 $HOME/miniconda3/bin/conda.real "$@"' > $HOME/miniconda3/bin/conda;
+      chmod +x $HOME/miniconda3/bin/conda;
       conda info
       if $TRAVIS_PYTHON -c 'import virtualenv'; then echo "ERROR: virtualenv package is installed"; exit 1; fi;
       $TRAVIS_PYTHON .continuous-integration/download_reqs.py
