@@ -519,12 +519,12 @@ def browser(request, pytestconfig):
         from selenium.webdriver.firefox.options import Options
         options = Options()
         options.add_argument("-headless")
-        return selenium.webdriver.Firefox(firefox_options=options)
+        return selenium.webdriver.Firefox(options=options)
 
     def ChromeHeadless():
         options = selenium.webdriver.ChromeOptions()
         options.add_argument('headless')
-        return selenium.webdriver.Chrome(chrome_options=options)
+        return selenium.webdriver.Chrome(options=options)
 
     ns = {}
     six.exec_("import selenium.webdriver", ns)
