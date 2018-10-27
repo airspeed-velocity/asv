@@ -37,7 +37,6 @@ class Update(Command):
     @classmethod
     def run(cls, config_path, _machine_file=None):
         MachineCollection.update(_path=_machine_file)
-        Config.update(config_path)
 
         conf = Config.load(config_path)
 

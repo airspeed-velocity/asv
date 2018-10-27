@@ -752,9 +752,20 @@ def write_json(path, data, api_version=None, compact=False):
             json.dump(data, fd)
 
 
-def load_json(path, api_version=None, cleanup=True):
+def load_json(path, api_version=None, js_comments=False):
     """
-    Loads JSON to the given path, ignoring any C-style comments.
+    Loads JSON from the given path.
+
+    Parameters
+    ----------
+    path : str
+        File name
+    api_version : str or None
+        API version indentifier
+    js_comments : bool, optional
+        Whether to allow nonstandard javascript-style comments
+        in the file. Note that this slows down the loading
+        significantly.
     """
     # Hide traceback from expected exceptions in pytest reports
     __tracebackhide__ = operator.methodcaller('errisinstance', UserError)
@@ -768,7 +779,7 @@ def load_json(path, api_version=None, cleanup=True):
     with long_path_open(path, 'r', **open_kwargs) as fd:
         content = fd.read()
 
-    if cleanup:
+    if js_comments:
         content = minify_json.json_minify(content)
         content = content.replace(",]", "]")
         content = content.replace(",}", "}")
@@ -800,7 +811,7 @@ def load_json(path, api_version=None, cleanup=True):
     return d
 
 
-def update_json(cls, path, api_version, cleanup=True):
+def update_json(cls, path, api_version):
     """
     Perform JSON file format updates.
 
@@ -819,7 +830,7 @@ def update_json(cls, path, api_version, cleanup=True):
     # Hide traceback from expected exceptions in pytest reports
     __tracebackhide__ = operator.methodcaller('errisinstance', UserError)
 
-    d = load_json(path, cleanup=cleanup)
+    d = load_json(path)
     if 'version' not in d:
         raise UserError(
             "No version specified in {0}.".format(path))
