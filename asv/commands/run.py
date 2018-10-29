@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import sys
 import logging
 import traceback
 import itertools
@@ -196,7 +197,9 @@ class Run(Command):
             commit_hashes = repo.get_new_branch_commits(conf.branches, [])
         elif isinstance(range_spec, six.string_types) and range_spec.startswith('HASHFILE:'):
             hashfn = range_spec[9:]
-            if os.path.isfile(hashfn):
+            if hashfn == '-' or hashfn.lower() == 'stdin':
+                hashstr = sys.stdin.read()
+            elif os.path.isfile(hashfn):
                 with open(hashfn, 'r') as f:
                     hashstr = f.read()
             else:
