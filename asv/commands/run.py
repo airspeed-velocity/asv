@@ -194,6 +194,15 @@ class Run(Command):
         elif range_spec == "ALL":
             # All commits on each configured branches
             commit_hashes = repo.get_new_branch_commits(conf.branches, [])
+        elif isinstance(range_spec, six.string_types) and range_spec.startswith('HASHFILE:'):
+            hashfn = range_spec[9:]
+            if os.path.isfile(hashfn):
+                with open(hashfn, 'r') as f:
+                    hashstr = f.read()
+            else:
+                log.error('Requested commit hash file "{}" is not a file'.format(hashfn))
+                return 1
+            commit_hashes = hashstr.strip().split('\n')
         elif isinstance(range_spec, list):
             commit_hashes = range_spec
         else:
