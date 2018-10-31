@@ -194,6 +194,31 @@ if sys.platform.startswith('win'):
         if info == 0:
             raise ctypes.WinError()
         return counters.PeakWorkingSetSize
+
+    if ctypes.sizeof(ctypes.c_void_p) == ctypes.sizeof(ctypes.c_uint64):
+        DWORD_PTR = ctypes.c_uint64
+    elif ctypes.sizeof(ctypes.c_void_p) == ctypes.sizeof(ctypes.c_uint32):
+        DWORD_PTR = ctypes.c_uint32
+
+    SetProcessAffinityMask = ctypes.windll.kernel32.SetProcessAffinityMask
+    SetProcessAffinityMask.argtypes = [ctypes.wintypes.HANDLE, DWORD_PTR]
+    SetProcessAffinityMask.restype  = bool
+
+    GetCurrentProcess = ctypes.windll.kernel32.GetCurrentProcess
+    GetCurrentProcess.argtypes = []
+    GetCurrentProcess.restype  = ctypes.wintypes.HANDLE
+
+    def set_cpu_affinity(affinity_list):
+        """Set CPU affinity to CPUs listed (numbered 0...n-1)"""
+        mask = 0
+        for num in affinity_list:
+            mask |= 2**num
+
+        # Pseudohandle, doesn't need to be closed
+        handle = GetCurrentProcess()
+        ok = SetProcessAffinityMask(handle, mask)
+        if not ok:
+            raise RuntimeError("SetProcessAffinityMask failed")
 else:
     try:
         import resource
@@ -210,6 +235,16 @@ else:
                 return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
     except ImportError:
         pass
+
+    def set_cpu_affinity(affinity_list):
+        """Set CPU affinity to CPUs listed (numbered 0...n-1)"""
+        if hasattr(os, 'sched_setaffinity'):
+            os.sched_setaffinity(0, affinity_list)
+        else:
+            import psutil
+            p = psutil.Process()
+            if hasattr(p, 'cpu_affinity'):
+                p.cpu_affinity(affinity_list)
 
 
 def recvall(sock, size):
@@ -894,6 +929,14 @@ def main_run(args):
 
     if profile_path == 'None':
         profile_path = None
+
+    affinity_list = extra_params.pop('cpu_affinity', None)
+    if affinity_list is not None:
+        try:
+            set_cpu_affinity(affinity_list)
+        except BaseException as exc:
+            print("asv: setting cpu affinity {!r} failed: {!r}".format(
+                affinity_list, exc))
 
     benchmark = get_benchmark_from_name(
         benchmark_dir, benchmark_id, extra_params=extra_params)

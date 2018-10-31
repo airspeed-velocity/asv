@@ -68,8 +68,7 @@ This will modify system settings that can be only changed as root, and
 you should read the ``perf`` documentation on what it precisely does.
 This system tuning also improves results for ``asv``.  To achieve CPU
 affinity pinning with ``asv`` (e.g. to an isolated CPU), you should
-use ``taskset`` to run the commands with ``taskset -c CPUNUMBER asv
-...``.
+use :ref:`the --cpu-affinity option <cmd-asv-run>`.
 
 It is also useful to note that configuration changes and operating
 system upgrades on the benchmarking machine can change the baseline

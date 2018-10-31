@@ -424,3 +424,25 @@ def test_run_append_samples(basic_conf):
     run_it()
     data = util.load_json(result_fn)
     assert len(data['results']['time_examples.TimeSuite.time_example_benchmark_1']['samples'][0]) == 2
+
+
+def test_cpu_affinity(basic_conf):
+    tmpdir, local, conf, machine_file = basic_conf
+
+    # Only one environment
+    conf.matrix = {}
+
+    # Tests multiple calls to "asv run --append-samples"
+    tools.run_asv_with_conf(conf, 'run', "master^!",
+                            '--bench', 'time_examples.TimeSuite.time_example_benchmark_1',
+                            '--cpu-affinity=0', '-a', 'repeat=(1, 1, 10.0)', '-a', 'processes=1',
+                            '-a', 'number=1', '-a', 'warmup_time=0',
+                            _machine_file=machine_file)
+
+
+    # Check run produced a result
+    result_dir = join(tmpdir, 'results_workflow', 'orangutan')
+    result_fn, = [join(result_dir, fn) for fn in os.listdir(result_dir)
+                  if fn != 'machine.json']
+    data = util.load_json(result_fn)
+    assert data['results']['time_examples.TimeSuite.time_example_benchmark_1']
