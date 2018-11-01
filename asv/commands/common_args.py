@@ -3,6 +3,7 @@
 
 from __future__ import absolute_import, division, unicode_literals, print_function
 
+import multiprocessing
 import argparse
 
 from .. import __version__
@@ -68,20 +69,26 @@ class DictionaryArgAction(argparse.Action):
     """
     Parses multiple key=value assignments into a dictionary.
     """
-    def __init__(self, option_strings, dest, converters=None, choices=None, **kwargs):
+    def __init__(self, option_strings, dest, converters=None, choices=None,
+                 dict_dest=None, **kwargs):
         if converters is None:
             converters = {}
         self.converters = converters
         self.__choices = choices
+        self.dict_dest = dict_dest
         super(DictionaryArgAction, self).__init__(option_strings, dest, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         # Parse and check value
-        try:
-            key, value = values.split("=", 1)
-        except ValueError:
-            raise argparse.ArgumentError(self,
-                                         "{!r} is not a key=value assignment".format(values))
+        if self.dict_dest is None:
+            try:
+                key, value = values.split("=", 1)
+            except ValueError:
+                raise argparse.ArgumentError(self,
+                                             "{!r} is not a key=value assignment".format(values))
+        else:
+            key = self.dict_dest
+            value = values
 
         if self.__choices is not None and key not in self.__choices:
             raise argparse.ArgumentError(self,
@@ -119,6 +126,29 @@ def add_bench(parser):
         value = (int(min_repeat), int(max_repeat), float(max_time))
         return value
 
+    def parse_affinity(value):
+        if "," in value:
+            value = value.split(",")
+        else:
+            value = [value]
+
+        affinity_list = []
+        for v in value:
+            if "-" in v:
+                a, b = v.split("-", 1)
+                a = int(a)
+                b = int(b)
+                affinity_list.extend(range(a, b + 1))
+            else:
+                affinity_list.append(int(v))
+
+        num_cpu = multiprocessing.cpu_count()
+        for n in affinity_list:
+            if not (0 <= n < num_cpu):
+                raise ValueError("CPU {!r} not in range 0-{!r}".format(n, num_cpu-1))
+
+        return affinity_list
+
     converters = {
         'timeout': float,
         'version': str,
@@ -126,13 +156,21 @@ def add_bench(parser):
         'repeat': parse_repeat,
         'number': int,
         'processes': int,
-        'sample_time': float
+        'sample_time': float,
+        'cpu_affinity': parse_affinity
     }
 
     parser.add_argument(
         "--attribute", "-a", action=DictionaryArgAction,
         choices=tuple(converters.keys()), converters=converters,
         help="""Override a benchmark attribute, e.g. `-a repeat=10`.""")
+
+    parser.add_argument(
+        "--cpu-affinity", action=DictionaryArgAction, dest="attribute",
+        dict_dest="cpu_affinity",
+        choices=tuple(converters.keys()), converters=converters,
+        help=("Set CPU affinity for running the benchmark, in format: "
+              "0 or 0,1,2 or 0-3. Default: not set"))
 
 
 def add_machine(parser):
