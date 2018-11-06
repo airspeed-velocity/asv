@@ -66,6 +66,8 @@ import pkgutil
 import traceback
 import contextlib
 from importlib import import_module
+from collections import Counter
+import warnings
 
 
 # The best timer we can use is time.process_time, but it is not
@@ -402,6 +404,21 @@ def check_num_args(root, benchmark_name, func, min_num_args, max_num_args=None):
     return ok
 
 
+def _repr_no_address(obj):
+    result = repr(obj)
+    address_regex = re.compile('^<.* at (0x[\da-fA-F]*)>$')
+    match = address_regex.match(result)
+    if match:
+        suspected_address = match.group(1)
+        # Double check this is the actual address
+        default_result = object.__repr__(obj)
+        known_address = address_regex.match(default_result).group(1)
+        if known_address == suspected_address:
+            result = re.sub(' at 0x[\da-fA-F]*>$', '>', result)
+
+    return result
+
+
 class Benchmark(object):
     """
     Represents a single benchmark.
@@ -461,7 +478,17 @@ class Benchmark(object):
                                                                    len(self._params))]
 
         # Exported parameter representations
-        self.params = [[repr(item) for item in entry] for entry in self._params]
+        self.params = [[_repr_no_address(item) for item in entry] for entry in self._params]
+        for i, param in enumerate(self.params):
+            if len(param) != len(set(param)):
+                counter = Counter(param)
+                dupe_dict = {name: 0 for name, count in counter.items() if count > 1}
+                for j in range(len(param)):
+                    name = param[j]
+                    if name in dupe_dict:
+                        param[j] = name + ' ({})'.format(dupe_dict[name])
+                        dupe_dict[name] += 1
+                self.params[i] = param
 
     def set_param_idx(self, param_idx):
         try:
