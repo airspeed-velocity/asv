@@ -121,7 +121,7 @@ $(document).ready(function() {
         });
 
         summary_display.append(summary_container);
-        $(window).scroll();
+        $(window).trigger('scroll');
 
         summary_loaded = true;
     }

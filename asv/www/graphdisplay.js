@@ -123,7 +123,7 @@ $(document).ready(function() {
         benchmark_graph_display_ready = true;
 
         /* When the window resizes, redraw the graphs */
-        $(window).resize(function() {
+        $(window).on('resize', function() {
             update_graphs();
         });
 
@@ -178,7 +178,7 @@ $(document).ready(function() {
                 stack.push($(top.children()[1]));
                 cursor.push(parts[j]);
 
-                $(top.children()[0]).click(function () {
+                $(top.children()[0]).on('click', function () {
                     $(this).parent().children('ul.tree').toggle(150);
                     var caret = $(this).children('b');
                     if (caret.attr('class') == 'caret') {
