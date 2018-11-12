@@ -408,7 +408,7 @@ $(document).ready(function() {
 
         table.stupidtable();
 
-        table.bind('aftertablesort', function (event, data) {
+        table.on('aftertablesort', function (event, data) {
             var info = $.asv.parse_hash_string(window.location.hash);
             info.params['sort'] = [data.column];
             info.params['dir'] = [data.direction];

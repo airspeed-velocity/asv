@@ -285,7 +285,7 @@ $(document).ready(function() {
         }
 
         var previous_hover = null;
-        $("#main-graph").bind("plothover", function (event, pos, item) {
+        $("#main-graph").on("plothover", function (event, pos, item) {
             if (item) {
                 if (previous_hover != item.datapoint) {
                     previous_hover = item.datapoint;
@@ -307,7 +307,7 @@ $(document).ready(function() {
            hash in another tab. */
         var previous_click;
         var previous_hash;
-        $("#main-graph").bind("plotclick", function (event, pos, item) {
+        $("#main-graph").on("plotclick", function (event, pos, item) {
             if (item) {
                 if (previous_click != item.datapoint) {
                     previous_click = item.datapoint;
@@ -1233,8 +1233,8 @@ $(document).ready(function() {
             overview = $.plot(overview_div, graphs, overview_options);
         }
 
-        graph_div.unbind("plotselected");
-        graph_div.bind("plotselected", function (event, ranges) {
+        graph_div.off("plotselected");
+        graph_div.on("plotselected", function (event, ranges) {
             // do the zooming
             var new_options = $.extend(true, {}, options, {
                 xaxis: {
@@ -1257,8 +1257,8 @@ $(document).ready(function() {
             }
         });
 
-        overview_div.unbind("plotselected");
-        overview_div.bind("plotselected", function (event, ranges) {
+        overview_div.off("plotselected");
+        overview_div.on("plotselected", function (event, ranges) {
             plot.setSelection(ranges);
             // Update things that depend on the range
             update_tags();
