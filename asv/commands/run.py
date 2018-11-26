@@ -64,12 +64,15 @@ class Run(Command):
             repository, this is passed as the first argument to ``git
             log``.  See 'specifying ranges' section of the
             `gitrevisions` manpage for more info.  Also accepts the
-            special values 'NEW', 'ALL', and 'EXISTING'. 'NEW' will
-            benchmark all commits since the latest benchmarked on this
-            machine.  'ALL' will benchmark all commits in the project.
-            'EXISTING' will benchmark against all commits for which
-            there are existing benchmarks on any machine. By default,
-            will benchmark the head each configured branches.""")
+            special values 'NEW', 'ALL', 'EXISTING', and 'HASHFILE:xxx'.
+            'NEW' will benchmark all commits since the latest
+            benchmarked on this machine.  'ALL' will benchmark all
+            commits in the project. 'EXISTING' will benchmark against
+            all commits for which there are existing benchmarks on any
+            machine. 'HASHFILE:xxx' will benchmark only a specific set
+            of hashes given in the file named 'xxx', which must have
+            one hash per line. By default, will benchmark the head of
+            each configured of the branches.""")
         parser.add_argument(
             "--steps", "-s", type=common_args.positive_int, default=None,
             help="""Maximum number of steps to benchmark.  This is
