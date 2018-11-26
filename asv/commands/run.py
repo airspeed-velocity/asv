@@ -198,7 +198,7 @@ class Run(Command):
             commit_hashes = repo.get_new_branch_commits(conf.branches, [])
         elif isinstance(range_spec, six.string_types) and range_spec.startswith('HASHFILE:'):
             hashfn = range_spec[9:]
-            if hashfn == '-' or hashfn.lower() == 'stdin':
+            if hashfn == '-':
                 hashstr = sys.stdin.read()
             elif os.path.isfile(hashfn):
                 with open(hashfn, 'r') as f:
@@ -206,7 +206,7 @@ class Run(Command):
             else:
                 log.error('Requested commit hash file "{}" is not a file'.format(hashfn))
                 return 1
-            commit_hashes = hashstr.strip().split('\n')
+            commit_hashes = [h.strip() for h in hashstr.split("\n") if h.strip()]
         elif isinstance(range_spec, list):
             commit_hashes = range_spec
         else:
