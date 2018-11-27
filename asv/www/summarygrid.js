@@ -12,7 +12,7 @@ $(document).ready(function() {
                     (element.offset().top + element.height() >= $(window).scrollTop()));
             if (visible) {
                 func();
-                $(window).unbind('scroll', handler);
+                $(window).off('scroll', handler);
             }
         }
         $(window).on('scroll', handler);
@@ -121,7 +121,7 @@ $(document).ready(function() {
         });
 
         summary_display.append(summary_container);
-        $(window).scroll();
+        $(window).trigger('scroll');
 
         summary_loaded = true;
     }

@@ -417,7 +417,7 @@ $(document).ready(function() {
             }
         });
 
-        table.bind('aftertablesort', function (event, data) {
+        table.on('aftertablesort', function (event, data) {
             update_url({'sort': [data.column], 'dir': [data.direction]});
             /* Update appearance */
             table.find('thead th').removeClass('asc');
