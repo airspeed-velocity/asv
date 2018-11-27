@@ -293,6 +293,14 @@ def test_run_spec(basic_conf):
         for range_spec in (None, "NEW", "ALL"):
             _test_run(range_spec, branches, expected_commits)
 
+    # test the HASHFILE version of range_spec'ing
+    expected_commits = (initial_commit, branch_commit)
+    with open(os.path.join(tmpdir, 'hashes_to_benchmark'), 'w') as f:
+        for commit in expected_commits:
+            f.write(commit)
+            f.write('\n')
+    _test_run('HASHFILE:hashes_to_benchmark', [None], expected_commits)
+
 
 def test_run_build_failure(basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
