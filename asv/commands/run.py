@@ -4,6 +4,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import os
+import sys
 import logging
 import traceback
 import itertools
@@ -62,12 +64,15 @@ class Run(Command):
             repository, this is passed as the first argument to ``git
             log``.  See 'specifying ranges' section of the
             `gitrevisions` manpage for more info.  Also accepts the
-            special values 'NEW', 'ALL', and 'EXISTING'. 'NEW' will
-            benchmark all commits since the latest benchmarked on this
-            machine.  'ALL' will benchmark all commits in the project.
-            'EXISTING' will benchmark against all commits for which
-            there are existing benchmarks on any machine. By default,
-            will benchmark the head each configured branches.""")
+            special values 'NEW', 'ALL', 'EXISTING', and 'HASHFILE:xxx'.
+            'NEW' will benchmark all commits since the latest
+            benchmarked on this machine.  'ALL' will benchmark all
+            commits in the project. 'EXISTING' will benchmark against
+            all commits for which there are existing benchmarks on any
+            machine. 'HASHFILE:xxx' will benchmark only a specific set
+            of hashes given in the file named 'xxx', which must have
+            one hash per line. By default, will benchmark the head of
+            each configured of the branches.""")
         parser.add_argument(
             "--steps", "-s", type=common_args.positive_int, default=None,
             help="""Maximum number of steps to benchmark.  This is
@@ -194,6 +199,17 @@ class Run(Command):
         elif range_spec == "ALL":
             # All commits on each configured branches
             commit_hashes = repo.get_new_branch_commits(conf.branches, [])
+        elif isinstance(range_spec, six.string_types) and range_spec.startswith('HASHFILE:'):
+            hashfn = range_spec[9:]
+            if hashfn == '-':
+                hashstr = sys.stdin.read()
+            elif os.path.isfile(hashfn):
+                with open(hashfn, 'r') as f:
+                    hashstr = f.read()
+            else:
+                log.error('Requested commit hash file "{}" is not a file'.format(hashfn))
+                return 1
+            commit_hashes = [h.strip() for h in hashstr.split("\n") if h.strip()]
         elif isinstance(range_spec, list):
             commit_hashes = range_spec
         else:

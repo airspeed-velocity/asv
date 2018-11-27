@@ -105,26 +105,26 @@ single example benchmark file already in
             self.d = {}
             for x in range(500):
                 self.d[x] = None
-    
+
         def time_keys(self):
             for key in self.d.keys():
                 pass
-    
+
         def time_iterkeys(self):
             for key in self.d.iterkeys():
                 pass
-    
+
         def time_range(self):
             d = self.d
             for key in range(500):
                 x = d[key]
-    
+
         def time_xrange(self):
             d = self.d
             for key in xrange(500):
                 x = d[key]
-    
-    
+
+
     class MemSuite:
         def mem_list(self):
             return [0] * 256
@@ -314,6 +314,11 @@ You can benchmark all commits since the last one that was benchmarked
 on this machine.  This is useful for running in nightly cron jobs::
 
     asv run NEW
+
+You can also benchmark a specific set of commits listed explicitly in a file
+(one commit hash per line)::
+
+    asv run HASHFILE:hashestobenchmark.txt
 
 Finally, you can also benchmark all commits that have not yet been benchmarked
 for this machine::
@@ -583,10 +588,10 @@ revisions of the project. You can do so with the ``compare`` command::
 
     $ asv compare v0.1 v0.2
     All benchmarks:
-    
+
            before           after         ratio
          [3bfda9c6]       [bf719488]
-         <v0.1>           <v0.2>    
+         <v0.1>           <v0.2>
                 40.4m            40.4m     1.00  benchmarks.MemSuite.mem_list [amulet.localdomain/virtualenv-py2.7-numpy]
                failed            35.2m      n/a  benchmarks.MemSuite.mem_list [amulet.localdomain/virtualenv-py3.6-numpy]
           11.5±0.08μs         11.0±0μs     0.96  benchmarks.TimeSuite.time_iterkeys [amulet.localdomain/virtualenv-py2.7-numpy]
