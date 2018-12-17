@@ -17,4 +17,4 @@ class Simple:
             step_detect.detect_regressions(self.y)
 
     def time_solve_potts_approx(self):
-        step_detect.solve_potts_approx(self.y, 0.3, p=1)
+        step_detect.solve_potts_approx(self.y, [1] * len(self.y), gamma=0.3)
