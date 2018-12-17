@@ -266,11 +266,17 @@ stolen from IPython's `%timeit
 magic function.  This means that in most cases the benchmark function
 itself will be run many times to achieve accurate timing.
 
-The default timing function is `time.process_time` (POSIX
+The default timing function is `timeit.default_timer`, which uses the
+highest resolution clock available on a given platform to measure the
+elapsed wall time. This has the consequence of being more susceptible
+to noise from other processes, but the increase in resolution is more
+significant for shorter duration tests (particularly on Windows).
+
+Process timing is provided by the function `time.process_time` (POSIX
 ``CLOCK_PROCESS_CPUTIME``), which measures the CPU time used only by
 the current process.  You can change the timer by setting the
-benchmark's ``timer`` attribute, for example to `timeit.default_timer`
-to measure wall clock time.
+benchmark's ``timer`` attribute, for example to `time.process_time`
+to measure process time.
 
 .. note::
 
