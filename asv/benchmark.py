@@ -152,6 +152,8 @@ except ImportError:  # Python <3.3
         # Fallback to default timer
         process_time = timeit.default_timer
 
+wall_timer = timeit.default_timer
+
 
 def get_maxrss():
     # Fallback function, in case we don't have one that works on the
@@ -487,7 +489,7 @@ class TimeBenchmark(Benchmark):
         self.number = int(_get_first_attr(self._attr_sources, 'number', 0))
         self.sample_time = _get_first_attr(self._attr_sources, 'sample_time', 0.01)
         self.warmup_time = _get_first_attr(self._attr_sources, 'warmup_time', -1)
-        self.timer = _get_first_attr(self._attr_sources, 'timer', process_time)
+        self.timer = _get_first_attr(self._attr_sources, 'timer', wall_timer)
 
     def do_setup(self):
         result = Benchmark.do_setup(self)
@@ -547,7 +549,7 @@ class TimeBenchmark(Benchmark):
                          number, min_run_count):
 
         sample_time = self.sample_time
-        start_time = time.time()
+        start_time = wall_timer()
         run_count = 0
 
         samples = []
@@ -558,7 +560,7 @@ class TimeBenchmark(Benchmark):
                 return False
             if num_samples < min_repeat:
                 return False
-            return time.time() > start_time + warmup_time + max_time
+            return wall_timer() > start_time + warmup_time + max_time
 
         if number == 0:
             # Select number & warmup.
@@ -569,14 +571,14 @@ class TimeBenchmark(Benchmark):
             number = 1
             while True:
                 self._redo_setup_next = False
-                start = time.time()
+                start = wall_timer()
                 timing = timer.timeit(number)
-                wall_time = time.time() - start
+                wall_time = wall_timer() - start
                 actual_timing = max(wall_time, timing)
                 run_count += number
 
                 if actual_timing >= sample_time:
-                    if time.time() > start_time + warmup_time:
+                    if wall_timer() > start_time + warmup_time:
                         break
                 else:
                     try:
@@ -593,7 +595,7 @@ class TimeBenchmark(Benchmark):
                 self._redo_setup_next = False
                 timing = timer.timeit(number)
                 run_count += number
-                if time.time() >= start_time + warmup_time:
+                if wall_timer() >= start_time + warmup_time:
                     break
 
             if too_slow(1):
@@ -1089,14 +1091,14 @@ def main_run_server(args):
 
             # Wait for results
             # (Poll in a loop is simplest --- also used by subprocess.py)
-            start_time = time.time()
+            start_time = wall_timer()
             is_timeout = False
             while True:
                 res, status = os.waitpid(pid, os.WNOHANG)
                 if res != 0:
                     break
 
-                if timeout is not None and time.time() > start_time + timeout:
+                if timeout is not None and wall_timer() > start_time + timeout:
                     # Timeout
                     if is_timeout:
                         os.kill(pid, signal.SIGKILL)
@@ -1142,7 +1144,7 @@ def main_timing(argv):
     parser.add_argument("--number", action="store", type=int, default=0)
     parser.add_argument("--repeat", action="store", type=int, default=0)
     parser.add_argument("--timer", action="store", choices=("process_time", "perf_counter"),
-                        default="process_time")
+                        default="perf_counter")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("statement")
     args = parser.parse_args(argv)

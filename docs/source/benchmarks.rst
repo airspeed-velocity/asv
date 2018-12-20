@@ -138,20 +138,17 @@ Timing benchmarks
 - ``timer``: The timing function to use, which can be any source of
   monotonically increasing numbers, such as `time.clock`, `time.time`
   or ``time.process_time``.  If it's not provided, it defaults to
-  ``time.process_time`` (or a backported version of it for versions of
-  Python prior to 3.3), but other useful values are
-  `timeit.default_timer` to use the default ``timeit`` behavior on
-  your version of Python.
+  ``timeit.default_timer``, but other useful values are
+  ``process_time``, for which ``asv`` provides a backported version for
+  versions of Python prior to 3.3.
 
-  On Windows, `time.clock` has microsecond granularity, but
-  `time.time`'s granularity is 1/60th of a second. On Unix,
-  `time.clock` has 1/100th of a second granularity, and `time.time` is
-  much more precise. On either platform, `timeit.default_timer`
-  measures wall clock time, not the CPU time. This means that other
-  processes running on the same computer may interfere with the
-  timing.  That's why the default of ``time.process_time``, which only
-  measures the time used by the current process, is often the best
-  choice.
+  .. versionchanged:: 0.4
+
+     Previously, the default timer measured process time, which was chosen
+     to minimize noise from other processes. However, on Windows, this is
+     only available at a resolution of 15.6ms, which is greater than the
+     recommended benchmark runtime of 10ms. Therefore, we default to the
+     highest resolution clock on any platform.
 
 The ``sample_time``, ``number``, ``repeat``, and ``timer`` attributes
 can be adjusted in the ``setup()`` routine, which can be useful for

@@ -6,6 +6,9 @@ New Features
 
 API Changes
 ^^^^^^^^^^^
+- Default timer changed from ``process_time()`` to
+  ``timeit.default_timer()`` to fix resolution issues on Windows.
+  Old behavior can be restored by setting ``Benchmark.timer = time.process_time``
 
 Bug Fixes
 ^^^^^^^^^
