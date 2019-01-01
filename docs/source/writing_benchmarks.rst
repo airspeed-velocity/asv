@@ -64,6 +64,11 @@ these features and is equivalent to::
 
        asv run --python=same --quick --show-stderr --dry-run
 
+You may also want to only do a basic check whether the benchmark suite
+is well-formatted, without actually running any benchmarks::
+
+       asv check --python=same
+
 .. _setup-and-teardown:
 
 Setup and teardown functions
