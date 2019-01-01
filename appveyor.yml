@@ -58,7 +58,7 @@ install:
 build: false
 
 test_script:
-    - "python -m pytest -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp -vv -n 3 --webdriver=FirefoxHeadless test"
+    - "python -m pytest -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp -vv --webdriver=FirefoxHeadless test"
 
 after_build:
     # Clear up pip cache
