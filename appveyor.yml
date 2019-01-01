@@ -13,9 +13,9 @@ environment:
       - PYTHON_VERSION: "3.7"
         platform: x64
         PYTHON_ARCH: "64"
-      - PYTHON_VERSION: "2.7"
-        platform: x86
-        PYTHON_ARCH: "32"
+      #- PYTHON_VERSION: "2.7"
+      #  platform: x86
+      #  PYTHON_ARCH: "32"
 
 cache:
     - '%LOCALAPPDATA%\pip\Cache'
@@ -58,7 +58,7 @@ install:
 build: false
 
 test_script:
-    - "python -m pytest -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp -vv -n 3 --webdriver=FirefoxHeadless test"
+    - "python -m pytest -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp -vv --webdriver=FirefoxHeadless test"
 
 after_build:
     # Clear up pip cache

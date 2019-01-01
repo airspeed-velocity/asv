@@ -312,4 +312,5 @@ def test_asv_benchmark_timings():
     # Check the benchmark runner runs
     util.check_call([sys.executable, '-masv.benchmark', 'timing',
                      '--setup=import time',
-                     'time.sleep(0)'])
+                     'time.sleep(0)'],
+                    cwd=os.path.join(os.path.dirname(__file__), '..'))
