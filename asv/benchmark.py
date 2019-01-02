@@ -342,6 +342,53 @@ def get_source_code(items):
     return "\n\n".join(sources).rstrip()
 
 
+def _get_sourceline_info(obj, basedir):
+    try:
+        fn = inspect.getsourcefile(obj)
+        fn = os.path.relpath(fn, basedir)
+        _, lineno = inspect.getsourcelines(obj)
+        return " in {!s}:{!s}".format(fn, lineno)
+    except Exception:
+        return ""
+
+
+def check_num_args(root, benchmark_name, func, num_args):
+    try:
+        if sys.version_info[0] >= 3:
+            info = inspect.getfullargspec(func)
+        else:
+            info = inspect.getargspec(func)
+    except Exception as exc:
+        print("{!s}: failed to check ({!r}{!s}): {!s}".format(
+            benchmark_name, func, _get_sourceline_info(func, root), exc))
+        return True
+
+    max_args = len(info.args)
+
+    if inspect.ismethod(func):
+        max_args -= 1
+
+    if info.defaults is not None:
+        min_args = max_args - len(info.defaults)
+    else:
+        min_args = max_args
+
+    if info.varargs is not None:
+        max_args = float('inf')
+
+    ok = min_args <= num_args <= max_args
+    if not ok:
+        if min_args == max_args:
+            args_str = min_args
+        else:
+            args_str = "{}-{}".format(min_args, max_args)
+        print("{!s}: wrong number of arguments (for {!r}{!s}): expected {}, has {}".format(
+            benchmark_name, func, _get_sourceline_info(func, root),
+            num_args, args_str))
+
+    return ok
+
+
 class Benchmark(object):
     """
     Represents a single benchmark.
@@ -420,6 +467,33 @@ class Benchmark(object):
 
     def __repr__(self):
         return '<{0} {1}>'.format(self.__class__.__name__, self.name)
+
+    def check(self, root):
+        # Check call syntax (number of arguments only...)
+        ok = True
+
+        if self._params:
+            self.set_param_idx(0)
+
+        if self.setup_cache_key is not None:
+            self.insert_param(None)
+            ok = ok and check_num_args(root, self.name + ": setup_cache",
+                                       self._setup_cache, 0)
+
+        num_args = len(self._current_params)
+
+        for setup in self._setups:
+            ok = ok and check_num_args(root, self.name + ": setup",
+                                       setup, num_args)
+
+        ok = ok and check_num_args(root, self.name + ": call",
+                                   self.func, num_args)
+
+        for teardown in self._teardowns:
+            ok = ok and check_num_args(root, self.name + ": teardown",
+                                       teardown, num_args)
+
+        return ok
 
     def do_setup(self):
         try:
@@ -916,6 +990,18 @@ def main_discover(args):
         list_benchmarks(benchmark_dir, fp)
 
 
+def main_check(args):
+    benchmark_dir, = args
+
+    update_sys_path(benchmark_dir)
+
+    ok = True
+    for benchmark in disc_benchmarks(benchmark_dir):
+        ok = ok and benchmark.check(benchmark_dir)
+
+    sys.exit(0 if ok else 1)
+
+
 def main_setup_cache(args):
     (benchmark_dir, benchmark_id) = args
     benchmark = get_benchmark_from_name(benchmark_dir, benchmark_id)
@@ -1189,6 +1275,7 @@ commands = {
     'setup_cache': main_setup_cache,
     'run': main_run,
     'run_server': main_run_server,
+    'check': main_check,
     'timing': main_timing,
     '-h': main_help,
     '--help': main_help,

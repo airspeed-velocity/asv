@@ -331,6 +331,9 @@ for this machine::
    developing benchmarks, called ``asv dev``.  See
    :ref:`writing-benchmarks` for more information.
 
+   You can also do a validity check for the benchmark suite without
+   running benchmarks, using ``asv check``.
+
 The results are stored as JSON files in the directory
 ``results/$MACHINE``, where ``$MACHINE`` is the unique machine name
 that was set up in your ``~/.asv-machine.json`` file.  In order to

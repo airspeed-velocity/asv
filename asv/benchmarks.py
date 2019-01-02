@@ -109,7 +109,8 @@ class Benchmarks(dict):
         return benchmarks
 
     @classmethod
-    def discover(cls, conf, repo, environments, commit_hash, regex=None):
+    def discover(cls, conf, repo, environments, commit_hash, regex=None,
+                 check=False):
         """
         Discover benchmarks in the given `benchmark_dir`.
 
@@ -132,12 +133,15 @@ class Benchmarks(dict):
             benchmarks to run.  If none are provided, all benchmarks
             are run.
 
+        check : bool
+            Run additional checks after discovery.
+
         """
-        benchmarks = cls._disc_benchmarks(conf, repo, environments, commit_hash)
+        benchmarks = cls._disc_benchmarks(conf, repo, environments, commit_hash, check)
         return cls(conf, benchmarks, regex=regex)
 
     @classmethod
-    def _disc_benchmarks(cls, conf, repo, environments, commit_hashes):
+    def _disc_benchmarks(cls, conf, repo, environments, commit_hashes, check):
         """
         Discover all benchmarks in a directory tree.
         """
@@ -213,6 +217,32 @@ class Benchmarks(dict):
                     util.long_path_rmtree(result_dir)
             else:
                 raise util.UserError("Failed to build the project and import the benchmark suite.")
+
+        if check:
+            log.info("Checking benchmarks")
+            with log.indent():
+                result_dir = tempfile.mkdtemp()
+                try:
+                    out, err, retcode = env.run(
+                        [runner.BENCHMARK_RUN_SCRIPT, 'check',
+                         os.path.abspath(root)],
+                        cwd=result_dir,
+                        dots=False,
+                        valid_return_codes=None,
+                        return_stderr=True,
+                        redirect_stderr=True)
+                finally:
+                    util.long_path_rmtree(result_dir)
+
+                out = out.strip()
+                if retcode == 0:
+                    if out:
+                        log.info(out)
+                    log.info("No problems found.")
+                else:
+                    if out:
+                        log.error(out)
+                    raise util.UserError("Benchmark suite check failed.")
 
         return benchmarks
 
