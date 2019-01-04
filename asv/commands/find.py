@@ -144,6 +144,13 @@ class Find(Command):
 
             results[i] = result
 
+            if results[i] == [None]:
+                errcode = res.errcode[benchmark_name]
+                if errcode == util.TIMEOUT_RETCODE:
+                    # If we failed due to timeout, set runtime as the timeout
+                    # to prevent falling back to linear search
+                    results[i] = [benchmarks[benchmark_name]['timeout']]
+            
             return results[i]
 
         def non_null_results(*results):
