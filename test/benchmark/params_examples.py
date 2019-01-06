@@ -97,3 +97,9 @@ def track_bytes():
     return 1000000
 
 track_bytes.unit = "bytes"
+
+
+def track_wrong_number_of_args(a, b):
+    return 0
+
+track_wrong_number_of_args.params = [[1, 2]]

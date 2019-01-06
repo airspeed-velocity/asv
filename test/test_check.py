@@ -23,5 +23,6 @@ def test_check(capsys, basic_conf):
 
     text, err = capsys.readouterr()
 
-    assert re.search(r"cache_examples\.[A-Za-z]+\.track_[a-z]+: call: wrong number of arguments", text)
+    assert re.search(r"params_examples\.track_wrong_number_of_args: call: "
+                     r"wrong number of arguments.*: expected 1, has 2", text)
     assert text.count("wrong number of arguments") == 1

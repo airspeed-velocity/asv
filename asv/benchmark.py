@@ -358,7 +358,10 @@ def _get_sourceline_info(obj, basedir):
         return ""
 
 
-def check_num_args(root, benchmark_name, func, num_args):
+def check_num_args(root, benchmark_name, func, min_num_args, max_num_args=None):
+    if max_num_args is None:
+        max_num_args = min_num_args
+
     try:
         if sys.version_info[0] >= 3:
             info = inspect.getfullargspec(func)
@@ -382,15 +385,19 @@ def check_num_args(root, benchmark_name, func, num_args):
     if info.varargs is not None:
         max_args = float('inf')
 
-    ok = min_args <= num_args <= max_args
+    ok = (min_args <= max_num_args) and (min_num_args <= max_args)
     if not ok:
         if min_args == max_args:
             args_str = min_args
         else:
             args_str = "{}-{}".format(min_args, max_args)
+        if min_num_args == max_num_args:
+            num_args_str = min_num_args
+        else:
+            num_args_str = "{}-{}".format(min_num_args, max_num_args)
         print("{!s}: wrong number of arguments (for {!r}{!s}): expected {}, has {}".format(
             benchmark_name, func, _get_sourceline_info(func, root),
-            num_args, args_str))
+            num_args_str, args_str))
 
     return ok
 
@@ -481,23 +488,24 @@ class Benchmark(object):
         if self._params:
             self.set_param_idx(0)
 
+        min_num_args = len(self._current_params)
+        max_num_args = min_num_args
+
         if self.setup_cache_key is not None:
-            self.insert_param(None)
             ok = ok and check_num_args(root, self.name + ": setup_cache",
                                        self._setup_cache, 0)
-
-        num_args = len(self._current_params)
+            max_num_args += 1
 
         for setup in self._setups:
             ok = ok and check_num_args(root, self.name + ": setup",
-                                       setup, num_args)
+                                       setup, min_num_args, max_num_args)
 
         ok = ok and check_num_args(root, self.name + ": call",
-                                   self.func, num_args)
+                                   self.func, min_num_args, max_num_args)
 
         for teardown in self._teardowns:
             ok = ok and check_num_args(root, self.name + ": teardown",
-                                       teardown, num_args)
+                                       teardown, min_num_args, max_num_args)
 
         return ok
 
