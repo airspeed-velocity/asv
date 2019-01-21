@@ -264,19 +264,20 @@ class Compare(Command):
         titles['lightgrey'] = "Benchmarks that are not comparable:"
         titles['all'] = "All benchmarks:"
 
-        log.flush()
-
+        # Compute headers
         for key in keys:
 
             if len(bench[key]) == 0:
                 continue
 
+            header = []
+
             if not only_changed:
-                color_print("")
-                color_print(titles[key])
-                color_print("")
-            color_print("       before           after         ratio")
-            color_print("     [{0:8s}]       [{1:8s}]".format(hash_1[:8], hash_2[:8]))
+                header.append("")
+                header.append(titles[key])
+                header.append("")
+            header.append("       before           after         ratio")
+            header.append("     [{0:8s}]       [{1:8s}]".format(hash_1[:8], hash_2[:8]))
 
             name_1 = commit_names.get(hash_1)
             if name_1:
@@ -291,25 +292,36 @@ class Compare(Command):
                 name_2 = ''
 
             if name_1 or name_2:
-                color_print("     {0:10s}       {1:10s}".format(name_1, name_2))
+                header.append("     {0:10s}       {1:10s}".format(name_1, name_2))
 
-            if sort == 'ratio':
-                bench[key].sort(key=lambda v: v[3], reverse=True)
-            elif sort == 'name':
-                bench[key].sort(key=lambda v: v[2])
-            else:
-                raise ValueError("Unknown 'sort'")
-
-            for color, details, benchmark, ratio in bench[key]:
-                if len(machine_env_names) > 1:
-                    benchmark_name = "{} [{}]".format(*benchmark)
-                else:
-                    benchmark_name = benchmark[0]
-
-                color_print(details, color, end='')
-                color_print(benchmark_name)
+            cls.display_result(bench, key, sort, header, machine_env_names)
 
         return worsened, improved
+
+
+    @classmethod
+    def display_result(cls, bench, key, sort, header, machine_env_names):
+        log.flush()
+
+        for header_line in header:
+            color_print(header_line)
+
+        if sort == 'ratio':
+            bench[key].sort(key=lambda v: v[3], reverse=True)
+        elif sort == 'name':
+            bench[key].sort(key=lambda v: v[2])
+        else:
+            raise ValueError("Unknown 'sort'")
+
+        for color, details, benchmark, ratio in bench[key]:
+            if len(machine_env_names) > 1:
+                benchmark_name = "{} [{}]".format(*benchmark)
+            else:
+                benchmark_name = benchmark[0]
+
+            color_print(details, color, end='')
+            color_print(benchmark_name)
+
 
     @classmethod
     def dispatch_results(
