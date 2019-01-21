@@ -238,6 +238,94 @@ class Compare(Command):
             raise util.UserError(
                 "Did not find results for commit {0}".format(hash_2))
 
+        bench, worsened, improved = cls.dispatch_results(
+            results_1,
+            results_2,
+            units,
+            split,
+            ss_1,
+            ss_2,
+            versions_1,
+            versions_2,
+            factor,
+            use_stats,
+            only_changed,
+        )
+
+        if split:
+            keys = ['green', 'default', 'red', 'lightgrey']
+        else:
+            keys = ['all']
+
+        titles = {}
+        titles['green'] = "Benchmarks that have improved:"
+        titles['default'] = "Benchmarks that have stayed the same:"
+        titles['red'] = "Benchmarks that have got worse:"
+        titles['lightgrey'] = "Benchmarks that are not comparable:"
+        titles['all'] = "All benchmarks:"
+
+        log.flush()
+
+        for key in keys:
+
+            if len(bench[key]) == 0:
+                continue
+
+            if not only_changed:
+                color_print("")
+                color_print(titles[key])
+                color_print("")
+            color_print("       before           after         ratio")
+            color_print("     [{0:8s}]       [{1:8s}]".format(hash_1[:8], hash_2[:8]))
+
+            name_1 = commit_names.get(hash_1)
+            if name_1:
+                name_1 = '<{0}>'.format(name_1)
+            else:
+                name_1 = ''
+
+            name_2 = commit_names.get(hash_2)
+            if name_2:
+                name_2 = '<{0}>'.format(name_2)
+            else:
+                name_2 = ''
+
+            if name_1 or name_2:
+                color_print("     {0:10s}       {1:10s}".format(name_1, name_2))
+
+            if sort == 'ratio':
+                bench[key].sort(key=lambda v: v[3], reverse=True)
+            elif sort == 'name':
+                bench[key].sort(key=lambda v: v[2])
+            else:
+                raise ValueError("Unknown 'sort'")
+
+            for color, details, benchmark, ratio in bench[key]:
+                if len(machine_env_names) > 1:
+                    benchmark_name = "{} [{}]".format(*benchmark)
+                else:
+                    benchmark_name = benchmark[0]
+
+                color_print(details, color, end='')
+                color_print(benchmark_name)
+
+        return worsened, improved
+
+    @classmethod
+    def dispatch_results(
+        cls,
+        results_1,
+        results_2,
+        units,
+        split,
+        ss_1,
+        ss_2,
+        versions_1,
+        versions_2,
+        factor,
+        use_stats,
+        only_changed,
+    ):
         benchmarks_1 = set(results_1.keys())
         benchmarks_2 = set(results_2.keys())
 
@@ -351,61 +439,4 @@ class Compare(Command):
             else:
                 bench['all'].append((color, details, benchmark, ratio_num))
 
-        if split:
-            keys = ['green', 'default', 'red', 'lightgrey']
-        else:
-            keys = ['all']
-
-        titles = {}
-        titles['green'] = "Benchmarks that have improved:"
-        titles['default'] = "Benchmarks that have stayed the same:"
-        titles['red'] = "Benchmarks that have got worse:"
-        titles['lightgrey'] = "Benchmarks that are not comparable:"
-        titles['all'] = "All benchmarks:"
-
-        log.flush()
-
-        for key in keys:
-
-            if len(bench[key]) == 0:
-                continue
-
-            if not only_changed:
-                color_print("")
-                color_print(titles[key])
-                color_print("")
-            color_print("       before           after         ratio")
-            color_print("     [{0:8s}]       [{1:8s}]".format(hash_1[:8], hash_2[:8]))
-
-            name_1 = commit_names.get(hash_1)
-            if name_1:
-                name_1 = '<{0}>'.format(name_1)
-            else:
-                name_1 = ''
-
-            name_2 = commit_names.get(hash_2)
-            if name_2:
-                name_2 = '<{0}>'.format(name_2)
-            else:
-                name_2 = ''
-
-            if name_1 or name_2:
-                color_print("     {0:10s}       {1:10s}".format(name_1, name_2))
-
-            if sort == 'ratio':
-                bench[key].sort(key=lambda v: v[3], reverse=True)
-            elif sort == 'name':
-                bench[key].sort(key=lambda v: v[2])
-            else:
-                raise ValueError("Unknown 'sort'")
-
-            for color, details, benchmark, ratio in bench[key]:
-                if len(machine_env_names) > 1:
-                    benchmark_name = "{} [{}]".format(*benchmark)
-                else:
-                    benchmark_name = benchmark[0]
-
-                color_print(details, color, end='')
-                color_print(benchmark_name)
-
-        return worsened, improved
+        return bench, worsened, improved
