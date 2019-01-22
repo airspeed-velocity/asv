@@ -28,6 +28,13 @@ def mean(values):
         return sum(values) / float(len(values))
 
 
+def format_benchmark_name(benchmark_name_parts):
+    if len(benchmark_name_parts) == 0:
+        return benchmark_name_parts[0]
+
+    return "%s(%s)" % (benchmark_name_parts[0], ", ".join(benchmark_name_parts[1:]))
+
+
 def unroll_result(benchmark_name, params, *values):
     """
     Iterate through parameterized result values
@@ -53,9 +60,9 @@ def unroll_result(benchmark_name, params, *values):
 
     for params, value in zip(itertools.product(*params), zip(*values)):
         if params == ():
-            name = benchmark_name
+            name = [benchmark_name]
         else:
-            name = "%s(%s)" % (benchmark_name, ", ".join(params))
+            name = [benchmark_name] + list(params)
         yield (name,) + value
 
 
@@ -216,7 +223,8 @@ class Compare(Command):
         for key, params, value, stats, samples, version, machine, env_name in resultset_1:
             machine_env_name = "{}/{}".format(machine, env_name)
             machine_env_names.add(machine_env_name)
-            for name, value, stats, samples in unroll_result(key, params, value, stats, samples):
+            for name_parts, value, stats, samples in unroll_result(key, params, value, stats, samples):
+                name = format_benchmark_name(name_parts)
                 units[(name, machine_env_name)] = benchmarks.get(key, {}).get('unit')
                 results_1[(name, machine_env_name)] = value
                 ss_1[(name, machine_env_name)] = (stats, samples)
@@ -225,7 +233,8 @@ class Compare(Command):
         for key, params, value, stats, samples, version, machine, env_name in resultset_2:
             machine_env_name = "{}/{}".format(machine, env_name)
             machine_env_names.add(machine_env_name)
-            for name, value, stats, samples in unroll_result(key, params, value, stats, samples):
+            for name_parts, value, stats, samples in unroll_result(key, params, value, stats, samples):
+                name = format_benchmark_name(name_parts)
                 units[(name, machine_env_name)] = benchmarks.get(key, {}).get('unit')
                 results_2[(name, machine_env_name)] = value
                 ss_2[(name, machine_env_name)] = (stats, samples)
