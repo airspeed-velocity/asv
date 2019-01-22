@@ -85,6 +85,21 @@ def _is_result_better(a, b, a_ss, b_ss, factor, use_stats=True):
     return a < b / factor
 
 
+def results_default_iter(commit_hash, conf, machine, env_names):
+    for result in iter_results_for_machine_and_hash(
+            conf.results_dir, machine, commit_hash):
+        if env_names is not None and result.env_name not in env_names:
+            continue
+        for key in result.get_all_result_keys():
+            params = result.get_result_params(key)
+            result_value = result.get_result_value(key, params)
+            result_stats = result.get_result_stats(key, params)
+            result_samples = result.get_result_samples(key, params)
+            result_version = result.benchmark_version.get(key)
+            yield (key, params, result_value, result_stats, result_samples,
+                   result_version, result.params['machine'], result.env_name)
+
+
 class Compare(Command):
 
     @classmethod
@@ -190,25 +205,11 @@ class Compare(Command):
         if commit_names is None:
             commit_names = {}
 
-        def results_default_iter(commit_hash):
-            for result in iter_results_for_machine_and_hash(
-                    conf.results_dir, machine, commit_hash):
-                if env_names is not None and result.env_name not in env_names:
-                    continue
-                for key in result.get_all_result_keys():
-                    params = result.get_result_params(key)
-                    result_value = result.get_result_value(key, params)
-                    result_stats = result.get_result_stats(key, params)
-                    result_samples = result.get_result_samples(key, params)
-                    result_version = result.benchmark_version.get(key)
-                    yield (key, params, result_value, result_stats, result_samples,
-                           result_version, result.params['machine'], result.env_name)
-
         if resultset_1 is None:
-            resultset_1 = results_default_iter(hash_1)
+            resultset_1 = results_default_iter(hash_1, conf, machine, env_names)
 
         if resultset_2 is None:
-            resultset_2 = results_default_iter(hash_2)
+            resultset_2 = results_default_iter(hash_2, conf, machine, env_names)
 
         machine_env_names = set()
 
