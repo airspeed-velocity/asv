@@ -42,7 +42,7 @@ $(document).ready(function() {
     var mem_units = [
         ['', 'bytes', 1],
         ['k', 'kilobytes', 1000],
-        ['M', 'megaytes', 1000000],
+        ['M', 'megabytes', 1000000],
         ['G', 'gigabytes', 1000000000],
         ['T', 'terabytes', 1000000000000]
     ];
