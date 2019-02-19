@@ -61,6 +61,10 @@
     // dependency packages in the specified order
     // "conda_channels": ["conda-forge", "defaults"],
 
+    // A conda environment file that is used for the dependencies instead of
+    // other dependencies mechanisms in this file.
+    // "conda_environment_file": "environment.yml",
+
     // The matrix of dependencies to test.  Each key is the name of a
     // package (in PyPI) and the values are version numbers.  An empty
     // list or empty string indicates to just test against the default

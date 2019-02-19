@@ -75,6 +75,7 @@ class Conda(environment.Environment):
         self._python = python
         self._requirements = requirements
         self._conda_channels = conf.conda_channels
+        self._conda_environment_file = conf.conda_environment_file
         super(Conda, self).__init__(conf, python, requirements)
 
     @classmethod
@@ -123,39 +124,48 @@ class Conda(environment.Environment):
 
         log.info("Creating conda environment for {0}".format(self.name))
 
-        # create a temporary environment.yml file
-        # and use that to generate the env for benchmarking
-        env_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=".yml")
-        try:
-            env_file.write('name: {0}\n'
-                           'channels:\n'.format(self.name))
-            env_file.writelines(('   - %s\n' % ch for ch in self._conda_channels))
-            env_file.write('dependencies:\n'
-                           '   - python={0}\n'
-                           '   - wheel\n'
-                           '   - pip\n'.format(self._python))
+        if not self._conda_environment_file:
+            # create a temporary environment.yml file
+            # and use that to generate the env for benchmarking
+            env_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=".yml")
+            try:
+                env_file.write('name: {0}\n'
+                               'channels:\n'.format(self.name))
+                env_file.writelines(('   - %s\n' % ch for ch in self._conda_channels))
+                env_file.write('dependencies:\n'
+                               '   - python={0}\n'
+                               '   - wheel\n'
+                               '   - pip\n'.format(self._python))
 
-            # categorize & write dependencies based on pip vs. conda
-            conda_args, pip_args = self._get_requirements(conda)
-            env_file.writelines(('   - %s\n' % s for s in conda_args))
-            if pip_args:
-                # and now specify the packages that are to be installed in
-                # the pip subsection
-                env_file.write('   - pip:\n')
-                env_file.writelines(('     - %s\n' % s for s in pip_args))
+                # categorize & write dependencies based on pip vs. conda
+                conda_args, pip_args = self._get_requirements(conda)
+                env_file.writelines(('   - %s\n' % s for s in conda_args))
+                if pip_args:
+                    # and now specify the packages that are to be installed in
+                    # the pip subsection
+                    env_file.write('   - pip:\n')
+                    env_file.writelines(('     - %s\n' % s for s in pip_args))
 
-            env_file.close()
+                env_file.close()
 
-            util.check_output([conda] + ['env', 'create', '-f', env_file.name,
-                                         '-p', self._path, '--force'])
-        except Exception as exc:
-            if os.path.isfile(env_file.name):
-                with open(env_file.name, 'r') as f:
-                    text = f.read()
-                log.info("conda env create failed: in {} with:\n{}".format(self._path, text))
-            raise
-        finally:
-            os.unlink(env_file.name)
+                util.check_output([conda] + ['env', 'create', '-f', env_file.name,
+                                             '-p', self._path, '--force'])
+            except Exception as exc:
+                if os.path.isfile(env_file.name):
+                    with open(env_file.name, 'r') as f:
+                        text = f.read()
+                    log.info("conda env create failed: in {} with:\n{}".format(self._path, text))
+                raise
+            finally:
+                os.unlink(env_file.name)
+        else:
+            try:
+                util.check_output([conda] + ['env', 'create', '-f', self._conda_environment_file,
+                                             '-p', self._path, '--force'])
+            except Exception as exc:
+                log.info("conda env create failed: in {} with environment file: {}".format(
+                    self._path, self._conda_environment_file))
+                raise
 
     def _get_requirements(self, conda):
         if self._requirements:

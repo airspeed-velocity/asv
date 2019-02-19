@@ -172,6 +172,16 @@ following:
   already be installed, and it will not be possible to benchmark
   multiple revisions of the project.
 
+``conda_environment_file``
+-------------------------
+A path to a ``conda`` environment file to use as source for the
+dependencies. For example::
+
+    "conda_environment_file": "environment.yml"
+
+Using this option will cause ``asv`` to ignore all other ways of
+specifying dependencies.
+
 ``conda_channels``
 ------------------
 A list of ``conda`` channel names (strings) to use in the provided
