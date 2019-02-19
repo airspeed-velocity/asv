@@ -92,6 +92,11 @@ class Run(Command):
             benchmark functions faster.  The results are unlikely to
             be useful, and thus are not saved.""")
         common_args.add_environment(parser)
+        parser.add_argument(
+            "--commit-label", "-c", default=None,
+            help="""Commit label to use in place of the commit hash
+            when benchmarking against an existing environment. If
+            provided, the results will be saved.""")
         common_args.add_launch_method(parser)
         parser.add_argument(
             "--dry-run", "-n", action="store_true",
@@ -136,7 +141,7 @@ class Run(Command):
             conf=conf, range_spec=args.range, steps=args.steps,
             bench=args.bench, attribute=args.attribute, parallel=args.parallel,
             show_stderr=args.show_stderr, quick=args.quick,
-            profile=args.profile, env_spec=args.env_spec,
+            profile=args.profile, env_spec=args.env_spec, commit_label=args.commit_label,
             dry_run=args.dry_run, machine=args.machine,
             skip_successful=args.skip_existing_successful or args.skip_existing,
             skip_failed=args.skip_existing_failed or args.skip_existing,
@@ -149,7 +154,7 @@ class Run(Command):
 
     @classmethod
     def run(cls, conf, range_spec=None, steps=None, bench=None, attribute=None, parallel=1,
-            show_stderr=False, quick=False, profile=False, env_spec=None,
+            show_stderr=False, quick=False, profile=False, env_spec=None, commit_label=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
             skip_failed=False, skip_existing_commits=False, record_samples=False,
             append_samples=False, pull=True, interleave_processes=False,
@@ -386,10 +391,14 @@ class Run(Command):
                         params['python'] = env.python
                         params.update(env.requirements)
 
-                        skip_save = (dry_run or isinstance(env, environment.ExistingEnvironment))
+                        skip_save = dry_run or (isinstance(env, environment.ExistingEnvironment)
+                                                and commit_label is None)
 
                         skip_list = skipped_benchmarks[(commit_hash, env.name)]
                         benchmark_set = benchmarks.filter_out(skip_list)
+
+                        if isinstance(env, environment.ExistingEnvironment) and commit_label is not None:
+                            commit_hash = commit_label
 
                         result = Results(
                             params,
