@@ -61,6 +61,9 @@ class Publish(Command):
             '--no-pull', action='store_true', dest='no_pull',
             help="Do not pull the repository")
         parser.add_argument(
+            '--no-commit-filtering', action='store_true', dest='no_commit_filtering',
+            help="Include all commits, instead of filtering. Default is 'False'.")
+        parser.add_argument(
             'range', nargs='?', default=None,
             help="""Optional commit range to consider""")
         parser.add_argument(
@@ -76,7 +79,9 @@ class Publish(Command):
     def run_from_conf_args(cls, conf, args):
         if args.html_dir is not None:
             conf.html_dir = args.html_dir
-        return cls.run(conf=conf, range_spec=args.range, pull=not args.no_pull)
+
+        return cls.run(conf=conf, range_spec=args.range, pull=not args.no_pull,
+                        no_commit_filtering=args.no_commit_filtering)
 
     @staticmethod
     def iter_results(conf, repo, range_spec=None):
@@ -92,7 +97,7 @@ class Publish(Command):
                 yield result
 
     @classmethod
-    def run(cls, conf, range_spec=None, pull=True):
+    def run(cls, conf, range_spec=None, pull=True, no_commit_filtering=False):
         params = {}
         graphs = GraphSet()
         machines = {}
@@ -186,7 +191,7 @@ class Publish(Command):
 
                     for branch in [
                         branch for branch, commits in branches.items()
-                        if results.commit_hash in commits
+                        if no_commit_filtering or results.commit_hash in commits
                     ]:
                         cur_params = dict(results.params)
                         cur_params['branch'] = repo.get_branch_name(branch)
