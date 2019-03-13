@@ -171,6 +171,14 @@ class Publish(Command):
             for results in cls.iter_results(conf, repo, range_spec):
                 log.dot()
 
+                branches_for_commit = [branch for branch, commits in branches.items() if
+                                       results.commit_hash in commits]
+
+                # Print a warning message if we couldn't find the branch of a commit
+                if not len(branches_for_commit):
+                    msg = "Couldn't find %s in %s branches"
+                    log.warning(msg % (results.commit_hash, branches.keys()))
+
                 for key in results.get_result_keys(benchmarks):
                     b = benchmarks[key]
                     b_params = b['params']
@@ -184,10 +192,7 @@ class Publish(Command):
 
                     benchmark_names.add(key)
 
-                    for branch in [
-                        branch for branch, commits in branches.items()
-                        if results.commit_hash in commits
-                    ]:
+                    for branch in branches_for_commit:
                         cur_params = dict(results.params)
                         cur_params['branch'] = repo.get_branch_name(branch)
 
