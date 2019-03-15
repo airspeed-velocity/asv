@@ -155,11 +155,16 @@ def get_filename(machine, commit_hash, env_name):
     """
     if env_name and len(env_name) >= 128:
         env_name = "env-" + hashlib.md5(env_name.encode('utf-8')).hexdigest()
+    
+    if 'label-' in commit_hash:
+        commit_hash = commit_hash[6:]
+    else:
+        commit_hash = commit_hash[:8]
 
     return os.path.join(
         machine,
         "{0}-{1}.json".format(
-            commit_hash[:8],
+            commit_hash,
             env_name))
 
 

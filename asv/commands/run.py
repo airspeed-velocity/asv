@@ -398,7 +398,7 @@ class Run(Command):
                         benchmark_set = benchmarks.filter_out(skip_list)
 
                         if isinstance(env, environment.ExistingEnvironment) and commit_label is not None:
-                            commit_hash = commit_label
+                            commit_hash = 'label-' + commit_label.replace('-', '_')
 
                         result = Results(
                             params,
