@@ -191,6 +191,7 @@ def test_continuous(capfd, basic_conf):
 
     text, err = capfd.readouterr()
     assert "SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY" in text
+    assert "PERFORMANCE INCREASED" in text or "PERFORMANCE DECREASED" in text
     assert "+               1                6     6.00  params_examples.track_find_test(2)" in text
     assert "params_examples.ClassOne" in text
 
