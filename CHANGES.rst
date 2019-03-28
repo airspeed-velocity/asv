@@ -17,7 +17,8 @@ Bug Fixes
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+- In case of significant changes ``asv continuous`` message now reports
+  if performance decreased or increased.
 
 0.3.1 (2018-10-20)
 ------------------
