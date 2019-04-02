@@ -304,13 +304,15 @@ def get_source_code(items):
     """
     Extract source code of given items, and concatenate and dedent it.
     """
+    from asv.console import log
     sources = []
     prev_class_name = None
 
     for func in items:
         try:
             lines, lineno = inspect.getsourcelines(func)
-        except TypeError:
+        except (TypeError, IOError) as exc:
+            log.debug("Cannot obtain source information for %s: %s", func, exc)
             continue
 
         if not lines:
