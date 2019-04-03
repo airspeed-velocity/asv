@@ -13,6 +13,7 @@ import datetime
 
 import six
 
+from asv.environment import get_test_env_vars
 from .console import log
 from . import util
 from . import runner
@@ -198,6 +199,7 @@ class Benchmarks(dict):
                          os.path.abspath(root),
                          os.path.abspath(result_file)],
                         cwd=result_dir,
+                        env=get_test_env_vars(env.env_vars_combination),
                         dots=False)
 
                     try:
@@ -228,6 +230,7 @@ class Benchmarks(dict):
                          os.path.abspath(root)],
                         cwd=result_dir,
                         dots=False,
+                        env=get_test_env_vars(env.env_vars_combination),
                         valid_return_codes=None,
                         return_stderr=True,
                         redirect_stderr=True)

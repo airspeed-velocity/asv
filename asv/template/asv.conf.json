@@ -80,6 +80,25 @@
     //     "pip+emcee": [""],   // emcee is only available for install with pip.
     // },
 
+
+    // The matrix of environment variables to pass to build and test commands.
+    // An environment will be created for every combination of the cartesian
+    // product of the "build" variables in this matrix.
+    //
+    //    "env_matrix": {
+    //        "build": {
+    //            "ENV_VAR_1": ["val1", "val2"],
+    //            "ENV_VAR_2": ["val3", null],
+    //        },
+    //        "no_build": {
+    //            "ENV_VAR_3": ["val4", "val5"],
+    //        }
+    //    }
+    // Variables in "no_build" will be passed to every environment during the
+    // test phase, but will not trigger a new build.
+    // A value of ``null`` means that the variable will not be set for the
+    // current combination.
+
     // Combinations of libraries/python versions can be excluded/included
     // from the set to test. Each entry is a dictionary containing additional
     // key-value pairs to include/exclude.

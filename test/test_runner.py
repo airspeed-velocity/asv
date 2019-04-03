@@ -243,7 +243,7 @@ def test_forkserver(tmpdir):
     with open(os.path.join('benchmark', 'unimportable.py'), 'w') as f:
         f.write("raise RuntimeError('not importable')")
 
-    env = environment.ExistingEnvironment(conf, sys.executable, {})
+    env = environment.ExistingEnvironment(conf, sys.executable, {}, {})
     spawner = runner.ForkServer(env, os.path.abspath('benchmark'))
 
     result_file = os.path.join(tmpdir, 'run-result')
@@ -297,7 +297,7 @@ def test_forkserver_preimport(tmpdir):
     d['repo'] = 'None'
     conf = config.Config.from_json(d)
 
-    env = environment.ExistingEnvironment(conf, sys.executable, {})
+    env = environment.ExistingEnvironment(conf, sys.executable, {}, {})
 
     #
     # Normal benchmark suite

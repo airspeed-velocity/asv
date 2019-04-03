@@ -423,7 +423,9 @@ class Run(Command):
                             commit_hash,
                             repo.get_date(commit_hash),
                             env.python,
-                            env.name)
+                            env.name,
+                            env.env_vars_combination
+                        )
 
                         if not skip_save:
                             result.load_data(conf.results_dir)

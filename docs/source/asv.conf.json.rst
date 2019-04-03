@@ -234,6 +234,52 @@ the project being benchmarked may specify in its ``setup.py`` file.
     name with ``pip+``. For example, ``emcee`` is only available from ``pip``,
     so the package name to be used is ``pip+emcee``.
 
+
+``env_matrix``
+--------------
+
+Defines a matrix of environment variables to pass to build and test commands.
+An environment will be created for every combination of the cartesian
+product of the "build" variables in this matrix::
+
+    "env_matrix": {
+        "build": {
+            "ENV_VAR_1": ["val1", "val2"],
+            "ENV_VAR_2": ["val3", null],
+        },
+        "no_build": {
+            "ENV_VAR_3": ["val4", "val5"],
+        }
+    }
+
+
+Variables in "no_build" will be passed to every environment during the test
+phase, but will not trigger a new build.
+A value of ``null`` means that the variable will not be set for the current
+combination.
+
+The above matrix will result in 4 different builds with the following
+additional environment variables and values:
+
+  - [("ENV_VAR_1", "val1"), ("ENV_VAR_2", "val3")]
+  - [("ENV_VAR_1", "val1")]
+  - [("ENV_VAR_1", "val2"), ("ENV_VAR_2", "val3")]
+  - [("ENV_VAR_1", "val2")]
+
+It will generate 8 different test environments based on those 4 builds with
+the following environment variables and values:
+
+  - [("ENV_VAR_1", "val1"), ("ENV_VAR_2", "val3"), ("ENV_VAR_3", "val4")]
+  - [("ENV_VAR_1", "val1"), ("ENV_VAR_2", "val3"), ("ENV_VAR_3", "val5")]
+  - [("ENV_VAR_1", "val1"), ("ENV_VAR_3", "val4")]
+  - [("ENV_VAR_1", "val1"), ("ENV_VAR_3", "val5")]
+  - [("ENV_VAR_1", "val2"), ("ENV_VAR_2", "val3"), ("ENV_VAR_3", "val4")]
+  - [("ENV_VAR_1", "val2"), ("ENV_VAR_2", "val3"), ("ENV_VAR_3", "val5")]
+  - [("ENV_VAR_1", "val2"), ("ENV_VAR_3", "val4")]
+  - [("ENV_VAR_1", "val2"), ("ENV_VAR_3", "val5")]
+
+
+
 ``exclude``
 -----------
 Combinations of libraries, Python versions, or platforms to be

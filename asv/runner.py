@@ -21,6 +21,7 @@ import traceback
 
 import six
 
+from asv.environment import get_build_env_vars, get_test_env_vars
 from .console import log
 from .results import Results, format_benchmark_result
 from . import statistics
@@ -230,7 +231,10 @@ def run_benchmarks(benchmarks, env, results=None,
     else:
         previous_result_keys = set()
 
-    log.info("Benchmarking {0}".format(env.name))
+    log.info("Benchmarking {0} with env {1}".format(
+        env.name,
+        env.env_vars_combination
+    ))
 
     partial_info_time = None
     indent = log.indent()
@@ -674,7 +678,9 @@ class Spawner(object):
             dots=False, display_error=False,
             return_stderr=True, valid_return_codes=None,
             redirect_stderr=True,
-            cwd=cache_dir, timeout=timeout)
+            cwd=cache_dir,
+            timeout=timeout,
+            env=get_build_env_vars(self.env.env_vars_combination))
 
         if errcode == 0:
             return cache_dir, None
@@ -688,7 +694,8 @@ class Spawner(object):
              name, params_str, profile_path, result_file_name],
             dots=False, timeout=timeout,
             display_error=False, return_stderr=True, redirect_stderr=True,
-            valid_return_codes=None, cwd=cwd)
+            valid_return_codes=None, cwd=cwd,
+            env=get_test_env_vars(self.env.env_vars_combination))
         return out, errcode
 
     def preimport(self):
@@ -710,7 +717,9 @@ class ForkServer(Spawner):
 
         self.server_proc = env.run(
             [BENCHMARK_RUN_SCRIPT, 'run_server', self.benchmark_dir, self.socket_name],
-            return_popen=True, redirect_stderr=True)
+            return_popen=True,
+            redirect_stderr=True,
+            env=get_test_env_vars(env.env_vars_combination))
 
         self._server_output = None
         self.stdout_reader_thread = threading.Thread(target=self._stdout_reader)

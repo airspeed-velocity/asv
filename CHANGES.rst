@@ -3,6 +3,7 @@
 
 New Features
 ^^^^^^^^^^^^
+- ``env_matrix`` config value for adding environment variables to build and benchmark commands.
 
 API Changes
 ^^^^^^^^^^^

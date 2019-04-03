@@ -20,6 +20,7 @@ import subprocess
 
 import six
 
+from asv.config import normalize_env_matrix
 from .console import log
 from . import util
 from . import build_cache
@@ -166,10 +167,11 @@ def match_rule(target, rule):
     return True
 
 
-def get_env_name(tool_name, python, requirements):
-    """
-    Get a name to uniquely identify an environment.
-    """
+def _get_env_name(tool_name,
+                  python,
+                  requirements,
+                  env_vars_combination,
+                  build):
     if tool_name:
         name = [tool_name]
     else:
@@ -184,7 +186,83 @@ def get_env_name(tool_name, python, requirements):
             name.append(''.join([key, val]))
         else:
             name.append(key)
+
+    if build:
+        env_vars_combination = get_build_env_vars(env_vars_combination)
+    else:
+        env_vars_combination = get_all_env_vars(env_vars_combination)
+
+    for env_var, value in six.iteritems(env_vars_combination):
+        name.append(''.join([env_var, value]))
+
     return util.sanitize_filename('-'.join(name))
+
+
+def get_env_name(tool_name, python, requirements, env_vars_combination):
+    """
+    Get a name to uniquely identify an environment.
+    """
+    return _get_env_name(tool_name=tool_name,
+                         python=python,
+                         requirements=requirements,
+                         env_vars_combination=env_vars_combination,
+                         build=False)
+
+
+def get_build_env_name(tool_name, python, requirements, env_vars_combination):
+    """
+    Get the name of an environment's build.
+    When using environment variables (in `env_vars_combination`), only the
+    "build" variables will be used to get the env name so that "non_build"
+    variables don't trigger a new build.
+    This implies that multiple environments can share a build.
+    """
+    return _get_env_name(tool_name=tool_name,
+                         python=python,
+                         requirements=requirements,
+                         env_vars_combination=env_vars_combination,
+                         build=True)
+
+
+def _get_env_vars(env_vars_combination, predicate=lambda x: True):
+    vars = {}
+
+    for var, value in six.iteritems(env_vars_combination):
+        build_type, env_var = var
+        if predicate(build_type):
+            vars[env_var] = value
+
+    return vars
+
+
+def get_all_env_vars(env_vars_combination):
+    return get_build_env_vars(env_vars_combination)
+
+
+def get_build_env_vars(env_vars_combination):
+    return _get_env_vars(env_vars_combination, lambda x: x == 'build')
+
+
+def get_test_env_vars(env_vars_combination):
+    return _get_env_vars(env_vars_combination)
+
+
+def iter_env_matrix_combinations(env_matrix):
+    if any(not value for value in env_matrix.values()):
+        raise util.UserError(
+            "Invalid value in `env_matrix`: "
+            "values should be non-empty lists. "
+            "Check your `asv.conf.json`."
+        )
+
+    # Generate cartesian product for all environment variables
+    for flat_values in itertools.product(*env_matrix.values()):
+        yield {
+            var_name: var_value
+            for var_name, var_value in
+            zip(env_matrix.keys(), flat_values)
+            if var_value is not None  # Skip `None` values
+        }
 
 
 def get_environments(conf, env_specifiers, verbose=True):
@@ -249,19 +327,25 @@ def get_environments(conf, env_specifiers, verbose=True):
             # Ignore requirement matrix
             requirements_iter = [dict(python=python) for python in pythons]
 
+        env_matrix_combinations = iter_env_matrix_combinations(conf.env_matrix)
+
+        if not env_matrix_combinations:
+            env_matrix_combinations = [{}]
+
         for requirements in requirements_iter:
             python = requirements.pop('python')
 
-            try:
-                if env_type:
-                    cls = get_environment_class_by_name(env_type)
-                else:
-                    cls = get_environment_class(conf, python)
+            for combination in env_matrix_combinations:
+                try:
+                    if env_type:
+                        cls = get_environment_class_by_name(env_type)
+                    else:
+                        cls = get_environment_class(conf, python)
 
-                yield cls(conf, python, requirements)
-            except EnvironmentUnavailable as err:
-                if verbose:
-                    log.warning(str(err))
+                    yield cls(conf, python, requirements, combination)
+                except EnvironmentUnavailable as err:
+                    if verbose:
+                        log.warning(str(err))
 
 
 def get_environment_class(conf, python):
@@ -333,7 +417,7 @@ class Environment(object):
     """
     tool_name = None
 
-    def __init__(self, conf, python, requirements):
+    def __init__(self, conf, python, requirements, env_vars_combination):
         """
         Get an environment for a given requirement matrix and
         Python version specifier.
@@ -360,8 +444,9 @@ class Environment(object):
         self._env_dir = conf.env_dir
         self._repo_subdir = conf.repo_subdir
         self._install_timeout = conf.install_timeout  # GH391
+        self.env_vars_combination = env_vars_combination
         self._path = os.path.abspath(os.path.join(
-            self._env_dir, self.hashname))
+            self._env_dir, self.build_hashname))
         self._project = conf.project
 
         self._is_setup = False
@@ -450,7 +535,21 @@ class Environment(object):
         """
         Get a name to uniquely identify this environment.
         """
-        return get_env_name(self.tool_name, self._python, self._requirements)
+        return get_env_name(self.tool_name,
+                            self._python,
+                            self._requirements,
+                            self.env_vars_combination)
+
+
+    @property
+    def build_name(self):
+        """
+        Get a name to uniquely identify this environment.
+        """
+        return get_build_env_name(self.tool_name,
+                                  self._python,
+                                  self._requirements,
+                                  self.env_vars_combination)
 
     @property
     def hashname(self):
@@ -458,6 +557,13 @@ class Environment(object):
         Get a hash to uniquely identify this environment.
         """
         return hashlib.md5(self.name.encode('utf-8')).hexdigest()
+
+    @property
+    def build_hashname(self):
+        """
+        Get a hash to uniquely identify this environment.
+        """
+        return hashlib.md5(self.build_name.encode('utf-8')).hexdigest()
 
     @property
     def requirements(self):
@@ -482,7 +588,8 @@ class Environment(object):
         expected_info = {
             'tool_name': self.tool_name,
             'python': self._python,
-            'requirements': self._requirements
+            'requirements': self._requirements,
+            'env_matrix': self.env_vars_combination,
         }
 
         if info != expected_info:
@@ -782,7 +889,8 @@ class Environment(object):
         content = {
             'tool_name': self.tool_name,
             'python': self._python,
-            'requirements': self._requirements
+            'requirements': self._requirements,
+            'env_matrix': normalize_env_matrix(self.env_vars_combination)
         }
         util.write_json(path, content)
 
@@ -790,7 +898,7 @@ class Environment(object):
 class ExistingEnvironment(Environment):
     tool_name = "existing"
 
-    def __init__(self, conf, executable, requirements):
+    def __init__(self, conf, executable, requirements, env_vars_combination):
         if executable == 'same':
             executable = sys.executable
 
@@ -809,7 +917,10 @@ class ExistingEnvironment(Environment):
         self._executable = executable
         self._requirements = {}
 
-        super(ExistingEnvironment, self).__init__(conf, executable, requirements)
+        super(ExistingEnvironment, self).__init__(conf,
+                                                  executable,
+                                                  requirements,
+                                                  env_vars_combination)
         self._env_vars.pop('ASV_ENV_DIR')
 
     @property
@@ -832,7 +943,8 @@ class ExistingEnvironment(Environment):
     def name(self):
         return get_env_name(self.tool_name,
                             self._executable.replace(os.path.sep, '_'),
-                            {})
+                            {},
+                            self.env_vars_combination)
 
     def check_presence(self):
         return True

@@ -24,7 +24,7 @@ class Virtualenv(environment.Environment):
     """
     tool_name = "virtualenv"
 
-    def __init__(self, conf, python, requirements):
+    def __init__(self, conf, python, requirements, env_vars_combination):
         """
         Parameters
         ----------
@@ -48,7 +48,10 @@ class Virtualenv(environment.Environment):
         self._executable = executable
         self._python = python
         self._requirements = requirements
-        super(Virtualenv, self).__init__(conf, python, requirements)
+        super(Virtualenv, self).__init__(conf,
+                                         python,
+                                         requirements,
+                                         env_vars_combination)
 
         try:
             import virtualenv
@@ -97,7 +100,10 @@ class Virtualenv(environment.Environment):
         if self._python.startswith('pypy'):
             # get_env_name adds py-prefix
             python = python[2:]
-        return environment.get_env_name(self.tool_name, python, self._requirements)
+        return environment.get_env_name(self.tool_name,
+                                        python,
+                                        self._requirements,
+                                        self.env_vars_combination)
 
     @classmethod
     def matches(self, python):

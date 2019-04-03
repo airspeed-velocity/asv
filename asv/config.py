@@ -6,11 +6,51 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 import sys
+from collections import defaultdict
 
 from .console import log
 from . import util
 
 # TODO: Some verification of the config values
+
+
+def flatten_env_matrix(env_matrix):
+    if not env_matrix:
+        return env_matrix
+
+    build = env_matrix.get("build")
+    non_build = env_matrix.get("non_build")
+
+    if build is None and non_build is None:
+        raise util.UserError(
+            "Invalid `env_matrix`: "
+            "{} "
+            "at least one of `build` or `non_build` "
+            "should be defined. "
+            "Check your `asv.conf.json`.".format(env_matrix)
+        )
+
+    if build is None:
+        build = {}
+    if non_build is None:
+        non_build = {}
+
+    merged = {('build', var): values for var, values in build.items()}
+    merged.update(
+        {('non_build', var): values for var, values in non_build.items()}
+    )
+
+    return merged
+
+
+def normalize_env_matrix(env_matrix):
+    result = defaultdict(dict)
+
+    for (env_type, var_name), values in env_matrix.items():
+        result[env_type][var_name] = values
+
+    return result
+
 
 class Config(object):
     """
@@ -29,6 +69,7 @@ class Config(object):
         self.exclude = []
         self.include = []
         self.env_dir = "env"
+        self.env_matrix = {}
         self.benchmark_dir = "benchmarks"
         self.results_dir = "results"
         self.html_dir = "html"
@@ -83,5 +124,9 @@ class Config(object):
             # be listed.
             raise util.UserError(
                 "No branches specified in config file.")
+
+        env_matrix = getattr(conf, "env_matrix", None)
+        if env_matrix:
+            conf.env_matrix = flatten_env_matrix(env_matrix)
 
         return conf

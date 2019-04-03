@@ -8,6 +8,7 @@ import os
 import shutil
 import multiprocessing
 import datetime
+from collections import defaultdict
 
 import six
 
@@ -94,6 +95,7 @@ class Publish(Command):
     @classmethod
     def run(cls, conf, range_spec=None, pull=True):
         params = {}
+        env_vars = defaultdict(set)
         graphs = GraphSet()
         machines = {}
         benchmark_names = set()
@@ -148,6 +150,13 @@ class Publish(Command):
                     params.setdefault(key, set())
                     params[key].add(val)
 
+                for key, val in six.iteritems(results.env_vars_combination):
+                    build_type, name = key
+                    # Prefix them in case of name collision
+                    env_vars["env-{}".format(name)].add(val)
+
+            params.update(env_vars)
+
             if pull:
                 repo.pull()
             tags = repo.get_tags()
@@ -195,6 +204,10 @@ class Publish(Command):
 
                     for branch in branches_for_commit:
                         cur_params = dict(results.params)
+                        cur_env = {'env-{}'.format(name): val for
+                                   (build_type, name), val in
+                                        six.iteritems(results.env_vars_combination)}
+                        cur_params.update(cur_env)
                         cur_params['branch'] = repo.get_branch_name(branch)
 
                         # Backward compatibility, see above

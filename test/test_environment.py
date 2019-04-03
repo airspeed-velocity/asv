@@ -13,6 +13,8 @@ import json
 from asv import config
 from asv import environment
 from asv import util
+from asv.config import flatten_env_matrix, normalize_env_matrix
+from asv.environment import iter_env_matrix_combinations
 from asv.repo import get_repo
 from asv.util import shlex_quote as quote
 
@@ -275,6 +277,118 @@ def test_matrix_expand_exclude():
         {'python': '2.7', 'b': '2'}
     ])
     assert combinations == expected
+
+
+@pytest.mark.parametrize(
+    ['env_matrix', 'expected'],
+    [
+        pytest.param(
+            {
+                'var0': ['val0', 'val1'],
+                'var1': ['val2', 'val3'],
+            },
+            [
+                {
+                    'var0': 'val0',
+                    'var1': 'val2',
+                },
+                {
+                    'var0': 'val0',
+                    'var1': 'val3',
+                },
+                {
+                    'var0': 'val1',
+                    'var1': 'val2',
+                },
+                {
+                    'var0': 'val1',
+                    'var1': 'val3',
+                },
+            ],
+            id="Basic combination"
+        ),
+        pytest.param(
+            {
+                'var0': ['val0', 'val1'],
+                'var1': ['val2', None],
+            },
+            [
+                {
+                    'var0': 'val0',
+                    'var1': 'val2',
+                },
+                {
+                    'var0': 'val0',
+                },
+                {
+                    'var0': 'val1',
+                    'var1': 'val2',
+                },
+                {
+                    'var0': 'val1',
+                },
+            ],
+            id="None variable"
+        ),
+        pytest.param(
+            {
+                'var0': ['val0', 'val1'],
+            },
+            [
+                {
+                    'var0': 'val0',
+                },
+                {
+                    'var0': 'val1',
+                },
+            ],
+            id="Single variable"
+        ),
+        pytest.param(
+            {},
+            [{}],
+            id="Empty matrix"
+        ),
+    ]
+)
+def test_successful_env_matrix(env_matrix, expected):
+    result = _sorted_dict_list(iter_env_matrix_combinations(env_matrix))
+    assert result == _sorted_dict_list(expected)
+
+
+expected_error_message = "Invalid value in `env_matrix`: " \
+                         "values should be non-empty lists. " \
+                         "Check your `asv.conf.json`."
+
+
+@pytest.mark.parametrize(
+    ['env_matrix', 'exception', 'exception_message'],
+    [
+        pytest.param(
+            {
+                'key': None
+            },
+            util.UserError,
+            expected_error_message,
+            id="None value"
+        ),
+        pytest.param(
+            {
+                'key': []
+            },
+            util.UserError,
+            expected_error_message,
+            id="Empty value"
+        ),
+    ]
+)
+def test_invalid_env_matrix(env_matrix, exception, exception_message):
+    with pytest.raises(exception) as exc_info:
+        list(iter_env_matrix_combinations(env_matrix))
+
+    # Don't assert inside the `pytest.raises` in case
+    # we try to catch an assertion error
+    assert exception_message in str(exc_info.value)
 
 
 @pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
@@ -783,3 +897,168 @@ def test_install_success(tmpdir):
     env.install_project(conf, repo, commit_hash)
 
     env.run(['-c', 'import asv_test_repo as t, sys; sys.exit(0 if t.dummy_value == 0 else 1)'])
+
+
+@pytest.mark.parametrize(
+    ['build_vars', 'non_build_vars', 'environ_count', 'build_count'],
+    [
+        pytest.param(
+            {},
+            {},
+            1,
+            1,
+            id="Empty matrix"
+        ),
+        pytest.param(
+            {"var1": ["val1"]},
+            {},
+            1,
+            1,
+            id="One variable, one value"
+        ),
+        pytest.param(
+            {"var1": ["val1", "val2", "val3"]},
+            {},
+            3,
+            3,
+            id="One variable, multiple values"
+        ),
+        pytest.param(
+            {"var1": ["val1", "val2"], "var2": ['val3', 'val4']},
+            {},
+            4,
+            4,
+            id="Two variables, two values each."
+        ),
+        pytest.param(
+            {"var1": ["val1", "val2"], "var2": ['val3', None]},
+            {},
+            4,
+            4,
+            id="Two variables, two values each with one `None`."
+        ),
+        pytest.param(
+            {"var1": ["val1", "val2"]},
+            {"var2": ['val3', None]},
+            4,
+            2,
+            id="One build, one non_build, two values each with one `None`."
+        ),
+        pytest.param(
+            {"var1": ["val1", "val2"], "var2": ['val3', 'val4']},
+            {"var3": ['val5', None]},
+            8,
+            4,
+            id="Two build, one non_build, two values each, one `None`."
+        ),
+    ]
+)
+def test_environment_env_matrix(build_vars,
+                                non_build_vars,
+                                environ_count,
+                                build_count):
+    conf = config.Config()
+
+    conf.environment_type = 'existing'
+    conf.env_matrix = flatten_env_matrix({
+        "build": build_vars,
+        "non_build": non_build_vars,
+    })
+    environments = list(environment.get_environments(conf, None))
+
+    assert len(environments) == environ_count
+    assert len(set(e.name for e in environments)) == build_count
+
+
+@pytest.mark.parametrize(
+    ['env_matrix', 'normalized'],
+    [
+        pytest.param(
+            {
+                "build": {
+                    "ENV1": ["val"],
+                    "ENV2": ["val2"]
+                }
+            },
+            {
+                ("build", "ENV1"): ["val"],
+                ("build", "ENV2"): ["val2"]
+            }
+        ),
+        pytest.param(
+            {
+                "build": {
+                    "ENV1": ["val"],
+                    "ENV2": ["val2"]
+                },
+                "non_build": {
+                    "ENV3": ["val3", "val4"],
+                    "ENV4": ["val5"]
+                }
+            },
+            {
+                ("build", "ENV1"): ["val"],
+                ("build", "ENV2"): ["val2"],
+                ("non_build", "ENV3"): ["val3", "val4"],
+                ("non_build", "ENV4"): ["val5"],
+            }
+        ),
+    ]
+)
+def test_flatten_env_matrix(env_matrix, normalized):
+    assert flatten_env_matrix(env_matrix) == normalized
+
+@pytest.mark.parametrize(
+    ['env_matrix'],
+    [
+        pytest.param(
+            {
+                "build": {
+                    "ENV1": ["val"],
+                    "ENV2": ["val2"]
+                }
+            },
+        ),
+        pytest.param(
+            {
+                "build": {
+                    "ENV1": ["val"],
+                    "ENV2": ["val2"]
+                },
+                "non_build": {
+                    "ENV3": ["val3", "val4"],
+                    "ENV4": ["val5"]
+                }
+            },
+        ),
+    ]
+)
+def test_normalize_flatten_env_matrix(env_matrix):
+    assert normalize_env_matrix(flatten_env_matrix(
+        env_matrix
+    )) == env_matrix
+
+
+@pytest.mark.parametrize(
+    ['normalized'],
+    [
+        pytest.param(
+            {
+                ("build", "ENV1"): ["val"],
+                ("build", "ENV2"): ["val2"]
+            },
+        ),
+        pytest.param(
+            {
+                ("build", "ENV1"): ["val"],
+                ("build", "ENV2"): ["val2"],
+                ("non_build", "ENV3"): ["val3", "val4"],
+                ("non_build", "ENV4"): ["val5"],
+            },
+        ),
+    ]
+)
+def test_flatten_normalize_env_matrix(normalized):
+    assert flatten_env_matrix(normalize_env_matrix(
+        normalized
+    )) == normalized
