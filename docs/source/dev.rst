@@ -52,7 +52,7 @@ A benchmark suite directory has the following layout.  The
       <https://ccache.samba.org>`__ is able to cache and reuse many of
       the build products.
 
-    - ``wheels/``: If ``wheel_cache_size`` in ``asv.conf.json`` is set
+    - ``wheels/``: If ``build_cache_size`` in ``asv.conf.json`` is set
       to something other than 0, this contains `Wheels
       <https://pypi.python.org/pypi/wheel>`__ of the last N project
       builds for this environment.  In this way, if a build for a
