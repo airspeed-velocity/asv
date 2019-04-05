@@ -7,6 +7,7 @@ from __future__ import (absolute_import, division, print_function,
 import os
 import sys
 
+from .console import log
 from . import util
 
 # TODO: Some verification of the config values
@@ -65,6 +66,10 @@ class Config(object):
 
     @classmethod
     def from_json(cls, d):
+        if 'wheel_cache_size' in d:
+            log.warning("`wheel_cache_size` has been renamed to `build_cache_size`. Update your `asv.conf.json` accordingly.")
+            d.setdefault('build_cache_size', d['wheel_cache_size'])
+
         conf = cls()
         conf.__dict__.update(d)
 
