@@ -15,6 +15,7 @@ import textwrap
 from hashlib import sha256
 
 from asv import benchmarks
+from asv import benchmark
 from asv import config
 from asv import environment
 from asv import util
@@ -105,7 +106,7 @@ def test_discover_benchmarks(benchmarks_fixture):
     assert b._benchmark_selection['params_examples.track_param_selection'] == [0, 1, 2, 3]
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
-    assert len(b) == 39
+    assert len(b) == 40
 
     assert 'named.OtherSuite.track_some_func' in b
 
@@ -277,6 +278,24 @@ def test_code_extraction(tmpdir):
     """).strip()
 
     bench = b['code_extraction.track_test']
+    assert bench['version'] == sha256(bench['code'].encode('utf-8')).hexdigest()
+    assert bench['code'] == expected_code
+
+    expected_code = textwrap.dedent("""
+    int track_pretty_source_test() {
+        return 0;
+    }
+
+    def setup():
+        # module-level
+        pass
+
+    def setup_cache():
+        # module-level
+        pass
+    """).strip()
+
+    bench = b['code_extraction.track_pretty_source_test']
     assert bench['version'] == sha256(bench['code'].encode('utf-8')).hexdigest()
     assert bench['code'] == expected_code
 
