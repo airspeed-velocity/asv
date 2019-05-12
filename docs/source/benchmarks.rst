@@ -48,6 +48,8 @@ The following attributes are applicable to all benchmark types:
 - ``pretty_name``: If given, used to display the benchmark name instead of the
   benchmark function name.
 
+- ``pretty_source``: If given, used to display a custom version of the benchmark source.
+
 - ``version``: Used to determine when to invalidate old benchmark
   results.  Benchmark results produced with a different value of the
   version than the current value will be ignored.  The value can be

@@ -308,16 +308,22 @@ def get_source_code(items):
     prev_class_name = None
 
     for func in items:
-        try:
-            lines, lineno = inspect.getsourcelines(func)
-        except TypeError:
-            continue
 
-        if not lines:
-            continue
+        # custom source
+        if hasattr(func, 'pretty_source'):
+            src = textwrap.dedent(func.pretty_source).lstrip()
+        # original source
+        else:
+            try:
+                lines, _ = inspect.getsourcelines(func)
+            except TypeError:
+                continue
 
-        src = "\n".join(line.rstrip() for line in lines)
-        src = textwrap.dedent(src)
+            if not lines:
+                continue
+
+            src = "\n".join(line.rstrip() for line in lines)
+            src = textwrap.dedent(src)
 
         class_name = None
         if inspect.ismethod(func):
