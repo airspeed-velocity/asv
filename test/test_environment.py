@@ -429,7 +429,7 @@ def test_matrix_existing():
 @pytest.mark.skipif((not HAS_CONDA),
                     reason="Requires conda")
 @pytest.mark.parametrize("channel_list,expected_channel", [
-    (["defaults", "conda-forge"], "defaults"),
+    (["defaults", "conda-forge"], "pkgs/main"),
     (["conda-forge", "defaults"], "conda-forge"),
     ])
 def test_conda_channel_addition(tmpdir,
@@ -468,6 +468,7 @@ def test_conda_channel_addition(tmpdir,
                                                     os.path.normpath(env._path),
                                                     '--json']))
         json_package_list = json.loads(out_str)
+        print(json_package_list)
         for installed_package in json_package_list:
             # check only explicitly installed packages
             if installed_package['name'] not in ('python',):
