@@ -660,8 +660,10 @@ class Environment(object):
         """
         cmd = self._install_command
         if cmd is None:
-            # Run pip via python -m pip, avoids shebang length limit on Linux
-            cmd = ["python -mpip install {wheel_file}"]
+            # Run pip via python -m pip, avoids shebang length limit on Linux.
+            # Ensure --force-reinstall so that package being present e.g. on cwd
+            # does not mess things up.
+            cmd = ["python -mpip install --force-reinstall {wheel_file}"]
 
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)
