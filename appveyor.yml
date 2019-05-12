@@ -36,9 +36,6 @@ install:
     - "conda install -q --yes python=%PYTHON_VERSION% conda six pip pytest pytest-xdist!=1.23.1,!=1.23.2 lockfile selenium conda-build bzip2"
     - "python -mpip install pytest-rerunfailures"
 
-    # Pre-download all necessary packages
-    - "python .continuous-integration/download_reqs.py"
-
     # Tell conda to not use hardlinks: on Windows it's not possible
     # to delete hard links to files in use, which causes problem when
     # trying to cleanup environments during the tests
