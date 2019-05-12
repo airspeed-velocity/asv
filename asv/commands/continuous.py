@@ -144,8 +144,10 @@ class Continuous(Command):
         color_print("")
         if worsened:
             color_print("SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY.", 'red')
+            color_print("PERFORMANCE DECREASED.", 'red')
         elif improved:
             color_print("SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY.", 'green')
+            color_print("PERFORMANCE INCREASED.", 'green')
         else:
             color_print("BENCHMARKS NOT SIGNIFICANTLY CHANGED.", 'green')
 
