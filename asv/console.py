@@ -137,6 +137,16 @@ def _write_with_fallback(s, write, fileobj):
         pass
 
     enc = locale.getpreferredencoding()
+
+    if isinstance(s, bytes):
+        # Try Unicode stream
+        try:
+            write(s.decode(enc))
+            return write
+        except (UnicodeEncodeError, TypeError):
+            # Let's try the next approach...
+            pass
+
     try:
         Writer = codecs.getwriter(enc)
     except LookupError:

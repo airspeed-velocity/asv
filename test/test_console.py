@@ -92,8 +92,16 @@ def test_write_with_fallback(tmpdir, capfd):
 
         check_write(s, expected, stream_enc, pref_enc)
 
+    # Should not fail with Unicode streams
+    def write(s):
+        if isinstance(s, bytes):
+            raise TypeError("failure")
+
+    _write_with_fallback("a", write, None)
+    _write_with_fallback(b"a", write, None)
+
     # Should not bail out on bytes input
-    _write_with_fallback("a".encode('ascii'), sys.stdout.write, sys.stdout)
+    _write_with_fallback(b"a", sys.stdout.write, sys.stdout)
     out, err = capfd.readouterr()
     assert out == "a"
 
