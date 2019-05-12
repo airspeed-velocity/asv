@@ -82,7 +82,6 @@ install:
       conda install --yes conda conda-build bzip2
       conda info
       if $TRAVIS_PYTHON -c 'import virtualenv'; then echo "ERROR: virtualenv package is installed"; exit 1; fi;
-      $TRAVIS_PYTHON .continuous-integration/download_reqs.py
     else
       if $TRAVIS_PYTHON -c 'import sys; sys.exit(0 if "__pypy__" in sys.modules else 1)'; then
         $TRAVIS_PIP install virtualenv;
