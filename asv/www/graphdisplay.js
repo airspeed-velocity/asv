@@ -21,8 +21,8 @@ $(document).ready(function() {
     var select_reference = false;
     /* The reference value */
     var reference = 1.0;
-    /* Whether to hide the legend */
-    var hide_legend = false;
+    /* Whether to show the legend */
+    var show_legend = true;
     /* Is even commit spacing being used? */
     var even_spacing = false;
     var even_spacing_revisions = [];
@@ -260,10 +260,9 @@ $(document).ready(function() {
             update_state_url({'x-axis-scale': date_scale ? ['date'] : []});
         });
         
-        $('#hide-legend').on('click', function(evt) {
-            hide_legend = !hide_legend;
-            
-            update_state_url({'hide-legend': hide_legend ? [true] : []});
+        $('#show-legend').on('click', function(evt) {
+            show_legend = !show_legend;
+            update_state_url({'show-legend': show_legend ? [] : [false]});
         });
 
         tooltip = $("<div></div>");
@@ -1186,7 +1185,7 @@ $(document).ready(function() {
                 mode: "x"
             },
             legend: {
-                show: !hide_legend,
+                show: show_legend,
                 position: "nw",
                 labelFormatter: function(label, series) {
                     // Ensure HTML escaping
@@ -1394,16 +1393,20 @@ $(document).ready(function() {
             delete params['x-axis-scale'];
         }
     
-        var hide_legend_button = $('#hide-legend')
-        if (params['hide-legend']) {
-            if (params['hide-legend'][0] === 'true') {
-                hide_legend_button.addClass('active');
-                hide_legend = true;
+        var show_legend_button = $('#show-legend')
+        if (params['show-legend']) {
+            if (params['show-legend'][0] === 'false') {
+                show_legend = false;
+                show_legend_button.removeClass('active');
             }
-            delete params['hide-legend'];
+            else {
+                show_legend_button.addClass('active');
+                show_legend = true;
+            }
+            delete params['show-legend'];
         }
         else {
-            hide_legend_button.removeClass('active');
+            show_legend_button.addClass('active');
         }
 
         if (Object.keys(params).length > 0) {
