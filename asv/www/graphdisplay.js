@@ -21,6 +21,8 @@ $(document).ready(function() {
     var select_reference = false;
     /* The reference value */
     var reference = 1.0;
+    /* Whether to show the legend */
+    var show_legend = true;
     /* Is even commit spacing being used? */
     var even_spacing = false;
     var even_spacing_revisions = [];
@@ -256,6 +258,11 @@ $(document).ready(function() {
             even_spacing = false;
             $('#even-spacing').removeClass('active');
             update_state_url({'x-axis-scale': date_scale ? ['date'] : []});
+        });
+        
+        $('#show-legend').on('click', function(evt) {
+            show_legend = !show_legend;
+            update_state_url({'show-legend': show_legend ? [] : [false]});
         });
 
         tooltip = $("<div></div>");
@@ -1178,6 +1185,7 @@ $(document).ready(function() {
                 mode: "x"
             },
             legend: {
+                show: show_legend,
                 position: "nw",
                 labelFormatter: function(label, series) {
                     // Ensure HTML escaping
@@ -1383,6 +1391,22 @@ $(document).ready(function() {
                 date_scale = true;
             }
             delete params['x-axis-scale'];
+        }
+    
+        var show_legend_button = $('#show-legend')
+        if (params['show-legend']) {
+            if (params['show-legend'][0] === 'false') {
+                show_legend = false;
+                show_legend_button.removeClass('active');
+            }
+            else {
+                show_legend_button.addClass('active');
+                show_legend = true;
+            }
+            delete params['show-legend'];
+        }
+        else {
+            show_legend_button.addClass('active');
         }
 
         if (Object.keys(params).length > 0) {
