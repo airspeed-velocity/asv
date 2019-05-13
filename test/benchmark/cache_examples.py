@@ -86,4 +86,3 @@ time_fail_second_run.number = 1
 time_fail_second_run.repeat = 1
 time_fail_second_run.warmup_time = 0
 time_fail_second_run.processes = 2
-
