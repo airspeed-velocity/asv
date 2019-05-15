@@ -7,29 +7,11 @@ env:
     - USE_CONDA=false
     - COVERAGE=""
 
-python:
-  - 2.7
-  - 3.5
-  - 3.6
-  - pypy3.5-5.10.1
-
 addons:
   firefox: "61.0.1"
 
 matrix:
   include:
-    - python: 3.7
-      dist: xenial
-      sudo: true
-
-    - python: 2.7
-      env:
-        - USE_CONDA=true
-        - COVERAGE="--cov=asv --cov=test"
-
-    - python: 3.6
-      env: USE_CONDA=true
-
     - python: 2.7
       env:
         - PYFLAKES=1
@@ -46,6 +28,30 @@ matrix:
           SKIP="$SKIP|asv/extern/asizeof.py"
           SKIP="$SKIP|asv/benchmark.py.*undefined name .(run|params)."
           PYFLAKES_NODOCTEST=1 pyflakes asv test | grep -E -v "$SKIP" > test.out; cat test.out; test \! -s test.out
+
+    - python: 3.8-dev
+      dist: xenial
+      sudo: true
+
+    - python: 3.7
+      dist: xenial
+      sudo: true
+
+    - python: 2.7
+
+    - python: 3.6
+
+    - python: 3.5
+
+    - python: 2.7
+      env:
+        - USE_CONDA=true
+        - COVERAGE="--cov=asv --cov=test"
+
+    - python: 3.6
+      env: USE_CONDA=true
+
+    - python: pypy3.5-5.10.1
 
 cache:
   directories:
@@ -84,6 +90,8 @@ install:
       if $TRAVIS_PYTHON -c 'import virtualenv'; then echo "ERROR: virtualenv package is installed"; exit 1; fi;
     else
       if $TRAVIS_PYTHON -c 'import sys; sys.exit(0 if "__pypy__" in sys.modules else 1)'; then
+        $TRAVIS_PIP install virtualenv;
+      elif [[ "$TRAVIS_PYTHON_VERSION" == "3.8-dev" ]]; then
         $TRAVIS_PIP install virtualenv;
       else
         $TRAVIS_PIP install virtualenv numpy scipy;
