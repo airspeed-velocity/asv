@@ -1,7 +1,5 @@
 language: python
 
-sudo: false
-
 env:
   global:
     - USE_CONDA=false
@@ -31,11 +29,9 @@ matrix:
 
     - python: 3.8-dev
       dist: xenial
-      sudo: true
 
     - python: 3.7
       dist: xenial
-      sudo: true
 
     - python: 2.7
 
@@ -51,7 +47,8 @@ matrix:
     - python: 3.6
       env: USE_CONDA=true
 
-    - python: pypy3.5-5.10.1
+    - python: pypy3.5-6.0
+      dist: xenial
 
 cache:
   directories:
