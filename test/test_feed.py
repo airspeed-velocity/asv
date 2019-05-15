@@ -86,7 +86,8 @@ More text</content>
 </entry>
 </feed>
 """
-    assert text == expected
+    expected2 = expected.replace('type="html" xml:lang="en"', 'xml:lang="en" type="html"')
+    assert text == expected or text == expected2
 
 
 @pytest.mark.skipif(not HAVE_FEEDPARSER, reason="test requires feedparser module")
