@@ -92,6 +92,11 @@ class Run(Command):
             benchmark functions faster.  The results are unlikely to
             be useful, and thus are not saved.""")
         common_args.add_environment(parser)
+        parser.add_argument(
+            "--set-commit-hash", default=None,
+            help="""Set the commit hash to use when recording benchmark
+            results. This makes results to be saved also when using an
+            existing environment.""")
         common_args.add_launch_method(parser)
         parser.add_argument(
             "--dry-run", "-n", action="store_true",
@@ -136,7 +141,7 @@ class Run(Command):
             conf=conf, range_spec=args.range, steps=args.steps,
             bench=args.bench, attribute=args.attribute, parallel=args.parallel,
             show_stderr=args.show_stderr, quick=args.quick,
-            profile=args.profile, env_spec=args.env_spec,
+            profile=args.profile, env_spec=args.env_spec, set_commit_hash=args.set_commit_hash,
             dry_run=args.dry_run, machine=args.machine,
             skip_successful=args.skip_existing_successful or args.skip_existing,
             skip_failed=args.skip_existing_failed or args.skip_existing,
@@ -149,7 +154,7 @@ class Run(Command):
 
     @classmethod
     def run(cls, conf, range_spec=None, steps=None, bench=None, attribute=None, parallel=1,
-            show_stderr=False, quick=False, profile=False, env_spec=None,
+            show_stderr=False, quick=False, profile=False, env_spec=None, set_commit_hash=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
             skip_failed=False, skip_existing_commits=False, record_samples=False,
             append_samples=False, pull=True, interleave_processes=False,
@@ -161,7 +166,7 @@ class Run(Command):
 
         environments = list(environment.get_environments(conf, env_spec))
 
-        if environment.is_existing_only(environments):
+        if environment.is_existing_only(environments) and set_commit_hash is None:
             # No repository required, so skip using it
             conf.dvcs = "none"
 
@@ -386,10 +391,14 @@ class Run(Command):
                         params['python'] = env.python
                         params.update(env.requirements)
 
-                        skip_save = (dry_run or isinstance(env, environment.ExistingEnvironment))
+                        skip_save = dry_run or (isinstance(env, environment.ExistingEnvironment)
+                                                and set_commit_hash is None)
 
                         skip_list = skipped_benchmarks[(commit_hash, env.name)]
                         benchmark_set = benchmarks.filter_out(skip_list)
+
+                        if set_commit_hash is not None:
+                            commit_hash = set_commit_hash
 
                         result = Results(
                             params,
