@@ -29,7 +29,8 @@ def basic_conf(tmpdir):
     shutil.copyfile(join(local, 'asv-machine.json'),
                     join(tmpdir, 'asv-machine.json'))
 
-    repo_path = relpath(tools.generate_test_repo(tmpdir).path)
+    repo = tools.generate_test_repo(tmpdir)
+    repo_path = relpath(repo.path)
 
     conf_dict = {
         'benchmark_dir': 'benchmark',
@@ -42,23 +43,19 @@ def basic_conf(tmpdir):
 
     conf = config.Config.from_json(conf_dict)
 
-    return tmpdir, conf
+    return tmpdir, conf, repo
 
 
-def test_run_existing(capsys, basic_conf):
-    tmpdir, conf = basic_conf
+def test_set_commit_hash(capsys, basic_conf):
+    tmpdir, conf, repo = basic_conf
+    commit_hash = repo.get_branch_hashes()[0]
 
-    commit_label = 'commit_label'
-
-    tools.run_asv_with_conf(conf, 'run', '--commit-label=' + commit_label, _machine_file=join(tmpdir, 'asv-machine.json'))
+    tools.run_asv_with_conf(conf, 'run', '--set-commit-hash=' + commit_hash, _machine_file=join(tmpdir, 'asv-machine.json'))
 
     env_name = list(environment.get_environments(conf, None))[0].name
-
-    result_filename = commit_label + '-' + env_name + '.json'
-    
+    result_filename = commit_hash[:conf.hash_length] + '-' + env_name + '.json'
     assert result_filename in os.listdir(join('results_workflow', 'orangutan'))
 
     result_path = join('results_workflow', 'orangutan', result_filename)
     times = results.Results.load(result_path)
-
-    assert times.commit_hash == 'label-' + commit_label
+    assert times.commit_hash == commit_hash

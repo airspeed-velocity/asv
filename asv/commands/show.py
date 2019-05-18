@@ -108,11 +108,7 @@ class Show(Command):
             commit_order.sort(key=lambda x: cur_commits[x])
 
             for commit in commit_order:
-                if 'label-' in commit:
-                    commit = commit[6:]
-                else:
-                    commit = commit[:conf.hash_length]
-                color_print("    {}".format(commit))
+                color_print("    {}".format(commit[:conf.hash_length]))
 
             color_print("")
 

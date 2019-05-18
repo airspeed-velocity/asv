@@ -4,7 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import time
+import datetime
 
 from . import util
 
@@ -213,7 +213,9 @@ class NoRepository(Repo):
         self._check_branch(commit_hash)
 
     def get_date(self, hash):
-        return int(time.time() * 1000)
+        if hash is None:
+            return datetime.datetime.now()
+        self._raise_error()
 
     def get_hashes_from_range(self, range):
         return [None]
