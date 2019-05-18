@@ -18,7 +18,7 @@ def test_check(capsys, basic_conf):
     tmpdir, local, conf = basic_conf
 
     # Test check runs (with full benchmark suite)
-    with pytest.raises(util.UserError, message="Benchmark suite check failed."):
+    with pytest.raises(util.UserError, match="Benchmark suite check failed"):
         tools.run_asv_with_conf(conf, 'check', "--python=same")
 
     text, err = capsys.readouterr()
