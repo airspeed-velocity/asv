@@ -516,15 +516,14 @@ def browser(request, pytestconfig):
 
     # Evaluate the options
     def FirefoxHeadless():
-        from selenium.webdriver.firefox.options import Options
-        options = Options()
+        options = selenium.webdriver.FirefoxOptions()
         options.add_argument("-headless")
-        return selenium.webdriver.Firefox(firefox_options=options)
+        return selenium.webdriver.Firefox(options=options)
 
     def ChromeHeadless():
         options = selenium.webdriver.ChromeOptions()
         options.add_argument('headless')
-        return selenium.webdriver.Chrome(chrome_options=options)
+        return selenium.webdriver.Chrome(options=options)
 
     ns = {}
     six.exec_("import selenium.webdriver", ns)
@@ -626,10 +625,10 @@ def dummy_packages(request, monkeypatch):
     with locked_cache_dir(request.config, "asv-wheels", timeout=900, tag=tag) as cache_dir:
         wheel_dir = os.path.abspath(join(six.text_type(cache_dir), 'wheels'))
 
-        monkeypatch.setenv('PIP_FIND_LINKS', 'file://' + wheel_dir)
+        monkeypatch.setenv(str('PIP_FIND_LINKS'), str('file://' + wheel_dir))
 
         condarc = join(wheel_dir, 'condarc')
-        monkeypatch.setenv('CONDARC', condarc)
+        monkeypatch.setenv(str('CONDARC'), str(condarc))
 
         if os.path.isdir(wheel_dir):
             return
