@@ -372,3 +372,10 @@ def test_datetime_to_timestamp():
     assert util.datetime_to_timestamp(ts) == 1
     ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 500000 - 1)
     assert util.datetime_to_timestamp(ts) == 0
+
+
+def test_check_output_exit_code(capsys):
+    with pytest.raises(util.ProcessError):
+        util.check_output([sys.executable, '-c', 'import sys; sys.exit(1)'])
+    out, err = capsys.readouterr()
+    assert '(exit status 1)' in out

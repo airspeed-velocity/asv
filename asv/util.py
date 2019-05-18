@@ -675,7 +675,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         retcode = proc.returncode
 
     if valid_return_codes is not None and retcode not in valid_return_codes:
-        header = 'Error running {0}'.format(' '.join(args))
+        header = 'Error running {0} (exit status {1})'.format(' '.join(args), retcode)
         if display_error:
             if log.is_debug_enabled():
                 # Output was already printed
