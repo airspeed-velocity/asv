@@ -865,7 +865,7 @@ def load_json(path, api_version=None, js_comments=False):
     return d
 
 
-def update_json(cls, path, api_version):
+def update_json(cls, path, api_version, compact=False):
     """
     Perform JSON file format updates.
 
@@ -892,7 +892,7 @@ def update_json(cls, path, api_version):
     if d['version'] < api_version:
         for x in six.moves.xrange(d['version'] + 1, api_version + 1):
             d = getattr(cls, 'update_to_{0}'.format(x), lambda x: x)(d)
-        write_json(path, d, api_version)
+        write_json(path, d, api_version, compact=compact)
     elif d['version'] > api_version:
         raise UserError(
             "{0} is stored in a format that is newer than "
@@ -1367,6 +1367,21 @@ def interpolate_command(command, variables):
         break
 
     return result, env, return_codes, cwd
+
+
+def truncate_float_list(item, digits=5):
+    """
+    Truncate floating-point numbers (in a possibly nested list)
+    to given significant digits, for a shorter base-10
+    representation.
+    """
+    if isinstance(item, float):
+        fmt = '{{:.{}e}}'.format(digits - 1)
+        return float(fmt.format(item))
+    elif isinstance(item, list):
+        return [truncate_float_list(x, digits) for x in item]
+    else:
+        return item
 
 
 _global_locks = {}
