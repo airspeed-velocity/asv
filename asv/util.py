@@ -836,7 +836,7 @@ def update_json(cls, path, api_version):
             "No version specified in {0}.".format(path))
 
     if d['version'] < api_version:
-        for x in six.moves.xrange(d['version'] + 1, api_version):
+        for x in six.moves.xrange(d['version'] + 1, api_version + 1):
             d = getattr(cls, 'update_to_{0}'.format(x), lambda x: x)(d)
         write_json(path, d, api_version)
     elif d['version'] > api_version:
