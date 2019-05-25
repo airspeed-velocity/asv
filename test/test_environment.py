@@ -9,8 +9,6 @@ import sys
 import six
 import pytest
 import json
-import shlex
-import tempfile
 
 from asv import config
 from asv import environment
@@ -305,32 +303,27 @@ def test_conda_pip_install(tmpdir, dummy_packages):
 
 @pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
 def test_conda_environment_file(tmpdir, dummy_packages):
-    # test that we can install with pip into a conda environment.
+    env_file_name = six.text_type(tmpdir.join("environment.yml"))
+    with open(env_file_name, "w") as temp_environment_file:
+        temp_environment_file.write(
+                'name: test_conda_envs\ndependencies:\n  - asv_dummy_test_package_2')
+
     conf = config.Config()
-
     conf.env_dir = six.text_type(tmpdir.join("env"))
-
     conf.environment_type = "conda"
     conf.pythons = [PYTHON_VER1]
-    try:
-        env_file_name = tempfile.mkstemp(suffix=".yml")[1]
-        conf.conda_environment_file = env_file_name
-        with open(env_file_name, "w") as temp_environment_file:
-            temp_environment_file.write(
-                    'name: test_conda_envs\ndependencies:\n  - pip:\n    - asv_dummy_test_package_2')
-        environments = list(environment.get_environments(conf, None))
+    conf.conda_environment_file = env_file_name
 
-        assert len(environments) == 1 * 1 * 1
+    environments = list(environment.get_environments(conf, None))
 
-        for env in environments:
-            env.create()
+    assert len(environments) == 1 * 1 * 1
 
-            output = env.run(
-                ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)'])
-            assert output.startswith(six.text_type(DUMMY2_VERSIONS[1]))
-    finally:
-        if env_file_name:
-            os.remove(env_file_name)
+    for env in environments:
+        env.create()
+
+        output = env.run(
+            ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)'])
+        assert output.startswith(six.text_type(DUMMY2_VERSIONS[1]))
 
 
 @pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
