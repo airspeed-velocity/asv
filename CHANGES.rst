@@ -1,5 +1,21 @@
-0.4 (unreleased)
-------------------
+0.5 (unreleased)
+----------------
+
+New Features
+^^^^^^^^^^^^
+
+API Changes
+^^^^^^^^^^^
+
+Bug Fixes
+^^^^^^^^^
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+0.4 (2019-05-26)
+----------------
 
 New Features
 ^^^^^^^^^^^^
