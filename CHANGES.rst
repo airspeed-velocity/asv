@@ -4,6 +4,13 @@
 New Features
 ^^^^^^^^^^^^
 - ``asv check`` command for a quick check of benchmark suite validity. (#782)
+- ``asv run HASHFILE:filename`` can read commit hashes to run from file or stdin (#768)
+- ``--set-commit-hash`` option to ``asv run``, which allows recording results
+  from runs in "existing" environments not managed by asv (#794)
+- ``--cpu-affinity`` option to ``asv run`` and others, to set CPU affinity (#769)
+- "Hide legend" option in web UI (#807)
+- ``pretty_source`` benchmark attribute for customizing source code shown (#810)
+- Record number of cores in machine information (#761)
 
 API Changes
 ^^^^^^^^^^^
@@ -14,6 +21,11 @@ API Changes
 
 Bug Fixes
 ^^^^^^^^^
+- Fix pip command line in ``install_command`` (#806)
+- Python 3.8 compatibility (#814)
+- Minor fixes and improvements (#759, #764, #767, #772, #779, #783, #784, #787,
+  #790, #795, #799, #804, #812, #813, #815, #816, #817, #818, #820)
+
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
