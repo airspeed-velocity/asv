@@ -596,7 +596,7 @@ class Results(object):
             'benchmark_version': self._benchmark_version,
         }
 
-        util.write_json(path, data, self.api_version)
+        util.write_json(path, data, self.api_version, compact=True)
 
     def load_data(self, result_dir):
         """
