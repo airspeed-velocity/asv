@@ -1227,6 +1227,7 @@ def interpolate_command(command, variables):
     - ``ENVVAR=value <command>``: parsed as declaring an environment variable
       named 'ENVVAR'.
     - ``return-code=value <command>``: parsed as declaring valid return codes.
+    - ``in-dir=value <command>``: parsed as declaring working directory for command.
 
     Parameters
     ----------
@@ -1243,6 +1244,8 @@ def interpolate_command(command, variables):
         Environment variables declared in the command.
     return_codes : {set, int, None}
         Valid return codes.
+    cwd : {str, None}
+        Current working directory for the command, if any.
 
     """
 
@@ -1260,6 +1263,7 @@ def interpolate_command(command, variables):
 
     return_codes_set = False
     return_codes = {0}
+    cwd = None
 
     while result:
         m = re.match('^([A-Za-z_][A-Za-z0-9_]*)=(.*)$', result[0])
@@ -1295,9 +1299,20 @@ def interpolate_command(command, variables):
                             "{0!r} when substituting into command {1!r} "
                             "".format(result[0], command))
 
+        if result[0].startswith('in-dir='):
+            if cwd is not None:
+                raise UserError("Configuration error: multiple in-dir specifications "
+                                "in command {0!r} "
+                                "".format(command))
+                break
+
+            cwd = result[0][7:]
+            del result[0]
+            continue
+
         break
 
-    return result, env, return_codes
+    return result, env, return_codes, cwd
 
 
 try:

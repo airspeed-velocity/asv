@@ -91,8 +91,8 @@ will only call ``install_command`` but not ``build_command``. (The
 number of cached builds retained at any time is determined by the
 ``build_cache_size`` configuration option.)
 
-The ``install_command`` and ``build_command`` are launched in
-``{build_dir}``. The ``uninstall_command`` is launched in the
+The ``install_command`` and ``build_command`` are by default launched
+in ``{build_dir}``. The ``uninstall_command`` is launched in the
 environment root directory.
 
 The commands are specified in typical POSIX shell syntax (Python
@@ -103,6 +103,9 @@ do not need to be quoted. The commands may contain environment
 variable specifications in in form ``VARNAME=value`` at the beginning.
 In addition, valid return codes can be specified via
 ``return-code=0,1,2`` and ``return-code=any``.
+
+The ``in-dir=somedir`` specification changes the working directory
+for the command.
 
 The commands can be supplied with the arguments:
 

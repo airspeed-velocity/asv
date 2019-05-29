@@ -297,25 +297,28 @@ def test_json_non_ascii(tmpdir):
 def test_interpolate_command():
     good_items = [
         ('python {inputs}', dict(inputs='9'),
-         ['python', '9'], {}, {0}),
+         ['python', '9'], {}, {0}, None),
 
         ('python "{inputs}"', dict(inputs='9'),
-         ['python', '9'], {}, {0}),
+         ['python', '9'], {}, {0}, None),
 
         ('python {inputs}', dict(inputs=''),
-         ['python', ''], {}, {0}),
+         ['python', ''], {}, {0}, None),
 
         ('HELLO="asd" python "{inputs}"', dict(inputs='9'),
-         ['python', '9'], {'HELLO': 'asd'}, {0}),
+         ['python', '9'], {'HELLO': 'asd'}, {0}, None),
 
         ('HELLO="asd" return-code=any python "{inputs}"', dict(inputs='9'),
-         ['python', '9'], {'HELLO': 'asd'}, None),
+         ['python', '9'], {'HELLO': 'asd'}, None, None),
 
         ('HELLO="asd" return-code=255 python "{inputs}"', dict(inputs='9'),
-         ['python', '9'], {'HELLO': 'asd'}, {255}),
+         ['python', '9'], {'HELLO': 'asd'}, {255}, None),
 
         ('HELLO="asd" return-code=255 python "{inputs}"', dict(inputs='9'),
-         ['python', '9'], {'HELLO': 'asd'}, {255}),
+         ['python', '9'], {'HELLO': 'asd'}, {255}, None),
+
+        ('HELLO="asd" in-dir="{somedir}" python', dict(somedir='dir'),
+         ['python'], {'HELLO': 'asd'}, {0}, 'dir'),
     ]
 
     bad_items = [
@@ -326,13 +329,15 @@ def test_interpolate_command():
         ('return-code=, python', {}),
         ('return-code=1,,2 python', {}),
         ('return-code=1 return-code=2 python', {}),
+        ('in-dir=a in-dir=b python', {}),
     ]
 
-    for value, variables, e_parts, e_env, e_codes in good_items:
-        parts, env, codes = util.interpolate_command(value, variables)
+    for value, variables, e_parts, e_env, e_codes, e_cwd in good_items:
+        parts, env, codes, cwd = util.interpolate_command(value, variables)
         assert parts == e_parts
         assert env == e_env
         assert codes == e_codes
+        assert cwd == e_cwd
 
     for value, variables in bad_items:
         with pytest.raises(util.UserError):
