@@ -66,7 +66,7 @@ Airspeed Velocity rebuilds the project as needed, using these commands.
 The defaults are::
 
   "install_command":
-  ["python -mpip install --force-reinstall {wheel_file}"],
+  ["in-dir={env_dir} python -mpip install {wheel_file}"],
 
   "uninstall_command":
   ["return-code=any python -mpip uninstall -y {project}"],
