@@ -1,17 +1,8 @@
 0.4.1 (unreleased)
 ------------------
 
-New Features
-^^^^^^^^^^^^
-
-API Changes
-^^^^^^^^^^^
-
-Bug Fixes
-^^^^^^^^^
-
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- Change wheel installation default command to chdir away from build directory
+  instead of ``--force-install``. (#823)
 
 
 0.4 (2019-05-26)
