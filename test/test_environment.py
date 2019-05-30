@@ -665,7 +665,6 @@ def test_custom_commands(tmpdir):
 
 def test_installed_commit_hash(tmpdir):
     tmpdir = six.text_type(tmpdir)
-    tmpdir = six.text_type(tmpdir)
 
     dvcs = generate_test_repo(tmpdir, [0], dvcs_type='git')
     commit_hash = dvcs.get_branch_hashes()[0]
@@ -709,3 +708,28 @@ def test_installed_commit_hash(tmpdir):
     env = get_env()
     assert env.installed_commit_hash == None
     assert env._env_vars.get('ASV_COMMIT') == None
+
+
+def test_install_success(tmpdir):
+    # Check that install_project really installs the package. (gh-805)
+    # This may fail if pip in install_command e.g. gets confused by an .egg-info
+    # directory in its cwd to think the package is already installed.
+    tmpdir = six.text_type(tmpdir)
+
+    dvcs = generate_test_repo(tmpdir, [0], dvcs_type='git')
+    commit_hash = dvcs.get_branch_hashes()[0]
+
+    conf = config.Config()
+    conf.env_dir = os.path.join(tmpdir, "env")
+    conf.pythons = [PYTHON_VER1]
+    conf.repo = os.path.abspath(dvcs.path)
+    conf.matrix = {}
+    conf.build_cache_size = 0
+
+    repo = get_repo(conf)
+
+    env = list(environment.get_environments(conf, None))[0]
+    env.create()
+    env.install_project(conf, repo, commit_hash)
+
+    env.run(['-c', 'import asv_test_repo as t, sys; sys.exit(0 if t.dummy_value == 0 else 1)'])
