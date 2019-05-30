@@ -562,7 +562,7 @@ class Environment(object):
 
         Returns
         -------
-        run_commands : list of (cmd, env, return_codes)
+        run_commands : list of (cmd, env, return_codes, cwd)
             Parsed commands to run.
 
         """
@@ -595,12 +595,14 @@ class Environment(object):
         # Interpolate, and raise useful error message if it fails
         return [util.interpolate_command(c, kwargs) for c in commands]
 
-    def _interpolate_and_run_commands(self, commands, cwd):
+    def _interpolate_and_run_commands(self, commands, default_cwd):
         interpolated = self._interpolate_commands(commands)
 
-        for cmd, env, return_codes in interpolated:
+        for cmd, env, return_codes, cwd in interpolated:
             environ = dict(os.environ)
             environ.update(env)
+            if cwd is None:
+                cwd = default_cwd
             self.run_executable(cmd[0], cmd[1:], timeout=self._install_timeout, cwd=cwd,
                                 env=environ, valid_return_codes=return_codes)
 
@@ -661,14 +663,14 @@ class Environment(object):
         cmd = self._install_command
         if cmd is None:
             # Run pip via python -m pip, avoids shebang length limit on Linux.
-            # Ensure --force-reinstall so that package being present e.g. on cwd
-            # does not mess things up.
-            cmd = ["python -mpip install --force-reinstall {wheel_file}"]
+            # Don't run it in build directory, because it may contain Python packages
+            # that pip believes to be already installed.
+            cmd = ["in-dir={env_dir} python -mpip install {wheel_file}"]
 
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)
             log.info("Installing {0} into {1}".format(commit_name, self.name))
-            self._interpolate_and_run_commands(cmd, cwd=build_dir)
+            self._interpolate_and_run_commands(cmd, default_cwd=build_dir)
 
     def _uninstall_project(self):
         """
@@ -685,7 +687,7 @@ class Environment(object):
 
         if cmd:
             log.info("Uninstalling from {0}".format(self.name))
-            self._interpolate_and_run_commands(cmd, cwd=self._env_dir)
+            self._interpolate_and_run_commands(cmd, default_cwd=self._env_dir)
 
     def _build_project(self, repo, commit_hash, build_dir):
         """
@@ -700,7 +702,7 @@ class Environment(object):
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)
             log.info("Building {0} for {1}".format(commit_name, self.name))
-            self._interpolate_and_run_commands(cmd, cwd=build_dir)
+            self._interpolate_and_run_commands(cmd, default_cwd=build_dir)
 
     def can_install_project(self):
         """
