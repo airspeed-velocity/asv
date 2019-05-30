@@ -14,6 +14,13 @@ Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.4.1 (2019-05-30)
+------------------
+
+- Change wheel installation default command to chdir away from build directory
+  instead of ``--force-install``. (#823)
+
+
 0.4 (2019-05-26)
 ----------------
 
