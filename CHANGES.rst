@@ -12,6 +12,11 @@ Bug Fixes
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- Uniqueness of ``repr()`` for ``param`` objects is now guaranteed
+  by suffixing unique identifier corresponding to order of
+  appearance. (#771)
+- Memory addresses are now stripped from the ``repr()`` of ``param``
+  elements, allowing comparison across multiple runs. (#771)
 
 
 0.4.1 (2019-05-30)

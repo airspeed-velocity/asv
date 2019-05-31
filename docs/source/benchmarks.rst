@@ -97,6 +97,12 @@ The following attributes are applicable to all benchmark types:
 
   Note that ``setup_cache`` is not parameterized.
 
+  For the purposes of identifying benchmarks in the UI, ``repr()`` is called
+  on the elements of ``params``. In the event these strings contain memory
+  addresses, those adresses are stripped to allow comparison across runs.
+  Additionally, if this results in a non-unique mapping, each duplicated
+  element will be suffixed with a distinct integer identifier corresponding
+  to order of appearance.
 
 Timing benchmarks
 `````````````````

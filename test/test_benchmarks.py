@@ -73,7 +73,7 @@ def test_discover_benchmarks(benchmarks_fixture):
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                                        regex='example')
     conf.branches = old_branches
-    assert len(b) == 30
+    assert len(b) == 31
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                               regex='time_example_benchmark_1')
@@ -106,9 +106,16 @@ def test_discover_benchmarks(benchmarks_fixture):
     assert b._benchmark_selection['params_examples.track_param_selection'] == [0, 1, 2, 3]
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
-    assert len(b) == 41
+    assert len(b) == 42
 
     assert 'named.OtherSuite.track_some_func' in b
+
+    params = b['params_examples.FunctionParamSuite.time_func']['params']
+    assert len(params) == 1
+    assert len(params[0]) == 2
+    assert params[0][0] == '<function track_param>'
+    # repr is a bit different on py2 vs py3 here
+    assert params[0][1] in ['<function FunctionParamSuite.<lambda>>', '<function <lambda>>']
 
 
 def test_invalid_benchmark_tree(tmpdir):

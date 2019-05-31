@@ -41,6 +41,15 @@ class ParamSuite:
         del self.value
 
 
+class FunctionParamSuite:
+    params = [track_param,
+              lambda x: x]
+    param_names = ['func']
+
+    def time_func(self, func):
+        return func('foo')
+
+
 class TuningTest:
     params = [1, 2]
     counter = [0, 0]

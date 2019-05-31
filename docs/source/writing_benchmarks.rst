@@ -229,7 +229,9 @@ as skipped for the parameter values in question.
 
 The parameter values can be any Python objects. However, it is often
 best to use only strings or numbers, because these have simple
-unambiguous text representations.
+unambiguous text representations. In the event the ``repr()`` output
+is non-unique, the representations will be made unique by suffixing
+an integer identifier corresponding to the order of appearance.
 
 When you have multiple parameters, the test is run for all
 of their combinations::
