@@ -302,6 +302,25 @@ def test_conda_pip_install(tmpdir, dummy_packages):
         assert output.startswith(six.text_type(env._requirements['pip+asv_dummy_test_package_2']))
 
 
+@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
+def test_conda_run_executable(tmpdir):
+    # test that we can install with pip into a conda environment.
+    conf = config.Config()
+
+    conf.env_dir = six.text_type(tmpdir.join("env"))
+
+    conf.environment_type = "conda"
+    conf.pythons = [PYTHON_VER1]
+    conf.matrix = {}
+    environments = list(environment.get_environments(conf, None))
+
+    assert len(environments) == 1 * 1 * 1
+
+    for env in environments:
+        env.create()
+        env.run_executable('conda', ['info'])
+
+
 def test_environment_select():
     conf = config.Config()
     conf.environment_type = "conda"

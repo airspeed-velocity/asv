@@ -184,6 +184,10 @@ class Conda(environment.Environment):
         return self.run_executable('python', args, **kwargs)
 
     def run_executable(self, executable, args, **kwargs):
+        # Special-case running conda, for user-provided commands
+        if executable == "conda":
+            executable = _find_conda()
+
         # Conda doesn't guarantee that user site directories are excluded
         kwargs["env"] = dict(kwargs.pop("env", os.environ),
                              PYTHONNOUSERSITE=str("True"))
