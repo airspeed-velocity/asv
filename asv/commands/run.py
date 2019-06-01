@@ -9,6 +9,8 @@ import sys
 import logging
 import traceback
 import itertools
+import argparse
+import textwrap
 
 from collections import defaultdict
 
@@ -56,7 +58,15 @@ class Run(Command):
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
             "run", help="Run a benchmark suite",
-            description="Run a benchmark suite.")
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            description=textwrap.dedent(
+                """
+                Run a benchmark suite.
+
+                examples:
+                  asv run master        run benchmarks for one branch
+                  asv run master^!      run benchmarks for one commit (git)
+                """))
 
         parser.add_argument(
             'range', nargs='?', default=None,
