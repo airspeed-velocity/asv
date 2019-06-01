@@ -224,7 +224,14 @@ class Run(Command):
             else:
                 log.error('Requested commit hash file "{}" is not a file'.format(hashfn))
                 return 1
-            commit_hashes = [h.strip() for h in hashstr.split("\n") if h.strip()]
+            commit_hashes = []
+            for h in hashstr.split("\n"):
+                h = h.strip()
+                if h:
+                    try:
+                        commit_hashes.append(repo.get_hash_from_name(h))
+                    except NoSuchNameError:
+                        log.warning("Unknown commit hash {0} in input file".format(h))
         elif isinstance(range_spec, list):
             commit_hashes = range_spec
         else:

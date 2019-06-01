@@ -127,8 +127,10 @@ def test_run_spec(basic_conf):
     expected_commits = (initial_commit, branch_commit)
     with open(os.path.join(tmpdir, 'hashes_to_benchmark'), 'w') as f:
         for commit in expected_commits:
-            f.write(commit)
-            f.write('\n')
+            f.write(commit + "\n")
+        f.write("master~1\n")
+        f.write("some-bad-hash-that-will-be-ignored\n")
+        expected_commits += (dvcs.get_hash("master~1"),)
     _test_run('HASHFILE:hashes_to_benchmark', [None], expected_commits)
 
 
