@@ -42,13 +42,16 @@ def _do_build(args):
     return (env.name, True)
 
 
-def _do_build_multiprocess(args):
+def _do_build_multiprocess(args_sets):
     """
     multiprocessing callback to build the project in one particular
     environment.
     """
     try:
-        return _do_build(args)
+        res = []
+        for args in args_sets:
+            res.append(_do_build(args))
+        return res
     except BaseException as exc:
         raise util.ParallelFailure(str(exc), exc.__class__, traceback.format_exc())
 
@@ -387,11 +390,21 @@ class Run(Command):
                     with log.indent():
                         args = [(env, conf, repo, commit_hash) for env in subenv
                                 if not successes.get(env.name)]
+
                         if parallel != 1:
+                            # Parallel run only for environments with different dir_names
+                            args_sets = defaultdict(list)
+                            for arg in args:
+                                args_sets[arg[0].dir_name].append(arg)
+                            args_sets = args_sets.values()
+
                             try:
                                 pool = multiprocessing.Pool(parallel)
                                 try:
-                                    successes.update(dict(pool.map(_do_build_multiprocess, args)))
+                                    res = []
+                                    for r in pool.map(_do_build_multiprocess, args_sets):
+                                        res.extend(r)
+                                    successes.update(dict(res))
                                     pool.close()
                                     pool.join()
                                 finally:
