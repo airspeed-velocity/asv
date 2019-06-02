@@ -327,13 +327,10 @@ def get_environments(conf, env_specifiers, verbose=True):
             # Ignore requirement matrix
             requirements_iter = [dict(python=python) for python in pythons]
 
-        env_matrix_combinations = iter_env_matrix_combinations(conf.env_matrix)
-
-        if not env_matrix_combinations:
-            env_matrix_combinations = [{}]
-
         for requirements in requirements_iter:
             python = requirements.pop('python')
+
+            env_matrix_combinations = iter_env_matrix_combinations(conf.env_matrix)
 
             for combination in env_matrix_combinations:
                 try:
