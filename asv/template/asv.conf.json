@@ -61,8 +61,7 @@
     // dependency packages in the specified order
     // "conda_channels": ["conda-forge", "defaults"],
 
-    // A conda environment file that is used for the dependencies instead of
-    // other dependencies mechanisms in this file.
+    // A conda environment file that is used for environment creation.
     // "conda_environment_file": "environment.yml",
 
     // The matrix of dependencies to test.  Each key is the name of a

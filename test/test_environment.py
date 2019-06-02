@@ -313,6 +313,9 @@ def test_conda_environment_file(tmpdir, dummy_packages):
     conf.environment_type = "conda"
     conf.pythons = [PYTHON_VER1]
     conf.conda_environment_file = env_file_name
+    conf.matrix = {
+        "asv_dummy_test_package_1": [DUMMY1_VERSION]
+    }
 
     environments = list(environment.get_environments(conf, None))
 
@@ -320,6 +323,10 @@ def test_conda_environment_file(tmpdir, dummy_packages):
 
     for env in environments:
         env.create()
+
+        output = env.run(
+            ['-c', 'import asv_dummy_test_package_1 as p, sys; sys.stdout.write(p.__version__)'])
+        assert output.startswith(six.text_type(DUMMY1_VERSION))
 
         output = env.run(
             ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)'])
