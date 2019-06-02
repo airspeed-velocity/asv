@@ -16,8 +16,8 @@ import datetime
 import six
 from six.moves import zip as izip
 
-from asv.config import flatten_env_matrix, normalize_env_matrix
 from . import environment
+from .config import flatten_env_matrix, normalize_env_matrix
 from .console import log
 from .machine import Machine
 from . import statistics

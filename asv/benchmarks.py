@@ -13,8 +13,8 @@ import datetime
 
 import six
 
-from asv.environment import get_test_env_vars
 from .console import log
+from .environment import get_test_env_vars
 from . import util
 from . import runner
 from .repo import NoSuchNameError

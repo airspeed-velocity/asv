@@ -21,8 +21,8 @@ import traceback
 
 import six
 
-from asv.environment import get_build_env_vars, get_test_env_vars
 from .console import log
+from .environment import get_build_env_vars, get_test_env_vars
 from .results import Results, format_benchmark_result
 from . import statistics
 from . import util
