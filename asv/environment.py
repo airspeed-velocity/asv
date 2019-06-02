@@ -209,8 +209,29 @@ def _untag_env_vars(tagged_env_vars, build=False):
     return vars
 
 
+def _flatten_env_matrix(env_matrix):
+    m = dict(env_matrix)
+    build = m.pop("build", {})
+    non_build = m.pop("non_build", {})
+
+    if m:
+        raise util.UserError(
+            "Invalid `env_matrix`: {!r}\n"
+            "Unknown keys: {!r}\n"
+            "Check your `asv.conf.json`.".format(env_matrix, list(m.keys())))
+
+    merged = {('build', var): values for var, values in build.items()}
+    merged.update(
+        {('non_build', var): values for var, values in non_build.items()}
+    )
+
+    return merged
+
+
 def iter_env_matrix_combinations(env_matrix):
-    if any(not value for value in env_matrix.values()):
+    flattened_matrix = _flatten_env_matrix(env_matrix)
+
+    if any(not value for value in flattened_matrix.values()):
         raise util.UserError(
             "Invalid value in `env_matrix`: "
             "values should be non-empty lists. "
@@ -218,11 +239,11 @@ def iter_env_matrix_combinations(env_matrix):
         )
 
     # Generate cartesian product for all environment variables
-    for flat_values in itertools.product(*env_matrix.values()):
+    for flat_values in itertools.product(*flattened_matrix.values()):
         yield {
             var_name: var_value
             for var_name, var_value in
-            zip(env_matrix.keys(), flat_values)
+            zip(flattened_matrix.keys(), flat_values)
             if var_value is not None  # Skip `None` values
         }
 

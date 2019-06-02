@@ -14,8 +14,7 @@ from collections import defaultdict
 from asv import config
 from asv import environment
 from asv import util
-from asv.config import _flatten_env_matrix
-from asv.environment import iter_env_matrix_combinations
+from asv.environment import iter_env_matrix_combinations, _flatten_env_matrix
 from asv.repo import get_repo
 from asv.util import shlex_quote as quote
 
@@ -280,7 +279,7 @@ def test_matrix_expand_exclude():
     assert combinations == expected
 
 
-def test_successful_env_matrix():
+def test_iter_env_matrix_combinations():
     # (matrix, expected)
     matrices = [
         ({'var0': ['val0', 'val1'], 'var1': ['val2', 'val3']},
@@ -297,7 +296,10 @@ def test_successful_env_matrix():
     ]
 
     for matrix, expected in matrices:
-        result = _sorted_dict_list(iter_env_matrix_combinations(matrix))
+        m = {'build': matrix}
+        expected = [{('build', key): value for key, value in item.items()}
+                    for item in expected]
+        result = _sorted_dict_list(iter_env_matrix_combinations(m))
         assert result == _sorted_dict_list(expected)
 
 
@@ -306,7 +308,7 @@ def test_invalid_env_matrix():
                               "values should be non-empty lists. "
                               "Check your `asv.conf.json`.")
 
-    configs = [{'key': None}, {'key': []}]
+    configs = [{'build': {'key': None}}, {'build': {'key': []}}]
 
     for env_matrix in configs:
         with pytest.raises(util.UserError) as exc_info:
@@ -842,10 +844,10 @@ def test_environment_env_matrix():
         conf = config.Config()
 
         conf.environment_type = 'existing'
-        conf.env_matrix = _flatten_env_matrix({
+        conf.env_matrix = {
             "build": build_vars,
             "non_build": non_build_vars,
-        })
+        }
         environments = list(environment.get_environments(conf, None))
 
         assert len(environments) == environ_count

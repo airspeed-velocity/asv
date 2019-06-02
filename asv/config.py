@@ -13,25 +13,6 @@ from . import util
 # TODO: Some verification of the config values
 
 
-def _flatten_env_matrix(env_matrix):
-    m = dict(env_matrix)
-    build = m.pop("build", {})
-    non_build = m.pop("non_build", {})
-
-    if m:
-        raise util.UserError(
-            "Invalid `env_matrix`: {!r}\n"
-            "Unknown keys: {!r}\n"
-            "Check your `asv.conf.json`.".format(env_matrix, m.keys()))
-
-    merged = {('build', var): values for var, values in build.items()}
-    merged.update(
-        {('non_build', var): values for var, values in non_build.items()}
-    )
-
-    return merged
-
-
 class Config(object):
     """
     Manages the configuration for a benchmark project.
@@ -104,9 +85,5 @@ class Config(object):
             # be listed.
             raise util.UserError(
                 "No branches specified in config file.")
-
-        env_matrix = getattr(conf, "env_matrix", None)
-        if env_matrix:
-            conf.env_matrix = _flatten_env_matrix(env_matrix)
 
         return conf
