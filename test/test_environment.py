@@ -9,7 +9,6 @@ import sys
 import six
 import pytest
 import json
-import shlex
 
 from asv import config
 from asv import environment
@@ -300,6 +299,38 @@ def test_conda_pip_install(tmpdir, dummy_packages):
         output = env.run(
             ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)'])
         assert output.startswith(six.text_type(env._requirements['pip+asv_dummy_test_package_2']))
+
+
+@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
+def test_conda_environment_file(tmpdir, dummy_packages):
+    env_file_name = six.text_type(tmpdir.join("environment.yml"))
+    with open(env_file_name, "w") as temp_environment_file:
+        temp_environment_file.write(
+                'name: test_conda_envs\ndependencies:\n  - asv_dummy_test_package_2')
+
+    conf = config.Config()
+    conf.env_dir = six.text_type(tmpdir.join("env"))
+    conf.environment_type = "conda"
+    conf.pythons = [PYTHON_VER1]
+    conf.conda_environment_file = env_file_name
+    conf.matrix = {
+        "asv_dummy_test_package_1": [DUMMY1_VERSION]
+    }
+
+    environments = list(environment.get_environments(conf, None))
+
+    assert len(environments) == 1 * 1 * 1
+
+    for env in environments:
+        env.create()
+
+        output = env.run(
+            ['-c', 'import asv_dummy_test_package_1 as p, sys; sys.stdout.write(p.__version__)'])
+        assert output.startswith(six.text_type(DUMMY1_VERSION))
+
+        output = env.run(
+            ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)'])
+        assert output.startswith(six.text_type(DUMMY2_VERSIONS[1]))
 
 
 @pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
