@@ -827,6 +827,35 @@ def test_install_success(tmpdir):
     env.run(['-c', 'import asv_test_repo as t, sys; sys.exit(0 if t.dummy_value == 0 else 1)'])
 
 
+def test_install_env_matrix_values(tmpdir):
+    tmpdir = six.text_type(tmpdir)
+
+    dvcs = generate_test_repo(tmpdir, [0], dvcs_type='git')
+    commit_hash = dvcs.get_branch_hashes()[0]
+
+    conf = config.Config()
+    conf.env_dir = os.path.join(tmpdir, "env")
+    conf.pythons = [PYTHON_VER1]
+    conf.repo = os.path.abspath(dvcs.path)
+    conf.matrix = {}
+    conf.env_matrix = {'build': {'SOME_ASV_TEST_BUILD_VALUE': '1'},
+                       'non_build': {'SOME_ASV_TEST_NON_BUILD_VALUE': '1'}}
+
+    repo = get_repo(conf)
+
+    env = list(environment.get_environments(conf, None))[0]
+    env.create()
+    env.install_project(conf, repo, commit_hash)
+
+    env.run(['-c',
+             'import asv_test_repo.build_time_env as t, sys; '
+             'sys.exit(0 if t.env["SOME_ASV_TEST_BUILD_VALUE"] == "1" else 1)'])
+
+    env.run(['-c',
+             'import asv_test_repo.build_time_env as t, sys; '
+             'sys.exit(0 if "SOME_ASV_TEST_NON_BUILD_VALUE" not in t.env else 1)'])
+
+
 def test_environment_env_matrix():
     # (build_vars, non_build_vars, environ_count, build_count)
     configs = [

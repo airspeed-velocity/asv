@@ -272,7 +272,6 @@ def test_cpu_affinity(basic_conf):
     # Only one environment
     conf.matrix = {}
 
-    # Tests multiple calls to "asv run --append-samples"
     tools.run_asv_with_conf(conf, 'run', "master^!",
                             '--bench', 'time_examples.TimeSuite.time_example_benchmark_1',
                             '--cpu-affinity=0', '-a', 'repeat=(1, 1, 10.0)', '-a', 'processes=1',
@@ -286,3 +285,31 @@ def test_cpu_affinity(basic_conf):
                   if fn != 'machine.json']
     data = util.load_json(result_fn)
     assert data['results']['time_examples.TimeSuite.time_example_benchmark_1']
+
+
+def test_env_matrix_value(basic_conf):
+    tmpdir, local, conf, machine_file = basic_conf
+
+    conf.matrix = {}
+
+    def check_env_matrix(matrix):
+        conf.env_matrix = matrix
+
+        tools.run_asv_with_conf(conf, 'run', "master^!",
+                                '--bench', 'time_secondary.track_environment_value',
+                                _machine_file=machine_file)
+
+        # Check run produced a result
+        result_dir = join(tmpdir, 'results_workflow', 'orangutan')
+
+        result_fn1, = glob.glob(result_dir + '/*-SOME_TEST_VAR1.json')
+        result_fn2, = glob.glob(result_dir + '/*-SOME_TEST_VAR2.json')
+
+        data = util.load_json(result_fn1)
+        assert data['results']['time_secondary.track_environment_value'] == 1
+
+        data = util.load_json(result_fn2)
+        assert data['results']['time_secondary.track_environment_value'] == 2
+
+    check_env_matrix({'non_build': {'SOME_TEST_VAR': ['1', '2']}})
+    check_env_matrix({'build': {'SOME_TEST_VAR': ['1', '2']}})

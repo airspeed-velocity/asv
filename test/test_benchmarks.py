@@ -66,7 +66,7 @@ def test_discover_benchmarks(benchmarks_fixture):
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                                        regex='secondary')
-    assert len(b) == 3
+    assert len(b) == 4
 
     old_branches = conf.branches
     conf.branches = ["master", "some-missing-branch"]  # missing branches ignored
@@ -106,7 +106,7 @@ def test_discover_benchmarks(benchmarks_fixture):
     assert b._benchmark_selection['params_examples.track_param_selection'] == [0, 1, 2, 3]
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
-    assert len(b) == 46
+    assert len(b) == 47
 
     assert 'named.OtherSuite.track_some_func' in b
 
