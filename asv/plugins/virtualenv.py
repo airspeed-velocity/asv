@@ -24,7 +24,7 @@ class Virtualenv(environment.Environment):
     """
     tool_name = "virtualenv"
 
-    def __init__(self, conf, python, requirements, env_vars_combination):
+    def __init__(self, conf, python, requirements, tagged_env_vars):
         """
         Parameters
         ----------
@@ -51,7 +51,7 @@ class Virtualenv(environment.Environment):
         super(Virtualenv, self).__init__(conf,
                                          python,
                                          requirements,
-                                         env_vars_combination)
+                                         tagged_env_vars)
 
         try:
             import virtualenv
@@ -103,7 +103,7 @@ class Virtualenv(environment.Environment):
         return environment.get_env_name(self.tool_name,
                                         python,
                                         self._requirements,
-                                        self.env_vars_combination)
+                                        self.env_vars)
 
     @classmethod
     def matches(self, python):
@@ -133,6 +133,9 @@ class Virtualenv(environment.Environment):
         Then, all of the requirements are installed into
         it using `pip install`.
         """
+        env = dict(os.environ)
+        env.update(self.build_env_vars)
+
         log.info("Creating virtualenv for {0}".format(self.name))
         util.check_call([
             sys.executable,
@@ -140,7 +143,7 @@ class Virtualenv(environment.Environment):
             '--no-site-packages',
             "-p",
             self._executable,
-            self._path])
+            self._path], env=env)
 
         log.info("Installing requirements for {0}".format(self.name))
         self._install_requirements()
@@ -151,13 +154,16 @@ class Virtualenv(environment.Environment):
         else:
             pip_args = ['install', '-v', 'wheel', 'pip>=8']
 
-        if 'COV_CORE_SOURCE' in os.environ:
+        env = dict(os.environ)
+        env.update(self.build_env_vars)
+
+        if 'COV_CORE_SOURCE' in env:
             # To measure coverage of ASV parts run in a subprocess from
             # a temporary virtual environment an interpreter hook needs
             # to be installed for that environment.
             pip_args.append('pytest-cov')
 
-        self._run_pip(pip_args)
+        self._run_pip(pip_args, env=env)
 
         if self._requirements:
             args = ['install', '-v', '--upgrade']
@@ -170,7 +176,7 @@ class Virtualenv(environment.Environment):
                     args.append("{0}=={1}".format(pkg, val))
                 else:
                     args.append(pkg)
-            self._run_pip(args, timeout=self._install_timeout)
+            self._run_pip(args, timeout=self._install_timeout, env=env)
 
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when

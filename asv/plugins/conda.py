@@ -9,7 +9,6 @@ import tempfile
 
 import six
 
-from asv.environment import get_build_env_vars
 from .. import environment
 from ..console import log
 from .. import util
@@ -60,7 +59,7 @@ class Conda(environment.Environment):
     tool_name = "conda"
     _matches_cache = {}
 
-    def __init__(self, conf, python, requirements, env_vars_combination):
+    def __init__(self, conf, python, requirements, tagged_env_vars):
         """
         Parameters
         ----------
@@ -80,7 +79,7 @@ class Conda(environment.Environment):
         super(Conda, self).__init__(conf,
                                     python,
                                     requirements,
-                                    env_vars_combination)
+                                    tagged_env_vars)
 
     @classmethod
     def matches(cls, python):
@@ -129,7 +128,8 @@ class Conda(environment.Environment):
         log.info("Creating conda environment for {0}".format(self.name))
 
         conda_args, pip_args = self._get_requirements(conda)
-        env = get_build_env_vars(self.env_vars_combination)
+        env = dict(os.environ)
+        env.update(self.build_env_vars)
 
         if not self._conda_environment_file:
             # The user-provided env file is assumed to set the python version

@@ -20,7 +20,6 @@ import subprocess
 
 import six
 
-from asv.config import normalize_env_matrix
 from .console import log
 from . import util
 from . import build_cache
@@ -167,11 +166,16 @@ def match_rule(target, rule):
     return True
 
 
-def _get_env_name(tool_name,
-                  python,
-                  requirements,
-                  env_vars_combination,
-                  build):
+def get_env_name(tool_name, python, requirements, tagged_env_vars, build=False):
+    """
+    Get a name to uniquely identify an environment.
+
+    Parameters
+    ----------
+    build : bool
+        Whether to omit non-build environment variables.
+        The canonical name of the environment is the name with build=False.
+    """
     if tool_name:
         name = [tool_name]
     else:
@@ -187,64 +191,22 @@ def _get_env_name(tool_name,
         else:
             name.append(key)
 
-    if build:
-        env_vars_combination = get_build_env_vars(env_vars_combination)
-    else:
-        env_vars_combination = get_all_env_vars(env_vars_combination)
+    env_vars = _untag_env_vars(tagged_env_vars, build=build)
 
-    for env_var, value in six.iteritems(env_vars_combination):
+    for env_var, value in six.iteritems(env_vars):
         name.append(''.join([env_var, value]))
 
     return util.sanitize_filename('-'.join(name))
 
 
-def get_env_name(tool_name, python, requirements, env_vars_combination):
-    """
-    Get a name to uniquely identify an environment.
-    """
-    return _get_env_name(tool_name=tool_name,
-                         python=python,
-                         requirements=requirements,
-                         env_vars_combination=env_vars_combination,
-                         build=False)
-
-
-def get_build_env_name(tool_name, python, requirements, env_vars_combination):
-    """
-    Get the name of an environment's build.
-    When using environment variables (in `env_vars_combination`), only the
-    "build" variables will be used to get the env name so that "non_build"
-    variables don't trigger a new build.
-    This implies that multiple environments can share a build.
-    """
-    return _get_env_name(tool_name=tool_name,
-                         python=python,
-                         requirements=requirements,
-                         env_vars_combination=env_vars_combination,
-                         build=True)
-
-
-def _get_env_vars(env_vars_combination, predicate=lambda x: True):
+def _untag_env_vars(tagged_env_vars, build=False):
     vars = {}
 
-    for var, value in six.iteritems(env_vars_combination):
-        build_type, env_var = var
-        if predicate(build_type):
-            vars[env_var] = value
+    for (tag, key), value in six.iteritems(tagged_env_vars):
+        if not build or tag == 'build':
+            vars[key] = value
 
     return vars
-
-
-def get_all_env_vars(env_vars_combination):
-    return get_build_env_vars(env_vars_combination)
-
-
-def get_build_env_vars(env_vars_combination):
-    return _get_env_vars(env_vars_combination, lambda x: x == 'build')
-
-
-def get_test_env_vars(env_vars_combination):
-    return _get_env_vars(env_vars_combination)
 
 
 def iter_env_matrix_combinations(env_matrix):
@@ -414,7 +376,7 @@ class Environment(object):
     """
     tool_name = None
 
-    def __init__(self, conf, python, requirements, env_vars_combination):
+    def __init__(self, conf, python, requirements, tagged_env_vars):
         """
         Get an environment for a given requirement matrix and
         Python version specifier.
@@ -432,6 +394,9 @@ class Environment(object):
         requirements : dict (str -> str)
             Mapping from package names to versions
 
+        tagged_env_vars : dict (tag, key) -> value
+            Environment variables, tagged for build vs. non-build
+
         Raises
         ------
         EnvironmentUnavailable
@@ -441,9 +406,9 @@ class Environment(object):
         self._env_dir = conf.env_dir
         self._repo_subdir = conf.repo_subdir
         self._install_timeout = conf.install_timeout  # GH391
-        self.env_vars_combination = env_vars_combination
+        self._tagged_env_vars = tagged_env_vars
         self._path = os.path.abspath(os.path.join(
-            self._env_dir, self.build_hashname))
+            self._env_dir, self.dir_name))
         self._project = conf.project
 
         self._is_setup = False
@@ -455,33 +420,33 @@ class Environment(object):
         self._install_command = conf.install_command
         self._uninstall_command = conf.uninstall_command
 
-        self._env_vars = {}
-        self._env_vars['ASV'] = 'true'
-        self._env_vars['ASV_PROJECT'] = conf.project
-        self._env_vars['ASV_CONF_DIR'] = os.path.abspath(os.getcwd())
-        self._env_vars['ASV_ENV_NAME'] = self.name
-        self._env_vars['ASV_ENV_DIR'] = self._path
-        self._env_vars['ASV_ENV_TYPE'] = self.tool_name
+        self._global_env_vars = {}
+        self._global_env_vars['ASV'] = 'true'
+        self._global_env_vars['ASV_PROJECT'] = conf.project
+        self._global_env_vars['ASV_CONF_DIR'] = os.path.abspath(os.getcwd())
+        self._global_env_vars['ASV_ENV_NAME'] = self.name
+        self._global_env_vars['ASV_ENV_DIR'] = self._path
+        self._global_env_vars['ASV_ENV_TYPE'] = self.tool_name
 
         installed_commit_hash = self._get_installed_commit_hash()
         self._set_commit_hash(installed_commit_hash)
 
     def _set_commit_hash(self, commit_hash):
         if commit_hash is None:
-            self._env_vars.pop('ASV_COMMIT', None)
+            self._global_env_vars.pop('ASV_COMMIT', None)
         else:
-            self._env_vars['ASV_COMMIT'] = commit_hash
+            self._global_env_vars['ASV_COMMIT'] = commit_hash
 
     def _set_build_dirs(self, build_dir, cache_dir):
         if build_dir is None:
-            self._env_vars.pop('ASV_BUILD_DIR', None)
+            self._global_env_vars.pop('ASV_BUILD_DIR', None)
         else:
-            self._env_vars['ASV_BUILD_DIR'] = build_dir
+            self._global_env_vars['ASV_BUILD_DIR'] = build_dir
 
         if cache_dir is None:
-            self._env_vars.pop('ASV_BUILD_CACHE_DIR', None)
+            self._global_env_vars.pop('ASV_BUILD_CACHE_DIR', None)
         else:
-            self._env_vars['ASV_BUILD_CACHE_DIR'] = cache_dir
+            self._global_env_vars['ASV_BUILD_CACHE_DIR'] = cache_dir
 
     def _set_installed_commit_hash(self, commit_hash):
         # Save status
@@ -535,18 +500,7 @@ class Environment(object):
         return get_env_name(self.tool_name,
                             self._python,
                             self._requirements,
-                            self.env_vars_combination)
-
-
-    @property
-    def build_name(self):
-        """
-        Get a name to uniquely identify this environment.
-        """
-        return get_build_env_name(self.tool_name,
-                                  self._python,
-                                  self._requirements,
-                                  self.env_vars_combination)
+                            self._tagged_env_vars)
 
     @property
     def hashname(self):
@@ -556,15 +510,36 @@ class Environment(object):
         return hashlib.md5(self.name.encode('utf-8')).hexdigest()
 
     @property
-    def build_hashname(self):
+    def dir_name(self):
         """
-        Get a hash to uniquely identify this environment.
+        Get the name of the directory where the environment resides.
+        This is not necessarily unique, and may be shared across
+        different environments.
         """
-        return hashlib.md5(self.build_name.encode('utf-8')).hexdigest()
+        name = get_env_name(self.tool_name,
+                            self._python,
+                            self._requirements,
+                            self._tagged_env_vars,
+                            build=True)
+        return hashlib.md5(name.encode('utf-8')).hexdigest()
 
     @property
     def requirements(self):
         return self._requirements
+
+    @property
+    def env_vars(self):
+        """
+        All environment variables configured in the matrix.
+        """
+        return _untag_env_vars(self._tagged_env_vars, build=False)
+
+    @property
+    def build_env_vars(self):
+        """
+        Build-time environment variables configured in the matrix.
+        """
+        return _untag_env_vars(self._tagged_env_vars, build=True)
 
     @property
     def python(self):
@@ -586,7 +561,7 @@ class Environment(object):
             'tool_name': self.tool_name,
             'python': self._python,
             'requirements': self._requirements,
-            'env_matrix': self.env_vars_combination,
+            'build_env_vars': self.build_env_vars
         }
 
         if info != expected_info:
@@ -679,7 +654,7 @@ class Environment(object):
         # All environment variables are available as interpolation variables,
         # lowercased without the prefix.
         kwargs = dict()
-        for key, value in self._env_vars.items():
+        for key, value in self._global_env_vars.items():
             if key == 'ASV':
                 continue
             assert key.startswith('ASV_')
@@ -699,11 +674,13 @@ class Environment(object):
         # Interpolate, and raise useful error message if it fails
         return [util.interpolate_command(c, kwargs) for c in commands]
 
-    def _interpolate_and_run_commands(self, commands, default_cwd):
+    def _interpolate_and_run_commands(self, commands, default_cwd, extra_env=None):
         interpolated = self._interpolate_commands(commands)
 
         for cmd, env, return_codes, cwd in interpolated:
             environ = dict(os.environ)
+            if extra_env is not None:
+                environ.update(extra_env)
             environ.update(env)
             if cwd is None:
                 cwd = default_cwd
@@ -774,7 +751,8 @@ class Environment(object):
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)
             log.info("Installing {0} into {1}".format(commit_name, self.name))
-            self._interpolate_and_run_commands(cmd, default_cwd=build_dir)
+            self._interpolate_and_run_commands(cmd, default_cwd=build_dir,
+                                               extra_env=self.build_env_vars)
 
     def _uninstall_project(self):
         """
@@ -791,7 +769,8 @@ class Environment(object):
 
         if cmd:
             log.info("Uninstalling from {0}".format(self.name))
-            self._interpolate_and_run_commands(cmd, default_cwd=self._env_dir)
+            self._interpolate_and_run_commands(cmd, default_cwd=self._env_dir,
+                                               extra_env=self.build_env_vars)
 
     def _build_project(self, repo, commit_hash, build_dir):
         """
@@ -806,7 +785,8 @@ class Environment(object):
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)
             log.info("Building {0} for {1}".format(commit_name, self.name))
-            self._interpolate_and_run_commands(cmd, default_cwd=build_dir)
+            self._interpolate_and_run_commands(cmd, default_cwd=build_dir,
+                                               extra_env=self.build_env_vars)
 
     def can_install_project(self):
         """
@@ -837,7 +817,7 @@ class Environment(object):
         Run a given executable (eg. python, pip) in the environment.
         """
         env = kwargs.pop("env", os.environ).copy()
-        env.update(self._env_vars)
+        env.update(self._global_env_vars)
 
         # Insert bin dirs to PATH
         if "PATH" in env:
@@ -887,7 +867,7 @@ class Environment(object):
             'tool_name': self.tool_name,
             'python': self._python,
             'requirements': self._requirements,
-            'env_matrix': normalize_env_matrix(self.env_vars_combination)
+            'build_env_vars': self.build_env_vars
         }
         util.write_json(path, content)
 
@@ -895,7 +875,7 @@ class Environment(object):
 class ExistingEnvironment(Environment):
     tool_name = "existing"
 
-    def __init__(self, conf, executable, requirements, env_vars_combination):
+    def __init__(self, conf, executable, requirements, tagged_env_vars):
         if executable == 'same':
             executable = sys.executable
 
@@ -917,8 +897,8 @@ class ExistingEnvironment(Environment):
         super(ExistingEnvironment, self).__init__(conf,
                                                   executable,
                                                   requirements,
-                                                  env_vars_combination)
-        self._env_vars.pop('ASV_ENV_DIR')
+                                                  tagged_env_vars)
+        self._global_env_vars.pop('ASV_ENV_DIR')
 
     @property
     def installed_commit_hash(self):
@@ -941,7 +921,7 @@ class ExistingEnvironment(Environment):
         return get_env_name(self.tool_name,
                             self._executable.replace(os.path.sep, '_'),
                             {},
-                            self.env_vars_combination)
+                            self._tagged_env_vars)
 
     def check_presence(self):
         return True

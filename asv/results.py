@@ -17,7 +17,6 @@ import six
 from six.moves import zip as izip
 
 from . import environment
-from .config import flatten_env_matrix, normalize_env_matrix
 from .console import log
 from .machine import Machine
 from . import statistics
@@ -200,7 +199,7 @@ class Results(object):
                  date,
                  python,
                  env_name,
-                 env_vars_combination):
+                 env_vars):
         """
         Parameters
         ----------
@@ -224,8 +223,8 @@ class Results(object):
         env_name : str
             Environment name
 
-        env_vars_combination: dict
-            Combination of additional environment variables
+        env_vars: dict
+            Environment variables
         """
         self._params = params
         self._requirements = requirements
@@ -241,7 +240,7 @@ class Results(object):
         self._started_at = {}
         self._ended_at = {}
         self._benchmark_version = {}
-        self._env_vars_combination = env_vars_combination
+        self._env_vars = env_vars
 
         # Note: stderr and errcode are not saved to files
         self._stderr = {}
@@ -270,8 +269,8 @@ class Results(object):
         return self._params
 
     @property
-    def env_vars_combination(self):
-        return self._env_vars_combination
+    def env_vars(self):
+        return self._env_vars
 
     @property
     def started_at(self):
@@ -600,9 +599,7 @@ class Results(object):
 
         data = {
             'results': results,
-            'env_vars_combination': normalize_env_matrix(
-                self._env_vars_combination
-            ),
+            'env_vars': self._env_vars,
             'params': self._params,
             'requirements': self._requirements,
             'commit_hash': self._commit_hash,
@@ -628,8 +625,7 @@ class Results(object):
 
         if os.path.isfile(path):
             old = self.load(path)
-            for dict_name in ('_results', '_samples', '_stats',
-                              '_env_vars_combination',
+            for dict_name in ('_results', '_samples', '_stats', '_env_vars',
                               '_benchmark_params', '_profiles', '_started_at',
                               '_ended_at', '_benchmark_version'):
                 setattr(self, dict_name, getattr(old, dict_name))
@@ -648,12 +644,9 @@ class Results(object):
 
         """
         d = util.load_json(path, cls.api_version)
-        d.setdefault('env_vars_combination', {})
+        d.setdefault('env_vars', {})
 
         try:
-            env_vars_combination = flatten_env_matrix(
-                d['env_vars_combination']
-            )
             obj = cls(
                 d['params'],
                 d['requirements'],
@@ -664,8 +657,8 @@ class Results(object):
                       environment.get_env_name('',
                                                d['python'],
                                                d['requirements'],
-                                               env_vars_combination)),
-                env_vars_combination,
+                                               {})),
+                d['env_vars'],
             )
 
             obj._results = {}

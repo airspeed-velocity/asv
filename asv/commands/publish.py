@@ -150,8 +150,7 @@ class Publish(Command):
                     params.setdefault(key, set())
                     params[key].add(val)
 
-                for key, val in six.iteritems(results.env_vars_combination):
-                    build_type, name = key
+                for name, val in six.iteritems(results.env_vars):
                     # Prefix them in case of name collision
                     env_vars["env-{}".format(name)].add(val)
 
@@ -204,9 +203,8 @@ class Publish(Command):
 
                     for branch in branches_for_commit:
                         cur_params = dict(results.params)
-                        cur_env = {'env-{}'.format(name): val for
-                                   (build_type, name), val in
-                                        six.iteritems(results.env_vars_combination)}
+                        cur_env = {'env-{}'.format(name): val
+                                   for name, val in six.iteritems(results.env_vars)}
                         cur_params.update(cur_env)
                         cur_params['branch'] = repo.get_branch_name(branch)
 

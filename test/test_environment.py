@@ -9,11 +9,12 @@ import sys
 import six
 import pytest
 import json
+from collections import defaultdict
 
 from asv import config
 from asv import environment
 from asv import util
-from asv.config import flatten_env_matrix, normalize_env_matrix
+from asv.config import _flatten_env_matrix
 from asv.environment import iter_env_matrix_combinations
 from asv.repo import get_repo
 from asv.util import shlex_quote as quote
@@ -775,14 +776,14 @@ def test_installed_commit_hash(tmpdir):
 
     # Check updating installed_commit_hash
     assert env.installed_commit_hash == None
-    assert env._env_vars.get('ASV_COMMIT') == None
+    assert env._global_env_vars.get('ASV_COMMIT') == None
     env.install_project(conf, repo, commit_hash)
     assert env.installed_commit_hash == commit_hash
-    assert env._env_vars.get('ASV_COMMIT') == commit_hash
+    assert env._global_env_vars.get('ASV_COMMIT') == commit_hash
 
     env = get_env()
     assert env.installed_commit_hash == commit_hash
-    assert env._env_vars.get('ASV_COMMIT') == commit_hash
+    assert env._global_env_vars.get('ASV_COMMIT') == commit_hash
 
     # Configuration change results to reinstall
     env._project = "something"
@@ -792,11 +793,11 @@ def test_installed_commit_hash(tmpdir):
     env = get_env()
     env._uninstall_project()
     assert env.installed_commit_hash == None
-    assert env._env_vars.get('ASV_COMMIT') != None
+    assert env._global_env_vars.get('ASV_COMMIT') != None
 
     env = get_env()
     assert env.installed_commit_hash == None
-    assert env._env_vars.get('ASV_COMMIT') == None
+    assert env._global_env_vars.get('ASV_COMMIT') == None
 
 
 def test_install_success(tmpdir):
@@ -841,14 +842,14 @@ def test_environment_env_matrix():
         conf = config.Config()
 
         conf.environment_type = 'existing'
-        conf.env_matrix = flatten_env_matrix({
+        conf.env_matrix = _flatten_env_matrix({
             "build": build_vars,
             "non_build": non_build_vars,
         })
         environments = list(environment.get_environments(conf, None))
 
         assert len(environments) == environ_count
-        assert len(set(e.name for e in environments)) == build_count
+        assert len(set(e.dir_name for e in environments)) == build_count
 
 
 def test_flatten_env_matrix():
@@ -863,7 +864,16 @@ def test_flatten_env_matrix():
           ("non_build", "ENV4"): ["val5"]})
     ]
     for env_matrix, normalized in configs:
-        assert flatten_env_matrix(env_matrix) == normalized
+        assert _flatten_env_matrix(env_matrix) == normalized
+
+
+def _normalize_env_matrix(env_matrix):
+    result = defaultdict(dict)
+
+    for (env_type, var_name), values in env_matrix.items():
+        result[env_type][var_name] = values
+
+    return result
 
 
 def test_normalize_flatten_env_matrix():
@@ -887,8 +897,8 @@ def test_normalize_flatten_env_matrix():
     ]
 
     for normalized in configs:
-        flattened = flatten_env_matrix(normalized)
-        assert normalize_env_matrix(flattened) == normalized
+        flattened = _flatten_env_matrix(normalized)
+        assert _normalize_env_matrix(flattened) == normalized
 
 
 def test_flatten_normalize_env_matrix():
@@ -902,5 +912,5 @@ def test_flatten_normalize_env_matrix():
     ]
 
     for flattened in configs:
-        normalized = normalize_env_matrix(flattened)
-        assert flatten_env_matrix(normalized) == flattened
+        normalized = _normalize_env_matrix(flattened)
+        assert _flatten_env_matrix(normalized) == flattened

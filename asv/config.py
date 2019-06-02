@@ -6,7 +6,6 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 import sys
-from collections import defaultdict
 
 from .console import log
 from . import util
@@ -14,7 +13,7 @@ from . import util
 # TODO: Some verification of the config values
 
 
-def flatten_env_matrix(env_matrix):
+def _flatten_env_matrix(env_matrix):
     if not env_matrix:
         return env_matrix
 
@@ -41,15 +40,6 @@ def flatten_env_matrix(env_matrix):
     )
 
     return merged
-
-
-def normalize_env_matrix(env_matrix):
-    result = defaultdict(dict)
-
-    for (env_type, var_name), values in env_matrix.items():
-        result[env_type][var_name] = values
-
-    return result
 
 
 class Config(object):
@@ -127,6 +117,6 @@ class Config(object):
 
         env_matrix = getattr(conf, "env_matrix", None)
         if env_matrix:
-            conf.env_matrix = flatten_env_matrix(env_matrix)
+            conf.env_matrix = _flatten_env_matrix(env_matrix)
 
         return conf

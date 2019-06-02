@@ -14,7 +14,6 @@ import datetime
 import six
 
 from .console import log
-from .environment import get_test_env_vars
 from . import util
 from . import runner
 from .repo import NoSuchNameError
@@ -193,13 +192,16 @@ class Benchmarks(dict):
                 try:
                     env.install_project(conf, repo, commit_hash)
 
+                    env_vars = dict(os.environ)
+                    env_vars.update(env.env_vars)
+
                     result_file = os.path.join(result_dir, 'result.json')
                     env.run(
                         [runner.BENCHMARK_RUN_SCRIPT, 'discover',
                          os.path.abspath(root),
                          os.path.abspath(result_file)],
                         cwd=result_dir,
-                        env=get_test_env_vars(env.env_vars_combination),
+                        env=env_vars,
                         dots=False)
 
                     try:
@@ -230,7 +232,7 @@ class Benchmarks(dict):
                          os.path.abspath(root)],
                         cwd=result_dir,
                         dots=False,
-                        env=get_test_env_vars(env.env_vars_combination),
+                        env=env_vars,
                         valid_return_codes=None,
                         return_stderr=True,
                         redirect_stderr=True)

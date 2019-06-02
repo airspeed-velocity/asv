@@ -22,7 +22,6 @@ import traceback
 import six
 
 from .console import log
-from .environment import get_build_env_vars, get_test_env_vars
 from .results import Results, format_benchmark_result
 from . import statistics
 from . import util
@@ -233,7 +232,7 @@ def run_benchmarks(benchmarks, env, results=None,
 
     log.info("Benchmarking {0} with env {1}".format(
         env.name,
-        env.env_vars_combination
+        env.env_vars
     ))
 
     partial_info_time = None
@@ -671,6 +670,9 @@ class Spawner(object):
     def create_setup_cache(self, benchmark_id, timeout):
         cache_dir = tempfile.mkdtemp()
 
+        env_vars = dict(os.environ)
+        env_vars.update(self.env.env_vars)
+
         out, _, errcode = self.env.run(
             [BENCHMARK_RUN_SCRIPT, 'setup_cache',
              os.path.abspath(self.benchmark_dir),
@@ -680,7 +682,7 @@ class Spawner(object):
             redirect_stderr=True,
             cwd=cache_dir,
             timeout=timeout,
-            env=get_build_env_vars(self.env.env_vars_combination))
+            env=env_vars)
 
         if errcode == 0:
             return cache_dir, None
@@ -689,13 +691,16 @@ class Spawner(object):
             return None, out.strip()
 
     def run(self, name, params_str, profile_path, result_file_name, timeout, cwd):
+        env_vars = dict(os.environ)
+        env_vars.update(self.env.env_vars)
+
         out, _, errcode = self.env.run(
             [BENCHMARK_RUN_SCRIPT, 'run', os.path.abspath(self.benchmark_dir),
              name, params_str, profile_path, result_file_name],
             dots=False, timeout=timeout,
             display_error=False, return_stderr=True, redirect_stderr=True,
             valid_return_codes=None, cwd=cwd,
-            env=get_test_env_vars(self.env.env_vars_combination))
+            env=env_vars)
         return out, errcode
 
     def preimport(self):
@@ -715,11 +720,14 @@ class ForkServer(Spawner):
         self.tmp_dir = tempfile.mkdtemp(prefix='asv-forkserver-')
         self.socket_name = os.path.join(self.tmp_dir, 'socket')
 
+        env_vars = dict(os.environ)
+        env_vars.update(env.env_vars)
+
         self.server_proc = env.run(
             [BENCHMARK_RUN_SCRIPT, 'run_server', self.benchmark_dir, self.socket_name],
             return_popen=True,
             redirect_stderr=True,
-            env=get_test_env_vars(env.env_vars_combination))
+            env=env_vars)
 
         self._server_output = None
         self.stdout_reader_thread = threading.Thread(target=self._stdout_reader)

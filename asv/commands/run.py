@@ -424,7 +424,7 @@ class Run(Command):
                             repo.get_date(commit_hash),
                             env.python,
                             env.name,
-                            env.env_vars_combination
+                            env.env_vars
                         )
 
                         if not skip_save:
