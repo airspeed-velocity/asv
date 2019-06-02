@@ -103,7 +103,7 @@ class Virtualenv(environment.Environment):
         return environment.get_env_name(self.tool_name,
                                         python,
                                         self._requirements,
-                                        self.env_vars)
+                                        self._tagged_env_vars)
 
     @classmethod
     def matches(self, python):
