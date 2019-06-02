@@ -14,25 +14,15 @@ from . import util
 
 
 def _flatten_env_matrix(env_matrix):
-    if not env_matrix:
-        return env_matrix
+    m = dict(env_matrix)
+    build = m.pop("build", {})
+    non_build = m.pop("non_build", {})
 
-    build = env_matrix.get("build")
-    non_build = env_matrix.get("non_build")
-
-    if build is None and non_build is None:
+    if m:
         raise util.UserError(
-            "Invalid `env_matrix`: "
-            "{} "
-            "at least one of `build` or `non_build` "
-            "should be defined. "
-            "Check your `asv.conf.json`.".format(env_matrix)
-        )
-
-    if build is None:
-        build = {}
-    if non_build is None:
-        non_build = {}
+            "Invalid `env_matrix`: {!r}\n"
+            "Unknown keys: {!r}\n"
+            "Check your `asv.conf.json`.".format(env_matrix, m.keys()))
 
     merged = {('build', var): values for var, values in build.items()}
     merged.update(
