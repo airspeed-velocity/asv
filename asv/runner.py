@@ -230,10 +230,7 @@ def run_benchmarks(benchmarks, env, results=None,
     else:
         previous_result_keys = set()
 
-    log.info("Benchmarking {0} with env {1}".format(
-        env.name,
-        env.env_vars
-    ))
+    log.info("Benchmarking {0}".format(env.name))
 
     partial_info_time = None
     indent = log.indent()
