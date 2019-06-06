@@ -916,7 +916,8 @@ def disc_benchmarks(root, ignore_import_errors=False):
             (k, v) for k, v in module.__dict__.items()
             if not k.startswith('_')
         ):
-            if inspect.isclass(module_attr):
+            if (inspect.isclass(module_attr) and
+                    not inspect.isabstract(module_attr)):
                 for name, class_attr in inspect.getmembers(module_attr):
                     if (inspect.isfunction(class_attr) or
                             inspect.ismethod(class_attr)):
