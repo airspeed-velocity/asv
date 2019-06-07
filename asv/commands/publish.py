@@ -176,8 +176,9 @@ class Publish(Command):
 
                 # Print a warning message if we couldn't find the branch of a commit
                 if not len(branches_for_commit):
-                    msg = "Couldn't find %s in %s branches"
-                    log.warning(msg % (results.commit_hash, branches.keys()))
+                    msg = "Couldn't find {} in branches ({})"
+                    log.warning(msg.format(results.commit_hash[:conf.hash_length],
+                                           ", ".join(str(branch) for branch in branches.keys())))
 
                 for key in results.get_result_keys(benchmarks):
                     b = benchmarks[key]
