@@ -431,3 +431,16 @@ def test_run_import_failure(capsys, benchmarks_fixture, launch_method):
 
     text, err = capsys.readouterr()
     assert 'hello import' in text
+
+
+def test_timeraw_benchmark(benchmarks_fixture):
+    conf, repo, envs, commit_hash = benchmarks_fixture
+
+    b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash], regex='TimerawSuite')
+    results = runner.run_benchmarks(b, envs[0], show_stderr=True)
+    times = ResultsWrapper(results, b)
+
+    assert times['timeraw_examples.TimerawSuite.timeraw_fresh'].result is not None
+    assert times['timeraw_examples.TimerawSuite.timeraw_setup'].result is not None
+    assert 'timed out' in times['timeraw_examples.TimerawSuite.timeraw_timeout'].stderr
+    assert '0' * 7 * 3 in times['timeraw_examples.TimerawSuite.timeraw_count'].stderr

@@ -372,6 +372,57 @@ memory usage you want to track::
 
 For details, see :doc:`benchmarks`.
 
+
+Raw timing benchmarks
+`````````````````````
+
+For some timing benchmarks, for example measuring the time it takes to
+import a module, it is important that they are run separately in a new
+Python process.
+
+Measuring execution time for benchmarks run once in a new Python process
+can be done with ``timeraw_*`` timing benchmarks::
+
+    def timeraw_import_inspect():
+        return """
+        import inspect
+        """
+
+Note that these benchmark functions should return a string,
+corresponding to the code that will be run.
+
+Importing a module takes a meaningful amount of time only the first time
+it is executed, therefore a fresh interpreter is used for each iteration of
+the benchmark. The string returned by the benchmark function is executed in a
+subprocess.
+
+Note that the setup and setup_cache are performed in the base benchmark
+process, so that the setup done by them is not available in the benchmark code.
+To perform setup also in the benchmark itself, you can return a second string:
+
+    def timeraw_import_inspect():
+        code = "import inspect"
+        setup = "import ast"
+        return code, setup
+
+The raw timing benchmarks have the same parameters as ordinary timing benchmarks,
+but ``number`` is by default 1, and ``timer`` is ignored.
+
+.. note::
+
+   Timing standard library modules is possible as long as they are not
+   `built-in`_ or brought in by importing the ``timeit`` module (which
+   further imports ``gc``, ``sys``, ``time``, and ``itertools``).
+
+.. _built-in: https://hg.python.org/cpython/file/tip/Modules/Setup.dist
+
+
+Imports
+```````
+
+You can use raw timing benchmarks to measure import times.
+
+
 .. _tracking:
 
 Tracking (Generic)

@@ -73,7 +73,7 @@ def test_discover_benchmarks(benchmarks_fixture):
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                                        regex='example')
     conf.branches = old_branches
-    assert len(b) == 31
+    assert len(b) == 35
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                               regex='time_example_benchmark_1')
@@ -106,7 +106,7 @@ def test_discover_benchmarks(benchmarks_fixture):
     assert b._benchmark_selection['params_examples.track_param_selection'] == [0, 1, 2, 3]
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
-    assert len(b) == 42
+    assert len(b) == 46
 
     assert 'named.OtherSuite.track_some_func' in b
 
@@ -116,6 +116,11 @@ def test_discover_benchmarks(benchmarks_fixture):
     assert params[0][0] == '<function track_param>'
     # repr is a bit different on py2 vs py3 here
     assert params[0][1] in ['<function FunctionParamSuite.<lambda>>', '<function <lambda>>']
+
+    # Raw timing benchmarks
+    assert b['timeraw_examples.TimerawSuite.timeraw_count']['repeat'] == 7
+    assert b['timeraw_examples.TimerawSuite.timeraw_count']['number'] == 3
+    assert b['timeraw_examples.TimerawSuite.timeraw_setup']['number'] == 1
 
 
 def test_invalid_benchmark_tree(tmpdir):
