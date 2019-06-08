@@ -73,7 +73,7 @@ def test_discover_benchmarks(benchmarks_fixture):
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                                        regex='example')
     conf.branches = old_branches
-    assert len(b) == 31
+    assert len(b) == 35
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                               regex='time_example_benchmark_1')
@@ -106,7 +106,7 @@ def test_discover_benchmarks(benchmarks_fixture):
     assert b._benchmark_selection['params_examples.track_param_selection'] == [0, 1, 2, 3]
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
-    assert len(b) == 42
+    assert len(b) == 46
 
     assert 'named.OtherSuite.track_some_func' in b
 
@@ -117,29 +117,10 @@ def test_discover_benchmarks(benchmarks_fixture):
     # repr is a bit different on py2 vs py3 here
     assert params[0][1] in ['<function FunctionParamSuite.<lambda>>', '<function <lambda>>']
 
-
-@pytest.mark.skipif(sys.version_info < (2, 7),
-                    reason="Import benchmarks require Python 2.7+")
-def test_imp_benchmark(tmpdir):
-    tmpdir = six.text_type(tmpdir)
-    os.chdir(tmpdir)
-
-    d = {}
-    d.update(ASV_CONF_JSON)
-    d['benchmark_dir'] = BENCHMARK_DIR
-    d['env_dir'] = "env"
-    d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
-    conf = config.Config.from_json(d)
-
-    repo = get_repo(conf)
-    envs = list(environment.get_environments(conf, None))
-
-    b = benchmarks.Benchmarks(conf, repo, envs, regex='ImpSuite')
-    times = b.run_benchmarks(envs[0], show_stderr=True)
-    assert times['imp_examples.ImpSuite.imp_fresh']['result'] is not None
-    assert times['imp_examples.ImpSuite.imp_docstring']['result'] is not None
-    assert 'timed out' in times['imp_examples.ImpSuite.imp_timeout']['stderr']
-    assert '0' * 21 in times['imp_examples.ImpSuite.imp_count']['stderr']
+    # Raw timing benchmarks
+    assert b['timeraw_examples.TimerawSuite.timeraw_count']['repeat'] == 7
+    assert b['timeraw_examples.TimerawSuite.timeraw_count']['number'] == 3
+    assert b['timeraw_examples.TimerawSuite.timeraw_setup']['number'] == 1
 
 
 def test_invalid_benchmark_tree(tmpdir):

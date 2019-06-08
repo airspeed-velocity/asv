@@ -373,25 +373,40 @@ memory usage you want to track::
 For details, see :doc:`benchmarks`.
 
 
-Imports
-```````
+Raw timing benchmarks
+`````````````````````
 
-To benchmark import times use the ``imp`` prefix::
+For some timing benchmarks, for example measuring the time it takes to
+import a module, it is important that they are run separately in a new
+Python process.
 
-    def imp_inspect():
+Measuring execution time for benchmarks run once in a new Python process
+can be done with ``timeraw_*`` timing benchmarks::
+
+    def timeraw_import_inspect():
+        return """
         import inspect
+        """
+
+Note that these benchmark functions should return a string,
+corresponding to the code that will be run.
 
 Importing a module takes a meaningful amount of time only the first time
 it is executed, therefore a fresh interpreter is used for each iteration of
-the benchmark. The source code of the benchmark function is executed in a
-subprocess; the setup is performed in the base benchmark process, parameters
-and profiling are not supported.
+the benchmark. The string returned by the benchmark function is executed in a
+subprocess.
 
-The ``goal_time``, ``number``, and ``repeat`` arguments have the same meaning
-as in :ref:`timing` benchmarks, but by default ``number`` is set to 1 and
-``repeat`` is adjusted to approximate the goal time. The ``timer`` argument is
-ignored, ``process_time`` is used inside the subprocess (falling back to
-``timeit.default_timer`` under older Pythons).
+Note that the setup and setup_cache are performed in the base benchmark
+process, so that the setup done by them is not available in the benchmark code.
+To perform setup also in the benchmark itself, you can return a second string:
+
+    def timeraw_import_inspect():
+        code = "import inspect"
+        setup = "import ast"
+        return code, setup
+
+The raw timing benchmarks have the same parameters as ordinary timing benchmarks,
+but ``number`` is by default 1, and ``timer`` is ignored.
 
 .. note::
 
@@ -399,12 +414,14 @@ ignored, ``process_time`` is used inside the subprocess (falling back to
    `built-in`_ or brought in by importing the ``timeit`` module (which
    further imports ``gc``, ``sys``, ``time``, and ``itertools``).
 
-.. note::
-
-   Import benchmarks require Python 2.7 or later, the timing is more precise
-   with Python 3.3 or later.
-
 .. _built-in: https://hg.python.org/cpython/file/tip/Modules/Setup.dist
+
+
+Imports
+```````
+
+You can use raw timing benchmarks to measure import times.
+
 
 .. _tracking:
 

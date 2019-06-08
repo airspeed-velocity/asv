@@ -615,6 +615,19 @@ class TimeBenchmark(Benchmark):
         self._load_vars()
         return result
 
+    def _get_timer(self, *param):
+        if param:
+            func = lambda: self.func(*param)
+        else:
+            func = self.func
+
+        timer = timeit.Timer(
+            stmt=func,
+            setup=self.redo_setup,
+            timer=self.timer)
+
+        return timer
+
     def run(self, *param):
         warmup_time = self.warmup_time
         if warmup_time < 0:
@@ -625,15 +638,7 @@ class TimeBenchmark(Benchmark):
                 # OS scheduling
                 warmup_time = 0.1
 
-        if param:
-            func = lambda: self.func(*param)
-        else:
-            func = self.func
-
-        timer = timeit.Timer(
-            stmt=func,
-            setup=self.redo_setup,
-            timer=self.timer)
+        timer = self._get_timer(*param)
 
         try:
             min_repeat, max_repeat, max_time = self.repeat
@@ -731,6 +736,57 @@ class TimeBenchmark(Benchmark):
         return samples, number
 
 
+class _SeparateProcessTimer(object):
+    subprocess_tmpl = textwrap.dedent('''
+        from __future__ import print_function
+        from timeit import timeit, default_timer as timer
+        print(repr(timeit(stmt="""{stmt}""", setup="""{setup}""", number={number}, timer=timer)))
+    ''').strip()
+
+    def __init__(self, func):
+        self.func = func
+
+    def timeit(self, number):
+        stmt = self.func()
+        if isinstance(stmt, tuple):
+            stmt, setup = stmt
+        else:
+            setup = ""
+        stmt = textwrap.dedent(stmt)
+        setup = textwrap.dedent(setup)
+        stmt = stmt.replace(r'"""', r'\"\"\"')
+        setup = setup.replace(r'"""', r'\"\"\"')
+
+        code = self.subprocess_tmpl.format(stmt=stmt, setup=setup, number=number)
+
+        res = subprocess.check_output([sys.executable, "-c", code])
+        return float(res.strip())
+
+
+class TimerawBenchmark(TimeBenchmark):
+    """
+    Represents a benchmark for tracking timing benchmarks run once in
+    a separate process.
+    """
+    name_regex = re.compile(
+        '^(Timeraw[A-Z_].+)|(timeraw_.+)$')
+
+    def _load_vars(self):
+        TimeBenchmark._load_vars(self)
+        self.number = int(_get_first_attr(self._attr_sources, 'number', 1))
+        del self.timer
+
+    def _get_timer(self, *param):
+        if param:
+            func = lambda: self.func(*param)
+        else:
+            func = self.func
+        return _SeparateProcessTimer(func)
+
+    def do_profile(self, filename=None):
+        raise ValueError("Raw timing benchmarks cannot be profiled")
+
+
 class MemBenchmark(Benchmark):
     """
     Represents a single benchmark for tracking the memory consumption
@@ -780,59 +836,6 @@ class PeakMemBenchmark(Benchmark):
         return get_maxrss()
 
 
-class ImpBenchmark(TimeBenchmark):
-    """
-    Represents a single benchmark for tracking import times.
-    """
-    name_regex = re.compile(
-        '^(Imp[A-Z_].+)|(imp_.+)$')
-    subprocess_tmpl = textwrap.dedent('''
-        from __future__ import print_function
-        from timeit import timeit
-        try:
-            # Python 3.3+.
-            from time import process_time as timer
-        except ImportError:
-            from timeit import default_timer as timer
-
-        print(timeit(stmt="""{stmt}""", number={number}, timer=timer))
-    ''').strip()
-
-    def do_profile(self, filename=None):
-        raise ValueError("Import benchmarks cannot be profiled")
-
-    def run(self, *param):
-        if param:
-            raise ValueError("Import benchmarks do not support parameters")
-        body = self.code[self.code.index('\n') + 1:]
-        stmt = textwrap.dedent(body).replace('"""', r'\"\"\"')
-
-        def subprocess_timeit(number):
-            self.redo_setup()
-            script = self.subprocess_tmpl.format(stmt=stmt, number=number)
-            timing = subprocess.check_output((sys.executable, '-c', script))
-            return float(timing)
-
-        number = self.number
-        if number == 0:
-            # Consequent imports take negligible time.
-            number = 1
-
-        timings = []
-        repeat = self.repeat
-        if repeat == 0:
-            # Do not exceed the goal time by more than one run (taking into
-            # account interpreter startup overhead in the subprocess).
-            system_time = timeit.default_timer
-            start = system_time()
-            while system_time() - start < self.goal_time:
-                timings.append(subprocess_timeit(number))
-        else:
-            for r in range(repeat):
-                timings.append(subprocess_timeit(number))
-        return min(timings) / number
-
-
 class TrackBenchmark(Benchmark):
     """
     Represents a single benchmark for tracking an arbitrary value.
@@ -853,7 +856,7 @@ class TrackBenchmark(Benchmark):
 
 
 benchmark_types = [
-    TimeBenchmark, MemBenchmark, PeakMemBenchmark, ImpBenchmark, TrackBenchmark
+    TimerawBenchmark, TimeBenchmark, MemBenchmark, PeakMemBenchmark, TrackBenchmark
 ]
 
 
