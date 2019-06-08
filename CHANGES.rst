@@ -13,7 +13,8 @@ API Changes
 
 Bug Fixes
 ^^^^^^^^^
-- When an ``asv find`` step fails due to timeout, assume runtime equal to timeout to allow bisection to proceed
+- When an ``asv find`` step fails due to timeout, assume runtime equal to
+  timeout to allow bisection to proceed (#768)
 
 
 Other Changes and Additions

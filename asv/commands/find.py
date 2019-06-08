@@ -111,6 +111,7 @@ class Find(Command):
                 return 1
 
         benchmark_name, = benchmarks.keys()
+        benchmark_type = benchmarks[benchmark_name]["type"]
 
         steps = int(math.log(len(commit_hashes)) / math.log(2))
 
@@ -144,13 +145,15 @@ class Find(Command):
 
             results[i] = result
 
-            if results[i] == [None]:
-                errcode = res.errcode[benchmark_name]
-                if errcode == util.TIMEOUT_RETCODE:
-                    # If we failed due to timeout, set runtime as the timeout
-                    # to prevent falling back to linear search
-                    results[i] = [benchmarks[benchmark_name]['timeout']]
-            
+            # If we failed due to timeout in a timing benchmark, set
+            # runtime as the timeout to prevent falling back to linear
+            # search
+            errcode = res.errcode[benchmark_name]
+            if errcode == util.TIMEOUT_RETCODE and benchmark_type == "time":
+                timeout_limit = benchmarks[benchmark_name]['timeout']
+                results[i] = [r if r is not None else timeout_limit
+                              for r in results[i]]
+
             return results[i]
 
         def non_null_results(*results):
