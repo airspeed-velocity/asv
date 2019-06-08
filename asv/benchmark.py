@@ -406,15 +406,17 @@ def check_num_args(root, benchmark_name, func, min_num_args, max_num_args=None):
 
 def _repr_no_address(obj):
     result = repr(obj)
-    address_regex = re.compile('^<.* at (0x[\da-fA-F]*)>$')
+    address_regex = re.compile(r'^(<.*) at (0x[\da-fA-F]*)(>)$')
     match = address_regex.match(result)
     if match:
-        suspected_address = match.group(1)
+        suspected_address = match.group(2)
         # Double check this is the actual address
         default_result = object.__repr__(obj)
-        known_address = address_regex.match(default_result).group(1)
-        if known_address == suspected_address:
-            result = re.sub(' at 0x[\da-fA-F]*>$', '>', result)
+        match2 = address_regex.match(default_result)
+        if match2:
+            known_address = match2.group(2)
+            if known_address == suspected_address:
+                result = match.group(1) + match.group(3)
 
     return result
 
