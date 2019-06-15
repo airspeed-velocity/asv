@@ -313,3 +313,14 @@ def test_env_matrix_value(basic_conf):
 
     check_env_matrix({}, {'SOME_TEST_VAR': ['1', '2']})
     check_env_matrix({'SOME_TEST_VAR': ['1', '2']}, {})
+
+
+def test_parallel(basic_conf, dummy_packages):
+    tmpdir, local, conf, machine_file = basic_conf
+
+    conf.matrix["@env"] = {"SOME_TEST_VAR": ["1", "2"]}
+    conf.matrix["@env_nobuild"] = {"SOME_OTHER_TEST_VAR": ["1", "2"]}
+
+    tools.run_asv_with_conf(conf, 'run', "master^!",
+                            '--bench', 'time_secondary.track_environment_value',
+                            '--parallel=2', _machine_file=machine_file)

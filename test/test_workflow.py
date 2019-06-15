@@ -89,6 +89,8 @@ def basic_conf(tmpdir, dummy_packages):
 def test_run_publish(capfd, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
+    conf.matrix["@env"] = {"SOME_TEST_VAR": ["1"]}
+
     # Tests a typical complete run/publish workflow
     tools.run_asv_with_conf(conf, 'run', "master~5..master", '--steps=2',
                             '--quick', '--show-stderr', '--profile',
@@ -112,7 +114,9 @@ def test_run_publish(capfd, basic_conf):
                               'asv_dummy_test_package_1',
                               'asv_dummy_test_package_2-' + tools.DUMMY2_VERSIONS[1],
                               'branch-master',
-                              'cpu-Blazingly fast', 'machine-orangutan',
+                              'cpu-Blazingly fast',
+                              'env-SOME_TEST_VAR-1',
+                              'machine-orangutan',
                               'os-GNU_Linux', 'python-*', 'ram-128GB',
                               'params_examples.time_skip.json'))[0]
     with open(filename, 'r') as fp:
