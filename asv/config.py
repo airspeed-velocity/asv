@@ -12,6 +12,7 @@ from . import util
 
 # TODO: Some verification of the config values
 
+
 class Config(object):
     """
     Manages the configuration for a benchmark project.

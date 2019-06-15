@@ -59,7 +59,7 @@ class Conda(environment.Environment):
     tool_name = "conda"
     _matches_cache = {}
 
-    def __init__(self, conf, python, requirements):
+    def __init__(self, conf, python, requirements, tagged_env_vars):
         """
         Parameters
         ----------
@@ -76,7 +76,10 @@ class Conda(environment.Environment):
         self._requirements = requirements
         self._conda_channels = conf.conda_channels
         self._conda_environment_file = conf.conda_environment_file
-        super(Conda, self).__init__(conf, python, requirements)
+        super(Conda, self).__init__(conf,
+                                    python,
+                                    requirements,
+                                    tagged_env_vars)
 
     @classmethod
     def matches(cls, python):
@@ -125,6 +128,8 @@ class Conda(environment.Environment):
         log.info("Creating conda environment for {0}".format(self.name))
 
         conda_args, pip_args = self._get_requirements(conda)
+        env = dict(os.environ)
+        env.update(self.build_env_vars)
 
         if not self._conda_environment_file:
             # The user-provided env file is assumed to set the python version
@@ -152,13 +157,15 @@ class Conda(environment.Environment):
             try:
                 env_file_name = self._conda_environment_file or env_file.name
                 util.check_output([conda] + ['env', 'create', '-f', env_file_name,
-                                             '-p', self._path, '--force'])
+                                             '-p', self._path, '--force'], 
+                                  env=env)
 
                 if self._conda_environment_file and (conda_args or pip_args):
                     # Add extra packages
                     env_file_name = env_file.name
                     util.check_output([conda] + ['env', 'update', '-f', env_file_name,
-                                                 '-p', self._path])
+                                                 '-p', self._path],
+                                      env=env)
             except Exception:
                 if env_file_name != env_file.name:
                     log.info("conda env create/update failed: in {} with file {}".format(self._path, env_file_name))

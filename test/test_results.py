@@ -30,7 +30,8 @@ def test_results(tmpdir):
             hex(i),
             i * 1000000,
             '2.7',
-            'some-environment-name')
+            'some-environment-name',
+            {})
 
         x1 = float(i * 0.001)
         x2 = float(i * 0.001)
@@ -67,7 +68,13 @@ def test_results(tmpdir):
         assert r2.commit_hash == r.commit_hash
         assert r2._filename == r._filename
 
-        r3 = results.Results(r.params, r._requirements, r.commit_hash, r.date, r._python, r.env_name)
+        r3 = results.Results(r.params,
+                             r._requirements,
+                             r.commit_hash,
+                             r.date,
+                             r._python,
+                             r.env_name,
+                             {})
         r3.load_data(resultsdir)
 
         for rr in [r2, r3]:
@@ -154,8 +161,13 @@ def test_json_timestamp(tmpdir):
     stamp1 = datetime.datetime(1971, 1, 1)
     stamp2 = datetime.datetime.utcnow()
 
-    r = results.Results({'machine': 'mach'}, {}, 'aaaa', util.datetime_to_timestamp(stamp0),
-                        'py', 'env')
+    r = results.Results({'machine': 'mach'},
+                        {},
+                        'aaaa',
+                        util.datetime_to_timestamp(stamp0),
+                        'py',
+                        'env',
+                        {})
     value = runner.BenchmarkResult(
         result=[42],
         samples=[None],
@@ -205,10 +217,10 @@ def test_iter_results(capsys, tmpdir):
 
 
 def test_filename_format():
-    r = results.Results({'machine': 'foo'}, [], "commit", 0, "", "env")
+    r = results.Results({'machine': 'foo'}, [], "commit", 0, "", "env", {})
     assert r._filename == join("foo", "commit-env.json")
 
-    r = results.Results({'machine': 'foo'}, [], "hash", 0, "", "a"*128)
+    r = results.Results({'machine': 'foo'}, [], "hash", 0, "", "a"*128, {})
     assert r._filename == join("foo", "hash-env-e510683b3f5ffe4093d021808bc6ff70.json")
 
 

@@ -3,6 +3,7 @@
 
 New Features
 ^^^^^^^^^^^^
+- Adding environment variables to build and benchmark commands.
 
 API Changes
 ^^^^^^^^^^^

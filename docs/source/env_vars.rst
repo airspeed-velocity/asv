@@ -1,5 +1,5 @@
 ASV environment variables
--------------------------
+=========================
 
 Benchmarking and build commands are run with the following environment
 variables available:
@@ -24,3 +24,10 @@ behavior are also set:
 - ``PIP_USER``: ``false``
 - ``PYTHONNOUSERSITE``: ``True`` (for conda environments only)
 - ``PYTHONPATH``: unset (if really needed, can be overridden by setting ``ASV_PYTHONPATH``)
+
+
+Custom environment variables
+----------------------------
+
+You can send custom environment variables to build and benchmarking commands
+by configuring the ``matrix`` setting in ``asv.conf.json``.

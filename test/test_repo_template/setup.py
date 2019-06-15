@@ -1,4 +1,8 @@
+import os
 from setuptools import setup
+
+with open('asv_test_repo/build_time_env.py', 'w') as f:
+    f.write("env = {{}}\n".format(repr(dict(os.environ))))
 
 setup(name='asv_test_repo',
       version="{version}",

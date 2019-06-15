@@ -827,7 +827,16 @@ $(document).ready(function() {
         var to_load = collect_graphs(current_benchmark, state, benchmark_param_selection);
         var failures = 0;
         var count = 1;
-
+        
+        if (to_load.length === 0) {
+            $('#main-graph').html("<div style='display: flex;" +
+                "justify-content: center;" +
+                " align-items: center; height: 100%;'>" +
+                "<p style='font-size: 2rem;'>No graphs to load.</p>" +
+                "</div>")
+            return
+        }
+    
         current_revisions = [];
         $.each(to_load, function(i, item) {
             $.asv.load_graph_data(

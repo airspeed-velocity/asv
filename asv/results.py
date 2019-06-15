@@ -192,7 +192,14 @@ class Results(object):
     """
     api_version = 1
 
-    def __init__(self, params, requirements, commit_hash, date, python, env_name):
+    def __init__(self,
+                 params,
+                 requirements,
+                 commit_hash,
+                 date,
+                 python,
+                 env_name,
+                 env_vars):
         """
         Parameters
         ----------
@@ -215,6 +222,9 @@ class Results(object):
 
         env_name : str
             Environment name
+
+        env_vars: dict
+            Environment variables
         """
         self._params = params
         self._requirements = requirements
@@ -230,6 +240,7 @@ class Results(object):
         self._started_at = {}
         self._ended_at = {}
         self._benchmark_version = {}
+        self._env_vars = env_vars
 
         # Note: stderr and errcode are not saved to files
         self._stderr = {}
@@ -243,7 +254,7 @@ class Results(object):
 
     @classmethod
     def unnamed(cls):
-        return cls({}, {}, None, None, None, None)
+        return cls({}, {}, None, None, None, None, {})
 
     @property
     def commit_hash(self):
@@ -256,6 +267,10 @@ class Results(object):
     @property
     def params(self):
         return self._params
+
+    @property
+    def env_vars(self):
+        return self._env_vars
 
     @property
     def started_at(self):
@@ -584,6 +599,7 @@ class Results(object):
 
         data = {
             'results': results,
+            'env_vars': self._env_vars,
             'params': self._params,
             'requirements': self._requirements,
             'commit_hash': self._commit_hash,
@@ -609,7 +625,7 @@ class Results(object):
 
         if os.path.isfile(path):
             old = self.load(path)
-            for dict_name in ('_results', '_samples', '_stats',
+            for dict_name in ('_results', '_samples', '_stats', '_env_vars',
                               '_benchmark_params', '_profiles', '_started_at',
                               '_ended_at', '_benchmark_version'):
                 setattr(self, dict_name, getattr(old, dict_name))
@@ -628,6 +644,7 @@ class Results(object):
 
         """
         d = util.load_json(path, cls.api_version)
+        d.setdefault('env_vars', {})
 
         try:
             obj = cls(
@@ -637,7 +654,11 @@ class Results(object):
                 d['date'],
                 d['python'],
                 d.get('env_name',
-                      environment.get_env_name('', d['python'], d['requirements']))
+                      environment.get_env_name('',
+                                               d['python'],
+                                               d['requirements'],
+                                               {})),
+                d['env_vars'],
             )
 
             obj._results = {}

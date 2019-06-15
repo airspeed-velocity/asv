@@ -35,7 +35,8 @@ A benchmark suite directory has the following layout.  The
     reasonable limits.
 
     - ``asv-env-info.json``: Contains information about the
-      environment, mainly the Python version and dependencies used.
+      environment, mainly the Python version, dependencies and
+      build environment variables used.
 
     - ``project/``: An environment-specific clone of the project
       repository.  Each environment has its own clone so that builds

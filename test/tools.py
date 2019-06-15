@@ -478,7 +478,7 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
         if isinstance(value, dict):
             params = value["params"]
         result = Results({"machine": "tarzan"}, {}, commit,
-                         repo.get_date_from_name(commit), "2.7", None)
+                         repo.get_date_from_name(commit), "2.7", None, {})
         value = runner.BenchmarkResult(
             result=[value],
             samples=[None],
