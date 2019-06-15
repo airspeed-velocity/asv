@@ -128,8 +128,8 @@ def test_presence_checks(tmpdir):
         env.run(['-c', 'import os'])
 
 
-def _sorted(lst):
-    return list(sorted(lst, key=repr))
+def _sorted_dict_list(lst):
+    return list(sorted(lst, key=lambda x: list(sorted(x.items()))))
 
 
 def test_matrix_expand_basic():
@@ -144,9 +144,9 @@ def test_matrix_expand_basic():
         'pkg5': []
     }
 
-    combinations = _sorted(environment.iter_matrix(
+    combinations = _sorted_dict_list(environment.iter_matrix(
         conf.environment_type, conf.pythons, conf))
-    expected = _sorted([
+    expected = _sorted_dict_list([
         {('python', None): '2.6', ('req', 'pkg2'): '', ('req', 'pkg3'): '',
          ('req', 'pkg4'): '1.2', ('req', 'pkg5'): ''},
         {('python', None): '2.6', ('req', 'pkg2'): '', ('req', 'pkg3'): '',
@@ -172,9 +172,9 @@ def test_matrix_expand_include():
         {'environment_type': 'something', 'python': '2.7', 'b': '5'},
     ]
 
-    combinations = _sorted(environment.iter_matrix(
+    combinations = _sorted_dict_list(environment.iter_matrix(
         conf.environment_type, conf.pythons, conf))
-    expected = _sorted([
+    expected = _sorted_dict_list([
         {('python', None): '2.6', ('req', 'a'): '1'},
         {('python', None): '3.5', ('req', 'b'): '2'},
         {('python', None): '2.7', ('req', 'b'): '3'},
@@ -199,9 +199,9 @@ def test_matrix_expand_include_detect_env_type():
         {'sys_platform': sys.platform, 'python': PYTHON_VER1},
     ]
 
-    combinations = _sorted(environment.iter_matrix(
+    combinations = _sorted_dict_list(environment.iter_matrix(
         conf.environment_type, conf.pythons, conf))
-    expected = _sorted([
+    expected = _sorted_dict_list([
         {('python', None): PYTHON_VER1},
     ])
     assert combinations == expected
@@ -225,9 +225,9 @@ def test_matrix_expand_exclude():
         {'python': '2.7', 'b': None},
         {'python': '2.6', 'a': '1'},
     ]
-    combinations = _sorted(environment.iter_matrix(
+    combinations = _sorted_dict_list(environment.iter_matrix(
         conf.environment_type, conf.pythons, conf))
-    expected = _sorted([
+    expected = _sorted_dict_list([
         {('python', None): '2.7', ('req', 'a'): '1', ('req', 'b'): '1'},
         {('python', None): '2.7', ('req', 'b'): '2'}
     ])
@@ -237,9 +237,9 @@ def test_matrix_expand_exclude():
     conf.exclude = [
         {'python': '.*', 'b': None},
     ]
-    combinations = _sorted(environment.iter_matrix(
+    combinations = _sorted_dict_list(environment.iter_matrix(
         conf.environment_type, conf.pythons, conf))
-    expected = _sorted([
+    expected = _sorted_dict_list([
         {('python', None): '2.6', ('req', 'a'): '1', ('req', 'b'): '1'},
         {('python', None): '2.7', ('req', 'a'): '1', ('req', 'b'): '1'},
         {('python', None): '2.7', ('req', 'b'): '2'}
@@ -250,7 +250,7 @@ def test_matrix_expand_exclude():
     conf.exclude = [
         {'environment_type': 'some.*'},
     ]
-    combinations = _sorted(environment.iter_matrix(
+    combinations = _sorted_dict_list(environment.iter_matrix(
         conf.environment_type, conf.pythons, conf))
     expected = [
         {('python', None): '2.7', ('req', 'b'): '2'}
@@ -261,7 +261,7 @@ def test_matrix_expand_exclude():
     conf.exclude = [
         {'sys_platform': sys.platform},
     ]
-    combinations = _sorted(environment.iter_matrix(
+    combinations = _sorted_dict_list(environment.iter_matrix(
         conf.environment_type, conf.pythons, conf))
     expected = [
         {('python', None): '2.7', ('req', 'b'): '2'}
@@ -272,9 +272,9 @@ def test_matrix_expand_exclude():
     conf.exclude = [
         {'python': '(?!2.6).*'}
     ]
-    combinations = _sorted(environment.iter_matrix(
+    combinations = _sorted_dict_list(environment.iter_matrix(
         conf.environment_type, conf.pythons, conf))
-    expected = _sorted([
+    expected = _sorted_dict_list([
         {('python', None): '2.6', ('req', 'a'): '1', ('req', 'b'): '1'},
         {('python', None): '2.6', ('req', 'a'): '1'},
         {('python', None): '2.7', ('req', 'b'): '2'}
@@ -310,8 +310,8 @@ def test_iter_env_matrix_combinations():
                     for item in expected]
         for m in expected:
             m['python', None] = "2.6"
-        result = _sorted(environment.iter_matrix(conf.environment_type, conf.pythons, conf))
-        assert result == _sorted(expected)
+        result = _sorted_dict_list(environment.iter_matrix(conf.environment_type, conf.pythons, conf))
+        assert result == _sorted_dict_list(expected)
 
 
 @pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
@@ -886,7 +886,7 @@ def test__parse_exclude_include_rule():
     ]
     for rule, expected in cases:
         parsed = environment._parse_exclude_include_rule(rule)
-        assert _sorted(parsed) == _sorted(expected)
+        assert parsed == expected
 
 
 def test__parse_matrix_entries():
