@@ -201,13 +201,14 @@ benchmarking environment.
 
 ``matrix``
 ----------
-Defines a matrix of third-party dependencies to run the benchmarks with.
+Defines a matrix of third-party dependencies and environment variables
+to run the benchmarks with.
 
 If provided, it must be a dictionary, where the keys are the names of
-dependencies and the values are lists of versions (as strings) of that
-dependency.  An empty string means the "latest" version of that
-dependency available on PyPI. Value of ``null`` means the package will
-not be installed.
+dependencies or special values prefixed by "@" (see below), and the values are lists
+of versions (as strings) of that dependency.  An empty string means the
+"latest" version of that dependency available on PyPI. Value of ``null``
+means the package will not be installed.
 
 If the list is empty, it is equivalent to ``[""]``, in other words,
 the "latest" version.
@@ -234,24 +235,19 @@ the project being benchmarked may specify in its ``setup.py`` file.
     name with ``pip+``. For example, ``emcee`` is only available from ``pip``,
     so the package name to be used is ``pip+emcee``.
 
+The special names ``@env`` and ``@env_nobuild`` can be used to set
+also environment variables::
 
-``env_matrix``
---------------
-
-Defines a matrix of environment variables to pass to build and test commands.
-An environment will be created for every combination of the cartesian
-product of the "build" variables in this matrix::
-
-    "env_matrix": {
-        "build": {
-            "ENV_VAR_1": ["val1", "val2"],
-            "ENV_VAR_2": ["val3", null],
-        },
-        "no_build": {
-            "ENV_VAR_3": ["val4", "val5"],
-        }
-    }
-
+   "matrix": {
+       "numpy": [""],
+       "@env": {
+           "ENV_VAR_1": ["val1", "val2"],
+           "ENV_VAR_2": ["val3", null],
+       },
+       "@env_nobuild": {
+           "ENV_VAR_3": ["val4", "val5"],
+       }
+   }
 
 Variables in "no_build" will be passed to every environment during the test
 phase, but will not trigger a new build.
@@ -279,7 +275,6 @@ the following environment variables and values:
   - [("ENV_VAR_1", "val2"), ("ENV_VAR_3", "val5")]
 
 
-
 ``exclude``
 -----------
 Combinations of libraries, Python versions, or platforms to be
@@ -301,6 +296,10 @@ available:
 
 - ``environment_type``: The environment type in use (from ``environment_type``).
 
+- ``@env``: environment variables (as in matrix)
+
+- ``@env_nobuild``: non-build environment variables (as in matrix)
+
 For example::
 
     "pythons": ["2.6", "2.7"],
@@ -308,23 +307,25 @@ For example::
         "numpy": ["1.7", "1.8"],
         "Cython": ["", null],
         "colorama": ["", null],
+        "@env": {"FOO": ["1", "2"]},
     },
     "exclude": [
         {"python": "2.6", "numpy": "1.7"},
         {"sys_platform": "(?!win32).*", "colorama": ""},
         {"sys_platform": "win32", "colorama": null},
+        {"@env": {"FOO": "1"}},
     ]
 
 This will generate all combinations of Python version and items in the
 matrix, except those with Python 2.6 and Numpy 1.7. In other words,
 the combinations::
 
-    python==2.6 numpy==1.8 Cython==latest (colorama==latest)
-    python==2.6 numpy==1.8 (colorama==latest)
-    python==2.7 numpy==1.7 Cython==latest (colorama==latest)
-    python==2.7 numpy==1.7 (colorama==latest)
-    python==2.7 numpy==1.8 Cython==latest (colorama==latest)
-    python==2.7 numpy==1.8 (colorama==latest)
+    python==2.6 numpy==1.8 Cython==latest (colorama==latest) FOO=2
+    python==2.6 numpy==1.8 (colorama==latest) FOO=2
+    python==2.7 numpy==1.7 Cython==latest (colorama==latest) FOO=2
+    python==2.7 numpy==1.7 (colorama==latest) FOO=2
+    python==2.7 numpy==1.8 Cython==latest (colorama==latest) FOO=2
+    python==2.7 numpy==1.8 (colorama==latest) FOO=2
 
 The ``colorama`` package will be installed only if the current
 platform is Windows.
@@ -340,16 +341,17 @@ include a ``python`` key specifying the Python version.
 In addition, the following keys can be present: ``sys_platform``,
 ``environment_type``.  If present, the include rule is active only if
 the values match, using same matching rules as explained for
-``exclude`` above.
+``exclude`` above. Moreover, ``@env`` and ``@env_nobuild`` can be used
+to set environment variables.
 
 The exclude rules are not applied to includes.
 
 For example::
 
     "include": [
-        {'python': '2.7', 'numpy': '1.8.2'},
-        {'platform': 'win32', 'environment_type': 'conda', 'python': '2.7',
-         'libpython': ''}
+        {"python": "2.7", "numpy": "1.8.2", "@env": {"FOO": "true"}},
+        {"platform": "win32", "environment_type": "conda", "python": "2.7",
+         "libpython": ""}
     ]
 
 This corresponds to two additional environments. One runs on Python 2.7

@@ -30,4 +30,4 @@ Custom environment variables
 ----------------------------
 
 You can send custom environment variables to build and benchmarking commands
-by configuring the ``env_matrix`` setting in ``asv.conf.json``.
+by configuring the ``matrix`` setting in ``asv.conf.json``.

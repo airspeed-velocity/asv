@@ -292,8 +292,8 @@ def test_env_matrix_value(basic_conf):
 
     conf.matrix = {}
 
-    def check_env_matrix(matrix):
-        conf.env_matrix = matrix
+    def check_env_matrix(env_build, env_nobuild):
+        conf.matrix = {"@env": env_build, "@env_nobuild": env_nobuild}
 
         tools.run_asv_with_conf(conf, 'run', "master^!",
                                 '--bench', 'time_secondary.track_environment_value',
@@ -311,5 +311,5 @@ def test_env_matrix_value(basic_conf):
         data = util.load_json(result_fn2)
         assert data['results']['time_secondary.track_environment_value'] == 2
 
-    check_env_matrix({'non_build': {'SOME_TEST_VAR': ['1', '2']}})
-    check_env_matrix({'build': {'SOME_TEST_VAR': ['1', '2']}})
+    check_env_matrix({}, {'SOME_TEST_VAR': ['1', '2']})
+    check_env_matrix({'SOME_TEST_VAR': ['1', '2']}, {})

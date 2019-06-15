@@ -30,7 +30,6 @@ class Config(object):
         self.exclude = []
         self.include = []
         self.env_dir = "env"
-        self.env_matrix = {}
         self.benchmark_dir = "benchmarks"
         self.results_dir = "results"
         self.html_dir = "html"

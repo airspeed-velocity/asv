@@ -28,10 +28,16 @@ from . import build_cache
 WIN = (os.name == "nt")
 
 
-def iter_requirement_matrix(environment_type, pythons, conf, explicit_selection=False):
+def iter_matrix(environment_type, pythons, conf, explicit_selection=False):
     """
     Iterate through all combinations of the given requirement
     matrix and python versions.
+
+    Yields
+    ------
+    combination : dict of {(key_type, key_name): value, ...}
+        Combination of environment settings.
+        Possible key types are ('req', 'env', 'env_nobuild', 'python').
     """
 
     env_classes = {}
@@ -45,24 +51,32 @@ def iter_requirement_matrix(environment_type, pythons, conf, explicit_selection=
         return env_type
 
     platform_keys = {
-        'environment_type': environment_type,
-        'sys_platform': sys.platform
+        ('environment_type', None): environment_type,
+        ('sys_platform', None): sys.platform
     }
 
-    # Parse input
-    keys = sorted(conf.matrix.keys())
-    values = [conf.matrix[key] for key in keys]
-    values = [value if isinstance(value, list) else [value]
-              for value in values]
-    values = [[''] if value == [] else value
-              for value in values]
+    # Parse requirement matrix
+    matrix = dict(conf.matrix)
+    matrices = [('env', matrix.pop('@env', {}))]
+    matrices += [('env_nobuild', matrix.pop('@env_nobuild', {}))]
+    matrices += [('req', matrix)]
+
+    # Convert values
+    keys = []
+    values = []
+    for key_type, m in matrices:
+        keys += [(key_type, key) for key in m.keys()]
+        values += [value if isinstance(value, list) else [value]
+                   for value in m.values()]
+
+    values = [[''] if value == [] else value for value in values]
 
     # Process excludes
     for python in pythons:
         empty_matrix = True
 
         # Cartesian product of everything
-        all_keys = ['python'] + keys
+        all_keys = [('python', None)] + keys
         all_combinations = itertools.product([python], *values)
 
         for combination in all_combinations:
@@ -71,13 +85,14 @@ def iter_requirement_matrix(environment_type, pythons, conf, explicit_selection=
 
             if not environment_type:
                 try:
-                    target['environment_type'] = get_env_type(target['python'])
+                    target[('environment_type', None)] = get_env_type(target[('python', None)])
                 except EnvironmentUnavailable as err:
                     log.warning(str(err))
                     continue
 
             for rule in conf.exclude:
                 # check if all fields in the rule match
+                rule = _parse_exclude_include_rule(rule)
                 if match_rule(target, rule):
                     # rule matched
                     break
@@ -90,24 +105,21 @@ def iter_requirement_matrix(environment_type, pythons, conf, explicit_selection=
         # If the user explicitly selected environment/python, yield it
         # even if matrix contains no packages to be installed
         if empty_matrix and explicit_selection:
-            yield dict(python=python)
+            yield {('python', None): python}
 
     # Process includes, unless explicit selection
     if explicit_selection:
         return
 
     for include in conf.include:
-        if 'python' not in include:
-            raise util.UserError("include rule '{0}' does not specify Python version".format(include))
-
-        include = dict(include)
+        include = _parse_exclude_include_rule(include, is_include=True)
 
         # Platform keys in include statement act as matching rules
         target = dict(platform_keys)
 
         if not environment_type:
             try:
-                target['environment_type'] = get_env_type(include['python'])
+                target[('environment_type', None)] = get_env_type(include[('python', None)])
             except EnvironmentUnavailable as err:
                 log.warning(str(err))
                 continue
@@ -134,14 +146,14 @@ def match_rule(target, rule):
     Parameters
     ----------
     target : dict
-        Dictionary containing [(key, value), ...].
-        Keys must be str, values must be str or None.
+        Dictionary containing [((key_type, key), value), ...].
     rule : dict
-        Dictionary containing [(key, match), ...], to be matched
+        Dictionary containing [((key_type, key), match), ...], to be matched
         to *target*. Match can be str specifying a regexp that must
         match target[key], or None. None matches either None
         or a missing key in *target*. If match is not None,
         and the key is missing in *target*, the rule does not match.
+        The key_type must match exactly.
 
     Returns
     -------
@@ -164,6 +176,46 @@ def match_rule(target, rule):
 
     # rule matched
     return True
+
+
+def _parse_exclude_include_rule(rule, is_include=False):
+    """
+    Parse exclude/include rule by adding key types.
+
+    Parameters
+    ----------
+    rule : dict
+        Keys must be str, values must be str or None.
+        The keys 'python', 'environment_type', 'sys_platform',
+        '@env', '@env_nobuild' are parsed specially and result
+        to the corresponding key types.
+
+    Returns
+    -------
+    rule : dict
+        Dictionary of {(key_type, key): value, ...}
+    """
+    if is_include and 'python' not in rule:
+        raise util.UserError("include rule '{0}' does not specify Python version".format(rule))
+
+    bare_keys = ['python', 'environment_type', 'sys_platform']
+    env_matrix = rule.pop('@env', {})
+    env_matrix_nobuild = rule.pop('@env_nobuild', {})
+
+    parsed_rule = {}
+    for key, value in rule.items():
+        if key in bare_keys:
+            parsed_rule[(key, None)] = value
+        else:
+            parsed_rule[('req', key)] = value
+
+    for key, value in env_matrix.items():
+        parsed_rule[('env', key)] = value
+
+    for key, value in env_matrix_nobuild.items():
+        parsed_rule[('env_nobuild', key)] = value
+
+    return parsed_rule
 
 
 def get_env_name(tool_name, python, requirements, tagged_env_vars, build=False):
@@ -207,45 +259,6 @@ def _untag_env_vars(tagged_env_vars, build=False):
             vars[key] = value
 
     return vars
-
-
-def _flatten_env_matrix(env_matrix):
-    m = dict(env_matrix)
-    build = m.pop("build", {})
-    non_build = m.pop("non_build", {})
-
-    if m:
-        raise util.UserError(
-            "Invalid `env_matrix`: {!r}\n"
-            "Unknown keys: {!r}\n"
-            "Check your `asv.conf.json`.".format(env_matrix, list(m.keys())))
-
-    merged = {('build', var): values for var, values in build.items()}
-    merged.update(
-        {('non_build', var): values for var, values in non_build.items()}
-    )
-
-    return merged
-
-
-def iter_env_matrix_combinations(env_matrix):
-    flattened_matrix = _flatten_env_matrix(env_matrix)
-
-    if any(not value for value in flattened_matrix.values()):
-        raise util.UserError(
-            "Invalid value in `env_matrix`: "
-            "values should be non-empty lists. "
-            "Check your `asv.conf.json`."
-        )
-
-    # Generate cartesian product for all environment variables
-    for flat_values in itertools.product(*flattened_matrix.values()):
-        yield {
-            var_name: var_value
-            for var_name, var_value in
-            zip(flattened_matrix.keys(), flat_values)
-            if var_value is not None  # Skip `None` values
-        }
 
 
 def get_environments(conf, env_specifiers, verbose=True):
@@ -304,28 +317,48 @@ def get_environments(conf, env_specifiers, verbose=True):
                 pythons = conf.pythons
 
         if env_type != "existing":
-            requirements_iter = iter_requirement_matrix(env_type, pythons, conf,
-                                                        explicit_selection)
+            requirements_iter = iter_matrix(env_type, pythons, conf,
+                                            explicit_selection)
         else:
             # Ignore requirement matrix
-            requirements_iter = [dict(python=python) for python in pythons]
+            requirements_iter = [{('python', None): python} for python in pythons]
 
-        for requirements in requirements_iter:
-            python = requirements.pop('python')
+        for entries in requirements_iter:
+            python, requirements, tagged_env_vars = _parse_matrix_entries(entries)
 
-            env_matrix_combinations = iter_env_matrix_combinations(conf.env_matrix)
+            try:
+                if env_type:
+                    cls = get_environment_class_by_name(env_type)
+                else:
+                    cls = get_environment_class(conf, python)
 
-            for combination in env_matrix_combinations:
-                try:
-                    if env_type:
-                        cls = get_environment_class_by_name(env_type)
-                    else:
-                        cls = get_environment_class(conf, python)
+                yield cls(conf, python, requirements, tagged_env_vars)
+            except EnvironmentUnavailable as err:
+                if verbose:
+                    log.warning(str(err))
 
-                    yield cls(conf, python, requirements, combination)
-                except EnvironmentUnavailable as err:
-                    if verbose:
-                        log.warning(str(err))
+
+def _parse_matrix_entries(entries):
+    """
+    Parse mixed requirement / environment variable matrix entries
+    to requirements and tagged environment variables.
+    """
+    python = None
+    requirements = {}
+    tagged_env_vars = {}
+    for (key_type, key), value in entries.items():
+        if key_type == 'python':
+            python = value
+        elif key_type == 'env':
+            tagged_env_vars[("build", key)] = value
+        elif key_type == 'env_nobuild':
+            tagged_env_vars[("nobuild", key)] = value
+        elif key_type == 'req':
+            requirements[key] = value
+        else:
+            # Shouldn't happen
+            raise ValueError("Invalid matrix key type {0}".format(key))
+    return python, requirements, tagged_env_vars
 
 
 def get_environment_class(conf, python):

@@ -14,7 +14,6 @@ from collections import defaultdict
 from asv import config
 from asv import environment
 from asv import util
-from asv.environment import iter_env_matrix_combinations, _flatten_env_matrix
 from asv.repo import get_repo
 from asv.util import shlex_quote as quote
 
@@ -129,8 +128,8 @@ def test_presence_checks(tmpdir):
         env.run(['-c', 'import os'])
 
 
-def _sorted_dict_list(lst):
-    return list(sorted(lst, key=lambda x: list(sorted(x.items()))))
+def _sorted(lst):
+    return list(sorted(lst, key=repr))
 
 
 def test_matrix_expand_basic():
@@ -145,13 +144,17 @@ def test_matrix_expand_basic():
         'pkg5': []
     }
 
-    combinations = _sorted_dict_list(environment.iter_requirement_matrix(
+    combinations = _sorted(environment.iter_matrix(
         conf.environment_type, conf.pythons, conf))
-    expected = _sorted_dict_list([
-        {'python': '2.6', 'pkg2': '', 'pkg3': '', 'pkg4': '1.2', 'pkg5': ''},
-        {'python': '2.6', 'pkg2': '', 'pkg3': '', 'pkg4': '3.4', 'pkg5': ''},
-        {'python': '2.7', 'pkg2': '', 'pkg3': '', 'pkg4': '1.2', 'pkg5': ''},
-        {'python': '2.7', 'pkg2': '', 'pkg3': '', 'pkg4': '3.4', 'pkg5': ''},
+    expected = _sorted([
+        {('python', None): '2.6', ('req', 'pkg2'): '', ('req', 'pkg3'): '',
+         ('req', 'pkg4'): '1.2', ('req', 'pkg5'): ''},
+        {('python', None): '2.6', ('req', 'pkg2'): '', ('req', 'pkg3'): '',
+         ('req', 'pkg4'): '3.4', ('req', 'pkg5'): ''},
+        {('python', None): '2.7', ('req', 'pkg2'): '', ('req', 'pkg3'): '',
+         ('req', 'pkg4'): '1.2', ('req', 'pkg5'): ''},
+        {('python', None): '2.7', ('req', 'pkg2'): '', ('req', 'pkg3'): '',
+         ('req', 'pkg4'): '3.4', ('req', 'pkg5'): ''},
     ])
     assert combinations == expected
 
@@ -169,13 +172,13 @@ def test_matrix_expand_include():
         {'environment_type': 'something', 'python': '2.7', 'b': '5'},
     ]
 
-    combinations = _sorted_dict_list(environment.iter_requirement_matrix(
+    combinations = _sorted(environment.iter_matrix(
         conf.environment_type, conf.pythons, conf))
-    expected = _sorted_dict_list([
-        {'python': '2.6', 'a': '1'},
-        {'python': '3.5', 'b': '2'},
-        {'python': '2.7', 'b': '3'},
-        {'python': '2.7', 'b': '5'}
+    expected = _sorted([
+        {('python', None): '2.6', ('req', 'a'): '1'},
+        {('python', None): '3.5', ('req', 'b'): '2'},
+        {('python', None): '2.7', ('req', 'b'): '3'},
+        {('python', None): '2.7', ('req', 'b'): '5'}
     ])
     assert combinations == expected
 
@@ -183,7 +186,7 @@ def test_matrix_expand_include():
         {'b': '2'}
     ]
     with pytest.raises(util.UserError):
-        list(environment.iter_requirement_matrix(conf.environment_type, conf.pythons, conf))
+        list(environment.iter_matrix(conf.environment_type, conf.pythons, conf))
 
 
 def test_matrix_expand_include_detect_env_type():
@@ -196,10 +199,10 @@ def test_matrix_expand_include_detect_env_type():
         {'sys_platform': sys.platform, 'python': PYTHON_VER1},
     ]
 
-    combinations = _sorted_dict_list(environment.iter_requirement_matrix(
+    combinations = _sorted(environment.iter_matrix(
         conf.environment_type, conf.pythons, conf))
-    expected = _sorted_dict_list([
-        {'python': PYTHON_VER1},
+    expected = _sorted([
+        {('python', None): PYTHON_VER1},
     ])
     assert combinations == expected
 
@@ -222,11 +225,11 @@ def test_matrix_expand_exclude():
         {'python': '2.7', 'b': None},
         {'python': '2.6', 'a': '1'},
     ]
-    combinations = _sorted_dict_list(environment.iter_requirement_matrix(
+    combinations = _sorted(environment.iter_matrix(
         conf.environment_type, conf.pythons, conf))
-    expected = _sorted_dict_list([
-        {'python': '2.7', 'a': '1', 'b': '1'},
-        {'python': '2.7', 'b': '2'}
+    expected = _sorted([
+        {('python', None): '2.7', ('req', 'a'): '1', ('req', 'b'): '1'},
+        {('python', None): '2.7', ('req', 'b'): '2'}
     ])
     assert combinations == expected
 
@@ -234,12 +237,12 @@ def test_matrix_expand_exclude():
     conf.exclude = [
         {'python': '.*', 'b': None},
     ]
-    combinations = _sorted_dict_list(environment.iter_requirement_matrix(
+    combinations = _sorted(environment.iter_matrix(
         conf.environment_type, conf.pythons, conf))
-    expected = _sorted_dict_list([
-        {'python': '2.6', 'a': '1', 'b': '1'},
-        {'python': '2.7', 'a': '1', 'b': '1'},
-        {'python': '2.7', 'b': '2'}
+    expected = _sorted([
+        {('python', None): '2.6', ('req', 'a'): '1', ('req', 'b'): '1'},
+        {('python', None): '2.7', ('req', 'a'): '1', ('req', 'b'): '1'},
+        {('python', None): '2.7', ('req', 'b'): '2'}
     ])
     assert combinations == expected
 
@@ -247,10 +250,10 @@ def test_matrix_expand_exclude():
     conf.exclude = [
         {'environment_type': 'some.*'},
     ]
-    combinations = _sorted_dict_list(environment.iter_requirement_matrix(
+    combinations = _sorted(environment.iter_matrix(
         conf.environment_type, conf.pythons, conf))
     expected = [
-        {'python': '2.7', 'b': '2'}
+        {('python', None): '2.7', ('req', 'b'): '2'}
     ]
     assert combinations == expected
 
@@ -258,10 +261,10 @@ def test_matrix_expand_exclude():
     conf.exclude = [
         {'sys_platform': sys.platform},
     ]
-    combinations = _sorted_dict_list(environment.iter_requirement_matrix(
+    combinations = _sorted(environment.iter_matrix(
         conf.environment_type, conf.pythons, conf))
     expected = [
-        {'python': '2.7', 'b': '2'}
+        {('python', None): '2.7', ('req', 'b'): '2'}
     ]
     assert combinations == expected
 
@@ -269,19 +272,25 @@ def test_matrix_expand_exclude():
     conf.exclude = [
         {'python': '(?!2.6).*'}
     ]
-    combinations = _sorted_dict_list(environment.iter_requirement_matrix(
+    combinations = _sorted(environment.iter_matrix(
         conf.environment_type, conf.pythons, conf))
-    expected = _sorted_dict_list([
-        {'python': '2.6', 'a': '1', 'b': '1'},
-        {'python': '2.6', 'a': '1'},
-        {'python': '2.7', 'b': '2'}
+    expected = _sorted([
+        {('python', None): '2.6', ('req', 'a'): '1', ('req', 'b'): '1'},
+        {('python', None): '2.6', ('req', 'a'): '1'},
+        {('python', None): '2.7', ('req', 'b'): '2'}
     ])
     assert combinations == expected
 
 
 def test_iter_env_matrix_combinations():
+    conf = config.Config()
+    conf.environment_type = 'something'
+    conf.pythons = ["2.6"]
+    conf.matrix = {}
+    conf.include = []
+
     # (matrix, expected)
-    matrices = [
+    env_matrices = [
         ({'var0': ['val0', 'val1'], 'var1': ['val2', 'val3']},
          [{'var0': 'val0', 'var1': 'val2'},
           {'var0': 'val0', 'var1': 'val3'},
@@ -295,28 +304,14 @@ def test_iter_env_matrix_combinations():
         ({}, [{}]),
     ]
 
-    for matrix, expected in matrices:
-        m = {'build': matrix}
-        expected = [{('build', key): value for key, value in item.items()}
+    for matrix, expected in env_matrices:
+        conf.matrix = {'@env': matrix}
+        expected = [{('env', key): value for key, value in item.items()}
                     for item in expected]
-        result = _sorted_dict_list(iter_env_matrix_combinations(m))
-        assert result == _sorted_dict_list(expected)
-
-
-def test_invalid_env_matrix():
-    expected_error_message = ("Invalid value in `env_matrix`: "
-                              "values should be non-empty lists. "
-                              "Check your `asv.conf.json`.")
-
-    configs = [{'build': {'key': None}}, {'build': {'key': []}}]
-
-    for env_matrix in configs:
-        with pytest.raises(util.UserError) as exc_info:
-            list(iter_env_matrix_combinations(env_matrix))
-
-        # Don't assert inside the `pytest.raises` in case
-        # we try to catch an assertion error
-        assert expected_error_message in str(exc_info.value)
+        for m in expected:
+            m['python', None] = "2.6"
+        result = _sorted(environment.iter_matrix(conf.environment_type, conf.pythons, conf))
+        assert result == _sorted(expected)
 
 
 @pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
@@ -515,6 +510,7 @@ def test_matrix_existing():
     environments = list(environment.get_environments(conf, None))
     items = [(env.tool_name, tuple(env.requirements.keys())) for env in environments]
     assert items == [('existing', ())]
+
 
 # environment.yml should respect the specified order
 # of channels when adding packages
@@ -837,9 +833,8 @@ def test_install_env_matrix_values(tmpdir):
     conf.env_dir = os.path.join(tmpdir, "env")
     conf.pythons = [PYTHON_VER1]
     conf.repo = os.path.abspath(dvcs.path)
-    conf.matrix = {}
-    conf.env_matrix = {'build': {'SOME_ASV_TEST_BUILD_VALUE': '1'},
-                       'non_build': {'SOME_ASV_TEST_NON_BUILD_VALUE': '1'}}
+    conf.matrix = {'@env': {'SOME_ASV_TEST_BUILD_VALUE': '1'},
+                   '@env_nobuild': {'SOME_ASV_TEST_NON_BUILD_VALUE': '1'}}
 
     repo = get_repo(conf)
 
@@ -872,10 +867,9 @@ def test_environment_env_matrix():
     for build_vars, non_build_vars, environ_count, build_count in configs:
         conf = config.Config()
 
-        conf.environment_type = 'existing'
-        conf.env_matrix = {
-            "build": build_vars,
-            "non_build": non_build_vars,
+        conf.matrix = {
+            "@env": build_vars,
+            "@env_nobuild": non_build_vars,
         }
         environments = list(environment.get_environments(conf, None))
 
@@ -883,65 +877,21 @@ def test_environment_env_matrix():
         assert len(set(e.dir_name for e in environments)) == build_count
 
 
-def test_flatten_env_matrix():
-    configs = [
-        ({"build": {"ENV1": ["val"], "ENV2": ["val2"]}},
-         {("build", "ENV1"): ["val"], ("build", "ENV2"): ["val2"]}),
-        ({"build": {"ENV1": ["val"], "ENV2": ["val2"]},
-          "non_build": {"ENV3": ["val3", "val4"], "ENV4": ["val5"]}},
-         {("build", "ENV1"): ["val"],
-          ("build", "ENV2"): ["val2"],
-          ("non_build", "ENV3"): ["val3", "val4"],
-          ("non_build", "ENV4"): ["val5"]})
+def test__parse_exclude_include_rule():
+    cases = [
+        ({"python": "2.6", "environment_type": "conda", "sys_platform": "123",
+          "@env": {"A": "B"}, "@env_nobuild": {"C": "D"}, "foo": "9"},
+         {("python", None): "2.6", ("environment_type", None): "conda", ("sys_platform", None): "123",
+          ("env", "A"): "B", ("env_nobuild", "C"): "D", ("req", "foo"): "9"})
     ]
-    for env_matrix, normalized in configs:
-        assert _flatten_env_matrix(env_matrix) == normalized
+    for rule, expected in cases:
+        parsed = environment._parse_exclude_include_rule(rule)
+        assert _sorted(parsed) == _sorted(expected)
 
 
-def _normalize_env_matrix(env_matrix):
-    result = defaultdict(dict)
-
-    for (env_type, var_name), values in env_matrix.items():
-        result[env_type][var_name] = values
-
-    return result
-
-
-def test_normalize_flatten_env_matrix():
-    configs = [
-        {
-            "build": {
-                "ENV1": ["val"],
-                "ENV2": ["val2"]
-            }
-        },
-        {
-            "build": {
-                "ENV1": ["val"],
-                "ENV2": ["val2"]
-            },
-            "non_build": {
-                "ENV3": ["val3", "val4"],
-                "ENV4": ["val5"]
-            }
-        }
-    ]
-
-    for normalized in configs:
-        flattened = _flatten_env_matrix(normalized)
-        assert _normalize_env_matrix(flattened) == normalized
-
-
-def test_flatten_normalize_env_matrix():
-    configs = [
-        {("build", "ENV1"): ["val"],
-         ("build", "ENV2"): ["val2"]},
-        {("build", "ENV1"): ["val"],
-         ("build", "ENV2"): ["val2"],
-         ("non_build", "ENV3"): ["val3", "val4"],
-         ("non_build", "ENV4"): ["val5"]},
-    ]
-
-    for flattened in configs:
-        normalized = _normalize_env_matrix(flattened)
-        assert _flatten_env_matrix(normalized) == flattened
+def test__parse_matrix_entries():
+    entries =  {("python", None): "2.6",  ("env", "A"): "B", ("env_nobuild", "C"): "D", ("req", "foo"): "9"}
+    python, requirements, tagged_env_vars = environment._parse_matrix_entries(entries)
+    assert python == "2.6"
+    assert requirements == {"foo": "9"}
+    assert tagged_env_vars == {("build", "A"): "B", ("nobuild", "C"): "D"}
