@@ -74,30 +74,22 @@
     // pip (with all the conda available packages installed first,
     // followed by the pip installed packages).
     //
+    // The ``@env`` and ``@env_nobuild`` keys contain the matrix of environment
+    // variables to pass to build and benchmark commands.
+    // An environment will be created for every combination of the cartesian
+    // product of the "@env" variables in this matrix.
+    // Variables in "@env_nobuild" will be passed to every environment during the
+    // benchmark phase, but will not trigger creation of new environments.
+    // A value of ``null`` means that the variable will not be set for the
+    // current combination.
+    //
     // "matrix": {
     //     "numpy": ["1.6", "1.7"],
     //     "six": ["", null],        // test with and without six installed
     //     "pip+emcee": [""],   // emcee is only available for install with pip.
+    //     "@env": {"ENV_VAR_1": ["val1", "val2"]},
+    //     "@env_nobuild": {"ENV_VAR_2": ["val3", null]},
     // },
-
-
-    // The matrix of environment variables to pass to build and test commands.
-    // An environment will be created for every combination of the cartesian
-    // product of the "build" variables in this matrix.
-    //
-    //    "env_matrix": {
-    //        "build": {
-    //            "ENV_VAR_1": ["val1", "val2"],
-    //            "ENV_VAR_2": ["val3", null],
-    //        },
-    //        "no_build": {
-    //            "ENV_VAR_3": ["val4", "val5"],
-    //        }
-    //    }
-    // Variables in "no_build" will be passed to every environment during the
-    // test phase, but will not trigger a new build.
-    // A value of ``null`` means that the variable will not be set for the
-    // current combination.
 
     // Combinations of libraries/python versions can be excluded/included
     // from the set to test. Each entry is a dictionary containing additional
@@ -119,15 +111,20 @@
     // - sys_platform
     //     Platform, as in sys.platform. Possible values for the common
     //     cases: 'linux2', 'win32', 'cygwin', 'darwin'.
+    // - @env
+    //     Environment variables
+    // - @env_nobuild
+    //     Non-build environment variables
     //
     // "exclude": [
     //     {"python": "3.2", "sys_platform": "win32"}, // skip py3.2 on windows
     //     {"environment_type": "conda", "six": null}, // don't run without six on conda
+    //     {"@env": {"ENV_VAR_1": "val2"}}, // skip val2 for ENV_VAR_1
     // ],
     //
     // "include": [
     //     // additional env for python2.7
-    //     {"python": "2.7", "numpy": "1.8"},
+    //     {"python": "2.7", "numpy": "1.8", "@env_nobuild": {"FOO": "123"}},
     //     // additional env if run on windows+conda
     //     {"platform": "win32", "environment_type": "conda", "python": "2.7", "libpython": ""},
     // ],
