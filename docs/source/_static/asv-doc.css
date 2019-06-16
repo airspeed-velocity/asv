@@ -16,5 +16,6 @@ table.citation td.label {
 }
 
 ul.credits-list {
-    column-width: 12em;
+    column-width: 13em;
+    list-style: none;
 }
