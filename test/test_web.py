@@ -76,7 +76,7 @@ def _rebuild_basic_html(basedir):
             'repo': join(basedir, 'repo'),
             'dvcs': 'git',
             'project': 'asv',
-            'matrix': {"@env": {"SOME_TEST_VAR": ["1"]}},
+            'matrix': {"env": {"SOME_TEST_VAR": ["1"]}},
             'regressions_first_commits': {
                 '.*': first_tested_commit_hash
             },

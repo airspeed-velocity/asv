@@ -7,6 +7,9 @@ New Features
 
 API Changes
 ^^^^^^^^^^^
+- The configuration syntax for "matrix", "exclude", and "include"
+  in ``asv.conf.json`` has changed. The old syntax is still supported,
+  unless you are installing packages named ``req``, ``env``, ``env_nobuild``.
 
 Bug Fixes
 ^^^^^^^^^

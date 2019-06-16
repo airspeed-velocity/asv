@@ -64,31 +64,34 @@
     // A conda environment file that is used for environment creation.
     // "conda_environment_file": "environment.yml",
 
-    // The matrix of dependencies to test.  Each key is the name of a
-    // package (in PyPI) and the values are version numbers.  An empty
-    // list or empty string indicates to just test against the default
-    // (latest) version. null indicates that the package is to not be
+    // The matrix of dependencies to test.  Each key of the "req"
+    // requirements dictionary is the name of a package (in PyPI) and
+    // the values are version numbers.  An empty list or empty string
+    // indicates to just test against the default (latest)
+    // version. null indicates that the package is to not be
     // installed. If the package to be tested is only available from
     // PyPi, and the 'environment_type' is conda, then you can preface
-    // the package name by 'pip+', and the package will be installed via
-    // pip (with all the conda available packages installed first,
+    // the package name by 'pip+', and the package will be installed
+    // via pip (with all the conda available packages installed first,
     // followed by the pip installed packages).
     //
-    // The ``@env`` and ``@env_nobuild`` keys contain the matrix of environment
-    // variables to pass to build and benchmark commands.
-    // An environment will be created for every combination of the cartesian
-    // product of the "@env" variables in this matrix.
-    // Variables in "@env_nobuild" will be passed to every environment during the
-    // benchmark phase, but will not trigger creation of new environments.
-    // A value of ``null`` means that the variable will not be set for the
-    // current combination.
+    // The ``@env`` and ``@env_nobuild`` keys contain the matrix of
+    // environment variables to pass to build and benchmark commands.
+    // An environment will be created for every combination of the
+    // cartesian product of the "@env" variables in this matrix.
+    // Variables in "@env_nobuild" will be passed to every environment
+    // during the benchmark phase, but will not trigger creation of
+    // new environments.  A value of ``null`` means that the variable
+    // will not be set for the current combination.
     //
     // "matrix": {
-    //     "numpy": ["1.6", "1.7"],
-    //     "six": ["", null],        // test with and without six installed
-    //     "pip+emcee": [""],   // emcee is only available for install with pip.
-    //     "@env": {"ENV_VAR_1": ["val1", "val2"]},
-    //     "@env_nobuild": {"ENV_VAR_2": ["val3", null]},
+    //     "req": {
+    //         "numpy": ["1.6", "1.7"],
+    //         "six": ["", null],  // test with and without six installed
+    //         "pip+emcee": [""]   // emcee is only available for install with pip.
+    //     },
+    //     "env": {"ENV_VAR_1": ["val1", "val2"]},
+    //     "env_nobuild": {"ENV_VAR_2": ["val3", null]},
     // },
 
     // Combinations of libraries/python versions can be excluded/included
@@ -111,22 +114,24 @@
     // - sys_platform
     //     Platform, as in sys.platform. Possible values for the common
     //     cases: 'linux2', 'win32', 'cygwin', 'darwin'.
-    // - @env
+    // - req
+    //     Required packages
+    // - env
     //     Environment variables
-    // - @env_nobuild
+    // - env_nobuild
     //     Non-build environment variables
     //
     // "exclude": [
     //     {"python": "3.2", "sys_platform": "win32"}, // skip py3.2 on windows
-    //     {"environment_type": "conda", "six": null}, // don't run without six on conda
-    //     {"@env": {"ENV_VAR_1": "val2"}}, // skip val2 for ENV_VAR_1
+    //     {"environment_type": "conda", "req": {"six": null}}, // don't run without six on conda
+    //     {"env": {"ENV_VAR_1": "val2"}}, // skip val2 for ENV_VAR_1
     // ],
     //
     // "include": [
     //     // additional env for python2.7
-    //     {"python": "2.7", "numpy": "1.8", "@env_nobuild": {"FOO": "123"}},
+    //     {"python": "2.7", "req": {"numpy": "1.8"}, "env_nobuild": {"FOO": "123"}},
     //     // additional env if run on windows+conda
-    //     {"platform": "win32", "environment_type": "conda", "python": "2.7", "libpython": ""},
+    //     {"platform": "win32", "environment_type": "conda", "python": "2.7", "req": {"libpython": ""}},
     // ],
 
     // The directory (relative to the current directory) that benchmarks are
