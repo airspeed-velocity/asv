@@ -56,19 +56,12 @@ def iter_matrix(environment_type, pythons, conf, explicit_selection=False):
     }
 
     # Parse requirement matrix
-    matrix = dict(conf.matrix)
-    matrices = [('env', matrix.pop('@env', {}))]
-    matrices += [('env_nobuild', matrix.pop('@env_nobuild', {}))]
-    matrices += [('req', matrix)]
+    parsed_matrix = _parse_matrix(conf.matrix)
+    keys = list(parsed_matrix.keys())
+    values = list(parsed_matrix.values())
 
-    # Convert values
-    keys = []
-    values = []
-    for key_type, m in matrices:
-        keys += [(key_type, key) for key in m.keys()]
-        values += [value if isinstance(value, list) else [value]
-                   for value in m.values()]
-
+    # Convert values to lists in the expected format
+    values = [value if isinstance(value, list) else [value] for value in values]
     values = [[''] if value == [] else value for value in values]
 
     # Process excludes
@@ -139,6 +132,93 @@ def iter_matrix(environment_type, pythons, conf, explicit_selection=False):
             yield include
 
 
+def _parse_matrix(matrix, bare_keys=()):
+    """
+    Parse 'matrix' and include/exclude rule configuration entries.
+
+    It is in format::
+
+         {"key_type1": {"key1": value1, "key2, value2, ...},
+          ...,
+          "nondict_key1": nondict_value1,
+          ...}
+
+    or in legacy format::
+
+         {"key1": value1, ..., "nondict_key1": nondict_value1, ...}
+
+    in which the key type is assumed to be "req".
+
+    Parameters
+    ----------
+    matrix
+        Configuration matrix or rule entry
+    bare_keys : iterable
+        Non-dictionary key values to store as is
+
+    Returns
+    -------
+    parsed_matrix
+        Dictionary {(key_type, key): value, ...}
+
+    """
+    matrix = dict(matrix)
+    result = {}
+
+    # Insert non-dict ("bare") keys first
+    for key in bare_keys:
+        if key in matrix:
+            result[key, None] = matrix.pop(key)
+
+    # Insert remaining matrix entries
+    matrix_types = ('req', 'env', 'env_nobuild')
+    if any(t in matrix for t in matrix_types):
+        # New-style config
+        matrices = []
+        for t in matrix_types:
+            submatrix = matrix.pop(t, {})
+            matrices.append((t, submatrix))
+
+        # Check if spurious keys left
+        remaining_keys = tuple(matrix.keys())
+        if remaining_keys:
+            raise util.UserError('Unknown keys in "matrix" configuration: {}, expected: {}'.format(
+                remaining_keys, matrix_types + tuple(bare_keys)))
+    else:
+        # Backward-compatibility for old-style config
+        matrices = [('req', matrix)]
+
+    # Convert values
+    for t, m in matrices:
+        for key, value in m.items():
+            result[t, key] = value
+
+    return result
+
+
+def _parse_exclude_include_rule(rule, is_include=False):
+    """
+    Parse exclude/include rule by adding key types.
+
+    Parameters
+    ----------
+    rule : dict
+        Keys must be str, values must be str or None.
+        The keys 'python', 'environment_type', 'sys_platform',
+        are parsed specially and result to the corresponding key types.
+
+    Returns
+    -------
+    rule : dict
+        Dictionary of {(key_type, key): value, ...}
+    """
+    if is_include and 'python' not in rule:
+        raise util.UserError("include rule '{0}' does not specify Python version".format(rule))
+
+    bare_keys = ('python', 'environment_type', 'sys_platform')
+    return _parse_matrix(rule, bare_keys)
+
+
 def match_rule(target, rule):
     """
     Match rule to a target.
@@ -176,46 +256,6 @@ def match_rule(target, rule):
 
     # rule matched
     return True
-
-
-def _parse_exclude_include_rule(rule, is_include=False):
-    """
-    Parse exclude/include rule by adding key types.
-
-    Parameters
-    ----------
-    rule : dict
-        Keys must be str, values must be str or None.
-        The keys 'python', 'environment_type', 'sys_platform',
-        '@env', '@env_nobuild' are parsed specially and result
-        to the corresponding key types.
-
-    Returns
-    -------
-    rule : dict
-        Dictionary of {(key_type, key): value, ...}
-    """
-    if is_include and 'python' not in rule:
-        raise util.UserError("include rule '{0}' does not specify Python version".format(rule))
-
-    bare_keys = ['python', 'environment_type', 'sys_platform']
-    env_matrix = rule.pop('@env', {})
-    env_matrix_nobuild = rule.pop('@env_nobuild', {})
-
-    parsed_rule = {}
-    for key, value in rule.items():
-        if key in bare_keys:
-            parsed_rule[(key, None)] = value
-        else:
-            parsed_rule[('req', key)] = value
-
-    for key, value in env_matrix.items():
-        parsed_rule[('env', key)] = value
-
-    for key, value in env_matrix_nobuild.items():
-        parsed_rule[('env_nobuild', key)] = value
-
-    return parsed_rule
 
 
 def get_env_name(tool_name, python, requirements, tagged_env_vars, build=False):

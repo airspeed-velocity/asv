@@ -204,11 +204,24 @@ benchmarking environment.
 Defines a matrix of third-party dependencies and environment variables
 to run the benchmarks with.
 
-If provided, it must be a dictionary, where the keys are the names of
-dependencies or special values prefixed by "@" (see below), and the values are lists
-of versions (as strings) of that dependency.  An empty string means the
-"latest" version of that dependency available on PyPI. Value of ``null``
-means the package will not be installed.
+If provided, it must be a dictionary, containing some of the keys
+"req", "env", "env_nobuild". For example::
+
+    "matrix": {
+        "req": {
+            "numpy": ["1.7", "1.8"],
+            "Cython": []
+            "six": ["", null]
+        },
+        "env": {
+            "FOO": "bar"
+        }
+    }
+
+The keys of the ``"req"`` are the names of dependencies, and the
+values are lists of versions (as strings) of that dependency.  An
+empty string means the "latest" version of that dependency available
+on PyPI. Value of ``null`` means the package will not be installed.
 
 If the list is empty, it is equivalent to ``[""]``, in other words,
 the "latest" version.
@@ -218,9 +231,11 @@ Numpy, the latest version of Cython, and six installed as the latest
 version and not installed at all::
 
     "matrix": {
-        "numpy": ["1.7", "1.8"],
-        "Cython": []
-        "six": ["", null]
+        "req": {
+            "numpy": ["1.7", "1.8"],
+            "Cython": []
+            "six": ["", null],
+        }
     }
 
 The matrix dependencies are installed *before* any dependencies that
@@ -235,16 +250,15 @@ the project being benchmarked may specify in its ``setup.py`` file.
     name with ``pip+``. For example, ``emcee`` is only available from ``pip``,
     so the package name to be used is ``pip+emcee``.
 
-The special names ``@env`` and ``@env_nobuild`` can be used to set
-also environment variables::
+The ``env`` and ``env_nobuild`` dictionaries can be used to set also
+environment variables::
 
    "matrix": {
-       "numpy": [""],
-       "@env": {
+       "env": {
            "ENV_VAR_1": ["val1", "val2"],
            "ENV_VAR_2": ["val3", null],
        },
-       "@env_nobuild": {
+       "env_nobuild": {
            "ENV_VAR_3": ["val4", "val5"],
        }
    }
@@ -286,8 +300,7 @@ An exclude rule consists of key-value pairs, specifying matching rules
 expressions that should match whole strings.  The exclude rule matches
 if all of the items in it match.
 
-In addition to entries in ``matrix``, the following special keys are
-available:
+Each exclude rule can contain the following keys:
 
 - ``python``: Python version (from ``pythons``)
 
@@ -296,24 +309,28 @@ available:
 
 - ``environment_type``: The environment type in use (from ``environment_type``).
 
-- ``@env``: environment variables (as in matrix)
+- ``req``: dictionary of rules vs. the requirements
 
-- ``@env_nobuild``: non-build environment variables (as in matrix)
+- ``env``: dictionary of rules vs. environment variables
+
+- ``env_nobuild``: : dictionary of rules vs. the non-build environment variables
 
 For example::
 
     "pythons": ["2.6", "2.7"],
     "matrix": {
-        "numpy": ["1.7", "1.8"],
-        "Cython": ["", null],
-        "colorama": ["", null],
-        "@env": {"FOO": ["1", "2"]},
+        "req": {
+            "numpy": ["1.7", "1.8"],
+            "Cython": ["", null],
+            "colorama": ["", null]
+        },
+        "env": {"FOO": ["1", "2"]},
     },
     "exclude": [
-        {"python": "2.6", "numpy": "1.7"},
-        {"sys_platform": "(?!win32).*", "colorama": ""},
-        {"sys_platform": "win32", "colorama": null},
-        {"@env": {"FOO": "1"}},
+        {"python": "2.6", "req": {"numpy": "1.7"}},
+        {"sys_platform": "(?!win32).*", "req": {"colorama": ""}},
+        {"sys_platform": "win32", "req": {"colorama": null}},
+        {"env": {"FOO": "1"}},
     ]
 
 This will generate all combinations of Python version and items in the
@@ -330,28 +347,33 @@ the combinations::
 The ``colorama`` package will be installed only if the current
 platform is Windows.
 
+
 ``include``
 -----------
 Additional package combinations to be included as environments.
 
-If specified, must be a list of dictionaries, indicating
-the versions of packages to be installed. The dictionary must also
-include a ``python`` key specifying the Python version.
+If specified, must be a list of dictionaries, indicating the versions
+of packages and other environment configuration to be installed. The
+dictionary must also include a ``python`` key specifying the Python
+version.
+
+Similarly as for the matrix, the ``"req"``, ``"env"`` and ``"env_nobuild"``
+entries specify dictionaries containing requirements and environment variables.
+In contrast to the matrix, the values are not lists, but a single value only.
 
 In addition, the following keys can be present: ``sys_platform``,
 ``environment_type``.  If present, the include rule is active only if
 the values match, using same matching rules as explained for
-``exclude`` above. Moreover, ``@env`` and ``@env_nobuild`` can be used
-to set environment variables.
+``exclude`` above.
 
 The exclude rules are not applied to includes.
 
 For example::
 
     "include": [
-        {"python": "2.7", "numpy": "1.8.2", "@env": {"FOO": "true"}},
-        {"platform": "win32", "environment_type": "conda", "python": "2.7",
-         "libpython": ""}
+        {"python": "2.7", "req": {"numpy": "1.8.2"}, "env": {"FOO": "true"}},
+        {"platform": "win32", "environment_type": "conda",
+         "req": {"python": "2.7", "libpython": ""}}
     ]
 
 This corresponds to two additional environments. One runs on Python 2.7

@@ -89,7 +89,10 @@ def basic_conf(tmpdir, dummy_packages):
 def test_run_publish(capfd, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
-    conf.matrix["@env"] = {"SOME_TEST_VAR": ["1"]}
+    conf.matrix = {
+        "req": dict(conf.matrix),
+        "env":{"SOME_TEST_VAR": ["1"]},
+    }
 
     # Tests a typical complete run/publish workflow
     tools.run_asv_with_conf(conf, 'run', "master~5..master", '--steps=2',

@@ -305,7 +305,7 @@ def test_iter_env_matrix_combinations():
     ]
 
     for matrix, expected in env_matrices:
-        conf.matrix = {'@env': matrix}
+        conf.matrix = {'env': matrix}
         expected = [{('env', key): value for key, value in item.items()}
                     for item in expected]
         for m in expected:
@@ -833,8 +833,8 @@ def test_install_env_matrix_values(tmpdir):
     conf.env_dir = os.path.join(tmpdir, "env")
     conf.pythons = [PYTHON_VER1]
     conf.repo = os.path.abspath(dvcs.path)
-    conf.matrix = {'@env': {'SOME_ASV_TEST_BUILD_VALUE': '1'},
-                   '@env_nobuild': {'SOME_ASV_TEST_NON_BUILD_VALUE': '1'}}
+    conf.matrix = {'env': {'SOME_ASV_TEST_BUILD_VALUE': '1'},
+                   'env_nobuild': {'SOME_ASV_TEST_NON_BUILD_VALUE': '1'}}
 
     repo = get_repo(conf)
 
@@ -868,8 +868,8 @@ def test_environment_env_matrix():
         conf = config.Config()
 
         conf.matrix = {
-            "@env": build_vars,
-            "@env_nobuild": non_build_vars,
+            "env": build_vars,
+            "env_nobuild": non_build_vars,
         }
         environments = list(environment.get_environments(conf, None))
 
@@ -877,16 +877,55 @@ def test_environment_env_matrix():
         assert len(set(e.dir_name for e in environments)) == build_count
 
 
+def test__parse_matrix():
+    cases = [
+        ({"env": {"A": "B"}, "env_nobuild": {"C": None}, "req": {"foo": ["9"]}},
+         {("env", "A"): "B", ("env_nobuild", "C"): None, ("req", "foo"): ["9"]})
+    ]
+    for rule, expected in cases:
+        parsed = environment._parse_matrix(rule)
+        assert parsed == expected
+
+
+def test__parse_matrix_invalid():
+    cases = [
+        {"env": "1", "req": "1", "foo": "1"},
+    ]
+    for m in cases:
+        with pytest.raises(util.UserError):
+            environment._parse_matrix(m)
+
+
+def test__parse_matrix_legacy():
+    cases = [
+        ({"foo": "1", "bar": ["2", "3"]},
+         {("req", "foo"): "1", ("req", "bar"): ["2", "3"]})
+    ]
+    for m, expected in cases:
+        parsed = environment._parse_matrix(m)
+        assert parsed == expected
+
+
 def test__parse_exclude_include_rule():
     cases = [
         ({"python": "2.6", "environment_type": "conda", "sys_platform": "123",
-          "@env": {"A": "B"}, "@env_nobuild": {"C": "D"}, "foo": "9"},
+          "env": {"A": "B"}, "env_nobuild": {"C": "D"}, "req": {"foo": "9"}},
          {("python", None): "2.6", ("environment_type", None): "conda", ("sys_platform", None): "123",
           ("env", "A"): "B", ("env_nobuild", "C"): "D", ("req", "foo"): "9"})
     ]
     for rule, expected in cases:
         parsed = environment._parse_exclude_include_rule(rule)
         assert parsed == expected
+
+
+def test__parse_exclude_include_rule_invalid():
+    cases = [
+        {"python": "2.6", "environment_type": "conda", "sys_platform": "123",
+         "env": {"A": "B"}, "env_nobuild": {"C": "D"}, "req": {"foo": "9"}, "foo": "9"},
+    ]
+    for rule in cases:
+        with pytest.raises(util.UserError):
+            environment._parse_exclude_include_rule(rule)
 
 
 def test__parse_matrix_entries():
