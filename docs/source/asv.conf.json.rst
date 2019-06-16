@@ -173,7 +173,7 @@ following:
   multiple revisions of the project.
 
 ``conda_environment_file``
--------------------------
+--------------------------
 A path to a ``conda`` environment file to use as source for the
 dependencies. For example::
 

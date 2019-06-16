@@ -1,43 +1,54 @@
+Credits
+-------
+
+.. rst-class:: credits-list
+
 - Michael Droettboom (founder)
 - Pauli Virtanen
 - Philippe Pepiot
 - Thomas Robitaille
-- Richard Hattersley
 - Antoine Pitrou
 - Matthew Turk
-- Antoine Pitrou
-- Christoph Deil
-- Chris Beaumont
-- Kacper Kowalik
-- Erik M. Bray
-- Nathan Goldbaum
-- MinRK
+- Richard Hattersley
 - Christopher Whelan
-- Robert T. McGibbon
-- Juan Nunez-Iglesias
+- Erik Tollerud
+- Elliott Sales de Andrade
+- @afragner
+- Raphaël Gomès
 - Andrew Nelson
+- Juan Nunez-Iglesias
+- Pierre Glaser
+- Chris Beaumont
+- Christoph Deil
+- @Rok
+- Robert T. McGibbon
 - Andreas Fragner
+- Jeremie du Boisberranger
+- @wrwrwr
 - Aaron Meurer
 - Boris Feld
 - Erik M. Bray
+- Isuru Fernando
 - Kacper Kowalik
 - Tyler Reddy
 - Yaroslav Halchenko
-- @wrwrwr
 - Antony Lee
 - Arne Neumann
 - Colin Carroll
+- Dieter Werthmüller
 - Edison Gustavo Muenz
-- Elliott Sales de Andrade
 - Eric Dill
 - Hans Moritz Günther
 - John Kirkham
 - Josh Soref
-- Kacper Kowalik (Xarthisius)
-- MinRK
+- Markus Mohrhard
+- Mike Sarahan
+- @MinRK
 - Nathan Goldbaum
+- P\. L. Lim
 - Thomas Pfaff
 - Tom Augspurger
 - @Warbo
 - Wojtek Ruszczewski
 - @jbrockmendel
+- @serge-sans-paille

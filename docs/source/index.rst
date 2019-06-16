@@ -34,8 +34,4 @@ Development: https://github.com/airspeed-velocity/asv
    reference.rst
    dev.rst
    changelog.rst
-
-Credits
--------
-
-.. include:: credits.txt
+   credits.rst

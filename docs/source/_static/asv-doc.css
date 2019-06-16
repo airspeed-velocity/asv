@@ -14,3 +14,7 @@ table.citation td.label {
     margin-right: 1em;
     font: inherit;
 }
+
+ul.credits-list {
+    column-width: 12em;
+}
