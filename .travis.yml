@@ -47,7 +47,7 @@ matrix:
     - python: 3.6
       env: USE_CONDA=true
 
-    - python: pypy3.6-7.1
+    - python: pypy3
       dist: xenial
 
 cache:
