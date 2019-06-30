@@ -7,7 +7,9 @@ The ``asv.conf.json`` file contains information about a particular
 benchmarking project.  The following describes each of the keys in
 this file and their expected values.
 
-.. contents::
+.. only:: not man
+
+   .. contents::
 
 ``project``
 -----------
