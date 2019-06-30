@@ -252,8 +252,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'airspeedvelocity', u'airspeed velocity Documentation',
-     [u'Michael Droettboom'], 1)
+    ('manindex', 'asv', u'Airspeed Velocity', [u'Michael Droettboom', u'Pauli Virtanen'], '1'),
 ]
 
 # If true, show URL addresses after external links.

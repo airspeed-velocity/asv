@@ -1,7 +1,9 @@
 Benchmark types and attributes
 ==============================
 
-.. contents::
+.. only:: not man
+
+   .. contents::
 
 Benchmark attributes can either be applied directly to the benchmark function::
 
