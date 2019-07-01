@@ -57,15 +57,15 @@ other applications actively using CPU, or you can run ``asv`` pinned
 to a CPU core not used by other processes.  You should also force the
 CPU frequency or power level settings to a fixed value.
 
-The `perf <https://perf.readthedocs.io/>`__ project has `documentation
+The `pyperf <https://pyperf.readthedocs.io/>`__ project has `documentation
 on how to tune machines for benchmarking
-<https://perf.readthedocs.io/en/latest/system.html>`__.  The simplest
-way to apply basic tuning on Linux using ``perf`` is to run::
+<https://pyperf.readthedocs.io/en/latest/system.html>`__.  The simplest
+way to apply basic tuning on Linux using ``pyperf`` is to run::
 
-    sudo python -mperf system tune
+    sudo python -mpyperf system tune
 
 This will modify system settings that can be only changed as root, and
-you should read the ``perf`` documentation on what it precisely does.
+you should read the ``pyperf`` documentation on what it precisely does.
 This system tuning also improves results for ``asv``.  To achieve CPU
 affinity pinning with ``asv`` (e.g. to an isolated CPU), you should
 use :ref:`the --cpu-affinity option <cmd-asv-run>`.
