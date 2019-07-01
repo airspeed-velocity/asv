@@ -74,7 +74,7 @@ install:
     export TRAVIS_PIP=`which pip`
     if [[ $USE_CONDA == true ]]; then
       mkdir -p $HOME/download;
-      export MINICONDA_SH="Miniconda3-4.5.11-Linux-x86_64.sh";
+      export MINICONDA_SH="Miniconda3-latest-x86_64.sh";
       pushd $HOME/download;
       wget -N https://repo.continuum.io/miniconda/$MINICONDA_SH;
       chmod +x $MINICONDA_SH;
@@ -82,7 +82,7 @@ install:
       popd;
       . $HOME/miniconda3/etc/profile.d/conda.sh  # enable conda bash function
       conda activate
-      conda install --yes conda conda-build bzip2
+      conda install --yes conda-build bzip2
       conda info
       if $TRAVIS_PYTHON -c 'import virtualenv'; then echo "ERROR: virtualenv package is installed"; exit 1; fi;
     else
