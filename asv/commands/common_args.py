@@ -7,6 +7,7 @@ import multiprocessing
 import argparse
 
 from .. import __version__
+from .. import util
 
 
 def add_global_arguments(parser, suppress_defaults=True):
@@ -262,6 +263,9 @@ def add_record_samples(parser):
 
 
 def positive_int(string):
+    """
+    Parse a positive integer argument
+    """
     try:
         value = int(string)
         if not value > 0:
@@ -269,3 +273,13 @@ def positive_int(string):
         return value
     except ValueError:
         raise argparse.ArgumentTypeError("%r is not an integer" % (string,))
+
+
+def time_period(string, base_period='d'):
+    """
+    Parse a time period argument with unit suffix
+    """
+    try:
+        return util.parse_human_time(string, base_period)
+    except ValueError as err:
+        raise argparse.ArgumentTypeError(str(err))

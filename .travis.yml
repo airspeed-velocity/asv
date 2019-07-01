@@ -100,7 +100,7 @@ install:
 
 script:
   - if [[ $USE_CONDA == true ]]; then PYTEST_PARALLEL=""; else PYTEST_PARALLEL="-n 3"; fi
-  - $TRAVIS_PYTHON -m pytest -l $COVERAGE $PYTEST_PARALLEL -vv --webdriver=FirefoxHeadless test
+  - $TRAVIS_PYTHON -m pytest -l $COVERAGE $PYTEST_PARALLEL -v -v --webdriver=FirefoxHeadless test
 
 after_script:
   - if [[ "$COVERAGE" != '' ]]; then

@@ -195,6 +195,21 @@ def human_file_size(size, err=None):
         str_err = human_float(err / scale, 1, truncate_small=2)
         return "{0:s}±{1:s}{2}".format(str_value, str_err, suffix)
 
+
+_human_time_units = (
+    ('ns', 0.000000001),
+    ('μs', 0.000001),
+    ('ms', 0.001),
+    ('s', 1),
+    ('m', 60),
+    ('h', 60 * 60),
+    ('d', 60 * 60 * 24),
+    ('w', 60 * 60 * 24 * 7),
+    ('y', 60 * 60 * 24 * 7 * 52),
+    ('C', 60 * 60 * 24 * 7 * 52 * 100)
+)
+
+
 def human_time(seconds, err=None):
     """
     Returns a human-friendly time string that is always exactly 6
@@ -221,19 +236,7 @@ def human_time(seconds, err=None):
         A human-friendly representation of the given number of seconds
         that is always exactly 6 characters.
     """
-    units = [
-        ('ns', 0.000000001),
-        ('μs', 0.000001),
-        ('ms', 0.001),
-        ('s', 1),
-        ('m', 60),
-        ('h', 60 * 60),
-        ('d', 60 * 60 * 24),
-        ('w', 60 * 60 * 24 * 7),
-        ('y', 60 * 60 * 24 * 7 * 52),
-        ('C', 60 * 60 * 24 * 7 * 52 * 100)
-    ]
-
+    units = _human_time_units
     seconds = float(seconds)
 
     for i in xrange(len(units) - 1):
@@ -280,6 +283,28 @@ def human_value(value, unit, err=None):
         display = json.dumps(value)
 
     return display
+
+
+def parse_human_time(string, base_period='d'):
+    """
+    Parse a human-specified time period to an integer number of seconds.
+    The following format is accepted: <number><suffix>
+
+    Raises a ValueError on parse error.
+    """
+    units = dict(_human_time_units)
+    units[''] = units[base_period]
+
+    suffixes = '|'.join(units.keys())
+
+    try:
+        m = re.match(r'^\s*([0-9.]+)\s*({})\s*$'.format(suffixes), string)
+        if m is None:
+            raise ValueError()
+        return float(m.group(1)) * units[m.group(2)]
+    except ValueError:
+        raise ValueError("%r is not a valid time period (valid units: %s)"
+                         % (string, suffixes))
 
 
 def which(filename, paths=None):

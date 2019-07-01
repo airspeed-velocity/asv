@@ -10,6 +10,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 import re
+import shlex
 
 from ..console import log
 from ..repo import Repo, NoSuchNameError
@@ -120,7 +121,7 @@ class Git(Repo):
     def get_hashes_from_range(self, range_spec):
         args = ['rev-list', '--first-parent']
         if range_spec != "":
-            args += range_spec.split()
+            args += shlex.split(range_spec)
         output = self._run_git(args, valid_return_codes=(0, 1), dots=False)
         return output.strip().split()
 
