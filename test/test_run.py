@@ -327,3 +327,36 @@ def test_parallel(basic_conf, dummy_packages):
     tools.run_asv_with_conf(conf, 'run', "master^!",
                             '--bench', 'time_secondary.track_environment_value',
                             '--parallel=2', _machine_file=machine_file)
+
+
+def test_filter_date_period(tmpdir, basic_conf):
+    tmpdir, local, conf, machine_file = basic_conf
+
+    dates = [
+        datetime.datetime(2001, 1, 1),
+        datetime.datetime(2001, 1, 2),
+        datetime.datetime(2001, 1, 8)
+    ]
+
+    dvcs = tools.generate_repo_from_ops(
+        tmpdir, 'git',
+        [("commit", j, dates[j]) for j in range(len(dates))])
+    commits = dvcs.get_branch_hashes()[::-1]
+
+    conf.repo = dvcs.path
+    conf.matrix = {}
+
+    tools.run_asv_with_conf(conf, 'run', 'master',
+                            '--date-period=1w',
+                            '--quick', '--show-stderr',
+                            '--bench=time_secondary.track_value',
+                            _machine_file=machine_file)
+
+    expected_commits = [commits[0], commits[2]]
+
+    fns = glob.glob(join(tmpdir, 'results_workflow', 'orangutan', '*-*.json'))
+
+    for commit in expected_commits:
+        assert any(os.path.basename(c).startswith(commit[:8]) for c in fns)
+
+    assert len(fns) == len(expected_commits)

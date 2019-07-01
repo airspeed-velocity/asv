@@ -11,6 +11,7 @@ import six
 import pytest
 import tempfile
 import shutil
+import datetime
 
 from asv import config
 from asv import repo
@@ -473,3 +474,39 @@ def test_no_such_name_error(dvcs_type, tmpdir):
     elif dvcs_type == "hg":
         # hglib seems to do some caching, so this doesn't work
         pass
+
+
+@pytest.mark.parametrize('dvcs_type', [
+    "git",
+    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))
+])
+def test_filter_date_period(tmpdir, dvcs_type):
+    tmpdir = six.text_type(tmpdir)
+
+    dates = [
+        datetime.datetime(2001, 1, 1),
+        datetime.datetime(2001, 1, 2),
+        datetime.datetime(2001, 1, 8)
+    ]
+
+    dvcs = tools.generate_repo_from_ops(
+        tmpdir, dvcs_type,
+        [("commit", j, dates[j]) for j in range(len(dates))])
+    commits = dvcs.get_branch_hashes()[::-1]
+    assert len(commits) == len(dates)
+
+    conf = config.Config()
+    conf.dvcs = dvcs_type
+    conf.repo = dvcs.path
+    r = repo.get_repo(conf)
+
+    # Basic filtering
+    weekly_commits = r.filter_date_period(commits, 60*60*24*7)
+    assert weekly_commits == [commits[0], commits[2]]
+
+    daily_commits = r.filter_date_period(commits, 60*60*24)
+    assert daily_commits == commits
+
+    # Test with old_commits specified
+    monthly_commits = r.filter_date_period(commits[1:], 60*60*24*30, commits[:1])
+    assert monthly_commits == []

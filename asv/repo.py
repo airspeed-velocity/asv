@@ -170,8 +170,14 @@ class Repo(object):
 
     def get_new_branch_commits(self, branches, existing):
         """
-        Return a set of new commits on `branches` that are successors of all
-        `existing` commits
+        Return a set of commits on `branches` that are not in `existing`.
+
+        Returns
+        -------
+        commit_hashes
+            New commit hashes
+        all_commit_hashes
+            All branch commit hashes
         """
         new = set()
         new_commits = []
@@ -183,6 +189,42 @@ class Repo(object):
                     new.add(commit)
                     new_commits.append(commit)
         return new_commits
+
+    def filter_date_period(self, commits, period, old_commits=None):
+        """
+        Pick a subset of `commits` such that the dates are spaced at least
+        by `period` seconds.
+
+        If `old_commits` are given, consider also them in the selection,
+        but omit them from the returned list.
+
+        The initial part of the selection remains stable if new commits
+        with newer dates are added.
+        """
+        if old_commits is None:
+            old_commits = []
+
+        old_commits = set(old_commits)
+
+        items = []
+        for commit in set(commits).union(old_commits):
+            items.append((self.get_date(commit), commit))
+        items.sort()
+
+        # JS date
+        period = period * 1000
+
+        # Pick a subset of commits
+        prev_date = None
+        selected = set()
+        for date, commit in items:
+            if prev_date is None or date >= prev_date + period:
+                prev_date = date
+                if commit not in old_commits:
+                    selected.add(commit)
+
+        # Preserve original ordering
+        return [commit for commit in commits if commit in selected]
 
 
 class NoRepository(Repo):
@@ -244,7 +286,6 @@ class NoRepository(Repo):
 
     def get_new_branch_commits(self, branches, existing):
         self._raise_error()
-
 
 def get_repo(conf):
     """

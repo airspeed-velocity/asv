@@ -266,6 +266,29 @@ def test_human_file_size():
         assert got == expected, item
 
 
+def test_parse_human_time():
+    items = [
+        # (value, expected)
+        ("1", 60*60*24),
+        ("1h", 60*60),
+        ("1w", 60*60*24*7),
+    ]
+
+    for value, expected in items:
+        result = util.parse_human_time(value)
+        assert result == expected
+
+    bad_items = [
+        "1:",
+        ".",
+        "1x",
+    ]
+
+    for value in bad_items:
+        with pytest.raises(ValueError):
+            util.parse_human_time(value)
+
+
 def test_is_main_thread():
     if sys.version_info[0] >= 3:
         # NB: the test itself doesn't necessarily run in main thread...

@@ -67,25 +67,31 @@ class Run(Command):
                 Run a benchmark suite.
 
                 examples:
-                  asv run master        run benchmarks for one branch
-                  asv run master^!      run benchmarks for one commit (git)
+                  asv run master             run for one branch
+                  asv run master^!           run for one commit (git)
+                  asv run "--merges master"  run for only merge commits (git)
                 """))
 
         parser.add_argument(
             'range', nargs='?', default=None,
             help="""Range of commits to benchmark.  For a git
             repository, this is passed as the first argument to ``git
-            log``.  See 'specifying ranges' section of the
-            `gitrevisions` manpage for more info.  Also accepts the
+            rev-list``; or Mercurial log command. See 'specifying ranges'
+            section of the `gitrevisions` manpage, or 'hg help revisions',
+            for more info. Also accepts the
             special values 'NEW', 'ALL', 'EXISTING', and 'HASHFILE:xxx'.
             'NEW' will benchmark all commits since the latest
             benchmarked on this machine.  'ALL' will benchmark all
             commits in the project. 'EXISTING' will benchmark against
             all commits for which there are existing benchmarks on any
             machine. 'HASHFILE:xxx' will benchmark only a specific set
-            of hashes given in the file named 'xxx', which must have
-            one hash per line. By default, will benchmark the head of
-            each configured of the branches.""")
+            of hashes given in the file named 'xxx' ('-' means stdin),
+            which must have one hash per line. By default, will benchmark
+            the head of each configured of the branches.""")
+        parser.add_argument(
+            "--date-period", type=common_args.time_period, default=None,
+            help="""Pick only one commit in each given time period.
+            For example: 1d (daily), 1w (weekly), 1y (yearly).""")
         parser.add_argument(
             "--steps", "-s", type=common_args.positive_int, default=None,
             help="""Maximum number of steps to benchmark.  This is
@@ -151,7 +157,7 @@ class Run(Command):
     @classmethod
     def run_from_conf_args(cls, conf, args, **kwargs):
         return cls.run(
-            conf=conf, range_spec=args.range, steps=args.steps,
+            conf=conf, range_spec=args.range, steps=args.steps, date_period=args.date_period,
             bench=args.bench, attribute=args.attribute, parallel=args.parallel,
             show_stderr=args.show_stderr, quick=args.quick,
             profile=args.profile, env_spec=args.env_spec, set_commit_hash=args.set_commit_hash,
@@ -166,7 +172,8 @@ class Run(Command):
         )
 
     @classmethod
-    def run(cls, conf, range_spec=None, steps=None, bench=None, attribute=None, parallel=1,
+    def run(cls, conf, range_spec=None, steps=None, date_period=None,
+            bench=None, attribute=None, parallel=1,
             show_stderr=False, quick=False, profile=False, env_spec=None, set_commit_hash=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
             skip_failed=False, skip_existing_commits=False, record_samples=False,
@@ -203,6 +210,9 @@ class Run(Command):
         if pull:
             repo.pull()
 
+        # Comparison period for date_period filtering
+        old_commit_hashes = None
+
         if range_spec is None:
             try:
                 commit_hashes = list(set([repo.get_hash_from_name(branch) for branch in conf.branches]))
@@ -212,8 +222,8 @@ class Run(Command):
             commit_hashes = get_existing_hashes(conf.results_dir)
         elif range_spec == "NEW":
             # New commits on each configured branches
-            commit_hashes = repo.get_new_branch_commits(
-                conf.branches, get_existing_hashes(conf.results_dir))
+            old_commit_hashes = get_existing_hashes(conf.results_dir)
+            commit_hashes = repo.get_new_branch_commits(conf.branches, old_commit_hashes)
         elif range_spec == "ALL":
             # All commits on each configured branches
             commit_hashes = repo.get_new_branch_commits(conf.branches, [])
@@ -240,12 +250,16 @@ class Run(Command):
         else:
             commit_hashes = repo.get_hashes_from_range(range_spec)
 
-        if len(commit_hashes) == 0:
-            log.error("No commit hashes selected")
-            return 1
+        if date_period is not None:
+            commit_hashes = repo.filter_date_period(commit_hashes, date_period,
+                                                    old_commit_hashes)
 
         if steps is not None:
             commit_hashes = util.pick_n(commit_hashes, steps)
+
+        if len(commit_hashes) == 0:
+            log.error("No commit hashes selected")
+            return 1
 
         Setup.perform_setup(environments, parallel=parallel)
         if len(environments) == 0:
