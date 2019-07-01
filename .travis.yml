@@ -74,7 +74,7 @@ install:
     export TRAVIS_PIP=`which pip`
     if [[ $USE_CONDA == true ]]; then
       mkdir -p $HOME/download;
-      export MINICONDA_SH="Miniconda3-latest-x86_64.sh";
+      export MINICONDA_SH="Miniconda3-latest-Linux-x86_64.sh";
       pushd $HOME/download;
       wget -N https://repo.continuum.io/miniconda/$MINICONDA_SH;
       chmod +x $MINICONDA_SH;
