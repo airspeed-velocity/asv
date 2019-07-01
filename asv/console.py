@@ -9,7 +9,6 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import io
-import codecs
 import contextlib
 import locale
 import logging
@@ -38,27 +37,6 @@ def isatty(file):
     if hasattr(file, 'isatty'):
         return file.isatty()
     return False
-
-
-def _decode_preferred_encoding(s):
-    """
-    Decode the supplied byte string using the preferred encoding for
-    the locale (`locale.getpreferredencoding`) or, if the default
-    encoding is invalid, fall back first on utf-8, then on latin-1 if
-    the message cannot be decoded with utf-8.
-    """
-
-    if six.PY3 and isinstance(s, bytes):
-        enc = locale.getpreferredencoding()
-        try:
-            try:
-                return s.decode(enc)
-            except LookupError:
-                enc = 'utf-8'
-            return s.decode(enc)
-        except UnicodeDecodeError:
-            return s.decode('latin-1', 'replace')
-    return s
 
 
 def _color_text(text, color):
@@ -121,69 +99,44 @@ _unicode_translations = {
 }
 
 
-def _write_with_fallback(s, write, fileobj):
+def _write_with_fallback(s, fileobj):
     """
-    Write the supplied string with the given write function like
-    ``write(s)``, but use a writer for the locale's preferred encoding
-    in case of a UnicodeEncodeError.  Failing that attempt to write
-    with 'utf-8' or 'latin-1'. *fileobj* can be text or byte stream,
-    *s* can be unicode or bytes.
+    Write the supplied string to the given stream, but switch to
+    the locale's preferred encoding in case of a UnicodeEncodeError.
+    Failing that, replace characters.
+    *fileobj* must be text stream on Py3, on Py2 a `file` byte stream.
+    *s* must be unicode.
     """
-    try:
-        write(s)
-        return write
-    except (UnicodeEncodeError, TypeError):
-        # Let's try the next approach...
-        pass
-
-    enc = locale.getpreferredencoding()
-
-    if isinstance(s, bytes):
-        # Try Unicode stream
-        try:
-            write(s.decode(enc))
-            return write
-        except (UnicodeEncodeError, TypeError):
-            # Let's try the next approach...
-            pass
-
-    try:
-        Writer = codecs.getwriter(enc)
-    except LookupError:
-        Writer = codecs.getwriter('utf-8')
-
-    if isinstance(fileobj, io.TextIOBase):
-        # Get the byte stream
-        fileobj = fileobj.buffer
-
-    if six.PY3 and isinstance(s, bytes):
-        # Writers expect unicode input
-        s = _decode_preferred_encoding(s)
-
-    f = Writer(fileobj)
-    write = f.write
-
-    try:
-        write(s)
-        return write
-    except UnicodeEncodeError:
-        Writer = codecs.getwriter('latin-1')
-        f = Writer(fileobj)
-        write = f.write
+    if not isinstance(s, six.text_type):
+        raise ValueError("Input string is not a Unicode string")
 
     if six.PY3:
-        s = s.translate(_unicode_translations)
-    else:
-        for key, val in _unicode_translations.iteritems():
-            s = s.replace(unichr(key), val)
+        try:
+            fileobj.write(s)
+            return
+        except UnicodeError:
+            pass
 
-    # If this doesn't work let the exception bubble up; I'm out of ideas
-    try:
-        write(s)
-        return write
-    except UnicodeEncodeError:
-        write(s.encode('ascii', 'replace').decode('ascii'))
-        return write
+        # Fall back to writing bytes
+        enc = locale.getpreferredencoding()
+        try:
+            b = s.encode(enc)
+        except UnicodeError:
+            s = s.translate(_unicode_translations)
+            b = s.encode(enc, errors='replace')
+
+        fileobj.flush()
+        fileobj.buffer.write(b)
+    else:
+        enc = locale.getpreferredencoding()
+        try:
+            b = s.encode(enc)
+        except UnicodeError:
+            for key, val in _unicode_translations.iteritems():
+                s = s.replace(unichr(key), val)
+            b = s.encode(enc, errors='replace')
+
+        fileobj.write(b)
 
 
 def color_print(*args, **kwargs):
@@ -220,7 +173,6 @@ def color_print(*args, **kwargs):
     file = kwargs.get('file', sys.stdout)
     end = kwargs.get('end', '\n')
 
-    write = file.write
     if isatty(file) and not WIN:
         for i in xrange(0, len(args), 2):
             msg = args[i]
@@ -231,16 +183,14 @@ def color_print(*args, **kwargs):
 
             if color:
                 msg = _color_text(msg, color)
-            msg = _decode_preferred_encoding(msg)
-            write = _write_with_fallback(msg, write, file)
+            _write_with_fallback(msg, file)
 
-        write(end)
+        _write_with_fallback(end, file)
     else:
         for i in xrange(0, len(args), 2):
             msg = args[i]
-            msg = _decode_preferred_encoding(msg)
-            write = _write_with_fallback(msg, write, file)
-        write(end)
+            _write_with_fallback(msg, file)
+        _write_with_fallback(end, file)
 
 
 def get_answer_default(prompt, default, use_defaults=False):
@@ -427,7 +377,7 @@ class Log(object):
 
     def add(self, msg):
         if self._needs_newline:
-            _write_with_fallback(msg, sys.stdout.write, sys.stdout)
+            _write_with_fallback(msg, sys.stdout)
             sys.stdout.flush()
         else:
             self.info(msg)

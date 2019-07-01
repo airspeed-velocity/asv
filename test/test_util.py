@@ -84,21 +84,6 @@ def test_parallelfailure():
         pass
 
 
-def test_write_unicode_to_ascii():
-    def get_fake_encoding():
-        return 'ascii'
-
-    original_getpreferredencoding = locale.getpreferredencoding
-    locale.getpreferredencoding = get_fake_encoding
-
-    try:
-        buff = io.BytesIO()
-        console.color_print("μs", file=buff)
-        assert buff.getvalue() == b'us\n'
-    finally:
-        locale.getpreferredencoding = original_getpreferredencoding
-
-
 def test_which_path(tmpdir):
     dirname = os.path.abspath(os.path.join(str(tmpdir), 'name with spaces'))
     fn = 'asv_test_exe_1234.exe'

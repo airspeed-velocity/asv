@@ -13,6 +13,8 @@ import itertools
 
 from asv.console import _write_with_fallback, color_print, log
 
+import pytest
+
 
 def test_write_with_fallback(tmpdir, capfd):
     tmpdir = six.text_type(tmpdir)
@@ -23,33 +25,42 @@ def test_write_with_fallback(tmpdir, capfd):
             locale.getpreferredencoding = lambda: preferred_encoding
 
             # Check writing to io.StringIO
-            stream = io.StringIO()
-            _write_with_fallback(value, stream.write, stream)
-            assert stream.getvalue() == value
+            if six.PY3:
+                stream = io.StringIO()
+                _write_with_fallback(value, stream)
+                assert stream.getvalue() == value
+            else:
+                stream = io.StringIO()
+                with pytest.raises(TypeError):
+                    _write_with_fallback(value, stream)
 
             # Check writing to a text stream
-            buf = io.BytesIO()
-            stream = io.TextIOWrapper(buf, encoding=stream_encoding)
-            _write_with_fallback(value, stream.write, stream)
-            stream.flush()
-            got = buf.getvalue()
-            assert got == expected
-
-            # Check writing to a byte stream (no stream encoding, so
-            # it should write in locale encoding)
-            if stream_encoding == preferred_encoding:
+            if six.PY3:
                 buf = io.BytesIO()
-                _write_with_fallback(value, buf.write, buf)
+                stream = io.TextIOWrapper(buf, encoding=stream_encoding)
+                _write_with_fallback(value, stream)
+                stream.flush()
                 got = buf.getvalue()
                 assert got == expected
 
+            # Writing to io.BytesIO
+            if six.PY3:
+                stream = io.BytesIO()
+                with pytest.raises(TypeError):
+                    _write_with_fallback(value, stream)
+            else:
+                stream = io.BytesIO()
+                _write_with_fallback(value, stream)
+                assert stream.getvalue() == expected
+
             # Check writing to a file
             fn = os.path.join(tmpdir, 'tmp.txt')
-            with io.open(fn, 'w', encoding=stream_encoding) as stream:
-                _write_with_fallback(value, stream.write, stream)
-            with open(fn, 'rb') as stream:
-                got = stream.read()
-                assert got == expected
+            if six.PY3:
+                with io.open(fn, 'w', encoding=stream_encoding) as stream:
+                    _write_with_fallback(value, stream)
+                with open(fn, 'rb') as stream:
+                    got = stream.read()
+                    assert got == expected
 
             # Check writing to Py2 files
             if not six.PY3:
@@ -57,7 +68,7 @@ def test_write_with_fallback(tmpdir, capfd):
                     # No stream encoding: write in locale encoding
                     for mode in ['w', 'wb']:
                         with open(fn, mode) as stream:
-                            _write_with_fallback(value, stream.write, stream)
+                            _write_with_fallback(value, stream)
                         with open(fn, 'rb') as stream:
                             got = stream.read()
                             assert got == expected
@@ -77,7 +88,11 @@ def test_write_with_fallback(tmpdir, capfd):
 
     for pref_enc, stream_enc, s in itertools.product(encodings, encodings, strings):
         expected = None
-        for enc in [stream_enc, pref_enc]:
+        if six.PY3:
+            encodings = [stream_enc, pref_enc]
+        else:
+            encodings = [pref_enc]
+        for enc in encodings:
             try:
                 expected = s.encode(enc)
                 break
@@ -85,25 +100,13 @@ def test_write_with_fallback(tmpdir, capfd):
                 pass
         else:
             s2 = repmap.get(s, s)
-            try:
-                expected = s2.encode('latin1')
-            except UnicodeError:
-                expected = s2.encode('ascii', 'replace')
+            expected = s2.encode(pref_enc, errors='replace')
 
         check_write(s, expected, stream_enc, pref_enc)
 
-    # Should not fail with Unicode streams
-    def write(s):
-        if isinstance(s, bytes):
-            raise TypeError("failure")
-
-    _write_with_fallback("a", write, None)
-    _write_with_fallback(b"a", write, None)
-
-    # Should not bail out on bytes input
-    _write_with_fallback(b"a", sys.stdout.write, sys.stdout)
-    out, err = capfd.readouterr()
-    assert out == "a"
+    # Should bail out on bytes input
+    with pytest.raises(ValueError):
+        _write_with_fallback(b"a", sys.stdout)
 
 
 def test_color_print_nofail(capfd):
@@ -111,13 +114,12 @@ def test_color_print_nofail(capfd):
 
     color_print("hello", "red")
     color_print("indeed難", "blue")
-    color_print(b"really\xfe", "green", "not really")
+    with pytest.raises(ValueError):
+        color_print(b"really\xfe", "green", "not really")
 
     out, err = capfd.readouterr()
     assert 'hello' in out
     assert 'indeed' in out
-    assert 'really' in out
-    assert 'not really' in out
 
 
 def test_log_indent(capsys):
