@@ -71,7 +71,7 @@ def test_show_durations(capsys, show_fixture):
 
     tools.run_asv_with_conf(conf, 'show', '--machine=cheetah', '--durations')
     text, err = capsys.readouterr()
-    assert '13dd6571547f8dd87b24c4e29536d33cc4f335c9  1.00ms' in text.strip()
+    assert '13dd6571547f8dd87b24c4e29536d33cc4f335c9  1.00s' in text.strip()
 
     tools.run_asv_with_conf(conf, 'show', '13dd6571', '--machine=cheetah',
                             '--durations')
@@ -82,6 +82,6 @@ def test_show_durations(capsys, show_fixture):
     Machine    : cheetah
     Environment: py2.7-Cython-numpy1.8
 
-        time_quantity.time_quantity_array_conversion  1.00ms
+        time_quantity.time_quantity_array_conversion  1.00s
     """)
     assert text.strip() == expected.strip()

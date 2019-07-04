@@ -158,8 +158,8 @@ A benchmark suite directory has the following layout.  The
       - ``started_at``: A dictionary from benchmark names to JavaScript
         time stamps indicating the start time of the last benchmark run.
 
-      - ``ended_at``: A dictionary from benchmark names to JavaScript
-        time stamps indicating the end time of the last benchmark run.
+      - ``duration``: A dictionary from benchmark names to number of seconds
+        (float) indicating the total duration of the last run of benchmarks.
 
       - ``benchmark_version``: A dictionary from benchmark names to benchmark
         version identifier (an arbitrary string). Results whose version

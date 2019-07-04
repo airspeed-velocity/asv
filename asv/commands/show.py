@@ -180,14 +180,21 @@ class Show(Command):
             color_print("  " + details.replace("\n", "\n  "))
 
         started_at = result.started_at.get(benchmark['name'])
-        ended_at = result.ended_at.get(benchmark['name'])
-        if started_at and ended_at:
+        if started_at is not None:
             started_at = util.js_timestamp_to_datetime(started_at)
-            ended_at = util.js_timestamp_to_datetime(ended_at)
+            started_at = started_at.strftime('%Y-%m-%d %H:%M:%S')
+        else:
+            started_at = "n/a"
 
+        duration = result.duration.get(benchmark['name'])
+        if duration is not None:
+            duration = util.human_time(duration)
+        else:
+            duration = "n/a"
+
+        if started_at != "n/a" or duration != "n/a":
             color_print('  started: {}, duration: {}'.format(
-                started_at.strftime('%Y-%m-%d %H:%M:%S'),
-                util.human_time((ended_at - started_at).total_seconds())))
+                started_at, duration))
 
         if not show_details:
             color_print("")
@@ -227,10 +234,8 @@ class Show(Command):
 
             keys = result.get_result_keys(benchmarks)
             for key in keys:
-                if key in result.started_at and key in result.ended_at:
-                    start = util.js_timestamp_to_datetime(result.started_at[key])
-                    end = util.js_timestamp_to_datetime(result.ended_at[key])
-                    duration = (end - start).total_seconds()
+                duration = result.duration.get(key)
+                if duration is not None:
                     if total_duration is None:
                         total_duration = 0
                     total_duration += duration

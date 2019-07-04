@@ -175,7 +175,7 @@ def test_run_build_failure(basic_conf):
 
     for data in (data_broken, data_ok):
         assert data['started_at'][bench_name] >= timestamp
-        assert data['ended_at'][bench_name] >= data['started_at'][bench_name]
+        assert data['duration'][bench_name] >= 0
 
     assert len(data_broken['results']) == 1
     assert len(data_ok['results']) == 1
