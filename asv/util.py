@@ -239,8 +239,21 @@ def human_time(seconds, err=None):
     units = _human_time_units
     seconds = float(seconds)
 
+    scale = seconds
+
+    if scale == 0 and err is not None:
+        scale = float(err)
+
+    if scale == 0:
+        # Represent zero in reasonable units
+        units = [('s', 1), ('m', 60)]
+
+    if scale != scale:
+        # nan
+        return "n/a"
+
     for i in xrange(len(units) - 1):
-        if seconds < units[i+1][1]:
+        if scale < units[i+1][1]:
             str_time = human_float(seconds / units[i][1], 3, significant_zeros=True)
             if err is None:
                 return "{0:s}{1}".format(str_time, units[i][0])
