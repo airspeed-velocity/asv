@@ -170,7 +170,8 @@ class Repo(object):
 
     def get_new_branch_commits(self, branches, existing):
         """
-        Return a set of commits on `branches` that are not in `existing`.
+        Return a set of new commits on `branches` that are successors of all
+        `existing` commits.
 
         Returns
         -------
