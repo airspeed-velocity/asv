@@ -430,6 +430,16 @@ def log_benchmark_result(results, benchmark, show_stderr=False):
 
     # Dump program output
     stderr = results.stderr.get(benchmark['name'])
+    errcode = results.errcode.get(benchmark['name'])
+
+    if errcode is not None and errcode != 0:
+        # Display also error code
+        if not stderr:
+            stderr = ""
+        else:
+            stderr += "\n"
+        stderr += "asv: benchmark failed (exit status {})".format(errcode)
+
     if stderr and show_stderr:
         with log.indent():
             log.error(stderr)
@@ -695,6 +705,7 @@ class Spawner(object):
             return cache_dir, None
         else:
             util.long_path_rmtree(cache_dir, True)
+            out += '\nasv: setup_cache failed (exit status {})'.format(errcode)
             return None, out.strip()
 
     def run(self, name, params_str, profile_path, result_file_name, timeout, cwd):
