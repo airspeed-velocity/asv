@@ -58,7 +58,7 @@ class ResultsWrapper(object):
                                profile=(self.results.get_profile(key)
                                         if self.results.has_profile(key) else None),
                                started_at=self.results.started_at[key],
-                               duration=self.results.duration[key])
+                               duration=self.results.duration.get(key))
 
 
 @pytest.mark.flaky(reruns=1, reruns_delay=5)
@@ -170,7 +170,10 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     # Check run time timestamps
     for name, result in times.items():
         assert result.started_at >= util.datetime_to_js_timestamp(start_timestamp)
-        assert result.duration >= 0
+        if any(x is not None for x in result.result):
+            assert result.duration >= 0
+        else:
+            assert result.duration is None or result.duration >= 0
 
 
 def test_quick(benchmarks_fixture):
