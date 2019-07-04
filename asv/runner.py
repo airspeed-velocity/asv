@@ -230,6 +230,8 @@ def run_benchmarks(benchmarks, env, results=None,
     else:
         previous_result_keys = set()
 
+    benchmark_durations = {}
+
     log.info("Benchmarking {0}".format(env.name))
 
     partial_info_time = None
@@ -348,11 +350,19 @@ def run_benchmarks(benchmarks, env, results=None,
                                 extra_params=cur_extra_params,
                                 cwd=cache_dir)
 
+            # Retain runtime durations, even if ended_at may be in the future
+            ended_at = datetime.datetime.utcnow()
+            if name in benchmark_durations:
+                benchmark_durations[name] += ended_at - started_at
+                ended_at = started_at + benchmark_durations[name]
+            else:
+                benchmark_durations[name] = ended_at - started_at
+
             # Save result
             results.add_result(benchmark, res,
                                selected_idx=selected_idx,
                                started_at=started_at,
-                               ended_at=datetime.datetime.utcnow(),
+                               ended_at=ended_at,
                                record_samples=(not is_final or record_samples),
                                append_samples=(name in previous_result_keys))
 

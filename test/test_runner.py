@@ -171,7 +171,6 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     for name, result in times.items():
         assert result.started_at >= util.datetime_to_js_timestamp(start_timestamp)
         assert result.ended_at >= result.started_at
-        assert result.ended_at <= util.datetime_to_js_timestamp(end_timestamp)
 
 
 def test_quick(benchmarks_fixture):
