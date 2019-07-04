@@ -51,6 +51,7 @@ class Find(Command):
             "--invert", "-i", action="store_true",
             help="""Search for a decrease in the benchmark value,
             rather than an increase.""")
+        common_args.add_parallel(parser)
         common_args.add_show_stderr(parser)
         common_args.add_machine(parser)
         common_args.add_environment(parser)
@@ -65,12 +66,13 @@ class Find(Command):
         return cls.run(
             conf, args.range, args.bench,
             invert=args.invert, show_stderr=args.show_stderr,
+            parallel=args.parallel,
             machine=args.machine, env_spec=args.env_spec,
             launch_method=args.launch_method, **kwargs
         )
 
     @classmethod
-    def run(cls, conf, range_spec, bench, invert=False, show_stderr=False,
+    def run(cls, conf, range_spec, bench, invert=False, show_stderr=False, parallel=1,
             machine=None, env_spec=None, _machine_file=None, launch_method=None):
         params = {}
         machine_params = Machine.load(
@@ -89,7 +91,7 @@ class Find(Command):
             log.error("No commit hashes selected")
             return 1
 
-        environments = Setup.run(conf=conf, env_spec=env_spec)
+        environments = Setup.run(conf=conf, env_spec=env_spec, parallel=parallel)
         if len(environments) == 0:
             log.error("No environments selected")
             return 1

@@ -55,7 +55,7 @@ class Setup(Command):
     @classmethod
     def run(cls, conf, parallel=-1, env_spec=None):
         environments = list(environment.get_environments(conf, env_spec))
-        cls.perform_setup(environments)
+        cls.perform_setup(environments, parallel=parallel)
         return environments
 
     @classmethod
