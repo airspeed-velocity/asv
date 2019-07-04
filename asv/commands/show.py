@@ -157,6 +157,8 @@ class Show(Command):
     def _print_results(cls, conf, commit_hash, result_iter, benchmarks, show_details=False):
         repo = get_repo(conf)
 
+        log.flush()
+
         color_print("Commit: {}".format(repo.get_decorated_hash(commit_hash,
                                                                 conf.hash_length)),
                     "blue")
@@ -281,6 +283,8 @@ class Show(Command):
         durations = cls._get_durations(result_iter, benchmarks, commits=False)
 
         repo = get_repo(conf)
+
+        log.flush()
 
         color_print("Commit: {}".format(repo.get_decorated_hash(commit_hash,
                                                                 conf.hash_length)),
