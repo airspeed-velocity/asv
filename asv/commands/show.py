@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import datetime
 from collections import defaultdict
 
 from . import Command
@@ -33,6 +34,9 @@ class Show(Command):
         parser.add_argument(
             '--details', action='store_true', default=False,
             help="""Show all result details.""")
+        parser.add_argument(
+            '--durations', action='store_true', default=False,
+            help="""Show only run durations.""")
         common_args.add_bench(parser)
         common_args.add_machine(parser)
         common_args.add_environment(parser)
@@ -45,12 +49,13 @@ class Show(Command):
         return cls.run(
             conf=conf, commit=args.commit, bench=args.bench,
             machine=args.machine, env_spec=args.env_spec,
-            details=args.details, **kwargs
+            details=args.details, durations=args.durations,
+            **kwargs
         )
 
     @classmethod
     def run(cls, conf, commit=None, bench=None, machine=None, env_spec=None,
-            details=False):
+            details=False, durations=False):
         if env_spec:
             env_names = ([env.name for env in get_environments(conf, env_spec, verbose=False)]
                          + list(env_spec))
@@ -75,23 +80,59 @@ class Show(Command):
         benchmarks = Benchmarks.load(conf, regex=bench)
 
         if commit is None:
-            cls._print_commits(conf, machines, env_names, benchmarks)
+            result_iter = cls._iter_results(conf, machines, env_names)
+            if durations:
+                cls._print_commit_durations(conf, result_iter, benchmarks)
+            else:
+                cls._print_commits(conf, result_iter, benchmarks)
         else:
-            cls._print_results(conf, commit, machines, env_names, benchmarks,
-                               show_details=details)
+            result_iter = cls._iter_results(conf, machines, env_names, commit)
+            if durations:
+                cls._print_result_durations(conf, commit, result_iter, benchmarks)
+            else:
+                cls._print_results(conf, commit, result_iter,
+                                   benchmarks, show_details=details)
 
     @classmethod
-    def _print_commits(cls, conf, machines, env_names, benchmarks):
-        commits = defaultdict(lambda: {})
+    def _iter_results(cls, conf, machines, env_names, commit_hash=None):
+        """
+        Iterate over results for given machines/environments.
+
+        Yields
+        ------
+        machine : str
+            Machine name
+        result : asv.result.Results
+            Results
+        """
+        if commit_hash is not None:
+            repo = get_repo(conf)
+            try:
+                commit_hash = repo.get_hash_from_name(commit_hash)
+            except NoSuchNameError:
+                pass
 
         for machine in machines:
-            for result in iter_results_for_machine(
-                    conf.results_dir, machine):
+            if commit_hash is not None:
+                result_iter = iter_results_for_machine_and_hash(
+                    conf.results_dir, machine, commit_hash)
+            else:
+                result_iter = iter_results_for_machine(
+                    conf.results_dir, machine)
+
+            for result in result_iter:
                 if env_names is not None and result.env_name not in env_names:
                     continue
 
-                if result.get_result_keys(benchmarks):
-                    commits[(machine, result.env_name)][result.commit_hash] = result.date
+                yield machine, result
+
+    @classmethod
+    def _print_commits(cls, conf, result_iter, benchmarks):
+        commits = defaultdict(lambda: {})
+
+        for machine, result in result_iter:
+            if result.get_result_keys(benchmarks):
+                commits[(machine, result.env_name)][result.commit_hash] = result.date
 
         log.flush()
 
@@ -113,28 +154,15 @@ class Show(Command):
             color_print("")
 
     @classmethod
-    def _print_results(cls, conf, commit_hash, machines, env_names, benchmarks,
-                       show_details=False):
+    def _print_results(cls, conf, commit_hash, result_iter, benchmarks, show_details=False):
         repo = get_repo(conf)
-        try:
-            commit_hash = repo.get_hash_from_name(commit_hash)
-        except NoSuchNameError:
-            pass
-
-        def results_iter():
-            for machine in sorted(machines):
-                for result in iter_results_for_machine_and_hash(
-                        conf.results_dir, machine, commit_hash):
-                    if env_names is not None and result.env_name not in env_names:
-                        continue
-                    yield machine, result
 
         color_print("Commit: {}".format(repo.get_decorated_hash(commit_hash,
                                                                 conf.hash_length)),
                     "blue")
         color_print("")
 
-        for machine, result in results_iter():
+        for machine, result in result_iter:
             for name in sorted(result.get_result_keys(benchmarks)):
                 cls._print_benchmark(machine, result, benchmarks[name],
                                      show_details=show_details)
@@ -190,3 +218,82 @@ class Show(Command):
             color_print("  samples: {}".format(samples))
 
         color_print("")
+
+    @classmethod
+    def _get_durations(cls, result_iter, benchmarks, commits=False):
+        durations = defaultdict(lambda: {})
+        for machine, result in result_iter:
+            total_duration = None
+
+            keys = result.get_result_keys(benchmarks)
+            for key in keys:
+                if key in result.started_at and key in result.ended_at:
+                    start = util.js_timestamp_to_datetime(result.started_at[key])
+                    end = util.js_timestamp_to_datetime(result.ended_at[key])
+                    duration = (end - start).total_seconds()
+                    if total_duration is None:
+                        total_duration = 0
+                    total_duration += duration
+
+                    if not commits:
+                        durations[(machine, result.env_name)][key] = duration
+
+            if total_duration is None:
+                total_duration = float("nan")
+
+            if commits:
+                durations[(machine, result.env_name)][result.commit_hash] = (result.date, total_duration)
+
+        return durations
+
+    @classmethod
+    def _print_commit_durations(cls, conf, result_iter, benchmarks):
+        durations = cls._get_durations(result_iter, benchmarks, commits=True)
+
+        log.flush()
+
+        color_print("Run durations:")
+        color_print("")
+
+        for machine, env_name in sorted(durations.keys()):
+            color_print("Machine    : {}".format(machine))
+            color_print("Environment: {}".format(env_name))
+            color_print("")
+
+            cur_durations = durations[(machine, env_name)]
+            commit_order = list(cur_durations.keys())
+            commit_order.sort(key=lambda x: cur_durations[x])
+
+            for commit in commit_order:
+                seconds = cur_durations[commit][1]
+                color_print("    {}  {}".format(
+                    commit, util.human_time(seconds)))
+
+            color_print("")
+
+    @classmethod
+    def _print_result_durations(cls, conf, commit_hash, result_iter, benchmarks):
+        durations = cls._get_durations(result_iter, benchmarks, commits=False)
+
+        repo = get_repo(conf)
+
+        color_print("Commit: {}".format(repo.get_decorated_hash(commit_hash,
+                                                                conf.hash_length)),
+                    "blue")
+        color_print("")
+
+        for machine, env_name in sorted(durations.keys()):
+            color_print("Machine    : {}".format(machine))
+            color_print("Environment: {}".format(env_name))
+            color_print("")
+
+            cur_durations = durations[(machine, env_name)]
+            order = list(cur_durations.keys())
+            order.sort(key=lambda x: -cur_durations[x])
+
+            for name in order:
+                seconds = cur_durations[name]
+                color_print("    {}  {}".format(
+                    name, util.human_time(seconds)))
+
+            color_print("")

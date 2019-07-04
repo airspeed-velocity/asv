@@ -14,13 +14,15 @@ from asv import config
 
 from . import tools
 
+import pytest
+
 
 RESULT_DIR = abspath(join(dirname(__file__), 'example_results'))
 BENCHMARK_DIR = abspath(join(dirname(__file__), 'example_results'))
 MACHINE_FILE = abspath(join(dirname(__file__), 'asv-machine.json'))
 
-
-def test_show(capsys, tmpdir):
+@pytest.fixture
+def show_fixture(tmpdir):
     tmpdir = six.text_type(tmpdir)
     os.chdir(tmpdir)
 
@@ -29,6 +31,12 @@ def test_show(capsys, tmpdir):
          'repo': tools.generate_test_repo(tmpdir).path,
          'project': 'asv',
          'environment_type': "shouldn't matter what"})
+
+    return conf
+
+
+def test_show(capsys, show_fixture):
+    conf = show_fixture
 
     tools.run_asv_with_conf(conf, 'show')
     text, err = capsys.readouterr()
@@ -54,5 +62,26 @@ def test_show(capsys, tmpdir):
     time_ci_small [cheetah/py2.7-numpy1.8]
       3.00±0s
       ci_99: (3.10s, 3.90s)
+    """)
+    assert text.strip() == expected.strip()
+
+
+def test_show_durations(capsys, show_fixture):
+    conf = show_fixture
+
+    tools.run_asv_with_conf(conf, 'show', '--machine=cheetah', '--durations')
+    text, err = capsys.readouterr()
+    assert '13dd6571547f8dd87b24c4e29536d33cc4f335c9  1.00ms' in text.strip()
+
+    tools.run_asv_with_conf(conf, 'show', '13dd6571', '--machine=cheetah',
+                            '--durations')
+    text, err = capsys.readouterr()
+    expected = textwrap.dedent("""
+    Commit: 13dd6571
+
+    Machine    : cheetah
+    Environment: py2.7-Cython-numpy1.8
+
+        time_quantity.time_quantity_array_conversion  1.00ms
     """)
     assert text.strip() == expected.strip()
