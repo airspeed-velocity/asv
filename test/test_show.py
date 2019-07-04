@@ -83,5 +83,7 @@ def test_show_durations(capsys, show_fixture):
     Environment: py2.7-Cython-numpy1.8
 
         time_quantity.time_quantity_array_conversion  1.00s
+
+        total duration: 1.00s
     """)
     assert text.strip() == expected.strip()

@@ -300,9 +300,13 @@ class Show(Command):
             order = list(cur_durations.keys())
             order.sort(key=lambda x: -cur_durations[x])
 
+            total = 0
+
             for name in order:
                 seconds = cur_durations[name]
+                total += seconds
                 color_print("    {}  {}".format(
                     name, util.human_time(seconds)))
 
             color_print("")
+            color_print("    total duration: {}".format(util.human_time(total)))

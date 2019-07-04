@@ -376,5 +376,6 @@ def test_format_durations():
         quux         3.00s      
         bar          2.00s      
         ...           ...       
+       total         6.00s      
     =========== ================""")
     assert msg == expected
