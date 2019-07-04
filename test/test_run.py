@@ -11,11 +11,13 @@ import pytest
 import shutil
 import glob
 import datetime
+import textwrap
 
 from asv import results
 from asv import environment
 from asv import repo
 from asv import util
+from asv.commands.run import Run
 
 from . import tools
 from .tools import dummy_packages, HAS_CONDA
@@ -361,3 +363,18 @@ def test_filter_date_period(tmpdir, basic_conf):
         assert any(os.path.basename(c).startswith(commit[:8]) for c in fns)
 
     assert len(fns) == len(expected_commits)
+
+
+def test_format_durations():
+    durations = {'foo': 1, 'bar': 2, 'quux': 3}
+
+    msg = Run.format_durations(durations, 2)
+    expected = textwrap.dedent("""\
+    =========== ================
+     benchmark   total duration 
+    ----------- ----------------
+        quux         3.00s      
+        bar          2.00s      
+        ...           ...       
+    =========== ================""")
+    assert msg == expected
