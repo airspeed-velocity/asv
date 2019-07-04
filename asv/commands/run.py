@@ -105,6 +105,10 @@ class Run(Command):
         common_args.add_parallel(parser)
         common_args.add_show_stderr(parser)
         parser.add_argument(
+            "--durations", action="store", metavar='N', nargs='?',
+            type=common_args.positive_int_or_inf, default=0, const='all',
+            help="Display total duration for N (or 'all') slowest benchmarks")
+        parser.add_argument(
             "--quick", "-q", action="store_true",
             help="""Do a "quick" run, where each benchmark function is
             run only once.  This is useful to find basic errors in the
@@ -167,7 +171,7 @@ class Run(Command):
             skip_existing_commits=args.skip_existing_commits,
             record_samples=args.record_samples, append_samples=args.append_samples,
             pull=not args.no_pull, interleave_processes=args.interleave_processes,
-            launch_method=args.launch_method,
+            launch_method=args.launch_method, durations=args.durations,
             **kwargs
         )
 
@@ -178,7 +182,7 @@ class Run(Command):
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
             skip_failed=False, skip_existing_commits=False, record_samples=False,
             append_samples=False, pull=True, interleave_processes=False,
-            launch_method=None, _returns={}):
+            launch_method=None, durations=0, _returns={}):
         machine_params = Machine.load(
             machine_name=machine,
             _path=_machine_file, interactive=True)
@@ -480,3 +484,24 @@ class Run(Command):
 
                         if not skip_save:
                             result.save(conf.results_dir)
+
+                        if durations > 0:
+                            log.info(cls.format_durations(result.duration, durations))
+
+    @classmethod
+    def format_durations(cls, durations, num_durations):
+        items = list(durations.items())
+        items.sort(key=lambda x: (-x[1], x[0]))
+
+        rows = [["benchmark", "total duration"]]
+
+        for j, (name, duration) in enumerate(items):
+            if j >= num_durations:
+                break
+            rows.append([name, util.human_time(duration)])
+
+        if j >= num_durations:
+            rows.append(["...", "..."])
+
+        msg = util.format_text_table(rows, num_headers=1)
+        return msg

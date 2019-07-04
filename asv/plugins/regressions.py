@@ -113,7 +113,7 @@ class Regressions(OutputPublisher):
             revision_timestamps[revision] = results.date
 
             # Time when the benchmark was run
-            for benchmark_name, timestamp in six.iteritems(results.ended_at):
+            for benchmark_name, timestamp in six.iteritems(results.started_at):
                 key = (benchmark_name, revision)
                 run_timestamps[key] = timestamp
 

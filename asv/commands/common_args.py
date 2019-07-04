@@ -269,10 +269,25 @@ def positive_int(string):
     try:
         value = int(string)
         if not value > 0:
-            raise argparse.ArgumentTypeError("%r is not a positive integer" % (string,))
+            raise ValueError()
         return value
     except ValueError:
-        raise argparse.ArgumentTypeError("%r is not an integer" % (string,))
+        raise argparse.ArgumentTypeError("%r is not a positive integer" % (string,))
+
+
+def positive_int_or_inf(string):
+    """
+    Parse a positive integer argument
+    """
+    try:
+        if string == 'all':
+            return float("inf")
+        value = int(string)
+        if not value > 0:
+            raise ValueError()
+        return value
+    except ValueError:
+        raise argparse.ArgumentTypeError("%r is not a positive integer or 'all'" % (string,))
 
 
 def time_period(string, base_period='d'):

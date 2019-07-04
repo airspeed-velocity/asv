@@ -487,7 +487,7 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
             stderr='',
             profile=None)
         result.add_result({"name": "time_func", "version": benchmark_version, "params": []},
-                          value, started_at=timestamp, ended_at=timestamp)
+                          value, started_at=timestamp, duration=1.0)
         result.save(result_dir)
 
     if params:

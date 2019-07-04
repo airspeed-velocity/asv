@@ -98,12 +98,14 @@ def test_run_publish(capfd, basic_conf):
     tools.run_asv_with_conf(conf, 'run', "master~5..master", '--steps=2',
                             '--quick', '--show-stderr', '--profile',
                             '-a', 'warmup_time=0',
+                            '--durations=5',
                             _machine_file=machine_file)
     text, err = capfd.readouterr()
 
     assert len(os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))) == 5
     assert len(os.listdir(join(tmpdir, 'results_workflow'))) == 2
     assert 'asv: benchmark timed out (timeout 0.1s)' in text
+    assert 'total duration' in text
 
     tools.run_asv_with_conf(conf, 'publish')
 

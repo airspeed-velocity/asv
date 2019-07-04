@@ -102,7 +102,7 @@ def skip_benchmarks(benchmarks, env, results=None):
             results.add_result(benchmark, r,
                                selected_idx=benchmarks.benchmark_selection.get(name),
                                started_at=started_at,
-                               ended_at=datetime.datetime.utcnow())
+                               duration=0)
 
     return results
 
@@ -230,6 +230,8 @@ def run_benchmarks(benchmarks, env, results=None,
     else:
         previous_result_keys = set()
 
+    benchmark_durations = {}
+
     log.info("Benchmarking {0}".format(env.name))
 
     partial_info_time = None
@@ -265,7 +267,7 @@ def run_benchmarks(benchmarks, env, results=None,
                 results.add_result(benchmark, res,
                                    selected_idx=selected_idx,
                                    started_at=started_at,
-                                   ended_at=datetime.datetime.utcnow(),
+                                   duration=0,
                                    record_samples=record_samples)
                 failed_benchmarks.add(name)
             return results
@@ -316,7 +318,7 @@ def run_benchmarks(benchmarks, env, results=None,
                 results.add_result(benchmark, res,
                                    selected_idx=selected_idx,
                                    started_at=started_at,
-                                   ended_at=datetime.datetime.utcnow(),
+                                   duration=0,
                                    record_samples=record_samples)
                 failed_benchmarks.add(name)
                 continue
@@ -349,11 +351,18 @@ def run_benchmarks(benchmarks, env, results=None,
                                 extra_params=cur_extra_params,
                                 cwd=cache_dir)
 
+            # Retain runtime durations
+            ended_at = datetime.datetime.utcnow()
+            if name in benchmark_durations:
+                benchmark_durations[name] += (ended_at - started_at).total_seconds()
+            else:
+                benchmark_durations[name] = (ended_at - started_at).total_seconds()
+
             # Save result
             results.add_result(benchmark, res,
                                selected_idx=selected_idx,
                                started_at=started_at,
-                               ended_at=datetime.datetime.utcnow(),
+                               duration=benchmark_durations[name],
                                record_samples=(not is_final or record_samples),
                                append_samples=(name in previous_result_keys))
 

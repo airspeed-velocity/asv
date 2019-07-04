@@ -33,8 +33,8 @@
     "started_at": {
         "time_quantity.time_quantity_array_conversion": 1
     },
-    "ended_at": {
-        "time_quantity.time_quantity_array_conversion": 2
+    "duration": {
+        "time_quantity.time_quantity_array_conversion": 1
     },
     "version": 1
 }

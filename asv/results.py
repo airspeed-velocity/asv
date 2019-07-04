@@ -238,7 +238,7 @@ class Results(object):
         self._python = python
         self._env_name = env_name
         self._started_at = {}
-        self._ended_at = {}
+        self._duration = {}
         self._benchmark_version = {}
         self._env_vars = env_vars
 
@@ -277,8 +277,8 @@ class Results(object):
         return self._started_at
 
     @property
-    def ended_at(self):
-        return self._ended_at
+    def duration(self):
+        return self._duration
 
     @property
     def benchmark_version(self):
@@ -413,7 +413,7 @@ class Results(object):
 
         # Remove run times (may be missing in old files)
         self._started_at.pop(key, None)
-        self._ended_at.pop(key, None)
+        self._duration.pop(key, None)
 
         # Remove version (may be missing)
         self._benchmark_version.pop(key, None)
@@ -432,7 +432,7 @@ class Results(object):
                 self._samples[key][j] = None
 
     def add_result(self, benchmark, result,
-                   started_at=None, ended_at=None,
+                   started_at=None, duration=None,
                    record_samples=False,
                    append_samples=False,
                    selected_idx=None):
@@ -450,8 +450,8 @@ class Results(object):
         started_at : datetime.datetime, optional
             Benchmark start time.
 
-        ended_at : datetime.datetime, optional
-            Benchmark end time.
+        duration : float, optional
+            Benchmark total duration in seconds.
 
         record_samples : bool, optional
             Whether to save samples.
@@ -472,9 +472,6 @@ class Results(object):
 
         if started_at is None:
             started_at = datetime.datetime.utcnow()
-
-        if ended_at is None:
-            ended_at = started_at
 
         new_stats = [None] * len(new_result)
 
@@ -529,7 +526,10 @@ class Results(object):
 
         self._benchmark_params[benchmark_name] = benchmark['params'] if benchmark['params'] else []
         self._started_at[benchmark_name] = util.datetime_to_js_timestamp(started_at)
-        self._ended_at[benchmark_name] = util.datetime_to_js_timestamp(ended_at)
+        if duration is None:
+            self._duration.pop(benchmark_name, None)
+        else:
+            self._duration[benchmark_name] = float(duration)
         self._benchmark_version[benchmark_name] = benchmark_version
 
         self._stderr[benchmark_name] = result.stderr
@@ -608,7 +608,7 @@ class Results(object):
             'python': self._python,
             'profiles': self._profiles,
             'started_at': self._started_at,
-            'ended_at': self._ended_at,
+            'duration': self._duration,
             'benchmark_version': self._benchmark_version,
         }
 
@@ -627,7 +627,7 @@ class Results(object):
             old = self.load(path)
             for dict_name in ('_results', '_samples', '_stats', '_env_vars',
                               '_benchmark_params', '_profiles', '_started_at',
-                              '_ended_at', '_benchmark_version'):
+                              '_duration', '_benchmark_version'):
                 setattr(self, dict_name, getattr(old, dict_name))
 
     @classmethod
@@ -693,7 +693,7 @@ class Results(object):
             obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
 
             obj._started_at = d.get('started_at', {})
-            obj._ended_at = d.get('ended_at', {})
+            obj._duration = d.get('duration', {})
             obj._benchmark_version = d.get('benchmark_version', {})
         except KeyError as exc:
             raise util.UserError(

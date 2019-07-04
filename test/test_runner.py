@@ -34,7 +34,7 @@ ON_PYPY = hasattr(sys, 'pypy_version_info')
 class ResultsWrapper(object):
     tuple_type = collections.namedtuple('tuple_type', ['result', 'stats', 'samples',
                                                        'params', 'stderr', 'errcode',
-                                                       'profile', 'started_at', 'ended_at'])
+                                                       'profile', 'started_at', 'duration'])
 
     def __init__(self, results, benchmarks):
         self.results = results
@@ -58,7 +58,7 @@ class ResultsWrapper(object):
                                profile=(self.results.get_profile(key)
                                         if self.results.has_profile(key) else None),
                                started_at=self.results.started_at[key],
-                               ended_at=self.results.ended_at[key])
+                               duration=self.results.duration[key])
 
 
 @pytest.mark.flaky(reruns=1, reruns_delay=5)
@@ -170,8 +170,7 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     # Check run time timestamps
     for name, result in times.items():
         assert result.started_at >= util.datetime_to_js_timestamp(start_timestamp)
-        assert result.ended_at >= result.started_at
-        assert result.ended_at <= util.datetime_to_js_timestamp(end_timestamp)
+        assert result.duration >= 0
 
 
 def test_quick(benchmarks_fixture):

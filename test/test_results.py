@@ -19,7 +19,7 @@ def test_results(tmpdir):
     tmpdir = six.text_type(tmpdir)
 
     timestamp1 = datetime.datetime.utcnow()
-    timestamp2 = datetime.datetime.utcnow()
+    duration = 1.5
 
     resultsdir = join(tmpdir, "results")
     for i in six.moves.xrange(10):
@@ -58,7 +58,7 @@ def test_results(tmpdir):
                                        stderr='')
             benchmark = {'name': key, 'version': val['version'], 'params': val['params']}
             r.add_result(benchmark, v, record_samples=True,
-                         started_at=timestamp1, ended_at=timestamp2)
+                         started_at=timestamp1, duration=duration)
 
         # Save / add_existing_results roundtrip
         r.save(resultsdir)
@@ -83,7 +83,7 @@ def test_results(tmpdir):
             assert rr._samples == r._samples
             assert rr._profiles == r._profiles
             assert rr.started_at == r._started_at
-            assert rr.ended_at == r._ended_at
+            assert rr.duration == r._duration
             assert rr.benchmark_version == r._benchmark_version
 
         # Check the get_* methods
@@ -159,7 +159,7 @@ def test_json_timestamp(tmpdir):
 
     stamp0 = datetime.datetime(1970, 1, 1)
     stamp1 = datetime.datetime(1971, 1, 1)
-    stamp2 = datetime.datetime.utcnow()
+    duration = 1.5
 
     r = results.Results({'machine': 'mach'},
                         {},
@@ -177,12 +177,12 @@ def test_json_timestamp(tmpdir):
         stderr=''
     )
     benchmark = {'name': 'some_benchmark', 'version': 'some version', 'params': []}
-    r.add_result(benchmark, value, started_at=stamp1, ended_at=stamp2)
+    r.add_result(benchmark, value, started_at=stamp1, duration=duration)
     r.save(tmpdir)
 
     r = util.load_json(join(tmpdir, 'mach', 'aaaa-env.json'))
     assert r['started_at']['some_benchmark'] == util.datetime_to_js_timestamp(stamp1)
-    assert r['ended_at']['some_benchmark'] == util.datetime_to_js_timestamp(stamp2)
+    assert r['duration']['some_benchmark'] == duration
 
 
 def test_iter_results(capsys, tmpdir):
