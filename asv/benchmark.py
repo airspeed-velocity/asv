@@ -1103,8 +1103,23 @@ def main_check(args):
     sys.exit(0 if ok else 1)
 
 
+def set_cpu_affinity_from_params(extra_params):
+    affinity_list = extra_params.get('cpu_affinity', None)
+    if affinity_list is not None:
+        try:
+            set_cpu_affinity(affinity_list)
+        except BaseException as exc:
+            print("asv: setting cpu affinity {!r} failed: {!r}".format(
+                affinity_list, exc))
+
+
 def main_setup_cache(args):
-    (benchmark_dir, benchmark_id) = args
+    (benchmark_dir, benchmark_id, params_str) = args
+
+    extra_params = json.loads(params_str)
+
+    set_cpu_affinity_from_params(extra_params)
+
     benchmark = get_benchmark_from_name(benchmark_dir, benchmark_id)
     cache = benchmark.do_setup_cache()
     with open("cache.pickle", "wb") as fd:
@@ -1116,16 +1131,11 @@ def main_run(args):
 
     extra_params = json.loads(params_str)
 
+    set_cpu_affinity_from_params(extra_params)
+    extra_params.pop('cpu_affinity', None)
+
     if profile_path == 'None':
         profile_path = None
-
-    affinity_list = extra_params.pop('cpu_affinity', None)
-    if affinity_list is not None:
-        try:
-            set_cpu_affinity(affinity_list)
-        except BaseException as exc:
-            print("asv: setting cpu affinity {!r} failed: {!r}".format(
-                affinity_list, exc))
 
     benchmark = get_benchmark_from_name(
         benchmark_dir, benchmark_id, extra_params=extra_params)

@@ -294,8 +294,9 @@ def run_benchmarks(benchmarks, env, results=None,
                 partial_info_time = None
                 short_key = os.path.relpath(setup_cache_key, benchmarks.benchmark_dir)
                 log.info("Setting up {0}".format(short_key), reserve_space=True)
+                params_str = json.dumps({'cpu_affinity': extra_params.get('cpu_affinity')})
                 cache_dir, stderr = spawner.create_setup_cache(
-                    name, setup_cache_timeout[setup_cache_key])
+                    name, setup_cache_timeout[setup_cache_key], params_str)
                 if cache_dir is not None:
                     log.add_padded('ok')
                     cache_dirs[setup_cache_key] = cache_dir
@@ -664,7 +665,7 @@ class Spawner(object):
     def interrupt(self):
         self.interrupted = True
 
-    def create_setup_cache(self, benchmark_id, timeout):
+    def create_setup_cache(self, benchmark_id, timeout, params_str):
         cache_dir = tempfile.mkdtemp()
 
         env_vars = dict(os.environ)
@@ -673,7 +674,7 @@ class Spawner(object):
         out, _, errcode = self.env.run(
             [BENCHMARK_RUN_SCRIPT, 'setup_cache',
              os.path.abspath(self.benchmark_dir),
-             benchmark_id],
+             benchmark_id, params_str],
             dots=False, display_error=False,
             return_stderr=True, valid_return_codes=None,
             redirect_stderr=True,
