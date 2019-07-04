@@ -494,14 +494,19 @@ class Run(Command):
         items.sort(key=lambda x: (-x[1], x[0]))
 
         rows = [["benchmark", "total duration"]]
+        total = 0
 
         for j, (name, duration) in enumerate(items):
             if j >= num_durations:
                 break
             rows.append([name, util.human_time(duration)])
 
+        total = sum(durations.values())
+
         if j >= num_durations:
             rows.append(["...", "..."])
+
+        rows.append(["total", util.human_time(total)])
 
         msg = util.format_text_table(rows, num_headers=1)
         return msg
