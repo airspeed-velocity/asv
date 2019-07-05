@@ -112,6 +112,10 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     assert times['time_secondary.track_value'].profile is not None
     assert isinstance(times['time_examples.time_with_warnings'].stderr, type(''))
     assert times['time_examples.time_with_warnings'].errcode != 0
+    assert times['time_secondary.track_fail_errcode_123'].errcode == 123
+    if hasattr(os, 'kill') and hasattr(os, 'getpid'):
+        expected = -9 if os.name != "nt" else 9
+        assert times['time_secondary.track_fail_signal_9'].errcode == expected
 
     assert times['time_examples.TimeWithBadTimer.time_it'].result == [0.0]
 

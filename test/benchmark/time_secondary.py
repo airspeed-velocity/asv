@@ -56,3 +56,14 @@ def track_environment_value():
         return int(v)
     except (ValueError, TypeError):
         return 0
+
+
+def track_fail_errcode_123():
+    if hasattr(os, '_exit'):
+        os._exit(123)
+    else:
+        sys.exit(123)
+
+
+def track_fail_signal_9():
+    os.kill(os.getpid(), 9)
