@@ -1309,8 +1309,19 @@ def main_run_server(args):
             with io.open(stdout_file, 'r', errors='replace') as f:
                 out = f.read()
 
+            # Emulate subprocess
+            if os.WIFSIGNALED(status):
+                retcode = -os.WTERMSIG(status)
+            elif os.WIFEXITED(status):
+                retcode = os.WEXITSTATUS(status)
+            elif os.WIFSTOPPED(status):
+                retcode = -os.WSTOPSIG(status)
+            else:
+                # shouldn't happen, but fail silently
+                retcode = -128
+
             info = {'out': out,
-                    'errcode': -256 if is_timeout else status}
+                    'errcode': -256 if is_timeout else retcode}
 
             result_text = json.dumps(info)
             if sys.version_info[0] >= 3:
