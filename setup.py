@@ -252,7 +252,7 @@ def run_setup(build_binary=False):
         zip_safe=False,
 
         # py.test testing
-        tests_require=['pytest'],
+        tests_require=['pytest', 'lockfile'],
         cmdclass={'test': PyTest,
                   'build_ext': optional_build_ext,
                   'sdist': sdist_checked},
