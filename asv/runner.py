@@ -101,8 +101,7 @@ def skip_benchmarks(benchmarks, env, results=None):
             r = fail_benchmark(benchmark)
             results.add_result(benchmark, r,
                                selected_idx=benchmarks.benchmark_selection.get(name),
-                               started_at=started_at,
-                               duration=0)
+                               started_at=started_at)
 
     return results
 
@@ -267,7 +266,6 @@ def run_benchmarks(benchmarks, env, results=None,
                 results.add_result(benchmark, res,
                                    selected_idx=selected_idx,
                                    started_at=started_at,
-                                   duration=0,
                                    record_samples=record_samples)
                 failed_benchmarks.add(name)
             return results
@@ -318,7 +316,6 @@ def run_benchmarks(benchmarks, env, results=None,
                 results.add_result(benchmark, res,
                                    selected_idx=selected_idx,
                                    started_at=started_at,
-                                   duration=0,
                                    record_samples=record_samples)
                 failed_benchmarks.add(name)
                 continue
