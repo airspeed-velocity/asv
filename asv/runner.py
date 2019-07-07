@@ -292,8 +292,7 @@ def run_benchmarks(benchmarks, env, results=None,
                 cache_dir = cache_dirs[setup_cache_key]
             elif setup_cache_key not in failed_setup_cache:
                 partial_info_time = None
-                short_key = os.path.relpath(setup_cache_key, benchmarks.benchmark_dir)
-                log.info("Setting up {0}".format(short_key), reserve_space=True)
+                log.info("Setting up {0}".format(setup_cache_key), reserve_space=True)
                 params_str = json.dumps({'cpu_affinity': extra_params.get('cpu_affinity')})
                 cache_dir, stderr = spawner.create_setup_cache(
                     name, setup_cache_timeout[setup_cache_key], params_str)
