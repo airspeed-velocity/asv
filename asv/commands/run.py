@@ -8,7 +8,7 @@ import os
 import sys
 import logging
 import traceback
-import itertools
+import time
 import argparse
 import textwrap
 
@@ -28,18 +28,23 @@ from .. import environment
 from .. import util
 
 from .setup import Setup
+from .show import Show
 
 from . import common_args
 
 
 def _do_build(args):
     env, conf, repo, commit_hash = args
+    started_at = time.time()
+    success = False
     try:
         with log.set_level(logging.WARN):
             env.install_project(conf, repo, commit_hash)
+        success = True
     except util.ProcessError:
-        return (env.name, False)
-    return (env.name, True)
+        pass
+    duration = time.time() - started_at
+    return (env.name, (success, duration))
 
 
 def _do_build_multiprocess(args_sets):
@@ -351,6 +356,8 @@ class Run(Command):
                     for commit_hash in commit_hashes:
                         yield run_rounds, commit_hash
 
+        build_durations = defaultdict(lambda: 0)
+
         for run_rounds, commit_hash in iter_rounds_commits():
             if commit_hash in skipped_benchmarks:
                 for env in environments:
@@ -396,18 +403,19 @@ class Run(Command):
 
                 for subenv in util.iter_chunks(active_environments, parallel):
 
-                    successes = dict([(env.name, env.installed_commit_hash == commit_hash)
+                    successes = dict([(env.name, (env.installed_commit_hash == commit_hash, 0))
                                       for env in subenv])
 
-                    subenv_name = ', '.join([x.name for x in subenv
-                                             if not successes.get(env.name)])
+                    env_to_install = [env for env in subenv
+                                      if env.installed_commit_hash != commit_hash]
+
+                    subenv_name = ', '.join([x.name for x in env_to_install])
 
                     if subenv_name:
                         log.info("Building for {0}".format(subenv_name))
 
                     with log.indent():
-                        args = [(env, conf, repo, commit_hash) for env in subenv
-                                if not successes.get(env.name)]
+                        args = [(env, conf, repo, commit_hash) for env in env_to_install]
 
                         if parallel != 1:
                             # Parallel run only for environments with different dir_names
@@ -433,7 +441,11 @@ class Run(Command):
                             successes.update(dict(map(_do_build, args)))
 
                     for env in subenv:
-                        success = successes[env.name]
+                        success, duration = successes[env.name]
+
+                        build_duration_key = (commit_hash, env.name)
+                        build_durations[build_duration_key] += duration
+                        build_duration = build_durations[build_duration_key]
 
                         params = dict(machine_params.__dict__)
                         params['python'] = env.python
@@ -461,6 +473,9 @@ class Run(Command):
                         if not skip_save:
                             result.load_data(conf.results_dir)
 
+                        if build_duration != 0:
+                            result.set_build_duration(build_duration)
+
                         # If we are interleaving commits, we need to
                         # append samples (except for the first round)
                         # and record samples (except for the final
@@ -486,7 +501,8 @@ class Run(Command):
                             result.save(conf.results_dir)
 
                         if durations > 0:
-                            log.info(cls.format_durations(result.duration, durations))
+                            duration_set = Show._get_durations([(machine, result)], benchmark_set)
+                            log.info(cls.format_durations(duration_set[(machine, env.name)], durations))
 
     @classmethod
     def format_durations(cls, durations, num_durations):
@@ -498,14 +514,11 @@ class Run(Command):
 
         for j, (name, duration) in enumerate(items):
             if j >= num_durations:
+                rows.append(["...", "..."])
                 break
             rows.append([name, util.human_time(duration)])
 
         total = sum(durations.values())
-
-        if j >= num_durations:
-            rows.append(["...", "..."])
-
         rows.append(["total", util.human_time(total)])
 
         msg = util.format_text_table(rows, num_headers=1)

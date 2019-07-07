@@ -236,6 +236,7 @@
     "time_quantity.time_quantity_array_conversion": {
         "code": "foo\n", 
         "name": "time_quantity.time_quantity_array_conversion", 
+    	"setup_cache_key": "example:21",
         "param_names": [], 
         "params": [], 
         "timeout": 60.0, 

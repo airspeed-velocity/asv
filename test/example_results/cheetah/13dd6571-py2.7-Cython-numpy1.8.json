@@ -34,7 +34,9 @@
         "time_quantity.time_quantity_array_conversion": 1
     },
     "duration": {
-        "time_quantity.time_quantity_array_conversion": 1
+        "time_quantity.time_quantity_array_conversion": 1,
+        "<build>": 2,
+        "<setup_cache example:21>": 3
     },
     "version": 1
 }

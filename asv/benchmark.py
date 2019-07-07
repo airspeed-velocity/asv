@@ -299,8 +299,13 @@ def _get_first_attr(sources, name, default, ignore_case=False):
 def get_setup_cache_key(func):
     if func is None:
         return None
-    return '{0}:{1}'.format(inspect.getsourcefile(func),
-                            inspect.getsourcelines(func)[1])
+
+    module = inspect.getmodule(func)
+    mname = ".".join(module.__name__.split('.', 1)[1:])
+    if not mname:
+        mname = inspect.getsourcefile(func)
+
+    return '{0}:{1}'.format(mname, inspect.getsourcelines(func)[1])
 
 
 def get_source_code(items):
