@@ -4,7 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import datetime
+import os
 from collections import defaultdict
 
 from . import Command
@@ -234,7 +234,14 @@ class Show(Command):
         for machine, result in result_iter:
             total_duration = None
 
-            keys = result.get_result_keys(benchmarks)
+            keys = list(result.get_result_keys(benchmarks))
+            keys += ["<build>"]
+
+            for key in result.get_result_keys(benchmarks):
+                setup_cache_key = benchmarks[key].get('setup_cache_key')
+                if setup_cache_key is not None:
+                    keys.append("<setup_cache {}>".format(setup_cache_key))
+
             for key in keys:
                 duration = result.duration.get(key)
                 if duration is not None:

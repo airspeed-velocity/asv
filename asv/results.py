@@ -280,6 +280,12 @@ class Results(object):
     def duration(self):
         return self._duration
 
+    def set_build_duration(self, value):
+        self._duration["<build>"] = float(value)
+
+    def set_setup_cache_duration(self, setup_cache_key, value):
+        self._duration["<setup_cache {}>".format(setup_cache_key)] = float(value)
+
     @property
     def benchmark_version(self):
         return self._benchmark_version

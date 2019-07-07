@@ -306,6 +306,10 @@ def run_benchmarks(benchmarks, env, results=None,
                             log.error(stderr)
                     failed_setup_cache[setup_cache_key] = stderr
 
+                duration = (datetime.datetime.utcnow() - started_at).total_seconds()
+                results.set_setup_cache_duration(setup_cache_key, duration)
+                started_at = datetime.datetime.utcnow()
+
             if setup_cache_key in failed_setup_cache:
                 # Mark benchmark as failed
                 partial_info_time = None
