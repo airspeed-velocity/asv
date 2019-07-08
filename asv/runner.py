@@ -432,7 +432,7 @@ def log_benchmark_result(results, benchmark, show_stderr=False):
     stderr = results.stderr.get(benchmark['name'])
     errcode = results.errcode.get(benchmark['name'])
 
-    if errcode is not None and errcode != 0:
+    if errcode not in (None, 0, util.TIMEOUT_RETCODE, JSON_ERROR_RETCODE):
         # Display also error code
         if not stderr:
             stderr = ""
