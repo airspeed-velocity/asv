@@ -13,13 +13,14 @@ from asv import config
 from asv import results
 
 from . import tools
+from .tools import example_results
 
 
-def test_rm(tmpdir):
+def test_rm(tmpdir, example_results):
     tmpdir = six.text_type(tmpdir)
 
     shutil.copytree(
-        join(dirname(__file__), 'example_results'),
+        example_results,
         join(tmpdir, 'example_results'))
 
     conf = config.Config.from_json({
