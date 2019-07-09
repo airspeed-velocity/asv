@@ -12,6 +12,7 @@ import zlib
 import itertools
 import hashlib
 import datetime
+import collections
 
 import six
 from six.moves import zip as izip
@@ -588,34 +589,64 @@ class Results(object):
         path = os.path.join(result_dir, self._filename)
 
         results = {}
-        for key in six.iterkeys(self._samples):
-            # Save omitting default values
-            value = {'result': self._results[key]}
-            if self._samples[key] and any(x is not None for x in self._samples[key]):
-                value['samples'] = self._samples[key]
-            if self._stats[key] and any(x is not None for x in self._stats[key]):
-                value['stats'] = self._stats[key]
-            if self._benchmark_params[key]:
-                value['params'] = self._benchmark_params[key]
-            if list(value.keys()) == ['result']:
-                value = value['result']
-                if isinstance(value, list) and len(value) == 1:
-                    value = value[0]
-            results[key] = value
 
-        data = {
-            'results': results,
-            'env_vars': self._env_vars,
-            'params': self._params,
-            'requirements': self._requirements,
-            'commit_hash': self._commit_hash,
-            'date': self._date,
-            'env_name': self._env_name,
-            'python': self._python,
-            'profiles': self._profiles,
+        simple_dict = {
+            'result': self._results,
+            'params': self._benchmark_params,
+            'version': self._benchmark_version,
             'started_at': self._started_at,
             'duration': self._duration,
-            'benchmark_version': self._benchmark_version,
+            'samples': self._samples,
+            'profile': self._profiles,
+        }
+        all_keys = ['result', 'params', 'version', 'started_at', 'duration',
+                    'stats_ci_99_a', 'stats_ci_99_b', 'stats_q_25', 'stats_q_75',
+                    'stats_min', 'stats_max', 'stats_mean', 'stats_std',
+                    'stats_number', 'stats_repeat', 'samples', 'profile']
+
+        for name in six.iterkeys(self._results):
+            row = []
+
+            for key in all_keys:
+                if key in simple_dict:
+                    value = simple_dict[key].get(name)
+                else:
+                    assert key[:6] == 'stats_'
+                    z = self._stats[name]
+                    if z is None:
+                        value = None
+                    else:
+                        value = [x.get(key[6:]) if x is not None else None
+                                 for x in z]
+
+                if key != 'params':
+                    if isinstance(value, list) and all(x is None for x in value):
+                        value = None
+                    value = util.truncate_float_list(value)
+
+                row.append(value)
+
+            while row and row[-1] is None:
+                row.pop()
+
+            results[name] = row
+
+        other_durations = {}
+        for key, value in six.iteritems(self._duration):
+            if key.startswith('<'):
+                other_durations[key] = value
+
+        data = {
+            'commit_hash': self._commit_hash,
+            'env_name': self._env_name,
+            'date': self._date,
+            'params': self._params,
+            'python': self._python,
+            'requirements': self._requirements,
+            'env_vars': self._env_vars,
+            'result_keys': all_keys,
+            'results': results,
+            'durations': other_durations,
         }
 
         util.write_json(path, data, self.api_version, compact=True)
@@ -659,11 +690,7 @@ class Results(object):
                 d['commit_hash'],
                 d['date'],
                 d['python'],
-                d.get('env_name',
-                      environment.get_env_name('',
-                                               d['python'],
-                                               d['requirements'],
-                                               {})),
+                d['env_name'],
                 d['env_vars'],
             )
 
@@ -671,36 +698,43 @@ class Results(object):
             obj._samples = {}
             obj._stats = {}
             obj._benchmark_params = {}
+            obj._profiles = {}
+            obj._started_at = {}
+            obj._duration = d.get('durations', {})
+            obj._benchmark_version = {}
 
-            for key, value in six.iteritems(d['results']):
-                # Backward compatibility
-                if not isinstance(value, dict):
-                    value = {'result': [value], 'samples': None,
-                             'stats': None, 'params': []}
+            simple_keys = {
+                'result': obj._results,
+                'params': obj._benchmark_params,
+                'version': obj._benchmark_version,
+                'started_at': obj._started_at,
+                'duration': obj._duration,
+                'samples': obj._samples,
+                'profile': obj._profiles,
+            }
 
-                if not isinstance(value['result'], list):
-                    value['result'] = [value['result']]
+            for name, key_values in six.iteritems(d['results']):
+                for key, value in zip(d['result_keys'], key_values):
+                    key_dict = simple_keys.get(key)
+                    if key_dict is not None:
+                        key_dict[name] = value
+                        continue
+                    elif key.startswith('stats_'):
+                        if value is not None:
+                            if name not in obj._stats:
+                                obj._stats[name] = [{}]*len(value)
 
-                if 'stats' in value and not isinstance(value['stats'], list):
-                    value['stats'] = [value['stats']]
+                            stats_key = key[6:]
+                            for j, v in enumerate(value):
+                                obj._stats[name][j][stats_key] = v
+                    else:
+                        raise KeyError("unknown data key {}".format(key))
 
-                value.setdefault('samples', None)
-                value.setdefault('stats', None)
-                value.setdefault('params', [])
+                for key_dict in simple_keys.values():
+                    key_dict.setdefault(name, None)
+                obj._stats.setdefault(name, None)
 
-                # Assign results
-                obj._results[key] = value['result']
-                obj._samples[key] = value['samples']
-                obj._stats[key] = value['stats']
-                obj._benchmark_params[key] = value['params']
-
-            if 'profiles' in d:
-                obj._profiles = d['profiles']
             obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
-
-            obj._started_at = d.get('started_at', {})
-            obj._duration = d.get('duration', {})
-            obj._benchmark_version = d.get('benchmark_version', {})
         except KeyError as exc:
             raise util.UserError(
                 "Error loading results file '{0}': missing key {1}".format(
@@ -727,6 +761,10 @@ class Results(object):
     @property
     def env_name(self):
         return self._env_name
+
+    #
+    # Old data format support
+    #
 
     @classmethod
     def update_to_2(cls, d):
