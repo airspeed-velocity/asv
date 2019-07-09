@@ -31,14 +31,12 @@ class Update(Command):
         return parser
 
     @classmethod
-    def run_from_args(cls, args, _machine_file=None):
-        return cls.run(args.config, _machine_file=_machine_file)
+    def run_from_conf_args(cls, conf, args, _machine_file=None):
+        return cls.run(conf, _machine_file=_machine_file)
 
     @classmethod
-    def run(cls, config_path, _machine_file=None):
+    def run(cls, conf, _machine_file=None):
         MachineCollection.update(_path=_machine_file)
-
-        conf = Config.load(config_path)
 
         log.info("Updating results data...")
 
@@ -50,7 +48,12 @@ class Update(Command):
                 elif filename == "benchmarks.json":
                     pass
                 elif filename.endswith('.json'):
-                    Results.update(path)
+                    try:
+                        Results.update(path)
+                    except util.UserError as err:
+                        # Conversion failed: just skip the file
+                        log.warning("{}: {}".format(path, err))
+                        continue
 
                     # Rename files if necessary
                     m = re.match(r'^([0-9a-f]+)-(.*)\.json$', os.path.basename(path), re.I)
