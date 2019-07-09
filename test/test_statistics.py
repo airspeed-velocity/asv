@@ -42,7 +42,7 @@ def test_compute_stats():
 
     assert statistics.compute_stats([], 1) == (None, None)
     assert statistics.compute_stats([15.0], 1) == (
-        15.0, {'ci_99': [-inf, inf], 'max': 15.0, 'mean': 15.0, 'min': 15.0,
+        15.0, {'ci_99_a': -inf, 'ci_99_b': inf, 'max': 15.0, 'mean': 15.0, 'min': 15.0,
                'number': 1, 'q_25': 15.0, 'q_75': 15.0, 'repeat': 1, 'std': 0.0})
 
     for nsamples, true_mean in product([10, 50, 250], [0, 0.3, 0.6]):
@@ -59,7 +59,7 @@ def test_compute_stats():
         assert np.allclose(stats['std'], np.std(samples, ddof=0))
         assert np.allclose(result, np.median(samples))
 
-        ci = stats['ci_99']
+        ci = stats['ci_99_a'], stats['ci_99_b']
         assert ci[0] <= true_mean <= ci[1]
         w = 12.0 * np.std(samples) / np.sqrt(len(samples))
         assert ci[1] - ci[0] < w
