@@ -601,7 +601,6 @@ class Results(object):
         }
         all_keys = ['result', 'params', 'version', 'started_at', 'duration',
                     'stats_ci_99_a', 'stats_ci_99_b', 'stats_q_25', 'stats_q_75',
-                    'stats_min', 'stats_max', 'stats_mean', 'stats_std',
                     'stats_number', 'stats_repeat', 'samples', 'profile']
 
         for name in six.iterkeys(self._results):
@@ -836,10 +835,6 @@ class Results(object):
                 ('stats_ci_99_b', stats, lambda z: z['ci_99'][1]),
                 ('stats_q_25', stats, lambda z: z.get('q_25')),
                 ('stats_q_75', stats, lambda z: z.get('q_75')),
-                ('stats_min', stats, lambda z: z.get('min')),
-                ('stats_max', stats, lambda z: z.get('max')),
-                ('stats_mean', stats, lambda z: z.get('mean')),
-                ('stats_std', stats, lambda z: z.get('std')),
                 ('stats_number', stats, lambda z: z.get('number')),
                 ('stats_repeat', stats, lambda z: z.get('repeat')),
                 ('samples', samples, None),

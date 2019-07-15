@@ -60,20 +60,12 @@ def compute_stats(samples, number):
         ci_50 = (a, b)
 
     # Produce results
-    mean = sum(Y) / len(Y)
-    var = sum((yp - mean)**2 for yp in Y) / len(Y)   # mle
-    std = math.sqrt(var)
-
     result = y_50
 
     stats = {'ci_99_a': ci_50[0],
              'ci_99_b': ci_50[1],
              'q_25': y_25,
              'q_75': y_75,
-             'min': min(Y),
-             'max': max(Y),
-             'mean': mean,
-             'std': std,
              'repeat': len(Y),
              'number': number}
 
