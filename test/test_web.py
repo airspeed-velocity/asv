@@ -83,7 +83,7 @@ def _rebuild_basic_html(basedir):
         })
 
         tools.run_asv_with_conf(conf, 'run', 'ALL',
-                                '--show-stderr', '--quick', '--bench=params_examples.*track_.*',
+                                '--show-stderr', '--quick', '--bench=params_examples[a-z0-9_.]*track_',
                                 _machine_file=machine_file)
 
         # Swap CPU info and obtain some results
@@ -97,7 +97,7 @@ def _rebuild_basic_html(basedir):
         util.write_json(machine_file, info, api_version=1)
 
         tools.run_asv_with_conf(conf, 'run', 'master~10..', '--steps=3',
-                                '--show-stderr', '--quick', '--bench=params_examples.*track_.*',
+                                '--show-stderr', '--quick', '--bench=params_examples[a-z0-9_.]*track_',
                                 _machine_file=machine_file)
 
         # Output
