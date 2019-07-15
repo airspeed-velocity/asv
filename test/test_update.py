@@ -46,7 +46,7 @@ def test_update_simple(monkeypatch, generate_result_dir):
 
     # Should succeed
     monkeypatch.chdir(basedir)
-    tools.run_asv("update", _machine_file=machine_file)
+    tools.run_asv_with_conf(conf, "update", _machine_file=machine_file)
 
     # Check file rename
     items = [fn.lower() for fn in os.listdir(machine_dir)]

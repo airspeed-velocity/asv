@@ -176,16 +176,19 @@ def test_run_build_failure(basic_conf):
     data_ok = util.load_json(fn_ok)
 
     for data in (data_broken, data_ok):
-        assert data['started_at'][bench_name] >= timestamp
+        value = dict(zip(data['result_keys'], data['results'][bench_name]))
+        assert value['started_at'] >= timestamp
         if data is data_broken:
-            assert bench_name not in data['duration']
+            assert 'duration' not in value
         else:
-            assert data['duration'][bench_name] >= 0
+            assert value['duration'] >= 0
 
     assert len(data_broken['results']) == 1
     assert len(data_ok['results']) == 1
-    assert data_broken['results'][bench_name] is None
-    assert data_ok['results'][bench_name] == 42.0
+    assert data_broken['result_keys'][0] == 'result'
+    assert data_ok['result_keys'][0] == 'result'
+    assert data_broken['results'][bench_name][0] is None
+    assert data_ok['results'][bench_name][0] == [42.0]
 
     # Check that parameters were also saved
     assert data_broken['params'] == data_ok['params']
@@ -211,8 +214,10 @@ def test_run_with_repo_subdir(basic_conf_with_subdir):
     fn_results, = glob.glob(join(tmpdir, 'results_workflow', 'orangutan',
                                  '*-*.json'))  # avoid machine.json
     data = util.load_json(fn_results)
-    assert data['results'][bench_name] == {'params': [['1', '2']],
-                                           'result': [6, 6]}
+
+    value = dict(zip(data['result_keys'], data['results'][bench_name]))
+    assert value['params'] == [['1', '2']]
+    assert value['result'] == [6, 6]
 
 
 def test_benchmark_param_selection(basic_conf):
@@ -228,9 +233,10 @@ def test_benchmark_param_selection(basic_conf):
         results = util.load_json(glob.glob(join(
             tmpdir, 'results_workflow', 'orangutan', '*-*.json'))[0])
         # replacing NaN by 'n/a' make assertions easier
+        keys = results['result_keys']
+        value = dict(zip(keys, results['results']['params_examples.track_param_selection']))
         return ['n/a' if util.is_nan(item) else item
-                for item in results['results'][
-                    'params_examples.track_param_selection']['result']]
+                for item in value['result']]
 
     assert get_results() == [4, 'n/a', 5, 'n/a']
     tools.run_asv_with_conf(conf, 'run', '--show-stderr',
@@ -263,12 +269,14 @@ def test_run_append_samples(basic_conf):
                   if fn != 'machine.json']
 
     data = util.load_json(result_fn)
-    assert data['results']['time_examples.TimeSuite.time_example_benchmark_1']['stats'][0] is not None
-    assert len(data['results']['time_examples.TimeSuite.time_example_benchmark_1']['samples'][0]) == 1
+    value = dict(zip(data['result_keys'], data['results']['time_examples.TimeSuite.time_example_benchmark_1']))
+    assert value['stats_q_25'][0] is not None
+    assert len(value['samples'][0]) == 1
 
     run_it()
     data = util.load_json(result_fn)
-    assert len(data['results']['time_examples.TimeSuite.time_example_benchmark_1']['samples'][0]) == 2
+    value = dict(zip(data['result_keys'], data['results']['time_examples.TimeSuite.time_example_benchmark_1']))
+    assert len(value['samples'][0]) == 2
 
 
 def test_cpu_affinity(basic_conf):
@@ -311,10 +319,11 @@ def test_env_matrix_value(basic_conf):
         result_fn2, = glob.glob(result_dir + '/*-SOME_TEST_VAR2.json')
 
         data = util.load_json(result_fn1)
-        assert data['results']['time_secondary.track_environment_value'] == 1
+        assert data['result_keys'][0] == 'result'
+        assert data['results']['time_secondary.track_environment_value'][0] == [1]
 
         data = util.load_json(result_fn2)
-        assert data['results']['time_secondary.track_environment_value'] == 2
+        assert data['results']['time_secondary.track_environment_value'][0] == [2]
 
     check_env_matrix({}, {'SOME_TEST_VAR': ['1', '2']})
     check_env_matrix({'SOME_TEST_VAR': ['1', '2']}, {})
