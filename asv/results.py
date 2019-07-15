@@ -622,6 +622,8 @@ class Results(object):
                 if key != 'params':
                     if isinstance(value, list) and all(x is None for x in value):
                         value = None
+
+                if key.startswith('stats_') or key == 'duration':
                     value = util.truncate_float_list(value)
 
                 row.append(value)
@@ -863,7 +865,8 @@ class Results(object):
                         else:
                             value = key_getter(value)
 
-                    value = util.truncate_float_list(value)
+                    if key_name.startswith('stats_') or key_name == 'duration':
+                        value = util.truncate_float_list(value)
 
                     if key_name == 'params' and value is None:
                         value = []

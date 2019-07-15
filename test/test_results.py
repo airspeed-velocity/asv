@@ -92,9 +92,9 @@ def test_results(tmpdir):
         r3.load_data(resultsdir)
 
         for rr in [r2, r3]:
-            assert rr._results == _truncate_floats(r._results)
+            assert rr._results == r._results
             assert rr._stats == _truncate_floats(r._stats)
-            assert rr._samples == _truncate_floats(r._samples)
+            assert rr._samples == r._samples
             assert rr._profiles == r._profiles
             assert rr.started_at == r._started_at
             assert rr.duration == _truncate_floats(r._duration)
@@ -106,8 +106,8 @@ def test_results(tmpdir):
             # Get with same parameters as stored
             params = r2.get_result_params(bench)
             assert params == values[bench]['params']
-            assert r2.get_result_value(bench, params) == _truncate_floats(values[bench]['result'])
-            assert r2.get_result_samples(bench, params) == _truncate_floats(values[bench]['samples'])
+            assert r2.get_result_value(bench, params) == values[bench]['result']
+            assert r2.get_result_samples(bench, params) == values[bench]['samples']
             stats = r2.get_result_stats(bench, params)
             if values[bench]['number'][0] is None:
                 assert stats == [None]
