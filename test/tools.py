@@ -472,21 +472,24 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
 
     benchmark_version = sha256(os.urandom(16)).hexdigest()
 
-    params = None
+    params = []
     param_names = None
     for commit, value in values.items():
         if isinstance(value, dict):
             params = value["params"]
+            value = value["result"]
+        else:
+            value = [value]
         result = Results({"machine": "tarzan"}, {}, commit,
                          repo.get_date_from_name(commit), "2.7", None, {})
         value = runner.BenchmarkResult(
-            result=[value],
-            samples=[None],
-            number=[None],
+            result=value,
+            samples=[None]*len(value),
+            number=[None]*len(value),
             errcode=0,
             stderr='',
             profile=None)
-        result.add_result({"name": "time_func", "version": benchmark_version, "params": []},
+        result.add_result({"name": "time_func", "version": benchmark_version, "params": params},
                           value, started_at=timestamp, duration=1.0)
         result.save(result_dir)
 
