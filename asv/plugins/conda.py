@@ -22,11 +22,12 @@ WIN = (os.name == "nt")
 # Conda (as of version 4.7.5) is not safe to run in parallel.
 # See https://github.com/conda/conda/issues/8870
 # Hence, serialize the calls to it.
-_conda_main_lock = multiprocessing.Lock()
+
+util.new_multiprocessing_lock("conda_lock")
 
 def _conda_lock():
     # function; for easier monkeypatching
-    return _conda_main_lock
+    return util.get_multiprocessing_lock("conda_lock")
 
 
 @contextlib.contextmanager

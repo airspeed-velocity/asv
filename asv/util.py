@@ -26,6 +26,7 @@ import stat
 import shlex
 import operator
 import collections
+import multiprocessing
 
 import six
 from six.moves import xrange
@@ -1351,6 +1352,30 @@ def interpolate_command(command, variables):
         break
 
     return result, env, return_codes, cwd
+
+
+_global_locks = {}
+
+
+def _init_global_locks(lock_dict):
+    """Initialize global locks in a new multiprocessing process"""
+    _global_locks.update(lock_dict)
+
+
+def new_multiprocessing_lock(name):
+    """Create a new global multiprocessing lock"""
+    _global_locks[name] = multiprocessing.Lock()
+
+
+def get_multiprocessing_lock(name):
+    """Get an existing global multiprocessing lock"""
+    return _global_locks[name]
+
+
+def get_multiprocessing_pool(parallel=None):
+    """Create a multiprocessing.Pool, managing global locks properly"""
+    return multiprocessing.Pool(initializer=_init_global_locks,
+                                initargs=(_global_locks,))
 
 
 try:

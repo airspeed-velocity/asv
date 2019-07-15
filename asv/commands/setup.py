@@ -76,7 +76,7 @@ class Setup(Command):
                     for env in environments:
                         environment_groups[env.dir_name].append(env)
 
-                    pool = multiprocessing.Pool(parallel)
+                    pool = util.get_multiprocessing_pool(parallel)
                     try:
                         pool.map(_create_parallel, environment_groups.values())
                         pool.close()

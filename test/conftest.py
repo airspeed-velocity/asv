@@ -28,10 +28,12 @@ def _monkeypatch_conda_lock(config):
         return
 
     import lockfile
+    import asv.util
 
     @contextlib.contextmanager
     def _conda_lock():
-        with asv.plugins.conda._conda_main_lock, lockfile.LockFile(str(path)):
+        conda_lock = asv.util.get_multiprocessing_lock("conda_lock")
+        with conda_lock, lockfile.LockFile(str(path)):
             yield
 
     path = config.cache.makedir('conda-lock') / 'lock'

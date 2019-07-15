@@ -425,7 +425,7 @@ class Run(Command):
                             args_sets = args_sets.values()
 
                             try:
-                                pool = multiprocessing.Pool(parallel)
+                                pool = util.get_multiprocessing_pool(parallel)
                                 try:
                                     res = []
                                     for r in pool.map(_do_build_multiprocess, args_sets):
