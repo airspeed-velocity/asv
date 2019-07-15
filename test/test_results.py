@@ -195,7 +195,7 @@ def test_json_timestamp(tmpdir):
     r.save(tmpdir)
 
     r = util.load_json(join(tmpdir, 'mach', 'aaaa-env.json'))
-    keys = r['result_keys']
+    keys = r['result_columns']
     values = dict(zip(keys, r['results']['some_benchmark']))
     assert values['started_at'] == util.datetime_to_js_timestamp(stamp1)
     assert values['duration'] == duration

@@ -123,7 +123,7 @@ A benchmark suite directory has the following layout.  The
 
       - ``durations``: Duration information for build and setup-cache timings.
 
-      - ``result_keys``: List of column names for the ``results`` dictionary.
+      - ``result_columns``: List of column names for the ``results`` dictionary.
         It is ``["result", "samples", "params", "started_at", "duration",
         "version", "profile", "stats_ci_99_a", "stats_ci_99_b", "stats_q_25",
         "stats_q_75", "stats_min", "stats_max", "stats_mean", "stats_std",

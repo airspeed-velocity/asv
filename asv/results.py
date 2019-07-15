@@ -646,7 +646,7 @@ class Results(object):
             'python': self._python,
             'requirements': self._requirements,
             'env_vars': self._env_vars,
-            'result_keys': all_keys,
+            'result_columns': all_keys,
             'results': results,
             'durations': other_durations,
         }
@@ -716,7 +716,7 @@ class Results(object):
             }
 
             for name, key_values in six.iteritems(d['results']):
-                for key, value in zip(d['result_keys'], key_values):
+                for key, value in zip(d['result_columns'], key_values):
                     key_dict = simple_keys.get(key)
                     if key_dict is not None:
                         key_dict[name] = value
@@ -850,7 +850,7 @@ class Results(object):
             for key_dict in (results, benchmark_params):
                 names.update(key_dict.keys())
 
-            d2['result_keys'] = [x[0] for x in getters]
+            d2['result_columns'] = [x[0] for x in getters]
             d2['results'] = {}
 
             for name in sorted(names):

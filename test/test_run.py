@@ -176,7 +176,7 @@ def test_run_build_failure(basic_conf):
     data_ok = util.load_json(fn_ok)
 
     for data in (data_broken, data_ok):
-        value = dict(zip(data['result_keys'], data['results'][bench_name]))
+        value = dict(zip(data['result_columns'], data['results'][bench_name]))
         assert value['started_at'] >= timestamp
         if data is data_broken:
             assert 'duration' not in value
@@ -185,8 +185,8 @@ def test_run_build_failure(basic_conf):
 
     assert len(data_broken['results']) == 1
     assert len(data_ok['results']) == 1
-    assert data_broken['result_keys'][0] == 'result'
-    assert data_ok['result_keys'][0] == 'result'
+    assert data_broken['result_columns'][0] == 'result'
+    assert data_ok['result_columns'][0] == 'result'
     assert data_broken['results'][bench_name][0] is None
     assert data_ok['results'][bench_name][0] == [42.0]
 
@@ -215,7 +215,7 @@ def test_run_with_repo_subdir(basic_conf_with_subdir):
                                  '*-*.json'))  # avoid machine.json
     data = util.load_json(fn_results)
 
-    value = dict(zip(data['result_keys'], data['results'][bench_name]))
+    value = dict(zip(data['result_columns'], data['results'][bench_name]))
     assert value['params'] == [['1', '2']]
     assert value['result'] == [6, 6]
 
@@ -233,7 +233,7 @@ def test_benchmark_param_selection(basic_conf):
         results = util.load_json(glob.glob(join(
             tmpdir, 'results_workflow', 'orangutan', '*-*.json'))[0])
         # replacing NaN by 'n/a' make assertions easier
-        keys = results['result_keys']
+        keys = results['result_columns']
         value = dict(zip(keys, results['results']['params_examples.track_param_selection']))
         return ['n/a' if util.is_nan(item) else item
                 for item in value['result']]
@@ -269,13 +269,13 @@ def test_run_append_samples(basic_conf):
                   if fn != 'machine.json']
 
     data = util.load_json(result_fn)
-    value = dict(zip(data['result_keys'], data['results']['time_examples.TimeSuite.time_example_benchmark_1']))
+    value = dict(zip(data['result_columns'], data['results']['time_examples.TimeSuite.time_example_benchmark_1']))
     assert value['stats_q_25'][0] is not None
     assert len(value['samples'][0]) == 1
 
     run_it()
     data = util.load_json(result_fn)
-    value = dict(zip(data['result_keys'], data['results']['time_examples.TimeSuite.time_example_benchmark_1']))
+    value = dict(zip(data['result_columns'], data['results']['time_examples.TimeSuite.time_example_benchmark_1']))
     assert len(value['samples'][0]) == 2
 
 
@@ -319,7 +319,7 @@ def test_env_matrix_value(basic_conf):
         result_fn2, = glob.glob(result_dir + '/*-SOME_TEST_VAR2.json')
 
         data = util.load_json(result_fn1)
-        assert data['result_keys'][0] == 'result'
+        assert data['result_columns'][0] == 'result'
         assert data['results']['time_secondary.track_environment_value'][0] == [1]
 
         data = util.load_json(result_fn2)
