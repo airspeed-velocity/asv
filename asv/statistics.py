@@ -93,12 +93,15 @@ def get_weight(stats):
     """
     Return a data point weight for the result.
     """
-    if stats is None or 'ci_99_a' not in stats or 'ci_99_b' not in stats:
+    if stats is None:
+        return None
+
+    a = stats.get('ci_99_a')
+    b = stats.get('ci_99_b')
+    if a is None or b is None:
         return None
 
     try:
-        a = stats['ci_99_a']
-        b = stats['ci_99_b']
         return 2 / abs(b - a)
     except ZeroDivisionError:
         return None
@@ -139,6 +142,9 @@ def is_different(samples_a, samples_b, stats_a, stats_b, p_threshold=0.002):
     # 0.00027 <= p <= 0.01.
     ci_a = (stats_a['ci_99_a'], stats_a['ci_99_b'])
     ci_b = (stats_b['ci_99_a'], stats_b['ci_99_b'])
+
+    if None in ci_a or None in ci_b:
+        return (ci_a != ci_b)
 
     if ci_a[1] >= ci_b[0] and ci_a[0] <= ci_b[1]:
         return False
