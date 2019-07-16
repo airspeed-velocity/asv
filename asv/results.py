@@ -777,10 +777,11 @@ class Results(object):
 
             d2['commit_hash'] = d['commit_hash']
             d2['date'] = d['date']
-            d2['env_name'] = environment.get_env_name('',
-                                                      d['python'],
-                                                      d['requirements'],
-                                                      {})
+            d2['env_name'] = d.get('env_name',
+                                   environment.get_env_name('',
+                                                            d['python'],
+                                                            d['requirements'],
+                                                            {}))
             d2['params'] = d['params']
             d2['python'] = d['python']
             d2['requirements'] = d['requirements']
