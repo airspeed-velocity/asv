@@ -234,7 +234,7 @@ class Publish(Command):
         log.info("Detecting steps")
         with log.indent():
             n_processes = multiprocessing.cpu_count()
-            pool = multiprocessing.Pool(n_processes)
+            pool = util.get_multiprocessing_pool(n_processes)
             try:
                 graphs.detect_steps(pool, dots=log.dot)
                 pool.close()

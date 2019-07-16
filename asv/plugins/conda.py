@@ -6,6 +6,8 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 import re
 import os
 import tempfile
+import contextlib
+import multiprocessing
 
 import six
 
@@ -17,8 +19,25 @@ from .. import util
 WIN = (os.name == "nt")
 
 
+# Conda (as of version 4.7.5) is not safe to run in parallel.
+# See https://github.com/conda/conda/issues/8870
+# Hence, serialize the calls to it.
+
+util.new_multiprocessing_lock("conda_lock")
+
+def _conda_lock():
+    # function; for easier monkeypatching
+    return util.get_multiprocessing_lock("conda_lock")
+
+
+@contextlib.contextmanager
+def _dummy_lock():
+    yield
+
+
 def _find_conda():
-    """Find the conda executable robustly across conda versions.
+    """
+    Find the conda executable robustly across conda versions.
 
     Returns
     -------
@@ -106,28 +125,24 @@ class Conda(environment.Environment):
 
             # Check that the version number is valid
             try:
-                util.check_call([
-                    conda,
-                    'create',
-                    '--yes',
-                    '-p',
-                    path,
-                    'python={0}'.format(python),
-                    '--dry-run'], display_error=False, dots=False)
+                with _conda_lock():
+                    util.check_call([
+                        conda,
+                        'create',
+                        '--yes',
+                        '-p',
+                        path,
+                        'python={0}'.format(python),
+                        '--dry-run'], display_error=False, dots=False)
             except util.ProcessError:
                 return False
             else:
                 return True
 
     def _setup(self):
-        try:
-            conda = _find_conda()
-        except IOError as e:
-            raise util.UserError(str(e))
-
         log.info("Creating conda environment for {0}".format(self.name))
 
-        conda_args, pip_args = self._get_requirements(conda)
+        conda_args, pip_args = self._get_requirements()
         env = dict(os.environ)
         env.update(self.build_env_vars)
 
@@ -156,16 +171,16 @@ class Conda(environment.Environment):
 
             try:
                 env_file_name = self._conda_environment_file or env_file.name
-                util.check_output([conda] + ['env', 'create', '-f', env_file_name,
-                                             '-p', self._path, '--force'], 
-                                  env=env)
+                self._run_conda(['env', 'create', '-f', env_file_name,
+                                 '-p', self._path, '--force'],
+                                env=env)
 
                 if self._conda_environment_file and (conda_args or pip_args):
                     # Add extra packages
                     env_file_name = env_file.name
-                    util.check_output([conda] + ['env', 'update', '-f', env_file_name,
-                                                 '-p', self._path],
-                                      env=env)
+                    self._run_conda(['env', 'update', '-f', env_file_name,
+                                     '-p', self._path],
+                                    env=env)
             except Exception:
                 if env_file_name != env_file.name:
                     log.info("conda env create/update failed: in {} with file {}".format(self._path, env_file_name))
@@ -177,7 +192,7 @@ class Conda(environment.Environment):
         finally:
             os.unlink(env_file.name)
 
-    def _get_requirements(self, conda):
+    def _get_requirements(self):
         if self._requirements:
             # retrieve and return all conda / pip dependencies
             conda_args = []
@@ -199,6 +214,18 @@ class Conda(environment.Environment):
         else:
             return [], []
 
+    def _run_conda(self, args, env=None):
+        """
+        Run conda command outside the environment.
+        """
+        try:
+            conda = _find_conda()
+        except IOError as e:
+            raise util.UserError(str(e))
+
+        with _conda_lock():
+            return util.check_output([conda] + args, env=env)
+
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
         return self.run_executable('python', args, **kwargs)
@@ -207,8 +234,13 @@ class Conda(environment.Environment):
         # Special-case running conda, for user-provided commands
         if executable == "conda":
             executable = _find_conda()
+            lock = _conda_lock
+        else:
+            lock = _dummy_lock
 
         # Conda doesn't guarantee that user site directories are excluded
         kwargs["env"] = dict(kwargs.pop("env", os.environ),
                              PYTHONNOUSERSITE=str("True"))
-        return super(Conda, self).run_executable(executable, args, **kwargs)
+
+        with lock():
+            return super(Conda, self).run_executable(executable, args, **kwargs)

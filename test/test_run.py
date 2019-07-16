@@ -320,7 +320,6 @@ def test_env_matrix_value(basic_conf):
     check_env_matrix({'SOME_TEST_VAR': ['1', '2']}, {})
 
 
-@pytest.mark.xfail(HAS_CONDA, reason="Conda is not parallel-safe, at least on CI")
 def test_parallel(basic_conf, dummy_packages):
     tmpdir, local, conf, machine_file = basic_conf
 

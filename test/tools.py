@@ -684,6 +684,7 @@ def _build_dummy_wheels(tmpdir, wheel_dir, to_build, build_conda=False):
 
 def _build_dummy_conda_pkg(name, version, build_dir, dst):
     # Build fake conda packages for testing
+    from asv.plugins.conda import _conda_lock
 
     build_dir = os.path.abspath(build_dir)
 
@@ -713,9 +714,10 @@ def _build_dummy_conda_pkg(name, version, build_dir, dst):
     conda = _find_conda()
 
     for pyver in [PYTHON_VER1, PYTHON_VER2]:
-        subprocess.check_call([conda, 'build',
-                               '--output-folder=' + dst,
-                               '--no-anaconda-upload',
-                               '--python=' + pyver,
-                               '.'],
-                              cwd=build_dir)
+        with _conda_lock():
+            subprocess.check_call([conda, 'build',
+                                   '--output-folder=' + dst,
+                                   '--no-anaconda-upload',
+                                   '--python=' + pyver,
+                                   '.'],
+                                  cwd=build_dir)
