@@ -727,7 +727,8 @@ class Results(object):
 
                             stats_key = key[6:]
                             for j, v in enumerate(value):
-                                obj._stats[name][j][stats_key] = v
+                                if v is not None:
+                                    obj._stats[name][j][stats_key] = v
                     else:
                         raise KeyError("unknown data key {}".format(key))
 
