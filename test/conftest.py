@@ -10,6 +10,9 @@ def pytest_addoption(parser):
                            "with a return statement with selenium.webdriver object, for "
                            "example 'return Chrome()'"))
 
+    parser.addoption("--sensible-test-order", action="store_true", default=False,
+                     help=("Run tests in 'sensible' order."))
+
 
 def pytest_sessionstart(session):
     os.environ['PIP_NO_INDEX'] = '1'
@@ -29,3 +32,23 @@ def _monkeypatch_conda_lock(config):
 
     path = config.cache.makedir('conda-lock') / 'lock'
     asv.plugins.conda._conda_lock = _conda_lock
+
+
+def pytest_collection_modifyitems(session, config, items):
+    """
+    Reorder tests so that slow fixtures are initialized first
+    """
+    if not config.getoption('sensible_test_order'):
+        return
+
+    order = [
+        "test_workflow.py::test_run_publish",
+    ]
+
+    def sorter(item):
+        for j, name in enumerate(order):
+            if item.nodeid.endswith(name):
+                return -j-1
+        return 0
+
+    items.sort(key=sorter)
