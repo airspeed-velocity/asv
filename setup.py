@@ -178,6 +178,18 @@ class optional_build_ext(build_ext):
             raise BuildFailed()
 
 
+try:
+    # Set default options for setuptools sphinx command;
+    # setup(command_options=...) can't specify two builders
+    from sphinx.setup_command import BuildDoc as BuildDocSphinx
+    class BuildDoc(BuildDocSphinx):
+        def initialize_options(self):
+            super(BuildDoc, self).initialize_options()
+            self.builder = ['html', 'man']
+except ImportError:
+    BuildDoc = None
+
+
 def run_setup(build_binary=False):
     version = get_version()
     git_hash = get_git_hash()
@@ -198,6 +210,13 @@ def run_setup(build_binary=False):
 
     with open('README.rst', 'r') as f:
         long_description = f.read()
+
+    cmdclass = {'test': PyTest,
+                'build_ext': optional_build_ext,
+                'sdist': sdist_checked}
+
+    if BuildDoc is not None:
+        cmdclass['build_sphinx'] = BuildDoc
 
     setup(
         name="asv",
@@ -242,9 +261,7 @@ def run_setup(build_binary=False):
 
         # py.test testing
         tests_require=['pytest', 'lockfile'],
-        cmdclass={'test': PyTest,
-                  'build_ext': optional_build_ext,
-                  'sdist': sdist_checked},
+        cmdclass=cmdclass,
 
         author="Michael Droettboom",
         author_email="mdroe@stsci.edu",
