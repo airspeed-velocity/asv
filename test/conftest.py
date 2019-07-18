@@ -1,5 +1,6 @@
 import os
 import contextlib
+import pytest
 
 
 def pytest_addoption(parser):
@@ -10,10 +11,22 @@ def pytest_addoption(parser):
                            "with a return statement with selenium.webdriver object, for "
                            "example 'return Chrome()'"))
 
+    parser.addoption("--environment-type", action="store", default=None,
+                     choices=("conda", "virtualenv"),
+                     help="environment_type to use in tests by default")
+
 
 def pytest_sessionstart(session):
     os.environ['PIP_NO_INDEX'] = '1'
     _monkeypatch_conda_lock(session.config)
+
+    # Unregister unwanted environment types
+    env_type = session.config.getoption('environment_type')
+    if env_type is not None:
+        import asv.environment, asv.util
+
+        for cls in asv.util.iter_subclasses(asv.environment.Environment):
+            cls.matches_python_fallback = (cls.tool_name in (env_type, "existing"))
 
 
 def _monkeypatch_conda_lock(config):

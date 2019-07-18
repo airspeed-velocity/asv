@@ -10,18 +10,16 @@ import re
 from asv.results import iter_results_for_machine
 
 from . import tools
-from .tools import HAS_CONDA
-from .tools import dummy_packages
+from .tools import dummy_packages, get_default_environment_type
 from .test_workflow import basic_conf
 
 
 def test_continuous(capfd, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
-    if HAS_CONDA:
-        env_spec = ("-E", "conda:{0[0]}.{0[1]}".format(sys.version_info))
-    else:
-        env_spec = ("-E", "virtualenv:{0[0]}.{0[1]}".format(sys.version_info))
+    python = "{0[0]}.{0[1]}".format(sys.version_info)
+    env_type = get_default_environment_type(conf, python)
+    env_spec = ("-E", env_type + ":" + python)
 
     # Check that asv continuous runs
     tools.run_asv_with_conf(conf, 'continuous', "master^", '--show-stderr',
