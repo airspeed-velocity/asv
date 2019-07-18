@@ -564,59 +564,74 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     if WIN:
         start_time = [time.time()]
-        was_timeout = [False]
+        is_timeout = False
 
         def stdout_reader_run():
-            while True:
-                c = proc.stdout.read(1)
-                if not c:
-                    break
-                start_time[0] = time.time()
-                stdout_chunks.append(c)
-                debug_log(c)
+            try:
+                while not is_timeout:
+                    c = proc.stdout.read(1)
+                    if not c:
+                        break
+                    start_time[0] = time.time()
+                    stdout_chunks.append(c)
+                    debug_log(c)
+            finally:
+                proc.stdout.close()
 
         def stderr_reader_run():
-            while True:
-                c = proc.stderr.read(1)
-                if not c:
-                    break
-                start_time[0] = time.time()
-                stderr_chunks.append(c)
-                debug_log(c)
-
-        def watcher_run():
-            while proc.returncode is None:
-                time.sleep(0.1)
-                if timeout is not None and time.time() - start_time[0] > timeout:
-                    was_timeout[0] = True
-                    proc.send_signal(signal.CTRL_BREAK_EVENT)
-
-        watcher = threading.Thread(target=watcher_run)
-        watcher.start()
+            try:
+                while not is_timeout:
+                    c = proc.stderr.read(1)
+                    if not c:
+                        break
+                    start_time[0] = time.time()
+                    stderr_chunks.append(c)
+                    debug_log(c)
+            finally:
+                proc.stderr.close()
 
         stdout_reader = threading.Thread(target=stdout_reader_run)
+        stdout_reader.daemon = True
         stdout_reader.start()
+
+        all_threads = [stdout_reader]
 
         if not redirect_stderr:
             stderr_reader = threading.Thread(target=stderr_reader_run)
+            stderr_reader.daemon = True
             stderr_reader.start()
+            all_threads.append(stderr_reader)
 
-        try:
-            proc.wait()
-        finally:
-            if proc.returncode is None:
-                proc.terminate()
-                proc.wait()
-            watcher.join()
-            if not redirect_stderr:
-                stderr_reader.join()
-            stdout_reader.join()
+        # Wait for reader threads
+        threads = list(all_threads)
+        while threads:
+            thread = threads[0]
 
-            proc.stdout.close()
-            if not redirect_stderr:
-                proc.stderr.close()
+            if timeout is None:
+                remaining = None
+            else:
+                remaining = timeout - (time.time() - start_time[0])
+                if remaining <= 0:
+                    # Timeout; we won't wait for the thread to join here
+                    if not is_timeout:
+                        is_timeout = True
+                        proc.send_signal(signal.CTRL_BREAK_EVENT)
+                    threads.pop(0)
+                    continue
 
-        is_timeout = was_timeout[0]
+            thread.join(remaining)
+            if not thread.is_alive():
+                threads.pop(0)
+
+        if is_timeout:
+            proc.terminate()
+
+            # Wait a bit for the reader threads, if they're alive
+            for thread in all_threads:
+                thread.join(0.1)
+
+        # Wait for process to exit
+        proc.wait()
     else:
         try:
             if posix and is_main_thread():

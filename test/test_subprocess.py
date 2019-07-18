@@ -158,6 +158,13 @@ def test_popen():
     popen.communicate()
 
 
+def test_large_output():
+    # More data than a pipe buffer can hold
+    data = util.check_output([sys.executable, "-c",
+                              "import sys; [sys.stdout.write('x'*1000) for j in range(5000)]"])
+    assert data == 'x'*5000000
+
+
 # This *does* seem to work, only seems untestable somehow...
 # def test_dots(capsys):
 #     code = r"""
