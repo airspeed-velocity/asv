@@ -44,12 +44,6 @@ a URL that ``git`` or ``hg`` know how to clone from, for example:
 
 The repository may be readonly.
 
-.. note::
-
-   Currently, mercurial works only on Python 2, although the interface to
-   Mercurial used in ``asv`` (``python-hglib``) is being ported to Python 3.
-   At the present time, Mercurial support will only function on Python 2.
-
 ``repo_subdir``
 ---------------
 
