@@ -99,7 +99,7 @@ install:
   - $TRAVIS_PYTHON setup.py build_ext -i
 
 script:
-  - $TRAVIS_PYTHON -m pytest -l $COVERAGE -n 3 -v -v --webdriver=FirefoxHeadless --timeout=1800 --timeout-method=thread --durations=100 test
+  - $TRAVIS_PYTHON -m pytest -l $COVERAGE -n 3 -v -v --webdriver=FirefoxHeadless --sensible-test-order --timeout=1800 --timeout-method=thread --durations=100 test
 
 after_script:
   - if [[ "$COVERAGE" != '' ]]; then
