@@ -96,25 +96,11 @@ except ImportError:
 WAIT_TIME = 20.0
 
 
-class DummyLock(object):
-    def __init__(self, filename):
-        pass
-    def acquire(self, timeout=None):
-        pass
-    def release(self):
-        pass
-
-try:
-    from lockfile import LockFile
-except ImportError:
-    LockFile = DummyLock
+from lockfile import LockFile
 
 
 @contextmanager
 def locked_cache_dir(config, cache_key, timeout=900, tag=None):
-    if LockFile is DummyLock:
-        cache_key = cache_key + os.environ.get('PYTEST_XDIST_WORKER', '')
-
     base_dir = config.cache.makedir(cache_key)
 
     lockfile = join(six.text_type(base_dir), 'lock')
