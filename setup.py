@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-import ez_setup
-ez_setup.use_setuptools()
-
 from setuptools import setup, Extension, Command
 from setuptools.command.test import test as TestCommand
 from setuptools.command.sdist import sdist
@@ -194,16 +191,6 @@ def run_setup(build_binary=False):
     write_version_file(os.path.join(basedir, 'asv', '_version.py'),
                        suffix, git_hash)
 
-    # Install entry points for making releases with zest.releaser
-    entry_points = {}
-    for hook in [('releaser', 'middle'), ('postreleaser', 'before')]:
-        hook_ep = 'zest.releaser.' + '.'.join(hook)
-        hook_name = 'asv.release.' + '.'.join(hook)
-        hook_func = 'asv._release:' + '_'.join(hook)
-        entry_points[hook_ep] = ['%s = %s' % (hook_name, hook_func)]
-
-    entry_points['console_scripts'] = ['asv = asv.main:main']
-
     if build_binary:
         ext_modules = [Extension("asv._rangemedian", ["asv/_rangemedian.cpp"])]
     else:
@@ -218,9 +205,7 @@ def run_setup(build_binary=False):
         packages=['asv',
                   'asv.commands',
                   'asv.plugins',
-                  'asv.extern',
-                  'asv._release'],
-        entry_points=entry_points,
+                  'asv.extern'],
         ext_modules = ext_modules,
 
         install_requires=[
@@ -245,6 +230,10 @@ def run_setup(build_binary=False):
                 'template/asv.conf.json',
                 'template/benchmarks/*.py'
             ]
+        },
+
+        entry_points={
+            str('console_scripts'): ['asv = asv.main:main']
         },
 
         python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
