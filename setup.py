@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-import ez_setup
-ez_setup.use_setuptools()
-
 from setuptools import setup, Extension, Command
 from setuptools.command.test import test as TestCommand
 from setuptools.command.sdist import sdist
