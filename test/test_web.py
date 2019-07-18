@@ -29,7 +29,7 @@ except ImportError:
     pass
 
 from . import tools
-from .tools import browser, get_with_retry, WAIT_TIME, locked_cache_dir
+from .tools import browser, get_with_retry, WAIT_TIME, locked_cache_dir, WIN
 
 
 @pytest.fixture(scope="session")
@@ -81,6 +81,13 @@ def _rebuild_basic_html(basedir):
                 '.*': first_tested_commit_hash
             },
         })
+
+        if WIN:
+            # Tell conda to not use hardlinks: on Windows it's not possible
+            # to delete hard links to files in use, which causes problem when
+            # trying to cleanup environments during this test (since the
+            # same cache directory may get reused).
+            conf.matrix["env"]["CONDA_ALWAYS_COPY"] = ["True"]
 
         tools.run_asv_with_conf(conf, 'run', 'ALL',
                                 '--show-stderr', '--quick', '--bench=params_examples[a-z0-9_.]*track_',

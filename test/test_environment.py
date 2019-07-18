@@ -80,8 +80,14 @@ def test_large_environment_matrix(tmpdir):
         env.create()
 
 
-def test_presence_checks(tmpdir):
+def test_presence_checks(tmpdir, monkeypatch):
     conf = config.Config()
+
+    if WIN:
+        # Tell conda to not use hardlinks: on Windows it's not possible
+        # to delete hard links to files in use, which causes problem when
+        # trying to cleanup environments during this test
+        monkeypatch.setenv(str('CONDA_ALWAYS_COPY'), str('True'))
 
     conf.env_dir = six.text_type(tmpdir.join("env"))
 
