@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import sys
 import os
 from os.path import join
 
@@ -20,7 +21,7 @@ from asv import util
 from asv.commands.run import Run
 
 from . import tools
-from .tools import dummy_packages
+from .tools import dummy_packages, WIN
 from .test_workflow import basic_conf, generate_basic_conf
 
 
@@ -322,6 +323,12 @@ def test_env_matrix_value(basic_conf):
 
 def test_parallel(basic_conf, dummy_packages):
     tmpdir, local, conf, machine_file = basic_conf
+
+    if WIN and os.path.basename(sys.argv[0]).lower().startswith('py.test'):
+        # Multiprocessing in spawn mode can result to problems with py.test
+        # Find.run calls Setup.run in parallel mode by default
+        pytest.skip("Multiprocessing spawn mode on Windows not safe to run "
+                    "from py.test runner.")
 
     conf.matrix = {
         "req": dict(conf.matrix),
