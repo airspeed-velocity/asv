@@ -434,7 +434,7 @@ def get_environment_class(conf, python):
         classes.insert(0, cls)
 
     for cls in classes:
-        if cls.matches(python):
+        if cls.matches_python_fallback and cls.matches(python):
             return cls
     raise EnvironmentUnavailable(
         "No way to create environment for python='{0}'".format(python))
@@ -469,6 +469,7 @@ class Environment(object):
     project.
     """
     tool_name = None
+    matches_python_fallback = True
 
     def __init__(self, conf, python, requirements, tagged_env_vars):
         """

@@ -35,6 +35,7 @@ import asv
 from asv import util
 from asv import commands
 from asv import config
+from asv import environment
 from asv import runner
 from asv.commands.preview import create_httpd
 from asv.repo import get_repo
@@ -97,6 +98,10 @@ WAIT_TIME = 20.0
 
 
 from lockfile import LockFile
+
+
+def get_default_environment_type(conf, python):
+    return environment.get_environment_class(conf, python).tool_name
 
 
 @contextmanager

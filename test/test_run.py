@@ -20,7 +20,7 @@ from asv import util
 from asv.commands.run import Run
 
 from . import tools
-from .tools import dummy_packages, HAS_CONDA
+from .tools import dummy_packages
 from .test_workflow import basic_conf, generate_basic_conf
 
 

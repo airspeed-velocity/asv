@@ -22,7 +22,7 @@ from asv.results import iter_results_for_machine
 from asv.util import check_output, which
 
 from . import tools
-from .tools import dummy_packages, HAS_CONDA
+from .tools import dummy_packages, get_default_environment_type
 
 
 dummy_values = [
@@ -150,10 +150,9 @@ def test_run_publish(capfd, basic_conf):
     assert 'Running benchmarks.' not in text
 
     # Check EXISTING and --environment work
-    if HAS_CONDA:
-        env_spec = ("-E", "conda:{0[0]}.{0[1]}".format(sys.version_info))
-    else:
-        env_spec = ("-E", "virtualenv:{0[0]}.{0[1]}".format(sys.version_info))
+    python = "{0[0]}.{0[1]}".format(sys.version_info)
+    env_type = get_default_environment_type(conf, python)
+    env_spec = ("-E", env_type + ":" + python)
     tools.run_asv_with_conf(conf, 'run', "EXISTING", '--quick',
                             '--bench=time_secondary.track_value',
                             *env_spec,
