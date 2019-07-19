@@ -12,21 +12,27 @@ import pytest
 from asv.util import check_output, which
 
 from . import tools
-from .tools import dummy_packages
-from .test_workflow import basic_conf
+from .test_workflow import generate_basic_conf
 
 
 WIN = (os.name == 'nt')
 
 
-def test_find(capfd, basic_conf):
-    tmpdir, local, conf, machine_file = basic_conf
+def test_find(capfd, tmpdir):
+    values = [
+        (None, None),
+        (1, 1),
+        (3, 1),
+        (None, 1),
+        (6, None),
+        (5, 1),
+        (6, 1),
+        (6, 1),
+        (6, 6),
+        (6, 6),
+    ]
 
-    if WIN and os.path.basename(sys.argv[0]).lower().startswith('py.test'):
-        # Multiprocessing in spawn mode can result to problems with py.test
-        # Find.run calls Setup.run in parallel mode by default
-        pytest.skip("Multiprocessing spawn mode on Windows not safe to run "
-                    "from py.test runner.")
+    tmpdir, local, conf, machine_file = generate_basic_conf(tmpdir, values=values, dummy_packages=False)
 
     # Test find at least runs
     tools.run_asv_with_conf(conf, 'find', "master~5..master", "params_examples.track_find_test",
