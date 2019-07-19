@@ -73,7 +73,7 @@ def test_discover_benchmarks(benchmarks_fixture):
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                                        regex='example')
     conf.branches = old_branches
-    assert len(b) == 35
+    assert len(b) == 36
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                               regex='time_example_benchmark_1')
@@ -106,7 +106,7 @@ def test_discover_benchmarks(benchmarks_fixture):
     assert b._benchmark_selection['params_examples.track_param_selection'] == [0, 1, 2, 3]
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
-    assert len(b) == 49
+    assert len(b) == 50
 
     assert 'named.OtherSuite.track_some_func' in b
 

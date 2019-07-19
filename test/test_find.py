@@ -45,3 +45,27 @@ def test_find(capfd, tmpdir):
         [which('git'), 'rev-parse', 'master^'], cwd=conf.repo)
 
     assert "Greatest regression found: {0}".format(regression_hash[:8]) in output
+
+
+@pytest.mark.flaky(reruns=1, reruns_delay=5)  # depends on a timeout
+def test_find_timeout(capfd, tmpdir):
+    values = [
+        (1, 0),
+        (1, 0),
+        (1, -1)
+    ]
+
+    tmpdir, local, conf, machine_file = generate_basic_conf(tmpdir, values=values, dummy_packages=False)
+
+    # Test find at least runs
+    tools.run_asv_with_conf(conf, 'find', "-e", "master", "params_examples.time_find_test_timeout",
+                            _machine_file=machine_file)
+
+    # Check it found the first commit after the initially tested one
+    output, err = capfd.readouterr()
+
+    regression_hash = check_output(
+        [which('git'), 'rev-parse', 'master'], cwd=conf.repo)
+
+    assert "Greatest regression found: {0}".format(regression_hash[:8]) in output
+    assert "asv: benchmark timed out (timeout 1.0s)" in output

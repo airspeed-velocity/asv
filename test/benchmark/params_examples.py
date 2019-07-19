@@ -94,6 +94,17 @@ def track_find_test(n):
 track_find_test.params = [1, 2]
 
 
+def time_find_test_timeout():
+    import asv_test_repo, time
+    if asv_test_repo.dummy_value[1] < 0:
+        time.sleep(100)
+
+time_find_test_timeout.timeout = 1.0
+time_find_test_timeout.repeat = 1
+time_find_test_timeout.number = 1
+time_find_test_timeout.warmup_time = 0
+
+
 def track_param_selection(a, b):
     return a + b
 
