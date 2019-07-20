@@ -548,8 +548,9 @@ class Benchmark(object):
         try:
             for setup in self._setups:
                 setup(*self._current_params)
-        except NotImplementedError:
+        except NotImplementedError as e:
             # allow skipping test
+            print("asv: skipped: {!r} ".format(e))
             return True
         return False
 
