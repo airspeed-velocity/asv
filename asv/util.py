@@ -559,6 +559,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     if log.is_debug_enabled():
         debug_log = DebugLogBuffer(log)
+        dots = False
     else:
         debug_log = lambda c: None
 
