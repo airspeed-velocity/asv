@@ -572,38 +572,26 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         start_time = [time.time()]
         is_timeout = False
 
-        def stdout_reader_run():
+        def stream_reader(stream, buf):
             try:
                 while not is_timeout:
-                    c = proc.stdout.read(1)
+                    c = stream.read(1)
                     if not c:
                         break
                     start_time[0] = time.time()
-                    stdout_chunks.append(c)
+                    buf.append(c)
                     debug_log(c)
             finally:
-                proc.stdout.close()
+                stream.close()
 
-        def stderr_reader_run():
-            try:
-                while not is_timeout:
-                    c = proc.stderr.read(1)
-                    if not c:
-                        break
-                    start_time[0] = time.time()
-                    stderr_chunks.append(c)
-                    debug_log(c)
-            finally:
-                proc.stderr.close()
-
-        stdout_reader = threading.Thread(target=stdout_reader_run)
+        stdout_reader = threading.Thread(target=stream_reader, args=(proc.stdout, stdout_chunks))
         stdout_reader.daemon = True
         stdout_reader.start()
 
         all_threads = [stdout_reader]
 
         if not redirect_stderr:
-            stderr_reader = threading.Thread(target=stderr_reader_run)
+            stderr_reader = threading.Thread(target=stream_reader, args=(proc.stderr, stderr_chunks))
             stderr_reader.daemon = True
             stderr_reader.start()
             all_threads.append(stderr_reader)
