@@ -570,6 +570,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     if WIN:
         start_time = [time.time()]
+        dot_start_time = start_time[0]
         is_timeout = False
 
         def stream_reader(stream, buf):
@@ -612,6 +613,24 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                         proc.send_signal(signal.CTRL_BREAK_EVENT)
                     threads.pop(0)
                     continue
+
+            if dots:
+                dot_remaining = 0.5 - (time.time() - last_dot_time)
+                if dot_remaining <= 0:
+                    # Print a dot only if there has been output
+                    if dot_start_time != start_time[0]:
+                        if dots is True:
+                            log.dot()
+                        elif dots:
+                            dots()
+                        dot_start_time = start_time[0]
+                        last_dot_time = time.time()
+                    dot_remaining = 0.5
+
+                if remaining is None:
+                    remaining = dot_remaining
+                else:
+                    remaining = min(dot_remaining, remaining)
 
             thread.join(remaining)
             if not thread.is_alive():
