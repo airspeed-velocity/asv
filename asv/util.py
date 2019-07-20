@@ -414,8 +414,13 @@ class DebugLogBuffer(object):
         self.first = True
         self.linebreak_re = re.compile(b'.*\n')
         self.log = log
+        self.lock = threading.Lock()
 
     def __call__(self, c):
+        with self.lock:
+            self._process(c)
+
+    def _process(self, c):
         if c is None:
             text = b"".join(self.buf)
             del self.buf[:]
@@ -716,7 +721,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         if not redirect_stderr:
             proc.stderr.close()
 
+    # Flush and disconnect debug log, if any
     debug_log(None)
+    debug_log = lambda c: None
 
     stdout = b''.join(stdout_chunks)
     stderr = b''.join(stderr_chunks)
