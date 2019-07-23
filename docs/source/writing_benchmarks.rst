@@ -170,6 +170,29 @@ The ``setup_cache`` timeout can be specified by setting the
 ``.timeout`` attribute of the ``setup_cache`` function. The default
 value is the maximum of the timeouts of the benchmarks using it.
 
+If the ``setup`` or ``teardown`` of the test function raise an
+exception, the ``finalize_teardown`` method (if it exists) will be
+called with the exception as first argument, and the current
+benchmark parameters as second. The exception is then re-raised.
+
+This method gives you a chance to clean up any side-effects (or
+shared state) of the suite::
+
+  class Suite:
+      def setup(self, *args, **kwargs):
+          if not hasattr(self, '_server'):
+              self._server = MySuperServer()
+              self._server.launch()
+          # other code
+
+      def finalize_teardown(self, exc_info, current_params):
+          if hasattr(self, '_server'):
+              self._server.stop()
+
+Had the ``finalize_teardown`` not stopped the server, ASV would have
+waited until the ``setup`` timeout to go to the next benchmark, since
+a running process was still attached.
+
 .. _benchmark-attributes:
 
 Benchmark attributes
