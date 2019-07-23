@@ -93,15 +93,15 @@ def test_output_timeout():
 import time
 import sys
 for j in range(3):
-    time.sleep(0.5)
     sys.stdout.write('.')
     sys.stdout.flush()
+    time.sleep(1.0)
 """
-    output = util.check_output([sys.executable, "-c", code], timeout=0.75)
+    output = util.check_output([sys.executable, "-c", code], timeout=1.5)
     assert output == '.'*3
 
     try:
-        util.check_output([sys.executable, "-c", code], timeout=0.25)
+        util.check_output([sys.executable, "-c", code], timeout=0.5)
     except util.ProcessError as e:
         assert e.retcode == util.TIMEOUT_RETCODE
     else:
