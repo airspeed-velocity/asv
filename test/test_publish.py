@@ -24,12 +24,12 @@ from asv.repo import get_repo
 
 
 from . import tools
+from .tools import example_results
 
-RESULT_DIR = abspath(join(dirname(__file__), 'example_results'))
 BENCHMARK_DIR = abspath(join(dirname(__file__), 'benchmark'))
 
 
-def test_publish(tmpdir):
+def test_publish(tmpdir, example_results):
     tmpdir = six.text_type(tmpdir)
     os.chdir(tmpdir)
 
@@ -38,7 +38,7 @@ def test_publish(tmpdir):
     os.makedirs(join(result_dir, 'cheetah'))
 
     # Synthesize history with two branches that both have commits
-    result_files = [fn for fn in os.listdir(join(RESULT_DIR, 'cheetah'))
+    result_files = [fn for fn in os.listdir(join(example_results, 'cheetah'))
                     if fn.endswith('.json') and fn != 'machine.json']
     result_files.sort()
     master_values = list(range(len(result_files)*2//3))
@@ -54,7 +54,7 @@ def test_publish(tmpdir):
     commits = master_commits + only_branch
     for k, item in enumerate(zip(result_files, commits)):
         fn, commit = item
-        src = join(RESULT_DIR, 'cheetah', fn)
+        src = join(example_results, 'cheetah', fn)
         dst = join(result_dir, 'cheetah', commit[:8] + fn[8:])
         try:
             data = util.load_json(src)
@@ -65,9 +65,9 @@ def test_publish(tmpdir):
         data['commit_hash'] = commit
         util.write_json(dst, data)
 
-    shutil.copyfile(join(RESULT_DIR, 'benchmarks.json'),
+    shutil.copyfile(join(example_results, 'benchmarks.json'),
                     join(result_dir, 'benchmarks.json'))
-    shutil.copyfile(join(RESULT_DIR, 'cheetah', 'machine.json'),
+    shutil.copyfile(join(example_results, 'cheetah', 'machine.json'),
                     join(result_dir, 'cheetah', 'machine.json'))
 
     # Publish the synthesized data

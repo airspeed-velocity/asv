@@ -13,21 +13,21 @@ import textwrap
 from asv import config
 
 from . import tools
+from .tools import example_results
 
 import pytest
 
 
-RESULT_DIR = abspath(join(dirname(__file__), 'example_results'))
 BENCHMARK_DIR = abspath(join(dirname(__file__), 'example_results'))
 MACHINE_FILE = abspath(join(dirname(__file__), 'asv-machine.json'))
 
 @pytest.fixture
-def show_fixture(tmpdir):
+def show_fixture(tmpdir, example_results):
     tmpdir = six.text_type(tmpdir)
     os.chdir(tmpdir)
 
     conf = config.Config.from_json(
-        {'results_dir': RESULT_DIR,
+        {'results_dir': example_results,
          'repo': tools.generate_test_repo(tmpdir).path,
          'project': 'asv',
          'environment_type': "shouldn't matter what"})

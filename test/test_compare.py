@@ -17,6 +17,7 @@ from asv import util
 from asv.commands.compare import Compare
 
 from . import tools
+from .tools import example_results
 
 try:
     import hglib
@@ -24,7 +25,6 @@ except ImportError:
     hglib = None
 
 
-RESULT_DIR = abspath(join(dirname(__file__), 'example_results'))
 MACHINE_FILE = abspath(join(dirname(__file__), 'asv-machine.json'))
 
 REFERENCE = """
@@ -140,12 +140,12 @@ REFERENCE_ONLY_CHANGED_MULTIENV = """
 """
 
 
-def test_compare(capsys, tmpdir):
+def test_compare(capsys, tmpdir, example_results):
     tmpdir = six.text_type(tmpdir)
     os.chdir(tmpdir)
 
     conf = config.Config.from_json(
-        {'results_dir': RESULT_DIR,
+        {'results_dir': example_results,
          'repo': tools.generate_test_repo(tmpdir).path,
          'project': 'asv',
          'environment_type': "shouldn't matter what"})
@@ -183,7 +183,7 @@ def test_compare(capsys, tmpdir):
     "git",
     pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))
 ])
-def test_compare_name_lookup(dvcs_type, capsys, tmpdir):
+def test_compare_name_lookup(dvcs_type, capsys, tmpdir, example_results):
     tmpdir = six.text_type(tmpdir)
     os.chdir(tmpdir)
 
@@ -193,14 +193,14 @@ def test_compare_name_lookup(dvcs_type, capsys, tmpdir):
 
     result_dir = os.path.join(tmpdir, 'results')
 
-    src = os.path.join(RESULT_DIR, 'cheetah')
+    src = os.path.join(example_results, 'cheetah')
     dst = os.path.join(result_dir, 'cheetah')
     os.makedirs(dst)
 
     for fn in ['feea15ca-py2.7-Cython-numpy1.8.json', 'machine.json']:
         shutil.copyfile(os.path.join(src, fn), os.path.join(dst, fn))
 
-    shutil.copyfile(os.path.join(RESULT_DIR, 'benchmarks.json'),
+    shutil.copyfile(os.path.join(example_results, 'benchmarks.json'),
                     os.path.join(result_dir, 'benchmarks.json'))
 
     # Copy to different commit

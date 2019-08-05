@@ -205,6 +205,9 @@ class Show(Command):
         stats = result.get_result_stats(benchmark['name'], benchmark['params'])
 
         def get_stat_info(key):
+            if key == 'ci_99':
+                return [(x.get('ci_99_a'), x.get('ci_99_b')) if x is not None else None
+                        for x in stats]
             return [x.get(key) if x is not None else None for x in stats]
 
         for key in ['repeat', 'number', 'ci_99', 'mean', 'std', 'min', 'max']:

@@ -99,11 +99,15 @@ A benchmark suite directory has the following layout.  The
 
     - ``HASH-pythonX.X-depA-depB.json``: Each JSON file within a
       particular machine represents a run of benchmarks for a
-      particular project commit in a particular environment.  Useful
-      keys include:
+      particular project commit in a particular environment.  Contains
+      the keys:
+
+      - ``version``: the value ``2``.
 
       - ``commit_hash``: The project commit that the benchmarks were
         run on.
+
+      - ``env_name``: Name of the environment the benchmarks were run in.
 
       - ``date``: A JavaScript date stamp of the date of the commit
         (not when the benchmarks were run).
@@ -111,16 +115,38 @@ A benchmark suite directory has the following layout.  The
       - ``params``: Information about the machine the benchmarks were
         run on.
 
+      - ``python``: Python version of the environment.
+
+      - ``requirements``: Requirements dictionary of the environment.
+
+      - ``env_vars``: Environment variable dictionary of the environment.
+
+      - ``durations``: Duration information for build and setup-cache timings.
+
+      - ``result_columns``: List of column names for the ``results`` dictionary.
+        It is ``["result", "params", "version", "started_at", "duration",
+        "stats_ci_99_a", "stats_ci_99_b", "stats_q_25", "stats_q_75",
+        "stats_number", "stats_repeat", "samples", "profile"]`` currently.
+
       - ``results``: A dictionary from benchmark names to benchmark
-        results. The item can also be directly the float/list of result
-        values instead of a dictionary.
+        results. The keys are benchmark names, and values are lists
+        such that ``dict(zip(result_columns, results[benchmark_name]))``
+        pairs the appropriate keys with the values; in particular,
+        trailing columns with missing values can be dropped.
 
-        The dictionary form can have the following keys:
+        Some items, marked with "(param-list)" below, are lists
+        with items corresponding to results from a parametrized benchmark
+        (see ``params`` below). Non-parametrized benchmarks then have lists
+        with a single item.
 
-        - ``result``: contains the summarized result value(s) of
-          the benchmark. For a non-parameterized benchmark, the value is
-          the result: float, NaN or null. For parameterized
-          benchmarks, it is a list of such values (see ``params`` below).
+        Values except ``params`` can be ``null``, indicating missing data.
+
+        Floating-point numbers in ``stats_*`` and ``duration`` are truncated
+        to 5 significant base-10 digits when saving, in order to produce smaller
+        JSON files.
+
+        - ``result``: (param-list) contains the summarized result value(s) of
+          the benchmark. The values are float, NaN or null.
 
           The values are either numbers indicating result from
           successful run, ``null`` indicating a failed benchmark,
@@ -137,35 +163,28 @@ A benchmark suite directory has the following layout.  The
           i.e., the results appear in cartesian product order, with
           the last parameters varying fastest.
 
-          This key is omitted if the benchmark is not parameterized.
+          For non-parametrized benchmarks, ``[]``.
 
-        - ``samples``: contains the raw data samples produced.
-          For a non-parameterized benchmark, the result is a single
-          list of float values. For parameterized benchmarks,
-          it is a list of such lists (see below).
+        - ``version``: string, a benchmark version identifier.  Results whose version
+          is not equal to the current version of the benchmark are ignored.
+          If the value is missing, no version comparisons are done
+          (backward compatibility).
+
+        - ``started_at``: Javascript timestamp indicating start time of latest
+          benchmark run.
+
+        - ``duration``: float, indicating the duration of a benchmark run in seconds.
+
+        - ``stats_*``: (param-list) dictionary containing various statistical
+          indicators. Possible ``*`` are ``ci_99_a``, ``ci_99_b`` (confidence interval
+          estimate lower/upper values), ``q_25`` (lower quartile),
+          ``q_75`` (upper quartile), ``repeat``, and ``number``.
+
+        - ``profile``: string, zlib-compressed and base64-encoded
+          Python profile dump.
+
+        - ``samples``: (param-list) List of samples obtained for a benchmark.
           The samples are in the order they were measured in.
-
-          This key is omitted if there are no samples recorded.
-
-        - ``stats``: dictionary containing results of statistical
-          analysis. Contains keys ``ci_99`` (confidence interval
-          estimate for the result), ``q_25``, ``q_75`` (percentiles),
-          ``min``, ``max``, ``mean``, ``std``, ``repeat``, and
-          ``number``.
-
-          This key is omitted if there is no statistical analysis.
-
-      - ``started_at``: A dictionary from benchmark names to JavaScript
-        time stamps indicating the start time of the last benchmark run.
-
-      - ``duration``: A dictionary from benchmark names to number of seconds
-        (float) indicating the total duration of the last run of benchmarks.
-
-      - ``benchmark_version``: A dictionary from benchmark names to benchmark
-        version identifier (an arbitrary string). Results whose version
-        is not equal to the version of the benchmark are ignored.
-        If the value is missing, no version comparisons are done
-        (backward compatibility).
 
 - ``$html_dir/``: The output of ``asv publish``, that turns the raw
   results in ``$results_dir/`` into something viewable in a web

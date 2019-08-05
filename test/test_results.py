@@ -14,6 +14,20 @@ import six
 from asv import results, runner, util
 import pytest
 
+from .tools import example_results
+
+
+def _truncate_floats(item, digits=5):
+    if isinstance(item, float):
+        fmt = '{{:.{}e}}'.format(digits - 1)
+        return float(fmt.format(item))
+    elif isinstance(item, list):
+        return [_truncate_floats(x, digits) for x in item]
+    elif isinstance(item, dict):
+        return dict((k, _truncate_floats(v)) for k, v in item.items())
+    else:
+        return item
+
 
 def test_results(tmpdir):
     tmpdir = six.text_type(tmpdir)
@@ -79,11 +93,11 @@ def test_results(tmpdir):
 
         for rr in [r2, r3]:
             assert rr._results == r._results
-            assert rr._stats == r._stats
+            assert rr._stats == _truncate_floats(r._stats)
             assert rr._samples == r._samples
             assert rr._profiles == r._profiles
             assert rr.started_at == r._started_at
-            assert rr.duration == r._duration
+            assert rr.duration == _truncate_floats(r._duration)
             assert rr.benchmark_version == r._benchmark_version
 
         # Check the get_* methods
@@ -144,8 +158,8 @@ def test_get_result_hash_from_prefix(tmpdir):
     assert 'one of multiple commits' in str(excinfo.value)
 
 
-def test_backward_compat_load():
-    resultsdir = join(os.path.dirname(__file__), 'example_results')
+def test_backward_compat_load(example_results):
+    resultsdir = example_results
     filename = join('cheetah', '624da0aa-py2.7-Cython-numpy1.8.json')
 
     r = results.Results.load(join(resultsdir, filename))
@@ -181,14 +195,15 @@ def test_json_timestamp(tmpdir):
     r.save(tmpdir)
 
     r = util.load_json(join(tmpdir, 'mach', 'aaaa-env.json'))
-    assert r['started_at']['some_benchmark'] == util.datetime_to_js_timestamp(stamp1)
-    assert r['duration']['some_benchmark'] == duration
+    keys = r['result_columns']
+    values = dict(zip(keys, r['results']['some_benchmark']))
+    assert values['started_at'] == util.datetime_to_js_timestamp(stamp1)
+    assert values['duration'] == duration
 
 
-def test_iter_results(capsys, tmpdir):
-    src = os.path.join(os.path.dirname(__file__), 'example_results')
+def test_iter_results(capsys, tmpdir, example_results):
     dst = os.path.join(six.text_type(tmpdir), 'example_results')
-    shutil.copytree(src, dst)
+    shutil.copytree(example_results, dst)
 
     path = os.path.join(dst, 'cheetah')
 

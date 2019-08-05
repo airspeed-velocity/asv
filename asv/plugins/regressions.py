@@ -114,6 +114,8 @@ class Regressions(OutputPublisher):
 
             # Time when the benchmark was run
             for benchmark_name, timestamp in six.iteritems(results.started_at):
+                if timestamp is None:
+                    continue
                 key = (benchmark_name, revision)
                 run_timestamps[key] = timestamp
 

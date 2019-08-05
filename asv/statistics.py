@@ -60,19 +60,12 @@ def compute_stats(samples, number):
         ci_50 = (a, b)
 
     # Produce results
-    mean = sum(Y) / len(Y)
-    var = sum((yp - mean)**2 for yp in Y) / len(Y)   # mle
-    std = math.sqrt(var)
-
     result = y_50
 
-    stats = {'ci_99': list(ci_50),
+    stats = {'ci_99_a': ci_50[0],
+             'ci_99_b': ci_50[1],
              'q_25': y_25,
              'q_75': y_75,
-             'min': min(Y),
-             'max': max(Y),
-             'mean': mean,
-             'std': std,
              'repeat': len(Y),
              'number': number}
 
@@ -92,11 +85,13 @@ def get_weight(stats):
     """
     Return a data point weight for the result.
     """
-    if stats is None or 'ci_99' not in stats:
+    if stats is None or 'ci_99_a' not in stats or 'ci_99_b' not in stats:
         return None
 
     try:
-        return 2 / abs(stats['ci_99'][1] - stats['ci_99'][0])
+        a = stats['ci_99_a']
+        b = stats['ci_99_b']
+        return 2 / abs(b - a)
     except ZeroDivisionError:
         return None
 
@@ -134,8 +129,8 @@ def is_different(samples_a, samples_b, stats_a, stats_b, p_threshold=0.002):
     # which generally can be significantly smaller than p <= 0.01
     # depending on the actual data. For normal test (known variance),
     # 0.00027 <= p <= 0.01.
-    ci_a = stats_a['ci_99']
-    ci_b = stats_b['ci_99']
+    ci_a = (stats_a['ci_99_a'], stats_a['ci_99_b'])
+    ci_b = (stats_b['ci_99_a'], stats_b['ci_99_b'])
 
     if ci_a[1] >= ci_b[0] and ci_a[0] <= ci_b[1]:
         return False

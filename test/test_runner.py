@@ -91,7 +91,7 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     assert times[
         'time_examples.TimeSuite.time_example_benchmark_1'].result != [None]
     stats = results.get_result_stats(name, b[name]['params'])
-    assert isinstance(stats[0]['std'], float)
+    assert isinstance(stats[0]['q_25'], float)
     # The exact number of samples may vary if the calibration is not fully accurate
     samples = results.get_result_samples(name, b[name]['params'])
     assert len(samples[0]) >= 4

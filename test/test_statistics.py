@@ -42,8 +42,8 @@ def test_compute_stats():
 
     assert statistics.compute_stats([], 1) == (None, None)
     assert statistics.compute_stats([15.0], 1) == (
-        15.0, {'ci_99': [-inf, inf], 'max': 15.0, 'mean': 15.0, 'min': 15.0,
-               'number': 1, 'q_25': 15.0, 'q_75': 15.0, 'repeat': 1, 'std': 0.0})
+        15.0, {'ci_99_a': -inf, 'ci_99_b': inf,
+               'number': 1, 'q_25': 15.0, 'q_75': 15.0, 'repeat': 1})
 
     for nsamples, true_mean in product([10, 50, 250], [0, 0.3, 0.6]):
         samples = np.random.randn(nsamples) + true_mean
@@ -51,15 +51,11 @@ def test_compute_stats():
 
         assert stats['repeat'] == len(samples)
         assert stats['number'] == 42
-        assert np.allclose(stats['mean'], np.mean(samples))
         assert np.allclose(stats['q_25'], np.percentile(samples, 25))
         assert np.allclose(stats['q_75'], np.percentile(samples, 75))
-        assert np.allclose(stats['min'], np.min(samples))
-        assert np.allclose(stats['max'], np.max(samples))
-        assert np.allclose(stats['std'], np.std(samples, ddof=0))
         assert np.allclose(result, np.median(samples))
 
-        ci = stats['ci_99']
+        ci = stats['ci_99_a'], stats['ci_99_b']
         assert ci[0] <= true_mean <= ci[1]
         w = 12.0 * np.std(samples) / np.sqrt(len(samples))
         assert ci[1] - ci[0] < w
