@@ -29,11 +29,11 @@ matrix:
 
     - python: 3.8-dev
       dist: xenial
+        - COVERAGE="--cov=asv --cov=test"
 
     - python: 3.6
       env:
         - USE_CONDA=true
-        - COVERAGE="--cov=asv --cov=test"
 
     - python: pypy3
       dist: xenial
