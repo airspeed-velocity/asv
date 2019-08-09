@@ -29,6 +29,7 @@ matrix:
 
     - python: 3.8-dev
       dist: xenial
+      env:
         - COVERAGE="--cov=asv --cov=test"
 
     - python: 3.6
