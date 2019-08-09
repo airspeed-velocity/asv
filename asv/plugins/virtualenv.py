@@ -157,12 +157,6 @@ class Virtualenv(environment.Environment):
         env = dict(os.environ)
         env.update(self.build_env_vars)
 
-        if 'COV_CORE_SOURCE' in env:
-            # To measure coverage of ASV parts run in a subprocess from
-            # a temporary virtual environment an interpreter hook needs
-            # to be installed for that environment.
-            pip_args.append('pytest-cov')
-
         self._run_pip(pip_args, env=env)
 
         if self._requirements:
