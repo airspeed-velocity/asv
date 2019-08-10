@@ -32,12 +32,12 @@ def pytest_sessionstart(session):
 def _monkeypatch_conda_lock(config):
     import asv.plugins.conda
     import asv.util
-    import lockfile
+    import filelock
 
     @contextlib.contextmanager
     def _conda_lock():
         conda_lock = asv.util.get_multiprocessing_lock("conda_lock")
-        with conda_lock, lockfile.LockFile(str(path)):
+        with conda_lock, filelock.FileLock(str(path)):
             yield
 
     path = config.cache.makedir('conda-lock') / 'lock'
