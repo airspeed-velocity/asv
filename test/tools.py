@@ -97,7 +97,7 @@ except ImportError:
 WAIT_TIME = 20.0
 
 
-from lockfile import LockFile
+from filelock import FileLock
 
 
 def get_default_environment_type(conf, python):
@@ -111,7 +111,7 @@ def locked_cache_dir(config, cache_key, timeout=900, tag=None):
     lockfile = join(six.text_type(base_dir), 'lock')
     cache_dir = join(six.text_type(base_dir), 'cache')
 
-    lock = LockFile(lockfile)
+    lock = FileLock(lockfile)
     lock.acquire(timeout=timeout)
     try:
         # Clear cache dir contents if it was generated with different

@@ -260,7 +260,7 @@ def run_setup(build_binary=False):
         zip_safe=False,
 
         # py.test testing
-        tests_require=['pytest', 'lockfile'],
+        tests_require=['pytest', 'filelock'],
         cmdclass=cmdclass,
 
         author="Michael Droettboom",
