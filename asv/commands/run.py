@@ -507,17 +507,15 @@ class Run(Command):
                         if not skip_save:
                             result.save(conf.results_dir)
                         if strict:
-                            failed = [
-                                failed_bench for failed_bench in
-                                result.errcode if
-                                result.errcode[failed_bench] != 0]
-                            failures += failed
+                            failures = failures or any(
+                                code != 0 for code in result.errcode.values())
 
                         if durations > 0:
                             duration_set = Show._get_durations([(machine, result)], benchmark_set)
                             log.info(cls.format_durations(duration_set[(machine, env.name)], durations))
+
         if failures and strict:
-            return len(failures)
+            return 2
 
     @classmethod
     def format_durations(cls, durations, num_durations):
