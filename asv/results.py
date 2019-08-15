@@ -723,7 +723,7 @@ class Results(object):
                     elif key.startswith('stats_'):
                         if value is not None:
                             if name not in obj._stats:
-                                obj._stats[name] = [{}]*len(value)
+                                obj._stats[name] = [{} for _ in value]
 
                             stats_key = key[6:]
                             for j, v in enumerate(value):
