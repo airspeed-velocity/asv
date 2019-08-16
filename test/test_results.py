@@ -60,6 +60,9 @@ def test_results(tmpdir):
                                   'version': "1", 'profile': b'\x00\xff'},
             'suite2.benchmark1': {'result': [x3], 'number': [None],
                                   'samples': [None], 'params': [['c']],
+                                  'version': None, 'profile': b'\x00\xff'},
+            'suite3.benchmark1': {'result': [x1, x2], 'number': [1, 1],
+                                  'samples': [[x1,x1], [x2,x2,x3]], 'params': [['c', 'd']],
                                   'version': None, 'profile': b'\x00\xff'}
         }
 
