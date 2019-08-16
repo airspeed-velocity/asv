@@ -158,6 +158,10 @@ class Run(Command):
         parser.add_argument(
             "--no-pull", action="store_true",
             help="Do not pull the repository")
+        parser.add_argument(
+            "--strict", action="store_true",
+            help="When set true the run command will exit with a non-zero "
+                 "return code if any benchmark is in a failed state")
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -177,7 +181,7 @@ class Run(Command):
             record_samples=args.record_samples, append_samples=args.append_samples,
             pull=not args.no_pull, interleave_processes=args.interleave_processes,
             launch_method=args.launch_method, durations=args.durations,
-            **kwargs
+            strict=args.strict, **kwargs
         )
 
     @classmethod
@@ -187,7 +191,7 @@ class Run(Command):
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
             skip_failed=False, skip_existing_commits=False, record_samples=False,
             append_samples=False, pull=True, interleave_processes=False,
-            launch_method=None, durations=0, _returns={}):
+            launch_method=None, durations=0, strict=False, _returns={}):
         machine_params = Machine.load(
             machine_name=machine,
             _path=_machine_file, interactive=True)
@@ -218,6 +222,9 @@ class Run(Command):
         repo = get_repo(conf)
         if pull:
             repo.pull()
+
+        # Track failures across the run command
+        failures = False
 
         # Comparison period for date_period filtering
         old_commit_hashes = None
@@ -500,9 +507,16 @@ class Run(Command):
                         if not skip_save:
                             result.save(conf.results_dir)
 
+                        if strict:
+                            failures = failures or any(
+                                code != 0 for code in result.errcode.values())
+
                         if durations > 0:
                             duration_set = Show._get_durations([(machine, result)], benchmark_set)
                             log.info(cls.format_durations(duration_set[(machine, env.name)], durations))
+
+        if failures and strict:
+            return 2
 
     @classmethod
     def format_durations(cls, durations, num_durations):

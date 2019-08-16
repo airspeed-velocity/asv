@@ -48,6 +48,10 @@ class Continuous(Command):
             can take longer.""")
         parser.add_argument(
             "--no-interleave-processes", action="store_false", dest="interleave_processes")
+        parser.add_argument(
+            "--strict", action="store_true",
+            help="When set true the run command will exit with a non-zero "
+                 "return code if any benchmark is in a failed state")
         common_args.add_compare(parser, sort_default='ratio', only_changed_default=True)
         common_args.add_show_stderr(parser)
         common_args.add_bench(parser)
@@ -69,7 +73,7 @@ class Continuous(Command):
             env_spec=args.env_spec, record_samples=args.record_samples,
             append_samples=args.append_samples,
             quick=args.quick, interleave_processes=args.interleave_processes,
-            launch_method=args.launch_method, **kwargs
+            launch_method=args.launch_method, strict=args.strict, **kwargs
         )
 
     @classmethod
@@ -77,7 +81,8 @@ class Continuous(Command):
             factor=None, split=False, only_changed=True, sort='ratio',
             show_stderr=False, bench=None,
             attribute=None, machine=None, env_spec=None, record_samples=False, append_samples=False,
-            quick=False, interleave_processes=None, launch_method=None, _machine_file=None):
+            quick=False, interleave_processes=None, launch_method=None, _machine_file=None,
+            strict=False):
         repo = get_repo(conf)
         repo.pull()
 
@@ -102,7 +107,7 @@ class Continuous(Command):
             show_stderr=show_stderr, machine=machine, env_spec=env_spec,
             record_samples=record_samples, append_samples=append_samples, quick=quick,
             interleave_processes=interleave_processes,
-            launch_method=launch_method,
+            launch_method=launch_method, strict=strict,
             _returns=run_objs, _machine_file=_machine_file)
         if result:
             return result
