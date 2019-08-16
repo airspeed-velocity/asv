@@ -93,11 +93,12 @@ def test_run_publish(capfd, basic_conf):
     }
 
     # Tests a typical complete run/publish workflow
-    tools.run_asv_with_conf(conf, 'run', "master", '--steps=2',
-                            '--quick', '--show-stderr', '--profile',
-                            '-a', 'warmup_time=0',
-                            '--durations=5',
-                            _machine_file=machine_file)
+    ret = tools.run_asv_with_conf(conf, 'run', "master", '--steps=2',
+                                  '--quick', '--show-stderr', '--profile',
+                                  '-a', 'warmup_time=0',
+                                  '--durations=5',
+                                  _machine_file=machine_file)
+    assert ret is None
     text, err = capfd.readouterr()
 
     assert len(os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))) == 5

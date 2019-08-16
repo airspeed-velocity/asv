@@ -402,9 +402,7 @@ def test_format_durations():
 def test_return_code_strict_mode(tmpdir, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
-
-
-    res = tools.run_asv_with_conf(conf, 'run', 'master',
+    res = tools.run_asv_with_conf(conf, 'run', 'master^!', '--quick',
                                   '--strict', '--bench', 'TimeSecondary',
                                   _machine_file=machine_file)
     assert res == 2

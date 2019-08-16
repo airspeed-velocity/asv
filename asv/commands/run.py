@@ -224,7 +224,7 @@ class Run(Command):
             repo.pull()
 
         # Track failures across the run command
-        failures = []
+        failures = False
 
         # Comparison period for date_period filtering
         old_commit_hashes = None
@@ -506,6 +506,7 @@ class Run(Command):
 
                         if not skip_save:
                             result.save(conf.results_dir)
+
                         if strict:
                             failures = failures or any(
                                 code != 0 for code in result.errcode.values())
