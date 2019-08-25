@@ -681,11 +681,11 @@ def solve_potts_autogamma(y, w, beta=None, **kw):
             """
             l = 1
             E_prev = y[0] - values[0]
-            s = abs(E_prev)
+            s = abs(E_prev) * w[0]
             for r, v in zip(rights, values):
-                for yv in y[l:r]:
+                for yv, wv in zip(y[l:r], w[l:r]):
                     E = yv - v
-                    s += abs(E - rho*E_prev)
+                    s += abs(E - rho*E_prev) * wv
                     E_prev = E
                 l = r
             return s
