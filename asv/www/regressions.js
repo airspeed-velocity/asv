@@ -15,6 +15,8 @@ $(document).ready(function() {
     /* Set of ignored regressions, same information as in HTML5 local storage.
        Useful if local storage runs out of space. */
     var ignored_regressions = {};
+    /* Whether to force reload on next page update */
+    var skip_reload = false;
 
     function load_data(params) {
         $("#title").text(current_title);
@@ -26,9 +28,16 @@ $(document).ready(function() {
 
         if (regression_data !== null) {
             // already displayed
+            if (!skip_reload) {
+                var main_div = display_data(regression_data, params);
+                $('#regressions-body').empty();
+                $('#regressions-body').append(main_div);
+            }
+            skip_reload = false;
         }
         else {
             var message = $('<div>Loading...</div>');
+            skip_reload = false;
             $('#regressions-body').append(message);
             $.ajax({
                 url: 'regressions.json' + '?timestamp=' + $.asv.master_timestamp,
@@ -43,12 +52,25 @@ $(document).ready(function() {
         }
     }
 
-    function update_url(params) {
+    function update_url(params, reload) {
         var info = $.asv.parse_hash_string(window.location.hash);
         $.each(params || {}, function(key, value) {
             info.params[key] = value;
         });
-        window.location.hash = $.asv.format_hash_string(info);
+
+        var new_hash = $.asv.format_hash_string(info);
+        if (new_hash != window.location.hash) {
+            if (reload === undefined) {
+                skip_reload = false;
+            }
+            else {
+                skip_reload = !reload;
+            }
+            window.location.hash = new_hash;
+        }
+        else {
+            skip_reload = false;
+        }
     }
 
     function display_data(data, params) {
@@ -73,6 +95,23 @@ $(document).ready(function() {
         var feed_div = $('<div class="feed-div"><a class="btn" href="regressions.xml">Feed (Atom)</a></div>');
         main_div.append(feed_div);
 
+        var group_div = $('<div>');
+        var group_button = $('<button class="btn btn-small"/>');
+        if (params.grouped) {
+            group_button.text('Ungroup regressions');
+            group_button.on('click', function(evt) {
+                update_url({'grouped': []});
+            });
+        }
+        else {
+            group_button.text('Group regressions');
+            group_button.on('click', function(evt) {
+                update_url({'grouped': ["true"]});
+            });
+        }
+        group_div.append(group_button);
+        main_div.append(group_div);
+
         $.each(branches, function(i, branch) {
             var branch_div = $('<div class="regression-div"/>')
 
@@ -88,7 +127,7 @@ $(document).ready(function() {
                 dropdown_menu.append($('<li role="presentation"/>').append(branch_link));
                 branch_link.on('click', function(evt) {
                     current_title = "Regressions in " + branch + " branch";
-                    update_url({'branch': [branch]});
+                    update_url({'branch': [branch]}, false);
                     $("#title").text(current_title);
                     $(".regression-div").hide();
                     $(".ignored").hide();
@@ -105,8 +144,14 @@ $(document).ready(function() {
             branch_div.hide();
             main_div.append(branch_div);
 
-            create_data_table(display_table, ignored_table, ignored_conf_sample_div,
-                              data, params, branch, all_ignored_keys);
+            if (params.grouped) {
+                create_grouped_data_table(display_table, ignored_table, ignored_conf_sample_div,
+                                          data, params, branch, all_ignored_keys);
+            }
+            else {
+                create_data_table(display_table, ignored_table, ignored_conf_sample_div,
+                                  data, params, branch, all_ignored_keys);
+            }
             branch_div.append(display_table);
             ignored_table.hide();
             ignored_conf_sample_div.hide();
@@ -308,6 +353,131 @@ $(document).ready(function() {
         setup_sort(params, ignored_table);
     }
 
+    function create_grouped_data_table(display_table, ignored_table, ignored_conf_sample_div,
+                                       data, params, branch, all_ignored_keys) {
+        var table_head = $('<thead><tr>' +
+                           '<th data-sort="string">Benchmark</th>' +
+                           '<th data-sort="string">Last date</th>' +
+                           '<th data-sort="string">Commits</th>' +
+                           '<th data-sort="factor">Factor</th>' +
+                           '<th data-sort="value">Best</th>' +
+                           '<th data-sort="value">Current</th>' +
+                           '<th></th>' +
+                           '</tr></thead>');
+
+        display_table.append(table_head);
+        ignored_table.append(table_head.clone());
+
+        var table_body = $('<tbody/>');
+        var regressions = data['regressions'];
+
+        $.each(regressions, function (i, item) {
+            var benchmark_name = item[0];
+            var graph_url = item[1];
+            var param_dict = item[2];
+            var parameter_idx = item[3];
+            var last_value = item[4];
+            var best_value = item[5];
+            var jumps = item[6];  // [[rev1, rev2, before, after], ...]
+
+            if (jumps === null) {
+                return;
+            }
+
+            if (branch !== null && param_dict['branch'] != branch) {
+                return;
+            }
+
+            var benchmark_basename = benchmark_name.replace(/\(.*/, '');
+            var benchmark = $.asv.master_json.benchmarks[benchmark_basename];
+            var url_params = {};
+
+            $.each(param_dict, function (key, value) {
+                url_params[key] = [value];
+            });
+
+            if (parameter_idx !== null) {
+                $.each($.asv.param_selection_from_flat_idx(benchmark.params, parameter_idx).slice(1), function(i, param_values) {
+                    url_params['p-'+benchmark.param_names[i]] = [benchmark.params[i][param_values[0]]];
+                });
+            }
+
+            url_params.commits = [];
+
+            var commit_td = $('<td/>');
+
+            $.each(jumps, function(i, revs) {
+                var commit_a = $.asv.get_commit_hash(revs[0]);
+                var commit_b = $.asv.get_commit_hash(revs[1]);
+
+                if (commit_a) {
+                    url_params.commits = url_params.commits.concat([commit_a + '-' + commit_b]);
+                }
+                else {
+                    url_params.commits = url_params.commits.concat([commit_b]);
+                }
+
+                if (i > 0) {
+                    commit_td.append($('<span>, </span>'));
+                }
+
+                if (commit_a) {
+                    if ($.asv.master_json.show_commit_url.match(/.*\/\/github.com\//)) {
+                        var commit_url = ($.asv.master_json.show_commit_url + '../compare/'
+                                          + commit_a + '...' + commit_b);
+                        commit_td.append(
+                            $('<a/>').attr('href', commit_url).text(commit_a + '..' + commit_b));
+                    }
+                    else {
+                        commit_td.append($('<span/>').text(commit_a + '..' + commit_b));
+                    }
+                }
+                else {
+                    var commit_url = $.asv.master_json.show_commit_url + commit_b;
+                    commit_td.append(
+                        $('<a/>').attr('href', commit_url).text(commit_b));
+                }
+            });
+
+            var row = $('<tr/>');
+
+            var benchmark_url = $.asv.format_hash_string({
+                location: [benchmark_basename],
+                params: url_params
+            });
+
+            var benchmark_link = $('<a/>').attr('href', benchmark_url).text(benchmark_name);
+            $.asv.ui.hover_graph(benchmark_link, graph_url, benchmark_basename, parameter_idx, jumps);
+            row.append($('<td/>').append(benchmark_link));
+
+            var date_td = $('<td class="date"/>');
+            var date_fmt = new Date($.asv.master_json.revision_to_date[jumps[jumps.length-1][1]]);
+            date_td.text($.asv.format_date_yyyymmdd_hhmm(date_fmt));
+            row.append(date_td);
+
+            row.append(commit_td);
+
+            var factor_td = $('<td/>');
+            row.append(factor_td);
+            var factor = last_value / best_value;
+            factor_td.text(factor.toFixed(2) + 'x');
+
+            var best_td = $('<td/>');
+            best_td.text($.asv.pretty_unit(best_value, benchmark.unit));
+            row.append(best_td);
+
+            var last_td = $('<td/>');
+            last_td.text($.asv.pretty_unit(last_value, benchmark.unit));
+            row.append(last_td);
+
+            table_body.append(row);
+        });
+
+        display_table.append(table_body);
+
+        setup_sort(params, display_table);
+    }
+
     function get_ignore_key(item, revs) {
         var benchmark_name = item[0];
         var ignore_payload = benchmark_name;
@@ -418,7 +588,7 @@ $(document).ready(function() {
         });
 
         table.on('aftertablesort', function (event, data) {
-            update_url({'sort': [data.column], 'dir': [data.direction]});
+            update_url({'sort': [data.column], 'dir': [data.direction]}, false);
             /* Update appearance */
             table.find('thead th').removeClass('asc');
             table.find('thead th').removeClass('desc');
