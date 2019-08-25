@@ -311,3 +311,20 @@ def test_regression_threshold():
     assert latest == None
     assert best == None
     assert pos == None
+
+
+def test_zero_weight():
+    t = list(range(50))
+    y = [1.0 * (tt > 25) for tt in t]
+    w = [0 if tt >= 20 and tt < 30 else 1 for tt in t]
+
+    # Due to zero weight, part of the data is not assigned to belong to a step
+    steps = detect_steps(y, w=w)
+    steps_pos = [s[:2] for s in steps]
+    assert steps_pos == [(0, 20), (30, 50)]
+
+    # A small weight allows to find the actual step
+    w = [1e-6 if ww == 0 else 1 for ww in w]
+    steps = detect_steps(y, w=w)
+    steps_pos = [s[:2] for s in steps]
+    assert steps_pos == [(0, 26), (26, 50)]
