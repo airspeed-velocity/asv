@@ -401,6 +401,9 @@ def detect_steps(y, w=None):
         if x is None or x != x:
             # None or NaN: missing data
             continue
+        if w is not None and w[j] is not None and (w[j] <= 0):
+            # non-positive weight: consider as missing data
+            continue
         index_map[len(y_filtered)] = j
         y_filtered.append(x)
 

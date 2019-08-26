@@ -91,6 +91,12 @@ def get_weight(stats):
     try:
         a = stats['ci_99_a']
         b = stats['ci_99_b']
+
+        if math.isinf(a) or math.isinf(b):
+            # Infinite interval is due to too few samples --- consider
+            # weight as missing
+            return None
+
         return 2 / abs(b - a)
     except ZeroDivisionError:
         return None
