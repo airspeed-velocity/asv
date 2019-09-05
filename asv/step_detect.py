@@ -427,7 +427,7 @@ def detect_steps(y, w=None):
                 w_filtered[j] = w[jj] / w_median
 
     # Find piecewise segments
-    right, values, dists, gamma = solve_potts_autogamma(y_filtered, w=w_filtered)
+    right, values, dists, gamma = solve_potts_autogamma(y_filtered, w=w_filtered, min_size=2)
 
     # Extract the steps, mapping indices back etc.
     steps = []

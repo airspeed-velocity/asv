@@ -143,14 +143,16 @@ def test_weighted():
     w = [1]*len(y)
 
     y[15] = 2
+    y[16] = 2
     right, values, dists = solve_potts(y, w=w, gamma=0.1)
-    assert right == [5, 10, 15, 16, 20, 50, 70, 100]
+    assert right == [5, 10, 15, 17, 20, 50, 70, 100]
 
     steps = detect_steps(y, w=w)
     steps_pos = [s[0] for s in steps]
-    assert steps_pos == [0, 5, 10, 15, 16, 20, 50, 70]
+    assert steps_pos == [0, 5, 10, 15, 17, 20, 50, 70]
 
     w[15] = 0.1
+    w[16] = 0.1
     right, values, dists = solve_potts(y, w=w, gamma=0.1)
     assert right == [5, 10, 20, 50, 70, 100]
 
@@ -328,3 +330,22 @@ def test_zero_weight():
     steps = detect_steps(y, w=w)
     steps_pos = [s[:2] for s in steps]
     assert steps_pos == [(0, 26), (26, 50)]
+
+
+def test_outlier():
+    # Check that we exclude size-1 outliers
+    t = list(range(50))
+    y = [1.0]*len(t)
+
+    y[25] = 1000
+
+    steps = detect_steps(y)
+    steps_pos = [s[:2] for s in steps]
+    assert steps_pos == [(0, 50)]
+
+    y[25] = 1000
+    y[26] = 1000
+
+    steps = detect_steps(y)
+    steps_pos = [s[:2] for s in steps]
+    assert steps_pos == [(0, 25), (25, 27), (27, 50)]
