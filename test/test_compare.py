@@ -139,6 +139,24 @@ REFERENCE_ONLY_CHANGED_MULTIENV = """
 -          69.1μs           18.3μs     0.27  time_units.time_unit_to [cheetah/py2.7-numpy1.8]
 """
 
+REFERENCE_ONLY_CHANGED_NOSTATS = """
+       before           after         ratio
+     [22b920c6]       [fcf8c079]
+!             n/a           failed      n/a  params_examples.ParamSuite.track_value
+!           454μs           failed      n/a  time_coordinates.time_latitude
+!           3.00s           failed      n/a  time_other.time_parameterized(3)
++           934μs            108ms   115.90  time_quantity.time_quantity_init_array
++          1.75ms            153ms    87.28  time_quantity.time_quantity_array_conversion
++           372μs           11.5ms    30.81  time_units.time_unit_parse
++           125μs           3.81ms    30.42  time_units.time_simple_unit_parse
++          1.31ms           7.75ms     5.91  time_quantity.time_quantity_ufunc_sin
++         1.00±1s          3.00±1s     3.00  time_ci_big
++         1.00±0s          3.00±0s     3.00  time_ci_small
++           1.00s            3.00s     3.00  time_with_version_match
++           1.00s            3.00s     3.00  time_with_version_mismatch_bench
+-          69.1μs           18.3μs     0.27  time_units.time_unit_to
+"""
+
 
 def test_compare(capsys, tmpdir, example_results):
     tmpdir = six.text_type(tmpdir)
@@ -177,6 +195,14 @@ def test_compare(capsys, tmpdir, example_results):
                                  split=False, only_changed=True, sort='ratio')
     text, err = capsys.readouterr()
     assert text.strip() == REFERENCE_ONLY_CHANGED_MULTIENV.strip()
+
+    # Check results with no stats
+    tools.run_asv_with_conf(conf, 'compare', '22b920c6', 'fcf8c079', '--machine=cheetah',
+                            '--factor=2', '--sort=ratio', '--environment=py2.7-numpy1.8',
+                            '--no-stats', '--only-changed')
+    text, err = capsys.readouterr()
+    assert text.strip() == REFERENCE_ONLY_CHANGED_NOSTATS.strip()
+    assert "time_ci_big" in text.strip()
 
 
 @pytest.mark.parametrize("dvcs_type", [

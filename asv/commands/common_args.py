@@ -45,6 +45,11 @@ def add_compare(parser, only_changed_default=False, sort_default='name'):
         be displayed in the results list.""")
 
     parser.add_argument(
+        '--no-stats', action="store_false", dest="use_stats", default=True,
+        help="""Do not use result statistics in comparisons, only `factor`
+        and the median result.""")
+
+    parser.add_argument(
         '--split', '-s', action='store_true',
         help="""Split the output into a table of benchmarks that have
         improved, stayed the same, and gotten worse.""")

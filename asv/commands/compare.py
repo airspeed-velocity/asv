@@ -123,11 +123,12 @@ class Compare(Command):
                        factor=args.factor, split=args.split,
                        only_changed=args.only_changed, sort=args.sort,
                        machine=args.machine,
-                       env_spec=args.env_spec)
+                       env_spec=args.env_spec,
+                       use_stats=args.use_stats)
 
     @classmethod
     def run(cls, conf, hash_1, hash_2, factor=None, split=False, only_changed=False,
-            sort='name', machine=None, env_spec=None):
+            sort='name', machine=None, env_spec=None, use_stats=True):
 
         repo = get_repo(conf)
         try:
@@ -168,7 +169,7 @@ class Compare(Command):
         commit_names = {hash_1: repo.get_name_from_hash(hash_1),
                         hash_2: repo.get_name_from_hash(hash_2)}
 
-        cls.print_table(conf, hash_1, hash_2, factor=factor, split=split,
+        cls.print_table(conf, hash_1, hash_2, factor=factor, split=split, use_stats=use_stats,
                         only_changed=only_changed, sort=sort,
                         machine=machine, env_names=env_names, commit_names=commit_names)
 
