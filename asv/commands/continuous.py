@@ -68,6 +68,7 @@ class Continuous(Command):
             conf=conf, branch=args.branch, base=args.base,
             factor=args.factor, split=args.split,
             only_changed=args.only_changed, sort=args.sort,
+            use_stats=args.use_stats,
             show_stderr=args.show_stderr, bench=args.bench, attribute=args.attribute,
             machine=args.machine,
             env_spec=args.env_spec, record_samples=args.record_samples,
@@ -78,7 +79,7 @@ class Continuous(Command):
 
     @classmethod
     def run(cls, conf, branch=None, base=None,
-            factor=None, split=False, only_changed=True, sort='ratio',
+            factor=None, split=False, only_changed=True, sort='ratio', use_stats=True,
             show_stderr=False, bench=None,
             attribute=None, machine=None, env_spec=None, record_samples=False, append_samples=False,
             quick=False, interleave_processes=None, launch_method=None, _machine_file=None,
@@ -142,6 +143,7 @@ class Continuous(Command):
                                      resultset_1=results_iter(parent),
                                      resultset_2=results_iter(head),
                                      factor=factor, split=split,
+                                     use_stats=use_stats,
                                      only_changed=only_changed, sort=sort,
                                      commit_names=commit_names)
         worsened, improved = status
