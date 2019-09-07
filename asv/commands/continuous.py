@@ -34,7 +34,7 @@ class Continuous(Command):
         parser.add_argument(
             'branch', default=None,
             help="""The commit/branch to test. By default, the first configured branch.""")
-        common_args.add_record_samples(parser)
+        common_args.add_record_samples(parser, record_default=True)
         parser.add_argument(
             "--quick", "-q", action="store_true",
             help="""Do a "quick" run, where each benchmark function is
