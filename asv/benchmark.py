@@ -954,6 +954,11 @@ def disc_modules(module_name, ignore_import_errors=False):
             traceback.print_exc()
             return
 
+    # Exclude sourceless .pyc/.pyo left around (py3 __pycache__
+    # behaves sensibly, so workaround only for py2)
+    if sys.version_info[0] == 2 and not inspect.getsourcefile(module):
+        return
+
     yield module
 
     if getattr(module, '__path__', None):
