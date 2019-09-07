@@ -175,6 +175,8 @@ def test_web_regressions(browser, basic_html):
 
     bad_commit_hash = dvcs.get_hash('master~9')
 
+    ignore_exc = (NoSuchElementException, StaleElementReferenceException)
+
     browser.set_window_size(1200, 900)
 
     with tools.preview(html_dir) as base_url:
@@ -270,6 +272,27 @@ def test_web_regressions(browser, basic_html):
 
         popover = browser.find_element_by_css_selector('div.popover-content')
         flotplot = browser.find_element_by_css_selector('canvas.flot-base')
+
+        # Check group/ungroup button functionality
+        group_button, = [button for button in browser.find_elements_by_xpath('//button')
+                         if button.text == "Group regressions"]
+        group_button.click()
+
+        def check(*args):
+            columns = browser.find_element_by_xpath('//table/thead/tr[1]').text
+            return columns == 'Benchmark Last date Commits Factor Best Current'
+
+        WebDriverWait(browser, WAIT_TIME, ignored_exceptions=ignore_exc).until(check)
+
+        ungroup_button, = [button for button in browser.find_elements_by_xpath('//button')
+                         if button.text == "Ungroup regressions"]
+        ungroup_button.click()
+
+        def check(*args):
+            columns = browser.find_element_by_xpath('//table/thead/tr[1]').text
+            return columns == 'Benchmark Date Commit Factor Before After'
+
+        WebDriverWait(browser, WAIT_TIME, ignored_exceptions=ignore_exc).until(check)
 
 
 @pytest.mark.flaky(reruns=1, reruns_delay=5)
