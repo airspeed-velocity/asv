@@ -77,6 +77,14 @@ class Run(Command):
                   asv run "--merges master"  run for only merge commits (git)
                 """))
 
+        cls._setup_arguments(parser)
+
+        parser.set_defaults(func=cls.run_from_args)
+
+        return parser
+
+    @classmethod
+    def _setup_arguments(cls, parser, env_default_same=False):
         parser.add_argument(
             'range', nargs='?', default=None,
             help="""Range of commits to benchmark.  For a git
@@ -119,7 +127,7 @@ class Run(Command):
             run only once.  This is useful to find basic errors in the
             benchmark functions faster.  The results are unlikely to
             be useful, and thus are not saved.""")
-        common_args.add_environment(parser)
+        common_args.add_environment(parser, default_same=env_default_same)
         parser.add_argument(
             "--set-commit-hash", default=None,
             help="""Set the commit hash to use when recording benchmark
@@ -162,10 +170,6 @@ class Run(Command):
             "--strict", action="store_true",
             help="When set true the run command will exit with a non-zero "
                  "return code if any benchmark is in a failed state")
-
-        parser.set_defaults(func=cls.run_from_args)
-
-        return parser
 
     @classmethod
     def run_from_conf_args(cls, conf, args, **kwargs):

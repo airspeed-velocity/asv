@@ -16,33 +16,17 @@ class Dev(Run):
             "dev", help="Do a test run of a benchmark suite during development",
             description="""
                 This runs a benchmark suite in a mode that is useful
-                during development.  It is equivalent to ``asv run
-                --quick --show-stderr --python=same``""")
+                during development.  It is equivalent to
+                ``asv run --python=same``""")
 
-        common_args.add_bench(parser)
-        common_args.add_machine(parser)
-        common_args.add_environment(parser, default_same=True)
-        parser.add_argument(
-            "--strict", action="store_true",
-            help="When set true the run command will exit with a non-zero "
-                 "return code if any benchmark is in a failed state")
+        cls._setup_arguments(parser, env_default_same=True)
+
         parser.set_defaults(func=cls.run_from_args)
 
         return parser
 
     @classmethod
-    def run_from_conf_args(cls, conf, args, **kwargs):
-        return cls.run(conf, bench=args.bench, attribute=args.attribute,
-                       machine=args.machine, env_spec=args.env_spec,
-                       strict=args.strict, **kwargs)
-
-    @classmethod
-    def run(cls, conf, bench=None, attribute=None, env_spec=None, machine=None,
-            strict=False, _machine_file=None):
-        if not env_spec:
-            env_spec = ["existing:same"]
-        return super(cls, Dev).run(conf=conf, bench=bench, attribute=attribute,
-                                   show_stderr=True, quick=True,
-                                   env_spec=env_spec, machine=machine, dry_run=True,
-                                   strict=strict,
-                                   _machine_file=_machine_file)
+    def run(cls, conf, **kwargs):
+        if not kwargs.get("env_spec"):
+            kwargs["env_spec"] = ["existing:same"]
+        return super(cls, Dev).run(conf=conf, **kwargs)
