@@ -227,6 +227,9 @@ class Run(Command):
         if pull:
             repo.pull()
 
+        if set_commit_hash is not None:
+            set_commit_hash = repo.get_hash_from_name(set_commit_hash)
+
         # Track failures across the run command
         failures = False
 

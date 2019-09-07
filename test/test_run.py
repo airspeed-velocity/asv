@@ -49,7 +49,8 @@ def test_set_commit_hash(capsys, existing_env_conf):
     r = repo.get_repo(conf)
     commit_hash = r.get_hash_from_name(r.get_branch_name())
 
-    tools.run_asv_with_conf(conf, 'run', '--set-commit-hash=' + commit_hash, _machine_file=join(tmpdir, 'asv-machine.json'))
+    tools.run_asv_with_conf(conf, 'run', '--set-commit-hash=' + r.get_branch_name(),
+                            _machine_file=join(tmpdir, 'asv-machine.json'))
 
     env_name = list(environment.get_environments(conf, None))[0].name
     result_filename = commit_hash[:conf.hash_length] + '-' + env_name + '.json'
