@@ -414,8 +414,13 @@ class DebugLogBuffer(object):
         self.first = True
         self.linebreak_re = re.compile(b'.*\n')
         self.log = log
+        self.lock = threading.Lock()
 
     def __call__(self, c):
+        with self.lock:
+            self._process(c)
+
+    def _process(self, c):
         if c is None:
             text = b"".join(self.buf)
             del self.buf[:]
@@ -565,40 +570,29 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     if WIN:
         start_time = [time.time()]
+        dot_start_time = start_time[0]
         is_timeout = False
 
-        def stdout_reader_run():
+        def stream_reader(stream, buf):
             try:
                 while not is_timeout:
-                    c = proc.stdout.read(1)
+                    c = stream.read(1)
                     if not c:
                         break
                     start_time[0] = time.time()
-                    stdout_chunks.append(c)
+                    buf.append(c)
                     debug_log(c)
             finally:
-                proc.stdout.close()
+                stream.close()
 
-        def stderr_reader_run():
-            try:
-                while not is_timeout:
-                    c = proc.stderr.read(1)
-                    if not c:
-                        break
-                    start_time[0] = time.time()
-                    stderr_chunks.append(c)
-                    debug_log(c)
-            finally:
-                proc.stderr.close()
-
-        stdout_reader = threading.Thread(target=stdout_reader_run)
+        stdout_reader = threading.Thread(target=stream_reader, args=(proc.stdout, stdout_chunks))
         stdout_reader.daemon = True
         stdout_reader.start()
 
         all_threads = [stdout_reader]
 
         if not redirect_stderr:
-            stderr_reader = threading.Thread(target=stderr_reader_run)
+            stderr_reader = threading.Thread(target=stream_reader, args=(proc.stderr, stderr_chunks))
             stderr_reader.daemon = True
             stderr_reader.start()
             all_threads.append(stderr_reader)
@@ -619,6 +613,24 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                         proc.send_signal(signal.CTRL_BREAK_EVENT)
                     threads.pop(0)
                     continue
+
+            if dots:
+                dot_remaining = 0.5 - (time.time() - last_dot_time)
+                if dot_remaining <= 0:
+                    # Print a dot only if there has been output
+                    if dot_start_time != start_time[0]:
+                        if dots is True:
+                            log.dot()
+                        elif dots:
+                            dots()
+                        dot_start_time = start_time[0]
+                        last_dot_time = time.time()
+                    dot_remaining = 0.5
+
+                if remaining is None:
+                    remaining = dot_remaining
+                else:
+                    remaining = min(dot_remaining, remaining)
 
             thread.join(remaining)
             if not thread.is_alive():
@@ -716,7 +728,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         if not redirect_stderr:
             proc.stderr.close()
 
+    # Flush and disconnect debug log, if any
     debug_log(None)
+    debug_log = lambda c: None
 
     stdout = b''.join(stdout_chunks)
     stderr = b''.join(stderr_chunks)
