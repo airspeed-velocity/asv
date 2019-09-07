@@ -251,10 +251,18 @@ def add_parallel(parser):
         number of cores on this machine.""")
 
 
-def add_record_samples(parser):
-    parser.add_argument(
-        "--record-samples", action="store_true",
-        help="""Store raw measurement samples, not only statistics""")
+def add_record_samples(parser, record_default=False):
+    grp = parser.add_mutually_exclusive_group()
+    grp.add_argument(
+        "--record-samples", action="store_true", dest="record_samples",
+        help=(argparse.SUPPRESS if record_default else
+              """Store raw measurement samples, not only statistics"""),
+        default=record_default)
+    grp.add_argument(
+        "--no-record-samples", action="store_false", dest="record_samples",
+        help=(argparse.SUPPRESS if not record_default else
+              """Do not store raw measurement samples, but only statistics"""),
+        default=record_default)
     parser.add_argument(
         "--append-samples", action="store_true",
         help="""Combine new measurement samples with previous results,
