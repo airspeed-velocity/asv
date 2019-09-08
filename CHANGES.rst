@@ -3,10 +3,22 @@
 
 New Features
 ^^^^^^^^^^^^
-- Adding environment variables to build and benchmark commands.
+- Adding environment variables to build and benchmark commands. (#809, #833)
+- Added ``--strict`` option to ``asv run`` to set exit code on failure. (#865)
+- Added ``--no-stats`` option to ``asv compare`` and ``asv continuous``. (#879)
+- Added ``--durations`` option to ``asv run`` and ``asv show`` for displaying
+  benchmark run durations. (#838)
+- Added ``--date-period`` option to ``asv run`` for running benchmarks for
+  commits separated by a constant time interval. (#835)
+- Web UI button to group regressions by benchmark. (#869)
+- Space-saving v2 file format for storing results. (#847)
+- ``timeraw_*`` benchmarks for measuring e.g. import times. (#832)
+- Support for using conda environment files for env setup. (#793)
 
 API Changes
 ^^^^^^^^^^^
+- Results file format change requires ``asv update`` to update old data
+  to v2 format.
 - The configuration syntax for "matrix", "exclude", and "include"
   in ``asv.conf.json`` has changed. The old syntax is still supported,
   unless you are installing packages named ``req``, ``env``, ``env_nobuild``.
@@ -15,7 +27,10 @@ Bug Fixes
 ^^^^^^^^^
 - When an ``asv find`` step fails due to timeout, assume runtime equal to
   timeout to allow bisection to proceed (#768)
-
+- Minor fixes and improvements (#877, #876, #875, #861, #870, #868, #867,
+  #866, #864, #863, #857, #786, #854, #855, #852, #850, #844, #843, #842,
+  #839, #841, #840, #837, #836, #834, #831, #830, #829, #828, #826, #825,
+  #824)
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -24,6 +39,11 @@ Other Changes and Additions
   appearance. (#771)
 - Memory addresses are now stripped from the ``repr()`` of ``param``
   elements, allowing comparison across multiple runs. (#771)
+- ``asv dev`` is now equivalent to ``asv run`` with ``--python=same``
+  default. (#874)
+- ``asv continuous`` by default now records measurement samples,
+  for better comparison statistics. (#878)
+- ASV now uses PEP 518 ``pyproject.toml`` in packaging. (#853)
 
 
 0.4.1 (2019-05-30)
@@ -61,11 +81,11 @@ Bug Fixes
 - Minor fixes and improvements (#759, #764, #767, #772, #779, #783, #784, #787,
   #790, #795, #799, #804, #812, #813, #815, #816, #817, #818, #820)
 
-
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - In case of significant changes ``asv continuous`` message now reports
   if performance decreased or increased.
+
 
 0.3.1 (2018-10-20)
 ------------------
@@ -228,10 +248,12 @@ Bug Fixes
 - Fixup CI, test, etc issues (#616, #552, #601, #586, #554, #549,
   #571, #527, #560, #565)
 
+
 0.2.2rc1 (2018-07-09)
 ---------------------
 
 Same as 0.2.2, minus #670.
+
 
 0.2.1 (2017-06-22)
 ------------------
@@ -292,15 +314,18 @@ Bug Fixes
 - Longer default install timeout. (#342)
 - Many other bugfixes and minor improvements.
 
+
 0.2rc2 (2016-10-17)
 -------------------
 
 Same as 0.2.
 
+
 0.1.1 (2015-05-05)
 ------------------
 
 First full release.
+
 
 0.1rc3 (2015-05-01)
 -------------------
@@ -311,8 +336,10 @@ Include pip_requirements.txt.
 
 Display version correctly in docs.
 
+
 0.1rc2 (2015-05-01)
 -------------------
+
 
 0.1rc1 (2015-05-01)
 -------------------
