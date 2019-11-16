@@ -78,7 +78,7 @@ nav li.active span.navbar-brand:hover {
     min-width: 100px;
     max-width: 800px;
     text-align: left;
-    white-space: pre;
+    white-space: pre-wrap;
     font-family: monospace;
 }
 
