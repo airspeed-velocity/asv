@@ -320,20 +320,38 @@ def _compute_graph_steps(data, reraise=True):
 def make_summary_graph(graphs):
     val, n_series = _combine_graph_data(graphs)
 
-    # Given multiple input series
-    #
-    #     val = [(x_0, (y[0,0], y[0,1], ..., y[0,n])),
-    #            (x_1, (y[1,0], y[1,1], ..., y[1,n])),
-    #            ... ]
-    #
-    # calculate summary data series
-    #
-    #     z = geom_mean(y, axis=1)
-    #
-    # Missing data in y is filled by the previous non-null
-    # values (or the first non-null value, for nulls at the
-    # beginning), to avoid meaningless jumps in the result.
-    # Data points missing from all series are not filled.
+    val = _compute_summary_data_series(val, n_series)
+
+    # Resample
+    val = resample_data(val)
+
+    # Return as a graph
+    graph = Graph(graphs[0].benchmark_name, {'summary': ''})
+    for x, y in val:
+        graph.add_data_point(x, y)
+    return graph
+
+
+def _compute_summary_data_series(val, n_series):
+    """
+    Given multiple input series::
+
+        val = [(x_0, (y[0,0], y[0,1], ..., y[0,n_series])),
+               (x_1, (y[1,0], y[1,1], ..., y[1,n_series])),
+               ... ]
+
+    calculate summary data series::
+
+        val = [(x_0, geom_mean(y[0,:])),
+               (x_1, geom_mean(y[1,:])),
+               ...]
+
+    Missing data in y is filled by the previous non-null
+    values (or the first non-null value, for nulls at the
+    beginning), to avoid meaningless jumps in the result.
+    Data points missing from all series are not filled.
+
+    """
 
     # Find first non-null values
     first_values = [None]*n_series
@@ -370,29 +388,25 @@ def make_summary_graph(graphs):
         v = geom_mean_na(cur_vals)
         new_val.append((k, v))
 
-    val = new_val
-
-    # Resample
-    val = resample_data(val)
-
-    # Return as a graph
-    graph = Graph(graphs[0].benchmark_name, {'summary': ''})
-    for x, y in val:
-        graph.add_data_point(x, y)
-    return graph
+    return new_val
 
 
 def _combine_graph_data(graphs):
     """
     Concatenate data series from multiple graphs into a single series
 
+    Parameters
+    ----------
+    graphs : list of Graph
+        Input data.
+
     Returns
     -------
     val
         List of the form [(x_0, [y_00, y_01, ...]), (x_1, ...)]
-        where the y-values are obtained by concatenating the data
-        series. When some of the graphs do not have data for a given x-value,
-        the missing data is indicated by None values.
+        where the y-values are obtained by combining the data series
+        from all graphs. When some of the graphs do not have data for
+        a given x-value, the missing data is indicated by None values.
     n_series
         Number of data series in output. Equal to the sum of n_series
         of the input graphs.
@@ -421,13 +435,13 @@ def _combine_graph_data(graphs):
     return val, n_series
 
 
-def resample_data(val):
-    if len(val) < RESAMPLED_POINTS:
+def resample_data(val, num_points=RESAMPLED_POINTS):
+    if len(val) < num_points:
         return val
 
     min_revision = min(x[0] for x in val)
     max_revision = max(x[0] for x in val)
-    step_size = int((max_revision - min_revision) / RESAMPLED_POINTS)
+    step_size = int((max_revision - min_revision) / num_points)
 
     if step_size == 0:
         step_size = max_revision - min_revision + 1
