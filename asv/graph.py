@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 import traceback
+import math
 
 import six
 from six.moves import xrange
@@ -318,9 +319,9 @@ def _compute_graph_steps(data, reraise=True):
 
 
 def make_summary_graph(graphs):
-    val, n_series = _combine_graph_data(graphs)
-
-    val = _compute_summary_data_series(val, n_series)
+    x, ys = _combine_graph_data(graphs)
+    y = _compute_summary_data_series(*ys)
+    val = list(zip(x, y))
 
     # Resample
     val = resample_data(val)
@@ -332,68 +333,74 @@ def make_summary_graph(graphs):
     return graph
 
 
-def _compute_summary_data_series(val, n_series):
+def _compute_summary_data_series(*ys):
     """
     Given multiple input series::
 
-        val = [(x_0, (y[0,0], y[0,1], ..., y[0,n_series])),
-               (x_1, (y[1,0], y[1,1], ..., y[1,n_series])),
-               ... ]
+        y0, y1, ...
 
     calculate summary data series::
 
-        val = [(x_0, geom_mean(y[0,:])),
-               (x_1, geom_mean(y[1,:])),
+        val = [geom_mean([y0[0], y1[0], ...]),
+               geom_mean([y0[1], y1[1], ...]),
                ...]
 
-    Missing data in y is filled by the previous non-null
-    values (or the first non-null value, for nulls at the
-    beginning), to avoid meaningless jumps in the result.
-    Data points missing from all series are not filled.
+    Missing data in each y-series is filled for each series
+    separately, before averaging. Data points that are missing from
+    all series are however marked missing.
 
     """
-
-    # Find first non-null values
-    first_values = [None]*n_series
-    for k, v in val:
-        for j, x in enumerate(v):
-            if first_values[j] is None and not is_na(x):
-                first_values[j] = x
-        if not any(is_na(x) for x in first_values):
-            break
-
-    first_values = [fv if fv is not None else 1.0
-                    for fv in first_values]
+    # Fill missing data
+    filled = [_fill_missing_data(y) for y in ys]
 
     # Compute geom mean of filled series
-    last_values = [None]*n_series
-    new_val = []
-    for k, v in val:
-        # Fill missing data, unless it's missing from all
-        # parameter combinations
-        cur_vals = []
-        if any(not is_na(x) for x in v):
-            for j, x in enumerate(v):
-                if is_na(x):
-                    if last_values[j] is not None:
-                        x = last_values[j]
-                    else:
-                        x = first_values[j]
-                else:
-                    last_values[j] = x
+    res = []
+    for i in range(len(ys[0])):
+        # Average filled series, unless it's missing from all
+        # original series
+        if any(not is_na(y[i]) for y in ys):
+            v = geom_mean_na(y[i] for y in filled)
+        else:
+            v = None
+        res.append(v)
+    return res
 
-                cur_vals.append(x)
 
-        # Geometric mean of values
-        v = geom_mean_na(cur_vals)
-        new_val.append((k, v))
+def _fill_missing_data(y, max_gap_fraction=0.1):
+    """
+    Fill missing data to series by linearly interpolating inside gaps
+    that are smaller than ``max_gap_fraction`` of total available
+    points.
 
-    return new_val
+    """
+    # Count number of valid values in each series
+    valid_count = sum(int(not is_na(v)) for v in y)
+    max_gap_size = math.ceil(max_gap_fraction * valid_count)
+
+    # Fill gaps of missing data in each series
+    filled = list(y)
+    prev = None
+    prev_idx = 0
+
+    for i, v in enumerate(y):
+        if not is_na(v):
+            gap_size = i - prev_idx - 1
+
+            if 0 < gap_size <= max_gap_size and not is_na(prev):
+                # Interpolate gap
+                for k in range(1, gap_size + 1):
+                    filled[prev_idx + k] = (
+                        v * k + (gap_size + 1 - k) * prev) / (gap_size + 1)
+
+            prev = v
+            prev_idx = i
+
+    return filled
 
 
 def _combine_graph_data(graphs):
     """
-    Concatenate data series from multiple graphs into a single series
+    Combine data series from multiple graphs to compatible form
 
     Parameters
     ----------
@@ -402,37 +409,41 @@ def _combine_graph_data(graphs):
 
     Returns
     -------
-    val
-        List of the form [(x_0, [y_00, y_01, ...]), (x_1, ...)]
-        where the y-values are obtained by combining the data series
-        from all graphs. When some of the graphs do not have data for
-        a given x-value, the missing data is indicated by None values.
-    n_series
-        Number of data series in output. Equal to the sum of n_series
-        of the input graphs.
+    x : list of float
+        List of x-coordinates, in increasing order
+    ys : list of list of float
+        List of data series, [y0, y1, y2, ...],
+        where y0, y1, y2, ... are each lists of y-coordinates
+        corresponding to `x`, one for each data series in each graph.
+        When some of the graphs do not have data for a given x-value,
+        the missing data is indicated by None values.
 
     """
+    datasets = [graph.get_data() for graph in graphs]
+    n_series = sum(graph.n_series for graph in graphs)
 
-    all_data = {}
-    n_series = sum(graph.n_series if graph.n_series else 1
-                   for graph in graphs)
+    # Find distinct x-values
+    x = set()
+    for dataset in datasets:
+        x.update(k for k, _, _ in dataset)
 
-    template = [None]*n_series
+    x = sorted(x)
+    x_idx = dict(zip(x, range(len(x))))
+
+    # Get y-values
+    ys = [[None]*len(x_idx) for j in range(n_series)]
     pos = 0
-
-    for graph in graphs:
-        series = graph.get_data()
-        for k, v, dv in series:
-            prev = all_data.get(k, template)
+    for dataset, graph in zip(datasets, graphs):
+        for k, v, dv in dataset:
+            i = x_idx[k]
             if graph.scalar_series:
                 v = [v]
-            all_data[k] = prev[:pos] + v + prev[pos+graph.n_series:]
+
+            for j, y in enumerate(v):
+                ys[pos + j][i] = y
         pos += graph.n_series
 
-    val = list(all_data.items())
-    val.sort()
-
-    return val, n_series
+    return x, ys
 
 
 def resample_data(val, num_points=RESAMPLED_POINTS):
