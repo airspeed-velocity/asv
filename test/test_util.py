@@ -398,3 +398,9 @@ def test_check_output_exit_code(capsys):
         util.check_output([sys.executable, '-c', 'import sys; sys.exit(1)'])
     out, err = capsys.readouterr()
     assert '(exit status 1)' in out
+
+
+def test_geom_mean_na():
+    for x in [[1, 2, -3], [1, 2, 3], [3, 1, 3, None, None]]:
+        expected = abs(x[0]*x[1]*x[2])**(1/3)
+        assert abs(util.geom_mean_na(x) - expected) < 1e-10

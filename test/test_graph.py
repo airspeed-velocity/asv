@@ -6,7 +6,9 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 
-from asv.graph import Graph, RESAMPLED_POINTS, make_summary_graph
+from asv.graph import (Graph, RESAMPLED_POINTS, make_summary_graph,
+                       _fill_missing_data, _combine_graph_data)
+from asv import util
 
 
 def test_graph_single():
@@ -64,12 +66,12 @@ def test_graph_multi():
     ]
 
     filled_vals = [
-        (1, [1, 5, 4]),
+        (1, [1, None, None]),
         (2, [2, 5, 4]),
         (3, [3, 4, -60]),
         (4, [4, 3, 2]),
-        (5, [4, 2, 2]),
-        (6, [6, 1, 2])
+        (5, [5, 2, None]),
+        (6, [6, 1, None])
     ]
 
     # Should give same data back, with missing data at edges removed
@@ -105,8 +107,8 @@ def test_graph_multi():
         assert kv == kd
 
         # geom mean, with some sign convention
-        expected = _sgn(sum(xvs)) * (abs(xvs[0]*xvs[1]*xvs[2]))**(1./3)
-        assert abs(xd - expected) < 1e-10
+        expected = util.geom_mean_na(xvs)
+        assert (xd is None and expected is None) or abs(xd - expected) < 1e-10
 
     # Test summary over separate graphs -- should behave as if the
     # data was in a single graph
@@ -198,6 +200,34 @@ def test_summary_graph_loop():
     assert len(data) == 1
     assert data[0][0] == n
     assert abs(data[0][1] - 0.1) < 1e-7
+
+
+def test__fill_missing_data():
+    y = [None, 1, 2, None, None, 5, None, 7, None]
+    filled = _fill_missing_data(y, max_gap_fraction=0.5)
+    assert filled == [None, 1, 2, 3, 4, 5, 6, 7, None]
+
+    filled = _fill_missing_data(y, max_gap_fraction=0.1)
+    assert filled == [None, 1, 2, None, None, 5, 6, 7, None]
+
+
+def test__combine_graph_data():
+    g1 = Graph('1', {})
+    g2 = Graph('2', {})
+    g3 = Graph('3', {})
+    for i in range(5):
+        if i >= 3:
+            g1.add_data_point(i, None)
+        g2.add_data_point(i, i)
+        if i <= 2:
+            g3.add_data_point(i, [-i, -2*i])
+
+    x, ys = _combine_graph_data([g1, g2, g3])
+    assert x == [0, 1, 2, 3, 4]
+    assert ys == [[None, None, None, None, None],
+                  [0, 1, 2, 3, 4],
+                  [0, -1, -2, None, None],
+                  [0, -2, -4, None, None]]
 
 
 def test_graph_steps():
