@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-from setuptools import setup, Extension, Command
+from setuptools import setup, Extension
 from setuptools.command.test import test as TestCommand
 from setuptools.command.sdist import sdist
 from setuptools.command.build_ext import build_ext
 
-from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
+from distutils.errors import DistutilsError, CCompilerError, DistutilsExecError, DistutilsPlatformError
 
 import os
 import subprocess
@@ -42,7 +42,8 @@ class PyTest(TestCommand):
         if self.coverage:
             test_args += ['--cov', os.path.abspath('asv')]
         errno = pytest.main(test_args)
-        sys.exit(errno)
+        if errno != 0:
+            raise DistutilsError("Tests failed")
 
 
 class sdist_checked(sdist):
