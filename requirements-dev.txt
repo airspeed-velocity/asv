@@ -1,0 +1,17 @@
+pytest>=4.4.0
+virtualenv
+filelock
+six
+pip
+setuptools
+wheel
+# Optional requirements follow:
+numpy
+scipy
+selenium
+pytest-xdist
+pytest-rerunfailures
+pytest-faulthandler
+pytest-timeout
+feedparser
+python-hglib

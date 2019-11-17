@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-from setuptools import setup, Extension, Command
+from setuptools import setup, Extension
 from setuptools.command.test import test as TestCommand
 from setuptools.command.sdist import sdist
 from setuptools.command.build_ext import build_ext
 
-from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
+from distutils.errors import DistutilsError, CCompilerError, DistutilsExecError, DistutilsPlatformError
 
 import os
 import subprocess
@@ -42,7 +42,8 @@ class PyTest(TestCommand):
         if self.coverage:
             test_args += ['--cov', os.path.abspath('asv')]
         errno = pytest.main(test_args)
-        sys.exit(errno)
+        if errno != 0:
+            raise DistutilsError("Tests failed")
 
 
 class sdist_checked(sdist):
@@ -203,6 +204,10 @@ def run_setup(build_binary=False):
     write_version_file(os.path.join(basedir, 'asv', '_version.py'),
                        suffix, git_hash)
 
+    with open('requirements-dev.txt', 'r') as f:
+        tests_require = [x.strip() for x in f.read().splitlines()
+                         if not x.strip().startswith('#')]
+
     if build_binary:
         ext_modules = [Extension("asv._rangemedian", ["asv/_rangemedian.cpp"])]
     else:
@@ -232,7 +237,8 @@ def run_setup(build_binary=False):
         ],
 
         extras_require={
-            str('hg'): ["python-hglib>=1.5"]
+            str('hg'): ["python-hglib>=1.5"],
+            str('testing'): tests_require,
         },
 
         package_data={
@@ -260,7 +266,7 @@ def run_setup(build_binary=False):
         zip_safe=False,
 
         # py.test testing
-        tests_require=['pytest', 'filelock'],
+        tests_require=tests_require,
         cmdclass=cmdclass,
 
         author="Michael Droettboom",
