@@ -283,22 +283,22 @@ def test_regression_threshold():
              (1, 2,   1.1, 1.1, 0.0),
              (2, 3,   2.0, 2.0, 0.0)]
 
-    latest, best, pos = detect_regressions(steps, threshold=0.05)
+    latest, best, pos = detect_regressions(steps, threshold=0.05, min_size=1)
     assert latest == 2
     assert best == 1
     assert pos == [(0, 1, 1.0, 1.1), (1, 2, 1.1, 2.0)]
 
-    latest, best, pos = detect_regressions(steps, threshold=0.2)
+    latest, best, pos = detect_regressions(steps, threshold=0.2, min_size=1)
     assert latest == 2
     assert best == 1
     assert pos == [(1, 2, 1.1, 2.0)]
 
-    latest, best, pos = detect_regressions(steps, threshold=0.8)
+    latest, best, pos = detect_regressions(steps, threshold=0.8, min_size=1)
     assert latest == 2
     assert best == 1
     assert pos == [(1, 2, 1.1, 2.0)]
 
-    latest, best, pos = detect_regressions(steps, threshold=1.1)
+    latest, best, pos = detect_regressions(steps, threshold=1.1, min_size=1)
     assert latest == None
     assert best == None
     assert pos == None
@@ -307,7 +307,7 @@ def test_regression_threshold():
              (1, 2,   1.3, 1.3, 0.0),
              (2, 3,   1.1, 1.1, 0.0)]
 
-    latest, best, pos = detect_regressions(steps, threshold=0.2)
+    latest, best, pos = detect_regressions(steps, threshold=0.2, min_size=1)
     assert latest == None
     assert best == None
     assert pos == None
@@ -328,3 +328,42 @@ def test_zero_weight():
     steps = detect_steps(y, w=w)
     steps_pos = [s[:2] for s in steps]
     assert steps_pos == [(0, 26), (26, 50)]
+
+
+def test_regression_min_size():
+    steps = [(0, 2,   1.0, 1.0, 0.0),
+             (2, 3,   0.0, 0.0, 0.0),
+             (3, 5,   1.0, 1.0, 0.0)]
+
+    latest, best, pos = detect_regressions(steps)
+    assert latest is None and best is None and pos is None
+
+    latest, best, pos = detect_regressions(steps, min_size=1)
+    assert latest == 1.0
+    assert best == 0.0
+    assert pos == [(2, 3, 0.0, 1.0)]
+
+    steps = [(0, 2,   1.0, 1.0, 0.0),
+             (2, 3,   0.0, 0.0, 0.0),
+             (3, 5,   2.0, 1.0, 0.0)]
+
+    latest, best, pos = detect_regressions(steps)
+    assert latest == 2.0
+    assert best == 0.0
+    assert pos == [(2, 3, 0.0, 2.0)]
+
+
+def test_solve_potts_approx_bug():
+    y = [2.9, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1,
+         3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1,
+         3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.2, 3.1, 3.1, 3.1, 3.1,
+         3.1, 3.1, 3.1, 3.1, 2.9, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1]
+    w = [86.1, 1.0, 1.0, 1.0, 0.8, 1.0, 0.8, 1.0, 1.0, 0.9, 0.9, 1.0,
+         0.8, 1.0, 1.0, 1.0, 1.0, 0.9, 0.6, 0.9, 0.5, 1.0, 1.0, 1.0, 1.0,
+         1.0, 1.0, 1.0, 1.0, 1.0, 0.9, 1.0, 1.0, 0.7, 1.0, 1.0, 1.0, 1.0,
+         1.0, 1.0, 0.8, 0.8, 50.0, 0.8, 1.0, 1.0, 0.6, 0.8, 1.0, 1.0]
+    gamma = 0.3
+
+    r0, v0, d0 = solve_potts(y, w, gamma=gamma)
+    r, v, d = solve_potts_approx(y, w, gamma=gamma)
+    assert r == r0

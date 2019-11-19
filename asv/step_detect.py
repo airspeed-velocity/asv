@@ -441,7 +441,7 @@ def detect_steps(y, w=None):
     return steps
 
 
-def detect_regressions(steps, threshold=0):
+def detect_regressions(steps, threshold=0, min_size=2):
     """Detect regressions in a (noisy) signal.
 
     A regression means an upward step in the signal.  The value
@@ -458,6 +458,8 @@ def detect_regressions(steps, threshold=0):
         whose relative size is smaller than threshold, if they are not
         necessary to explain the difference between the best and the latest
         values.
+    min_size : int
+        Minimum number of commits in a regression to consider it.
 
     Returns
     -------
@@ -480,11 +482,25 @@ def detect_regressions(steps, threshold=0):
     best_v = last_v
     best_err = steps[-1][4]
     prev_l = None
+    short_prev = None
 
     # Find upward steps that resulted to worsened value afterward
     for l, r, cur_v, cur_min, cur_err in reversed(steps):
-        if best_v - cur_v > max(cur_err, best_err, threshold * cur_v):
+        threshold_step = max(cur_err, best_err, threshold * cur_v)
+
+        if best_v > cur_v + threshold_step:
+            if r - l < min_size:
+                # Accept short intervals conditionally
+                short_prev = (best_v, best_err)
             regression_pos.append((r - 1, prev_l, cur_v, best_v))
+        elif short_prev is not None:
+            # Ignore the previous short interval, if the level
+            # is now back to where it was
+            if short_prev[0] <= cur_v + threshold_step:
+                regression_pos.pop()
+                best_v, best_err = short_prev
+            short_prev = None
+
         prev_l = l
         if cur_v < best_v:
             best_v = cur_v
@@ -800,7 +816,7 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
         prev_score = dist(l, right[j-1]-1) + dist(right[j-1], right[j]-1)
         new_off = 0
         for off in range(-max_size, max_size+1):
-            if right[j-1] + off - 1 <= l or right[j-1] + off >= right[j] - 1 or off == 0:
+            if right[j-1] + off - 1 < l or right[j-1] + off > right[j] - 1 or off == 0:
                 continue
             new_score = dist(l, right[j-1]+off-1) + dist(right[j-1]+off, right[j]-1)
             if new_score < prev_score:
