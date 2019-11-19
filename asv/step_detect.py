@@ -816,7 +816,7 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
         prev_score = dist(l, right[j-1]-1) + dist(right[j-1], right[j]-1)
         new_off = 0
         for off in range(-max_size, max_size+1):
-            if right[j-1] + off - 1 <= l or right[j-1] + off >= right[j] - 1 or off == 0:
+            if right[j-1] + off - 1 < l or right[j-1] + off > right[j] - 1 or off == 0:
                 continue
             new_score = dist(l, right[j-1]+off-1) + dist(right[j-1]+off, right[j]-1)
             if new_score < prev_score:
