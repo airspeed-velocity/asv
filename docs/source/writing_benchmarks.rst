@@ -266,12 +266,19 @@ Timing
 
 Timing benchmarks have the prefix ``time``.
 
-The timing itself is based on the Python standard library's `timeit`
-module, with some extensions for automatic heuristics shamelessly
-stolen from IPython's `%timeit
-<http://ipython.org/ipython-doc/dev/api/generated/IPython.core.magics.execution.html?highlight=timeit#IPython.core.magics.execution.ExecutionMagics.timeit>`__
-magic function.  This means that in most cases the benchmark function
-itself will be run many times to achieve accurate timing.
+How ASV runs benchmarks is as follows (pseudocode for main idea)::
+
+     for round in range(`rounds`):
+        for benchmark in benchmarks:
+            with new process:
+                <calibrate `number` if not manually set>
+                for j in range(`repeat`):
+                    <setup `benchmark`>
+                    sample = timing_function(<run benchmark `number` times>) / `number`
+                    <teardown `benchmark`>
+
+where the actual `rounds`, `repeat`, and `number` are :doc:`attributes
+of the benchmark <benchmarks>`.
 
 The default timing function is `timeit.default_timer`, which uses the
 highest resolution clock available on a given platform to measure the
@@ -311,7 +318,7 @@ How ``setup`` and ``teardown`` behave for timing benchmarks
 is similar to the Python ``timeit`` module, and the behavior is controlled
 by the ``number`` and ``repeat`` attributes.
 
-For the list of attributes, see :doc:`benchmarks`.
+For the list of benchmark attributes, see :doc:`benchmarks`.
 
 .. _memory-benchmarks:
 
