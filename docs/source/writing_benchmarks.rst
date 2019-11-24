@@ -373,6 +373,8 @@ memory usage you want to track::
 For details, see :doc:`benchmarks`.
 
 
+.. _raw-timing-benchmarks:
+
 Raw timing benchmarks
 `````````````````````
 

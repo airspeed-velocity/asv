@@ -15,8 +15,8 @@ Airspeed Velocity has mechanisms to deal with these variations.  For
 dealing with short-time variations, you can use the ``sample_time``,
 ``number`` and ``repeat`` attributes of timing benchmarks to control
 how results are sampled and averaged.  For long-time variations, you
-can use the ``processes`` attribute and ``--interleave-processes``,
-``--append-samples``, and ``-a processes=4`` command line options to
+can use the ``rounds`` attribute and ``--interleave-rounds``,
+``--append-samples``, and ``-a rounds=4`` command line options to
 run timing benchmarks at more widely spaced times, in order to average
 over long-time performance variations.
 

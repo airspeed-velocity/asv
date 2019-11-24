@@ -5,6 +5,23 @@ Benchmark types and attributes
 
    .. contents::
 
+Benchmark types
+---------------
+
+The following benchmark types are recognized:
+
+- ``def time_*()``: measure time taken by the function. See :ref:`timing-benchmarks`.
+- ``def timeraw_*()``: measure time taken by the function, after interpreter start. See :ref:`raw-timing-benchmarks`.
+- ``def mem_*()``: measure memory size of the object returned.  See :ref:`memory-benchmarks`.
+- ``def peakmem_*()``: measure peak memory size of the process when calling the function.
+  See :ref:`peak-memory`.
+- ``def track_*()``: use the returned numerical value as the benchmark result
+  See :ref:`tracking`.
+
+
+Benchmark attributes
+--------------------
+
 Benchmark attributes can either be applied directly to the benchmark function::
 
     def time_something():
@@ -20,26 +37,9 @@ or appear as class attributes::
         def time_something(self):
             pass
 
-Benchmark types
----------------
-
-The following benchmark types are recognized:
-
-- ``def time_*()``: measure time taken by the function. See :ref:`timing-benchmarks`.
-- ``def mem_*()``: measure memory size of the object returned.  See :ref:`memory-benchmarks`.
-- ``def peakmem_*()``: measure peak memory size of the process when calling the function.
-  See :ref:`peak-memory`.
-- ``def track_*()``: use the returned numerical value as the benchmark result
-  See :ref:`tracking`.
-
-
-Benchmark attributes
---------------------
-
-General
-```````
-
-The following attributes are applicable to all benchmark types:
+Different benchmark types have their own sets of applicable
+attributes.  Moreover, the following attributes are applicable to all
+benchmark types:
 
 - ``timeout``: The amount of time, in seconds, to give the benchmark
   to run before forcibly killing it.  Defaults to 60 seconds.
@@ -114,15 +114,15 @@ Timing benchmarks
   benchmark. If not specified, ``warmup_time`` defaults to 0.1 seconds
   (on PyPy, the default is 1.0 sec).
 
-- ``processes``: How many processes to launch for running the benchmarks
-  (default: 2). The processes run benchmarks in an interleaved order,
+- ``rounds``: How many rounds to run the benchmark in (default: 2).
+  The rounds run different timing benchmarks in an interleaved order,
   allowing to sample over longer periods of background performance
   variations (e.g. CPU power levels).
 
-- ``repeat``: The number measurement samples to collect per process.
+- ``repeat``: The number measurement samples to collect per round.
   Each sample consists of running the benchmark ``number`` times.
-  The median time from all samples is used as the final measurement
-  result.
+  The median time from all samples collected in all roudns is used
+  as the final measurement result.
 
   ``repeat`` can be a tuple ``(min_repeat, max_repeat, max_time)``.
   In this case, the measurement first collects at least ``min_repeat``
@@ -130,7 +130,7 @@ Timing benchmarks
   or the collection time exceeds ``max_time``.
 
   When not provided (``repeat`` set to 0), the default value is
-  ``(1, 10, 20.0)`` if ``processes==1`` and ``(1, 5, 10.0)`` otherwise.
+  ``(1, 10, 20.0)`` if ``rounds==1`` and ``(1, 5, 10.0)`` otherwise.
 
 - ``number``: Manually choose the number of iterations in each sample.
   If ``number`` is specified, ``sample_time`` is ignored.

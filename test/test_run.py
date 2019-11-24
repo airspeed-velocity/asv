@@ -260,7 +260,7 @@ def test_run_append_samples(basic_conf):
     def run_it():
         tools.run_asv_with_conf(conf, 'run', "master^!",
                                 '--bench', 'time_examples.TimeSuite.time_example_benchmark_1',
-                                '--append-samples', '-a', 'repeat=(1, 1, 10.0)', '-a', 'processes=1',
+                                '--append-samples', '-a', 'repeat=(1, 1, 10.0)', '-a', 'rounds=1',
                                 '-a', 'number=1', '-a', 'warmup_time=0',
                                 _machine_file=machine_file)
 
@@ -289,7 +289,7 @@ def test_cpu_affinity(basic_conf):
 
     tools.run_asv_with_conf(conf, 'run', "master^!",
                             '--bench', 'time_examples.TimeSuite.time_example_benchmark_1',
-                            '--cpu-affinity=0', '-a', 'repeat=(1, 1, 10.0)', '-a', 'processes=1',
+                            '--cpu-affinity=0', '-a', 'repeat=(1, 1, 10.0)', '-a', 'rounds=1',
                             '-a', 'number=1', '-a', 'warmup_time=0',
                             _machine_file=machine_file)
 
