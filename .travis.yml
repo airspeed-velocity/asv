@@ -27,7 +27,7 @@ matrix:
           SKIP="$SKIP|asv/benchmark.py.*undefined name .(run|params)."
           PYFLAKES_NODOCTEST=1 pyflakes asv test | grep -E -v "$SKIP" > test.out; cat test.out; test \! -s test.out
 
-    - python: 3.8-dev
+    - python: 3.8
       dist: xenial
       env:
         - COVERAGE="--cov=asv --cov=test"
