@@ -1,5 +1,5 @@
 pytest>=4.4.0
-virtualenv
+virtualenv>=1.7
 filelock
 six
 pip

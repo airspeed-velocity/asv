@@ -140,7 +140,6 @@ class Virtualenv(environment.Environment):
         util.check_call([
             sys.executable,
             "-mvirtualenv",
-            '--no-site-packages',
             "-p",
             self._executable,
             self._path], env=env)
