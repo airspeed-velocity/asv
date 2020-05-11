@@ -11,7 +11,8 @@ numpy
 scipy
 selenium
 pytest-xdist
-pytest-rerunfailures>=8.0
+pytest-rerunfailures>=8.0; platform_python_implementation != "PyPy"
+pytest-rerunfailures>=8.0,<9.0; platform_python_implementation == "PyPy"
 pytest-faulthandler; platform_python_implementation != "PyPy"
 pytest-faulthandler<2.0; platform_python_implementation == "PyPy"
 pytest-timeout
