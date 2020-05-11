@@ -88,6 +88,9 @@ install:
         $TRAVIS_PIP install virtualenv numpy scipy;
       fi
     fi
+    if $TRAVIS_PYTHON -c 'import sys; sys.exit(0 if "__pypy__" in sys.modules else 1)'; then
+      $TRAVIS_PIP install "pytest>=4.4.0,<5.0" "pytest-rerunfailures>=8.0" "pytest-faulthandler<2.0"
+    fi
     $TRAVIS_PIP install selenium six "pytest>=4.4.0" "pytest-xdist" pytest-rerunfailures pytest-faulthandler pytest-timeout feedparser python-hglib filelock;
     if [[ "$COVERAGE" != '' ]]; then $TRAVIS_PIP install pytest-cov codecov; fi;
   - $TRAVIS_PYTHON setup.py build_ext -i
