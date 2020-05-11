@@ -1,5 +1,5 @@
-pytest>=4.4.0; platform_python_implementation != "pypy"
-pytest>-4.4.0,<5.0; platform_python_implementation == "pypy"
+pytest>=4.4.0; platform_python_implementation != "PyPy"
+pytest>-4.4.0,<5.0; platform_python_implementation == "PyPy"
 virtualenv>=1.7
 filelock
 six
@@ -12,8 +12,8 @@ scipy
 selenium
 pytest-xdist
 pytest-rerunfailures>=8.0
-pytest-faulthandler; platform_python_implementation != "pypy"
-pytest-faulthandler<2.0; platform_python_implementation == "pypy"
+pytest-faulthandler; platform_python_implementation != "PyPy"
+pytest-faulthandler<2.0; platform_python_implementation == "PyPy"
 pytest-timeout
 feedparser
 python-hglib
