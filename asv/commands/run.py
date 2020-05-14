@@ -157,12 +157,19 @@ class Run(Command):
             or failed results""")
         common_args.add_record_samples(parser)
         parser.add_argument(
-            "--interleave-processes", action="store_true", default=False,
-            help="""Interleave benchmarks with multiple processes across
+            "--interleave-rounds", action="store_true", default=False,
+            help="""Interleave benchmarks with multiple rounds across
             commits. This can avoid measurement biases from commit ordering,
             can take longer.""")
         parser.add_argument(
-            "--no-interleave-processes", action="store_false", dest="interleave_processes")
+            "--no-interleave-rounds", action="store_false", dest="interleave_rounds")
+        # Backward compatibility for '--(no-)interleave-rounds'
+        parser.add_argument(
+            "--interleave-processes", action="store_true", default=False, dest="interleave_rounds",
+            help=argparse.SUPPRESS)
+        parser.add_argument(
+            "--no-interleave-processes", action="store_false", dest="interleave_rounds",
+            help=argparse.SUPPRESS)
         parser.add_argument(
             "--no-pull", action="store_true",
             help="Do not pull the repository")
@@ -183,7 +190,7 @@ class Run(Command):
             skip_failed=args.skip_existing_failed or args.skip_existing,
             skip_existing_commits=args.skip_existing_commits,
             record_samples=args.record_samples, append_samples=args.append_samples,
-            pull=not args.no_pull, interleave_processes=args.interleave_processes,
+            pull=not args.no_pull, interleave_rounds=args.interleave_rounds,
             launch_method=args.launch_method, durations=args.durations,
             strict=args.strict, **kwargs
         )
@@ -194,7 +201,7 @@ class Run(Command):
             show_stderr=False, quick=False, profile=False, env_spec=None, set_commit_hash=None,
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
             skip_failed=False, skip_existing_commits=False, record_samples=False,
-            append_samples=False, pull=True, interleave_processes=False,
+            append_samples=False, pull=True, interleave_rounds=False,
             launch_method=None, durations=0, strict=False, _returns={}):
         machine_params = Machine.load(
             machine_name=machine,
@@ -210,15 +217,15 @@ class Run(Command):
         has_existing_env = any(isinstance(env, environment.ExistingEnvironment)
                                for env in environments)
 
-        if interleave_processes:
+        if interleave_rounds:
             if dry_run:
-                raise util.UserError("--interleave-commits and --dry-run cannot be used together")
+                raise util.UserError("--interleave-rounds and --dry-run cannot be used together")
             if has_existing_env:
-                raise util.UserError("--interleave-commits cannot be used with existing environment "
+                raise util.UserError("--interleave-rounds cannot be used with existing environment "
                                      "(or python=same)")
-        elif interleave_processes is None:
+        elif interleave_rounds is None:
             # Enable if possible
-            interleave_processes = not (dry_run or has_existing_env)
+            interleave_rounds = not (dry_run or has_existing_env)
 
         if append_samples:
             record_samples = True
@@ -321,13 +328,13 @@ class Run(Command):
         _returns['environments'] = environments
         _returns['machine_params'] = machine_params.__dict__
 
-        if attribute and 'processes' in attribute:
-            max_processes = int(attribute['processes'])
+        if attribute and 'rounds' in attribute:
+            max_rounds = int(attribute['rounds'])
         else:
-            max_processes = max(b.get('processes', 1)
-                                for b in six.itervalues(benchmarks))
+            max_rounds = max(b.get('rounds', 1)
+                             for b in six.itervalues(benchmarks))
 
-        log.set_nitems(steps * max_processes)
+        log.set_nitems(steps * max_rounds)
 
         skipped_benchmarks = defaultdict(lambda: set())
 
@@ -356,14 +363,14 @@ class Run(Command):
                 except IOError:
                     pass
 
-        if interleave_processes:
-            run_round_set = [[j] for j in range(max_processes, 0, -1)]
+        if interleave_rounds:
+            run_round_set = [[j] for j in range(max_rounds, 0, -1)]
         else:
             run_round_set = [None]
 
         def iter_rounds_commits():
             for run_rounds in run_round_set:
-                if interleave_processes and run_rounds[0] % 2 == 0:
+                if interleave_rounds and run_rounds[0] % 2 == 0:
                     for commit_hash in commit_hashes[::-1]:
                         yield run_rounds, commit_hash
                 else:
@@ -376,10 +383,10 @@ class Run(Command):
             if commit_hash in skipped_benchmarks:
                 for env in environments:
                     for bench in benchmarks:
-                        if interleave_processes:
+                        if interleave_rounds:
                             log.step()
                         else:
-                            for j in range(max_processes):
+                            for j in range(max_rounds):
                                 log.step()
                 continue
 
@@ -387,10 +394,10 @@ class Run(Command):
                 skip_list = skipped_benchmarks[(commit_hash, env.name)]
                 for bench in benchmarks:
                     if bench in skip_list:
-                        if interleave_processes:
+                        if interleave_rounds:
                             log.step()
                         else:
-                            for j in range(max_processes):
+                            for j in range(max_rounds):
                                 log.step()
 
             active_environments = [env for env in environments
@@ -401,10 +408,10 @@ class Run(Command):
                 continue
 
             if commit_hash:
-                if interleave_processes:
+                if interleave_rounds:
                     round_info = " (round {}/{})".format(
-                        max_processes - run_rounds[0] + 1,
-                        max_processes)
+                        max_rounds - run_rounds[0] + 1,
+                        max_rounds)
                 else:
                     round_info = ""
 
@@ -494,9 +501,9 @@ class Run(Command):
                         # append samples (except for the first round)
                         # and record samples (except for the final
                         # round).
-                        force_append_samples = (interleave_processes and
-                                                run_rounds[0] < max_processes)
-                        force_record_samples = (interleave_processes and
+                        force_append_samples = (interleave_rounds and
+                                                run_rounds[0] < max_rounds)
+                        force_record_samples = (interleave_rounds and
                                                 run_rounds[0] > 1)
 
                         if success:

@@ -142,7 +142,7 @@ def run_benchmarks(benchmarks, env, results=None,
         Whether to retain any previously measured result samples
         and use them in statistics computations.
     run_rounds : sequence of int, optional
-        Run rounds for benchmarks with multiple processes.
+        Run rounds for benchmarks with multiple rounds.
         If None, run all rounds.
     launch_method : {'auto', 'spawn', 'forkserver'}, optional
         Benchmark launching method to use.
@@ -163,7 +163,7 @@ def run_benchmarks(benchmarks, env, results=None,
         extra_params['number'] = 1
         extra_params['repeat'] = 1
         extra_params['warmup_time'] = 0
-        extra_params['processes'] = 1
+        extra_params['rounds'] = 1
 
     if results is None:
         results = Results.unnamed()
@@ -172,14 +172,14 @@ def run_benchmarks(benchmarks, env, results=None,
     setup_cache_timeout = {}
     benchmark_order = {}
     cache_users = {}
-    max_processes = 0
+    max_rounds = 0
 
-    def get_processes(benchmark):
-        """Get number of processes to use for a job"""
-        if 'processes' in extra_params:
-            return int(extra_params['processes'])
+    def get_rounds(benchmark):
+        """Get number of rounds to use for a job"""
+        if 'rounds' in extra_params:
+            return int(extra_params['rounds'])
         else:
-            return int(benchmark.get('processes', 1))
+            return int(benchmark.get('rounds', 1))
 
     for name, benchmark in sorted(six.iteritems(benchmarks)):
         key = benchmark.get('setup_cache_key')
@@ -187,11 +187,11 @@ def run_benchmarks(benchmarks, env, results=None,
                                                      benchmark['timeout']),
                                        setup_cache_timeout.get(key, 0))
         benchmark_order.setdefault(key, []).append((name, benchmark))
-        max_processes = max(max_processes, get_processes(benchmark))
+        max_rounds = max(max_rounds, get_rounds(benchmark))
         cache_users.setdefault(key, set()).add(name)
 
     if run_rounds is None:
-        run_rounds = list(range(1, max_processes + 1))
+        run_rounds = list(range(1, max_rounds + 1))
 
     # Interleave benchmark runs, in setup_cache order
     existing_results = results.get_result_keys(benchmarks)
@@ -202,9 +202,9 @@ def run_benchmarks(benchmarks, env, results=None,
                 for name, benchmark in benchmark_set:
                     log.step()
 
-                    processes = get_processes(benchmark)
+                    rounds = get_rounds(benchmark)
 
-                    if run_round > processes:
+                    if run_round > rounds:
                         if (not append_samples and
                                 run_round == run_rounds[-1] and
                                 name in existing_results):

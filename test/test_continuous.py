@@ -36,7 +36,7 @@ def test_continuous(capfd, basic_conf):
     assert "+               1                6     6.00  params_examples.track_find_test(2)" in text
     assert "params_examples.ClassOne" in text
 
-    # Check processes were interleaved (timing benchmark was run twice)
+    # Check rounds were interleaved (timing benchmark was run twice)
     assert re.search(r"For.*commit [a-f0-9]+ (<[a-z0-9~^]+> )?\(round 1/2\)", text, re.M), text
 
     result_found = False

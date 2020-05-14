@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 import six
+import argparse
 
 from . import Command
 from .run import Run
@@ -42,12 +43,19 @@ class Continuous(Command):
             benchmark functions faster.  The results are unlikely to
             be useful, and thus are not saved.""")
         parser.add_argument(
-            "--interleave-processes", action="store_true", default=None,
-            help="""Interleave benchmarks with multiple processes across
+            "--interleave-rounds", action="store_true", default=None,
+            help="""Interleave benchmarks with multiple rounds across
             commits. This can avoid measurement biases from commit ordering,
             can take longer.""")
         parser.add_argument(
-            "--no-interleave-processes", action="store_false", dest="interleave_processes")
+            "--no-interleave-rounds", action="store_false", dest="interleave_rounds")
+        # Backward compatibility for '--(no-)interleave-rounds'
+        parser.add_argument(
+            "--interleave-processes", action="store_true", default=False, dest="interleave_rounds",
+            help=argparse.SUPPRESS)
+        parser.add_argument(
+            "--no-interleave-processes", action="store_false", dest="interleave_rounds",
+            help=argparse.SUPPRESS)
         parser.add_argument(
             "--strict", action="store_true",
             help="When set true the run command will exit with a non-zero "
@@ -73,7 +81,7 @@ class Continuous(Command):
             machine=args.machine,
             env_spec=args.env_spec, record_samples=args.record_samples,
             append_samples=args.append_samples,
-            quick=args.quick, interleave_processes=args.interleave_processes,
+            quick=args.quick, interleave_rounds=args.interleave_rounds,
             launch_method=args.launch_method, strict=args.strict, **kwargs
         )
 
@@ -82,7 +90,7 @@ class Continuous(Command):
             factor=None, split=False, only_changed=True, sort='ratio', use_stats=True,
             show_stderr=False, bench=None,
             attribute=None, machine=None, env_spec=None, record_samples=False, append_samples=False,
-            quick=False, interleave_processes=None, launch_method=None, _machine_file=None,
+            quick=False, interleave_rounds=None, launch_method=None, _machine_file=None,
             strict=False):
         repo = get_repo(conf)
         repo.pull()
@@ -107,7 +115,7 @@ class Continuous(Command):
             conf, range_spec=commit_hashes, bench=bench, attribute=attribute,
             show_stderr=show_stderr, machine=machine, env_spec=env_spec,
             record_samples=record_samples, append_samples=append_samples, quick=quick,
-            interleave_processes=interleave_processes,
+            interleave_rounds=interleave_rounds,
             launch_method=launch_method, strict=strict,
             _returns=run_objs, _machine_file=_machine_file)
         if result:

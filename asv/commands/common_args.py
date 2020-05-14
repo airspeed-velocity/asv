@@ -100,7 +100,11 @@ class DictionaryArgAction(argparse.Action):
             raise argparse.ArgumentError(self,
                                          "{!r} cannot be set".format(key))
 
+        dest_key = key
         conv = self.converters.get(key, None)
+        if isinstance(conv, tuple):
+            dest_key, conv = conv
+
         if conv is not None:
             try:
                 value = conv(value)
@@ -112,7 +116,7 @@ class DictionaryArgAction(argparse.Action):
         result = getattr(namespace, self.dest, None)
         if result is None:
             result = {}
-        result[key] = value
+        result[dest_key] = value
         setattr(namespace, self.dest, result)
 
 
@@ -161,7 +165,8 @@ def add_bench(parser):
         'warmup_time': float,
         'repeat': parse_repeat,
         'number': int,
-        'processes': int,
+        'rounds': int,
+        'processes': ('rounds', int),  # backward compatibility
         'sample_time': float,
         'cpu_affinity': parse_affinity
     }

@@ -604,7 +604,8 @@ class TimeBenchmark(Benchmark):
         self.type = "time"
         self.unit = "seconds"
         self._attr_sources = attr_sources
-        self.processes = int(_get_first_attr(self._attr_sources, 'processes', 2))
+        old = int(_get_first_attr(self._attr_sources, 'processes', 2))  # backward compat.
+        self.rounds = int(_get_first_attr(self._attr_sources, 'rounds', old))
         self._load_vars()
 
     def _load_vars(self):
@@ -653,7 +654,7 @@ class TimeBenchmark(Benchmark):
                 min_repeat = 1
                 max_repeat = 10
                 max_time = 20.0
-                if self.processes > 1:
+                if self.rounds > 1:
                     max_repeat //= 2
                     max_time /= 2.0
             else:
