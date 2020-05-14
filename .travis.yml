@@ -30,8 +30,6 @@ matrix:
 
     - python: 3.8
       dist: xenial
-      env:
-        - COVERAGE="--cov=asv --cov=test"
 
     - python: 3.6
       env:
@@ -79,6 +77,7 @@ install:
       conda activate
       conda install --yes conda-build bzip2
       conda info
+      XDIST_FLAG=""
     else
       ENVIRONMENT_TYPE=virtualenv
       if $TRAVIS_PYTHON -c 'import sys; sys.exit(0 if "__pypy__" in sys.modules else 1)'; then
@@ -88,16 +87,17 @@ install:
       else
         $TRAVIS_PIP install virtualenv numpy scipy;
       fi
+      XDIST_FLAG="-n3"
     fi
     if $TRAVIS_PYTHON -c 'import sys; sys.exit(0 if "__pypy__" in sys.modules else 1)'; then
       $TRAVIS_PIP install "pytest>=4.4.0,<5.0" "pytest-rerunfailures>=8.0,<9.0" "pytest-faulthandler<2.0"
     fi
-    $TRAVIS_PIP install selenium six "pytest>=4.4.0" "pytest-xdist" pytest-rerunfailures pytest-faulthandler pytest-timeout feedparser python-hglib filelock;
+    $TRAVIS_PIP install selenium six "pytest>=4.4.0" "pytest-xdist" feedparser python-hglib filelock;
     if [[ "$COVERAGE" != '' ]]; then $TRAVIS_PIP install pytest-cov codecov; fi;
   - $TRAVIS_PYTHON setup.py build_ext -i
 
 script:
-  - $TRAVIS_PYTHON -m pytest -l $COVERAGE -n 3 -v -v --webdriver=FirefoxHeadless --timeout=1800 --timeout-method=thread --durations=100 test
+  - $TRAVIS_PYTHON -m pytest -l $COVERAGE $XDIST_FLAG -v -v --webdriver=FirefoxHeadless test
 
 after_script:
   - if [[ "$COVERAGE" != '' ]]; then
