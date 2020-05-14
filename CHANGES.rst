@@ -1,17 +1,11 @@
 0.4.2 (unreleased)
 ------------------
 
-New Features
-^^^^^^^^^^^^
-
-API Changes
-^^^^^^^^^^^
-
 Bug Fixes
 ^^^^^^^^^
 
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- Do not supply ``--no-site-packages`` to virtualenv, as it is on by
+  default and no longer supported. (#917)
 
 
 0.4.1 (2019-05-30)
