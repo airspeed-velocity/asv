@@ -25,6 +25,7 @@ matrix:
           SKIP="$SKIP|test/test_repo_template/asv_test_repo/__init__.py"
           SKIP="$SKIP|asv/extern/asizeof.py"
           SKIP="$SKIP|asv/benchmark.py.*undefined name .(run|params)."
+          SKIP="$SKIP|format.*has unused arguments at position"
           PYFLAKES_NODOCTEST=1 pyflakes asv test | grep -E -v "$SKIP" > test.out; cat test.out; test \! -s test.out
 
     - python: 3.8
