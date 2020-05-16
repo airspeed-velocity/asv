@@ -147,6 +147,9 @@ class Find(Command):
                 env.env_vars
             )
 
+            if not skip_save:
+                result.load_data(conf.results_dir)
+
             res = run_benchmarks(benchmarks, env, results=result,
                                  show_stderr=show_stderr,
                                  launch_method=launch_method)
