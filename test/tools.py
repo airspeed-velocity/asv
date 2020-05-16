@@ -64,11 +64,23 @@ except (RuntimeError, IOError):
     HAS_PYPY = hasattr(sys, 'pypy_version_info') and (sys.version_info[:2] == (2, 7))
 
 
+def _check_conda():
+    from asv.plugins.conda import _conda_lock
+    conda = _find_conda()
+    with _conda_lock():
+        try:
+            subprocess.check_call([conda, 'build', '--version'],
+                                  stdout=subprocess.DEVNULL,
+                                  stderr=subprocess.DEVNULL)
+        except subprocess.CalledProcessError:
+            raise RuntimeError("conda-build is missing")
+
+
 try:
     # Conda can install required Python versions on demand
-    _find_conda()
+    _check_conda()
     HAS_CONDA = True
-except (RuntimeError, IOError):
+except (RuntimeError, IOError) as exc:
     HAS_CONDA = False
 
 
