@@ -47,7 +47,6 @@ def generate_basic_conf(tmpdir, repo_subdir='', values=dummy_values, dummy_packa
 
     conf_dict = {
         'env_dir': 'env',
-        'environment_type': 'virtualenv',
         'benchmark_dir': 'benchmark',
         'results_dir': 'results_workflow',
         'html_dir': 'html',
