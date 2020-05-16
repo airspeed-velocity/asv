@@ -70,8 +70,8 @@ def _check_conda():
     with _conda_lock():
         try:
             subprocess.check_call([conda, 'build', '--version'],
-                                  stdout=subprocess.DEVNULL,
-                                  stderr=subprocess.DEVNULL)
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
         except subprocess.CalledProcessError:
             raise RuntimeError("conda-build is missing")
 
