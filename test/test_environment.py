@@ -320,7 +320,7 @@ def test_iter_env_matrix_combinations():
         assert result == _sorted_dict_list(expected)
 
 
-@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
+@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
 def test_conda_pip_install(tmpdir, dummy_packages):
     # test that we can install with pip into a conda environment.
     conf = config.Config()
@@ -344,7 +344,7 @@ def test_conda_pip_install(tmpdir, dummy_packages):
         assert output.startswith(six.text_type(env._requirements['pip+asv_dummy_test_package_2']))
 
 
-@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
+@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
 def test_conda_environment_file(tmpdir, dummy_packages):
     env_file_name = six.text_type(tmpdir.join("environment.yml"))
     with open(env_file_name, "w") as temp_environment_file:
@@ -376,7 +376,7 @@ def test_conda_environment_file(tmpdir, dummy_packages):
         assert output.startswith(six.text_type(DUMMY2_VERSIONS[1]))
 
 
-@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
+@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
 def test_conda_run_executable(tmpdir):
     # test that we can install with pip into a conda environment.
     conf = config.Config()
@@ -521,7 +521,7 @@ def test_matrix_existing():
 # environment.yml should respect the specified order
 # of channels when adding packages
 @pytest.mark.skipif((not HAS_CONDA),
-                    reason="Requires conda")
+                    reason="Requires conda and conda-build")
 @pytest.mark.parametrize("channel_list,expected_channel", [
     (["defaults", "conda-forge"], "pkgs/main"),
     (["conda-forge", "defaults"], "conda-forge"),
@@ -605,7 +605,7 @@ def test_environment_name_sanitization():
 
 
 @pytest.mark.parametrize("environment_type", [
-    pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="needs conda")),
+    pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="needs conda and conda-build")),
     pytest.param("virtualenv", marks=pytest.mark.skipif(not HAS_VIRTUALENV, reason="needs virtualenv"))
 ])
 def test_environment_environ_path(environment_type, tmpdir, monkeypatch):
