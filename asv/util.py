@@ -995,6 +995,13 @@ def get_cpu_info():
     elif sys.platform.startswith('darwin'):
         sysctl = which('sysctl')
         return check_output([sysctl, '-n', 'machdep.cpu.brand_string']).strip()
+    elif sys.platform.startswith('win'):
+        try:
+            from win32com.client import GetObject
+            cimv = GetObject("winmgmts:root\cimv2")
+            return cimv.ExecQuery("Select Name from Win32_Processor")[0].name
+        except:
+            pass
     return ''
 
 
