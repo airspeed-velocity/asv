@@ -467,9 +467,11 @@ def detect_regressions(steps, threshold=0, min_size=2):
         Latest value
     best_value
         Best value
-    regression_pos : list of (before, after, value_before, value_after)
+    regression_pos : list of (before, after, value_before, best_value_after)
         List of positions between which the value increased. The first item
         corresponds to the last position at which the best value was obtained.
+        The last item indicates the best value found after the regression
+        (which is not always the value immediately following the regression).
 
     """
     if not steps:
