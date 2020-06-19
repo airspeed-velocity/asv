@@ -204,7 +204,7 @@ $(document).ready(function() {
                            '<th data-sort="string">Commit</th>' +
                            '<th data-sort="factor">Factor</th>' +
                            '<th data-sort="value">Before</th>' +
-                           '<th data-sort="value">After</th>' +
+                           '<th data-sort="value">Best after</th>' +
                            '<th></th>' +
                            '</tr></thead>');
 

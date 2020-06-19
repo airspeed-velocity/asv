@@ -290,7 +290,7 @@ def test_web_regressions(browser, basic_html):
 
         def check(*args):
             columns = browser.find_element_by_xpath('//table/thead/tr[1]').text
-            return columns == 'Benchmark Date Commit Factor Before After'
+            return columns == 'Benchmark Date Commit Factor Before Best after'
 
         WebDriverWait(browser, WAIT_TIME, ignored_exceptions=ignore_exc).until(check)
 
