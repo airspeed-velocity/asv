@@ -447,7 +447,7 @@ def generate_repo_from_ops(tmpdir, dvcs_type, operations):
     return dvcs
 
 
-def generate_result_dir(tmpdir, dvcs, values, branches=None):
+def generate_result_dir(tmpdir, dvcs, values, branches=None, updated=None):
     result_dir = join(tmpdir, "results")
     os.makedirs(result_dir)
     html_dir = join(tmpdir, "html")
@@ -471,7 +471,8 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
         'version': 1,
     })
 
-    timestamp = datetime.datetime.utcnow()
+    if updated is None:
+        updated = datetime.datetime(1970, 1, 1)
 
     benchmark_version = sha256(os.urandom(16)).hexdigest()
 
@@ -493,7 +494,7 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None):
             stderr='',
             profile=None)
         result.add_result({"name": "time_func", "version": benchmark_version, "params": params},
-                          value, started_at=timestamp, duration=1.0)
+                          value, started_at=updated, duration=1.0)
         result.save(result_dir)
 
     if params:
