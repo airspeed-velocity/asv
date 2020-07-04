@@ -998,7 +998,7 @@ def get_cpu_info():
     elif sys.platform.startswith('win'):
         try:
             from win32com.client import GetObject
-            cimv = GetObject("winmgmts:root\cimv2")
+            cimv = GetObject(r"winmgmts:root\cimv2")
             return cimv.ExecQuery("Select Name from Win32_Processor")[0].name
         except:
             pass
