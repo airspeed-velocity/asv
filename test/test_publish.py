@@ -420,7 +420,8 @@ def test_regression_atom_feed_update(dvcs_type, tmpdir):
     commit_values = {}
     for commit, value in zip(commits, values[:-5]):
         commit_values[commit] = value
-    conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
+    conf = tools.generate_result_dir(tmpdir, dvcs, commit_values,
+                                     updated=datetime.datetime(1970, 1, 1))
 
     tools.run_asv_with_conf(conf, "publish")
 
@@ -432,7 +433,8 @@ def test_regression_atom_feed_update(dvcs_type, tmpdir):
 
     shutil.rmtree(conf.results_dir)
     shutil.rmtree(conf.html_dir)
-    conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
+    conf = tools.generate_result_dir(tmpdir, dvcs, commit_values,
+                                     updated=datetime.datetime(1990, 1, 1))
 
     tools.run_asv_with_conf(conf, "publish")
 

@@ -36,7 +36,8 @@ def prettify_xml(text):
 def dummy_feed_xml():
     entry_1 = feed.FeedEntry(title='Some title', updated=datetime.datetime(1993, 1, 1))
     entry_2 = feed.FeedEntry(title='Another title', updated=datetime.datetime(1990, 1, 1),
-                             link='http://foo', content='More text', id_context=['something'])
+                             link='http://foo', content='More text', id_context=['something'],
+                             id_date=datetime.datetime(2000, 1, 1))
 
     stream = io.BytesIO()
     feed.write_atom(stream, [entry_1, entry_2], author='Me', title='Feed title',
@@ -75,7 +76,7 @@ Some title</title>
 </entry>
 <entry>
 <id>
-tag:baz.com,1990-01-01:/abd78e0420c232c75f3e7582946dac13e18a54b0b5542fbc3159458f8b16fd4f</id>
+tag:baz.com,2000-01-01:/abd78e0420c232c75f3e7582946dac13e18a54b0b5542fbc3159458f8b16fd4f</id>
 <title xml:lang="en">
 Another title</title>
 <updated>
