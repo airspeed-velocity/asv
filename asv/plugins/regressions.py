@@ -207,8 +207,7 @@ class Regressions(OutputPublisher):
                 # as the same one, as long as the benchmark name and
                 # commits match.
                 id_context = [name, revision_to_hash.get(rev1, ""), revision_to_hash.get(rev2, "")]
-                id_rev = rev1 if rev1 is not None else rev2
-                id_date = util.js_timestamp_to_datetime(revision_timestamps[id_rev])
+                id_date = util.js_timestamp_to_datetime(revision_timestamps[rev2])
 
                 entries.append(feed.FeedEntry(title, updated, link, summary, id_context, id_date))
 
