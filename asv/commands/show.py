@@ -25,18 +25,18 @@ class Show(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "show", help="Print recorded data.",
+            "show", help="Print recorded data",
             description="""Print saved benchmark results.""")
 
         parser.add_argument(
             'commit', nargs='?', default=None,
-            help="""The commit to show data for.""")
+            help="""The commit to show data for""")
         parser.add_argument(
             '--details', action='store_true', default=False,
-            help="""Show all result details.""")
+            help="""Show all result details""")
         parser.add_argument(
             '--durations', action='store_true', default=False,
-            help="""Show only run durations.""")
+            help="""Show only run durations""")
         common_args.add_bench(parser)
         common_args.add_machine(parser)
         common_args.add_environment(parser)

@@ -16,9 +16,9 @@ class GithubPages(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "gh-pages", help="Publish the results to Github pages.",
+            "gh-pages", help="Publish the results to Github pages",
             description="""
-            Publish the results to github pages.
+            Publish the results to github pages
 
             Updates the 'gh-pages' branch in the current repository,
             and pushes it to 'origin'.
