@@ -137,7 +137,7 @@ applies to in two ways:
   included in the timing of the benchmark.
 
 A separate cache is used for each environment and each commit of the
-project begin tested and is thrown out between benchmark runs.
+project being tested and is thrown out between benchmark runs.
 
 For example, caching data in a pickle::
 
