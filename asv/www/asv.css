@@ -125,8 +125,38 @@ nav li.active span.navbar-brand:hover {
 
 /* Summary page */
 
-.benchmark-group > h1 {
-    text-align: center;
+.benchmark-group h1, h2, h3, h4, h5, h6 {
+    margin: 5px 0;
+}
+
+.benchmark-group h2, h3, h4, h5, h6 {
+    background-color: #ddd;
+}
+
+.benchmark-group h1 {
+    font-weight: bold;
+    background-color: #ccc;
+    padding-left: 10px;
+}
+
+.benchmark-group h2 {
+    padding-left: 30px;
+}
+
+.benchmark-group h3 {
+    padding-left: 50px;
+}
+
+.benchmark-group h4 {
+    padding-left: 60px;
+}
+
+.benchmark-group h5 {
+    padding-left: 80px;
+}
+
+.benchmark-group h6 {
+    padding-left: 100px;
 }
 
 .benchmark-container {
