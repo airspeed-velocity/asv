@@ -318,7 +318,7 @@ $(document).ready(function() {
 
         var match = str.match(/^([^?]*?)\?/);
         if (match) {
-            info['location'] = match[1].replace(/\/+/, '/').split('/');
+            info['location'] = decodeURIComponent(match[1]).replace(/\/+/, '/').split('/');
             var rest = str.slice(match[1].length+1);
             var parts = rest.split('&');
             for (var i = 0; i < parts.length; ++i) {
@@ -340,7 +340,7 @@ $(document).ready(function() {
             }
         }
         else {
-            info['location'] = str.replace(/\/+/, '/').split('/');
+            info['location'] = decodeURIComponent(str).replace(/\/+/, '/').split('/');
         }
         return info;
     }
