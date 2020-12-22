@@ -112,6 +112,7 @@ $(document).ready(function() {
 
         $.each(get_benchmarks_by_groups(), function(group, benchmarks) {
             var group_container = $('<div class="benchmark-group"/>')
+            group_container.attr('id', 'group-' + group)
             group_container.append($('<h1>' + group + '</h1>'));
             summary_display.append(group_container);
             $.each(benchmarks, function(i, bm_name) {
