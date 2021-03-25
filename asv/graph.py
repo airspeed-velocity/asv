@@ -124,9 +124,8 @@ class Graph(object):
 
         The implementation must match asv.js:graph_to_path
         """
-        parts = ['graphs']
+        parts = []
         l = list(six.iteritems(params))
-        l.sort()
         for key, val in l:
             if val is None:
                 part = '{0}-null'.format(key)
@@ -135,6 +134,8 @@ class Graph(object):
             else:
                 part = '{0}'.format(key)
             parts.append(util.sanitize_filename(part))
+        parts.sort()
+        parts.insert(0, 'graphs')
         parts.append(util.sanitize_filename(benchmark_name))
         return os.path.join(*parts)
 
