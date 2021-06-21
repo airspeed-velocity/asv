@@ -176,6 +176,9 @@ class Find(Command):
                     denom = abs(va) + abs(vb) + abs(vc)
                     if denom == 0:
                         denom = 1.0
+                    if invert:
+                        denom*=-1.0
+
                     results_ab.append((va - vb) / denom)
                     results_bc.append((vb - vc) / denom)
             return max(results_ab), max(results_bc)
@@ -220,9 +223,6 @@ class Find(Command):
 
             diff_b, diff_a = difference_3way(hi_result, mid_result, lo_result)
 
-            if invert:
-                diff_a *= -1.0
-                diff_b *= -1.0
 
             if diff_a >= diff_b:
                 return do_search(lo, mid)

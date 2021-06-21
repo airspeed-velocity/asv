@@ -69,3 +69,26 @@ def test_find_timeout(capfd, tmpdir):
 
     assert "Greatest regression found: {0}".format(regression_hash[:8]) in output
     assert "asv: benchmark timed out (timeout 1.0s)" in output
+
+
+def test_find3(capfd, tmpdir):
+    values = [
+        (5, 6),
+        (6, 6),
+        (6, 6),
+        (6, 1),
+        (6, 1),
+    ]
+
+
+    tmpdir, local, conf, machine_file = generate_basic_conf(tmpdir, values=values, dummy_packages=False)
+    tools.run_asv_with_conf(*[conf, 'find',"-i", f"master~4..master", "params_examples.track_find_test"],
+                            _machine_file=machine_file)
+
+    output, err = capfd.readouterr()
+
+    regression_hash = check_output(
+        [which('git'), 'rev-parse', f'master^'], cwd=conf.repo)
+
+    formatted = "Greatest regression found: {0}".format(regression_hash[:8])
+    assert formatted in output
