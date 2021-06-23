@@ -86,8 +86,8 @@ except (RuntimeError, IOError) as exc:
 
 try:
     # Conda can install required Python versions on demand
-    _check_mamba()
-    HAS_MAMBA = True
+    _find_mamba()
+    HAS_MAMBA = True and HAS_CONDA
 except (RuntimeError, IOError) as exc:
     HAS_MAMBA = False
 
