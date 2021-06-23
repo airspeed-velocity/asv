@@ -77,7 +77,7 @@ install:
       popd;
       . $HOME/miniconda3/etc/profile.d/conda.sh  # enable conda bash function
       conda activate
-      conda install --yes conda-build bzip2
+      conda install --yes conda-build bzip2 mamba
       conda info
     else
       ENVIRONMENT_TYPE=virtualenv

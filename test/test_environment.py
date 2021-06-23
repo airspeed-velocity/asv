@@ -19,7 +19,7 @@ from asv.util import shlex_quote as quote
 
 from .tools import (PYTHON_VER1, PYTHON_VER2, DUMMY1_VERSION, DUMMY2_VERSIONS,
                     WIN, HAS_PYPY, HAS_CONDA, HAS_VIRTUALENV, HAS_PYTHON_VER2,
-                    generate_test_repo, dummy_packages)
+                    HAS_MAMBA, generate_test_repo, dummy_packages)
 
 
 @pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
@@ -320,14 +320,17 @@ def test_iter_env_matrix_combinations():
         assert result == _sorted_dict_list(expected)
 
 
-@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
-def test_conda_pip_install(tmpdir, dummy_packages):
+@pytest.mark.parametrize("environment_type", [
+    pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="needs conda and conda-build")),
+    pytest.param("mamba", marks=pytest.mark.skipif(not HAS_MAMBA, reason="needs mamba")),
+])
+def test_conda_pip_install(tmpdir, dummy_packages, environment_type):
     # test that we can install with pip into a conda environment.
     conf = config.Config()
 
     conf.env_dir = six.text_type(tmpdir.join("env"))
 
-    conf.environment_type = "conda"
+    conf.environment_type = environment_type
     conf.pythons = [PYTHON_VER1]
     conf.matrix = {
         "pip+asv_dummy_test_package_2": [DUMMY2_VERSIONS[0]]
@@ -344,8 +347,11 @@ def test_conda_pip_install(tmpdir, dummy_packages):
         assert output.startswith(six.text_type(env._requirements['pip+asv_dummy_test_package_2']))
 
 
-@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
-def test_conda_environment_file(tmpdir, dummy_packages):
+@pytest.mark.parametrize("environment_type", [
+    pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="needs conda and conda-build")),
+    pytest.param("mamba", marks=pytest.mark.skipif(not HAS_MAMBA, reason="needs mamba")),
+])
+def test_conda_environment_file(tmpdir, dummy_packages, environment_type):
     env_file_name = six.text_type(tmpdir.join("environment.yml"))
     with open(env_file_name, "w") as temp_environment_file:
         temp_environment_file.write(
@@ -353,7 +359,7 @@ def test_conda_environment_file(tmpdir, dummy_packages):
 
     conf = config.Config()
     conf.env_dir = six.text_type(tmpdir.join("env"))
-    conf.environment_type = "conda"
+    conf.environment_type = environment_type
     conf.pythons = [PYTHON_VER1]
     conf.conda_environment_file = env_file_name
     conf.matrix = {
@@ -376,14 +382,17 @@ def test_conda_environment_file(tmpdir, dummy_packages):
         assert output.startswith(six.text_type(DUMMY2_VERSIONS[1]))
 
 
-@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
-def test_conda_run_executable(tmpdir):
+@pytest.mark.parametrize("environment_type", [
+    pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="needs conda and conda-build")),
+    pytest.param("mamba", marks=pytest.mark.skipif(not HAS_MAMBA, reason="needs mamba")),
+])
+def test_conda_run_executable(tmpdir, environment_type):
     # test that we can install with pip into a conda environment.
     conf = config.Config()
 
     conf.env_dir = six.text_type(tmpdir.join("env"))
 
-    conf.environment_type = "conda"
+    conf.environment_type = environment_type
     conf.pythons = [PYTHON_VER1]
     conf.matrix = {}
     environments = list(environment.get_environments(conf, None))
@@ -395,21 +404,25 @@ def test_conda_run_executable(tmpdir):
         env.run_executable('conda', ['info'])
 
 
-def test_environment_select():
+@pytest.mark.parametrize("environment_type", [
+    pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="needs conda and conda-build")),
+    pytest.param("mamba", marks=pytest.mark.skipif(not HAS_MAMBA, reason="needs mamba")),
+])
+def test_environment_select(environment_type):
     conf = config.Config()
-    conf.environment_type = "conda"
+    conf.environment_type = environment_type
     conf.pythons = ["2.7", "3.5"]
     conf.matrix = {
         "six": ["1.10"],
     }
     conf.include = [
-        {'environment_type': 'conda', 'python': '1.9'}
+        {'environment_type': environment_type, 'python': '1.9'}
     ]
 
     # Check default environment config
     environments = list(environment.get_environments(conf, None))
     items = sorted([(env.tool_name, env.python) for env in environments])
-    assert items == [('conda', '1.9'), ('conda', '2.7'), ('conda', '3.5')]
+    assert items == [(environment_type, '1.9'), (environment_type, '2.7'), (environment_type, '3.5')]
 
     if HAS_VIRTUALENV:
         # Virtualenv plugin fails on initialization if not available,
@@ -418,14 +431,14 @@ def test_environment_select():
         conf.pythons = [PYTHON_VER1]
 
         # Check default python specifiers
-        environments = list(environment.get_environments(conf, ["conda", "virtualenv"]))
+        environments = list(environment.get_environments(conf, [environment_type, "virtualenv"]))
         items = sorted((env.tool_name, env.python) for env in environments)
-        assert items == [('conda', '1.9'), ('conda', PYTHON_VER1), ('virtualenv', PYTHON_VER1)]
+        assert items == [(environment_type, '1.9'), (environment_type PYTHON_VER1), ('virtualenv', PYTHON_VER1)]
 
         # Check specific python specifiers
         environments = list(environment.get_environments(conf, ["conda:3.5", "virtualenv:"+PYTHON_VER1]))
         items = sorted((env.tool_name, env.python) for env in environments)
-        assert items == [('conda', '3.5'), ('virtualenv', PYTHON_VER1)]
+        assert items == [(environment_type, '3.5'), ('virtualenv', PYTHON_VER1)]
 
     # Check same specifier
     environments = list(environment.get_environments(conf, ["existing:same", ":same", "existing"]))
@@ -445,25 +458,28 @@ def test_environment_select():
 
     # Select by environment name
     conf.pythons = ["2.7"]
-    environments = list(environment.get_environments(conf, ["conda-py2.7-six1.10"]))
+    environments = list(environment.get_environments(conf, [f"{environment_type}-py2.7-six1.10"]))
     assert len(environments) == 1
     assert environments[0].python == "2.7"
-    assert environments[0].tool_name == "conda"
+    assert environments[0].tool_name == environment_type
     assert environments[0].requirements == {'six': '1.10'}
 
     # Check interaction with exclude
-    conf.exclude = [{'environment_type': "conda"}]
-    environments = list(environment.get_environments(conf, ["conda-py2.7-six1.10"]))
+    conf.exclude = [{'environment_type': environment_type}]
+    environments = list(environment.get_environments(conf, [f"{environment_type}-py2.7-six1.10"]))
     assert len(environments) == 0
 
     conf.exclude = [{'environment_type': 'matches nothing'}]
-    environments = list(environment.get_environments(conf, ["conda-py2.7-six1.10"]))
+    environments = list(environment.get_environments(conf, [f"{environment_type}-py2.7-six1.10"]))
     assert len(environments) == 1
 
-
-def test_environment_select_autodetect():
+@pytest.mark.parametrize("environment_type", [
+    pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="needs conda and conda-build")),
+    pytest.param("mamba", marks=pytest.mark.skipif(not HAS_MAMBA, reason="needs mamba")),
+])
+def test_environment_select_autodetect(environment_type):
     conf = config.Config()
-    conf.environment_type = "conda"
+    conf.environment_type = environment_type
     conf.pythons = [PYTHON_VER1]
     conf.matrix = {
         "six": ["1.10"],
@@ -473,19 +489,19 @@ def test_environment_select_autodetect():
     environments = list(environment.get_environments(conf, [":" + PYTHON_VER1]))
     assert len(environments) == 1
     assert environments[0].python == PYTHON_VER1
-    assert environments[0].tool_name in ("virtualenv", "conda")
+    assert environments[0].tool_name in ("virtualenv", environment_type)
 
     # Check interaction with exclude
     conf.exclude = [{'environment_type': 'matches nothing'}]
     environments = list(environment.get_environments(conf, [":" + PYTHON_VER1]))
     assert len(environments) == 1
 
-    conf.exclude = [{'environment_type': 'virtualenv|conda'}]
+    conf.exclude = [{'environment_type': f'virtualenv|{environment_type}'}]
     environments = list(environment.get_environments(conf, [":" + PYTHON_VER1]))
     assert len(environments) == 1
 
-    conf.exclude = [{'environment_type': 'conda'}]
-    environments = list(environment.get_environments(conf, ["conda:" + PYTHON_VER1]))
+    conf.exclude = [{'environment_type': environment_type}]
+    environments = list(environment.get_environments(conf, [f"{environment_type}:" + PYTHON_VER1]))
     assert len(environments) == 1
 
 
@@ -589,10 +605,13 @@ def test_pypy_virtualenv(tmpdir):
         output = env.run(['-c', 'import sys; print(sys.pypy_version_info)'])
         assert output.startswith(six.text_type("(major="))
 
-
-def test_environment_name_sanitization():
+@pytest.mark.parametrize("environment_type", [
+    pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="needs conda and conda-build")),
+    pytest.param("mamba", marks=pytest.mark.skipif(not HAS_MAMBA, reason="needs mamba")),
+])
+def test_environment_name_sanitization(environment_type):
     conf = config.Config()
-    conf.environment_type = "conda"
+    conf.environment_type = environment_type
     conf.pythons = ["3.5"]
     conf.matrix = {
         "pip+git+http://github.com/space-telescope/asv.git": [],
@@ -601,11 +620,12 @@ def test_environment_name_sanitization():
     # Check name sanitization
     environments = list(environment.get_environments(conf, []))
     assert len(environments) == 1
-    assert environments[0].name == "conda-py3.5-pip+git+http___github.com_space-telescope_asv.git"
+    assert environments[0].name == f"{environment_type}-py3.5-pip+git+http___github.com_space-telescope_asv.git"
 
 
 @pytest.mark.parametrize("environment_type", [
     pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="needs conda and conda-build")),
+    pytest.param("mamba", marks=pytest.mark.skipif(not HAS_MAMBA, reason="needs mamba")),
     pytest.param("virtualenv", marks=pytest.mark.skipif(not HAS_VIRTUALENV, reason="needs virtualenv"))
 ])
 def test_environment_environ_path(environment_type, tmpdir, monkeypatch):
@@ -917,7 +937,11 @@ def test__parse_exclude_include_rule():
         ({"python": "2.6", "environment_type": "conda", "sys_platform": "123",
           "env": {"A": "B"}, "env_nobuild": {"C": "D"}, "req": {"foo": "9"}},
          {("python", None): "2.6", ("environment_type", None): "conda", ("sys_platform", None): "123",
-          ("env", "A"): "B", ("env_nobuild", "C"): "D", ("req", "foo"): "9"})
+          ("env", "A"): "B", ("env_nobuild", "C"): "D", ("req", "foo"): "9"}),
+        ({"python": "2.6", "environment_type": "mamba", "sys_platform": "123",
+          "env": {"A": "B"}, "env_nobuild": {"C": "D"}, "req": {"foo": "9"}},
+         {("python", None): "2.6", ("environment_type", None): "mamba", ("sys_platform", None): "123",
+          ("env", "A"): "B", ("env_nobuild", "C"): "D", ("req", "foo"): "9"}),
     ]
     for rule, expected in cases:
         parsed = environment._parse_exclude_include_rule(rule)
@@ -927,6 +951,8 @@ def test__parse_exclude_include_rule():
 def test__parse_exclude_include_rule_invalid():
     cases = [
         {"python": "2.6", "environment_type": "conda", "sys_platform": "123",
+         "env": {"A": "B"}, "env_nobuild": {"C": "D"}, "req": {"foo": "9"}, "foo": "9"},
+        {"python": "2.6", "environment_type": "mamba", "sys_platform": "123",
          "env": {"A": "B"}, "env_nobuild": {"C": "D"}, "req": {"foo": "9"}, "foo": "9"},
     ]
     for rule in cases:

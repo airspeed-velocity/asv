@@ -41,6 +41,7 @@ from asv.commands.preview import create_httpd
 from asv.repo import get_repo
 from asv.results import Results
 from asv.plugins.conda import _find_conda
+from asv.plugins.mamba import _find_mamba
 
 
 # Two Python versions for testing
@@ -82,6 +83,13 @@ try:
     HAS_CONDA = True
 except (RuntimeError, IOError) as exc:
     HAS_CONDA = False
+
+try:
+    # Conda can install required Python versions on demand
+    _check_mamba()
+    HAS_MAMBA = True
+except (RuntimeError, IOError) as exc:
+    HAS_MAMBA = False
 
 
 try:
