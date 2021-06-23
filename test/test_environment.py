@@ -433,7 +433,7 @@ def test_environment_select(environment_type):
         # Check default python specifiers
         environments = list(environment.get_environments(conf, [environment_type, "virtualenv"]))
         items = sorted((env.tool_name, env.python) for env in environments)
-        assert items == [(environment_type, '1.9'), (environment_type PYTHON_VER1), ('virtualenv', PYTHON_VER1)]
+        assert items == [(environment_type, '1.9'), (environment_type, PYTHON_VER1), ('virtualenv', PYTHON_VER1)]
 
         # Check specific python specifiers
         environments = list(environment.get_environments(conf, ["conda:3.5", "virtualenv:"+PYTHON_VER1]))
