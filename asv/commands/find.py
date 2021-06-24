@@ -232,6 +232,12 @@ class Find(Command):
         result = do_search(0, len(commit_hashes) - 1)
 
         commit_name = repo.get_decorated_hash(commit_hashes[result], 8)
-        log.info("Greatest regression found: {0}".format(commit_name))
+
+        if invert:
+            direction = "improvement"
+        else:
+            direction = "regression"
+
+        log.info("Greatest {0} found: {1}".format(direction, commit_name))
 
         return 0

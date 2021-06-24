@@ -71,7 +71,7 @@ def test_find_timeout(capfd, tmpdir):
     assert "asv: benchmark timed out (timeout 1.0s)" in output
 
 
-def test_find3(capfd, tmpdir):
+def test_find_inverted(capfd, tmpdir):
     values = [
         (5, 6),
         (6, 6),
@@ -90,5 +90,5 @@ def test_find3(capfd, tmpdir):
     regression_hash = check_output(
         [which('git'), 'rev-parse', f'master^'], cwd=conf.repo)
 
-    formatted = "Greatest regression found: {0}".format(regression_hash[:8])
+    formatted = "Greatest improvement found: {0}".format(regression_hash[:8])
     assert formatted in output
