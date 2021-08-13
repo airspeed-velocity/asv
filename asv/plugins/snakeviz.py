@@ -13,7 +13,7 @@ from .. import util
 
 class SnakevizGui(profiling.ProfilerGui):
     name = 'snakeviz'
-    description = "snakeviz http://jiffyclub.github.com/snakeviz/"
+    description = "snakeviz http://jiffyclub.github.io/snakeviz/"
 
     @classmethod
     def is_available(cls):
