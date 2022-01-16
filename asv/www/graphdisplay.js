@@ -1362,7 +1362,7 @@ $(document).ready(function() {
 
 
     $.asv.register_page('graphdisplay', function(params) {
-        var benchmark = params['benchmark'];
+        var benchmark = decodeURIComponent(params['benchmark']);
         var highlight_revisions = null;
         var state_selection = null;
 
