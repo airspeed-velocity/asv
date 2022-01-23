@@ -9,8 +9,6 @@ import os
 import re
 import tempfile
 import itertools
-import datetime
-
 import six
 
 from .console import log
