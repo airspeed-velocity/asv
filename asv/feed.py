@@ -3,7 +3,8 @@
 """
 Minimal Atom feed writer.
 """
-from __future__ import absolute_import, division, unicode_literals, print_function
+from __future__ import (absolute_import, division,
+                        unicode_literals, print_function)
 
 import sys
 import datetime
@@ -43,7 +44,9 @@ class FeedEntry(object):
         Default: same as *updated*
 
     """
-    def __init__(self, title, updated, link=None, content=None, id_context=None, id_date=None):
+    def __init__(
+                    self, title, updated, link=None, content=None,
+                    id_context=None, id_date=None):
         self.title = title
         self.link = link
         self.updated = updated
@@ -168,8 +171,8 @@ def write_atom(dest, entries, author, title, address, updated=None, link=None,
         if sys.version_info[:2] < (2, 7):
             _etree_py26_write(f, tree)
         else:
-            tree.write(f, xml_declaration=True, default_namespace=ATOM_NS[1:-1],
-                       encoding=str('utf-8'))
+            tree.write(f, xml_declaration=True,
+                       default_namespace=ATOM_NS[1:-1], encoding=str('utf-8'))
 
     if hasattr(dest, 'write'):
         write(dest)
@@ -223,4 +226,5 @@ def _get_id(owner, date, content):
 
     if date is None:
         date = datetime.datetime(1970, 1, 1)
-    return "tag:{0},{1}:/{2}".format(owner, date.strftime('%Y-%m-%d'), h.hexdigest())
+    return "tag:{0},{1}:/{2}".format(owner,
+                                     date.strftime('%Y-%m-%d'), h.hexdigest())
