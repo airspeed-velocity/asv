@@ -44,9 +44,8 @@ class FeedEntry(object):
         Default: same as *updated*
 
     """
-    def __init__(
-                    self, title, updated, link=None, content=None,
-                    id_context=None, id_date=None):
+    def __init__(self, title, updated, link=None, content=None,
+                 id_context=None, id_date=None):
         self.title = title
         self.link = link
         self.updated = updated

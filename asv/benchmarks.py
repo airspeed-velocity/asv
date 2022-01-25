@@ -65,8 +65,8 @@ class Benchmarks(dict):
                         ', '.join(param_set))
                     if not regex or any(re.search(reg, name) for reg in regex):
                         self[benchmark['name']] = benchmark
-                        bms = self._benchmark_selection[benchmark['name']]
-                        bms.append(idx)
+                        self._benchmark_selection
+                        [benchmark['name']].append(idx)
             else:
                 self._benchmark_selection[benchmark['name']] = None
                 if (not regex or
