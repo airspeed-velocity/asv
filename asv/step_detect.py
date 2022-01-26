@@ -30,7 +30,8 @@ piecewise weighted fitting problem
 .. math::
    :label: gamma-opt
 
-   \mathop{\mathrm{argmin}}_{k,\{j\},\{\mu\}} \gamma k + \sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} w_i |y_i - \mu_r|
+   \mathop{\mathrm{argmin}}_{k,\{j\},\{\mu\}} \gamma k
+    + \sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} w_i |y_i - \mu_r|
 
 The differences are: as we do not need exact solutions, we add
 additional heuristics to work around the :math:`{\mathcal O}(n^2)`
@@ -121,7 +122,8 @@ Change in the exponent when :math:`\mu` is perturbed is
 .. math::
    :label:
 
-   \Delta = -\sigma^{-1}\sum_{r=1}^k \sum_{i=j_{r-1}+1}^{j_r}w_i[|y_i-\mu^*_r - \delta\mu_r| - |y_i-\mu^*_r|]
+   \Delta = -\sigma^{-1}\sum_{r=1}^k
+   \sum_{i=j_{r-1}+1}^{j_r}w_i[|y_i-\mu^*_r - \delta\mu_r| - |y_i-\mu^*_r|]
 
 Note that :math:`\sum_{i=j_{r-1}+1}^{j_r}
 w_i\mathrm{sgn}(y_i-\mu^*_r)=0`, so that response to small variations
@@ -134,8 +136,9 @@ w_i\mathrm{sgn}(y_i-\mu^*_r)=0`, so that response to small variations
 
 where :math:`N_r(\delta\mu)=\sum_{i} w_i s_i` where :math:`s_i = \pm1` depending on whether
 :math:`y_i` is above or below the perturbed median. Let us assume that in a typical case,
-:math:`N_r(\delta\mu)\sim{}m_r\bar{W}_r^2\delta\mu/\sigma` where :math:`\bar{W}_r = \frac{1}{m_r}\sum_i w_i` is
-the average weight of the interval and :math:`m_r` the number of points in the interval.
+:math:`N_r(\delta\mu)\sim{}m_r\bar{W}_r^2\delta\mu/\sigma`
+where :math:`\bar{W}_r = \frac{1}{m_r}\sum_i w_i` is the average weight
+of the interval and :math:`m_r` the number of points in the interval.
 This recovers a result we would
 have obtained in the gaussian noise case
 
@@ -183,7 +186,7 @@ where we neglect terms that don't affect asymptotics for
 both :math:`m, k`. The result is of course the Schwarz criterion for
 :math:`k` free model parameters. We can suspect that the factor
 :math:`k/2` should be replaced by a different number, since we have
-:math:`2k` parameters. If also the other integrals/sums can be 
+:math:`2k` parameters. If also the other integrals/sums can be
 approximated in the same way as the :math:`\{\mu\}` ones, we should
 obtain the missing part.
 
@@ -213,7 +216,8 @@ The final fitting problem then becomes
 .. math::
    :label: bic-form
 
-   \mathop{\mathrm{argmin}}_{k,\{j\},\{\mu\}} r(m) k + \ln\sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} w_i |y_i - \mu_r|
+   \mathop{\mathrm{argmin}}_{k,\{j\},\{\mu\}} r(m) k
+   + \ln\sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} w_i |y_i - \mu_r|
 
 with :math:`r(m) = \frac{\ln m}{2m}`.
 Note that it is invariant vs. rescaling of weights :math:`w_i\mapsto{}\alpha{}w_i`,
@@ -325,7 +329,9 @@ does depend on :math:`\rho`, so that the problem becomes:
 .. math::
    :label: bic-form-autocorr
 
-   \mathop{\mathrm{argmin}}_{k,\rho,\{j\},\{\mu\}} r(m) k + \ln\sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} |\epsilon_{i,r} - \rho\epsilon_{i-1,r}|
+   \mathop{\mathrm{argmin}}_{k,\rho,\{j\},\{\mu\}} r(m) k
+   + \ln\sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} |\epsilon_{i,r}
+   - \rho\epsilon_{i-1,r}|
 
 To save computation time, we do not solve this optimization problem
 exactly. Instead, we again minimize along the :math:`\mu_r^*(\gamma)`,
@@ -387,8 +393,8 @@ def detect_steps(y, w=None):
     steps : list of (left_pos, right_pos, value, min_value, err_est)
         List containing a decomposition of the input data to a piecewise
         constant function. Each element contains the left (inclusive) and
-        right (exclusive) bounds of a segment, the average value on 
-        the segment, the minimum value in the segment, and the l1 error 
+        right (exclusive) bounds of a segment, the average value on
+        the segment, the minimum value in the segment, and the l1 error
         estimate, <|Y - avg|>. Missing data points are not necessarily
         contained in any segment; right_pos-1 is the last non-missing data
         point.
@@ -431,13 +437,14 @@ def detect_steps(y, w=None):
 
     # Extract the steps, mapping indices back etc.
     steps = []
-    l = 0
+    l_counter = 0
     for r, v, d in zip(right, values, dists):
-        steps.append((index_map[l], index_map[r-1] + 1,
-                          v,
-                          min(y_filtered[l:r]),
-                          abs(d/(r - l))))
-        l = r
+        steps.append((index_map[l_counter],
+                     index_map[r-1] + 1,
+                     v,
+                     min(y_filtered[l_counter:r]),
+                     abs(d/(r - l_counter))))
+        l_counter = r
     return steps
 
 
@@ -488,11 +495,11 @@ def detect_regressions(steps, threshold=0, min_size=2):
     short_prev = None
 
     # Find upward steps that resulted to worsened value afterward
-    for l, r, cur_v, cur_min, cur_err in reversed(steps):
+    for l_counter, r, cur_v, cur_min, cur_err in reversed(steps):
         threshold_step = max(cur_err, thresholded_best_err, threshold * cur_v)
 
         if thresholded_best_v > cur_v + threshold_step:
-            if r - l < min_size:
+            if r - l_counter < min_size:
                 # Accept short intervals conditionally
                 short_prev = (thresholded_best_v, thresholded_best_err)
 
@@ -508,7 +515,7 @@ def detect_regressions(steps, threshold=0, min_size=2):
                 thresholded_best_v, thresholded_best_err = short_prev
             short_prev = None
 
-        prev_l = l
+        prev_l = l_counter
 
         if cur_v < best_v:
             best_v = cur_v
@@ -601,7 +608,7 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
     mu, dist = mu_dist.mu, mu_dist.dist
 
     if min_size >= max_pos - min_pos:
-        return [len(y)], [mu(0,len(y)-1)], [dist(0,len(y)-1)]
+        return [len(y)], [mu(0, len(y)-1)], [dist(0, len(y)-1)]
 
     # Perform the Bellman recursion for the optimal partition.
     # Routine "Find best partition" in [1]
@@ -626,11 +633,11 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
             B[r+1-i0] = inf
             a = max(r + 1 - max_size, i0)
             b = max(r + 1 - min_size + 1, i0)
-            for l in range(a, b):
-                b = B[l-i0] + gamma + dist(l, r)
+            for element in range(a, b):
+                b = B[element-i0] + gamma + dist(element, r)
                 if b <= B[r+1-i0]:
                     B[r+1-i0] = b
-                    p[r-i0] = l - 1
+                    p[r-i0] = element - 1
 
             mu_dist.cleanup_cache()
 
@@ -638,16 +645,16 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
     # Convert interval representation computed above
     # to a list of intervals and values.
     r = len(p) - 1 + min_pos
-    l = p[r - min_pos]
+    interval_list = p[r - min_pos]
     right = []
     values = []
     dists = []
     while r >= min_pos:
         right.append(r + 1)
-        values.append(mu((l + 1), r))
-        dists.append(dist((l + 1), r))
-        r = l
-        l = p[r - min_pos]
+        values.append(mu((interval_list + 1), r))
+        dists.append(dist((interval_list + 1), r))
+        r = interval_list
+        interval_list = p[r - min_pos]
     right.reverse()
     values.reverse()
     dists.reverse()
@@ -679,7 +686,7 @@ def solve_potts_autogamma(y, w, beta=None, **kw):
         return [], [], [], None
 
     mu_dist = get_mu_dist(y, w)
-    mu, dist = mu_dist.mu, mu_dist.dist
+    dist = mu_dist.dist
 
     if beta is None:
         beta = 4 * math.log(n) / n
@@ -705,15 +712,15 @@ def solve_potts_autogamma(y, w, beta=None, **kw):
             """
             |E_0| + sum_{j>0} |E_j - rho E_{j-1}|
             """
-            l = 1
+            l_counter = 1
             E_prev = y[0] - values[0]
             s = abs(E_prev) * w[0]
             for r, v in zip(rights, values):
-                for yv, wv in zip(y[l:r], w[l:r]):
+                for yv, wv in zip(y[l_counter:r], w[l_counter:r]):
                     E = yv - v
                     s += abs(E - rho*E_prev) * wv
                     E_prev = E
-                l = r
+                l_counter = r
             return s
 
         rho_best = golden_search(lambda rho: sigma_star(r, v, rho), -1, 1,
@@ -769,8 +776,8 @@ def solve_potts_approx(y, w, gamma=None, min_size=1, **kw):
         kw['mu_dist'] = mu_dist
 
     if gamma is None:
-        mu, dist = mu_dist.mu, mu_dist.dist
-        gamma = 3 * dist(0,n-1) * math.log(n) / n
+        dist = mu_dist.dist
+        gamma = 3 * dist(0, n-1) * math.log(n) / n
 
     if min_size < 10:
         max_size = 20
@@ -796,18 +803,20 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
         min_change = 0
         min_change_j = len(right)
 
-        l = 0
+        l_counter = 0
         for j in range(1, len(right)):
             if min_change_j < j - 2:
                 break
 
             # Check whether merging consecutive intervals results to
             # decrease in the cost function
-            change = dist(l, right[j]-1) - (dist(l, right[j-1]-1) + dist(right[j-1], right[j]-1) + gamma)
+            change = (
+                dist(l_counter, right[j]-1)
+                - (dist(l_counter, right[j-1]-1) + dist(right[j-1], right[j]-1) + gamma))
             if change <= min_change:
                 min_change = change
                 min_change_j = j-1
-            l = right[j-1]
+            l_counter = right[j-1]
 
         if min_change_j < len(right):
             del right[min_change_j]
@@ -818,14 +827,14 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
     # in the cost function. The restricted Potts minimization can
     # return sub-optimal boundaries due to the interval maximum size
     # restriction.
-    l = 0
+    l_counter = 0
     for j in range(1, len(right)):
-        prev_score = dist(l, right[j-1]-1) + dist(right[j-1], right[j]-1)
+        prev_score = dist(l_counter, right[j-1]-1) + dist(right[j-1], right[j]-1)
         new_off = 0
         for off in range(-max_size, max_size+1):
-            if right[j-1] + off - 1 < l or right[j-1] + off > right[j] - 1 or off == 0:
+            if right[j-1] + off - 1 < l_counter or right[j-1] + off > right[j] - 1 or off == 0:
                 continue
-            new_score = dist(l, right[j-1]+off-1) + dist(right[j-1]+off, right[j]-1)
+            new_score = dist(l_counter, right[j-1]+off-1) + dist(right[j-1]+off, right[j]-1)
             if new_score < prev_score:
                 new_off = off
                 prev_score = new_score
@@ -833,16 +842,16 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
         if new_off != 0:
             right[j-1] += new_off
 
-        l = right[j-1]
+        l_counter = right[j-1]
 
     # Rebuild values and dists lists
-    l = 0
+    l_counter = 0
     values = []
     dists = []
     for j in range(len(right)):
-        dists.append(dist(l, right[j]-1))
-        values.append(mu(l, right[j]-1))
-        l = right[j]
+        dists.append(dist(l_counter, right[j]-1))
+        values.append(mu(l_counter, right[j]-1))
+        l_counter = right[j]
 
     return right, values, dists
 
@@ -1037,7 +1046,7 @@ def _plot_potts(x, sol):
     plt.clf()
     plt.plot(t, x, 'k.')
 
-    l = 0
+    l_counter = 0
     for r, v in zip(sol[0], sol[1]):
-        plt.plot([l, r-1], [v, v], 'b-o', hold=1)
-        l = r
+        plt.plot([l_counter, r-1], [v, v], 'b-o', hold=1)
+        l_counter = r
