@@ -8,7 +8,6 @@ A set of utilities for writing output to the console.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import io
 import contextlib
 import locale
 import logging
@@ -132,7 +131,8 @@ def _write_with_fallback(s, fileobj):
         try:
             b = s.encode(enc)
         except UnicodeError:
-            for key, val in _unicode_translations.iteritems():
+            unichr = _unicode_translations.iteritems()
+            for key, val in unichr:
                 s = s.replace(unichr(key), val)
             b = s.encode(enc, errors='replace')
 

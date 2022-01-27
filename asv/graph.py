@@ -125,8 +125,8 @@ class Graph(object):
         The implementation must match asv.js:graph_to_path
         """
         parts = []
-        l = list(six.iteritems(params))
-        for key, val in l:
+        file_list = list(six.iteritems(params))
+        for key, val in file_list:
             if val is None:
                 part = '{0}-null'.format(key)
             elif val:

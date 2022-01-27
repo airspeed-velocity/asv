@@ -12,8 +12,6 @@ from __future__ import (absolute_import, division, print_function,
 import hashlib
 import os
 import re
-import shutil
-import shlex
 import sys
 import itertools
 import subprocess
@@ -557,7 +555,7 @@ class Environment(object):
         if os.path.isfile(hash_file):
             try:
                 data = util.load_json(hash_file, api_version=1)
-            except util.UserError as exc:
+            except util.UserError:
                 pass
 
         # If configuration changed, force reinstall
@@ -702,7 +700,7 @@ class Environment(object):
 
             try:
                 self._setup()
-            except:
+            except OSError:
                 log.error("Failure creating environment for {0}".format(self.name))
                 if os.path.exists(self._path):
                     util.long_path_rmtree(self._path)
