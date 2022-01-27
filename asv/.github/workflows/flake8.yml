@@ -1,7 +1,9 @@
 name: flake8 Lint
 
-on: [push, pull_request]
-
+on:
+  workflow_run:
+    workflows:
+      - "Build"
 jobs:
   flake8-lint:
     runs-on: ubuntu-latest
@@ -19,4 +21,5 @@ jobs:
           ignore: ""
           max-line-length: "99"
           path: "src"
-          
+        run: flake8 . || true
+        
