@@ -587,7 +587,7 @@ def test_pypy_virtualenv(tmpdir):
     for env in environments:
         env.create()
         output = env.run(['-c', 'import sys; print(sys.pypy_version_info)'])
-        assert output.startswith(str("(major="))
+        assert output.startswith(("(major=", "sys.pypy_version_info(major="))
 
 
 def test_environment_name_sanitization():
