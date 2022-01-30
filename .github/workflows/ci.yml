@@ -9,5 +9,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Run Lint Tests
-        run: echo "Hello, world!"
+      - name: flake8
+        run: pip install flake8
+        uses: py-actions/flake8@v2
+        with:
+          ignore: ""
+          max-line-length: "99"
+          path: "src"
+        run: flake8 . || true
