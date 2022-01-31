@@ -9,6 +9,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: flake8
+      - name: Install dependencies
         run: pip install flake8
+
+      - name: flake8
         uses: py-actions/flake8@v2
+        run: flake8 . || true
