@@ -33,24 +33,7 @@ internal commands:
 # there although it's not part of the package, and Python puts it to
 # sys.path[0] on start which can shadow other modules
 import sys
-if __name__ == "__main__":
-    _old_sys_path_head = sys.path.pop(0)
-else:
-    _old_sys_path_head = None
-
 import copy
-try:
-    import cProfile as profile
-except:
-    profile = None
-import ctypes
-from ctypes.util import find_library
-from hashlib import sha256
-import errno
-if sys.version_info[0] >= 3:
-    import importlib.machinery
-else:
-    import imp
 import inspect
 import itertools
 import json
@@ -68,9 +51,23 @@ import traceback
 import contextlib
 from importlib import import_module
 from collections import Counter
-import warnings
+import ctypes
+from ctypes.util import find_library
+from hashlib import sha256
+import errno
+if __name__ == "__main__":
+    _old_sys_path_head = sys.path.pop(0)
+else:
+    _old_sys_path_head = None
 
-
+try:
+    import cProfile as profile
+except Exception:
+    profile = None
+if sys.version_info[0] >= 3:
+    import importlib.machinery
+else:
+    import imp
 # The best timer we can use is time.process_time, but it is not
 # available in the Python stdlib until Python 3.3.  This is a ctypes
 # backport for Pythons that don't have it.
@@ -157,17 +154,12 @@ except ImportError:  # Python <3.3
 
 wall_timer = timeit.default_timer
 
-
-def get_maxrss():
-    # Fallback function, in case we don't have one that works on the
-    # current platform
-    return None
-
 if sys.platform.startswith('win'):
     import ctypes
     import ctypes.wintypes
 
     SIZE_T = ctypes.c_size_t
+
     class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
         _fields_ = [
             ('cb', ctypes.wintypes.DWORD),
@@ -207,11 +199,11 @@ if sys.platform.startswith('win'):
 
     SetProcessAffinityMask = ctypes.windll.kernel32.SetProcessAffinityMask
     SetProcessAffinityMask.argtypes = [ctypes.wintypes.HANDLE, DWORD_PTR]
-    SetProcessAffinityMask.restype  = bool
+    SetProcessAffinityMask.restype = bool
 
     GetCurrentProcess = ctypes.windll.kernel32.GetCurrentProcess
     GetCurrentProcess.argtypes = []
-    GetCurrentProcess.restype  = ctypes.wintypes.HANDLE
+    GetCurrentProcess.restype = ctypes.wintypes.HANDLE
 
     def set_cpu_affinity(affinity_list):
         """Set CPU affinity to CPUs listed (numbered 0...n-1)"""
@@ -574,7 +566,7 @@ class Benchmark(object):
 
     def do_profile(self, filename=None):
         def method_caller():
-            run(*params)
+            return self.run(*self.current_params)
 
         if profile is None:
             raise RuntimeError("cProfile could not be imported")
@@ -622,9 +614,12 @@ class TimeBenchmark(Benchmark):
         self._load_vars()
         return result
 
+    def _func(self, *param):
+        return self.func(*param)
+
     def _get_timer(self, *param):
         if param:
-            func = lambda: self.func(*param)
+            func = self._func(*param)
         else:
             func = self.func
 
@@ -783,9 +778,12 @@ class TimerawBenchmark(TimeBenchmark):
         self.number = int(_get_first_attr(self._attr_sources, 'number', 1))
         del self.timer
 
+    def _func(self, *param):
+        return self.func(*param)
+
     def _get_timer(self, *param):
         if param:
-            func = lambda: self.func(*param)
+            func = self._func(*param)
         else:
             func = self.func
         return _SeparateProcessTimer(func)
@@ -1090,8 +1088,7 @@ def list_benchmarks(root, fp):
             fp.write(', ')
         clean = dict(
             (k, v) for (k, v) in benchmark.__dict__.items()
-            if isinstance(v, (str, int, float, list, dict, bool)) and not
-               k.startswith('_'))
+            if isinstance(v, (str, int, float, list, dict, bool)) and not k.startswith('_'))
         json.dump(clean, fp, skipkeys=True)
         first = False
     fp.write(']')
@@ -1292,7 +1289,7 @@ def main_run_server(args):
                             os.chdir(cwd)
                             main_run(run_args)
                             exitcode = 0
-                        except BaseException as ec:
+                        except BaseException:
                             import traceback
                             traceback.print_exc()
                 finally:
@@ -1356,7 +1353,7 @@ def main_timing(argv):
     import asv.console
 
     if (_old_sys_path_head is not None and
-        os.path.abspath(_old_sys_path_head) != os.path.abspath(os.path.dirname(__file__))):
+            os.path.abspath(_old_sys_path_head) != os.path.abspath(os.path.dirname(__file__))):
         sys.path.insert(0, _old_sys_path_head)
 
     parser = argparse.ArgumentParser(usage="python -masv.benchmark timing [options] STATEMENT")
@@ -1392,7 +1389,8 @@ def main_timing(argv):
     if not args.json:
         asv.console.color_print(formatted, 'red')
         asv.console.color_print(u"", 'default')
-        asv.console.color_print(u"\n".join(u"{}: {}".format(k, v) for k, v in sorted(stats.items())), 'default')
+        asv.console.color_print(u"\n".join(u"{}: {}"
+                                .format(k, v) for k, v in sorted(stats.items())), 'default')
         asv.console.color_print(u"samples: {}".format(result['samples']), 'default')
     else:
         json.dump({'result': value,
@@ -1430,6 +1428,7 @@ def main():
     else:
         sys.stderr.write("Unknown mode {0}\n".format(mode))
         sys.exit(1)
+
 
 if __name__ == '__main__':
     main()
