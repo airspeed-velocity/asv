@@ -13,4 +13,4 @@ jobs:
         run: pip install flake8
 
       - name: flake8
-        run: flake8 . || true
+        run: flake8 .
