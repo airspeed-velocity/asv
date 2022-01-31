@@ -12,7 +12,6 @@ import zlib
 import itertools
 import hashlib
 import datetime
-import collections
 
 import six
 from six.moves import zip as izip
@@ -41,7 +40,7 @@ def iter_results_paths(results):
                 raise util.UserError("malformed {0}".format(machine_json))
         except util.UserError as err:
             machine_json_err = "Skipping results: {0}".format(six.text_type(err))
-        except IOError as err:
+        except IOError:
             machine_json_err = "Skipping results: could not load {0}".format(
                 machine_json)
         else:
