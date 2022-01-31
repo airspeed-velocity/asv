@@ -8,7 +8,6 @@ import io
 import json
 import os
 import sys
-import re
 import time
 import tempfile
 import itertools
@@ -23,7 +22,6 @@ import six
 
 from .console import log
 from .results import Results, format_benchmark_result
-from . import statistics
 from . import util
 
 
@@ -314,7 +312,8 @@ def run_benchmarks(benchmarks, env, results=None,
                 # Mark benchmark as failed
                 partial_info_time = None
                 log.warning('{0} skipped (setup_cache failed)'.format(name))
-                stderr = 'asv: setup_cache failed\n\n{}'.format(failed_setup_cache[setup_cache_key])
+                stderr = 'asv: setup_cache failed\n\n{}'.format(
+                    failed_setup_cache[setup_cache_key])
                 res = fail_benchmark(benchmark, stderr=stderr)
                 results.add_result(benchmark, res,
                                    selected_idx=selected_idx,
@@ -766,7 +765,7 @@ class ForkServer(Spawner):
             out = self.server_proc.stdout.read()
             self.server_proc.stdout.close()
             out = out.decode('utf-8', 'replace')
-        except Exception as exc:
+        except Exception:
             import traceback
             out = traceback.format_exc()
 
