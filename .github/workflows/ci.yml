@@ -12,4 +12,3 @@ jobs:
       - name: flake8
         run: pip install flake8
         uses: py-actions/flake8@v2
-        run: flake8 --max-line-length=99 . || true
