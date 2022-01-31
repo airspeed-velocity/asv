@@ -68,15 +68,13 @@ class ParallelFailure(Exception):
 
     def __reduce__(self):
         return (
-            ParallelFailure, (self.message, self.exc_cls, self.traceback_str)
-            )
+            ParallelFailure, (self.message, self.exc_cls, self.traceback_str))
 
     def __str__(self):
         return "{0}: {1}\n    {2}".format(
             self.exc_cls.__name__,
             self.message,
-            self.traceback_str.replace("\n", "\n    ")
-            )
+            self.traceback_str.replace("\n", "\n    "))
 
     def reraise(self):
         if self.exc_cls is UserError:
@@ -152,7 +150,7 @@ def human_float(
 
     if significant_zeros and '.' not in formatted:
         if len(formatted) < significant:
-            formatted += "." + "0"*(significant - len(formatted))
+            formatted += "." + "0" * (significant - len(formatted))
 
     return formatted
 
@@ -262,7 +260,7 @@ def human_time(seconds, err=None):
         return "n/a"
 
     for i in xrange(len(units) - 1):
-        if scale < units[i+1][1]:
+        if scale < units[i + 1][1]:
             str_time = human_float(
                 seconds / units[i][1],
                 3,
@@ -676,8 +674,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                 signal.signal(signal.SIGCONT, sig_forward)
 
             fds = {
-                proc.stdout.fileno(): stdout_chunks
-                }
+                proc.stdout.fileno(): stdout_chunks}
             if not redirect_stderr:
                 fds[proc.stderr.fileno()] = stderr_chunks
 
@@ -1109,7 +1106,7 @@ def format_text_table(rows, num_headers=0,
     # Ensure same number of items on all rows
     num_items = max(len(row) for row in text_rows)
     for row in text_rows:
-        row.extend(['']*(num_items - len(row)))
+        row.extend([''] * (num_items - len(row)))
 
     # Determine widths
     col_widths = [max(len(row[j]) for row in text_rows) + 2
@@ -1122,17 +1119,17 @@ def format_text_table(rows, num_headers=0,
     # Generate result
     headers = [" ".join(row) for row in text_rows[:num_headers]]
     content = [" ".join(row) for row in text_rows[num_headers:]]
-    separator = " ".join("-"*w for w in col_widths)
+    separator = " ".join("-" * w for w in col_widths)
 
     result = []
     if top_header_text is not None:
         left_span = {
-            "-".join("-"*w for w in col_widths[:top_header_span_start])}
+            "-".join("-" * w for w in col_widths[:top_header_span_start])}
         right_span = {
-            "-".join("-"*w for w in col_widths[top_header_span_start:])}
+            "-".join("-" * w for w in col_widths[top_header_span_start:])}
         if left_span and right_span:
-            result += (["--" + " " * (len(left_span)-1)
-                        + top_header_text.center(len(right_span))])
+            result += (["--" + " " * (len(left_span) - 1) +
+                       top_header_text.center(len(right_span))])
             result += [" ".join([left_span, right_span])]
         else:
             result += [top_header_text.center(len(separator))]
@@ -1150,11 +1147,9 @@ def format_text_table(rows, num_headers=0,
 
 def _datetime_to_timestamp(dt, divisor):
     delta = dt - datetime.datetime(1970, 1, 1)
-    microseconds = ((delta.days * 86400 + delta.seconds)
-                    * 10**6
-                    + delta.microseconds)
+    microseconds = ((delta.days * 86400 + delta.seconds) * 10**6 + delta.microseconds)
     value, remainder = divmod(microseconds, divisor)
-    if remainder >= divisor//2:
+    if remainder >= divisor // 2:
         value += 1
     return value
 
@@ -1215,7 +1210,7 @@ def geom_mean_na(values):
     """
     values = [x for x in values if not is_na(x)]
     if values:
-        exponent = 1/len(values)
+        exponent = 1 / len(values)
         prod = 1.0
         acc = 0
         for x in values:
@@ -1228,7 +1223,7 @@ def geom_mean_na(values):
 
 def ceildiv(numerator, denominator):
     """Ceiling division"""
-    return -((-numerator)//denominator)
+    return -((-numerator) // denominator)
 
 
 if not WIN:
@@ -1246,8 +1241,7 @@ else:
     def _remove_readonly(func, path, exc_info):
         """Try harder to remove files on Windows"""
 
-        if (isinstance(exc_info[1], OSError) and
-                exc_info[1].errno == errno.EACCES):
+        if (isinstance(exc_info[1], OSError) and exc_info[1].errno == errno.EACCES):
             # Clear read-only flag and try again
             try:
                 os.chmod(path, stat.S_IWRITE | stat.S_IREAD)

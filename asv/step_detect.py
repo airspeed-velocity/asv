@@ -415,7 +415,7 @@ def detect_steps(y, w=None):
 
     # Weights
     if w is None:
-        w_filtered = [1]*len(y_filtered)
+        w_filtered = [1] * len(y_filtered)
     else:
         # Fill-in and normalize weights
         w_valid = [ww for ww in w if ww is not None and ww == ww]
@@ -426,7 +426,7 @@ def detect_steps(y, w=None):
         else:
             w_median = 1.0
 
-        w_filtered = [1.0]*len(y_filtered)
+        w_filtered = [1.0] * len(y_filtered)
         for j in range(len(w_filtered)):
             jj = index_map[j]
             if w[jj] is not None and w[jj] == w[jj]:
@@ -440,10 +440,10 @@ def detect_steps(y, w=None):
     l_counter = 0
     for r, v, d in zip(right, values, dists):
         steps.append((index_map[l_counter],
-                     index_map[r-1] + 1,
+                     index_map[r - 1] + 1,
                      v,
                      min(y_filtered[l_counter:r]),
-                     abs(d/(r - l_counter))))
+                     abs(d / (r - l_counter))))
         l_counter = r
     return steps
 
@@ -608,7 +608,7 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
     mu, dist = mu_dist.mu, mu_dist.dist
 
     if min_size >= max_pos - min_pos:
-        return [len(y)], [mu(0, len(y)-1)], [dist(0, len(y)-1)]
+        return [len(y)], [mu(0, len(y) - 1)], [dist(0, len(y) - 1)]
 
     # Perform the Bellman recursion for the optimal partition.
     # Routine "Find best partition" in [1]
@@ -627,17 +627,17 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
         i0 = min_pos
         i1 = max_pos
 
-        B = [-gamma]*(i1 - i0 + 1)
-        p = [0]*(i1 - i0)
+        B = [-gamma] * (i1 - i0 + 1)
+        p = [0] * (i1 - i0)
         for r in range(i0, i1):
-            B[r+1-i0] = inf
+            B[r + 1 - i0] = inf
             a = max(r + 1 - max_size, i0)
             b = max(r + 1 - min_size + 1, i0)
             for element in range(a, b):
-                b = B[element-i0] + gamma + dist(element, r)
-                if b <= B[r+1-i0]:
-                    B[r+1-i0] = b
-                    p[r-i0] = element - 1
+                b = B[element - i0] + gamma + dist(element, r)
+                if b <= B[r + 1 - i0]:
+                    B[r + 1 - i0] = b
+                    p[r - i0] = element - 1
 
             mu_dist.cleanup_cache()
 
@@ -691,7 +691,7 @@ def solve_potts_autogamma(y, w, beta=None, **kw):
     if beta is None:
         beta = 4 * math.log(n) / n
 
-    gamma_0 = dist(0, n-1)
+    gamma_0 = dist(0, n - 1)
 
     if gamma_0 == 0:
         # Zero variance
@@ -718,7 +718,7 @@ def solve_potts_autogamma(y, w, beta=None, **kw):
             for r, v in zip(rights, values):
                 for yv, wv in zip(y[l_counter:r], w[l_counter:r]):
                     E = yv - v
-                    s += abs(E - rho*E_prev) * wv
+                    s += abs(E - rho * E_prev) * wv
                     E_prev = E
                 l_counter = r
             return s
@@ -728,7 +728,7 @@ def solve_potts_autogamma(y, w, beta=None, **kw):
 
         # Measurement noise floor
         if len(v) > 2:
-            absdiff = [abs(v[j+1] - v[j]) for j in range(len(v) - 1)]
+            absdiff = [abs(v[j + 1] - v[j]) for j in range(len(v) - 1)]
             sigma_0 = 0.1 * min(absdiff)
         else:
             absv = [abs(z) for z in v]
@@ -737,7 +737,7 @@ def solve_potts_autogamma(y, w, beta=None, **kw):
 
         # Objective function
         s = sigma_star(r, v, rho_best)
-        obj = beta*len(r) + math.log(sigma_0 + s)
+        obj = beta * len(r) + math.log(sigma_0 + s)
 
         # Done
         if obj < best_obj[0]:
@@ -750,9 +750,9 @@ def solve_potts_autogamma(y, w, beta=None, **kw):
 
     # Try to find best gamma (golden section search on log-scale); we
     # don't need an accurate value for it however
-    a = math.log(0.1/n)
+    a = math.log(0.1 / n)
     b = 0.0
-    golden_search(f, a, b, xatol=abs(a)*0.1, ftol=0, expand_bounds=True)
+    golden_search(f, a, b, xatol=abs(a) * 0.1, ftol=0, expand_bounds=True)
     return best_r[0], best_v[0], best_d[0], best_gamma[0]
 
 
@@ -777,7 +777,7 @@ def solve_potts_approx(y, w, gamma=None, min_size=1, **kw):
 
     if gamma is None:
         dist = mu_dist.dist
-        gamma = 3 * dist(0, n-1) * math.log(n) / n
+        gamma = 3 * dist(0, n - 1) * math.log(n) / n
 
     if min_size < 10:
         max_size = 20
@@ -810,13 +810,12 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
 
             # Check whether merging consecutive intervals results to
             # decrease in the cost function
-            change = (
-                dist(l_counter, right[j]-1)
-                - (dist(l_counter, right[j-1]-1) + dist(right[j-1], right[j]-1) + gamma))
+            change = (dist(l_counter, right[j] - 1) - (dist(l_counter, right[j - 1] - 1) +
+                      dist(right[j - 1], right[j] - 1) + gamma))
             if change <= min_change:
                 min_change = change
-                min_change_j = j-1
-            l_counter = right[j-1]
+                min_change_j = j - 1
+            l_counter = right[j - 1]
 
         if min_change_j < len(right):
             del right[min_change_j]
@@ -829,28 +828,29 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
     # restriction.
     l_counter = 0
     for j in range(1, len(right)):
-        prev_score = dist(l_counter, right[j-1]-1) + dist(right[j-1], right[j]-1)
+        prev_score = dist(l_counter, right[j - 1] - 1) + dist(right[j - 1], right[j] - 1)
         new_off = 0
-        for off in range(-max_size, max_size+1):
-            if right[j-1] + off - 1 < l_counter or right[j-1] + off > right[j] - 1 or off == 0:
+        for off in range(-max_size, max_size + 1):
+            if right[j - 1] + off - 1 < l_counter or right[j - 1] + off > right[j] - 1 or off == 0:
                 continue
-            new_score = dist(l_counter, right[j-1]+off-1) + dist(right[j-1]+off, right[j]-1)
+            new_score = dist(l_counter, right[j - 1] + off - 1)
+            + dist(right[j - 1] + off, right[j] - 1)
             if new_score < prev_score:
                 new_off = off
                 prev_score = new_score
 
         if new_off != 0:
-            right[j-1] += new_off
+            right[j - 1] += new_off
 
-        l_counter = right[j-1]
+        l_counter = right[j - 1]
 
     # Rebuild values and dists lists
     l_counter = 0
     values = []
     dists = []
     for j in range(len(right)):
-        dists.append(dist(l_counter, right[j]-1))
-        values.append(mu(l_counter, right[j]-1))
+        dists.append(dist(l_counter, right[j] - 1))
+        values.append(mu(l_counter, right[j] - 1))
         l_counter = right[j]
 
     return right, values, dists
@@ -878,7 +878,7 @@ class L1Dist(object):
         class mu_dict(collections.defaultdict):
             def __missing__(self, a):
                 l, r = a
-                v = weighted_median(y[l:r+1], w[l:r+1])
+                v = weighted_median(y[l:r + 1], w[l:r + 1])
                 self[a] = v
                 return v
 
@@ -888,7 +888,7 @@ class L1Dist(object):
             def __missing__(self, a):
                 l, r = a
                 m = mu[l, r]
-                v = sum(wx*abs(x - m) for x, wx in zip(y[l:r+1], w[l:r+1]))
+                v = sum(wx * abs(x - m) for x, wx in zip(y[l:r + 1], w[l:r + 1]))
                 self[a] = v
                 return v
 
@@ -920,7 +920,7 @@ def get_mu_dist(y, w):
 def median(items):
     """Note: modifies the input list!"""
     items.sort()
-    k = len(items)//2
+    k = len(items) // 2
     if len(items) % 2 == 0:
         return (items[k] + items[k - 1]) / 2
     else:
@@ -960,7 +960,7 @@ def rolling_median_dev(items):
             heapq.heappush(min_heap, -v)
             min_heap_sum += v
             d = max(0, max_heap_sum - min_heap_sum)
-            yield ((max_heap[0] - min_heap[0])/2, d)
+            yield ((max_heap[0] - min_heap[0]) / 2, d)
     except StopIteration:
         return
 
@@ -1003,8 +1003,8 @@ def golden_search(f, a, b, xatol=1e-6, ftol=1e-8, expand_bounds=False):
         x0 = a
         x3 = b
     else:
-        x0 = (ratio * a - (1 - ratio) * b) / (2*ratio - 1)
-        x3 = (ratio * b - (1 - ratio) * a) / (2*ratio - 1)
+        x0 = (ratio * a - (1 - ratio) * b) / (2 * ratio - 1)
+        x3 = (ratio * b - (1 - ratio) * a) / (2 * ratio - 1)
 
     x1 = ratio * x0 + (1 - ratio) * x3
     x2 = (1 - ratio) * x0 + ratio * x3
@@ -1015,7 +1015,7 @@ def golden_search(f, a, b, xatol=1e-6, ftol=1e-8, expand_bounds=False):
     f0 = max(abs(f1), abs(f2))
 
     while True:
-        if abs(x0 - x3) < xatol or abs(f1 - f2) < ftol*f0:
+        if abs(x0 - x3) < xatol or abs(f1 - f2) < ftol * f0:
             break
 
         if f2 < f1:
@@ -1048,5 +1048,5 @@ def _plot_potts(x, sol):
 
     l_counter = 0
     for r, v in zip(sol[0], sol[1]):
-        plt.plot([l_counter, r-1], [v, v], 'b-o', hold=1)
+        plt.plot([l_counter, r - 1], [v, v], 'b-o', hold=1)
         l_counter = r

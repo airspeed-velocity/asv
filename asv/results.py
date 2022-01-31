@@ -989,7 +989,7 @@ def _format_benchmark_result(result, benchmark, max_width=None):
 
         for j, values in enumerate(itertools.product(*row_params)):
             row_results = [util.human_value(x[0], benchmark['unit'], err=x[1])
-                           for x in result[j*column_items:(j+1)*column_items]]
+                           for x in result[j * column_items:(j + 1) * column_items]]
             row = [_format_param_value(value) for value in values] + row_results
             rows.append(row)
 
@@ -1004,7 +1004,7 @@ def _format_benchmark_result(result, benchmark, max_width=None):
 
     # Determine how many parameters can be fit to columns
     if max_width is None:
-        max_width = util.get_terminal_width() * 3//4
+        max_width = util.get_terminal_width() * 3 // 4
 
     text = do_formatting(0)
     for j in range(1, len(benchmark['params'])):

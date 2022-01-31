@@ -204,7 +204,7 @@ def run_benchmarks(benchmarks, env, results=None,
 
                     if run_round > rounds:
                         if (not append_samples and
-                                run_round == run_rounds[-1] and
+                            run_round == run_rounds[-1] and
                                 name in existing_results):
                             # We need to remove samples here so that
                             # append_samples=False has an effect on all
