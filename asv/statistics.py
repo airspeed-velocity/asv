@@ -53,9 +53,9 @@ def compute_stats(samples, number):
         # Use the CI from that distribution to extend beyond sample
         # bounds
         if math.isinf(a):
-            a = min(c.ppf(0.01/2), min(Y))
+            a = min(c.ppf(0.01 / 2), min(Y))
         if math.isinf(b):
-            b = max(c.ppf(1 - 0.01/2), max(Y))
+            b = max(c.ppf(1 - 0.01 / 2), max(Y))
 
         ci_50 = (a, b)
 
@@ -78,7 +78,7 @@ def get_err(result, stats):
     about the spread of the measurement results.
     """
     a, b = stats['q_25'], stats['q_75']
-    return (b - a)/2
+    return (b - a) / 2
 
 
 def get_weight(stats):
@@ -236,7 +236,7 @@ def quantile(x, q):
     if j == n - 1:
         m = y[-1]
     else:
-        m = (1 - z)*y[j] + z*y[j+1]
+        m = (1 - z) * y[j] + z * y[j + 1]
 
     return m
 
@@ -288,11 +288,11 @@ def mann_whitney_u(x, y, method='auto'):
     u, ties = mann_whitney_u_u(x, y)
 
     # Conservative tie breaking
-    if u <= m*n//2 and u + ties >= m*n//2:
-        ties = m*n//2 - u
+    if u <= m * n // 2 and u + ties >= m * n // 2:
+        ties = m * n // 2 - u
 
-    ux1 = min(u, m*n - u)
-    ux2 = min(u + ties, m*n - (u + ties))
+    ux1 = min(u, m * n - u)
+    ux2 = min(u + ties, m * n - (u + ties))
 
     if ux1 >= ux2:
         ux = ux1
@@ -303,12 +303,12 @@ def mann_whitney_u(x, y, method='auto'):
     # Get p-value
     if method == 'exact':
         p1 = mann_whitney_u_cdf(m, n, ux, memo)
-        p2 = 1.0 - mann_whitney_u_cdf(m, n, max(m*n//2, m*n - ux - 1), memo)
+        p2 = 1.0 - mann_whitney_u_cdf(m, n, max(m * n // 2, m * n - ux - 1), memo)
         p = p1 + p2
     elif method == 'normal':
         N = m + n
-        var = m*n*(N + 1) / 12
-        z = (ux - m*n/2) / math.sqrt(var)
+        var = m * n * (N + 1) / 12
+        z = (ux - m * n / 2) / math.sqrt(var)
         cdf = 0.5 * math.erfc(-z / math.sqrt(2))
         p = 2 * cdf
     else:
@@ -369,8 +369,8 @@ def mann_whitney_u_r(m, n, u, memo=None):
         if value is not None:
             return value
 
-        value = (mann_whitney_u_r(m, n - 1, u, memo)
-                 + mann_whitney_u_r(m - 1, n, u - n, memo))
+        value = (mann_whitney_u_r(m, n - 1, u, memo) +
+                 mann_whitney_u_r(m - 1, n, u - n, memo))
 
         memo[key] = value
     return value
@@ -387,8 +387,8 @@ def binom_pmf(n, k, p):
 
     logp = math.log(p)
     log1mp = math.log(1 - p)
-    return math.exp(lgamma(1 + n) - lgamma(1 + n - k) - lgamma(1 + k)
-                    + k*logp + (n - k)*log1mp)
+    return math.exp(lgamma(1 + n) - lgamma(1 + n - k) - lgamma(1 + k) +
+                    k * logp + (n - k) * log1mp)
 
 
 _BERNOULLI = [1.0, -0.5, 0.166666666667, 0.0, -0.0333333333333, 0.0, 0.0238095238095]
@@ -404,9 +404,9 @@ def lgamma(x):
 
     if x > 100:
         # DLMF 5.11.1
-        r = 0.5 * math.log(2*math.pi) + (x - 0.5) * math.log(x) - x
-        for k in range(1, len(_BERNOULLI)//2 + 1):
-            r += _BERNOULLI[2*k] / (2*k*(2*k - 1) * x**(2*k - 1))
+        r = 0.5 * math.log(2 * math.pi) + (x - 0.5) * math.log(x) - x
+        for k in range(1, len(_BERNOULLI) // 2 + 1):
+            r += _BERNOULLI[2 * k] / (2 * k * (2 * k - 1) * x**(2 * k - 1))
         return r
 
     # Fall back to math.factorial
@@ -497,11 +497,11 @@ class LaplacePosterior(object):
         # when computing the unnormalized CDF integrals below.
         self.mle = quantile(y, 0.5)
         self._y_scale = sum(abs(yp - self.mle) for yp in y)
-        self._y_scale *= self.nu**(1/(self.nu + 1))
+        self._y_scale *= self.nu**(1 / (self.nu + 1))
 
         # Shift and scale
         if self._y_scale != 0:
-            self.y = [(yp - self.mle)/self._y_scale for yp in y]
+            self.y = [(yp - self.mle) / self._y_scale for yp in y]
         else:
             self.y = [0 for yp in y]
 
@@ -539,13 +539,13 @@ class LaplacePosterior(object):
 
         # Do the integral piecewise, resolving the absolute values
         for k in range(k_start, k0 + 1):
-            c = 2*k - len(self.y)
+            c = 2 * k - len(self.y)
             y = sum(self.y[k:]) - sum(self.y[:k])
 
             if k == 0:
                 a = -inf
             else:
-                a = self.y[k-1]
+                a = self.y[k - 1]
 
             if k == k0:
                 b = beta
@@ -553,9 +553,9 @@ class LaplacePosterior(object):
                 b = self.y[k]
 
             if c == 0:
-                term = (b - a) / y**(nu+1)
+                term = (b - a) / y**(nu + 1)
             else:
-                term = 1/(nu*c) * ((a*c + y)**(-nu) - (b*c + y)**(-nu))
+                term = 1 / (nu * c) * ((a * c + y)**(-nu) - (b * c + y)**(-nu))
 
             cdf += max(0, term)  # avoid rounding error
 
@@ -577,27 +577,27 @@ class LaplacePosterior(object):
                 break
 
         # Invert on interval
-        c = 2*k - len(self.y)
+        c = 2 * k - len(self.y)
         y = sum(self.y[k:]) - sum(self.y[:k])
         nu = self.nu
         if k == 0:
             term = cdfx
         else:
-            a = self.y[k-1]
-            term = cdfx - self._cdf_memo[k-1]
+            a = self.y[k - 1]
+            term = cdfx - self._cdf_memo[k - 1]
 
         if k == 0:
-            z = -nu*c*term
+            z = -nu * c * term
             if z > 0:
-                beta = (z**(-1/nu) - y) / c
+                beta = (z**(-1 / nu) - y) / c
             else:
                 beta = -inf
         elif c == 0:
-            beta = a + term * y**(nu+1)
+            beta = a + term * y**(nu + 1)
         else:
-            z = (a*c + y)**(-nu) - nu*c*term
+            z = (a * c + y)**(-nu) - nu * c * term
             if z > 0:
-                beta = (z**(-1/nu) - y)/c
+                beta = (z**(-1 / nu) - y) / c
             else:
                 beta = inf
 
@@ -626,14 +626,14 @@ class LaplacePosterior(object):
 
         ws = sum(abs(yp - beta) for yp in self.y)
         m = self.nu
-        return -(m+1)*math.log(ws) - math.log(self._cdf_norm) - math.log(self._y_scale)
+        return -(m + 1) * math.log(ws) - math.log(self._cdf_norm) - math.log(self._y_scale)
 
     def cdf(self, beta):
         """
         Cumulative probability distribution function
         """
         if self._y_scale == 0:
-            return 1.0*(beta > self.mle)
+            return 1.0 * (beta > self.mle)
 
         beta = (beta - self.mle) / self._y_scale
 

@@ -543,7 +543,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
     if env and WIN and sys.version_info < (3,):
         # Environment keys and values cannot be unicode
         def _fix_env(s):
-            return s.encode('mbcs') if isinstance(s, unicode) else s # noqa
+            return s.encode('mbcs') if isinstance(s, unicode) else s  # noqa F821 undefined name 'unicode'
         env = {_fix_env(k): _fix_env(v) for k, v in env.items()}
 
     kwargs = dict(shell=shell, env=env, cwd=cwd,
