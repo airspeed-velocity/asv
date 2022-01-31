@@ -243,6 +243,7 @@ def quantile(x, q):
 
 _mann_whitney_u_memo = {}
 
+
 def mann_whitney_u(x, y, method='auto'):
     """
     Mann-Whitney U test
@@ -333,7 +334,7 @@ def mann_whitney_u_cdf(m, n, u, memo=None):
         memo = {}
     cdf = 0
     for uu in range(u + 1):
-         cdf += mann_whitney_u_pmf(m, n, uu, memo)
+        cdf += mann_whitney_u_pmf(m, n, uu, memo)
     return cdf
 
 
@@ -387,7 +388,7 @@ def binom_pmf(n, k, p):
     logp = math.log(p)
     log1mp = math.log(1 - p)
     return math.exp(lgamma(1 + n) - lgamma(1 + n - k) - lgamma(1 + k)
-                        + k*logp + (n - k)*log1mp)
+                    + k*logp + (n - k)*log1mp)
 
 
 _BERNOULLI = [1.0, -0.5, 0.166666666667, 0.0, -0.0333333333333, 0.0, 0.0238095238095]
@@ -656,4 +657,3 @@ class LaplacePosterior(object):
         cdfx = min(cdf * self._cdf_norm, self._cdf_norm)
         beta = self._ppf_unnorm(cdfx)
         return beta * self._y_scale + self.mle
-
