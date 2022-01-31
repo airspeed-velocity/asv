@@ -9,5 +9,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Run Lint Tests
-        run: echo "Hello, world!"
+      - name: Install dependencies
+        run: pip install flake8
+
+      - name: flake8
+        run: flake8 . || true # preventing CI failing while flake8 issues exist
