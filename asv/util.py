@@ -71,10 +71,9 @@ class ParallelFailure(Exception):
             ParallelFailure, (self.message, self.exc_cls, self.traceback_str))
 
     def __str__(self):
-        return "{0}: {1}\n    {2}".format(
-            self.exc_cls.__name__,
-            self.message,
-            self.traceback_str.replace("\n", "\n    "))
+        return "{0}: {1}\n    {2}".format(self.exc_cls.__name__,
+                                          self.message,
+                                          self.traceback_str.replace("\n", "\n    "))
 
     def reraise(self):
         if self.exc_cls is UserError:
