@@ -633,11 +633,11 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
             B[r + 1 - i0] = inf
             a = max(r + 1 - max_size, i0)
             b = max(r + 1 - min_size + 1, i0)
-            for element in range(a, b):
-                b = B[element - i0] + gamma + dist(element, r)
+            for element_l in range(a, b):
+                b = B[element_l - i0] + gamma + dist(element_l, r)
                 if b <= B[r + 1 - i0]:
                     B[r + 1 - i0] = b
-                    p[r - i0] = element - 1
+                    p[r - i0] = element_l - 1
 
             mu_dist.cleanup_cache()
 
