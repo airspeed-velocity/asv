@@ -14,3 +14,6 @@ jobs:
 
       - name: flake8
         run: flake8 . || true # preventing CI failing while flake8 issues exist
+
+      - name: flake8 validating correct file(s)
+        run: flake8 asv/util.py
