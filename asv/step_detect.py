@@ -711,15 +711,15 @@ def solve_potts_autogamma(y, w, beta=None, **kw):
             """
             |E_0| + sum_{j>0} |E_j - rho E_{j-1}|
             """
-            l = 1  # noqa check again
+            l_variable = 1
             E_prev = y[0] - values[0]
             s = abs(E_prev) * w[0]
             for r, v in zip(rights, values):
-                for yv, wv in zip(y[l:r], w[l:r]):
+                for yv, wv in zip(y[l_variable:r], w[l_variable:r]):
                     E = yv - v
                     s += abs(E - rho * E_prev) * wv
                     E_prev = E
-                l = r  # noqa check again
+                l_variable = r
             return s
 
         rho_best = golden_search(lambda rho: sigma_star(r, v, rho), -1, 1,
@@ -802,19 +802,19 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
         min_change = 0
         min_change_j = len(right)
 
-        l = 0  # noqa check again
+        l_variable = 0
         for j in range(1, len(right)):
             if min_change_j < j - 2:
                 break
 
             # Check whether merging consecutive intervals results to
             # decrease in the cost function
-            change = dist(l, right[j] - 1) - (dist(l, right[j - 1] - 1) +
-                                              dist(right[j - 1], right[j] - 1) + gamma)
+            change = dist(l_variable, right[j] - 1) - (dist(l_variable, right[j - 1] - 1) +
+                                                       dist(right[j - 1], right[j] - 1) + gamma)
             if change <= min_change:
                 min_change = change
                 min_change_j = j - 1
-            l = right[j - 1]  # noqa check again
+            l_variable = right[j - 1]
 
         if min_change_j < len(right):
             del right[min_change_j]
