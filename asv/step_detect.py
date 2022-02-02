@@ -632,11 +632,11 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
             B[r + 1 - i0] = inf
             a = max(r + 1 - max_size, i0)
             b = max(r + 1 - min_size + 1, i0)
-            for l in range(a, b):  # noqa check again
-                b = B[l - i0] + gamma + dist(l, r)
+            for l_variable in range(a, b):
+                b = B[l_variable - i0] + gamma + dist(l_variable, r)
                 if b <= B[r + 1 - i0]:
                     B[r + 1 - i0] = b
-                    p[r - i0] = l - 1
+                    p[r - i0] = l_variable - 1
 
             mu_dist.cleanup_cache()
 
@@ -644,16 +644,16 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
     # Convert interval representation computed above
     # to a list of intervals and values.
     r = len(p) - 1 + min_pos
-    l = p[r - min_pos]  # noqa check again
+    l_variable = p[r - min_pos]
     right = []
     values = []
     dists = []
     while r >= min_pos:
         right.append(r + 1)
-        values.append(mu((l + 1), r))
-        dists.append(dist((l + 1), r))
-        r = l
-        l = p[r - min_pos]  # noqa check again
+        values.append(mu((l_variable + 1), r))
+        dists.append(dist((l_variable + 1), r))
+        r = l_variable
+        l_variable = p[r - min_pos]
     right.reverse()
     values.reverse()
     dists.reverse()
