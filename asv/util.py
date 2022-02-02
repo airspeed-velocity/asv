@@ -81,20 +81,20 @@ class ParallelFailure(Exception):
             raise self
 
 
-def human_list(non_human_list):
+def human_list(input_list):
     """
     Formats a list of strings in a human-friendly way.
     """
-    non_human_list = ["'{0}'".format(x) for x in non_human_list]
+    input_list = ["'{0}'".format(x) for x in input_list]
 
-    if len(non_human_list) == 0:
+    if len(input_list) == 0:
         return 'nothing'
-    elif len(non_human_list) == 1:
-        return non_human_list[0]
-    elif len(non_human_list) == 2:
-        return ' and '.join(non_human_list)
+    elif len(input_list) == 1:
+        return input_list[0]
+    elif len(input_list) == 2:
+        return ' and '.join(input_list)
     else:
-        return ', '.join(non_human_list[:-1]) + ' and ' + non_human_list[-1]
+        return ', '.join(input_list[:-1]) + ' and ' + input_list[-1]
 
 
 def human_float(value, significant=3, truncate_small=None, significant_zeros=False):
@@ -566,7 +566,8 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         debug_log = DebugLogBuffer(log)
         dots = False
     else:
-        debug_log = lambda c: None # noqa
+        def debug_log(c):
+            return None
 
     if WIN:
         start_time = [time.time()]
@@ -729,7 +730,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     # Flush and disconnect debug log, if any
     debug_log(None)
-    debug_log = lambda c: None  # noqa
+
+    def debug_log(c):
+        return None
 
     stdout = b''.join(stdout_chunks)
     stderr = b''.join(stderr_chunks)
