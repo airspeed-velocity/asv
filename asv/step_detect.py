@@ -494,11 +494,11 @@ def detect_regressions(steps, threshold=0, min_size=2):
     short_prev = None
 
     # Find upward steps that resulted to worsened value afterward
-    for l, r, cur_v, cur_min, cur_err in reversed(steps):  # noqa check again
+    for l_variable, r, cur_v, cur_min, cur_err in reversed(steps):
         threshold_step = max(cur_err, thresholded_best_err, threshold * cur_v)
 
         if thresholded_best_v > cur_v + threshold_step:
-            if r - l < min_size:
+            if r - l_variable < min_size:
                 # Accept short intervals conditionally
                 short_prev = (thresholded_best_v, thresholded_best_err)
 
@@ -514,7 +514,7 @@ def detect_regressions(steps, threshold=0, min_size=2):
                 thresholded_best_v, thresholded_best_err = short_prev
             short_prev = None
 
-        prev_l = l
+        prev_l = l_variable
 
         if cur_v < best_v:
             best_v = cur_v
@@ -1044,7 +1044,7 @@ def _plot_potts(x, sol):
     plt.clf()
     plt.plot(t, x, 'k.')
 
-    l = 0  # noqa check again
+    l_variable = 0
     for r, v in zip(sol[0], sol[1]):
-        plt.plot([l, r - 1], [v, v], 'b-o', hold=1)
-        l = r  # noqa check again
+        plt.plot([l_variable, r - 1], [v, v], 'b-o', hold=1)
+        l_variable = r
