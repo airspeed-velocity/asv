@@ -31,7 +31,7 @@ piecewise weighted fitting problem
    :label: gamma-opt
 
    \mathop{\mathrm{argmin}}_{k,\{j\},\{\mu\}} \gamma k +
-    \sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} w_i |y_i - \mu_r|
+   \sum_{r=1}^k\sum_{i=j_{r-1}}^{j_r} w_i |y_i - \mu_r|
 
 The differences are: as we do not need exact solutions, we add
 additional heuristics to work around the :math:`{\mathcal O}(n^2)`
@@ -436,14 +436,14 @@ def detect_steps(y, w=None):
 
     # Extract the steps, mapping indices back etc.
     steps = []
-    l_variable = 0
+    l = 0
     for r, v, d in zip(right, values, dists):
-        steps.append((index_map[l_variable],
-                      index_map[r - 1] + 1,
-                      v,
-                      min(y_filtered[l_variable:r]),
-                      abs(d / (r - l_variable))))
-        l_variable = r
+        steps.append((index_map[l],
+                     index_map[r - 1] + 1,
+                     v,
+                     min(y_filtered[l:r]),
+                     abs(d / (r - l))))
+        l = r
     return steps
 
 
@@ -494,11 +494,11 @@ def detect_regressions(steps, threshold=0, min_size=2):
     short_prev = None
 
     # Find upward steps that resulted to worsened value afterward
-    for l_variable, r, cur_v, cur_min, cur_err in reversed(steps):
+    for l, r, cur_v, cur_min, cur_err in reversed(steps):
         threshold_step = max(cur_err, thresholded_best_err, threshold * cur_v)
 
         if thresholded_best_v > cur_v + threshold_step:
-            if r - l_variable < min_size:
+            if r - l < min_size:
                 # Accept short intervals conditionally
                 short_prev = (thresholded_best_v, thresholded_best_err)
 
@@ -514,7 +514,7 @@ def detect_regressions(steps, threshold=0, min_size=2):
                 thresholded_best_v, thresholded_best_err = short_prev
             short_prev = None
 
-        prev_l = l_variable
+        prev_l = l
 
         if cur_v < best_v:
             best_v = cur_v
@@ -632,11 +632,11 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
             B[r + 1 - i0] = inf
             a = max(r + 1 - max_size, i0)
             b = max(r + 1 - min_size + 1, i0)
-            for l_variable in range(a, b):
-                b = B[l_variable - i0] + gamma + dist(l_variable, r)
+            for l in range(a, b):
+                b = B[l - i0] + gamma + dist(l, r)
                 if b <= B[r + 1 - i0]:
                     B[r + 1 - i0] = b
-                    p[r - i0] = l_variable - 1
+                    p[r - i0] = l - 1
 
             mu_dist.cleanup_cache()
 
@@ -644,16 +644,16 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
     # Convert interval representation computed above
     # to a list of intervals and values.
     r = len(p) - 1 + min_pos
-    l_variable = p[r - min_pos]
+    l = p[r - min_pos]
     right = []
     values = []
     dists = []
     while r >= min_pos:
         right.append(r + 1)
-        values.append(mu((l_variable + 1), r))
-        dists.append(dist((l_variable + 1), r))
-        r = l_variable
-        l_variable = p[r - min_pos]
+        values.append(mu((l + 1), r))
+        dists.append(dist((l + 1), r))
+        r = l
+        l = p[r - min_pos]
     right.reverse()
     values.reverse()
     dists.reverse()
@@ -711,15 +711,15 @@ def solve_potts_autogamma(y, w, beta=None, **kw):
             """
             |E_0| + sum_{j>0} |E_j - rho E_{j-1}|
             """
-            l_variable = 1
+            l = 1
             E_prev = y[0] - values[0]
             s = abs(E_prev) * w[0]
             for r, v in zip(rights, values):
-                for yv, wv in zip(y[l_variable:r], w[l_variable:r]):
+                for yv, wv in zip(y[l:r], w[l:r]):
                     E = yv - v
                     s += abs(E - rho * E_prev) * wv
                     E_prev = E
-                l_variable = r
+                l = r
             return s
 
         rho_best = golden_search(lambda rho: sigma_star(r, v, rho), -1, 1,
@@ -802,19 +802,19 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
         min_change = 0
         min_change_j = len(right)
 
-        l_variable = 0
+        l = 0
         for j in range(1, len(right)):
             if min_change_j < j - 2:
                 break
 
             # Check whether merging consecutive intervals results to
             # decrease in the cost function
-            change = dist(l_variable, right[j] - 1) - (dist(l_variable, right[j - 1] - 1) +
-                                                       dist(right[j - 1], right[j] - 1) + gamma)
+            change = (dist(l, right[j] - 1) -
+                      (dist(l, right[j - 1] - 1) + dist(right[j - 1], right[j] - 1) + gamma))
             if change <= min_change:
                 min_change = change
                 min_change_j = j - 1
-            l_variable = right[j - 1]
+            l = right[j - 1]
 
         if min_change_j < len(right):
             del right[min_change_j]
@@ -825,17 +825,14 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
     # in the cost function. The restricted Potts minimization can
     # return sub-optimal boundaries due to the interval maximum size
     # restriction.
-    l_variable = 0
+    l = 0
     for j in range(1, len(right)):
-        prev_score = dist(l_variable, right[j - 1] - 1) + dist(right[j - 1], right[j] - 1)
+        prev_score = dist(l, right[j - 1] - 1) + dist(right[j - 1], right[j] - 1)
         new_off = 0
         for off in range(-max_size, max_size + 1):
-            if (right[j - 1] + off - 1 < l_variable or
-                right[j - 1] + off > right[j] - 1 or
-                    off == 0):
+            if right[j - 1] + off - 1 < l or right[j - 1] + off > right[j] - 1 or off == 0:
                 continue
-            new_score = (dist(l_variable, right[j - 1] + off - 1) +
-                         dist(right[j - 1] + off, right[j] - 1))
+            new_score = dist(l, right[j - 1] + off - 1) + dist(right[j - 1] + off, right[j] - 1)
             if new_score < prev_score:
                 new_off = off
                 prev_score = new_score
@@ -843,16 +840,16 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
         if new_off != 0:
             right[j - 1] += new_off
 
-        l_variable = right[j - 1]
+        l = right[j - 1]
 
     # Rebuild values and dists lists
-    l_variable = 0
+    l = 0
     values = []
     dists = []
     for j in range(len(right)):
-        dists.append(dist(l_variable, right[j] - 1))
-        values.append(mu(l_variable, right[j] - 1))
-        l_variable = right[j]
+        dists.append(dist(l, right[j] - 1))
+        values.append(mu(l, right[j] - 1))
+        l = right[j]
 
     return right, values, dists
 
@@ -1047,7 +1044,7 @@ def _plot_potts(x, sol):
     plt.clf()
     plt.plot(t, x, 'k.')
 
-    l_variable = 0
+    l = 0
     for r, v in zip(sol[0], sol[1]):
-        plt.plot([l_variable, r - 1], [v, v], 'b-o', hold=1)
-        l_variable = r
+        plt.plot([l, r - 1], [v, v], 'b-o', hold=1)
+        l = r
