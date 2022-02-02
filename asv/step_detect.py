@@ -436,14 +436,14 @@ def detect_steps(y, w=None):
 
     # Extract the steps, mapping indices back etc.
     steps = []
-    l = 0  # noqa check again
+    l_variable = 0
     for r, v, d in zip(right, values, dists):
-        steps.append((index_map[l],
+        steps.append((index_map[l_variable],
                       index_map[r - 1] + 1,
                       v,
-                      min(y_filtered[l:r]),
-                      abs(d / (r - l))))
-        l = r  # noqa check again
+                      min(y_filtered[l_variable:r]),
+                      abs(d / (r - l_variable))))
+        l_variable = r
     return steps
 
 
