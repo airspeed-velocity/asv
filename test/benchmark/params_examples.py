@@ -3,8 +3,6 @@
 
 from __future__ import (absolute_import, division, print_function)
 
-import os # noqa F401 unused import
-
 
 class ClassOne(object):
     pass
@@ -22,7 +20,7 @@ track_param.params = [ClassOne, ClassTwo]
 
 
 def mem_param(n, m):
-    return [[0]*m]*n
+    return [[0] * m] * n
 
 
 mem_param.params = ([10, 20], [2, 3])
