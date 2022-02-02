@@ -1,5 +1,3 @@
-import time # noqa F401 unused import
-
 x = None
 
 

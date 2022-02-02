@@ -16,4 +16,4 @@ jobs:
         run: flake8 . || true # preventing CI failing while flake8 issues exist
       
       - name: flake8 validating correct file(s)
-        run: flake8 test/benchmark/params_examples.py
+        run: flake8 test/benchmark/cache_examples.py test/benchmark/code_extraction.py test/benchmark/params_examples.py test/benchmark/subdir/time_subdir.py test/benchmark/time_examples.py test/benchmark/time_secondary.py test/benchmark/timeraw_examples.py
