@@ -4,9 +4,6 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import inspect  # Checked below. # noqa F401 unused import
-import sys # noqa F401 unused import
-
 
 class TimerawSuite(object):
     def timeraw_fresh(self):
