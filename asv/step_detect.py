@@ -1040,4 +1040,4 @@ def _plot_potts(x, sol):
     l = 0
     for r, v in zip(sol[0], sol[1]):
         plt.plot([l, r-1], [v, v], 'b-o', hold=1)
-        l = r
+        l = r 
