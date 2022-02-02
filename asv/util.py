@@ -67,8 +67,7 @@ class ParallelFailure(Exception):
         return self
 
     def __reduce__(self):
-        return (
-            ParallelFailure, (self.message, self.exc_cls, self.traceback_str))
+        return (ParallelFailure, (self.message, self.exc_cls, self.traceback_str))
 
     def __str__(self):
         return "{0}: {1}\n    {2}".format(self.exc_cls.__name__,
@@ -98,17 +97,13 @@ def human_list(non_human_list):
         return ', '.join(non_human_list[:-1]) + ' and ' + non_human_list[-1]
 
 
-def human_float(
-        value, significant=3,
-        truncate_small=None,
-        significant_zeros=False):
+def human_float(value, significant=3, truncate_small=None, significant_zeros=False):
     """
-    Return a string representing a float with human
-    friendly significant digits.
+    Return a string representing a float with human friendly significant digits.
     Switches to scientific notation for too large/small numbers.
-    If `truncate_small`, then leading zeros of numbers < 1 are
-    counted as significant. If not `significant_zeros`, trailing
-    unnecessary zeros are stripped.
+    If `truncate_small`, then leading zeros of numbers < 1 are counted as
+    significant. If not `significant_zeros`, trailing unnecessary zeros are
+    stripped.
     """
     if value == 0:
         return "0"
@@ -260,10 +255,7 @@ def human_time(seconds, err=None):
 
     for i in xrange(len(units) - 1):
         if scale < units[i + 1][1]:
-            str_time = human_float(
-                seconds / units[i][1],
-                3,
-                significant_zeros=True)
+            str_time = human_float(seconds / units[i][1], 3, significant_zeros=True)
             if err is None:
                 return "{0:s}{1}".format(str_time, units[i][0])
             else:
@@ -346,10 +338,8 @@ def which(filename, paths=None):
         locations = os.environ.get("PATH", "").split(os.pathsep)
         if WIN:
             # On windows, an entry in %PATH% may be quoted
-            locations = [
-                path[1:-1] if len(path) > 2 and path[0] == path[-1] == '"'
-                else path
-                for path in locations]
+            locations = [path[1:-1] if len(path) > 2 and path[0] == path[-1] == '"' else path
+                         for path in locations]
 
     if WIN:
         filenames = [filename + ext for ext in ('.exe', '.bat', '.com', '')]
@@ -457,8 +447,7 @@ class DebugLogBuffer(object):
 
 def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                  display_error=True, shell=False, return_stderr=False,
-                 env=None, cwd=None, redirect_stderr=False,
-                 return_popen=False):
+                 env=None, cwd=None, redirect_stderr=False, return_popen=False):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.  Returns stdout as a string on success.
@@ -577,8 +566,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         debug_log = DebugLogBuffer(log)
         dots = False
     else:
-        def debug_log(c):
-            return None
+        debug_log = lambda c: None # noqa
 
     if WIN:
         start_time = [time.time()]
@@ -597,8 +585,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
             finally:
                 stream.close()
 
-        stdout_reader = threading.Thread(target=stream_reader,
-                                         args=(proc.stdout, stdout_chunks))
+        stdout_reader = threading.Thread(target=stream_reader, args=(proc.stdout, stdout_chunks))
         stdout_reader.daemon = True
         stdout_reader.start()
 
@@ -672,8 +659,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                 signal.signal(signal.SIGTSTP, sig_forward)
                 signal.signal(signal.SIGCONT, sig_forward)
 
-            fds = {
-                proc.stdout.fileno(): stdout_chunks}
+            fds = {proc.stdout.fileno(): stdout_chunks}
             if not redirect_stderr:
                 fds[proc.stderr.fileno()] = stderr_chunks
 
@@ -743,9 +729,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     # Flush and disconnect debug log, if any
     debug_log(None)
-
-    def debug_log(c):
-        return None
+    debug_log = lambda c: None  # noqa
 
     stdout = b''.join(stdout_chunks)
     stderr = b''.join(stderr_chunks)
@@ -759,8 +743,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         retcode = proc.returncode
 
     if valid_return_codes is not None and retcode not in valid_return_codes:
-        header = 'Error running {0} (exit status {1})'.format(' '.join(args),
-                                                              retcode)
+        header = 'Error running {0} (exit status {1})'.format(' '.join(args), retcode)
         if display_error:
             if log.is_debug_enabled():
                 # Output was already printed
@@ -1122,13 +1105,10 @@ def format_text_table(rows, num_headers=0,
 
     result = []
     if top_header_text is not None:
-        left_span = {
-            "-".join("-" * w for w in col_widths[:top_header_span_start])}
-        right_span = {
-            "-".join("-" * w for w in col_widths[top_header_span_start:])}
+        left_span = "-".join("-" * w for w in col_widths[:top_header_span_start])
+        right_span = "-".join("-" * w for w in col_widths[top_header_span_start:])
         if left_span and right_span:
-            result += (["--" + " " * (len(left_span) - 1) +
-                       top_header_text.center(len(right_span))])
+            result += ["--" + " " * (len(left_span) - 1) + top_header_text.center(len(right_span))]
             result += [" ".join([left_span, right_span])]
         else:
             result += [top_header_text.center(len(separator))]
@@ -1146,7 +1126,7 @@ def format_text_table(rows, num_headers=0,
 
 def _datetime_to_timestamp(dt, divisor):
     delta = dt - datetime.datetime(1970, 1, 1)
-    microseconds = ((delta.days * 86400 + delta.seconds) * 10**6 + delta.microseconds)
+    microseconds = (delta.days * 86400 + delta.seconds) * 10**6 + delta.microseconds
     value, remainder = divmod(microseconds, divisor)
     if remainder >= divisor // 2:
         value += 1
@@ -1240,7 +1220,7 @@ else:
     def _remove_readonly(func, path, exc_info):
         """Try harder to remove files on Windows"""
 
-        if (isinstance(exc_info[1], OSError) and exc_info[1].errno == errno.EACCES):
+        if isinstance(exc_info[1], OSError) and exc_info[1].errno == errno.EACCES:
             # Clear read-only flag and try again
             try:
                 os.chmod(path, stat.S_IWRITE | stat.S_IREAD)
@@ -1323,8 +1303,7 @@ def interpolate_command(command, variables):
     - ``ENVVAR=value <command>``: parsed as declaring an environment variable
       named 'ENVVAR'.
     - ``return-code=value <command>``: parsed as declaring valid return codes.
-    - ``in-dir=value <command>``: parsed as declaring working directory
-      for command.
+    - ``in-dir=value <command>``: parsed as declaring working directory for command.
 
     Parameters
     ----------
@@ -1371,8 +1350,8 @@ def interpolate_command(command, variables):
 
         if result[0].startswith('return-code='):
             if return_codes_set:
-                raise UserError("Configuration error: multiple return-code "
-                                "specifications in command {0!r} "
+                raise UserError("Configuration error: multiple return-code specifications "
+                                "in command {0!r} "
                                 "".format(command))
                 break
 
@@ -1392,15 +1371,14 @@ def interpolate_command(command, variables):
                 except ValueError:
                     pass
 
-            raise UserError("Configuration error: invalid return-code "
-                            "specification {0!r} when substituting "
-                            "into command {1!r} "
+            raise UserError("Configuration error: invalid return-code specification "
+                            "{0!r} when substituting into command {1!r} "
                             "".format(result[0], command))
 
         if result[0].startswith('in-dir='):
             if cwd is not None:
-                raise UserError("Configuration error: multiple in-dir "
-                                "specifications in command {0!r} "
+                raise UserError("Configuration error: multiple in-dir specifications "
+                                "in command {0!r} "
                                 "".format(command))
                 break
 
