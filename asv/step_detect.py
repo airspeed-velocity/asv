@@ -825,14 +825,17 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
     # in the cost function. The restricted Potts minimization can
     # return sub-optimal boundaries due to the interval maximum size
     # restriction.
-    l = 0  # noqa check again
+    l_variable = 0
     for j in range(1, len(right)):
-        prev_score = dist(l, right[j - 1] - 1) + dist(right[j - 1], right[j] - 1)
+        prev_score = dist(l_variable, right[j - 1] - 1) + dist(right[j - 1], right[j] - 1)
         new_off = 0
         for off in range(-max_size, max_size + 1):
-            if right[j - 1] + off - 1 < l or right[j - 1] + off > right[j] - 1 or off == 0:
+            if (right[j - 1] + off - 1 < l_variable or
+                right[j - 1] + off > right[j] - 1 or
+                    off == 0):
                 continue
-            new_score = dist(l, right[j - 1] + off - 1) + dist(right[j - 1] + off, right[j] - 1)
+            new_score = (dist(l_variable, right[j - 1] + off - 1) +
+                         dist(right[j - 1] + off, right[j] - 1))
             if new_score < prev_score:
                 new_off = off
                 prev_score = new_score
@@ -840,16 +843,16 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
         if new_off != 0:
             right[j - 1] += new_off
 
-        l = right[j - 1]  # noqa check again
+        l_variable = right[j - 1]
 
     # Rebuild values and dists lists
-    l = 0  # noqa check again
+    l_variable = 0
     values = []
     dists = []
     for j in range(len(right)):
-        dists.append(dist(l, right[j] - 1))
-        values.append(mu(l, right[j] - 1))
-        l = right[j]  # noqa check again
+        dists.append(dist(l_variable, right[j] - 1))
+        values.append(mu(l_variable, right[j] - 1))
+        l_variable = right[j]
 
     return right, values, dists
 
