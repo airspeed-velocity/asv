@@ -474,8 +474,8 @@ class Benchmark(object):
 
         if len(self.param_names) != len(self._params):
             self.param_names = self.param_names[:len(self._params)]
-            self.param_names += ['param%d' % (k+1,) for k in range(len(self.param_names),
-                                                                   len(self._params))]
+            self.param_names += ['param%d' % (k + 1,) for k in range(len(self.param_names),
+                                                                     len(self._params))]
 
         # Exported parameter representations
         self.params = [[_repr_no_address(item) for item in entry] for entry in self._params]
@@ -667,7 +667,7 @@ class TimeBenchmark(Benchmark):
                                                 number=self.number,
                                                 min_run_count=self.min_run_count)
 
-        samples = [s/number for s in samples]
+        samples = [s / number for s in samples]
         return {'samples': samples, 'number': number}
 
     def benchmark_timing(self, timer, min_repeat, max_repeat, max_time, warmup_time,
@@ -707,7 +707,7 @@ class TimeBenchmark(Benchmark):
                         break
                 else:
                     try:
-                        p = min(10.0, max(1.1, sample_time/actual_timing))
+                        p = min(10.0, max(1.1, sample_time / actual_timing))
                     except ZeroDivisionError:
                         p = 10.0
                     number = max(number + 1, int(p * number))
