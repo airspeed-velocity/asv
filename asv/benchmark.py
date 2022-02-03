@@ -33,7 +33,24 @@ internal commands:
 # there although it's not part of the package, and Python puts it to
 # sys.path[0] on start which can shadow other modules
 import sys
+if __name__ == "__main__":
+    _old_sys_path_head = sys.path.pop(0)
+else:
+    _old_sys_path_head = None
+
 import copy
+try:
+    import cProfile as profile
+except Exception:
+    profile = None
+import ctypes
+from ctypes.util import find_library
+from hashlib import sha256
+import errno
+if sys.version_info[0] >= 3:
+    import importlib.machinery
+else:
+    import imp
 import inspect
 import itertools
 import json
@@ -51,23 +68,7 @@ import traceback
 import contextlib
 from importlib import import_module
 from collections import Counter
-import ctypes
-from ctypes.util import find_library
-from hashlib import sha256
-import errno
-if __name__ == "__main__":
-    _old_sys_path_head = sys.path.pop(0)
-else:
-    _old_sys_path_head = None
 
-try:
-    import cProfile as profile
-except Exception:
-    profile = None
-if sys.version_info[0] >= 3:
-    import importlib.machinery
-else:
-    import imp
 # The best timer we can use is time.process_time, but it is not
 # available in the Python stdlib until Python 3.3.  This is a ctypes
 # backport for Pythons that don't have it.
@@ -153,6 +154,13 @@ except ImportError:  # Python <3.3
         process_time = timeit.default_timer
 
 wall_timer = timeit.default_timer
+
+
+def get_maxrss2():
+    # Fallback function, in case we don't have one that works on the
+    # current platform
+    return None
+
 
 if sys.platform.startswith('win'):
     import ctypes
@@ -565,8 +573,7 @@ class Benchmark(object):
 
     def do_profile(self, filename=None):
         def method_caller():
-            return self.run(*self.current_params)
-
+            self.run(*self.params)
         if profile is None:
             raise RuntimeError("cProfile could not be imported")
 
@@ -613,12 +620,10 @@ class TimeBenchmark(Benchmark):
         self._load_vars()
         return result
 
-    def _func(self, *param):
-        return self.func(*param)
-
     def _get_timer(self, *param):
         if param:
-            func = self._func(*param)
+            def func(self):
+                return self.func(*param)
         else:
             func = self.func
 
@@ -777,12 +782,10 @@ class TimerawBenchmark(TimeBenchmark):
         self.number = int(_get_first_attr(self._attr_sources, 'number', 1))
         del self.timer
 
-    def _func(self, *param):
-        return self.func(*param)
-
     def _get_timer(self, *param):
         if param:
-            func = self._func(*param)
+            def func(self):
+                return self.func(*param)
         else:
             func = self.func
         return _SeparateProcessTimer(func)
@@ -1388,8 +1391,8 @@ def main_timing(argv):
     if not args.json:
         asv.console.color_print(formatted, 'red')
         asv.console.color_print(u"", 'default')
-        asv.console.color_print(u"\n".join(u"{}: {}"
-                                .format(k, v) for k, v in sorted(stats.items())), 'default')
+        asv.console.color_print(u"\n".join(u"{}: {}".
+                                format(k, v) for k, v in sorted(stats.items())), 'default')
         asv.console.color_print(u"samples: {}".format(result['samples']), 'default')
     else:
         json.dump({'result': value,
