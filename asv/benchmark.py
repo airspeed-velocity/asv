@@ -347,7 +347,8 @@ def get_source_code(items):
             src = "class {0}:\n    {1}".format(
                 class_name, src.replace("\n", "\n    "))
         elif class_name:
-            src = "{0}".format(class_name)
+            src = "class {0}:\n    {1}".format(
+                class_name, src.replace("\n", "\n    "))
 
         sources.append(src)
         prev_class_name = class_name
