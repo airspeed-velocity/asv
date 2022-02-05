@@ -65,13 +65,10 @@ class Benchmarks(dict):
                         ', '.join(param_set))
                     if not regex or any(re.search(reg, name) for reg in regex):
                         self[benchmark['name']] = benchmark
-                        self._benchmark_selection
-                        [benchmark['name']].append(idx)
+                        self._benchmark_selection[benchmark['name']].append(idx)
             else:
                 self._benchmark_selection[benchmark['name']] = None
-                if (not regex or
-                        any(re.search(reg, benchmark['name'])
-                            for reg in regex)):
+                if not regex or any(re.search(reg, benchmark['name']) for reg in regex):
                     self[benchmark['name']] = benchmark
 
     @property
@@ -138,8 +135,7 @@ class Benchmarks(dict):
             Run additional checks after discovery.
 
         """
-        benchmarks = cls._disc_benchmarks(
-            conf, repo, environments, commit_hash, check)
+        benchmarks = cls._disc_benchmarks(conf, repo, environments, commit_hash, check)
         return cls(conf, benchmarks, regex=regex)
 
     @classmethod
@@ -184,11 +180,12 @@ class Benchmarks(dict):
         log.info("Discovering benchmarks")
         with log.indent():
             last_err = None
-            tools = itertools.product(environments, try_hashes)
-            for env, commit_hash in tools:
+            for env, commit_hash in itertools.product(environments, try_hashes):
                 env.create()
+
                 if last_err is not None:
                     log.warning("Failed: trying different commit/environment")
+
                 result_dir = tempfile.mkdtemp()
                 try:
                     env.install_project(conf, repo, commit_hash)
@@ -221,9 +218,7 @@ class Benchmarks(dict):
                 finally:
                     util.long_path_rmtree(result_dir)
             else:
-                raise util.UserError(
-                                    "Failed to build the project",
-                                    " and import the benchmark suite.")
+                raise util.UserError("Failed to build the project and import the benchmark suite.")
 
         if check:
             log.info("Checking benchmarks")
@@ -336,9 +331,7 @@ class Benchmarks(dict):
         try:
             path = cls.get_benchmark_file_path(conf.results_dir)
             if not os.path.isfile(path):
-                raise util.UserError(
-                    "Benchmark list file"
-                    " {} missing!".format(path))
+                raise util.UserError("Benchmark list file {} missing!".format(path))
             d = util.load_json(path, api_version=cls.api_version)
             benchmarks = six.itervalues(d)
             return cls(conf, benchmarks, regex=regex)
