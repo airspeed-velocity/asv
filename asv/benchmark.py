@@ -41,7 +41,7 @@ else:
 import copy
 try:
     import cProfile as profile
-except:
+except Exception:
     profile = None
 import ctypes
 from ctypes.util import find_library
@@ -68,7 +68,7 @@ import traceback
 import contextlib
 from importlib import import_module
 from collections import Counter
-import warnings
+import warnings # noqa F401 imported but unused
 
 
 # The best timer we can use is time.process_time, but it is not
@@ -157,17 +157,12 @@ except ImportError:  # Python <3.3
 
 wall_timer = timeit.default_timer
 
-
-def get_maxrss():
-    # Fallback function, in case we don't have one that works on the
-    # current platform
-    return None
-
 if sys.platform.startswith('win'):
     import ctypes
     import ctypes.wintypes
 
     SIZE_T = ctypes.c_size_t
+
     class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
         _fields_ = [
             ('cb', ctypes.wintypes.DWORD),
@@ -207,11 +202,11 @@ if sys.platform.startswith('win'):
 
     SetProcessAffinityMask = ctypes.windll.kernel32.SetProcessAffinityMask
     SetProcessAffinityMask.argtypes = [ctypes.wintypes.HANDLE, DWORD_PTR]
-    SetProcessAffinityMask.restype  = bool
+    SetProcessAffinityMask.restype = bool
 
     GetCurrentProcess = ctypes.windll.kernel32.GetCurrentProcess
     GetCurrentProcess.argtypes = []
-    GetCurrentProcess.restype  = ctypes.wintypes.HANDLE
+    GetCurrentProcess.restype = ctypes.wintypes.HANDLE
 
     def set_cpu_affinity(affinity_list):
         """Set CPU affinity to CPUs listed (numbered 0...n-1)"""
@@ -347,8 +342,7 @@ def get_source_code(items):
             src = "class {0}:\n    {1}".format(
                 class_name, src.replace("\n", "\n    "))
         elif class_name:
-            src = "    {1}".format(
-                class_name, src.replace("\n", "\n    "))
+            src = "    {0}".format(src.replace("\n", "\n    "))
 
         sources.append(src)
         prev_class_name = class_name
@@ -482,8 +476,8 @@ class Benchmark(object):
 
         if len(self.param_names) != len(self._params):
             self.param_names = self.param_names[:len(self._params)]
-            self.param_names += ['param%d' % (k+1,) for k in range(len(self.param_names),
-                                                                   len(self._params))]
+            self.param_names += ['param%d' % (k + 1,) for k in range(len(self.param_names),
+                                                                     len(self._params))]
 
         # Exported parameter representations
         self.params = [[_repr_no_address(item) for item in entry] for entry in self._params]
@@ -574,7 +568,7 @@ class Benchmark(object):
 
     def do_profile(self, filename=None):
         def method_caller():
-            run(*params)
+            run(*params) # noqa see #1234
 
         if profile is None:
             raise RuntimeError("cProfile could not be imported")
@@ -624,7 +618,8 @@ class TimeBenchmark(Benchmark):
 
     def _get_timer(self, *param):
         if param:
-            func = lambda: self.func(*param)
+            def func():
+                return self.func(*param)
         else:
             func = self.func
 
@@ -672,7 +667,7 @@ class TimeBenchmark(Benchmark):
                                                 number=self.number,
                                                 min_run_count=self.min_run_count)
 
-        samples = [s/number for s in samples]
+        samples = [s / number for s in samples]
         return {'samples': samples, 'number': number}
 
     def benchmark_timing(self, timer, min_repeat, max_repeat, max_time, warmup_time,
@@ -712,7 +707,7 @@ class TimeBenchmark(Benchmark):
                         break
                 else:
                     try:
-                        p = min(10.0, max(1.1, sample_time/actual_timing))
+                        p = min(10.0, max(1.1, sample_time / actual_timing))
                     except ZeroDivisionError:
                         p = 10.0
                     number = max(number + 1, int(p * number))
@@ -785,7 +780,8 @@ class TimerawBenchmark(TimeBenchmark):
 
     def _get_timer(self, *param):
         if param:
-            func = lambda: self.func(*param)
+            def func():
+                return self.func(*param)
         else:
             func = self.func
         return _SeparateProcessTimer(func)
@@ -1091,7 +1087,7 @@ def list_benchmarks(root, fp):
         clean = dict(
             (k, v) for (k, v) in benchmark.__dict__.items()
             if isinstance(v, (str, int, float, list, dict, bool)) and not
-               k.startswith('_'))
+            k.startswith('_'))
         json.dump(clean, fp, skipkeys=True)
         first = False
     fp.write(']')
@@ -1292,7 +1288,7 @@ def main_run_server(args):
                             os.chdir(cwd)
                             main_run(run_args)
                             exitcode = 0
-                        except BaseException as ec:
+                        except BaseException:
                             import traceback
                             traceback.print_exc()
                 finally:
@@ -1356,7 +1352,7 @@ def main_timing(argv):
     import asv.console
 
     if (_old_sys_path_head is not None and
-        os.path.abspath(_old_sys_path_head) != os.path.abspath(os.path.dirname(__file__))):
+            os.path.abspath(_old_sys_path_head) != os.path.abspath(os.path.dirname(__file__))):
         sys.path.insert(0, _old_sys_path_head)
 
     parser = argparse.ArgumentParser(usage="python -masv.benchmark timing [options] STATEMENT")
@@ -1392,7 +1388,8 @@ def main_timing(argv):
     if not args.json:
         asv.console.color_print(formatted, 'red')
         asv.console.color_print(u"", 'default')
-        asv.console.color_print(u"\n".join(u"{}: {}".format(k, v) for k, v in sorted(stats.items())), 'default')
+        asv.console.color_print(u"\n".join(u"{}: {}".format(k, v)
+                                for k, v in sorted(stats.items())), 'default')
         asv.console.color_print(u"samples: {}".format(result['samples']), 'default')
     else:
         json.dump({'result': value,
@@ -1430,6 +1427,7 @@ def main():
     else:
         sys.stderr.write("Unknown mode {0}\n".format(mode))
         sys.exit(1)
+
 
 if __name__ == '__main__':
     main()
