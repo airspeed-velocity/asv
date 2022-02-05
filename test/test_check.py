@@ -11,10 +11,10 @@ from asv import util
 
 from . import tools
 
-from .test_dev import basic_conf
+from .test_dev import basic_conf # noqa F401
 
 
-def test_check(capsys, basic_conf):
+def test_check(capsys, basic_conf): # noqa F811
     tmpdir, local, conf = basic_conf
 
     # Test check runs (with full benchmark suite)
