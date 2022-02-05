@@ -37,7 +37,7 @@ def main():
     try:
         result = args.func(args)
     except util.UserError as e:
-        log.error(six.text_type(e))
+        log.error(str(e))
         sys.exit(1)
     finally:
         log.flush()

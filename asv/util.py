@@ -858,7 +858,7 @@ def load_json(path, api_version=None, js_comments=False):
     except ValueError as e:
         raise UserError(
             "Error parsing JSON in file '{0}': {1}".format(
-                path, six.text_type(e)))
+                path, str(e)))
 
     if api_version is not None:
         if 'version' in d:
@@ -1253,7 +1253,7 @@ def sanitize_filename(filename):
 
     The implementation needs to match www/asv.js:escape_graph_parameter
     """
-    if not isinstance(filename, six.text_type):
+    if not isinstance(filename, str):
         filename = filename.decode(sys.getfilesystemencoding())
 
     # ntfs & ext3

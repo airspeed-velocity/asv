@@ -37,10 +37,10 @@ def iter_results_paths(results):
         try:
             data = util.load_json(machine_json, api_version=Machine.api_version)
             machine_name = data.get('machine')
-            if not isinstance(machine_name, six.text_type):
+            if not isinstance(machine_name, str):
                 raise util.UserError("malformed {0}".format(machine_json))
         except util.UserError as err:
-            machine_json_err = "Skipping results: {0}".format(six.text_type(err))
+            machine_json_err = "Skipping results: {0}".format(str(err))
         except IOError as err:
             machine_json_err = "Skipping results: could not load {0}".format(
                 machine_json)
@@ -66,7 +66,7 @@ def iter_results(results):
         try:
             yield Results.load(os.path.join(root, filename), machine_name=machine_name)
         except util.UserError as exc:
-            log.warning(six.text_type(exc))
+            log.warning(str(exc))
 
 
 def iter_results_for_machine(results, machine_name):
@@ -90,7 +90,7 @@ def iter_results_for_machine_and_hash(results, machine_name, commit):
             try:
                 yield Results.load(os.path.join(root, filename), machine_name=machine_name)
             except util.UserError as exc:
-                log.warning(six.text_type(exc))
+                log.warning(str(exc))
 
 
 def iter_existing_hashes(results):
@@ -740,7 +740,7 @@ class Results(object):
         except KeyError as exc:
             raise util.UserError(
                 "Error loading results file '{0}': missing key {1}".format(
-                    path, six.text_type(exc)))
+                    path, str(exc)))
 
         if machine_name is not None and obj.params.get('machine') != machine_name:
             raise util.UserError(
@@ -888,7 +888,7 @@ class Results(object):
         except KeyError as exc:
             raise util.UserError(
                 "Error loading results data: missing key {}".format(
-                    six.text_type(exc)))
+                    str(exc)))
 
 
 def format_benchmark_result(results, benchmark):

@@ -17,7 +17,7 @@ from .tools import example_results
 
 
 def test_rm(tmpdir, example_results):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     shutil.copytree(
         example_results,

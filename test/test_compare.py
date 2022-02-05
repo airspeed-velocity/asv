@@ -159,7 +159,7 @@ REFERENCE_ONLY_CHANGED_NOSTATS = """
 
 
 def test_compare(capsys, tmpdir, example_results):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
     conf = config.Config.from_json(
@@ -210,7 +210,7 @@ def test_compare(capsys, tmpdir, example_results):
     pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))
 ])
 def test_compare_name_lookup(dvcs_type, capsys, tmpdir, example_results):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
     repo = tools.generate_test_repo(tmpdir, dvcs_type=dvcs_type)

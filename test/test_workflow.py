@@ -32,7 +32,7 @@ dummy_values = (
 )
 
 def generate_basic_conf(tmpdir, repo_subdir='', values=dummy_values, dummy_packages=True):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     local = abspath(dirname(__file__))
     os.chdir(tmpdir)
 
