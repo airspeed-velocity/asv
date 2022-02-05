@@ -69,6 +69,7 @@ import contextlib
 from importlib import import_module
 from collections import Counter
 
+
 # The best timer we can use is time.process_time, but it is not
 # available in the Python stdlib until Python 3.3.  This is a ctypes
 # backport for Pythons that don't have it.
@@ -154,14 +155,6 @@ except ImportError:  # Python <3.3
         process_time = timeit.default_timer
 
 wall_timer = timeit.default_timer
-
-
-def get_maxrss2():
-    # Fallback function, in case we don't have one that works on the
-    # current platform
-    return None
-
-
 if sys.platform.startswith('win'):
     import ctypes
     import ctypes.wintypes
@@ -347,8 +340,7 @@ def get_source_code(items):
             src = "class {0}:\n    {1}".format(
                 class_name, src.replace("\n", "\n    "))
         elif class_name:
-            src = "class {0}:\n    {1}".format(
-                class_name, src.replace("\n", "\n    "))
+            src = "    {0}".format(src.replace("\n", "\n    "))
 
         sources.append(src)
         prev_class_name = class_name
@@ -574,7 +566,8 @@ class Benchmark(object):
 
     def do_profile(self, filename=None):
         def method_caller():
-            self.run(*self.params)
+            run(*params)  # noqa F821 See #1234
+
         if profile is None:
             raise RuntimeError("cProfile could not be imported")
 
@@ -623,7 +616,7 @@ class TimeBenchmark(Benchmark):
 
     def _get_timer(self, *param):
         if param:
-            def func(self):
+            def func():
                 return self.func(*param)
         else:
             func = self.func
@@ -785,7 +778,7 @@ class TimerawBenchmark(TimeBenchmark):
 
     def _get_timer(self, *param):
         if param:
-            def func(self):
+            def func():
                 return self.func(*param)
         else:
             func = self.func
@@ -1091,7 +1084,8 @@ def list_benchmarks(root, fp):
             fp.write(', ')
         clean = dict(
             (k, v) for (k, v) in benchmark.__dict__.items()
-            if isinstance(v, (str, int, float, list, dict, bool)) and not k.startswith('_'))
+            if isinstance(v, (str, int, float, list, dict, bool)) and not
+            k.startswith('_'))
         json.dump(clean, fp, skipkeys=True)
         first = False
     fp.write(']')
@@ -1392,8 +1386,8 @@ def main_timing(argv):
     if not args.json:
         asv.console.color_print(formatted, 'red')
         asv.console.color_print(u"", 'default')
-        asv.console.color_print(u"\n".join(u"{}: {}".
-                                format(k, v) for k, v in sorted(stats.items())), 'default')
+        asv.console.color_print(u"\n".join(u"{}: {}".format(k, v)
+                                for k, v in sorted(stats.items())), 'default')
         asv.console.color_print(u"samples: {}".format(result['samples']), 'default')
     else:
         json.dump({'result': value,
