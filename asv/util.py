@@ -523,7 +523,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
             ])
         return '\n'.join(content)
 
-    if isinstance(args, six.string_types):
+    if isinstance(args, str):
         args = [args]
 
     log.debug("Running '{0}'".format(' '.join(args)))
