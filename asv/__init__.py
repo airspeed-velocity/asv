@@ -28,3 +28,5 @@ if sys.version_info >= (3, 3):
     # inherited.
     if os.environ.get('__PYVENV_LAUNCHER__'):
         os.unsetenv('__PYVENV_LAUNCHER__')
+
+from . import plugin_manager # noqa  F401 '.plugin_manager' imported but unused
