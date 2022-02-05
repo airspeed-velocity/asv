@@ -9,12 +9,13 @@ import sys
 import shutil
 from os.path import join, dirname
 
-import pytest
+import pytest # noqa F401
 import six
 import textwrap
 from hashlib import sha256
 
 from asv import benchmarks
+from asv import benchmark # noqa F401
 from asv import config
 from asv import environment
 from asv import util
@@ -136,8 +137,7 @@ def test_invalid_benchmark_tree(tmpdir):
     commit_hash = repo.get_hash_from_name(repo.get_branch_name())
 
     with pytest.raises(util.UserError):
-        b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
-        assert len(b) == 1
+        b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash]) # noqa
 
 
 def test_find_benchmarks_cwd_imports(tmpdir):

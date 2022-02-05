@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
-import sys
+import sys # noqa F401
 import re
 from os.path import abspath, dirname, join, relpath
 import shutil

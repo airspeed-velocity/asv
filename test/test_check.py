@@ -11,6 +11,8 @@ from asv import util
 
 from . import tools
 
+from .test_dev import basic_conf
+
 
 def test_check(capsys, basic_conf):
     tmpdir, local, conf = basic_conf

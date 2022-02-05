@@ -1,5 +1,6 @@
 import os
 import contextlib
+import pytest # noqa F401
 
 
 def pytest_addoption(parser):
@@ -24,7 +25,6 @@ def pytest_sessionstart(session):
     if env_type is not None:
         import asv.environment
         import asv.util
-
         for cls in asv.util.iter_subclasses(asv.environment.Environment):
             cls.matches_python_fallback = (cls.tool_name in (env_type, "existing"))
 
