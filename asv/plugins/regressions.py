@@ -32,7 +32,7 @@ class Regressions(OutputPublisher):
         # it's easier to work with than the results directly
 
         regressions = []
-        revision_to_hash = dict((r, h) for h, r in six.iteritems(revisions))
+        revision_to_hash = dict((r, h) for h, r in revisions.items())
 
         data_filter = _GraphDataFilter(conf, repo, revisions)
 
@@ -68,7 +68,7 @@ class Regressions(OutputPublisher):
 
         # Select unique graph params
         graph_params = {}
-        for name, value in six.iteritems(graph.params):
+        for name, value in graph_params.items():
             if len(all_params[name]) > 1:
                 graph_params[name] = value
 
@@ -113,7 +113,7 @@ class Regressions(OutputPublisher):
             revision_timestamps[revision] = results.date
 
             # Time when the benchmark was run
-            for benchmark_name, timestamp in six.iteritems(results.started_at):
+            for benchmark_name, timestamp in results.started_at.items():
                 if timestamp is None:
                     continue
                 key = (benchmark_name, revision)
@@ -279,14 +279,14 @@ class _GraphDataFilter(object):
         regression detection runs on this order --- the starting commit
         thus corresponds to a specific starting revision.
         """
-        start_revision = min(six.itervalues(self.revisions))
+        start_revision = min(self.revisions.values())
 
         if graph.params.get('branch'):
             branch_suffix = '@' + graph.params.get('branch')
         else:
             branch_suffix = ''
 
-        for regex, start_commit in six.iteritems(self.conf.regressions_first_commits):
+        for regex, start_commit in self.conf.regressions_first_commits.items():
             if re.match(regex, entry_name + branch_suffix):
                 if start_commit is None:
                     # Disable regression detection completely
@@ -327,7 +327,7 @@ class _GraphDataFilter(object):
 
         max_threshold = None
 
-        for regex, threshold in six.iteritems(self.conf.regressions_thresholds):
+        for regex, threshold in self.conf.regressions_thresholds.items():
             if re.match(regex, entry_name + branch_suffix):
                 try:
                     threshold = float(threshold)

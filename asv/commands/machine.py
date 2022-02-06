@@ -43,7 +43,7 @@ class Machine(Command):
     def run(cls, **kwargs):
         different = {}
         defaults = machine.Machine.get_defaults()
-        for key, val in six.iteritems(defaults):
+        for key, val in defaults.items():
             if kwargs.get(key) != val:
                 different[key] = kwargs.get(key)
 

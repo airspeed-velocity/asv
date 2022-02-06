@@ -93,7 +93,7 @@ def test_publish(tmpdir, example_results):
     assert index['params']['branch'] == ['master']
 
     repo = get_repo(conf)
-    revision_to_hash = dict((r, h) for h, r in six.iteritems(repo.get_revisions(commits)))
+    revision_to_hash = dict((r, h) for h, r in repo.get_revisions(commits)).items()
 
     def check_file(branch, cython):
         fn = join(tmpdir, 'html', 'graphs', cython, 'arch-x86_64', 'branch-' + branch,

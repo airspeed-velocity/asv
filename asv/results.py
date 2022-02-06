@@ -303,7 +303,7 @@ class Results(object):
         """
         Return all available result keys.
         """
-        return six.iterkeys(self._results)
+        return self._results.keys()
 
     def get_result_keys(self, benchmarks):
         """
@@ -322,7 +322,7 @@ class Results(object):
 
         """
         keys = set()
-        for key in six.iterkeys(self._results):
+        for key in self._results.keys():
             if key not in benchmarks:
                 continue
 
@@ -603,7 +603,7 @@ class Results(object):
                     'stats_ci_99_a', 'stats_ci_99_b', 'stats_q_25', 'stats_q_75',
                     'stats_number', 'stats_repeat', 'samples', 'profile']
 
-        for name in six.iterkeys(self._results):
+        for name in self._results.keys():
             row = []
 
             for key in all_keys:
@@ -633,7 +633,7 @@ class Results(object):
             results[name] = row
 
         other_durations = {}
-        for key, value in six.iteritems(self._duration):
+        for key, value in self._duration.items():
             if key.startswith('<'):
                 other_durations[key] = value
 
@@ -714,7 +714,7 @@ class Results(object):
                 'profile': obj._profiles,
             }
 
-            for name, key_values in six.iteritems(d['results']):
+            for name, key_values in d['results'].items():
                 for key, value in zip(d['result_columns'], key_values):
                     key_dict = simple_keys.get(key)
                     if key_dict is not None:
@@ -795,7 +795,7 @@ class Results(object):
             stats = {}
             benchmark_params = {}
 
-            for key, value in six.iteritems(d['results']):
+            for key, value in d['results'].items():
                 # Backward compatibility
                 if not isinstance(value, dict):
                     value = {'result': [value], 'samples': None,
@@ -880,7 +880,7 @@ class Results(object):
                 d2['results'][name] = r
 
             d2['durations'] = {}
-            for key, value in six.iteritems(duration):
+            for key, value in duration.items():
                 if key.startswith('<'):
                     d2['durations'][key] = value
 

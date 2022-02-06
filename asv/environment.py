@@ -275,7 +275,7 @@ def get_env_name(tool_name, python, requirements, tagged_env_vars, build=False):
         name = []
 
     name.append("py{0}".format(python))
-    reqs = list(six.iteritems(requirements))
+    reqs = list(requirements.items)
     reqs.sort()
     for key, val in reqs:
         if val:
@@ -285,7 +285,7 @@ def get_env_name(tool_name, python, requirements, tagged_env_vars, build=False):
 
     env_vars = _untag_env_vars(tagged_env_vars, build=build)
 
-    for env_var, value in sorted(six.iteritems(env_vars)):
+    for env_var, value in sorted(env_vars.items()):
         name.append(''.join([env_var, value]))
 
     return util.sanitize_filename('-'.join(name))
@@ -294,7 +294,7 @@ def get_env_name(tool_name, python, requirements, tagged_env_vars, build=False):
 def _untag_env_vars(tagged_env_vars, build=False):
     vars = {}
 
-    for (tag, key), value in six.iteritems(tagged_env_vars):
+    for (tag, key), value in tagged_env_vars.items():
         if not build or tag == 'build':
             vars[key] = value
 

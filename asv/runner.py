@@ -93,7 +93,7 @@ def skip_benchmarks(benchmarks, env, results=None):
 
     log.warning("Skipping {0}".format(env.name))
     with log.indent():
-        for name, benchmark in six.iteritems(benchmarks):
+        for name, benchmark in benchmarks.items():
             log.step()
             log.warning('{0} skipped'.format(name))
 
@@ -181,7 +181,7 @@ def run_benchmarks(benchmarks, env, results=None,
         else:
             return int(benchmark.get('rounds', 1))
 
-    for name, benchmark in sorted(six.iteritems(benchmarks)):
+    for name, benchmark in sorted(benchmarks.items()):
         key = benchmark.get('setup_cache_key')
         setup_cache_timeout[key] = max(benchmark.get('setup_cache_timeout',
                                                      benchmark['timeout']),
@@ -198,7 +198,7 @@ def run_benchmarks(benchmarks, env, results=None,
 
     def iter_run_items():
         for run_round in run_rounds[::-1]:
-            for setup_cache_key, benchmark_set in six.iteritems(benchmark_order):
+            for setup_cache_key, benchmark_set in benchmark_order.items():
                 for name, benchmark in benchmark_set:
                     log.step()
 
