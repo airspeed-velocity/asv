@@ -9,7 +9,7 @@ import sys
 
 # This __version__ assignment is parsed by setup.py; keep it in this form.
 # Development versions end with ".dev" (suffix is added below).
-__version__ = "0.5.dev"
+__version__ = "0.5.1"
 __release__ = not __version__.endswith(".dev")
 
 try:
@@ -28,4 +28,5 @@ if sys.version_info >= (3, 3):
     # inherited.
     if os.environ.get('__PYVENV_LAUNCHER__'):
         os.unsetenv('__PYVENV_LAUNCHER__')
-        
+
+from . import plugin_manager # noqa
