@@ -12,7 +12,6 @@ import zlib
 import itertools
 import hashlib
 import datetime
-import collections
 
 import six
 from six.moves import zip as izip
@@ -41,7 +40,7 @@ def iter_results_paths(results):
                 raise util.UserError("malformed {0}".format(machine_json))
         except util.UserError as err:
             machine_json_err = "Skipping results: {0}".format(six.text_type(err))
-        except IOError as err:
+        except IOError:
             machine_json_err = "Skipping results: could not load {0}".format(
                 machine_json)
         else:
@@ -990,7 +989,7 @@ def _format_benchmark_result(result, benchmark, max_width=None):
 
         for j, values in enumerate(itertools.product(*row_params)):
             row_results = [util.human_value(x[0], benchmark['unit'], err=x[1])
-                           for x in result[j*column_items:(j+1)*column_items]]
+                           for x in result[j * column_items:(j + 1) * column_items]]
             row = [_format_param_value(value) for value in values] + row_results
             rows.append(row)
 
@@ -1005,7 +1004,7 @@ def _format_benchmark_result(result, benchmark, max_width=None):
 
     # Determine how many parameters can be fit to columns
     if max_width is None:
-        max_width = util.get_terminal_width() * 3//4
+        max_width = util.get_terminal_width() * 3 // 4
 
     text = do_formatting(0)
     for j in range(1, len(benchmark['params'])):
