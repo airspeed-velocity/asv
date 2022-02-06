@@ -275,7 +275,7 @@ def get_env_name(tool_name, python, requirements, tagged_env_vars, build=False):
         name = []
 
     name.append("py{0}".format(python))
-    reqs = list(requirements.items)
+    reqs = list(requirements.items())
     reqs.sort()
     for key, val in reqs:
         if val:

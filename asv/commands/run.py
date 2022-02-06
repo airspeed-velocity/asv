@@ -332,7 +332,7 @@ class Run(Command):
             max_rounds = int(attribute['rounds'])
         else:
             max_rounds = max(b.get('rounds', 1)
-                             for b in benchmarks.values)
+                             for b in benchmarks.values())
 
         log.set_nitems(steps * max_rounds)
 
