@@ -9,7 +9,7 @@ import sys
 
 # This __version__ assignment is parsed by setup.py; keep it in this form.
 # Development versions end with ".dev" (suffix is added below).
-__version__ = "0.5.1"
+__version__ = "0.6.dev"
 __release__ = not __version__.endswith(".dev")
 
 try:
