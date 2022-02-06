@@ -1,3 +1,10 @@
+0.5.1 (2021-02-06)
+------------------
+
+Bug Fixes
+^^^^^^^^^
+- Packaging ``requirements-dev.txt`` file, used in ``setup.py``. (#1013)
+
 0.5 (2021-02-05)
 ----------------
 
