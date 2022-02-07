@@ -568,7 +568,7 @@ class Benchmark(object):
 
     def do_profile(self, filename=None):
         def method_caller():
-            run(*params) # noqa see #986
+            run(*params) # noqa see #1020
 
         if profile is None:
             raise RuntimeError("cProfile could not be imported")
