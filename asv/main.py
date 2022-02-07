@@ -7,8 +7,6 @@ from __future__ import (absolute_import, division, print_function,
 import os
 import sys
 
-import six
-
 from . import commands
 from .console import log
 from . import util
