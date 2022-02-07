@@ -11,9 +11,9 @@ jobs:
 
       - name: Install dependencies
         run: pip install flake8
-
-      - name: flake8
-        run: flake8 . || true # preventing CI failing while flake8 issues exist
       
+      - name: flake8 all repo only show erros
+        run: flake8 . || true # preventing CI failing while flake8 issues exist
+
       - name: flake8 validating correct file(s)
-        run: flake8 asv/step_detect.py
+        run: flake8 asv/main.py asv/repo.py asv/results.py asv/runner.py asv/statistics.py asv/step_detect.py
