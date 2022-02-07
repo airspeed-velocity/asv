@@ -1,4 +1,26 @@
-0.5 (unreleased)
+0.6 (TBD)
+---------
+
+New Features
+^^^^^^^^^^^^
+
+API Changes
+^^^^^^^^^^^
+
+Bug Fixes
+^^^^^^^^^
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+0.5.1 (2021-02-06)
+------------------
+
+Bug Fixes
+^^^^^^^^^
+- Packaging ``requirements-dev.txt`` file, used in ``setup.py``. (#1013)
+
+0.5 (2021-02-05)
 ----------------
 
 New Features

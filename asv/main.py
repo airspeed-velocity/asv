@@ -10,9 +10,7 @@ import sys
 import six
 
 from . import commands
-from .config import Config
 from .console import log
-from .plugin_manager import plugin_manager
 from . import util
 
 
