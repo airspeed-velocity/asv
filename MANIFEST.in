@@ -7,7 +7,7 @@ recursive-include asv *.html *.js *.css *.ico *.png
 include asv.conf.json
 recursive-include benchmarks *.py
 
-include pip_requirements.txt
+include requirements-dev.txt
 include pyproject.toml
 include pytest.ini
 
