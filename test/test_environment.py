@@ -27,7 +27,7 @@ from .tools import (PYTHON_VER1, PYTHON_VER2, DUMMY1_VERSION, DUMMY2_VERSIONS,
 def test_matrix_environments(tmpdir, dummy_packages):
     conf = config.Config()
 
-    conf.env_dir = six.text_type(tmpdir.join("env"))
+    conf.env_dir = str(tmpdir.join("env"))
 
     conf.pythons = [PYTHON_VER1, PYTHON_VER2]
     conf.matrix = {
@@ -47,11 +47,11 @@ def test_matrix_environments(tmpdir, dummy_packages):
             ['-c', 'import asv_dummy_test_package_1 as p, sys; sys.stdout.write(p.__version__)'],
             valid_return_codes=None)
         if 'asv_dummy_test_package_1' in env._requirements:
-            assert output.startswith(six.text_type(env._requirements['asv_dummy_test_package_1']))
+            assert output.startswith(str(env._requirements['asv_dummy_test_package_1']))
 
         output = env.run(
             ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)'])
-        assert output.startswith(six.text_type(env._requirements['asv_dummy_test_package_2']))
+        assert output.startswith(str(env._requirements['asv_dummy_test_package_2']))
 
 
 def test_large_environment_matrix(tmpdir):
@@ -61,7 +61,7 @@ def test_large_environment_matrix(tmpdir):
 
     conf = config.Config()
 
-    conf.env_dir = six.text_type(tmpdir.join("env"))
+    conf.env_dir = str(tmpdir.join("env"))
     conf.pythons = [PYTHON_VER1]
     for i in range(25):
         conf.matrix['foo{0}'.format(i)] = []
@@ -89,7 +89,7 @@ def test_presence_checks(tmpdir, monkeypatch):
         # trying to cleanup environments during this test
         monkeypatch.setenv(str('CONDA_ALWAYS_COPY'), str('True'))
 
-    conf.env_dir = six.text_type(tmpdir.join("env"))
+    conf.env_dir = str(tmpdir.join("env"))
 
     conf.pythons = [PYTHON_VER1]
     conf.matrix = {}
@@ -325,7 +325,7 @@ def test_conda_pip_install(tmpdir, dummy_packages):
     # test that we can install with pip into a conda environment.
     conf = config.Config()
 
-    conf.env_dir = six.text_type(tmpdir.join("env"))
+    conf.env_dir = str(tmpdir.join("env"))
 
     conf.environment_type = "conda"
     conf.pythons = [PYTHON_VER1]
@@ -341,18 +341,18 @@ def test_conda_pip_install(tmpdir, dummy_packages):
 
         output = env.run(
             ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)'])
-        assert output.startswith(six.text_type(env._requirements['pip+asv_dummy_test_package_2']))
+        assert output.startswith(str(env._requirements['pip+asv_dummy_test_package_2']))
 
 
 @pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
 def test_conda_environment_file(tmpdir, dummy_packages):
-    env_file_name = six.text_type(tmpdir.join("environment.yml"))
+    env_file_name = str(tmpdir.join("environment.yml"))
     with open(env_file_name, "w") as temp_environment_file:
         temp_environment_file.write(
                 'name: test_conda_envs\ndependencies:\n  - asv_dummy_test_package_2')
 
     conf = config.Config()
-    conf.env_dir = six.text_type(tmpdir.join("env"))
+    conf.env_dir = str(tmpdir.join("env"))
     conf.environment_type = "conda"
     conf.pythons = [PYTHON_VER1]
     conf.conda_environment_file = env_file_name
@@ -369,11 +369,11 @@ def test_conda_environment_file(tmpdir, dummy_packages):
 
         output = env.run(
             ['-c', 'import asv_dummy_test_package_1 as p, sys; sys.stdout.write(p.__version__)'])
-        assert output.startswith(six.text_type(DUMMY1_VERSION))
+        assert output.startswith(str(DUMMY1_VERSION))
 
         output = env.run(
             ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)'])
-        assert output.startswith(six.text_type(DUMMY2_VERSIONS[1]))
+        assert output.startswith(str(DUMMY2_VERSIONS[1]))
 
 
 @pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
@@ -381,7 +381,7 @@ def test_conda_run_executable(tmpdir):
     # test that we can install with pip into a conda environment.
     conf = config.Config()
 
-    conf.env_dir = six.text_type(tmpdir.join("env"))
+    conf.env_dir = str(tmpdir.join("env"))
 
     conf.environment_type = "conda"
     conf.pythons = [PYTHON_VER1]
@@ -533,7 +533,7 @@ def test_conda_channel_addition(tmpdir,
     # and that we respect the specified priority order
     # of channels
     conf = config.Config()
-    conf.env_dir = six.text_type(tmpdir.join("env"))
+    conf.env_dir = str(tmpdir.join("env"))
     conf.environment_type = "conda"
     conf.pythons = [PYTHON_VER1]
     conf.matrix = {}
@@ -556,11 +556,11 @@ def test_conda_channel_addition(tmpdir,
         # which we are intentionally trying not to modify)
         conda = util.which('conda')
         print("\n**conda being used:", conda)
-        out_str = six.text_type(util.check_output([conda,
-                                                    'list',
-                                                    '-p',
-                                                    os.path.normpath(env._path),
-                                                    '--json']))
+        out_str = str(util.check_output([conda,
+                                        'list',
+                                         '-p',
+                                         os.path.normpath(env._path),
+                                         '--json']))
         json_package_list = json.loads(out_str)
         print(json_package_list)
         for installed_package in json_package_list:
@@ -575,7 +575,7 @@ def test_pypy_virtualenv(tmpdir):
     # test that we can setup a pypy environment
     conf = config.Config()
 
-    conf.env_dir = six.text_type(tmpdir.join("env"))
+    conf.env_dir = str(tmpdir.join("env"))
 
     conf.environment_type = "virtualenv"
     conf.pythons = ["pypy"]
@@ -587,7 +587,7 @@ def test_pypy_virtualenv(tmpdir):
     for env in environments:
         env.create()
         output = env.run(['-c', 'import sys; print(sys.pypy_version_info)'])
-        assert output.startswith(six.text_type("(major="))
+        assert output.startswith(str("(major="))
 
 
 def test_environment_name_sanitization():
@@ -611,7 +611,7 @@ def test_environment_name_sanitization():
 def test_environment_environ_path(environment_type, tmpdir, monkeypatch):
     # Check that virtualenv binary dirs are in the PATH
     conf = config.Config()
-    conf.env_dir = six.text_type(tmpdir.join("env"))
+    conf.env_dir = str(tmpdir.join("env"))
     conf.environment_type = environment_type
     conf.pythons = [PYTHON_VER1]
     conf.matrix = {}
@@ -639,7 +639,7 @@ def test_environment_environ_path(environment_type, tmpdir, monkeypatch):
 
 def test_build_isolation(tmpdir):
     # build should not fail with build_cache on projects that have pyproject.toml
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     # Create installable repository with pyproject.toml in it
     dvcs = generate_test_repo(tmpdir, [0], dvcs_type='git')
@@ -670,7 +670,7 @@ def test_build_isolation(tmpdir):
 
 def test_custom_commands(tmpdir):
     # check custom install/uninstall/build commands work
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     dvcs = generate_test_repo(tmpdir, [0], dvcs_type='git')
 
@@ -758,7 +758,7 @@ def test_custom_commands(tmpdir):
 
 
 def test_installed_commit_hash(tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     dvcs = generate_test_repo(tmpdir, [0], dvcs_type='git')
     commit_hash = dvcs.get_branch_hashes()[0]
@@ -808,7 +808,7 @@ def test_install_success(tmpdir):
     # Check that install_project really installs the package. (gh-805)
     # This may fail if pip in install_command e.g. gets confused by an .egg-info
     # directory in its cwd to think the package is already installed.
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     dvcs = generate_test_repo(tmpdir, [0], dvcs_type='git')
     commit_hash = dvcs.get_branch_hashes()[0]
@@ -830,7 +830,7 @@ def test_install_success(tmpdir):
 
 
 def test_install_env_matrix_values(tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     dvcs = generate_test_repo(tmpdir, [0], dvcs_type='git')
     commit_hash = dvcs.get_branch_hashes()[0]

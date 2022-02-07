@@ -107,7 +107,7 @@ def _write_with_fallback(s, fileobj):
     *fileobj* must be text stream on Py3, on Py2 a `file` byte stream.
     *s* must be unicode.
     """
-    if not isinstance(s, six.text_type):
+    if not isinstance(s, str):
         raise ValueError("Input string is not a Unicode string")
 
     if six.PY3:
