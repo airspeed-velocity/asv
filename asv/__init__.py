@@ -29,4 +29,4 @@ if sys.version_info >= (3, 3):
     if os.environ.get('__PYVENV_LAUNCHER__'):
         os.unsetenv('__PYVENV_LAUNCHER__')
 
-from . import plugin_manager
+from . import plugin_manager # noqa this dependency is not used here but it may be used in other files

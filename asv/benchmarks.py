@@ -9,8 +9,6 @@ import os
 import re
 import tempfile
 import itertools
-import datetime
-
 import six
 
 from .console import log
@@ -207,7 +205,7 @@ class Benchmarks(dict):
                     try:
                         with open(result_file, 'r') as fp:
                             benchmarks = json.load(fp)
-                    except (IOError, ValueError) as exc:
+                    except (IOError, ValueError):
                         log.error("Invalid discovery output")
                         raise util.UserError()
 
