@@ -3,10 +3,9 @@
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
+
 import os
 import sys
-from . import plugin_manager  # noqa: F401 unused, but required to load plugins
-
 # This __version__ assignment is parsed by setup.py; keep it in this form.
 # Development versions end with ".dev" (suffix is added below).
 __version__ = "0.6.dev"
@@ -28,3 +27,5 @@ if sys.version_info >= (3, 3):
     # inherited.
     if os.environ.get('__PYVENV_LAUNCHER__'):
         os.unsetenv('__PYVENV_LAUNCHER__')
+
+from . import plugin_manager  # noqa:F401 unused, but required to load plugins
