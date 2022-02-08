@@ -41,7 +41,7 @@ else:
 import copy
 try:
     import cProfile as profile
-except Exception:
+except ImportError:
     profile = None
 import ctypes
 from ctypes.util import find_library
@@ -568,7 +568,7 @@ class Benchmark(object):
 
     def do_profile(self, filename=None):
         def method_caller():
-            run(*params) # noqa see #1020
+            run(*params)  # noqa:F821 undefined name  see #1020 Bug: run() function is not defined
 
         if profile is None:
             raise RuntimeError("cProfile could not be imported")
