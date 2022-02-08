@@ -135,7 +135,7 @@ class Continuous(Command):
                     log.warning(six.text_type(err))
                     continue
 
-                for name, benchmark in six.iteritems(run_objs['benchmarks']):
+                for name, benchmark in run_objs['benchmarks'].items():
                     params = benchmark['params']
                     version = benchmark['version']
 
