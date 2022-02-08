@@ -23,7 +23,7 @@ MACHINE_FILE = abspath(join(dirname(__file__), 'asv-machine.json'))
 
 @pytest.fixture
 def show_fixture(tmpdir, example_results):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
     conf = config.Config.from_json(

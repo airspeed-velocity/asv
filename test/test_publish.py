@@ -30,7 +30,7 @@ BENCHMARK_DIR = abspath(join(dirname(__file__), 'benchmark'))
 
 
 def test_publish(tmpdir, example_results):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
     result_dir = join(tmpdir, 'sample_results')
@@ -154,7 +154,7 @@ def test_publish(tmpdir, example_results):
     pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib")),
 ])
 def generate_result_dir(request, tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     dvcs_type = request.param
 
     def _generate_result_dir(values, commits_without_result=None):
@@ -280,7 +280,7 @@ def test_regression_parameterized(generate_result_dir):
     pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib")),
 ])
 def test_regression_multiple_branches(dvcs_type, tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     if dvcs_type == "git":
         master = "master"
     elif dvcs_type == "hg":
@@ -332,7 +332,7 @@ def test_regression_multiple_branches(dvcs_type, tmpdir):
     pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))
 ])
 def test_regression_non_monotonic(dvcs_type, tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     now = datetime.datetime.now()
 
     dates = [now + datetime.timedelta(days=i) for i in range(5)] + [now - datetime.timedelta(days=i) for i in range(5)]
@@ -410,7 +410,7 @@ def test_regression_atom_feed(generate_result_dir):
 def test_regression_atom_feed_update(dvcs_type, tmpdir):
     # Check that adding new commits which only change values preserves
     # feed entry ids
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     values = 5 * [1] + 5 * [10] + 5*[15.70, 15.31]
     dvcs = tools.generate_repo_from_ops(
         tmpdir, dvcs_type, [("commit", i) for i in range(len(values))])

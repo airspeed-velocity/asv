@@ -49,7 +49,7 @@ class Benchmarks(dict):
 
         if not regex:
             regex = []
-        if isinstance(regex, six.string_types):
+        if isinstance(regex, str):
             regex = [regex]
 
         self._all_benchmarks = {}

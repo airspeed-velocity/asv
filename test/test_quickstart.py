@@ -15,7 +15,7 @@ import asv.commands.quickstart
 
 
 def test_quickstart(tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     dest = join(tmpdir, 'separate')
     os.makedirs(dest)

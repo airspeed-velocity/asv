@@ -15,7 +15,7 @@ import asv.util
 
 @pytest.mark.parametrize("rewrite", [False, True], ids=["no-rewrite", "rewrite"])
 def test_gh_pages(rewrite, tmpdir, generate_result_dir, monkeypatch):
-    tmpdir = os.path.abspath(six.text_type(tmpdir))
+    tmpdir = os.path.abspath(str(tmpdir))
 
     monkeypatch.setenv(str('EMAIL'), str('test@asv'))
     monkeypatch.setenv(str('GIT_COMMITTER_NAME'), str('asv test'))

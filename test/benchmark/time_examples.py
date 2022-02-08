@@ -39,12 +39,14 @@ def time_with_warnings():
     1 / 0
     warnings.warn('after')
 
+
 time_with_warnings.sample_time = 0.1
 
 
 def time_with_timeout():
     while True:
         pass
+
 
 time_with_timeout.timeout = 0.1
 
@@ -102,6 +104,7 @@ class TimeWithBadTimer(object):
 
 def time_auto_repeat():
     pass
+
 
 time_auto_repeat.number = 1
 time_auto_repeat.processes = 1
