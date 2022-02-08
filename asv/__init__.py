@@ -3,6 +3,8 @@
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
+from . import plugin_manager  # noqa: F401 unused, but required to load plugins
+
 
 import os
 import sys
@@ -28,5 +30,3 @@ if sys.version_info >= (3, 3):
     # inherited.
     if os.environ.get('__PYVENV_LAUNCHER__'):
         os.unsetenv('__PYVENV_LAUNCHER__')
-
-    from . import plugin_manager  # noqa: F401 unused, but required to load plugins
