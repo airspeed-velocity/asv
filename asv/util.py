@@ -81,28 +81,28 @@ class ParallelFailure(Exception):
             raise self
 
 
-def human_list(l):
+def human_list(input_list):
     """
     Formats a list of strings in a human-friendly way.
     """
-    l = ["'{0}'".format(x) for x in l]
+    input_list = ["'{0}'".format(x) for x in input_list]
 
-    if len(l) == 0:
+    if len(input_list) == 0:
         return 'nothing'
-    elif len(l) == 1:
-        return l[0]
-    elif len(l) == 2:
-        return ' and '.join(l)
+    elif len(input_list) == 1:
+        return input_list[0]
+    elif len(input_list) == 2:
+        return ' and '.join(input_list)
     else:
-        return ', '.join(l[:-1]) + ' and ' + l[-1]
+        return ', '.join(input_list[:-1]) + ' and ' + input_list[-1]
 
 
 def human_float(value, significant=3, truncate_small=None, significant_zeros=False):
     """
     Return a string representing a float with human friendly significant digits.
     Switches to scientific notation for too large/small numbers.
-    If `truncate_small`, then leading zeros of numbers < 1 are counted as 
-    significant. If not `significant_zeros`, trailing unnecessary zeros are 
+    If `truncate_small`, then leading zeros of numbers < 1 are counted as
+    significant. If not `significant_zeros`, trailing unnecessary zeros are
     stripped.
     """
     if value == 0:
@@ -144,7 +144,7 @@ def human_float(value, significant=3, truncate_small=None, significant_zeros=Fal
 
     if significant_zeros and '.' not in formatted:
         if len(formatted) < significant:
-            formatted += "." + "0"*(significant - len(formatted))
+            formatted += "." + "0" * (significant - len(formatted))
 
     return formatted
 
@@ -254,7 +254,7 @@ def human_time(seconds, err=None):
         return "n/a"
 
     for i in xrange(len(units) - 1):
-        if scale < units[i+1][1]:
+        if scale < units[i + 1][1]:
             str_time = human_float(seconds / units[i][1], 3, significant_zeros=True)
             if err is None:
                 return "{0:s}{1}".format(str_time, units[i][0])
@@ -523,7 +523,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
             ])
         return '\n'.join(content)
 
-    if isinstance(args, six.string_types):
+    if isinstance(args, str):
         args = [args]
 
     log.debug("Running '{0}'".format(' '.join(args)))
@@ -531,7 +531,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
     if env and WIN and sys.version_info < (3,):
         # Environment keys and values cannot be unicode
         def _fix_env(s):
-            return s.encode('mbcs') if isinstance(s, unicode) else s
+            return s.encode('mbcs') if isinstance(s, unicode) else s  # noqa F821 'unicode' does not exist in py2
         env = {_fix_env(k): _fix_env(v) for k, v in env.items()}
 
     kwargs = dict(shell=shell, env=env, cwd=cwd,
@@ -566,7 +566,8 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         debug_log = DebugLogBuffer(log)
         dots = False
     else:
-        debug_log = lambda c: None
+        def debug_log(c):
+            return None
 
     if WIN:
         start_time = [time.time()]
@@ -592,7 +593,8 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         all_threads = [stdout_reader]
 
         if not redirect_stderr:
-            stderr_reader = threading.Thread(target=stream_reader, args=(proc.stderr, stderr_chunks))
+            stderr_reader = threading.Thread(target=stream_reader,
+                                             args=(proc.stderr, stderr_chunks))
             stderr_reader.daemon = True
             stderr_reader.start()
             all_threads.append(stderr_reader)
@@ -658,9 +660,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                 signal.signal(signal.SIGTSTP, sig_forward)
                 signal.signal(signal.SIGCONT, sig_forward)
 
-            fds = {
-                proc.stdout.fileno(): stdout_chunks
-                }
+            fds = {proc.stdout.fileno(): stdout_chunks}
             if not redirect_stderr:
                 fds[proc.stderr.fileno()] = stderr_chunks
 
@@ -730,7 +730,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     # Flush and disconnect debug log, if any
     debug_log(None)
-    debug_log = lambda c: None
+
+    def debug_log(c):
+        return None
 
     stdout = b''.join(stdout_chunks)
     stderr = b''.join(stderr_chunks)
@@ -858,7 +860,7 @@ def load_json(path, api_version=None, js_comments=False):
     except ValueError as e:
         raise UserError(
             "Error parsing JSON in file '{0}': {1}".format(
-                path, six.text_type(e)))
+                path, str(e)))
 
     if api_version is not None:
         if 'version' in d:
@@ -1000,7 +1002,7 @@ def get_cpu_info():
             from win32com.client import GetObject
             cimv = GetObject(r"winmgmts:root\cimv2")
             return cimv.ExecQuery("Select Name from Win32_Processor")[0].name
-        except:
+        except sys.DoesNotExist:
             pass
     return ''
 
@@ -1045,7 +1047,7 @@ def _get_terminal_size_fallback():
         if width > 10:
             width -= 1
         return (lines, width)
-    except:
+    except Exception:
         # Fall back on environment variables, or if not set, (25, 80)
         try:
             return (int(os.environ.get('LINES')),
@@ -1089,7 +1091,7 @@ def format_text_table(rows, num_headers=0,
     # Ensure same number of items on all rows
     num_items = max(len(row) for row in text_rows)
     for row in text_rows:
-        row.extend(['']*(num_items - len(row)))
+        row.extend([''] * (num_items - len(row)))
 
     # Determine widths
     col_widths = [max(len(row[j]) for row in text_rows) + 2
@@ -1102,14 +1104,14 @@ def format_text_table(rows, num_headers=0,
     # Generate result
     headers = [" ".join(row) for row in text_rows[:num_headers]]
     content = [" ".join(row) for row in text_rows[num_headers:]]
-    separator = " ".join("-"*w for w in col_widths)
+    separator = " ".join("-" * w for w in col_widths)
 
     result = []
     if top_header_text is not None:
-        left_span = "-".join("-"*w for w in col_widths[:top_header_span_start])
-        right_span = "-".join("-"*w for w in col_widths[top_header_span_start:])
+        left_span = "-".join("-" * w for w in col_widths[:top_header_span_start])
+        right_span = "-".join("-" * w for w in col_widths[top_header_span_start:])
         if left_span and right_span:
-            result += ["--" + " " * (len(left_span)-1) + top_header_text.center(len(right_span))]
+            result += ["--" + " " * (len(left_span) - 1) + top_header_text.center(len(right_span))]
             result += [" ".join([left_span, right_span])]
         else:
             result += [top_header_text.center(len(separator))]
@@ -1129,7 +1131,7 @@ def _datetime_to_timestamp(dt, divisor):
     delta = dt - datetime.datetime(1970, 1, 1)
     microseconds = (delta.days * 86400 + delta.seconds) * 10**6 + delta.microseconds
     value, remainder = divmod(microseconds, divisor)
-    if remainder >= divisor//2:
+    if remainder >= divisor // 2:
         value += 1
     return value
 
@@ -1190,7 +1192,7 @@ def geom_mean_na(values):
     """
     values = [x for x in values if not is_na(x)]
     if values:
-        exponent = 1/len(values)
+        exponent = 1 / len(values)
         prod = 1.0
         acc = 0
         for x in values:
@@ -1203,12 +1205,13 @@ def geom_mean_na(values):
 
 def ceildiv(numerator, denominator):
     """Ceiling division"""
-    return -((-numerator)//denominator)
+    return -((-numerator) // denominator)
 
 
 if not WIN:
     long_path_open = open
     long_path_rmtree = shutil.rmtree
+
     def long_path(path):
         return path
 else:
@@ -1253,7 +1256,7 @@ def sanitize_filename(filename):
 
     The implementation needs to match www/asv.js:escape_graph_parameter
     """
-    if not isinstance(filename, six.text_type):
+    if not isinstance(filename, str):
         filename = filename.decode(sys.getfilesystemencoding())
 
     # ntfs & ext3
@@ -1368,7 +1371,7 @@ def interpolate_command(command, variables):
                     return_codes_set = True
                     del result[0]
                     continue
-                except ValueError as exc:
+                except ValueError:
                     pass
 
             raise UserError("Configuration error: invalid return-code specification "

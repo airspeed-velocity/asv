@@ -97,7 +97,7 @@ def _test_branches(conf, branch_commits, require_describe=False):
 
 
 def test_repo_git(tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     dvcs = tools.generate_test_repo(tmpdir, list(range(10)), dvcs_type='git',
                                     extra_branches=[('master~4', 'some-branch',[11, 12, 13])])
@@ -141,7 +141,7 @@ def test_repo_git(tmpdir):
 
 
 def test_repo_git_annotated_tag_date(tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     dvcs = tools.generate_test_repo(tmpdir, list(range(5)), dvcs_type='git')
 
@@ -158,7 +158,7 @@ def test_repo_git_annotated_tag_date(tmpdir):
 @pytest.mark.skipif(hglib is None,
                     reason="needs hglib")
 def test_repo_hg(tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     conf = config.Config()
 
@@ -230,7 +230,7 @@ def two_branch_repo_case(request, tmpdir):
 
     """
     dvcs_type = request.param
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     if dvcs_type == "git":
         master = "master"
     elif dvcs_type == "hg":
@@ -318,7 +318,7 @@ def test_get_new_branch_commits(two_branch_repo_case, existing, expected):
 
 
 def test_git_submodule(tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     # State 0 (no submodule)
     dvcs = tools.generate_test_repo(tmpdir, values=[0], dvcs_type='git')
@@ -414,7 +414,7 @@ def test_git_submodule(tmpdir):
 def test_root_ceiling(dvcs_type, tmpdir):
     # Check that git/hg does not try to look for repository in parent
     # directories.
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     dvcs1 = tools.generate_repo_from_ops(tmpdir, dvcs_type, [("commit", 1)])
     dvcs2 = tools.generate_repo_from_ops(tmpdir, dvcs_type, [("commit", 2)])
     commit1 = dvcs1.get_branch_hashes()[0]
@@ -449,7 +449,7 @@ def test_root_ceiling(dvcs_type, tmpdir):
     pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))
 ])
 def test_no_such_name_error(dvcs_type, tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     dvcs = tools.generate_test_repo(tmpdir, values=[0], dvcs_type=dvcs_type)
 
     conf = config.Config()
@@ -481,7 +481,7 @@ def test_no_such_name_error(dvcs_type, tmpdir):
     pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))
 ])
 def test_filter_date_period(tmpdir, dvcs_type):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     dates = [
         datetime.datetime(2001, 1, 1),
