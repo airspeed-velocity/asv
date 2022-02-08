@@ -3,10 +3,10 @@
 
 from __future__ import (absolute_import, division, print_function)
 
-import os
 
 class ClassOne(object):
     pass
+
 
 class ClassTwo(object):
     pass
@@ -15,11 +15,13 @@ class ClassTwo(object):
 def track_param(n):
     return 42
 
+
 track_param.params = [ClassOne, ClassTwo]
 
 
 def mem_param(n, m):
-    return [[0]*m]*n
+    return [[0] * m] * n
+
 
 mem_param.params = ([10, 20], [2, 3])
 mem_param.param_names = ['number', 'depth']
@@ -81,6 +83,8 @@ def setup_skip(n):
 
 def time_skip(n):
     list(range(n))
+
+
 time_skip.params = [1000, 2000, 3000]
 time_skip.setup = setup_skip
 time_skip.sample_time = 0.01
@@ -91,13 +95,16 @@ def track_find_test(n):
 
     return asv_test_repo.dummy_value[n - 1]
 
+
 track_find_test.params = [1, 2]
 
 
 def time_find_test_timeout():
-    import asv_test_repo, time
+    import asv_test_repo
+    import time
     if asv_test_repo.dummy_value[1] < 0:
         time.sleep(100)
+
 
 time_find_test_timeout.timeout = 1.0
 time_find_test_timeout.repeat = 1
@@ -116,10 +123,12 @@ track_param_selection.params = [[1, 2], [3, 5]]
 def track_bytes():
     return 1000000
 
+
 track_bytes.unit = "bytes"
 
 
 def track_wrong_number_of_args(a, b):
     return 0
+
 
 track_wrong_number_of_args.params = [[1, 2]]

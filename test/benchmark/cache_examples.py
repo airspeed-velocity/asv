@@ -42,6 +42,8 @@ def my_setup_cache():
 def track_my_cache_foo(d):
     assert not os.path.isfile("data.txt")
     return d['foo']
+
+
 track_my_cache_foo.setup_cache = my_setup_cache
 
 
@@ -78,8 +80,9 @@ class ClassLevelCacheTimeoutSuccess:
 def time_fail_second_run(data):
     if os.path.isfile("time_fail_second_run.tag"):
         raise RuntimeError()
-    with open("time_fail_second_run.tag", "w") as f:
+    with open("time_fail_second_run.tag", "w"):
         pass
+
 
 time_fail_second_run.setup_cache = my_setup_cache
 time_fail_second_run.number = 1
