@@ -10,7 +10,7 @@ from os.path import abspath, dirname, join, relpath
 import shutil
 import pytest
 
-import six
+import six  # noqa
 
 from asv import config
 from asv.commands import make_argparser
