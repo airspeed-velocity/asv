@@ -3,11 +3,9 @@
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-from . import plugin_manager  # noqa: F401 unused, but required to load plugins
-
-
 import os
 import sys
+from . import plugin_manager  # noqa: F401 unused, but required to load plugins
 
 # This __version__ assignment is parsed by setup.py; keep it in this form.
 # Development versions end with ".dev" (suffix is added below).
