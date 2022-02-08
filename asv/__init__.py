@@ -28,4 +28,4 @@ if sys.version_info >= (3, 3):
     if os.environ.get('__PYVENV_LAUNCHER__'):
         os.unsetenv('__PYVENV_LAUNCHER__')
 
-from . import plugin_manager  # noqa:F401 unused, but required to load plugins
+from . import plugin_manager  # noqa F401 unused, but required to load plugins
