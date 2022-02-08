@@ -7,12 +7,8 @@ from __future__ import (absolute_import, division, print_function,
 import os
 import sys
 
-import six
-
 from . import commands
-from .config import Config
 from .console import log
-from .plugin_manager import plugin_manager
 from . import util
 
 
@@ -37,7 +33,7 @@ def main():
     try:
         result = args.func(args)
     except util.UserError as e:
-        log.error(six.text_type(e))
+        log.error(str(e))
         sys.exit(1)
     finally:
         log.flush()
