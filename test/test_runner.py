@@ -152,7 +152,7 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     assert times['cache_examples.time_fail_second_run'].result == [None]
     assert times['cache_examples.time_fail_second_run'].samples == [None]
 
-    profile_path = join(six.text_type(tmpdir), 'test.profile')
+    profile_path = join(str(tmpdir), 'test.profile')
     with open(profile_path, 'wb') as fd:
         fd.write(times['time_secondary.track_value'].profile)
     pstats.Stats(profile_path)
@@ -229,7 +229,7 @@ def test_skip_param_selection():
 @pytest.mark.skipif(not (hasattr(os, 'fork') and hasattr(socket, 'AF_UNIX')),
                     reason="test requires fork and unix sockets")
 def test_forkserver(tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
     shutil.copytree(BENCHMARK_DIR, 'benchmark')
@@ -289,7 +289,7 @@ def clear_pyc(path):
 
 @needs_unix_socket_mark
 def test_forkserver_preimport(tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
     os.makedirs('benchmark')

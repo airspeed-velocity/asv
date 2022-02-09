@@ -12,7 +12,7 @@ from asv import machine
 
 
 def test_machine(tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     m = machine.Machine.load(
         interactive=False,
@@ -34,7 +34,7 @@ def test_machine(tmpdir):
 
 
 def test_machine_defaults(tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     m = machine.Machine.load(
         interactive=True,
