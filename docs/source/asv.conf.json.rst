@@ -313,7 +313,7 @@ Each exclude rule can contain the following keys:
 
 For example::
 
-    "pythons": ["2.6", "2.7"],
+    "pythons": ["3.8", "3.9"],
     "matrix": {
         "req": {
             "numpy": ["1.7", "1.8"],
@@ -323,22 +323,22 @@ For example::
         "env": {"FOO": ["1", "2"]},
     },
     "exclude": [
-        {"python": "2.6", "req": {"numpy": "1.7"}},
+        {"python": "3.8", "req": {"numpy": "1.7"}},
         {"sys_platform": "(?!win32).*", "req": {"colorama": ""}},
         {"sys_platform": "win32", "req": {"colorama": null}},
         {"env": {"FOO": "1"}},
     ]
 
 This will generate all combinations of Python version and items in the
-matrix, except those with Python 2.6 and Numpy 1.7. In other words,
+matrix, except those with Python 3.8 and Numpy 3.9. In other words,
 the combinations::
 
-    python==2.6 numpy==1.8 Cython==latest (colorama==latest) FOO=2
-    python==2.6 numpy==1.8 (colorama==latest) FOO=2
-    python==2.7 numpy==1.7 Cython==latest (colorama==latest) FOO=2
-    python==2.7 numpy==1.7 (colorama==latest) FOO=2
-    python==2.7 numpy==1.8 Cython==latest (colorama==latest) FOO=2
-    python==2.7 numpy==1.8 (colorama==latest) FOO=2
+    python==3.8 numpy==1.8 Cython==latest (colorama==latest) FOO=2
+    python==3.8 numpy==1.8 (colorama==latest) FOO=2
+    python==3.9 numpy==1.7 Cython==latest (colorama==latest) FOO=2
+    python==3.9 numpy==1.7 (colorama==latest) FOO=2
+    python==3.9 numpy==1.8 Cython==latest (colorama==latest) FOO=2
+    python==3.9 numpy==1.8 (colorama==latest) FOO=2
 
 The ``colorama`` package will be installed only if the current
 platform is Windows.
@@ -367,12 +367,12 @@ The exclude rules are not applied to includes.
 For example::
 
     "include": [
-        {"python": "2.7", "req": {"numpy": "1.8.2"}, "env": {"FOO": "true"}},
+        {"python": "3.9", "req": {"numpy": "1.8.2"}, "env": {"FOO": "true"}},
         {"platform": "win32", "environment_type": "conda",
          "req": {"python": "2.7", "libpython": ""}}
     ]
 
-This corresponds to two additional environments. One runs on Python 2.7
+This corresponds to two additional environments. One runs on Python 3.9
 and including the specified version of Numpy. The second is active only
 for Conda on Windows, and installs the latest version of ``libpython``.
 
