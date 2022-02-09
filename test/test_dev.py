@@ -9,9 +9,6 @@ import re
 from os.path import abspath, dirname, join, relpath
 import shutil
 import pytest
-
-import six  # noqa F401 'six' imported but unused
-
 from asv import config
 from asv.commands import make_argparser
 
