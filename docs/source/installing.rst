@@ -2,7 +2,7 @@ Installing airspeed velocity
 ============================
 
 **airspeed velocity** is known to work on Linux, Mac OS-X, and Windows.
-It is known to work with Python 2.7, 3.4, 3.5, and 3.6.
+It is known to work with Python 3.7.
 It works also with PyPy.
 
 **airspeed velocity** is a standard Python package, and the latest
