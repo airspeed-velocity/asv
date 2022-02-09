@@ -12,8 +12,6 @@ import pstats
 import collections
 import socket
 import json
-
-import six
 import pytest
 
 from os.path import join

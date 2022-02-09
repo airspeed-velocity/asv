@@ -8,9 +8,7 @@ import os
 import sys
 import shutil
 from os.path import join, dirname
-
 import pytest
-import six
 import textwrap
 from hashlib import sha256
 
