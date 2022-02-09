@@ -214,11 +214,11 @@ installed to support other environment tools.  The
 tool used to create environments.
 
 When using ``virtualenv``, ``asv`` does not build Python interpreters
-for you, but it expects to find each of the Python versions specified
+for you, but it expects to find the Python versions specified
 in the ``asv.conf.json`` file available on the ``PATH``.  For example,
 if the ``asv.conf.json`` file has::
 
-  "pythons": ["2.7", "3.6"]
+  "pythons": ["3.7", "3.10"]
 
 then it will use the executables named ``python2.7`` and
 ``python3.6`` on the path.  There are many ways to get multiple
