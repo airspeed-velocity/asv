@@ -142,7 +142,7 @@ class Publish(Command):
             hash_to_date = {}
             for results in cls.iter_results(conf, repo, range_spec):
                 hash_to_date[results.commit_hash] = results.date
-                for key, val in results.params.items():
+                for key, val in six.iteritems(results.params):
                     if val is None:
                         # Backward compatibility -- null means ''
                         val = ''
@@ -150,7 +150,7 @@ class Publish(Command):
                     params.setdefault(key, set())
                     params[key].add(val)
 
-                for name, val in results.env_vars.items():
+                for name, val in six.iteritems(results.env_vars):
                     # Prefix them in case of name collision
                     env_vars["env-{}".format(name)].add(val)
 
@@ -166,7 +166,7 @@ class Publish(Command):
                 tags[tag] = revisions[tags[tag]]
                 hash_to_date[commit_hash] = repo.get_date_from_name(commit_hash)
 
-            revision_to_date = dict((r, hash_to_date[h]) for h, r in revisions.items())
+            revision_to_date = dict((r, hash_to_date[h]) for h, r in six.iteritems(revisions))
 
             branches = dict(
                 (branch, repo.get_branch_commits(branch))
@@ -204,7 +204,7 @@ class Publish(Command):
                     for branch in branches_for_commit:
                         cur_params = dict(results.params)
                         cur_env = {'env-{}'.format(name): val
-                                   for name, val in results.env_vars.items()}
+                                   for name, val in six.iteritems(results.env_vars)}
                         cur_params.update(cur_env)
                         cur_params['branch'] = repo.get_branch_name(branch)
 
@@ -261,14 +261,14 @@ class Publish(Command):
         log.step()
         log.info("Writing index")
         benchmark_map = dict(benchmarks)
-        for key in benchmark_map.keys():
+        for key in six.iterkeys(benchmark_map):
             check_benchmark_params(key, benchmark_map[key])
-        for key, val in params.items():
+        for key, val in six.iteritems(params):
             val = list(val)
             val.sort(key=lambda x: '[none]' if x is None else str(x))
             params[key] = val
         params['branch'] = [repo.get_branch_name(branch) for branch in conf.branches]
-        revision_to_hash = dict((r, h) for h, r in revisions.items())
+        revision_to_hash = dict((r, h) for h, r in six.iteritems(revisions))
         util.write_json(os.path.join(conf.html_dir, "index.json"), {
             'project': conf.project,
             'project_url': conf.project_url,
