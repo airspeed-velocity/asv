@@ -16,8 +16,4 @@ jobs:
         run: flake8 . || true # preventing CI failing while flake8 issues exist
 
       - name: flake8 validating correct file(s)
-        run: flake8 asv/main.py asv/repo.py asv/results.py asv/runner.py asv/statistics.py asv/step_detect.py asv/util.py 
-        test/benchmark/ asv/__init__.py asv/benchmarks.py asv/config.py asv/benchmark.py test/test_runner.py asv/benchmarks.py  
-        asv/commands/__init__.py asv/commands/continuous.py asv/commands/machine.py asv/commands/publish.py asv/commands/rm.py 
-        asv/commands/run.py asv/environment.py asv/graph.py asv/plugins/conda.py asv/plugins/regressions.py asv/plugins/summarylist.py 
-        asv/plugins/virtualenv.py asv/results.py asv/runner.py test/test_benchmarks.py test/test_publish.py test/test_rm.py test/test_results.py
+        run: flake8 asv/main.py asv/repo.py asv/results.py asv/runner.py asv/statistics.py asv/step_detect.py asv/util.py test/benchmark/ asv/__init__.py asv/benchmarks.py asv/config.py asv/benchmark.py
