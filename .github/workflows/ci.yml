@@ -12,5 +12,5 @@ jobs:
       - name: Install dependencies
         run: pip install flake8
       
-      - name: flake8 all repo only show erros
-        run: flake8 .  # preventing CI failing while flake8 issues exist
+      - name: flake8
+        run: flake8 . 
