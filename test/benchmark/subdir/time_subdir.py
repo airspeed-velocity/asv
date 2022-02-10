@@ -1,5 +1,3 @@
-import time
-
 x = None
 
 

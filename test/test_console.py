@@ -17,7 +17,7 @@ import pytest
 
 
 def test_write_with_fallback(tmpdir, capfd):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     def check_write(value, expected, stream_encoding, preferred_encoding):
         old_getpreferredencoding = locale.getpreferredencoding

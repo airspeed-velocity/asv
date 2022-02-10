@@ -39,7 +39,7 @@ else:
 
 @pytest.fixture
 def benchmarks_fixture(tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
     shutil.copytree(BENCHMARK_DIR, 'benchmark')
@@ -122,7 +122,7 @@ def test_discover_benchmarks(benchmarks_fixture):
 
 
 def test_invalid_benchmark_tree(tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
     d = {}
@@ -144,7 +144,7 @@ def test_find_benchmarks_cwd_imports(tmpdir):
     # Test that files in the directory above the benchmark suite are
     # not importable
 
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
     os.makedirs('benchmark')
@@ -185,7 +185,7 @@ def track_this():
 def test_import_failure_retry(tmpdir):
     # Test that a different commit is tried on import failure
 
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
     os.makedirs('benchmark')
@@ -223,7 +223,7 @@ def test_import_failure_retry(tmpdir):
 def test_conf_inside_benchmarks_dir(tmpdir):
     # Test that the configuration file can be inside the benchmark suite
 
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     benchmark_dir = os.path.join(tmpdir, 'benchmark')
 
     os.makedirs(benchmark_dir)
@@ -254,7 +254,7 @@ def test_conf_inside_benchmarks_dir(tmpdir):
 
 
 def test_code_extraction(tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
     shutil.copytree(BENCHMARK_DIR, 'benchmark')

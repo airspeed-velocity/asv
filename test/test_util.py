@@ -128,7 +128,7 @@ def test_write_load_json(tmpdir):
     }
     orig_data = dict(data)
 
-    filename = os.path.join(six.text_type(tmpdir), 'test.json')
+    filename = os.path.join(str(tmpdir), 'test.json')
 
     util.write_json(filename, data)
     data2 = util.load_json(filename)

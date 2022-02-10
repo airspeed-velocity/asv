@@ -257,7 +257,7 @@ class Run(Command):
         elif range_spec == "ALL":
             # All commits on each configured branches
             commit_hashes = repo.get_new_branch_commits(conf.branches, [])
-        elif isinstance(range_spec, six.string_types) and range_spec.startswith('HASHFILE:'):
+        elif isinstance(range_spec, str) and range_spec.startswith('HASHFILE:'):
             hashfn = range_spec[9:]
             if hashfn == '-':
                 hashstr = sys.stdin.read()

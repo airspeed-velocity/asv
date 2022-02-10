@@ -145,9 +145,9 @@ class Machine(object):
 
         cpu = util.get_cpu_info()
 
-        ram = six.text_type(util.get_memsize())
+        ram = str(util.get_memsize())
 
-        num_cpu = six.text_type(mp.cpu_count())
+        num_cpu = str(mp.cpu_count())
 
         return {
             'machine': node,

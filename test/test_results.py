@@ -27,7 +27,7 @@ def _truncate_floats(item, digits=5):
 
 
 def test_results(tmpdir):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     timestamp1 = datetime.datetime.utcnow()
     duration = 1.5
@@ -169,7 +169,7 @@ def test_backward_compat_load(example_results):
 
 def test_json_timestamp(tmpdir):
     # Check that per-benchmark timestamps are saved as JS timestamps in the result file
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
 
     stamp0 = datetime.datetime(1970, 1, 1)
     stamp1 = datetime.datetime(1971, 1, 1)
@@ -202,7 +202,7 @@ def test_json_timestamp(tmpdir):
 
 
 def test_iter_results(capsys, tmpdir, example_results):
-    dst = os.path.join(six.text_type(tmpdir), 'example_results')
+    dst = os.path.join(str(tmpdir), 'example_results')
     shutil.copytree(example_results, dst)
 
     path = os.path.join(dst, 'cheetah')

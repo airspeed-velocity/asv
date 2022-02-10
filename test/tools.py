@@ -120,15 +120,15 @@ def get_default_environment_type(conf, python):
 def locked_cache_dir(config, cache_key, timeout=900, tag=None):
     base_dir = config.cache.makedir(cache_key)
 
-    lockfile = join(six.text_type(base_dir), 'lock')
-    cache_dir = join(six.text_type(base_dir), 'cache')
+    lockfile = join(str(base_dir), 'lock')
+    cache_dir = join(str(base_dir), 'cache')
 
     lock = FileLock(lockfile)
     lock.acquire(timeout=timeout)
     try:
         # Clear cache dir contents if it was generated with different
         # asv version
-        tag_fn = join(six.text_type(base_dir), 'tag.json')
+        tag_fn = join(str(base_dir), 'tag.json')
         tag_content = [asv.__version__, repr(tag)]
         if os.path.isdir(cache_dir):
             try:
@@ -655,7 +655,7 @@ def dummy_packages(request, monkeypatch):
     tag = [PYTHON_VER1, PYTHON_VER2, to_build, HAS_CONDA]
 
     with locked_cache_dir(request.config, "asv-wheels", timeout=900, tag=tag) as cache_dir:
-        wheel_dir = os.path.abspath(join(six.text_type(cache_dir), 'wheels'))
+        wheel_dir = os.path.abspath(join(str(cache_dir), 'wheels'))
 
         monkeypatch.setenv(str('PIP_FIND_LINKS'), str('file://' + wheel_dir))
 
@@ -665,7 +665,7 @@ def dummy_packages(request, monkeypatch):
         if os.path.isdir(wheel_dir):
             return
 
-        tmpdir = join(six.text_type(cache_dir), "tmp")
+        tmpdir = join(str(cache_dir), "tmp")
         if os.path.isdir(tmpdir):
             shutil.rmtree(tmpdir)
         os.makedirs(tmpdir)
