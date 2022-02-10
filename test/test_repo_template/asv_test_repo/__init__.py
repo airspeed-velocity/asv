@@ -3,4 +3,4 @@
 
 from __future__ import absolute_import, division, unicode_literals, print_function
 
-dummy_value = {dummy_value}  # noqa:F821 see #1023 Bug: dummy_value is not defined
+dummy_value = {dummy_value}
