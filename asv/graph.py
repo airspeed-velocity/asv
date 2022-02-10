@@ -78,7 +78,7 @@ class GraphSet(object):
                 dots()
 
     def __iter__(self):
-        return self._graphs.items()
+        return iter(self._graphs.items())
 
     def __len__(self):
         return len(self._graphs)
