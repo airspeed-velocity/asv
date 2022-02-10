@@ -5,9 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import io
-import sys
 import datetime
-import xml.etree.ElementTree as etree
 import xml.dom.minidom
 
 import pytest
