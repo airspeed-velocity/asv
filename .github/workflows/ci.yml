@@ -12,5 +12,5 @@ jobs:
       - name: Install dependencies
         run: pip install flake8
       
-      - name: flake8 
+      - name: flake8
         run: flake8 . 
