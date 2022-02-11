@@ -198,7 +198,7 @@ class Conda(environment.Environment):
             conda_args = []
             pip_args = []
 
-            for key, val in six.iteritems(self._requirements):
+            for key, val in self._requirements.items():
                 if key.startswith('pip+'):
                     if val:
                         pip_args.append("{0}=={1}".format(key[4:], val))

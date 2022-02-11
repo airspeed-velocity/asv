@@ -46,39 +46,39 @@ class GraphSet(object):
     def get_params(self):
         """Return all params used in graphs and their corresponding values set"""
         params = {}
-        for graph in six.itervalues(self._graphs):
-            for key, value in six.iteritems(graph.params):
+        for graph in self._graphs.values():
+            for key, value in graph.params.items():
                 params.setdefault(key, set())
                 if value:
                     params[key].add(value)
         return params
 
     def detect_steps(self, pool=None, dots=None):
-        for graph in six.itervalues(self._graphs):
+        for graph in self._graphs.values():
             graph.detect_steps(pool)
             if dots is not None and pool is None:
                 dots()
 
         # Wait for results to compute
-        for graph in six.itervalues(self._graphs):
+        for graph in self._graphs.values():
             graph.get_steps()
             if dots is not None and pool is not None:
                 dots()
 
     def get_summary_graphs(self, dots=None):
-        for graphs in six.itervalues(self._groups):
+        for graphs in self._groups.values():
             yield make_summary_graph(graphs)
             if dots is not None:
                 dots()
 
     def save(self, html_dir, dots=None):
-        for graph in six.itervalues(self._graphs):
+        for graph in self._graphs.values():
             graph.save(html_dir)
             if dots is not None:
                 dots()
 
     def __iter__(self):
-        return six.iteritems(self._graphs)
+        return iter(self._graphs.items())
 
     def __len__(self):
         return len(self._graphs)
@@ -125,7 +125,7 @@ class Graph(object):
         The implementation must match asv.js:graph_to_path
         """
         parts = []
-        l = list(six.iteritems(params))
+        l = list(params.items())
         for key, val in l:
             if val is None:
                 part = '{0}-null'.format(key)
@@ -193,7 +193,7 @@ class Graph(object):
 
         # Average data over commit log
         val = []
-        for k in six.iterkeys(self.data_points):
+        for k in self.data_points.keys():
             v = mean_axis0(self.data_points[k])
             w = mean_axis0(self.data_weights[k])
             val.append((k, v, w))

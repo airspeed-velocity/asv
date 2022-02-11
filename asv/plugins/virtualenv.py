@@ -160,7 +160,7 @@ class Virtualenv(environment.Environment):
 
         if self._requirements:
             args = ['install', '-v', '--upgrade']
-            for key, val in six.iteritems(self._requirements):
+            for key, val in self._requirements.items():
                 pkg = key
                 if key.startswith('pip+'):
                     pkg = key[4:]

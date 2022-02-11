@@ -67,7 +67,7 @@ class Rm(Command):
 
         for result in iter_results(conf.results_dir):
             found = True
-            for key, val in six.iteritems(global_patterns):
+            for key, val in global_patterns.items():
                 if key == 'commit_hash':
                     if not util.hash_equal(result.commit_hash, val):
                         found = False
