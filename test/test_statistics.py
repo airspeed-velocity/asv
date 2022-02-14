@@ -62,7 +62,7 @@ def test_compute_stats():
 
         err = statistics.get_err(result, stats)
         iqr = np.percentile(samples, 75) - np.percentile(samples, 25)
-        assert np.allclose(err, iqr/2)
+        assert np.allclose(err, iqr / 2)
 
 
 @pytest.mark.skipif(not HAS_NUMPY, reason="Requires numpy")
@@ -138,12 +138,12 @@ def test_quantile_ci():
     for sampler in [sample_exp, sample_normal]:
         cis = _check_ci(lambda z, alpha: statistics.quantile_ci(z, 0.5, alpha),
                         sampler, nsamples=300)
-        atol = 5/300
+        atol = 5 / 300
         for size, alpha, alpha_got in cis:
             if size < 20:
-                assert 0 <= alpha_got <= 1.2*alpha
+                assert 0 <= alpha_got <= 1.2 * alpha
             else:
-                assert 0.5*alpha - atol <= alpha_got <= 1.1*alpha + atol
+                assert 0.5 * alpha - atol <= alpha_got <= 1.1 * alpha + atol
 
 
 def test_quantile_ci_small():
@@ -157,7 +157,7 @@ def test_quantile_ci_small():
 
 def test_quantile_ci_r():
     # Compare to R
-    x = [-2.47946614, -1.49595963, -1.02812482, -0.76592323, -0.09452743,  0.10732743,
+    x = [-2.47946614, -1.49595963, -1.02812482, -0.76592323, -0.09452743, 0.10732743,
          0.27798342, 0.50173779, 0.57829823, 0.60474948, 0.94695675, 1.20159789]
 
     # quantile(x, type=7, prob=p)
@@ -168,7 +168,7 @@ def test_quantile_ci_r():
     # asht::quantileTest(x, prob=p, conf.level=0.8)$conf.int
     ci_20_80_e = [-2.47946614, -0.09452743]
     ci_50_80_e = [-0.7659232, 0.5782982]
-    ci_80_80_e = [0.5017378, 1.2015979,]
+    ci_80_80_e = [0.5017378, 1.2015979]
 
     q_20, ci_20_80 = statistics.quantile_ci(x, 0.2, 0.8)
     q_50, ci_50_80 = statistics.quantile_ci(x, 0.5, 0.8)
@@ -207,8 +207,8 @@ def test_lgamma():
 @pytest.mark.skipif(not HAS_SCIPY, reason="Requires scipy")
 def test_binom_pmf():
     p = np.linspace(0, 1, 7)
-    k = np.arange(0, 40, 5)[:,None]
-    n = np.arange(0, 40, 5)[:,None,None]
+    k = np.arange(0, 40, 5)[:, None]
+    n = np.arange(0, 40, 5)[:, None, None]
 
     expected = stats.binom.pmf(k, n, p)
     got = np.vectorize(statistics.binom_pmf)(n, k, p)
@@ -237,14 +237,14 @@ def test_laplace_posterior_ci():
 
     def estimator(z, alpha):
         c = statistics.LaplacePosterior(z.tolist())
-        a, b = c.ppf(alpha/2), c.ppf(1 - alpha/2)
+        a, b = c.ppf(alpha / 2), c.ppf(1 - alpha / 2)
         a = min(c.mle, a)  # force MLE inside CI
         b = max(c.mle, b)
         return c.mle, (a, b)
 
     for sampler in [get_z_exp, get_z_normal]:
         cis = _check_ci(estimator, sampler, nsamples=300)
-        atol = 5/300
+        atol = 5 / 300
         for size, alpha, alpha_got in cis:
             if sampler == get_z_exp:
                 # Result should be ok for the assumed distribution
@@ -271,11 +271,11 @@ def test_laplace_posterior_basic():
 
     # check pdf vs cdf
     sx = 200
-    dx = 1.0/sx
+    dx = 1.0 / sx
     cdf = 0
-    for jx in range(-10*sx, 10*sx):
-        cdf += c.pdf(dx*jx) * dx
-        got = c.cdf(dx*jx)
+    for jx in range(-10 * sx, 10 * sx):
+        cdf += c.pdf(dx * jx) * dx
+        got = c.cdf(dx * jx)
         assert abs(cdf - got) < 3e-3
     assert abs(cdf - 1.0) < 1e-3
 
@@ -318,7 +318,7 @@ def test_laplace_posterior_basic():
     with pytest.raises(ValueError):
         statistics.LaplacePosterior([])
 
-    
+
 @pytest.mark.skipif(not HAS_SCIPY, reason="Requires scipy")
 def test_laplace_posterior_cdf():
     # Test the LaplacePosterior cdf vs pdf
@@ -327,7 +327,8 @@ def test_laplace_posterior_cdf():
 
     c = statistics.LaplacePosterior(y)
 
-    num_cdf = lambda t: integrate.quad(c.pdf, -np.inf, t, limit=1000)[0]
+    def num_cdf(t):
+        return integrate.quad(c.pdf, -np.inf, t, limit=1000)[0]
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=integrate.IntegrationWarning)
@@ -434,7 +435,7 @@ def test_mann_whitney_u_basic():
     b = [2.5]
     u, p = statistics.mann_whitney_u(a, b, method='exact')
     assert u == 0
-    assert p == pytest.approx(2/3, abs=0, rel=1e-10)
+    assert p == pytest.approx(2 / 3, abs=0, rel=1e-10)
 
 
 @pytest.mark.skipif(not HAS_RPY2, reason="Requires rpy2")

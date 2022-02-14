@@ -23,12 +23,14 @@ from os.path import abspath, join, dirname, relpath, isdir
 from contextlib import contextmanager
 from hashlib import sha256
 from six.moves import SimpleHTTPServer
+from filelock import FileLock
+
 
 import pytest
 
 try:
     import hglib
-except ImportError as exc:
+except ImportError:
     hglib = None
 
 import asv
@@ -80,12 +82,11 @@ try:
     # Conda can install required Python versions on demand
     _check_conda()
     HAS_CONDA = True
-except (RuntimeError, IOError) as exc:
+except (RuntimeError, IOError):
     HAS_CONDA = False
 
 
 try:
-    import virtualenv
     HAS_VIRTUALENV = True
 except ImportError:
     HAS_VIRTUALENV = False
@@ -107,9 +108,6 @@ except ImportError:
 
 
 WAIT_TIME = 20.0
-
-
-from filelock import FileLock
 
 
 def get_default_environment_type(conf, python):
@@ -198,7 +196,7 @@ class Git(object):
             date = self._fake_date
 
         self.run_git(['commit', '--date', date.isoformat(),
-                       '-m', message])
+                     '-m', message])
 
     def tag(self, number):
         self.run_git(['tag', '-a', '-m', 'Tag {0}'.format(number),
@@ -488,8 +486,8 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None, updated=None):
                          repo.get_date_from_name(commit), "2.7", None, {})
         value = runner.BenchmarkResult(
             result=value,
-            samples=[None]*len(value),
-            number=[None]*len(value),
+            samples=[None] * len(value),
+            number=[None] * len(value),
             errcode=0,
             stderr='',
             profile=None)
@@ -612,7 +610,7 @@ def preview(base_path):
     def run():
         try:
             httpd.serve_forever()
-        except:
+        except Exception:
             import traceback
             traceback.print_exc()
         finally:
@@ -673,7 +671,7 @@ def dummy_packages(request, monkeypatch):
         try:
             os.makedirs(wheel_dir)
             _build_dummy_wheels(tmpdir, wheel_dir, to_build, build_conda=HAS_CONDA)
-        except:
+        except Exception:
             shutil.rmtree(wheel_dir)
             raise
 
