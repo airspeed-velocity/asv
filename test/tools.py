@@ -87,6 +87,7 @@ except (RuntimeError, IOError):
 
 
 try:
+    import virtualenv # noqa :F401 imported but unused
     HAS_VIRTUALENV = True
 except ImportError:
     HAS_VIRTUALENV = False

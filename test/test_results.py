@@ -14,6 +14,8 @@ import six
 from asv import results, runner, util
 import pytest
 
+from .tools import example_results # noqa :F401 imported but unused
+
 
 def _truncate_floats(item, digits=5):
     if isinstance(item, float):
@@ -160,7 +162,7 @@ def test_get_result_hash_from_prefix(tmpdir):
     assert 'one of multiple commits' in str(excinfo.value)
 
 
-def test_backward_compat_load(example_results):
+def test_backward_compat_load(example_results): # noqa :F811 redefinition of unused
     resultsdir = example_results
     filename = join('cheetah', '624da0aa-py2.7-Cython-numpy1.8.json')
 
@@ -203,7 +205,7 @@ def test_json_timestamp(tmpdir):
     assert values['duration'] == duration
 
 
-def test_iter_results(capsys, tmpdir, example_results):
+def test_iter_results(capsys, tmpdir, example_results): # noqa :F811 redefinition of unused
     dst = os.path.join(str(tmpdir), 'example_results')
     shutil.copytree(example_results, dst)
 
