@@ -204,7 +204,8 @@ def test_json_timestamp(tmpdir):
     assert values['duration'] == duration
 
 
-def test_iter_results(capsys, tmpdir, example_results): # noqa F811 
+def test_iter_results(capsys, tmpdir, example_results): # noqa F811 redefinition of the imported fixture,it can be removed when the fixture is moved to conftest.py file and the import deleted
+    resultsdir = example_results
     dst = os.path.join(str(tmpdir), 'example_results')
     shutil.copytree(example_results, dst)
 
