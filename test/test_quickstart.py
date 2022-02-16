@@ -6,9 +6,6 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 from os.path import isfile, join
-
-import six
-
 from . import tools
 from asv import util
 import asv.commands.quickstart
