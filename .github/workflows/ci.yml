@@ -7,10 +7,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout source
+        uses: actions/checkout@v2
 
       - name: Install dependencies
-        run: pip install flake8
+        run: |
+          pip install -r requirements-dev.txt
+          pip install flake8
       
       - name: flake8
-        run: flake8 . 
+        run: flake8 .
+      
+      - name: Run tests
+        run: pytest
