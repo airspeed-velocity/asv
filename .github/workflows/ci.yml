@@ -1,3 +1,5 @@
+
+   
 name: CI
 
 on: [push, pull_request]
@@ -6,11 +8,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout source
+        uses: actions/checkout@v2
 
       - name: Install dependencies
-        run: pip install flake8
+        run: |
+          pip install -r requirements-dev.txt
+          pip install flake8
       
       - name: flake8
-        run: flake8 . 
+        run: flake8 .
+      
+      - name: Run tests
+        run: pytest
