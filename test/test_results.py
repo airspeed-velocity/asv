@@ -161,7 +161,7 @@ def test_get_result_hash_from_prefix(tmpdir):
     assert 'one of multiple commits' in str(excinfo.value)
 
 
-def test_backward_compat_load(example_results): # noqa uses fixture
+def test_backward_compat_load(example_results): # noqa F811
     resultsdir = example_results
     filename = join('cheetah', '624da0aa-py2.7-Cython-numpy1.8.json')
 
@@ -204,7 +204,7 @@ def test_json_timestamp(tmpdir):
     assert values['duration'] == duration
 
 
-def test_iter_results(capsys, tmpdir, example_results): # noqa uses fixture
+def test_iter_results(capsys, tmpdir, example_results): # noqa F811
     dst = os.path.join(str(tmpdir), 'example_results')
     shutil.copytree(example_results, dst)
 
