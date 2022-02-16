@@ -85,7 +85,7 @@ def make_argparser():
         common_args.add_global_arguments(subparser)
         del commands[command]
 
-    for name, command in sorted(six.iteritems(commands)):
+    for name, command in sorted(commands.items()):
         subparser = command.setup_arguments(subparsers)
         common_args.add_global_arguments(subparser)
 
@@ -97,7 +97,7 @@ def _make_docstring():
 
     lines = []
 
-    for p in six.itervalues(subparsers.choices):
+    for p in subparsers.choices.values():
         lines.append('.. _cmd-{0}:'.format(p.prog.replace(' ', '-')))
         lines.append('')
         lines.append(p.prog)

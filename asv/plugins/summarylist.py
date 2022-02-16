@@ -45,7 +45,7 @@ class SummaryList(OutputPublisher):
         results = {}
 
         # Investigate all benchmarks
-        for benchmark_name, benchmark in sorted(six.iteritems(benchmarks)):
+        for benchmark_name, benchmark in sorted(benchmarks.items()):
             log.dot()
 
             benchmark_graphs = graphs.get_graph_group(benchmark_name)
@@ -112,7 +112,7 @@ class SummaryList(OutputPublisher):
                     results.setdefault(path, []).append(row)
 
         # Write results to files
-        for path, data in six.iteritems(results):
+        for path, data in results.items():
             filename = os.path.join(conf.html_dir, path)
             util.write_json(filename, sorted(data, key=lambda x: (x['name'], x['idx'])),
                             compact=True)

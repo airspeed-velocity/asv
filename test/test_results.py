@@ -13,8 +13,7 @@ import six
 
 from asv import results, runner, util
 import pytest
-
-from .tools import example_results
+from .tools import example_results # noqa F401 needed to load fixtures (see #1030)
 
 
 def _truncate_floats(item, digits=5):
@@ -53,16 +52,17 @@ def test_results(tmpdir):
 
         values = {
             'suite1.benchmark1': {'result': [x1], 'number': [1],
-                                  'samples': [[x1,x1]], 'params': [['a']],
+                                  'samples': [[x1, x1]], 'params': [['a']],
                                   'version': "1", 'profile': b'\x00\xff'},
             'suite1.benchmark2': {'result': [x2], 'number': [1],
-                                  'samples': [[x2,x2,x2]], 'params': [],
+                                  'samples': [[x2, x2, x2]], 'params': [],
                                   'version': "1", 'profile': b'\x00\xff'},
             'suite2.benchmark1': {'result': [x3], 'number': [None],
                                   'samples': [None], 'params': [['c']],
                                   'version': None, 'profile': b'\x00\xff'},
             'suite3.benchmark1': {'result': [x1, x2], 'number': [1, 1],
-                                  'samples': [[x1,x1], [x2,x2,x3]], 'params': [['c', 'd']],
+                                  'samples': [[x1, x1], [x2, x2, x3]],
+                                  'params': [['c', 'd']],
                                   'version': None, 'profile': b'\x00\xff'}
         }
 
@@ -161,7 +161,7 @@ def test_get_result_hash_from_prefix(tmpdir):
     assert 'one of multiple commits' in str(excinfo.value)
 
 
-def test_backward_compat_load(example_results):
+def test_backward_compat_load(example_results): # noqa F811 redefinition of the imported fixture,it can be removed when the fixture is moved to conftest.py file and the import deleted
     resultsdir = example_results
     filename = join('cheetah', '624da0aa-py2.7-Cython-numpy1.8.json')
 
@@ -204,7 +204,7 @@ def test_json_timestamp(tmpdir):
     assert values['duration'] == duration
 
 
-def test_iter_results(capsys, tmpdir, example_results):
+def test_iter_results(capsys, tmpdir, example_results): # noqa F811 noqa F811 redefinition of the imported fixture,it can be removed when the fixture is moved to conftest.py file and the import deleted
     dst = os.path.join(str(tmpdir), 'example_results')
     shutil.copytree(example_results, dst)
 
@@ -212,9 +212,9 @@ def test_iter_results(capsys, tmpdir, example_results):
 
     skip_list = [
         'machine.json',
-        'aaaaaaaa-py2.7-Cython-numpy1.8.json', # malformed file
-        'bbbbbbbb-py2.7-Cython-numpy1.8.json', # malformed file
-        'cccccccc-py2.7-Cython-numpy1.8.json', # malformed file
+        'aaaaaaaa-py2.7-Cython-numpy1.8.json',  # malformed file
+        'bbbbbbbb-py2.7-Cython-numpy1.8.json',  # malformed file
+        'cccccccc-py2.7-Cython-numpy1.8.json',  # malformed file
     ]
 
     files = [f for f in os.listdir(path) if f.endswith('.json') and f not in skip_list]
@@ -238,7 +238,7 @@ def test_filename_format():
     r = results.Results({'machine': 'foo'}, [], "commit", 0, "", "env", {})
     assert r._filename == join("foo", "commit-env.json")
 
-    r = results.Results({'machine': 'foo'}, [], "hash", 0, "", "a"*128, {})
+    r = results.Results({'machine': 'foo'}, [], "hash", 0, "", "a" * 128, {})
     assert r._filename == join("foo", "hash-env-e510683b3f5ffe4093d021808bc6ff70.json")
 
 
@@ -250,7 +250,7 @@ def test_remove_samples():
 
     v1 = runner.BenchmarkResult(result=[True], samples=[[1]], number=[1],
                                 profile=None, errcode=0, stderr='')
-    v2 = runner.BenchmarkResult(result=[True]*3, samples=[[1],[2],[3]], number=[1,1,1],
+    v2 = runner.BenchmarkResult(result=[True] * 3, samples=[[1], [2], [3]], number=[1, 1, 1],
                                 profile=None, errcode=0, stderr='')
 
     r.add_result(benchmark1, v1, record_samples=True)
@@ -287,8 +287,9 @@ def test_table_formatting():
     table = "\n".join(results._format_benchmark_result(result, benchmark, max_width=80))
     assert table == expected
 
-    benchmark = {'params': [["'a'", "'b'", "'c'"], ["[1]", "[2]"]], 'param_names': ['param1', 'param2'], "unit": "seconds"}
-    result = list(zip([1, 2, None, 4, 5, float('nan')], [None]*6))
+    benchmark = {'params': [["'a'", "'b'", "'c'"], ["[1]", "[2]"]],
+                 'param_names': ['param1', 'param2'], "unit": "seconds"}
+    result = list(zip([1, 2, None, 4, 5, float('nan')], [None] * 6))
     expected = ("======== ======== =======\n"
                 "--            param2     \n"
                 "-------- ----------------\n"
