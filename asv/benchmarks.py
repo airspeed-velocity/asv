@@ -9,8 +9,6 @@ import os
 import re
 import tempfile
 import itertools
-import datetime
-
 import six
 
 from .console import log
@@ -98,7 +96,7 @@ class Benchmarks(dict):
 
         selected_idx = {}
 
-        for name, benchmark in six.iteritems(self):
+        for name, benchmark in self.items():
             if name not in skip:
                 benchmarks[name] = benchmark
                 if name in self._benchmark_selection:
@@ -207,7 +205,7 @@ class Benchmarks(dict):
                     try:
                         with open(result_file, 'r') as fp:
                             benchmarks = json.load(fp)
-                    except (IOError, ValueError) as exc:
+                    except (IOError, ValueError):
                         log.error("Invalid discovery output")
                         raise util.UserError()
 
@@ -335,7 +333,7 @@ class Benchmarks(dict):
             if not os.path.isfile(path):
                 raise util.UserError("Benchmark list file {} missing!".format(path))
             d = util.load_json(path, api_version=cls.api_version)
-            benchmarks = six.itervalues(d)
+            benchmarks = d.values()
             return cls(conf, benchmarks, regex=regex)
         except util.UserError as err:
             if "asv update" in str(err):

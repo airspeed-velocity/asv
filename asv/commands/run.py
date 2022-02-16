@@ -332,7 +332,7 @@ class Run(Command):
             max_rounds = int(attribute['rounds'])
         else:
             max_rounds = max(b.get('rounds', 1)
-                             for b in six.itervalues(benchmarks))
+                             for b in benchmarks.values())
 
         log.set_nitems(steps * max_rounds)
 
@@ -401,7 +401,7 @@ class Run(Command):
                                 log.step()
 
             active_environments = [env for env in environments
-                                   if set(six.iterkeys(benchmarks))
+                                   if set(benchmarks.keys())
                                    .difference(skipped_benchmarks[(commit_hash, env.name)])]
 
             if not active_environments:

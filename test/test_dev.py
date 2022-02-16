@@ -5,14 +5,10 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import os
-import sys
 import re
 from os.path import abspath, dirname, join, relpath
 import shutil
 import pytest
-
-import six
-
 from asv import config
 from asv.commands import make_argparser
 
