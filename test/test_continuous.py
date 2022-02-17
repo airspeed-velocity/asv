@@ -11,7 +11,6 @@ from asv.results import iter_results_for_machine
 
 from . import tools
 from .tools import dummy_packages, get_default_environment_type
-from .test_workflow import basic_conf
 
 
 def test_continuous(capfd, basic_conf):
