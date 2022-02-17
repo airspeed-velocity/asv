@@ -19,11 +19,6 @@ jobs:
       
       - name: Run tests
         run: pytest
-
-  flake8:
-    steps:
-      - name: Install dependencies
-        run: pip install flake8
       
       - name: flake8
         run: flake8 .
