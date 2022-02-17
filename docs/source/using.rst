@@ -138,7 +138,7 @@ Running benchmarks
 Benchmarks are run using the ``asv run`` subcommand.
 
 Let's start by just benchmarking the latest commit on the current
-``master`` branch of the project::
+``main`` branch of the project::
 
     $ asv run
 
@@ -244,10 +244,10 @@ Finally, the benchmarks are run::
     · Creating environments......
     · Discovering benchmarks
     ·· Uninstalling from virtualenv-py2.7
-    ·· Building 4238c44d <master> for virtualenv-py2.7
+    ·· Building 4238c44d <main> for virtualenv-py2.7
     ·· Installing into virtualenv-py2.7.
     · Running 10 total benchmarks (1 commits * 2 environments * 5 benchmarks)
-    [  0.00%] · For project commit 4238c44d <master>:
+    [  0.00%] · For project commit 4238c44d <main>:
     [  0.00%] ·· Building for virtualenv-py2.7.
     [  0.00%] ·· Benchmarking virtualenv-py2.7
     [ 10.00%] ··· Running (benchmarks.TimeSuite.time_iterkeys--)....
@@ -284,13 +284,13 @@ has a very powerful syntax defined in the `gitrevisions manpage
 `revsets help section <http://www.selenic.com/hg/help/revsets>`_ for Mercurial.
 
 For example, in a Git repository, one can test a range of commits on a
-particular branch since branching off master::
+particular branch since branching off main::
 
-        asv run master..mybranch
+        asv run main..mybranch
 
 Or, to benchmark all of the commits since a particular tag (``v0.1``)::
 
-    asv run v0.1..master
+    asv run v0.1..main
 
 To benchmark a single commit, or tag, use `^!` (git)::
 
@@ -362,8 +362,8 @@ Viewing the results
 You can use the :ref:`asv show <cmd-asv-show>` command to display
 results from previous runs on the command line::
 
-    $ asv show master
-    Commit: 4238c44d <master>
+    $ asv show main
+    Commit: 4238c44d <main>
 
     benchmarks.MemSuite.mem_list [mymachine/virtualenv-py2.7]
       2.42k
