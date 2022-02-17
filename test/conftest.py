@@ -52,6 +52,7 @@ def _monkeypatch_conda_lock(config):
 def basic_conf(tmpdir, dummy_packages):
     return generate_basic_conf(tmpdir)
 
+
 @pytest.fixture
 def show_fixture(tmpdir, example_results):
     tmpdir = str(tmpdir)
@@ -67,11 +68,6 @@ def show_fixture(tmpdir, example_results):
 
 
 @pytest.fixture
-def basic_conf(tmpdir, dummy_packages):
-    return generate_basic_conf(tmpdir)
-
-
-@pytest.fixture
 def basic_conf_with_subdir(tmpdir, dummy_packages):
     return generate_basic_conf(tmpdir, 'some_subdir')
 
@@ -82,7 +78,3 @@ def existing_env_conf(tmpdir):
     conf.environment_type = "existing"
     conf.pythons = ["same"]
     return tmpdir, local, conf, machine_file
-
-
-
-
