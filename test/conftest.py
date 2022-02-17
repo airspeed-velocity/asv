@@ -1,5 +1,9 @@
 import os
 import contextlib
+from . import tools
+import pytest
+from .test_workflow import generate_basic_conf
+from asv import config
 
 
 def pytest_addoption(parser):
@@ -42,3 +46,43 @@ def _monkeypatch_conda_lock(config):
 
     path = config.cache.makedir('conda-lock') / 'lock'
     asv.plugins.conda._conda_lock = _conda_lock
+
+
+@pytest.fixture
+def basic_conf(tmpdir, dummy_packages):
+    return generate_basic_conf(tmpdir)
+
+@pytest.fixture
+def show_fixture(tmpdir, example_results):
+    tmpdir = str(tmpdir)
+    os.chdir(tmpdir)
+
+    conf = config.Config.from_json(
+        {'results_dir': example_results,
+         'repo': tools.generate_test_repo(tmpdir).path,
+         'project': 'asv',
+         'environment_type': "shouldn't matter what"})
+
+    return conf
+
+
+@pytest.fixture
+def basic_conf(tmpdir, dummy_packages):
+    return generate_basic_conf(tmpdir)
+
+
+@pytest.fixture
+def basic_conf_with_subdir(tmpdir, dummy_packages):
+    return generate_basic_conf(tmpdir, 'some_subdir')
+
+
+@pytest.fixture
+def existing_env_conf(tmpdir):
+    tmpdir, local, conf, machine_file = generate_basic_conf(tmpdir)
+    conf.environment_type = "existing"
+    conf.pythons = ["same"]
+    return tmpdir, local, conf, machine_file
+
+
+
+

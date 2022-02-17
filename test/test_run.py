@@ -21,26 +21,6 @@ from asv import util
 from asv.commands.run import Run
 
 from . import tools
-from .tools import dummy_packages, WIN
-from .test_workflow import basic_conf, generate_basic_conf
-
-
-@pytest.fixture
-def basic_conf(tmpdir, dummy_packages):
-    return generate_basic_conf(tmpdir)
-
-
-@pytest.fixture
-def basic_conf_with_subdir(tmpdir, dummy_packages):
-    return generate_basic_conf(tmpdir, 'some_subdir')
-
-
-@pytest.fixture
-def existing_env_conf(tmpdir):
-    tmpdir, local, conf, machine_file = generate_basic_conf(tmpdir)
-    conf.environment_type = "existing"
-    conf.pythons = ["same"]
-    return tmpdir, local, conf, machine_file
 
 
 def test_set_commit_hash(capsys, existing_env_conf):
