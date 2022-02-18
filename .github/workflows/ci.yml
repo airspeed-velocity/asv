@@ -5,30 +5,23 @@ on: [push, pull_request]
 jobs:
   test:
     name: test w/ Python
-
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         python-version: ["3.7", "3.10"]
-
     steps:
       - name: Checkout source
         uses: actions/checkout@v2
-
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
-      
       - name: Run tests
         run: pytest
   
   flake8-formatting:
       name: code autoformatting with flake8
       runs-on: ubuntu-latest
-
     steps:
       - name: Install dependencies
         run: pip install flake8
-  
       - name: flake8
         run: flake8 .
