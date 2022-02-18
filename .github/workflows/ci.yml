@@ -3,7 +3,7 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     strategy:
@@ -19,6 +19,14 @@ jobs:
       
       - name: Run tests
         run: pytest
-      
+  
+  flake8-formatting:
+      name: code autoformatting with flake8
+      runs-on: ubuntu-latest
+
+    steps:
+      - name: Install dependencies
+        run: pip install flake8
+  
       - name: flake8
         run: flake8 .
