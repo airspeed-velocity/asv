@@ -2,7 +2,7 @@ name: CI
 
 on: [push, pull_request]
 
-jobs:
+jobs: 
   test:
     name: test w/ Python
     runs-on: ubuntu-latest
