@@ -11,6 +11,8 @@ jobs:
         python-version: ["3.7", "3.10"]
     steps:
       - uses: actions/checkout@v2
+        with:
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
       - name: Run tests
