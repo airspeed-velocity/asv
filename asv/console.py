@@ -8,7 +8,6 @@ A set of utilities for writing output to the console.
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import io
 import contextlib
 import locale
 import logging
@@ -16,9 +15,6 @@ import os
 import sys
 import textwrap
 import time
-
-import six
-from six.moves import xrange, input
 
 from . import util
 
@@ -110,33 +106,22 @@ def _write_with_fallback(s, fileobj):
     if not isinstance(s, str):
         raise ValueError("Input string is not a Unicode string")
 
-    if six.PY3:
-        try:
-            fileobj.write(s)
-            return
-        except UnicodeError:
-            pass
+    try:
+        fileobj.write(s)
+        return
+    except UnicodeError:
+        pass
 
-        # Fall back to writing bytes
-        enc = locale.getpreferredencoding()
-        try:
-            b = s.encode(enc)
-        except UnicodeError:
-            s = s.translate(_unicode_translations)
-            b = s.encode(enc, errors='replace')
+    # Fall back to writing bytes
+    enc = locale.getpreferredencoding()
+    try:
+        b = s.encode(enc)
+    except UnicodeError:
+        s = s.translate(_unicode_translations)
+        b = s.encode(enc, errors='replace')
 
-        fileobj.flush()
-        fileobj.buffer.write(b)
-    else:
-        enc = locale.getpreferredencoding()
-        try:
-            b = s.encode(enc)
-        except UnicodeError:
-            for key, val in _unicode_translations.iteritems():
-                s = s.replace(unichr(key), val)
-            b = s.encode(enc, errors='replace')
-
-        fileobj.write(b)
+    fileobj.flush()
+    fileobj.buffer.write(b)
 
 
 def color_print(*args, **kwargs):
@@ -174,7 +159,7 @@ def color_print(*args, **kwargs):
     end = kwargs.get('end', '\n')
 
     if isatty(file) and not WIN:
-        for i in xrange(0, len(args), 2):
+        for i in range(0, len(args), 2):
             msg = args[i]
             if i + 1 == len(args):
                 color = ''
@@ -187,7 +172,7 @@ def color_print(*args, **kwargs):
 
         _write_with_fallback(end, file)
     else:
-        for i in xrange(0, len(args), 2):
+        for i in range(0, len(args), 2):
             msg = args[i]
             _write_with_fallback(msg, file)
         _write_with_fallback(end, file)
@@ -395,7 +380,7 @@ class Log(object):
         padding_length = util.get_terminal_width() - len(self._prev_message) - 14 - 1 - len(msg)
         if WIN:
             padding_length -= 1
-        padding = " "*padding_length
+        padding = " " * padding_length
 
         self._prev_message = None
         self.add(" {0}{1}".format(padding, msg))
