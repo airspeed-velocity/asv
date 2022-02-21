@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import os
 import sys
 # This __version__ assignment is parsed by setup.py; keep it in this form.
