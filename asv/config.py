@@ -13,7 +13,7 @@ from . import util
 # TODO: Some verification of the config values
 
 
-class Config(object):
+class Config:
     """
     Manages the configuration for a benchmark project.
     """
