@@ -1004,7 +1004,7 @@ def _format_benchmark_result(result, benchmark, max_width=None):
 
     # Determine how many parameters can be fit to columns
     if max_width is None:
-        max_width = util.get_terminal_width() * 3 // 4
+        max_width = util.terminal_width * 3 // 4
 
     text = do_formatting(0)
     for j in range(1, len(benchmark['params'])):
