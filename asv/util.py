@@ -16,7 +16,6 @@ import re
 import select
 import signal
 import subprocess
-import struct
 import sys
 import time
 import errno
