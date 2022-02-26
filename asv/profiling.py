@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-
-
 class ProfilerGui(object):
     """
     A base class to define a Profiler GUI that is available through

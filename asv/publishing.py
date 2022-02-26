@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-
-
 class OutputPublisher(object):
     """
     A base class for pages displaying output in the JS application
