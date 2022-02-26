@@ -6,8 +6,7 @@ Manages an environment -- a combination of a version of Python and set
 of dependencies.
 """
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+
 
 import hashlib
 import os
