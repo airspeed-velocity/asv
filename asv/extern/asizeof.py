@@ -191,7 +191,8 @@ if sys.version_info < (2, 6, 0):
     raise NotImplementedError('%s requires Python 2.6 or newer' % ('asizeof',))
 
 # all imports listed explicitly to help PyChecker
-
+from inspect import (isbuiltin, isclass, iscode, isframe, isfunction,
+                     ismethod, ismodule, stack)
 from math import log
 from os import curdir, linesep
 from struct import calcsize  # type/class Struct only in Python 2.5+
