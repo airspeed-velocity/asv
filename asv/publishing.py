@@ -3,7 +3,6 @@
 
 
 
-
 class OutputPublisher(object):
     """
     A base class for pages displaying output in the JS application

@@ -6,7 +6,6 @@ A set of utilities for writing output to the console.
 """
 
 
-
 import contextlib
 import locale
 import logging
