@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
+
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
 Supports git repositories for the benchmarked project.
 """
-
-
 
 import os
 import re
