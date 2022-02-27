@@ -436,6 +436,7 @@ class Benchmark(object):
         self.pretty_name = getattr(func, "pretty_name", None)
         self._attr_sources = attr_sources
         self._setups = list(_get_all_attrs(attr_sources, 'setup', True))[::-1]
+        self._finalize_teardowns = list(_get_all_attrs(attr_sources, 'finalize_teardown', True))
         self._teardowns = list(_get_all_attrs(attr_sources, 'teardown', True))
         self._setup_cache = _get_first_attr(attr_sources, 'setup_cache', None)
         self.setup_cache_key = get_setup_cache_key(self._setup_cache)
@@ -585,6 +586,11 @@ class Benchmark(object):
                 code, {'run': self.func, 'params': self._current_params},
                 {}, filename)
 
+    def do_finalize_teardown(self, exc_type, exception, trace):
+        """Called if the setup or the teardown of any test raise an exception.
+        """
+        for finalize_teardown in self._finalize_teardowns:
+            finalize_teardown(exc_type, exception, trace, self._current_params)
 
 class TimeBenchmark(Benchmark):
     """
@@ -1154,17 +1160,22 @@ def main_run(args):
         if cache is not None:
             benchmark.insert_param(cache)
 
-    skip = benchmark.do_setup()
-
     try:
-        if skip:
-            result = float('nan')
-        else:
-            result = benchmark.do_run()
-            if profile_path is not None:
-                benchmark.do_profile(profile_path)
+        skip = benchmark.do_setup()
+
+        try:
+            if skip:
+                result = float('nan')
+            else:
+                result = benchmark.do_run()
+                if profile_path is not None:
+                    benchmark.do_profile(profile_path)
+        finally:
+            benchmark.do_teardown()
     finally:
-        benchmark.do_teardown()
+        exc_type, exc, trace = sys.exc_info()
+        benchmark.do_finalize_teardown(exc_type, exc, trace)
+        raise exc
 
     # Write the output value
     with open(result_file, 'w') as fp:
