@@ -358,7 +358,6 @@ currently used to provide relative data weighting (see above).
 
 """
 
-from __future__ import absolute_import, division, unicode_literals, print_function
 
 import math
 import collections

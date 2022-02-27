@@ -5,8 +5,6 @@
 A set of utilities for writing output to the console.
 """
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
 
 import contextlib
 import locale
