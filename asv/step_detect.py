@@ -1,5 +1,4 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 r"""Regression detection in ASV is based on detecting stepwise changes
 in the graphs. The assumptions on the data are as follows: the curves
 are piecewise constant plus random noise. We don't know the scaling of
