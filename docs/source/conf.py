@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # airspeed velocity documentation build configuration file, created by
 # sphinx-quickstart on Mon Nov 18 09:12:08 2013.
