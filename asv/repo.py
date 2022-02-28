@@ -4,6 +4,7 @@ import datetime
 
 from . import util
 
+
 class NoSuchNameError(RuntimeError):
     """
     Exception raised if requested branch or commit does not exist.
