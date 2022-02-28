@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 def setup():
     # module-level
     pass

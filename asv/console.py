@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
 A set of utilities for writing output to the console.
 """
-
 
 import contextlib
 import locale
