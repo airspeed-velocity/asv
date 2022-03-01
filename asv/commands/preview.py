@@ -1,7 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-# XXX Removing only to see if the CI is now failing about this
-from six.moves import SimpleHTTPServer
+from six.moves import SimpleHTTPServer, socketserver
 
 import errno
 import os
