@@ -6,8 +6,6 @@ import os
 import re
 import tempfile
 import itertools
-import six
-
 from .console import log
 from . import util
 from . import runner

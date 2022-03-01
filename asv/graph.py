@@ -3,8 +3,6 @@
 import os
 import traceback
 import math
-
-import six
 from six.moves import xrange
 
 from . import util
@@ -167,7 +165,7 @@ class Graph(object):
                 raise ValueError("Mismatching number of data series in graph")
 
             if weight is None:
-                weight = [None]*len(value)
+                weight = [None] * len(value)
 
             self.data_points[revision].append(value)
             self.data_weights[revision].append(weight)
@@ -183,7 +181,7 @@ class Graph(object):
 
         def mean_axis0(v):
             if not v:
-                return [None]*self.n_series
+                return [None] * self.n_series
             return [mean_na(x[j] for x in v)
                     for j in xrange(self.n_series)]
 
@@ -209,7 +207,7 @@ class Graph(object):
             if any(not is_na(v) for v in val[j][1]):
                 break
 
-        val = val[i:j+1]
+        val = val[i:j + 1]
 
         # Single-element series
         if self.scalar_series:
@@ -254,7 +252,7 @@ class Graph(object):
 
         if not val:
             # Nothing to compute
-            self._steps = [[]]*self.n_series
+            self._steps = [[]] * self.n_series
             return
 
         if self.scalar_series:
@@ -305,7 +303,7 @@ def _compute_graph_steps(data, reraise=True):
         new_steps = []
 
         for left, right, cur_val, cur_min, cur_err in steps:
-            new_steps.append((x[left], x[right-1] + 1, cur_val, cur_min, cur_err))
+            new_steps.append((x[left], x[right - 1] + 1, cur_val, cur_min, cur_err))
 
         return new_steps
     except BaseException as exc:
@@ -428,7 +426,7 @@ def _combine_graph_data(graphs):
     x_idx = dict(zip(x, range(len(x))))
 
     # Get y-values
-    ys = [[None]*len(x_idx) for j in range(n_series)]
+    ys = [[None] * len(x_idx) for j in range(n_series)]
     pos = 0
     for dataset, graph in zip(datasets, graphs):
         for k, v, dv in dataset:
