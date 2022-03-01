@@ -1,6 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-class OutputPublisher(object):
+class OutputPublisher:
     """
     A base class for pages displaying output in the JS application
     """

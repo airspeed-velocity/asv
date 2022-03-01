@@ -663,7 +663,7 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
             util.long_path_rmtree(real_cwd, True)
 
 
-class Spawner(object):
+class Spawner:
     """
     Manage launching individual benchmark.py commands
     """

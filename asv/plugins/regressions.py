@@ -216,7 +216,7 @@ class Regressions(OutputPublisher):
                         address='{0}.asv'.format(conf.project))
 
 
-class _GraphDataFilter(object):
+class _GraphDataFilter:
     """
     Obtain data sets from graphs, following configuration settings.
     """

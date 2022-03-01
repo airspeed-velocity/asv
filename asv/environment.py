@@ -454,7 +454,7 @@ class EnvironmentUnavailable(BaseException):
     pass
 
 
-class Environment(object):
+class Environment:
     """
     Manage a single environment -- a combination of a particular
     version of Python and a set of dependencies for the benchmarked

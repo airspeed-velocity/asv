@@ -27,7 +27,7 @@ command_order = [
 ]
 
 
-class Command(object):
+class Command:
     @classmethod
     def setup_arguments(cls, subparsers):
         # TODO: Document me

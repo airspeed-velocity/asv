@@ -405,7 +405,7 @@ def check_call(args, valid_return_codes=(0,), timeout=600, dots=True,
         cwd=cwd)
 
 
-class DebugLogBuffer(object):
+class DebugLogBuffer:
     def __init__(self, log):
         self.buf = []
         self.first = True

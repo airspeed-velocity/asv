@@ -31,7 +31,7 @@ Benchmark attributes can either be applied directly to the benchmark function::
 
 or appear as class attributes::
 
-    class SomeBenchmarks(object):
+    class SomeBenchmarks:
         timeout = 123
 
         def time_something(self):

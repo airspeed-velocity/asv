@@ -7,7 +7,7 @@ from . import commands
 from . import plugins
 
 
-class PluginManager(object):
+class PluginManager:
     """
     A class to load and manage plugins.
 
