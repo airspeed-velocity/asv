@@ -25,7 +25,7 @@ jobs:
         run: python setup.py build_ext --inplace
 
       - name: Run tests
-        run: pythont -m pytest -l -v --environment-type=conda --webdriver=ChromeHeadless --timeout=1800 --durations=100 test
+        run: python -m pytest -l -v --environment-type=conda --webdriver=ChromeHeadless --timeout=1800 --durations=100 test
   
   flake8-formatting:
     name: code linting with flake8
