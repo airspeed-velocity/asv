@@ -13,9 +13,6 @@ import socket
 import struct
 import threading
 import traceback
-
-import six
-
 from .console import log
 from .results import Results, format_benchmark_result
 from . import util

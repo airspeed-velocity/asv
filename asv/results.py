@@ -8,8 +8,6 @@ import zlib
 import itertools
 import hashlib
 import datetime
-
-import six
 from six.moves import zip as izip
 
 from . import environment

@@ -1,7 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import six
-
 import os
 import multiprocessing as mp
 import platform
@@ -151,8 +149,7 @@ class Machine(object):
             'num_cpu': num_cpu,
             'arch': platform.machine(),
             'cpu': cpu,
-            'ram': ram
-            }
+            'ram': ram}
 
     @staticmethod
     def generate_machine_file(use_defaults=False):
@@ -175,7 +172,7 @@ class Machine(object):
             print(
                 textwrap.fill(
                     '{0}. {1}: {2}'.format(
-                        i+1, name, textwrap.dedent(description)),
+                        i + 1, name, textwrap.dedent(description)),
                     subsequent_indent='   '))
             values[name] = console.get_answer_default(name, defaults[name],
                                                       use_defaults=use_defaults)
