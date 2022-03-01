@@ -1,15 +1,12 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 import os
 import itertools
-import six
 
 from ..console import log
 from ..publishing import OutputPublisher
 from ..graph import Graph
 
 from .. import util
-
 
 
 def benchmark_param_iter(benchmark):
