@@ -1,12 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 import re
 import os
 import tempfile
 import contextlib
-import multiprocessing
-
-import six
 
 from .. import environment
 from ..console import log
@@ -21,6 +17,7 @@ WIN = (os.name == "nt")
 # Hence, serialize the calls to it.
 
 util.new_multiprocessing_lock("conda_lock")
+
 
 def _conda_lock():
     # function; for easier monkeypatching
