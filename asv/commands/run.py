@@ -10,7 +10,6 @@ import textwrap
 
 from collections import defaultdict
 
-import six
 
 from . import Command
 from ..benchmarks import Benchmarks
