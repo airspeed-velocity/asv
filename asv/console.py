@@ -338,7 +338,7 @@ class Log(object):
             kwargs['extra'] = extra
 
         if reserve_space:
-            max_width = max(16, util.get_terminal_width() - 33)
+            max_width = max(16, util.terminal_width - 33)
             message = truncate_left(message, max_width)
             self._prev_message = message
 
@@ -373,7 +373,7 @@ class Log(object):
             self.info(msg)
             return
 
-        padding_length = util.get_terminal_width() - len(self._prev_message) - 14 - 1 - len(msg)
+        padding_length = util.terminal_width - len(self._prev_message) - 14 - 1 - len(msg)
         if WIN:
             padding_length -= 1
         padding = " " * padding_length
