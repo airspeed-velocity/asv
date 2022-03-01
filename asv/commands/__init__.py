@@ -2,9 +2,6 @@
 
 import argparse
 import sys
-
-import six
-
 from .. import config
 from .. import util
 
