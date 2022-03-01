@@ -10,22 +10,31 @@ jobs:
       matrix:
         python-version: ["3.7", "3.10"]
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
+
+      - name: Build
+        run: python setup.py build_ext --inplace
+
       - name: Run tests
-        run: pytest
+        run: pythont -m pytest -l -v --environment-type=conda --webdriver=ChromeHeadless --timeout=1800 --durations=100 test
   
   flake8-formatting:
     name: code linting with flake8
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
       - name: Install dependencies
         run: pip install flake8
+
       - name: Check code with flake8
         run: flake8 .
