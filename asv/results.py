@@ -8,8 +8,6 @@ import zlib
 import itertools
 import hashlib
 import datetime
-from six.moves import zip as izip
-
 from . import environment
 from .console import log
 from .machine import Machine
@@ -169,7 +167,7 @@ def _compatible_results(result, result_params, params):
     # Pick results for those parameters that also appear in the
     # current benchmark
     old_results = {}
-    for param, value in izip(itertools.product(*result_params), result):
+    for param, value in zip(itertools.product(*result_params), result):
         old_results[param] = value
 
     new_results = []

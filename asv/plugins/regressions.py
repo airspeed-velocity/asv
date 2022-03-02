@@ -3,9 +3,7 @@ import os
 import re
 import itertools
 import datetime
-
-from six.moves.urllib.parse import urlencode
-
+import urllib.parse
 from ..results import iter_results
 from ..console import log
 from ..publishing import OutputPublisher
@@ -153,7 +151,7 @@ class Regressions(OutputPublisher):
                     params['commits'] = '{0}-{1}'.format(revision_to_hash[rev1],
                                                          revision_to_hash[rev2])
 
-                link = 'index.html#{0}?{1}'.format(benchmark_name, urlencode(params))
+                link = 'index.html#{0}?{1}'.format(benchmark_name, urllib.parse.urlencode() (params))
 
                 try:
                     best_percentage = "{0:.2f}%".format(100 * (last_value - best_value) / best_value)

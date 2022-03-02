@@ -3,8 +3,6 @@
 import os
 import traceback
 import math
-from six.moves import xrange
-
 from . import util
 from . import step_detect
 
@@ -183,7 +181,7 @@ class Graph:
             if not v:
                 return [None] * self.n_series
             return [mean_na(x[j] for x in v)
-                    for j in xrange(self.n_series)]
+                    for j in range(self.n_series)]
 
         # Average data over commit log
         val = []
@@ -196,14 +194,14 @@ class Graph:
 
         # Discard missing data at edges
         i = 0
-        for i in xrange(len(val)):
+        for i in range(len(val)):
             if any(not is_na(v) for v in val[i][1]):
                 break
         else:
             i = len(val)
 
         j = i
-        for j in xrange(len(val) - 1, i, -1):
+        for j in range(len(val) - 1, i, -1):
             if any(not is_na(v) for v in val[j][1]):
                 break
 

@@ -361,8 +361,6 @@ currently used to provide relative data weighting (see above).
 import math
 import collections
 import heapq
-import six
-
 try:
     from . import _rangemedian
 except ImportError:
@@ -938,7 +936,7 @@ def rolling_median_dev(items):
     try:
         while True:
             # Odd
-            v = six.next(s)
+            v = next(s)
             min_heap_sum += v
             v = -heapq.heappushpop(min_heap, -v)
             min_heap_sum -= v
@@ -949,7 +947,7 @@ def rolling_median_dev(items):
             yield (max_heap[0], d)
 
             # Even
-            v = six.next(s)
+            v = next(s)
             max_heap_sum += v
             v = heapq.heappushpop(max_heap, v)
             max_heap_sum -= v

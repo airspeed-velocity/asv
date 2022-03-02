@@ -1,6 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import six
 import io
 import os
 import sys
@@ -21,53 +20,41 @@ def test_write_with_fallback(tmpdir, capfd):
             locale.getpreferredencoding = lambda: preferred_encoding
 
             # Check writing to io.StringIO
-            if six.PY3:
-                stream = io.StringIO()
-                _write_with_fallback(value, stream)
-                assert stream.getvalue() == value
-            else:
-                stream = io.StringIO()
-                with pytest.raises(TypeError):
-                    _write_with_fallback(value, stream)
+            stream = io.StringIO()
+            _write_with_fallback(value, stream)
+            assert stream.getvalue() == value
+
 
             # Check writing to a text stream
-            if six.PY3:
-                buf = io.BytesIO()
-                stream = io.TextIOWrapper(buf, encoding=stream_encoding)
-                _write_with_fallback(value, stream)
-                stream.flush()
-                got = buf.getvalue()
-                assert got == expected
+            buf = io.BytesIO()
+            stream = io.TextIOWrapper(buf, encoding=stream_encoding)
+            _write_with_fallback(value, stream)
+            stream.flush()
+            got = buf.getvalue()
+            assert got == expected
 
             # Writing to io.BytesIO
-            if six.PY3:
-                stream = io.BytesIO()
-                with pytest.raises(TypeError):
-                    _write_with_fallback(value, stream)
-            else:
-                stream = io.BytesIO()
+            stream = io.BytesIO()
+            with pytest.raises(TypeError):
                 _write_with_fallback(value, stream)
-                assert stream.getvalue() == expected
 
             # Check writing to a file
             fn = os.path.join(tmpdir, 'tmp.txt')
-            if six.PY3:
-                with io.open(fn, 'w', encoding=stream_encoding) as stream:
-                    _write_with_fallback(value, stream)
-                with open(fn, 'rb') as stream:
-                    got = stream.read()
-                    assert got == expected
+            with io.open(fn, 'w', encoding=stream_encoding) as stream:
+                _write_with_fallback(value, stream)
+            with open(fn, 'rb') as stream:
+                got = stream.read()
+                assert got == expected
 
             # Check writing to Py2 files
-            if not six.PY3:
-                if stream_encoding == preferred_encoding:
-                    # No stream encoding: write in locale encoding
-                    for mode in ['w', 'wb']:
-                        with open(fn, mode) as stream:
-                            _write_with_fallback(value, stream)
-                        with open(fn, 'rb') as stream:
-                            got = stream.read()
-                            assert got == expected
+            if stream_encoding == preferred_encoding:
+                # No stream encoding: write in locale encoding
+                for mode in ['w', 'wb']:
+                    with open(fn, mode) as stream:
+                        _write_with_fallback(value, stream)
+                    with open(fn, 'rb') as stream:
+                        got = stream.read()
+                        assert got == expected
         finally:
             locale.getpreferredencoding = old_getpreferredencoding
 
@@ -84,10 +71,7 @@ def test_write_with_fallback(tmpdir, capfd):
 
     for pref_enc, stream_enc, s in itertools.product(encodings, encodings, strings):
         expected = None
-        if six.PY3:
-            encodings = [stream_enc, pref_enc]
-        else:
-            encodings = [pref_enc]
+        encodings = [stream_enc, pref_enc]
         for enc in encodings:
             try:
                 expected = s.encode(enc)
