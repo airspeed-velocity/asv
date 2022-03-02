@@ -214,8 +214,8 @@ class Run(Command):
             if dry_run:
                 raise util.UserError("--interleave-rounds and --dry-run cannot be used together")
             if has_existing_env:
-                raise util.UserError("--interleave-rounds cannot be used with existing environment "
-                                     "(or python=same)")
+                raise util.UserError("--interleave-rounds cannot be used with existing "
+                                     "environment (or python=same)")
         elif interleave_rounds is None:
             # Enable if possible
             interleave_rounds = not (dry_run or has_existing_env)
@@ -238,7 +238,8 @@ class Run(Command):
 
         if range_spec is None:
             try:
-                commit_hashes = list(set([repo.get_hash_from_name(branch) for branch in conf.branches]))
+                commit_hashes = list(set([(repo.get_hash_from_name(branch)
+                                           for branch in conf.branches)]))
             except NoSuchNameError as exc:
                 raise util.UserError('Unknown branch {0} in configuration'.format(exc))
         elif range_spec == 'EXISTING':
@@ -465,8 +466,9 @@ class Run(Command):
                         params['python'] = env.python
                         params.update(env.requirements)
 
-                        skip_save = dry_run or (isinstance(env, environment.ExistingEnvironment)
-                                                and set_commit_hash is None)
+                        skip_save = (dry_run or
+                                     (isinstance(env, environment.ExistingEnvironment) and
+                                      set_commit_hash is None))
 
                         skip_list = skipped_benchmarks[(commit_hash, env.name)]
                         benchmark_set = benchmarks.filter_out(skip_list)
@@ -520,7 +522,8 @@ class Run(Command):
 
                         if durations > 0:
                             duration_set = Show._get_durations([(machine, result)], benchmark_set)
-                            log.info(cls.format_durations(duration_set[(machine, env.name)], durations))
+                            log.info(cls.format_durations(duration_set[(machine, env.name)],
+                                                          durations))
 
         if failures and strict:
             return 2
