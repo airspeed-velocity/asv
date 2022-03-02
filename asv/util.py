@@ -8,6 +8,7 @@ Various low-level utilities.
 import datetime
 import json
 import math
+from msilib.schema import Error
 import os
 import re
 import select
@@ -1188,7 +1189,7 @@ else:
                 pass
 
         # Reraise original error
-        reraise(*exc_info)
+        raise Error(*exc_info)
 
     def long_path_open(filename, *a, **kw):
         return open(long_path(filename), *a, **kw)

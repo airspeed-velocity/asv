@@ -5,9 +5,7 @@ import os
 import sys
 import locale
 import itertools
-
 from asv.console import _write_with_fallback, color_print, log
-
 import pytest
 
 
@@ -23,8 +21,6 @@ def test_write_with_fallback(tmpdir, capfd):
             stream = io.StringIO()
             _write_with_fallback(value, stream)
             assert stream.getvalue() == value
-
-
             # Check writing to a text stream
             buf = io.BytesIO()
             stream = io.TextIOWrapper(buf, encoding=stream_encoding)
