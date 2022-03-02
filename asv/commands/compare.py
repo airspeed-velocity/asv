@@ -138,8 +138,8 @@ class Compare(Command):
             pass
 
         if env_spec:
-            env_names = ([env.name for env in get_environments(conf, env_spec, verbose=False)]
-                         + list(env_spec))
+            env_names = ([env.name for env in get_environments(conf, env_spec, verbose=False)] +
+                         list(env_spec))
         else:
             env_names = None
 
@@ -158,7 +158,7 @@ class Compare(Command):
                         '/'.join(machines)))
             else:
                 machine = machines[0]
-        elif not machine in machines:
+        elif machine not in machines:
             raise util.UserError(
                 "Results for machine '{0} not found".format(machine))
 

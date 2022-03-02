@@ -84,7 +84,8 @@ class Continuous(Command):
     def run(cls, conf, branch=None, base=None,
             factor=None, split=False, only_changed=True, sort='ratio', use_stats=True,
             show_stderr=False, bench=None,
-            attribute=None, machine=None, env_spec=None, record_samples=False, append_samples=False,
+            attribute=None, machine=None, env_spec=None,
+            record_samples=False, append_samples=False,
             quick=False, interleave_rounds=None, launch_method=None, _machine_file=None,
             strict=False):
         repo = get_repo(conf)
