@@ -100,7 +100,7 @@ class Find(Command):
         elif len(benchmarks) > 1:
             exact_matches = benchmarks.filter_out([x for x in benchmarks if x != bench])
             if len(exact_matches) == 1:
-                log.warning("'{0}' matches more than one benchmark,"
+                log.warning("'{0}' matches more than one benchmark, "
                             "using exact match".format(bench))
                 benchmarks = exact_matches
             else:

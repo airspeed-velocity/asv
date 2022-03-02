@@ -214,7 +214,7 @@ class Run(Command):
             if dry_run:
                 raise util.UserError("--interleave-rounds and --dry-run cannot be used together")
             if has_existing_env:
-                raise util.UserError("--interleave-rounds cannot be used with"
+                raise util.UserError("--interleave-rounds cannot be used with "
                                      "existing environment (or python=same)")
         elif interleave_rounds is None:
             # Enable if possible
