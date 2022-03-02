@@ -23,10 +23,6 @@ import shlex
 import operator
 import collections
 import multiprocessing
-
-import six
-from six.moves import xrange
-
 from .extern import minify_json
 
 
@@ -250,7 +246,7 @@ def human_time(seconds, err=None):
         # nan
         return "n/a"
 
-    for i in xrange(len(units) - 1):
+    for i in range(len(units) - 1):
         if scale < units[i + 1][1]:
             str_time = human_float(seconds / units[i][1], 3, significant_zeros=True)
             if err is None:
@@ -904,7 +900,7 @@ def update_json(cls, path, api_version, compact=False):
             "No version specified in {0}.".format(path))
 
     if d['version'] < api_version:
-        for x in six.moves.xrange(d['version'] + 1, api_version + 1):
+        for x in range(d['version'] + 1, api_version + 1):
             d = getattr(cls, 'update_to_{0}'.format(x), lambda x: x)(d)
         write_json(path, d, api_version, compact=compact)
     elif d['version'] > api_version:
@@ -1192,7 +1188,7 @@ else:
                 pass
 
         # Reraise original error
-        six.reraise(*exc_info)
+        raise
 
     def long_path_open(filename, *a, **kw):
         return open(long_path(filename), *a, **kw)

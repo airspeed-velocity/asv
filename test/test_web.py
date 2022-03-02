@@ -7,7 +7,7 @@ import tempfile
 import contextlib
 from os.path import join, abspath, dirname
 
-from six.moves.urllib.parse import parse_qs, splitquery, splittag
+import urllib.parse
 
 import pytest
 import asv
@@ -320,9 +320,9 @@ def test_web_summarylist(browser, basic_html):
         assert m, cur_row2.text
 
         # Check link
-        base_href, qs = splitquery(base_link.get_attribute('href'))
-        base_url, tag = splittag(base_href)
-        assert parse_qs(qs) == {'ram': ['128GB'], 'cpu': ['Blazingly fast'],
+        base_href, qs = urllib.parse.splitquery(base_link.get_attribute('href'))
+        base_url, tag = urllib.parse.splittag(base_href)
+        assert urllib.parse.parse_qs(qs) == {'ram': ['128GB'], 'cpu': ['Blazingly fast'],
                                 'NUL': ['[none]']}
         assert tag == 'params_examples.track_find_test'
 

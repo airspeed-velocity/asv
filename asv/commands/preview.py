@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from six.moves import SimpleHTTPServer, socketserver
-
+import socketserver
+import http.server
 import errno
 import os
 import random
@@ -84,9 +84,9 @@ class Preview(Command):
     def run(cls, conf, port=0, browser=False):
         os.chdir(conf.html_dir)
 
-        class Handler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+        class Handler(http.server.SimpleHTTPRequestHandler):
             def translate_path(self, path):
-                path = SimpleHTTPServer.SimpleHTTPRequestHandler.translate_path(
+                path = http.server.SimpleHTTPRequestHandler.translate_path(
                     self, path)
                 return util.long_path(path)
 
