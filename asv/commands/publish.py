@@ -1,12 +1,9 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 import os
 import shutil
 import multiprocessing
 import datetime
 from collections import defaultdict
-
-import six
 
 from . import Command
 from ..benchmarks import Benchmarks

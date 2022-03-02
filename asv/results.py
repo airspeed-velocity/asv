@@ -8,8 +8,6 @@ import zlib
 import itertools
 import hashlib
 import datetime
-
-import six
 from six.moves import zip as izip
 
 from . import environment
@@ -181,7 +179,7 @@ def _compatible_results(result, result_params, params):
     return new_results
 
 
-class Results(object):
+class Results:
     """
     Manage a set of benchmark results for a single machine and commit
     hash.

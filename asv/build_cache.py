@@ -5,7 +5,7 @@ import os
 from . import util
 
 
-class BuildCache(object):
+class BuildCache:
     """
     Build cache
 

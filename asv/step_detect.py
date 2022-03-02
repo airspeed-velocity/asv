@@ -852,7 +852,7 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
     return right, values, dists
 
 
-class L1Dist(object):
+class L1Dist:
     """
     Fast computations for::
 

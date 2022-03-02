@@ -1,7 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import six
-
 import os
 import multiprocessing as mp
 import platform
@@ -29,7 +27,7 @@ def _get_unique_machine_name():
     return node
 
 
-class MachineCollection(object):
+class MachineCollection:
     """
     Stores information about 1 or more machines in the
     ~/.asv-machine.json file.
@@ -82,7 +80,7 @@ class MachineCollection(object):
             util.update_json(cls, path, cls.api_version)
 
 
-class Machine(object):
+class Machine:
     """
     Stores information about a particular machine.
     """
@@ -151,8 +149,7 @@ class Machine(object):
             'num_cpu': num_cpu,
             'arch': platform.machine(),
             'cpu': cpu,
-            'ram': ram
-            }
+            'ram': ram}
 
     @staticmethod
     def generate_machine_file(use_defaults=False):
@@ -175,7 +172,7 @@ class Machine(object):
             print(
                 textwrap.fill(
                     '{0}. {1}: {2}'.format(
-                        i+1, name, textwrap.dedent(description)),
+                        i + 1, name, textwrap.dedent(description)),
                     subsequent_indent='   '))
             values[name] = console.get_answer_default(name, defaults[name],
                                                       use_defaults=use_defaults)

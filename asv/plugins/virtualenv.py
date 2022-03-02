@@ -1,11 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 from distutils.version import LooseVersion
 import sys
 import re
 import os
-
-import six
 
 from .. import environment
 from ..console import log

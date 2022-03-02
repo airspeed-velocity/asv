@@ -1,11 +1,9 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 import datetime
 import os
 from os.path import abspath, dirname, join, isfile, isdir
 import shutil
 
-import six
 import pytest
 import xml.etree.ElementTree as etree
 try:

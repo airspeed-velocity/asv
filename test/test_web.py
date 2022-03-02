@@ -1,5 +1,4 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 import os
 import re
 import shutil
@@ -8,7 +7,6 @@ import tempfile
 import contextlib
 from os.path import join, abspath, dirname
 
-import six
 from six.moves.urllib.parse import parse_qs, splitquery, splittag
 
 import pytest
