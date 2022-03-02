@@ -16,7 +16,7 @@ ATOM_NS = "{http://www.w3.org/2005/Atom}"
 XML_NS = "{http://www.w3.org/XML/1998/namespace}"
 
 
-class FeedEntry(object):
+class FeedEntry:
     """
     Atom feed entry.
 

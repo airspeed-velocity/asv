@@ -193,7 +193,7 @@ def truncate_left(s, l):
         return s
 
 
-class Log(object):
+class Log:
     def __init__(self):
         self._indent = 1
         self._total = 0

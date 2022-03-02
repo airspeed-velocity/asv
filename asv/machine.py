@@ -27,7 +27,7 @@ def _get_unique_machine_name():
     return node
 
 
-class MachineCollection(object):
+class MachineCollection:
     """
     Stores information about 1 or more machines in the
     ~/.asv-machine.json file.
@@ -80,7 +80,7 @@ class MachineCollection(object):
             util.update_json(cls, path, cls.api_version)
 
 
-class Machine(object):
+class Machine:
     """
     Stores information about a particular machine.
     """

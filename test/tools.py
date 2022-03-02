@@ -168,7 +168,7 @@ def run_asv_with_conf(conf, *argv, **kwargs):
 # operations to the repository, and the others should be read-only for
 # safety.
 
-class Git(object):
+class Git:
     def __init__(self, path):
         self.path = abspath(path)
         self._git = util.which('git')
@@ -236,7 +236,7 @@ username = Robotic Swallow <robot@asv>
 """
 
 
-class Hg(object):
+class Hg:
     encoding = 'utf-8'
 
     def __init__(self, path):

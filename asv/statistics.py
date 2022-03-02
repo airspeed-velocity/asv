@@ -433,7 +433,7 @@ def binom(n, k):
     return num // den
 
 
-class LaplacePosterior(object):
+class LaplacePosterior:
     """
     Univariate distribution::
 

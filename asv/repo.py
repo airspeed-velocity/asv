@@ -12,7 +12,7 @@ class NoSuchNameError(RuntimeError):
     pass
 
 
-class Repo(object):
+class Repo:
     """
     Base class for repository handlers.
 

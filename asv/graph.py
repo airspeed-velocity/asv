@@ -19,7 +19,7 @@ from .util import is_na, mean_na, geom_mean_na
 RESAMPLED_POINTS = (3840 / 5 / 2)
 
 
-class GraphSet(object):
+class GraphSet:
     """Manage multiple `Graph`"""
 
     def __init__(self):
@@ -78,7 +78,7 @@ class GraphSet(object):
         return len(self._graphs)
 
 
-class Graph(object):
+class Graph:
     """
     Manages a single "line" in the resulting plots for the front end.
 
