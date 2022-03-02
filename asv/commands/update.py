@@ -4,7 +4,6 @@ import os
 import re
 
 from . import Command
-from ..config import Config
 from ..machine import Machine, MachineCollection
 from ..results import Results, get_filename
 from ..benchmarks import Benchmarks
