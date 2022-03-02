@@ -452,7 +452,7 @@ def resample_data(val, num_points=RESAMPLED_POINTS):
 
     new_val = []
     j = 0
-    for i in xrange(min_revision + step_size, max_revision + step_size, step_size):
+    for i in range(min_revision + step_size, max_revision + step_size, step_size):
         chunk = []
         while j < len(val) and val[j][0] < i:
             chunk.append(val[j][1])

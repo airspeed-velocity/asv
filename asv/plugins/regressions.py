@@ -151,7 +151,7 @@ class Regressions(OutputPublisher):
                     params['commits'] = '{0}-{1}'.format(revision_to_hash[rev1],
                                                          revision_to_hash[rev2])
 
-                link = 'index.html#{0}?{1}'.format(benchmark_name, urllib.parse.urlencode() (params))
+                link = 'index.html#{0}?{1}'.format(benchmark_name, urllib.parse.urlencode(params))
 
                 try:
                     best_percentage = "{0:.2f}%".format(100 * (last_value - best_value) / best_value)
