@@ -1,5 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import os
 from collections import defaultdict
 
 from . import Command
@@ -52,8 +53,8 @@ class Show(Command):
     def run(cls, conf, commit=None, bench=None, machine=None, env_spec=None,
             details=False, durations=False):
         if env_spec:
-            env_names = ([env.name for env in get_environments(conf, env_spec, verbose=False)] +
-                         list(env_spec))
+            env_names = ([env.name for env in get_environments(conf, env_spec, verbose=False)]
+                         + list(env_spec))
         else:
             env_names = None
 
@@ -254,8 +255,7 @@ class Show(Command):
                 total_duration = float("nan")
 
             if commits:
-                durations[(machine, result.env_name)][result.commit_hash] = (result.date,
-                                                                             total_duration)
+                durations[(machine, result.env_name)][result.commit_hash] = (result.date, total_duration)
 
         return durations
 

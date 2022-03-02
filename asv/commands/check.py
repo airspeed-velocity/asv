@@ -4,6 +4,8 @@
 from ..benchmarks import Benchmarks
 from . import Command
 from ..repo import get_repo
+from .setup import Setup
+from ..console import log
 
 from . import common_args
 from .. import environment
@@ -38,5 +40,6 @@ class Check(Command):
         repo = get_repo(conf)
 
         commit_hashes = []  # use fallback defaults
-        Benchmarks.discover(conf, repo, environments, commit_hashes, check=True)
+        benchmarks = Benchmarks.discover(conf, repo, environments, commit_hashes,
+                                         check=True)
         return 0

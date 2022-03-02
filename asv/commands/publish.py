@@ -32,7 +32,7 @@ def check_benchmark_params(name, benchmark):
     msg = "Information in benchmarks.json for benchmark %s is malformed" % (
         name)
     if (not isinstance(benchmark['params'], list) or
-            not isinstance(benchmark['param_names'], list)):
+        not isinstance(benchmark['param_names'], list)):
         raise ValueError(msg)
     if len(benchmark['params']) != len(benchmark['param_names']):
         raise ValueError(msg)
@@ -46,7 +46,8 @@ class Publish(Command):
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
             "publish", help="Collate results into a website",
-            description="""
+            description=
+            """
             Collate all results into a website.  This website will be
             written to the ``html_dir`` given in the ``asv.conf.json``
             file, and may be served using any static web server.""")
