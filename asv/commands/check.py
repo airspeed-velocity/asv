@@ -38,6 +38,6 @@ class Check(Command):
         repo = get_repo(conf)
 
         commit_hashes = []  # use fallback defaults
-        benchmarks = Benchmarks.discover(conf, repo, environments, commit_hashes,
+        Benchmarks.discover(conf, repo, environments, commit_hashes,
                                          check=True)
         return 0
