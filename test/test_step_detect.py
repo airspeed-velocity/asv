@@ -23,26 +23,6 @@ except ImportError:
     HAVE_RANGEMEDIAN = False
 
 
-@pytest.fixture(params=[
-    "python",
-    pytest.param("rangemedian", marks=pytest.mark.skipif(not HAVE_RANGEMEDIAN, reason="compiled asv._rangemedian required"))
-])
-def use_rangemedian(request):
-    if request.param == "rangemedian":
-        assert isinstance(step_detect.get_mu_dist([0], [1]), _rangemedian.RangeMedian)
-        return True
-    else:
-        step_detect._rangemedian = None
-
-        def restore():
-            if HAVE_RANGEMEDIAN:
-                step_detect._rangemedian = _rangemedian
-        request.addfinalizer(restore)
-
-        assert isinstance(step_detect.get_mu_dist([0], [1]), L1Dist)
-        return False
-
-
 @pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
 def test_solve_potts(use_rangemedian):
     np.random.seed(1234)

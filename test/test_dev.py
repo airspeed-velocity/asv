@@ -48,16 +48,6 @@ def generate_basic_conf(tmpdir, repo_subdir=''):
     return tmpdir, local, conf
 
 
-@pytest.fixture
-def basic_conf(tmpdir):
-    return generate_basic_conf(tmpdir)
-
-
-@pytest.fixture
-def basic_conf_with_subdir(tmpdir):
-    return generate_basic_conf(tmpdir, 'some_subdir')
-
-
 def test_dev(capsys, basic_conf):
     tmpdir, local, conf = basic_conf
 

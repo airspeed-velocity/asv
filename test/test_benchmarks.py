@@ -33,28 +33,6 @@ else:
     ON_PYPY = False
 
 
-@pytest.fixture
-def benchmarks_fixture(tmpdir):
-    tmpdir = str(tmpdir)
-    os.chdir(tmpdir)
-
-    shutil.copytree(BENCHMARK_DIR, 'benchmark')
-
-    d = {}
-    d.update(ASV_CONF_JSON)
-    d['env_dir'] = "env"
-    d['benchmark_dir'] = 'benchmark'
-    d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
-    d['branches'] = ["master"]
-    conf = config.Config.from_json(d)
-
-    repo = get_repo(conf)
-    envs = list(environment.get_environments(conf, None))
-    commit_hash = repo.get_hash_from_name(repo.get_branch_name())
-
-    return conf, repo, envs, commit_hash
-
-
 def test_discover_benchmarks(benchmarks_fixture):
     conf, repo, envs, commit_hash = benchmarks_fixture
 

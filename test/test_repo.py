@@ -196,62 +196,6 @@ def test_repo_hg(tmpdir):
         Hg.url_match = old_url_match
 
 
-@pytest.fixture(params=[
-    "git",
-    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib")),
-])
-def two_branch_repo_case(request, tmpdir):
-    r"""
-    This test ensure we follow the first parent in case of merges
-
-    The revision graph looks like this:
-
-        @  Revision 6 (default)
-        |
-        | o  Revision 5 (stable)
-        | |
-        | o  Merge master
-        |/|
-        o |  Revision 4
-        | |
-        o |  Merge stable
-        |\|
-        o |  Revision 3
-        | |
-        | o  Revision 2
-        |/
-        o  Revision 1
-
-    """
-    dvcs_type = request.param
-    tmpdir = str(tmpdir)
-    if dvcs_type == "git":
-        master = "master"
-    elif dvcs_type == "hg":
-        master = "default"
-    dvcs = tools.generate_repo_from_ops(tmpdir, dvcs_type, [
-        ("commit", 1),
-        ("checkout", "stable", master),
-        ("commit", 2),
-        ("checkout", master),
-        ("commit", 3),
-        ("merge", "stable"),
-        ("commit", 4),
-        ("checkout", "stable"),
-        ("merge", master, "Merge master"),
-        ("commit", 5),
-        ("checkout", master),
-        ("commit", 6),
-    ])
-
-    conf = config.Config()
-    conf.branches = [master, "stable"]
-    conf.repo = dvcs.path
-    conf.project = join(tmpdir, "repo")
-    r = repo.get_repo(conf)
-    return dvcs, master, r, conf
-
-
 def test_get_branch_commits(two_branch_repo_case):
     # Test that get_branch_commits() return an ordered list of commits (last
     # first) and follow first parent in case of merge

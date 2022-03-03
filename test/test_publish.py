@@ -143,28 +143,6 @@ def test_publish(tmpdir, example_results):
         assert item in index['graph_param_list']
 
 
-@pytest.fixture(params=[
-    "git",
-    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib")),
-])
-def generate_result_dir(request, tmpdir):
-    tmpdir = str(tmpdir)
-    dvcs_type = request.param
-
-    def _generate_result_dir(values, commits_without_result=None):
-        dvcs = tools.generate_repo_from_ops(
-            tmpdir, dvcs_type, [("commit", i) for i in range(len(values))])
-        commits = list(reversed(dvcs.get_branch_hashes()))
-        commit_values = {}
-        commits_without_result = [commits[i] for i in commits_without_result or []]
-        for commit, value in zip(commits, values):
-            if commit not in commits_without_result:
-                commit_values[commit] = value
-        conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
-        repo = get_repo(conf)
-        return conf, repo, commits
-    return _generate_result_dir
-
 def _graph_path(dvcs_type):
     if dvcs_type == "git":
         master = "master"
