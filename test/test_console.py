@@ -44,16 +44,6 @@ def test_write_with_fallback(tmpdir, capfd):
             with open(fn, 'rb') as stream:
                 got = stream.read()
                 assert got == expected
-
-            # Check writing to Py2 files
-            if stream_encoding == preferred_encoding:
-                # No stream encoding: write in locale encoding
-                for mode in ['w', 'wb']:
-                    with open(fn, mode) as stream:
-                        _write_with_fallback(value, stream)
-                    with open(fn, 'rb') as stream:
-                        got = stream.read()
-                        assert got == expected
         finally:
             locale.getpreferredencoding = old_getpreferredencoding
 

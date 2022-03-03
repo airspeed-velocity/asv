@@ -2,6 +2,9 @@
 
 import os
 import shutil
+
+from six.moves import input as raw_input
+
 from . import Command
 from ..console import log, color_print
 
@@ -48,7 +51,7 @@ class Quickstart(Command):
             color_print("(2) benchmark suite in a separate repository")
             color_print("")
             while True:
-                answer = input("Layout to use? [1/2] ")
+                answer = raw_input("Layout to use? [1/2] ")
                 if answer.lower()[:1] == "1":
                     top_level = True
                     break
