@@ -9,7 +9,6 @@ import textwrap
 from hashlib import sha256
 
 from asv import benchmarks
-from asv import benchmark
 from asv import config
 from asv import environment
 from asv import util
@@ -24,7 +23,7 @@ INVALID_BENCHMARK_DIR = join(
 
 ASV_CONF_JSON = {
     'project': 'asv'
-    }
+}
 
 if hasattr(sys, 'pypy_version_info'):
     ON_PYPY = True
@@ -70,12 +69,12 @@ def test_discover_benchmarks(benchmarks_fixture):
     assert len(b) == 36
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
-                              regex='time_example_benchmark_1')
+                                       regex='time_example_benchmark_1')
     assert len(b) == 2
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
-                              regex=['time_example_benchmark_1',
-                                     'some regexp that does not match anything'])
+                                       regex=['time_example_benchmark_1',
+                                       'some regexp that does not match anything'])
     assert len(b) == 2
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash], regex='custom')
@@ -133,7 +132,7 @@ def test_invalid_benchmark_tree(tmpdir):
     commit_hash = repo.get_hash_from_name(repo.get_branch_name())
 
     with pytest.raises(util.UserError):
-        b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
+        benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
 
 
 def test_find_benchmarks_cwd_imports(tmpdir):
