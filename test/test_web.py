@@ -8,7 +8,6 @@ from os.path import join, abspath, dirname
 import urllib.parse
 
 import pytest
-import asv
 
 from asv import config, util
 
