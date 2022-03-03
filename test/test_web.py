@@ -3,8 +3,6 @@ import os
 import re
 import shutil
 import time
-import tempfile
-import contextlib
 from os.path import join, abspath, dirname
 
 import urllib.parse
@@ -23,7 +21,7 @@ except ImportError:
     pass
 
 from . import tools
-from .tools import browser, get_with_retry, WAIT_TIME, locked_cache_dir, WIN
+from .tools import browser, get_with_retry, WAIT_TIME, locked_cache_dir, WIN  # noqa F401 '.tools.browser' imported but unused. The fixture 'browser' is necessary for several functions
 
 
 @pytest.fixture(scope="session")
