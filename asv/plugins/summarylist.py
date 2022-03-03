@@ -52,8 +52,7 @@ class SummaryList(OutputPublisher):
                     pretty_name = benchmark['pretty_name']
 
                 if idx is not None:
-                    pretty_name = '{0}({1})'.format(pretty_name,
-                                                    ", ".join(benchmark_param))
+                    pretty_name = f'{pretty_name}({", ".join(benchmark_param)})'
 
                 # Each environment parameter combination is reported
                 # separately on the summarylist page

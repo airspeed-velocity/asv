@@ -70,10 +70,10 @@ class Git(Repo):
         return util.check_output([self._git] + args, env=env, **kwargs)
 
     def get_new_range_spec(self, latest_result, branch=None):
-        return '{0}..{1}'.format(latest_result, self.get_branch_name(branch))
+        return f'{latest_result}..{self.get_branch_name(branch)}'
 
     def get_range_spec(self, commit_a, commit_b):
-        return '{0}..{1}'.format(commit_a, commit_b)
+        return f'{commit_a}..{commit_b}'
 
     def pull(self):
         # We assume the remote isn't updated during the run of asv
