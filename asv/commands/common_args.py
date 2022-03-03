@@ -153,7 +153,7 @@ def add_bench(parser):
         num_cpu = multiprocessing.cpu_count()
         for n in affinity_list:
             if not (0 <= n < num_cpu):
-                raise ValueError("CPU {!r} not in range 0-{!r}".format(n, num_cpu-1))
+                raise ValueError("CPU {!r} not in range 0-{!r}".format(n, num_cpu - 1))
 
         return affinity_list
 

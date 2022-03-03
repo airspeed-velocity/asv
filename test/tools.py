@@ -9,17 +9,16 @@ import io
 import os
 import threading
 import time
-import six
 import tempfile
 import textwrap
 import sys
 import shutil
 import subprocess
+import http.server
 
 from os.path import abspath, join, dirname, relpath, isdir
 from contextlib import contextmanager
 from hashlib import sha256
-from six.moves import SimpleHTTPServer
 from filelock import FileLock
 
 
@@ -554,8 +553,8 @@ def browser(request, pytestconfig):
         return selenium.webdriver.Chrome(options=options)
 
     ns = {}
-    six.exec_("import selenium.webdriver", ns)
-    six.exec_("from selenium.webdriver import *", ns)
+    exec("import selenium.webdriver", ns)
+    exec("from selenium.webdriver import *", ns)
     ns['FirefoxHeadless'] = FirefoxHeadless
     ns['ChromeHeadless'] = ChromeHeadless
 
@@ -563,7 +562,7 @@ def browser(request, pytestconfig):
     if create_driver is None:
         src = "def create_driver():\n"
         src += textwrap.indent(driver_str, "    ")
-        six.exec_(src, ns)
+        exec(src, ns)
         create_driver = ns['create_driver']
 
     # Create the browser
@@ -596,10 +595,10 @@ def preview(base_path):
 
     """
 
-    class Handler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+    class Handler(http.server.SimpleHTTPRequestHandler):
         def translate_path(self, path):
             # Don't serve from cwd, but from a different directory
-            path = SimpleHTTPServer.SimpleHTTPRequestHandler.translate_path(self, path)
+            path = http.server.SimpleHTTPRequestHandler.translate_path(self, path)
             path = os.path.join(base_path, os.path.relpath(path, os.getcwd()))
             return util.long_path(path)
 

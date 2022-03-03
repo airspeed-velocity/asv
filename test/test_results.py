@@ -4,9 +4,6 @@ import os
 import datetime
 import shutil
 from os.path import join
-
-import six
-
 from asv import results, runner, util
 import pytest
 from .tools import example_results # noqa F401 needed to load fixtures (see #1030)
@@ -31,7 +28,7 @@ def test_results(tmpdir):
     duration = 1.5
 
     resultsdir = join(tmpdir, "results")
-    for i in six.moves.xrange(10):
+    for i in range(10):
         r = results.Results(
             {'machine': 'foo',
              'arch': 'x86_64'},
