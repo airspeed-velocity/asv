@@ -94,7 +94,7 @@ def test_repo_git(tmpdir):
     tmpdir = str(tmpdir)
 
     dvcs = tools.generate_test_repo(tmpdir, list(range(10)), dvcs_type='git',
-                                    extra_branches=[('master~4', 'some-branch',[11, 12, 13])])
+                                    extra_branches=[('master~4', 'some-branch', [11, 12, 13])])
 
     mirror_dir = join(tmpdir, "repo")
 
@@ -156,8 +156,8 @@ def test_repo_hg(tmpdir):
 
     conf = config.Config()
 
-    dvcs = tools.generate_test_repo(tmpdir, list(range(10)), dvcs_type='hg', 
-                                    extra_branches=[('default~4', 'somebranch',[11, 12, 13])])
+    dvcs = tools.generate_test_repo(tmpdir, list(range(10)), dvcs_type='hg',
+                                    extra_branches=[('default~4', 'somebranch', [11, 12, 13])])
 
     mirror_dir = join(tmpdir, "repo")
 
@@ -355,7 +355,6 @@ def test_git_submodule(tmpdir):
     dvcs.commit('Remove sub1')
     commit_hash_5 = dvcs.get_hash("master")
 
-
     # Verify clean operation
     conf = config.Config()
     conf.branches = [None]
@@ -495,12 +494,12 @@ def test_filter_date_period(tmpdir, dvcs_type):
     r = repo.get_repo(conf)
 
     # Basic filtering
-    weekly_commits = r.filter_date_period(commits, 60*60*24*7)
+    weekly_commits = r.filter_date_period(commits, 60 * 60 * 24 * 7)
     assert weekly_commits == [commits[0], commits[2]]
 
-    daily_commits = r.filter_date_period(commits, 60*60*24)
+    daily_commits = r.filter_date_period(commits, 60 * 60 * 24)
     assert daily_commits == commits
 
     # Test with old_commits specified
-    monthly_commits = r.filter_date_period(commits[1:], 60*60*24*30, commits[:1])
+    monthly_commits = r.filter_date_period(commits[1:], 60 * 60 * 24 * 30, commits[:1])
     assert monthly_commits == []
