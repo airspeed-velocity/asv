@@ -88,7 +88,7 @@ class SummaryList(OutputPublisher):
                                 change_rev = [None, last_piece[0]]
                             else:
                                 # Revision range (left-exclusive)
-                                change_rev = [prev_piece[1]-1, last_piece[0]]
+                                change_rev = [prev_piece[1] - 1, last_piece[0]]
 
                     row = dict(name=benchmark_name,
                                idx=idx,
