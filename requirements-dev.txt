@@ -19,4 +19,3 @@ pytest-timeout
 feedparser
 python-hglib
 flake8
-
