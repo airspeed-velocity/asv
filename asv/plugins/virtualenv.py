@@ -171,5 +171,6 @@ class Virtualenv(environment.Environment):
         return self.run_executable('python', ['-mpip'] + list(args), **kwargs)
 
     def run(self, args, **kwargs):
-        log.debug(f"Running '{' '.join(args)}' in {self.name}")
+        joined_args = ' '.join(args)
+        log.debug(f"Running '{joined_args}' in {self.name}")
         return self.run_executable('python', args, **kwargs)
