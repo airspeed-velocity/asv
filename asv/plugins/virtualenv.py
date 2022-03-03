@@ -138,7 +138,7 @@ class Virtualenv(environment.Environment):
             self._executable,
             self._path], env=env)
 
-        log.info("Installing requirements for {self.name}")
+        log.info(f"Installing requirements for {self.name}")
         self._install_requirements()
 
     def _install_requirements(self):
