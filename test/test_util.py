@@ -1,6 +1,4 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import io
-import locale
 import os
 import sys
 import shutil
@@ -8,11 +6,9 @@ import pickle
 import multiprocessing
 import threading
 import traceback
-import time
 import datetime
 import pytest
 
-from asv import console
 from asv import util
 
 
@@ -58,7 +54,7 @@ def test_parallelfailure():
     pool = multiprocessing.Pool(4)
     try:
         pool.map(_multiprocessing_raise_processerror, range(10))
-    except util.ParallelFailure as exc:
+    except util.ParallelFailure:
         pass
     finally:
         pool.close()
@@ -73,7 +69,7 @@ def test_parallelfailure():
         finally:
             pool.close()
         assert False
-    except util.UserError as exc:
+    except util.UserError:
         # OK
         pass
 
@@ -201,7 +197,7 @@ def test_human_time():
         ("1.12s", 1.123),
         ("1.13s", 1.126),
         ("1.00m", 60),
-        ("2.00h", 3600*2),
+        ("2.00h", 3600 * 2),
         ("0s", 0),
         ("n/a", float("nan")),
 
@@ -254,9 +250,9 @@ def test_human_file_size():
 def test_parse_human_time():
     items = [
         # (value, expected)
-        ("1", 60*60*24),
-        ("1h", 60*60),
-        ("1w", 60*60*24*7),
+        ("1", 60 * 60 * 24),
+        ("1h", 60 * 60),
+        ("1w", 60 * 60 * 24 * 7),
     ]
 
     for value, expected in items:
@@ -362,7 +358,7 @@ def test_datetime_to_js_timestamp():
 
     # Check sub-second precision
     ms = 50
-    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 1000*ms)
+    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 1000 * ms)
     assert util.datetime_to_js_timestamp(ts) == ms
 
     # Check rounding
@@ -396,5 +392,5 @@ def test_check_output_exit_code(capsys):
 
 def test_geom_mean_na():
     for x in [[1, 2, -3], [1, 2, 3], [3, 1, 3, None, None]]:
-        expected = abs(x[0]*x[1]*x[2])**(1/3)
+        expected = abs(x[0] * x[1] * x[2])**(1 / 3)
         assert abs(util.geom_mean_na(x) - expected) < 1e-10
