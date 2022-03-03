@@ -25,7 +25,9 @@ except ImportError:
 
 @pytest.fixture(params=[
     "python",
-    pytest.param("rangemedian", marks=pytest.mark.skipif(not HAVE_RANGEMEDIAN, reason="compiled asv._rangemedian required"))
+    pytest.param("rangemedian",
+                 marks=pytest.mark.skipif(not HAVE_RANGEMEDIAN,
+                                          reason="compiled asv._rangemedian required"))
 ])
 def use_rangemedian(request):
     if request.param == "rangemedian":
@@ -49,51 +51,51 @@ def test_solve_potts(use_rangemedian):
 
     # Easy case, exact solver
     y = [1, 1, 1, 2, 2, 2, 3, 3, 3]
-    right, values, dists = solve_potts(y, w=[1]*len(y), gamma=0.1)
+    right, values, dists = solve_potts(y, w=[1] * len(y), gamma=0.1)
     assert right == [3, 6, 9]
     assert np.allclose(values, [1, 2, 3], atol=0)
 
-    right, values, dists = solve_potts(y, w=[1]*len(y), gamma=8.0)
+    right, values, dists = solve_potts(y, w=[1] * len(y), gamma=8.0)
     assert right == [9]
     assert np.allclose(values, [2], atol=0)
 
     # l1 norm
-    right, values, dists = solve_potts(y, w=[1]*len(y), gamma=0.1)
+    right, values, dists = solve_potts(y, w=[1] * len(y), gamma=0.1)
     assert right == [3, 6, 9]
     assert np.allclose(values, [1, 2, 3], atol=0)
 
     # Bigger case, exact solver
     t = np.arange(100)
-    y0 = (+ 0.4 * (t >= 5)
-          + 0.9 * (t >= 10)
-          - 0.2 * (t >= 20)
-          + 0.2 * (t >= 50)
-          + 1.1 * (t >= 70))
+    y0 = (+ 0.4 * (t >= 5) +
+          0.9 * (t >= 10) -
+          0.2 * (t >= 20) +
+          0.2 * (t >= 50) +
+          1.1 * (t >= 70))
     y = y0 + 0.05 * np.random.rand(y0.size)
-    right, values, dists = solve_potts(y.tolist(), w=[1]*len(y), gamma=0.1)
+    right, values, dists = solve_potts(y.tolist(), w=[1] * len(y), gamma=0.1)
     assert right == [5, 10, 20, 50, 70, 100]
 
     # Bigger case, approximative solver
-    right, values, dists = solve_potts_approx(y.tolist(), w=[1]*len(y), gamma=0.1)
+    right, values, dists = solve_potts_approx(y.tolist(), w=[1] * len(y), gamma=0.1)
     assert right == [5, 10, 20, 50, 70, 100]
 
     # Larger case
     t = np.arange(3000)
-    y0 = (+ 0.4 * (t >= 10)
-          + 0.9 * (t >= 30)
-          - 0.2 * (t >= 200)
-          + 0.2 * (t >= 600)
-          + 1.1 * (t >= 2500)
-          - 0.5 * (t >= 2990))
+    y0 = (+ 0.4 * (t >= 10) +
+          0.9 * (t >= 30) -
+          0.2 * (t >= 200) +
+          0.2 * (t >= 600) +
+          1.1 * (t >= 2500) -
+          0.5 * (t >= 2990))
 
     # Small amount of noise shouldn't disturb step finding
     y = y0 + 0.05 * np.random.randn(y0.size)
-    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), w=[1]*len(y))
+    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), w=[1] * len(y))
     assert right == [10, 30, 200, 600, 2500, 2990, 3000]
 
     # Large noise should prevent finding any steps
     y = y0 + 5.0 * np.random.randn(y0.size)
-    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), w=[1]*len(y))
+    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), w=[1] * len(y))
     assert right == [3000]
 
     # The routine shouldn't choke on datasets with 10k points.
@@ -102,7 +104,7 @@ def test_solve_potts(use_rangemedian):
     y = y0 + 0.025 * np.random.rand(y.size)
     ypad = 0.025 * np.random.randn(10000 - 3000)
     right, values, dists, gamma = solve_potts_autogamma(y.tolist() + ypad.tolist(),
-                                                        w=[1]*(len(y)+len(ypad)))
+                                                        w=[1] * (len(y) + len(ypad)))
     assert right == [10, 30, 200, 600, 2500, 2990, 3000, 10000]
 
 
@@ -111,15 +113,15 @@ def test_autocorrelated():
     # Check that a low-amplitude cosine signal is not interpreted as
     # multiple steps
     j = np.arange(1000)
-    y = 0.2 * np.cos(j/100.0) + 1.0 * (j >= 500)
-    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), w=[1]*len(y))
+    y = 0.2 * np.cos(j / 100.0) + 1.0 * (j >= 500)
+    right, values, dists, gamma = solve_potts_autogamma(y.tolist(), w=[1] * len(y))
     assert right == [500, 1000]
 
 
 def test_zero_variance():
     # Should not choke on this data
-    y = [1.0]*1000
-    right, values, dists, gamma = solve_potts_autogamma(y, w=[1]*len(y))
+    y = [1.0] * 1000
+    right, values, dists, gamma = solve_potts_autogamma(y, w=[1] * len(y))
     assert right == [1000]
 
 
@@ -128,15 +130,15 @@ def test_weighted():
     np.random.seed(1234)
 
     t = np.arange(100)
-    y0 = (+ 0.4 * (t >= 5)
-          + 0.9 * (t >= 10)
-          - 0.2 * (t >= 20)
-          + 0.2 * (t >= 50)
-          + 1.1 * (t >= 70))
+    y0 = (+ 0.4 * (t >= 5) +
+          0.9 * (t >= 10) -
+          0.2 * (t >= 20) +
+          0.2 * (t >= 50) +
+          1.1 * (t >= 70))
     y = y0 + 0.05 * np.random.rand(y0.size)
 
     y = y.tolist()
-    w = [1]*len(y)
+    w = [1] * len(y)
 
     y[15] = 2
     right, values, dists = solve_potts(y, w=w, gamma=0.1)
@@ -197,7 +199,7 @@ def test_detect_regressions(use_rangemedian):
 
         # The expected mean error is 0.7 <|U(0,1) - 1/2|> = 0.7/4
         steps_err = [x[4] for x in steps]
-        assert np.allclose(steps_err, [0.7/4]*7, rtol=0.3)
+        assert np.allclose(steps_err, [0.7 / 4] * 7, rtol=0.3)
 
         # Check detect_regressions
         new_value, best_value, regression_pos = detect_regressions(steps)
@@ -205,14 +207,15 @@ def test_detect_regressions(use_rangemedian):
                                    steps_v[1], min(steps_v[2:])),
                                   (3499 + (seed % 71), 3499 + (seed % 71) + 1,
                                    steps_v[4], min(steps_v[5:]))]
-        assert np.allclose(best_value, 0.7/2 - 0.3, rtol=0.3, atol=0)
-        assert np.allclose(new_value, 0.7/2 - 0.3 + 2, rtol=0.3, atol=0)
+        assert np.allclose(best_value, 0.7 / 2 - 0.3, rtol=0.3, atol=0)
+        assert np.allclose(new_value, 0.7 / 2 - 0.3 + 2, rtol=0.3, atol=0)
+
 
 def test_golden_search():
     def f(x):
         return 1 + x**3 + x**4
     x = golden_search(f, -1, -0.25, xatol=1e-5, ftol=0)
-    assert abs(x - (-3/4)) < 1e-4
+    assert abs(x - (-3 / 4)) < 1e-4
     x = golden_search(f, -0.25, 0.25, xatol=1e-5, ftol=0)
     assert abs(x - (-0.25)) < 1e-4
 
@@ -245,8 +248,8 @@ def test_l1dist(use_rangemedian):
     random.seed(1)
 
     datasets = [
-        ([1, 1, 10, 3, 5, 1, -16, -3, 4, 9], [1]*10),
-        ([random.gauss(0, 1) for j in range(50)], [1]*50),
+        ([1, 1, 10, 3, 5, 1, -16, -3, 4, 9], [1] * 10),
+        ([random.gauss(0, 1) for j in range(50)], [1] * 50),
         ([1, 2, 3, 4], [1, 2, 1, 2])
     ]
 
@@ -257,7 +260,7 @@ def test_l1dist(use_rangemedian):
         else:
             for j in range(1, len(y) + 1):
                 m = step_detect.weighted_median(y[:j], w[:j])
-                d = sum(ww*abs(yy - m) for yy, ww in zip(y[:j], w[:j]))
+                d = sum(ww * abs(yy - m) for yy, ww in zip(y[:j], w[:j]))
                 yield m, d
 
     for y, w in datasets:
@@ -275,9 +278,9 @@ def test_l1dist(use_rangemedian):
 
 
 def test_regression_threshold():
-    steps = [(0, 1,   1.0, 1.0, 0.0),
-             (1, 2,   1.1, 1.1, 0.0),
-             (2, 3,   2.0, 2.0, 0.0)]
+    steps = [(0, 1, 1.0, 1.0, 0.0),
+             (1, 2, 1.1, 1.1, 0.0),
+             (2, 3, 2.0, 2.0, 0.0)]
 
     latest, best, pos = detect_regressions(steps, threshold=0.05, min_size=1)
     assert latest == 2
@@ -295,24 +298,24 @@ def test_regression_threshold():
     assert pos == [(1, 2, 1.1, 2.0)]
 
     latest, best, pos = detect_regressions(steps, threshold=1.1, min_size=1)
-    assert latest == None
-    assert best == None
-    assert pos == None
+    assert latest is None
+    assert best is None
+    assert pos is None
 
-    steps = [(0, 1,   1.0, 1.0, 0.0),
-             (1, 2,   1.3, 1.3, 0.0),
-             (2, 3,   1.1, 1.1, 0.0)]
+    steps = [(0, 1, 1.0, 1.0, 0.0),
+             (1, 2, 1.3, 1.3, 0.0),
+             (2, 3, 1.1, 1.1, 0.0)]
 
     latest, best, pos = detect_regressions(steps, threshold=0.2, min_size=1)
-    assert latest == None
-    assert best == None
-    assert pos == None
+    assert latest is None
+    assert best is None
+    assert pos is None
 
     # Gradual change should result to a regression detected somewhere,
     # even if the individual steps are smaller than the threshold
-    steps = [(0, 1,   1.0, 1.0, 0.0),
-             (1, 2,   1.04, 1.04, 0.0),
-             (2, 3,   1.08, 1.08, 0.0),]
+    steps = [(0, 1, 1.0, 1.0, 0.0),
+             (1, 2, 1.04, 1.04, 0.0),
+             (2, 3, 1.08, 1.08, 0.0)]
 
     latest, best, pos = detect_regressions(steps, threshold=0.05)
     assert pos == [(0, 1, 1.0, 1.04)]
@@ -336,9 +339,9 @@ def test_zero_weight():
 
 
 def test_regression_min_size():
-    steps = [(0, 2,   1.0, 1.0, 0.0),
-             (2, 3,   0.0, 0.0, 0.0),
-             (3, 5,   1.0, 1.0, 0.0)]
+    steps = [(0, 2, 1.0, 1.0, 0.0),
+             (2, 3, 0.0, 0.0, 0.0),
+             (3, 5, 1.0, 1.0, 0.0)]
 
     latest, best, pos = detect_regressions(steps)
     assert latest is None and best is None and pos is None
@@ -348,9 +351,9 @@ def test_regression_min_size():
     assert best == 0.0
     assert pos == [(2, 3, 0.0, 1.0)]
 
-    steps = [(0, 2,   1.0, 1.0, 0.0),
-             (2, 3,   0.0, 0.0, 0.0),
-             (3, 5,   2.0, 1.0, 0.0)]
+    steps = [(0, 2, 1.0, 1.0, 0.0),
+             (2, 3, 0.0, 0.0, 0.0),
+             (3, 5, 2.0, 1.0, 0.0)]
 
     latest, best, pos = detect_regressions(steps)
     assert latest == 2.0
