@@ -4,7 +4,6 @@
 from ..benchmarks import Benchmarks
 from . import Command
 from ..repo import get_repo
-from .setup import Setup
 from ..console import log
 
 from . import common_args
