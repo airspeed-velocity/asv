@@ -32,8 +32,7 @@ class Git(Repo):
 
             # Clone is missing
             log.info("Cloning project")
-            self._run_git(['clone', '--mirror', url, self._path],
-                           cwd=None)
+            self._run_git(['clone', '--mirror', url, self._path], cwd=None)
 
     @classmethod
     def is_local_repo(cls, path):
@@ -65,8 +64,8 @@ class Git(Repo):
         if cwd is not None:
             prev = env.get('GIT_CEILING_DIRECTORIES')
             env['GIT_CEILING_DIRECTORIES'] = os.pathsep.join(
-                [os.path.join(os.path.abspath(cwd), os.pardir)]
-                + ([prev] if prev is not None else []))
+                [os.path.join(os.path.abspath(cwd), os.pardir)] +
+                ([prev] if prev is not None else []))
         return util.check_output([self._git] + args, env=env, **kwargs)
 
     def get_new_range_spec(self, latest_result, branch=None):
@@ -149,7 +148,7 @@ class Git(Repo):
                                  display_error=False).strip()
             if not name:
                 return None
-        except util.ProcessError as err:
+        except util.ProcessError:
             # Failed to obtain.
             return None
 
