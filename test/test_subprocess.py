@@ -34,8 +34,7 @@ sys.stderr.write("Stderr before waiting\n")
 sys.stdout.flush()
 sys.stderr.flush()
 subprocess.call([sys.executable, "-c",
-    "import sys, subprocess; subprocess.call(
-        [sys.executable, '-c', 'import time; time.sleep(360)'])"])
+    "import sys, subprocess; subprocess.call([sys.executable, '-c', 'import time; time.sleep(360)'])"])
 sys.stdout.write("Stdout after waiting\n")
 sys.stderr.write("Stderr after waiting\n")
     """)
@@ -95,7 +94,7 @@ for j in range(3):
     time.sleep(1.0)
 """
     output = util.check_output([sys.executable, "-c", code], timeout=1.5)
-    assert output == '.' * 3
+    assert output == '.'*3
 
     try:
         util.check_output([sys.executable, "-c", code], timeout=0.5)
@@ -159,7 +158,7 @@ def test_large_output():
     # More data than a pipe buffer can hold
     data = util.check_output([sys.executable, "-c",
                               "import sys; [sys.stdout.write('x'*1000) for j in range(5000)]"])
-    assert data == 'x' * 5000000
+    assert data == 'x'*5000000
 
 
 # This *does* seem to work, only seems untestable somehow...
