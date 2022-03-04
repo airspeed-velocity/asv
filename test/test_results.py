@@ -6,6 +6,7 @@ import shutil
 from os.path import join
 from asv import results, runner, util
 import pytest
+from .tools import example_results # noqa F401 needed to load fixtures (see #1030)
 
 
 def _truncate_floats(item, digits=5):

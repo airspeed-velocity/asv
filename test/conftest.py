@@ -1,11 +1,16 @@
 import os
 import contextlib
-from os.path import abspath, join, dirname
-from .tools import run_asv_with_conf
 import pytest
+from os.path import join
 from asv import config
-import shutil
-from .tools import locked_cache_dir
+from asv import repo
+
+try:
+    import hglib
+except ImportError:
+    hglib = None
+
+from . import tools
 
 
 def pytest_addoption(parser):
@@ -50,25 +55,57 @@ def _monkeypatch_conda_lock(config):
     asv.plugins.conda._conda_lock = _conda_lock
 
 
-@pytest.fixture(scope="session")
-def example_results(request):
-    with locked_cache_dir(request.config, "example-results") as cache_dir:
-        src = abspath(join(dirname(__file__), 'example_results'))
-        dst = abspath(join(cache_dir, 'results'))
+@pytest.fixture(params=[
+    "git",
+    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib")),
+])
+def two_branch_repo_case(request, tmpdir):
+    r"""
+    This test ensure we follow the first parent in case of merges
 
-        if os.path.isdir(dst):
-            return dst
+    The revision graph looks like this:
 
-        shutil.copytree(src, dst)
+        @  Revision 6 (default)
+        |
+        | o  Revision 5 (stable)
+        | |
+        | o  Merge master
+        |/|
+        o |  Revision 4
+        | |
+        o |  Merge stable
+        |\|
+        o |  Revision 3
+        | |
+        | o  Revision 2
+        |/
+        o  Revision 1
 
-        src_machine = join(dirname(__file__), 'asv-machine.json')
-        dst_machine = join(cache_dir, 'asv-machine.json')
-        shutil.copyfile(src_machine, dst_machine)
+    """
+    dvcs_type = request.param
+    tmpdir = str(tmpdir)
+    if dvcs_type == "git":
+        master = "master"
+    elif dvcs_type == "hg":
+        master = "default"
+    dvcs = tools.generate_repo_from_ops(tmpdir, dvcs_type, [
+        ("commit", 1),
+        ("checkout", "stable", master),
+        ("commit", 2),
+        ("checkout", master),
+        ("commit", 3),
+        ("merge", "stable"),
+        ("commit", 4),
+        ("checkout", "stable"),
+        ("merge", master, "Merge master"),
+        ("commit", 5),
+        ("checkout", master),
+        ("commit", 6),
+    ])
 
-        # Convert to current file format
-        conf = config.Config.from_json({'results_dir': dst,
-                                        'repo': 'none',
-                                        'project': 'asv'})
-        run_asv_with_conf(conf, 'update', _machine_file=dst_machine)
-
-        return dst
+    conf = config.Config()
+    conf.branches = [master, "stable"]
+    conf.repo = dvcs.path
+    conf.project = join(tmpdir, "repo")
+    r = repo.get_repo(conf)
+    return dvcs, master, r, conf

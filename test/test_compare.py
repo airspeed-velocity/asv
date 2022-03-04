@@ -11,7 +11,7 @@ from asv import util
 from asv.commands.compare import Compare
 
 from . import tools
-
+from .tools import example_results
 
 try:
     import hglib
@@ -101,7 +101,7 @@ x           1.00s            3.00s     3.00  time_with_version_mismatch_other
 REFERENCE_ONLY_CHANGED = """
        before           after         ratio
      [22b920c6]       [fcf8c079]
-     <name1>          <name2>
+     <name1>          <name2>   
 !             n/a           failed      n/a  params_examples.ParamSuite.track_value
 !           454μs           failed      n/a  time_coordinates.time_latitude
 !           3.00s           failed      n/a  time_other.time_parameterized(3)
@@ -131,7 +131,7 @@ REFERENCE_ONLY_CHANGED_MULTIENV = """
 +           1.00s            3.00s     3.00  time_with_version_match [cheetah/py2.7-numpy1.8]
 +           1.00s            3.00s     3.00  time_with_version_mismatch_bench [cheetah/py2.7-numpy1.8]
 -          69.1μs           18.3μs     0.27  time_units.time_unit_to [cheetah/py2.7-numpy1.8]
-""" # noqa
+"""
 
 REFERENCE_ONLY_CHANGED_NOSTATS = """
        before           after         ratio
