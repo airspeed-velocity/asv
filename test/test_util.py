@@ -12,7 +12,6 @@ import time
 import datetime
 import pytest
 
-from asv import console
 from asv import util
 
 
