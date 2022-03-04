@@ -8,7 +8,6 @@ import pickle
 import multiprocessing
 import threading
 import traceback
-import time
 import datetime
 import pytest
 
