@@ -507,30 +507,6 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None, updated=None):
 
 
 @pytest.fixture(scope="session")
-def example_results(request):
-    with locked_cache_dir(request.config, "example-results") as cache_dir:
-        src = abspath(join(dirname(__file__), 'example_results'))
-        dst = abspath(join(cache_dir, 'results'))
-
-        if os.path.isdir(dst):
-            return dst
-
-        shutil.copytree(src, dst)
-
-        src_machine = join(dirname(__file__), 'asv-machine.json')
-        dst_machine = join(cache_dir, 'asv-machine.json')
-        shutil.copyfile(src_machine, dst_machine)
-
-        # Convert to current file format
-        conf = config.Config.from_json({'results_dir': dst,
-                                        'repo': 'none',
-                                        'project': 'asv'})
-        run_asv_with_conf(conf, 'update', _machine_file=dst_machine)
-
-        return dst
-
-
-@pytest.fixture(scope="session")
 def browser(request, pytestconfig):
     """
     Fixture for Selenium WebDriver browser interface
