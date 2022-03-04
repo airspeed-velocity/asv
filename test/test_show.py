@@ -7,13 +7,13 @@ import textwrap
 from asv import config
 
 from . import tools
-from .tools import example_results
 
 import pytest
 
 
 BENCHMARK_DIR = abspath(join(dirname(__file__), 'example_results'))
 MACHINE_FILE = abspath(join(dirname(__file__), 'asv-machine.json'))
+
 
 @pytest.fixture
 def show_fixture(tmpdir, example_results):

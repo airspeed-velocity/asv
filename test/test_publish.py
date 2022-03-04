@@ -18,7 +18,6 @@ from asv.repo import get_repo
 
 
 from . import tools
-from .tools import example_results
 
 BENCHMARK_DIR = abspath(join(dirname(__file__), 'benchmark'))
 
@@ -35,7 +34,7 @@ def test_publish(tmpdir, example_results):
     result_files = [fn for fn in os.listdir(join(example_results, 'cheetah'))
                     if fn.endswith('.json') and fn != 'machine.json']
     result_files.sort()
-    master_values = list(range(len(result_files)*2//3))
+    master_values = list(range(len(result_files) * 2 // 3))
     branch_values = list(range(len(master_values), len(result_files)))
     dvcs = tools.generate_test_repo(tmpdir, master_values, 'git',
                                     [('master~6', 'some-branch', branch_values)])
@@ -133,7 +132,7 @@ def test_publish(tmpdir, example_results):
                             'os': 'Linux (Fedora 20)',
                             'python': '2.7',
                             'ram': '8.2G'}
-                            for cython in ["", None] for branch in ["master", "some-branch"]]
+                           for cython in ["", None] for branch in ["master", "some-branch"]]
     d = dict(expected_graph_list[0])
     d['ram'] = 8804682956.8
     expected_graph_list.append(d)
@@ -165,6 +164,7 @@ def generate_result_dir(request, tmpdir):
         return conf, repo, commits
     return _generate_result_dir
 
+
 def _graph_path(dvcs_type):
     if dvcs_type == "git":
         master = "master"
@@ -190,8 +190,7 @@ def test_regression_simple(generate_result_dir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, 10.0, 1.0,
-        [[None, 5, 1.0, 10.0]]
-    ]]}
+                [[None, 5, 1.0, 10.0]]]]}
     assert regressions == expected
 
 
@@ -200,8 +199,7 @@ def test_regression_range(generate_result_dir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, 10.0, 1.0,
-                                 [[4, 6, 1.0, 10.0]],
-    ]]}
+                                 [[4, 6, 1.0, 10.0]]]]}
     assert regressions == expected
 
 
@@ -218,8 +216,7 @@ def test_regression_double(generate_result_dir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, 15.0, 1.0,
-        [[None, 5, 1.0, 10.0], [None, 10, 10.0, 15.0]],
-    ]]}
+                [[None, 5, 1.0, 10.0], [None, 10, 10.0, 15.0]]]]}
     assert regressions == expected
 
 
@@ -242,8 +239,7 @@ def test_regression_first_commits(generate_result_dir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, 10.0, 1.0,
-                                 [[None, 5, 1.0, 10.0]]
-    ]]}
+                                 [[None, 5, 1.0, 10.0]]]]}
     assert regressions == expected
 
 
@@ -329,11 +325,13 @@ def test_regression_non_monotonic(dvcs_type, tmpdir):
     tmpdir = str(tmpdir)
     now = datetime.datetime.now()
 
-    dates = [now + datetime.timedelta(days=i) for i in range(5)] + [now - datetime.timedelta(days=i) for i in range(5)]
+    dates = [now + datetime.timedelta(days=i)
+             for i in range(5)] + [now - datetime.timedelta(days=i) for i in range(5)]
     # last commit in the past
     dates[-1] = now - datetime.timedelta(days=1)
 
-    dvcs = tools.generate_repo_from_ops(tmpdir, dvcs_type, [("commit", i, d) for i, d in enumerate(dates)])
+    dvcs = tools.generate_repo_from_ops(tmpdir, dvcs_type, [("commit", i, d)
+                                        for i, d in enumerate(dates)])
     commits = list(reversed(dvcs.get_branch_hashes()))
     commit_values = {}
     for commit, value in zip(commits, 5 * [1] + 5 * [2]):
@@ -353,16 +351,14 @@ def test_regression_threshold(generate_result_dir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None,
-                                  2.0, 1.0, [[None, 5, 1.0, 1.1], [None, 10, 1.1, 2.0]],
-    ]]}
+                                2.0, 1.0, [[None, 5, 1.0, 1.1], [None, 10, 1.1, 2.0]]]]}
     assert regressions == expected
 
     conf.regressions_thresholds = {'.*': 0, 'time_func.*': 0.2}
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, 2.0, 1.0,
-                                 [[None, 10, 1.1, 2.0]]
-    ]]}
+                                 [[None, 10, 1.1, 2.0]]]]}
     assert regressions == expected
 
 
@@ -405,7 +401,7 @@ def test_regression_atom_feed_update(dvcs_type, tmpdir):
     # Check that adding new commits which only change values preserves
     # feed entry ids
     tmpdir = str(tmpdir)
-    values = 5 * [1] + 5 * [10] + 5*[15.70, 15.31]
+    values = 5 * [1] + 5 * [10] + 5 * [15.70, 15.31]
     dvcs = tools.generate_repo_from_ops(
         tmpdir, dvcs_type, [("commit", i) for i in range(len(values))])
     commits = list(reversed(dvcs.get_branch_hashes()))
