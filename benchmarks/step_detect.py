@@ -6,7 +6,7 @@ except ImportError:
 
 class Simple:
     def setup(self):
-        self.y = ([1]*20 + [2]*30)*50
+        self.y = ([1] * 20 + [2] * 30) * 50
 
     if hasattr(step_detect, 'detect_steps'):
         def time_detect_regressions(self):
