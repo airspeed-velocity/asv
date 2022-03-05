@@ -25,7 +25,7 @@ from .test_benchmarks import benchmarks_fixture, ASV_CONF_JSON, BENCHMARK_DIR
 ON_PYPY = hasattr(sys, 'pypy_version_info')
 
 
-class ResultsWrapper(object):
+class ResultsWrapper:
     tuple_type = collections.namedtuple('tuple_type', ['result', 'stats', 'samples',
                                                        'params', 'stderr', 'errcode',
                                                        'profile', 'started_at', 'duration'])
@@ -198,7 +198,7 @@ def test_skip_param_selection():
     d.update(ASV_CONF_JSON)
     conf = config.Config.from_json(d)
 
-    class DummyEnv(object):
+    class DummyEnv:
         name = 'env'
 
     d = [

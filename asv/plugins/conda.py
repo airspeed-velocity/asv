@@ -1,12 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 import re
 import os
 import tempfile
 import contextlib
-import multiprocessing
-
-import six
 
 from .. import environment
 from ..console import log
@@ -21,6 +17,7 @@ WIN = (os.name == "nt")
 # Hence, serialize the calls to it.
 
 util.new_multiprocessing_lock("conda_lock")
+
 
 def _conda_lock():
     # function; for easier monkeypatching
@@ -180,11 +177,13 @@ class Conda(environment.Environment):
                                     env=env)
             except Exception:
                 if env_file_name != env_file.name:
-                    log.info("conda env create/update failed: in {} with file {}".format(self._path, env_file_name))
+                    log.info("conda env create/update failed: "
+                             "in {} with file {}".format(self._path, env_file_name))
                 elif os.path.isfile(env_file_name):
                     with open(env_file_name, 'r') as f:
                         text = f.read()
-                    log.info("conda env create/update failed: in {} with:\n{}".format(self._path, text))
+                    log.info("conda env create/update failed: "
+                             "in {} with:\n{}".format(self._path, text))
                 raise
         finally:
             os.unlink(env_file.name)

@@ -100,7 +100,8 @@ class Find(Command):
         elif len(benchmarks) > 1:
             exact_matches = benchmarks.filter_out([x for x in benchmarks if x != bench])
             if len(exact_matches) == 1:
-                log.warning("'{0}' matches more than one benchmark, using exact match".format(bench))
+                log.warning("'{0}' matches more than one benchmark, "
+                            "using exact match".format(bench))
                 benchmarks = exact_matches
             else:
                 log.error("'{0}' matches more than one benchmark".format(bench))
@@ -173,7 +174,7 @@ class Find(Command):
                     if denom == 0:
                         denom = 1.0
                     if invert:
-                        denom*=-1.0
+                        denom *= -1.0
 
                     results_ab.append((va - vb) / denom)
                     results_bc.append((vb - vc) / denom)
@@ -218,7 +219,6 @@ class Find(Command):
                             raise util.UserError("Too many commits failed")
 
             diff_b, diff_a = difference_3way(hi_result, mid_result, lo_result)
-
 
             if diff_a >= diff_b:
                 return do_search(lo, mid)

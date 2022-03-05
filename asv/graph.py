@@ -3,8 +3,6 @@
 import os
 import traceback
 import math
-from six.moves import xrange
-
 from . import util
 from . import step_detect
 
@@ -19,7 +17,7 @@ from .util import is_na, mean_na, geom_mean_na
 RESAMPLED_POINTS = (3840 / 5 / 2)
 
 
-class GraphSet(object):
+class GraphSet:
     """Manage multiple `Graph`"""
 
     def __init__(self):
@@ -78,7 +76,7 @@ class GraphSet(object):
         return len(self._graphs)
 
 
-class Graph(object):
+class Graph:
     """
     Manages a single "line" in the resulting plots for the front end.
 
@@ -183,7 +181,7 @@ class Graph(object):
             if not v:
                 return [None] * self.n_series
             return [mean_na(x[j] for x in v)
-                    for j in xrange(self.n_series)]
+                    for j in range(self.n_series)]
 
         # Average data over commit log
         val = []
@@ -196,14 +194,14 @@ class Graph(object):
 
         # Discard missing data at edges
         i = 0
-        for i in xrange(len(val)):
+        for i in range(len(val)):
             if any(not is_na(v) for v in val[i][1]):
                 break
         else:
             i = len(val)
 
         j = i
-        for j in xrange(len(val) - 1, i, -1):
+        for j in range(len(val) - 1, i, -1):
             if any(not is_na(v) for v in val[j][1]):
                 break
 
@@ -454,7 +452,7 @@ def resample_data(val, num_points=RESAMPLED_POINTS):
 
     new_val = []
     j = 0
-    for i in xrange(min_revision + step_size, max_revision + step_size, step_size):
+    for i in range(min_revision + step_size, max_revision + step_size, step_size):
         chunk = []
         while j < len(val) and val[j][0] < i:
             chunk.append(val[j][1])

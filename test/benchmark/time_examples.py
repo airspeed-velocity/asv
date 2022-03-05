@@ -47,7 +47,7 @@ def time_with_timeout():
 time_with_timeout.timeout = 0.1
 
 
-class TimeWithRepeat(object):
+class TimeWithRepeat:
     # Check that setup is re-run on each repeat
     called = None
     number = 1
@@ -70,7 +70,7 @@ class TimeWithRepeat(object):
         self.count += 1
 
 
-class TimeWithRepeatCalibrate(object):
+class TimeWithRepeatCalibrate:
     # Check that setup is re-run on each repeat, apart from
     # autodetection of suitable `number`
     repeat = 1
@@ -84,7 +84,7 @@ class TimeWithRepeatCalibrate(object):
         pass
 
 
-class TimeWithBadTimer(object):
+class TimeWithBadTimer:
     # Check that calibration of number is robust against bad timers
     repeat = 1
     number = 0

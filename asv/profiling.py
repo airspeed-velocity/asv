@@ -1,6 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-class ProfilerGui(object):
+class ProfilerGui:
     """
     A base class to define a Profiler GUI that is available through
     the ``asv profile`` command.

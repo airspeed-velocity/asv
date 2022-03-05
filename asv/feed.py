@@ -16,7 +16,7 @@ ATOM_NS = "{http://www.w3.org/2005/Atom}"
 XML_NS = "{http://www.w3.org/XML/1998/namespace}"
 
 
-class FeedEntry(object):
+class FeedEntry:
     """
     Atom feed entry.
 
@@ -220,4 +220,4 @@ def _get_id(owner, date, content):
 
     if date is None:
         date = datetime.datetime(1970, 1, 1)
-    return "tag:{0},{1}:/{2}".format(owner, date.strftime('%Y-%m-%d'), h.hexdigest())
+    return f"tag:{owner},{date.strftime('%Y-%m-%d')}:/{h.hexdigest()}"

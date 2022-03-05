@@ -33,7 +33,7 @@ def test_graph_single():
     g.add_data_point(4, 5)
     data = g.get_data()
     assert data[3][0] == 4
-    assert abs(data[3][1] - (3 + 4 + 5)/3.) < 1e-10
+    assert abs(data[3][1] - (3 + 4 + 5) / 3.) < 1e-10
 
     # Summary graph should be the same as the main graph
     g = Graph('foo', {})
@@ -52,13 +52,13 @@ def test_graph_single():
 
 def test_graph_multi():
     vals = [
-        (0, [None, None, None], [None]*3),
-        (1, [1, None, float('nan')], [None]*3),
-        (2, [2,    5, 4], [1]*3),
-        (3, [3,    4, -60], [None]*3),
-        (4, [4,    3, 2], [None]*3),
-        (5, [None, 2, None], [None]*3),
-        (6, [6,    1, None], [None]*3)
+        (0, [None, None, None], [None] * 3),
+        (1, [1, None, float('nan')], [None] * 3),
+        (2, [2, 5, 4], [1] * 3),
+        (3, [3, 4, -60], [None] * 3),
+        (4, [4, 3, 2], [None] * 3),
+        (5, [None, 2, None], [None] * 3),
+        (6, [6, 1, None], [None] * 3)
     ]
 
     filled_vals = [
@@ -86,9 +86,9 @@ def test_graph_multi():
     g.add_data_point(4, [3, 2, 1])
     data = g.get_data()
     assert data[3][0] == 4
-    assert abs(data[3][1][0] - (1 + 4 + 3)/3.) < 1e-10
-    assert abs(data[3][1][1] - (2 + 3 + 2)/3.) < 1e-10
-    assert abs(data[3][1][2] - (3 + 2 + 1)/3.) < 1e-10
+    assert abs(data[3][1][0] - (1 + 4 + 3) / 3.) < 1e-10
+    assert abs(data[3][1][1] - (2 + 3 + 2) / 3.) < 1e-10
+    assert abs(data[3][1][2] - (3 + 2 + 1) / 3.) < 1e-10
 
     # The summary graph is obtained by geometric mean of filled data
     g = Graph('foo', {})
@@ -216,7 +216,7 @@ def test__combine_graph_data():
             g1.add_data_point(i, None)
         g2.add_data_point(i, i)
         if i <= 2:
-            g3.add_data_point(i, [-i, -2*i])
+            g3.add_data_point(i, [-i, -2 * i])
 
     x, ys = _combine_graph_data([g1, g2, g3])
     assert x == [0, 1, 2, 3, 4]
@@ -236,8 +236,8 @@ def test_graph_steps():
 
     steps = g.get_steps()
     lastval = steps[1][4]
-    assert abs(lastval - 1e-5/5.0) < 1e-10
-    assert steps == [(1, 8+1, 1.0, 1.0, 0), (11, 18+1, 2.0, 2.0, lastval)]
+    assert abs(lastval - 1e-5 / 5.0) < 1e-10
+    assert steps == [(1, 8 + 1, 1.0, 1.0, 0), (11, 18 + 1, 2.0, 2.0, lastval)]
 
     multi_g = Graph('foo', {})
     for x, y in vals:

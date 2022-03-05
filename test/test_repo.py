@@ -1,9 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 import os
 from os.path import join
 
-import six
 import pytest
 import tempfile
 import shutil
@@ -96,7 +94,7 @@ def test_repo_git(tmpdir):
     tmpdir = str(tmpdir)
 
     dvcs = tools.generate_test_repo(tmpdir, list(range(10)), dvcs_type='git',
-                                    extra_branches=[('master~4', 'some-branch',[11, 12, 13])])
+                                    extra_branches=[('master~4', 'some-branch', [11, 12, 13])])
 
     mirror_dir = join(tmpdir, "repo")
 
@@ -158,8 +156,8 @@ def test_repo_hg(tmpdir):
 
     conf = config.Config()
 
-    dvcs = tools.generate_test_repo(tmpdir, list(range(10)), dvcs_type='hg', 
-                                    extra_branches=[('default~4', 'somebranch',[11, 12, 13])])
+    dvcs = tools.generate_test_repo(tmpdir, list(range(10)), dvcs_type='hg',
+                                    extra_branches=[('default~4', 'somebranch', [11, 12, 13])])
 
     mirror_dir = join(tmpdir, "repo")
 
@@ -196,62 +194,6 @@ def test_repo_hg(tmpdir):
     finally:
         Hg.is_local_repo = old_local_method
         Hg.url_match = old_url_match
-
-
-@pytest.fixture(params=[
-    "git",
-    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib")),
-])
-def two_branch_repo_case(request, tmpdir):
-    r"""
-    This test ensure we follow the first parent in case of merges
-
-    The revision graph looks like this:
-
-        @  Revision 6 (default)
-        |
-        | o  Revision 5 (stable)
-        | |
-        | o  Merge master
-        |/|
-        o |  Revision 4
-        | |
-        o |  Merge stable
-        |\|
-        o |  Revision 3
-        | |
-        | o  Revision 2
-        |/
-        o  Revision 1
-
-    """
-    dvcs_type = request.param
-    tmpdir = str(tmpdir)
-    if dvcs_type == "git":
-        master = "master"
-    elif dvcs_type == "hg":
-        master = "default"
-    dvcs = tools.generate_repo_from_ops(tmpdir, dvcs_type, [
-        ("commit", 1),
-        ("checkout", "stable", master),
-        ("commit", 2),
-        ("checkout", master),
-        ("commit", 3),
-        ("merge", "stable"),
-        ("commit", 4),
-        ("checkout", "stable"),
-        ("merge", master, "Merge master"),
-        ("commit", 5),
-        ("checkout", master),
-        ("commit", 6),
-    ])
-
-    conf = config.Config()
-    conf.branches = [master, "stable"]
-    conf.repo = dvcs.path
-    conf.project = join(tmpdir, "repo")
-    r = repo.get_repo(conf)
-    return dvcs, master, r, conf
 
 
 def test_get_branch_commits(two_branch_repo_case):
@@ -356,8 +298,6 @@ def test_git_submodule(tmpdir):
     dvcs.run_git(['rm', '-f', 'sub1'])
     dvcs.commit('Remove sub1')
     commit_hash_5 = dvcs.get_hash("master")
-
-
     # Verify clean operation
     conf = config.Config()
     conf.branches = [None]
@@ -497,12 +437,12 @@ def test_filter_date_period(tmpdir, dvcs_type):
     r = repo.get_repo(conf)
 
     # Basic filtering
-    weekly_commits = r.filter_date_period(commits, 60*60*24*7)
+    weekly_commits = r.filter_date_period(commits, 60 * 60 * 24 * 7)
     assert weekly_commits == [commits[0], commits[2]]
 
-    daily_commits = r.filter_date_period(commits, 60*60*24)
+    daily_commits = r.filter_date_period(commits, 60 * 60 * 24)
     assert daily_commits == commits
 
     # Test with old_commits specified
-    monthly_commits = r.filter_date_period(commits[1:], 60*60*24*30, commits[:1])
+    monthly_commits = r.filter_date_period(commits[1:], 60 * 60 * 24 * 30, commits[:1])
     assert monthly_commits == []

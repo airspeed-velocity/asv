@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from six.moves import SimpleHTTPServer, socketserver
-
+import socketserver
+import http.server
 import errno
 import os
 import random
@@ -25,8 +25,8 @@ def random_ports(port, n):
         port = 8080
         for i in range(min(5, n)):
             yield port + i
-        for i in range(n-5):
-            yield max(1, port + random.randint(-2*n, 2*n))
+        for i in range(n - 5):
+            yield max(1, port + random.randint(-2 * n, 2 * n))
 
 
 def create_httpd(handler_cls, port=0):
@@ -84,9 +84,9 @@ class Preview(Command):
     def run(cls, conf, port=0, browser=False):
         os.chdir(conf.html_dir)
 
-        class Handler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+        class Handler(http.server.SimpleHTTPRequestHandler):
             def translate_path(self, path):
-                path = SimpleHTTPServer.SimpleHTTPRequestHandler.translate_path(
+                path = http.server.SimpleHTTPRequestHandler.translate_path(
                     self, path)
                 return util.long_path(path)
 

@@ -1,11 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 import os
 import sys
-import six
 import pytest
 import json
-from collections import defaultdict
 
 from asv import config
 from asv import environment
@@ -312,7 +309,8 @@ def test_iter_env_matrix_combinations():
                     for item in expected]
         for m in expected:
             m['python', None] = "2.6"
-        result = _sorted_dict_list(environment.iter_matrix(conf.environment_type, conf.pythons, conf))
+        result = _sorted_dict_list(environment.iter_matrix(conf.environment_type,
+                                                           conf.pythons, conf))
         assert result == _sorted_dict_list(expected)
 
 
@@ -344,8 +342,8 @@ def test_conda_pip_install(tmpdir, dummy_packages):
 def test_conda_environment_file(tmpdir, dummy_packages):
     env_file_name = str(tmpdir.join("environment.yml"))
     with open(env_file_name, "w") as temp_environment_file:
-        temp_environment_file.write(
-                'name: test_conda_envs\ndependencies:\n  - asv_dummy_test_package_2')
+        temp_environment_file.write('name: test_conda_envs\ndependencies:'
+                                    '\n  - asv_dummy_test_package_2')
 
     conf = config.Config()
     conf.env_dir = str(tmpdir.join("env"))
@@ -419,7 +417,9 @@ def test_environment_select():
         assert items == [('conda', '1.9'), ('conda', PYTHON_VER1), ('virtualenv', PYTHON_VER1)]
 
         # Check specific python specifiers
-        environments = list(environment.get_environments(conf, ["conda:3.5", "virtualenv:"+PYTHON_VER1]))
+        environments = list(environment.get_environments(conf,
+                                                         ["conda:3.5",
+                                                          "virtualenv:" + PYTHON_VER1]))
         items = sorted((env.tool_name, env.python) for env in environments)
         assert items == [('conda', '3.5'), ('virtualenv', PYTHON_VER1)]
 
@@ -437,7 +437,9 @@ def test_environment_select():
     for env in environments:
         assert env.tool_name == "existing"
         assert env.python == "{0[0]}.{0[1]}".format(sys.version_info)
-        assert os.path.normcase(os.path.abspath(env._executable)) == os.path.normcase(os.path.abspath(sys.executable))
+        assert os.path.normcase(
+            os.path.abspath(env._executable)
+        ) == os.path.normcase(os.path.abspath(sys.executable))
 
     # Select by environment name
     conf.pythons = ["2.7"]
@@ -521,7 +523,7 @@ def test_matrix_existing():
 @pytest.mark.parametrize("channel_list,expected_channel", [
     (["defaults", "conda-forge"], "pkgs/main"),
     (["conda-forge", "defaults"], "conda-forge"),
-    ])
+])
 def test_conda_channel_addition(tmpdir,
                                 channel_list,
                                 expected_channel):
@@ -566,6 +568,7 @@ def test_conda_channel_addition(tmpdir,
             print(installed_package)
             assert installed_package['channel'] == expected_channel
 
+
 @pytest.mark.skipif(not (HAS_PYPY and HAS_VIRTUALENV), reason="Requires pypy and virtualenv")
 def test_pypy_virtualenv(tmpdir):
     # test that we can setup a pypy environment
@@ -601,8 +604,10 @@ def test_environment_name_sanitization():
 
 
 @pytest.mark.parametrize("environment_type", [
-    pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="needs conda and conda-build")),
-    pytest.param("virtualenv", marks=pytest.mark.skipif(not HAS_VIRTUALENV, reason="needs virtualenv"))
+    pytest.param("conda",
+                 marks=pytest.mark.skipif(not HAS_CONDA, reason="needs conda and conda-build")),
+    pytest.param("virtualenv",
+                 marks=pytest.mark.skipif(not HAS_VIRTUALENV, reason="needs virtualenv"))
 ])
 def test_environment_environ_path(environment_type, tmpdir, monkeypatch):
     # Check that virtualenv binary dirs are in the PATH
@@ -775,8 +780,8 @@ def test_installed_commit_hash(tmpdir):
     env.create()
 
     # Check updating installed_commit_hash
-    assert env.installed_commit_hash == None
-    assert env._global_env_vars.get('ASV_COMMIT') == None
+    assert env.installed_commit_hash is None
+    assert env._global_env_vars.get('ASV_COMMIT') is None
     env.install_project(conf, repo, commit_hash)
     assert env.installed_commit_hash == commit_hash
     assert env._global_env_vars.get('ASV_COMMIT') == commit_hash
@@ -787,17 +792,17 @@ def test_installed_commit_hash(tmpdir):
 
     # Configuration change results to reinstall
     env._project = "something"
-    assert env.installed_commit_hash == None
+    assert env.installed_commit_hash is None
 
     # Uninstall resets hash (but not ASV_COMMIT)
     env = get_env()
     env._uninstall_project()
-    assert env.installed_commit_hash == None
-    assert env._global_env_vars.get('ASV_COMMIT') != None
+    assert env.installed_commit_hash is None
+    assert env._global_env_vars.get('ASV_COMMIT') is not None
 
     env = get_env()
-    assert env.installed_commit_hash == None
-    assert env._global_env_vars.get('ASV_COMMIT') == None
+    assert env.installed_commit_hash is None
+    assert env._global_env_vars.get('ASV_COMMIT') is None
 
 
 def test_install_success(tmpdir):
@@ -912,8 +917,9 @@ def test__parse_exclude_include_rule():
     cases = [
         ({"python": "2.6", "environment_type": "conda", "sys_platform": "123",
           "env": {"A": "B"}, "env_nobuild": {"C": "D"}, "req": {"foo": "9"}},
-         {("python", None): "2.6", ("environment_type", None): "conda", ("sys_platform", None): "123",
-          ("env", "A"): "B", ("env_nobuild", "C"): "D", ("req", "foo"): "9"})
+         {("python", None): "2.6", ("environment_type", None): "conda",
+          ("sys_platform", None): "123", ("env", "A"): "B",
+          ("env_nobuild", "C"): "D", ("req", "foo"): "9"})
     ]
     for rule, expected in cases:
         parsed = environment._parse_exclude_include_rule(rule)
@@ -931,7 +937,8 @@ def test__parse_exclude_include_rule_invalid():
 
 
 def test__parse_matrix_entries():
-    entries =  {("python", None): "2.6",  ("env", "A"): "B", ("env_nobuild", "C"): "D", ("req", "foo"): "9"}
+    entries = {("python", None): "2.6", ("env", "A"): "B",
+               ("env_nobuild", "C"): "D", ("req", "foo"): "9"}
     python, requirements, tagged_env_vars = environment._parse_matrix_entries(entries)
     assert python == "2.6"
     assert requirements == {"foo": "9"}

@@ -420,7 +420,7 @@ def _repr_no_address(obj):
     return result
 
 
-class Benchmark(object):
+class Benchmark:
     """
     Represents a single benchmark.
     """
@@ -737,7 +737,7 @@ class TimeBenchmark(Benchmark):
         return samples, number
 
 
-class _SeparateProcessTimer(object):
+class _SeparateProcessTimer:
     subprocess_tmpl = textwrap.dedent('''
         from __future__ import print_function
         from timeit import timeit, default_timer as timer
@@ -862,7 +862,7 @@ benchmark_types = [
 ]
 
 
-class SpecificImporter(object):
+class SpecificImporter:
     """
     Module importer that only allows loading a given module from the
     given path.
