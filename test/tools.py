@@ -42,11 +42,7 @@ from asv.plugins.conda import _find_conda
 
 
 # Two Python versions for testing
-PYTHON_VER1 = "{0[0]}.{0[1]}".format(sys.version_info)
-if sys.version_info < (3,):
-    PYTHON_VER2 = "3.6"
-else:
-    PYTHON_VER2 = "2.7"
+PYTHON_VER1, PYTHON_VER2 = '3.7', '3.10'
 
 # Installable library versions to use in tests
 DUMMY1_VERSION = "0.14"
