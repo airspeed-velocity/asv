@@ -236,6 +236,8 @@ class Hg:
 
     def __init__(self, path):
         self._fake_date = datetime.datetime.now()
+        if isinstance(path, bytes):
+            path = path.decode('utf-8')
         self.path = abspath(path)
         self._repo = None
 
