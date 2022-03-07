@@ -38,7 +38,6 @@ subprocess.call([sys.executable,
                  "import sys, 
                  subprocess; 
                  subprocess.call([sys.executable, '-c', 'import time; time.sleep(360)'])"])
-
 sys.stdout.write("Stdout after waiting\n")
 sys.stderr.write("Stderr after waiting\n")
     """)
