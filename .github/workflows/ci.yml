@@ -36,5 +36,5 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        build-command: "sphinx-build -b html . _build"
+        build-command: "sphinx-build -W docs/source html"
         docs-folder: "docs/"
