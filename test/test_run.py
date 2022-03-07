@@ -31,14 +31,6 @@ def basic_conf_with_subdir(tmpdir, dummy_packages):
     return generate_basic_conf(tmpdir, 'some_subdir')
 
 
-@pytest.fixture
-def existing_env_conf(tmpdir):
-    tmpdir, local, conf, machine_file = generate_basic_conf(tmpdir)
-    conf.environment_type = "existing"
-    conf.pythons = ["same"]
-    return tmpdir, local, conf, machine_file
-
-
 def test_set_commit_hash(capsys, existing_env_conf):
     tmpdir, local, conf, machine_file = existing_env_conf
 
