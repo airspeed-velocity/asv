@@ -7,10 +7,10 @@ setuptools
 wheel
 # Optional requirements follow:
 numpy
-scipy
+scipy; platform_python_implementation != "PyPy"
 selenium
 pytest-xdist
-pytest-rerunfailures>=8.0
+pytest-rerunfailures>=10.0
 pytest-timeout
 feedparser
 python-hglib
