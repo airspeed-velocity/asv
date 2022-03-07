@@ -295,8 +295,8 @@ def test_laplace_posterior_basic():
 
 def test_laplace_posterior_cdf():
     # Test the LaplacePosterior cdf vs pdf
-    integrate = pytest.importorskip("scipy.integrate")
     np = pytest.importorskip("numpy")
+    integrate = pytest.importorskip("scipy.integrate")
 
     np.random.seed(1)
     y = np.random.randn(15).tolist()
