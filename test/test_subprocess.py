@@ -34,7 +34,9 @@ sys.stderr.write("Stderr before waiting\n")
 sys.stdout.flush()
 sys.stderr.flush()
 subprocess.call([sys.executable, "-c",
-    "import sys, subprocess; subprocess.call([sys.executable, '-c', 'import time; time.sleep(360)'])"])  # noqa E501 line too long
+    "import sys, subprocess; subprocess.call([sys.executable,
+                                              '-c',
+                                              'import time; time.sleep(360)'])"])
 sys.stdout.write("Stdout after waiting\n")
 sys.stderr.write("Stderr after waiting\n")
     """)
