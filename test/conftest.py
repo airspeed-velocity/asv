@@ -128,4 +128,3 @@ def existing_env_conf(tmpdir):
     conf.environment_type = "existing"
     conf.pythons = ["same"]
     return tmpdir, local, conf, machine_file
-
