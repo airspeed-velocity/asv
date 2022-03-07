@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
       - name: Run tests
-        run: pytest
+        run: pytest -s  test/test_quickstart.py
   
   flake8-formatting:
     name: code linting with flake8
