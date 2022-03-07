@@ -1,12 +1,11 @@
 import os
+import shutil
 import contextlib
 import pytest
-from os.path import join
+from os.path import join, abspath, dirname
 from asv import config
 from asv import repo
 from .test_workflow import generate_basic_conf
-import shutil
-from os.path import abspath, dirname
 from .tools import locked_cache_dir, run_asv_with_conf
 
 try:
@@ -113,6 +112,16 @@ def two_branch_repo_case(request, tmpdir):
     conf.project = join(tmpdir, "repo")
     r = repo.get_repo(conf)
     return dvcs, master, r, conf
+
+
+@pytest.fixture
+def basic_conf(tmpdir, dummy_packages):
+    return generate_basic_conf(tmpdir)
+
+
+@pytest.fixture
+def basic_conf_with_subdir(tmpdir, dummy_packages):
+    return generate_basic_conf(tmpdir, 'some_subdir')
 
 
 @pytest.fixture
