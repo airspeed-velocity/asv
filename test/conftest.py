@@ -4,6 +4,8 @@ import pytest
 from os.path import join
 from asv import config
 from asv import repo
+from .test_workflow import generate_basic_conf
+
 
 try:
     import hglib
@@ -109,3 +111,12 @@ def two_branch_repo_case(request, tmpdir):
     conf.project = join(tmpdir, "repo")
     r = repo.get_repo(conf)
     return dvcs, master, r, conf
+
+
+@pytest.fixture
+def existing_env_conf(tmpdir):
+    tmpdir, local, conf, machine_file = generate_basic_conf(tmpdir)
+    conf.environment_type = "existing"
+    conf.pythons = ["same"]
+    return tmpdir, local, conf, machine_file
+
