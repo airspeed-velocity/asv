@@ -4,7 +4,7 @@ import pytest
 from os.path import join
 from asv import config
 from asv import repo
-from .test_workflow import basic_conf, generate_basic_conf
+from .test_workflow import generate_basic_conf
 
 try:
     import hglib
