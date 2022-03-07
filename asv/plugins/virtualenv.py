@@ -37,7 +37,7 @@ class Virtualenv(environment.Environment):
         executable = Virtualenv._find_python(python)
         if executable is None:
             raise environment.EnvironmentUnavailable(
-                "No executable found for python {0}".format(python))
+                f"No executable found for python {python}")
 
         self._executable = executable
         self._python = python
@@ -48,7 +48,7 @@ class Virtualenv(environment.Environment):
                                          tagged_env_vars)
 
         try:
-            import virtualenv
+            import virtualenv # noqa F401 unused, but required to test whether virtualenv is installed or not
         except ImportError:
             raise environment.EnvironmentUnavailable(
                 "virtualenv package not installed")
@@ -67,7 +67,7 @@ class Virtualenv(environment.Environment):
                 python_version = python[4:]
         else:
             python_version = python
-            executable = "python{0}".format(python_version)
+            executable = f"python{python_version}"
 
         # Find Python executable on path
         try:
@@ -77,8 +77,8 @@ class Virtualenv(environment.Environment):
 
         # Maybe the current one is correct?
         current_is_pypy = hasattr(sys, 'pypy_version_info')
-        current_versions = ['{0[0]}'.format(sys.version_info),
-                            '{0[0]}.{0[1]}'.format(sys.version_info)]
+        current_versions = [f'{sys.version_info[0]}',
+                            f'{sys.version_info[0]}.{sys.version_info[1]}']
 
         if is_pypy == current_is_pypy and python_version in current_versions:
             return sys.executable
@@ -130,7 +130,7 @@ class Virtualenv(environment.Environment):
         env = dict(os.environ)
         env.update(self.build_env_vars)
 
-        log.info("Creating virtualenv for {0}".format(self.name))
+        log.info(f"Creating virtualenv for {self.name}")
         util.check_call([
             sys.executable,
             "-mvirtualenv",
@@ -138,7 +138,7 @@ class Virtualenv(environment.Environment):
             self._executable,
             self._path], env=env)
 
-        log.info("Installing requirements for {0}".format(self.name))
+        log.info(f"Installing requirements for {self.name}")
         self._install_requirements()
 
     def _install_requirements(self):
@@ -160,7 +160,7 @@ class Virtualenv(environment.Environment):
                     pkg = key[4:]
 
                 if val:
-                    args.append("{0}=={1}".format(pkg, val))
+                    args.append(f"{pkg}=={val}")
                 else:
                     args.append(pkg)
             self._run_pip(args, timeout=self._install_timeout, env=env)
@@ -171,5 +171,6 @@ class Virtualenv(environment.Environment):
         return self.run_executable('python', ['-mpip'] + list(args), **kwargs)
 
     def run(self, args, **kwargs):
-        log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
+        joined_args = ' '.join(args)
+        log.debug(f"Running '{joined_args}' in {self.name}")
         return self.run_executable('python', args, **kwargs)

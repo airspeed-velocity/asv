@@ -52,8 +52,8 @@ class SummaryList(OutputPublisher):
                     pretty_name = benchmark['pretty_name']
 
                 if idx is not None:
-                    pretty_name = '{0}({1})'.format(pretty_name,
-                                                    ", ".join(benchmark_param))
+                    bench_param = ", ".join(benchmark_param)
+                    pretty_name = f'{pretty_name}({bench_param})'
 
                 # Each environment parameter combination is reported
                 # separately on the summarylist page
@@ -88,7 +88,7 @@ class SummaryList(OutputPublisher):
                                 change_rev = [None, last_piece[0]]
                             else:
                                 # Revision range (left-exclusive)
-                                change_rev = [prev_piece[1]-1, last_piece[0]]
+                                change_rev = [prev_piece[1] - 1, last_piece[0]]
 
                     row = dict(name=benchmark_name,
                                idx=idx,

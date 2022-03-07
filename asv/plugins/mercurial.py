@@ -9,7 +9,7 @@ import sys
 import re
 try:
     import hglib
-except ImportError as exc:
+except ImportError:
     hglib = None
 
 from ..console import log
@@ -91,7 +91,7 @@ class Hg(Repo):
         return False
 
     def get_range_spec(self, commit_a, commit_b):
-        return '{0}::{1} and not {0}'.format(commit_a, commit_b, commit_a)
+        return '{0}::{1} and not {0}'.format(commit_a, commit_b)
 
     def get_new_range_spec(self, latest_result, branch=None):
         return '{0}::{1}'.format(latest_result, self.get_branch_name(branch))

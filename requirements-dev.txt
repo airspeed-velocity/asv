@@ -18,3 +18,4 @@ pytest-faulthandler<2.0; platform_python_implementation == "PyPy"
 pytest-timeout
 feedparser
 python-hglib
+flake8
