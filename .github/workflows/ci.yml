@@ -29,3 +29,12 @@ jobs:
         run: pip install flake8
       - name: Check code with flake8
         run: flake8 .
+
+  docs:
+    name: docs check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        build-command: "sphinx-build -b html . _build"
+        docs-folder: "docs/"
