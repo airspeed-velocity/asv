@@ -152,15 +152,11 @@ class Compare(Command):
             raise util.UserError("No results found")
         elif machine is None:
             if len(machines) > 1:
-                raise util.UserError(
-                    "Results available for several machines: {0} - "
-                    "specify which one to use with the --machine option".format(
-                        '/'.join(machines)))
+                raise util.UserError(f"{'/'.join(machines)}")
             else:
                 machine = machines[0]
         elif machine not in machines:
-            raise util.UserError(
-                "Results for machine '{0} not found".format(machine))
+            raise util.UserError(f"{machine}")
 
         commit_names = {hash_1: repo.get_name_from_hash(hash_1),
                         hash_2: repo.get_name_from_hash(hash_2)}
@@ -228,12 +224,10 @@ class Compare(Command):
                 versions_2[(name, machine_env_name)] = version
 
         if len(results_1) == 0:
-            raise util.UserError(
-                "Did not find results for commit {0}".format(hash_1))
+            raise util.UserError(f"{hash_1}")
 
         if len(results_2) == 0:
-            raise util.UserError(
-                "Did not find results for commit {0}".format(hash_2))
+            raise util.UserError ( f"{hash_2}")
 
         benchmarks_1 = set(results_1.keys())
         benchmarks_2 = set(results_2.keys())
@@ -283,7 +277,7 @@ class Compare(Command):
             else:
                 try:
                     ratio_num = time_2 / time_1
-                    ratio = "{0:6.2f}".format(ratio_num)
+                    ratio = f"{ratio_num}"
                 except ZeroDivisionError:
                     ratio_num = 1e9
                     ratio = "n/a"
@@ -376,18 +370,18 @@ class Compare(Command):
 
             name_1 = commit_names.get(hash_1)
             if name_1:
-                name_1 = '<{0}>'.format(name_1)
+                name_1 = f"{name_1}"
             else:
                 name_1 = ''
 
             name_2 = commit_names.get(hash_2)
             if name_2:
-                name_2 = '<{0}>'.format(name_2)
+                name_2 = f"{name_2}"
             else:
                 name_2 = ''
 
             if name_1 or name_2:
-                color_print("     {0:10s}       {1:10s}".format(name_1, name_2))
+                color_print= f"{name_1}/{name_2}"
 
             if sort == 'ratio':
                 bench[key].sort(key=lambda v: v[3], reverse=True)
@@ -398,7 +392,7 @@ class Compare(Command):
 
             for color, details, benchmark, ratio in bench[key]:
                 if len(machine_env_names) > 1:
-                    benchmark_name = "{} [{}]".format(*benchmark)
+                    benchmark_name = "f{*benchmark}"
                 else:
                     benchmark_name = benchmark[0]
 
