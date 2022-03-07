@@ -11,7 +11,6 @@ from asv import util
 from asv.commands.compare import Compare
 
 from . import tools
-from .tools import example_results
 
 try:
     import hglib
