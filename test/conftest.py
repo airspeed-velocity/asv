@@ -11,6 +11,7 @@ from .test_workflow import generate_basic_conf
 from .tools import (locked_cache_dir, run_asv_with_conf, _build_dummy_wheels,
                     WAIT_TIME, DUMMY1_VERSION, DUMMY2_VERSIONS, WIN, HAS_CONDA,
                     PYTHON_VER1, PYTHON_VER2)
+from .test_web import _rebuild_basic_html
 
 
 try:
@@ -257,3 +258,10 @@ def dummy_packages(request, monkeypatch):
             f.write("channels:\n"
                     "- defaults\n"
                     "- {0}".format(wheel_dir_str))
+
+
+def basic_html(request):
+    with locked_cache_dir(request.config, "asv-test_web-basic_html", timeout=900) as cache_dir:
+        tmpdir = join(str(cache_dir), 'cached')
+        html_dir, dvcs = _rebuild_basic_html(tmpdir)
+        return html_dir, dvcs
