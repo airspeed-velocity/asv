@@ -1,49 +1,11 @@
-#!/usr/bin/env python
-
-from setuptools import setup, Extension
-from setuptools.command.test import test as TestCommand
-from setuptools.command.sdist import sdist
-from setuptools.command.build_ext import build_ext
-
-from distutils.errors import DistutilsError, CCompilerError, DistutilsExecError, DistutilsPlatformError
-
+import ast
 import os
 import subprocess
-import sys
-import ast
 
-
-# A py.test test command
-class PyTest(TestCommand):
-    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test"),
-                    ('coverage', 'c', "Generate coverage report")]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.pytest_args = ''
-        self.coverage = False
-
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-
-        # The following is required for setuptools<18.4
-        try:
-            self.test_args = []
-        except AttributeError:
-            # fails on setuptools>=18.4
-            pass
-        self.test_suite = 'unused'
-
-    def run_tests(self):
-        import pytest
-        test_args = ['test']
-        if self.pytest_args:
-            test_args += self.pytest_args.split()
-        if self.coverage:
-            test_args += ['--cov', os.path.abspath('asv')]
-        errno = pytest.main(test_args)
-        if errno != 0:
-            raise DistutilsError("Tests failed")
+from setuptools import Extension, setup
+from setuptools.command.build_ext import build_ext
+from setuptools.command.sdist import sdist
+from setuptools.errors import CCompilerError, ExecError, PlatformError
 
 
 class sdist_checked(sdist):
@@ -168,13 +130,13 @@ class optional_build_ext(build_ext):
     def run(self):
         try:
             build_ext.run(self)
-        except DistutilsPlatformError:
+        except PlatformError:
             raise BuildFailed()
 
     def build_extension(self, ext):
         try:
             build_ext.build_extension(self, ext)
-        except (CCompilerError, DistutilsExecError, DistutilsPlatformError,
+        except (CCompilerError, ExecError, PlatformError,
                 IOError, ValueError):
             raise BuildFailed()
 
@@ -216,9 +178,7 @@ def run_setup(build_binary=False):
     with open('README.rst', 'r') as f:
         long_description = f.read()
 
-    cmdclass = {'test': PyTest,
-                'build_ext': optional_build_ext,
-                'sdist': sdist_checked}
+    cmdclass = {'build_ext': optional_build_ext, 'sdist': sdist_checked}
 
     if BuildDoc is not None:
         cmdclass['build_sphinx'] = BuildDoc
