@@ -26,14 +26,6 @@ from . import tools
 from .tools import browser, get_with_retry, WAIT_TIME, locked_cache_dir, WIN
 
 
-@pytest.fixture(scope="session")
-def basic_html(request):
-    with locked_cache_dir(request.config, "asv-test_web-basic_html", timeout=900) as cache_dir:
-        tmpdir = join(str(cache_dir), 'cached')
-        html_dir, dvcs = _rebuild_basic_html(tmpdir)
-        return html_dir, dvcs
-
-
 def _rebuild_basic_html(basedir):
     local = abspath(dirname(__file__))
     cwd = os.getcwd()
