@@ -10,6 +10,7 @@ from .tools import locked_cache_dir, run_asv_with_conf
 from asv.repo import get_repo
 from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
 from asv import environment
+from .test_web import _rebuild_basic_html
 
 
 try:
@@ -158,7 +159,7 @@ def example_results(request):
         run_asv_with_conf(conf, 'update', _machine_file=dst_machine)
 
         return dst
-
+     
 
 @pytest.fixture
 def benchmarks_fixture(tmpdir):
@@ -180,3 +181,11 @@ def benchmarks_fixture(tmpdir):
     commit_hash = repo.get_hash_from_name(repo.get_branch_name())
 
     return conf, repo, envs, commit_hash
+
+
+@pytest.fixture(scope="session")
+def basic_html(request):
+    with locked_cache_dir(request.config, "asv-test_web-basic_html", timeout=900) as cache_dir:
+        tmpdir = join(str(cache_dir), 'cached')
+        html_dir, dvcs = _rebuild_basic_html(tmpdir)
+        return html_dir, dvcs
