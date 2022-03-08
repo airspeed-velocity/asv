@@ -7,6 +7,7 @@ from asv import config
 from asv import repo
 from .test_workflow import generate_basic_conf
 from .tools import locked_cache_dir, run_asv_with_conf
+from .test_web import _rebuild_basic_html
 
 try:
     import hglib
@@ -154,3 +155,11 @@ def example_results(request):
         run_asv_with_conf(conf, 'update', _machine_file=dst_machine)
 
         return dst
+
+
+@pytest.fixture(scope="session")
+def basic_html(request):
+    with locked_cache_dir(request.config, "asv-test_web-basic_html", timeout=900) as cache_dir:
+        tmpdir = join(str(cache_dir), 'cached')
+        html_dir, dvcs = _rebuild_basic_html(tmpdir)
+        return html_dir, dvcs
