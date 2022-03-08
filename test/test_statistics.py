@@ -1,39 +1,18 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import warnings
-from itertools import product
 import math
 import random
+import warnings
+from itertools import product
 
 import pytest
 
+from asv import statistics
 from asv.util import inf
-import asv.statistics as statistics
 
 
-try:
-    import numpy as np
-    HAS_NUMPY = True
-except ImportError:
-    HAS_NUMPY = False
-
-
-try:
-    from scipy import integrate, special, stats
-    HAS_SCIPY = True
-except ImportError:
-    HAS_SCIPY = False
-
-
-try:
-    from rpy2 import robjects
-    HAS_RPY2 = True
-except ImportError:
-    HAS_RPY2 = False
-
-
-@pytest.mark.skipif(not HAS_NUMPY, reason="Requires numpy")
 def test_compute_stats():
+    np = pytest.importorskip("numpy")
     np.random.seed(1)
 
     assert statistics.compute_stats([], 1) == (None, None)
@@ -61,16 +40,16 @@ def test_compute_stats():
         assert np.allclose(err, iqr / 2)
 
 
-@pytest.mark.skipif(not HAS_NUMPY, reason="Requires numpy")
 def test_is_different():
+    np = pytest.importorskip("numpy")
     np.random.seed(1)
 
     # Smoke test is_different
     for true_mean, n, significant in [(0.01, 10, False), (0.05, 100, True), (0.1, 10, True)]:
         samples_a = 0 + 0.1 * np.random.rand(n)
         samples_b = true_mean + 0.1 * np.random.rand(n)
-        result_a, stats_a = statistics.compute_stats(samples_a, 1)
-        result_b, stats_b = statistics.compute_stats(samples_b, 1)
+        _, stats_a = statistics.compute_stats(samples_a, 1)
+        _, stats_b = statistics.compute_stats(samples_b, 1)
         assert statistics.is_different(None, None, stats_a, stats_b) == significant
         assert statistics.is_different(samples_a, samples_b, stats_a, stats_b) == significant
 
@@ -103,7 +82,7 @@ def _check_ci(estimator, sampler, nsamples=300):
 
     for size, alpha in product(sizes, alphas):
         samples = []
-        for k in range(nsamples):
+        for _ in range(nsamples):
             z = sampler(size)
             m, ci = estimator(z, alpha)
             a, b = ci
@@ -115,10 +94,9 @@ def _check_ci(estimator, sampler, nsamples=300):
         yield size, alpha, alpha_got
 
 
-@pytest.mark.skipif(not HAS_NUMPY, reason="Requires numpy")
 def test_quantile_ci():
     # Test the confidence intervals
-
+    np = pytest.importorskip("numpy")
     scale = 2.5
 
     def sample_exp(size):
@@ -146,7 +124,7 @@ def test_quantile_ci_small():
     # Small samples should give infinite ci
     for n in range(1, 7):
         sample = list(range(n))
-        m, ci = statistics.quantile_ci(sample, 0.5, 0.99)
+        _, ci = statistics.quantile_ci(sample, 0.5, 0.99)
         assert ci[0] == -inf
         assert ci[1] == inf
 
@@ -179,8 +157,9 @@ def test_quantile_ci_r():
     assert ci_80_80 == pytest.approx(ci_80_80_e, abs=1e-4)
 
 
-@pytest.mark.skipif(not HAS_NUMPY, reason="Requires numpy")
 def test_quantile():
+    np = pytest.importorskip("numpy")
+
     np.random.seed(1)
     x = np.random.randn(50)
     for q in np.linspace(0, 1, 300):
@@ -189,33 +168,32 @@ def test_quantile():
         assert np.allclose(got, expected), q
 
 
-@pytest.mark.skipif(not HAS_SCIPY, reason="Requires scipy")
 def test_lgamma():
-    x = np.arange(1, 5000)
+    np = pytest.importorskip("numpy")
+    special = pytest.importorskip("scipy.special")
 
+    x = np.arange(1, 5000)
     expected = special.gammaln(x)
     got = np.vectorize(statistics.lgamma)(x)
-
     assert np.allclose(got, expected, rtol=1e-12, atol=0)
     assert np.isnan(statistics.lgamma(1.2))
 
 
-@pytest.mark.skipif(not HAS_SCIPY, reason="Requires scipy")
 def test_binom_pmf():
+    np = pytest.importorskip("numpy")
+    stats = pytest.importorskip("scipy.stats")
+
     p = np.linspace(0, 1, 7)
     k = np.arange(0, 40, 5)[:, None]
     n = np.arange(0, 40, 5)[:, None, None]
-
     expected = stats.binom.pmf(k, n, p)
     got = np.vectorize(statistics.binom_pmf)(n, k, p)
-
     assert np.allclose(got, expected, rtol=1e-12, atol=0)
 
 
-@pytest.mark.skipif(not HAS_NUMPY, reason="Requires numpy")
 def test_laplace_posterior_ci():
     # Test the LaplacePosterior confidence intervals
-
+    np = pytest.importorskip("numpy")
     scale = 2.5
 
     def get_z_exp(size):
@@ -241,7 +219,7 @@ def test_laplace_posterior_ci():
     for sampler in [get_z_exp, get_z_normal]:
         cis = _check_ci(estimator, sampler, nsamples=300)
         atol = 5 / 300
-        for size, alpha, alpha_got in cis:
+        for _, alpha, alpha_got in cis:
             if sampler == get_z_exp:
                 # Result should be ok for the assumed distribution
                 rtol = 0.25
@@ -315,9 +293,11 @@ def test_laplace_posterior_basic():
         statistics.LaplacePosterior([])
 
 
-@pytest.mark.skipif(not HAS_SCIPY, reason="Requires scipy")
 def test_laplace_posterior_cdf():
     # Test the LaplacePosterior cdf vs pdf
+    np = pytest.importorskip("numpy")
+    integrate = pytest.importorskip("scipy.integrate")
+
     np.random.seed(1)
     y = np.random.randn(15).tolist()
 
@@ -385,9 +365,10 @@ def test_mann_whitney_u_cdf():
     check_table(5, tbl)
 
 
-@pytest.mark.skipif(not HAS_SCIPY, reason="Requires scipy")
 def test_mann_whitney_u_scipy():
     # Scipy only has the large-sample limit...
+    np = pytest.importorskip("numpy")
+    stats = pytest.importorskip("scipy.stats")
 
     def check(x, y):
         u0, p0 = stats.mannwhitneyu(x, y, alternative='two-sided', use_continuity=False)
@@ -434,8 +415,9 @@ def test_mann_whitney_u_basic():
     assert p == pytest.approx(2 / 3, abs=0, rel=1e-10)
 
 
-@pytest.mark.skipif(not HAS_RPY2, reason="Requires rpy2")
 def test_mann_whitney_u_R():
+    robjects = pytest.importorskip("rpi2.robjects")
+
     random.seed(1)
 
     a = list(range(30))
