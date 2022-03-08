@@ -7,7 +7,6 @@ import textwrap
 from asv import config
 
 from . import tools
-from .tools import example_results
 
 import pytest
 
