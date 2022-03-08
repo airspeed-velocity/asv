@@ -323,11 +323,7 @@ static PyObject *RangeMedian_find_best_partition(RangeMedianObject *self, PyObje
     }
 
     for (Py_ssize_t k = 0; k < (Py_ssize_t)p.size(); ++k) {
-#if PY_MAJOR_VERSION >= 3
         PyObject *num = PyLong_FromSsize_t(p[k]);
-#else
-        PyObject *num = PyInt_FromSsize_t(p[k]);
-#endif
         if (num == NULL) {
             Py_DECREF(p_list);
             return NULL;
@@ -351,12 +347,7 @@ static PyMethodDef RangeMedian_methods[] = {
 };
 
 static PyTypeObject RangeMedianType = {
-#if PY_MAJOR_VERSION >= 3
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,
-#endif
     "RangeMedian",
     sizeof(RangeMedianObject),
     0,
@@ -408,10 +399,7 @@ static PyTypeObject RangeMedianType = {
 
 static PyTypeObject *RangeMedian_init_type(PyObject *m)
 {
-#if PY_MAJOR_VERSION < 3
     RangeMedianType.ob_type = &PyType_Type;
-#endif
-
     if (PyType_Ready(&RangeMedianType) < 0) {
         return NULL;
     }
@@ -429,8 +417,6 @@ static PyTypeObject *RangeMedian_init_type(PyObject *m)
 //
 
 EXTERN_C_BEGIN
-
-#if PY_MAJOR_VERSION >= 3
 
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
@@ -459,21 +445,5 @@ PyObject *PyInit__rangemedian(void)
 
     return m;
 }
-
-#else
-
-PyMODINIT_FUNC init_rangemedian(void)
-{
-    PyObject *m;
-
-    m = Py_InitModule("_rangemedian", NULL);
-    if (m == NULL) {
-        return;
-    }
-
-    RangeMedian_init_type(m);
-}
-
-#endif
 
 EXTERN_C_END
