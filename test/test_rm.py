@@ -6,7 +6,6 @@ from asv import config
 from asv import results
 
 from . import tools
-from .tools import example_results
 
 
 def test_rm(tmpdir, example_results):
