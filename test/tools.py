@@ -21,8 +21,6 @@ from hashlib import sha256
 from filelock import FileLock
 
 
-import pytest
-
 try:
     import hglib
 except ImportError:
@@ -96,7 +94,6 @@ except (RuntimeError, IOError):
 
 
 try:
-    import selenium
     from selenium.common.exceptions import TimeoutException
     HAVE_WEBDRIVER = True
 except ImportError:
