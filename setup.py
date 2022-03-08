@@ -1,11 +1,12 @@
 import ast
 import os
 import subprocess
+from distutils.errors import (CCompilerError, DistutilsExecError,
+                              DistutilsPlatformError)
 
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 from setuptools.command.sdist import sdist
-from setuptools.errors import CCompilerError, ExecError, PlatformError
 
 
 class sdist_checked(sdist):
@@ -130,13 +131,13 @@ class optional_build_ext(build_ext):
     def run(self):
         try:
             build_ext.run(self)
-        except PlatformError:
+        except DistutilsPlatformError:
             raise BuildFailed()
 
     def build_extension(self, ext):
         try:
             build_ext.build_extension(self, ext)
-        except (CCompilerError, ExecError, PlatformError,
+        except (CCompilerError, DistutilsExecError, DistutilsPlatformError,
                 IOError, ValueError):
             raise BuildFailed()
 
