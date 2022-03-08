@@ -7,6 +7,10 @@ from asv import config
 from asv import repo
 from .test_workflow import generate_basic_conf
 from .tools import locked_cache_dir, run_asv_with_conf
+from asv.repo import get_repo
+from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
+from asv import environment
+
 
 try:
     import hglib
@@ -154,3 +158,25 @@ def example_results(request):
         run_asv_with_conf(conf, 'update', _machine_file=dst_machine)
 
         return dst
+
+
+@pytest.fixture
+def benchmarks_fixture(tmpdir):
+    tmpdir = str(tmpdir)
+    os.chdir(tmpdir)
+
+    shutil.copytree(BENCHMARK_DIR, 'benchmark')
+
+    d = {}
+    d.update(ASV_CONF_JSON)
+    d['env_dir'] = "env"
+    d['benchmark_dir'] = 'benchmark'
+    d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
+    d['branches'] = ["master"]
+    conf = config.Config.from_json(d)
+
+    repo = get_repo(conf)
+    envs = list(environment.get_environments(conf, None))
+    commit_hash = repo.get_hash_from_name(repo.get_branch_name())
+
+    return conf, repo, envs, commit_hash
