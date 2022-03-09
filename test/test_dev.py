@@ -4,9 +4,6 @@ import os
 import re
 import shutil
 from os.path import abspath, dirname, join, relpath
-
-import pytest
-
 from asv import config
 from asv.commands import make_argparser
 
@@ -48,16 +45,6 @@ def generate_basic_conf(tmpdir, repo_subdir=''):
     conf = config.Config.from_json(conf_dict)
 
     return tmpdir, local, conf
-
-
-@pytest.fixture
-def basic_conf(tmpdir):
-    return generate_basic_conf(tmpdir)
-
-
-@pytest.fixture
-def basic_conf_with_subdir(tmpdir):
-    return generate_basic_conf(tmpdir, 'some_subdir')
 
 
 def test_dev(capsys, basic_conf):
