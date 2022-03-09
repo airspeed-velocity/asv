@@ -17,7 +17,7 @@ from asv import util
 from asv.commands.run import Run
 
 from . import tools
-from .tools import dummy_packages, WIN
+from .tools import WIN
 
 
 def test_set_commit_hash(capsys, existing_env_conf):
