@@ -259,6 +259,7 @@ def dummy_packages(request, monkeypatch):
                     "- defaults\n"
                     "- {0}".format(wheel_dir_str))
 
+
 @pytest.fixture(scope="session")
 def basic_html(request):
     with locked_cache_dir(request.config, "asv-test_web-basic_html", timeout=900) as cache_dir:
