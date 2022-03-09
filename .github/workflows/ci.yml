@@ -17,6 +17,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
+      - name: Install asv
+        run: pip install .
       - name: Run tests
         run: pytest
   
