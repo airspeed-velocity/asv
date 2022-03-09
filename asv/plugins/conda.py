@@ -4,10 +4,8 @@ import os
 import tempfile
 import contextlib
 
-from .. import environment
+from .. import environment, util
 from ..console import log
-from .. import util
-
 
 WIN = (os.name == "nt")
 

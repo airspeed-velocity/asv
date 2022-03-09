@@ -2,17 +2,14 @@
 
 import math
 
-from . import Command
+from . import Command, common_args
 from ..benchmarks import Benchmarks
 from ..console import log
 from ..machine import Machine
 from ..repo import get_repo
 from ..runner import run_benchmarks
 from .. import util
-
 from .setup import Setup
-
-from . import common_args
 
 
 def draw_graph(lo, mid, hi, total):

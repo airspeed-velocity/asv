@@ -4,8 +4,7 @@
 import multiprocessing
 import argparse
 
-from .. import __version__
-from .. import util
+from .. import __version__, util
 
 
 def add_global_arguments(parser, suppress_defaults=True):

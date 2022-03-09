@@ -12,10 +12,9 @@ import re
 import sys
 import itertools
 import subprocess
-from .console import log
-from . import util
-from . import build_cache
 
+from .console import log
+from . import util, build_cache
 
 WIN = (os.name == "nt")
 

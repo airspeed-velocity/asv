@@ -1,18 +1,18 @@
 import os
 import shutil
 import contextlib
-import pytest
-import selenium
 import textwrap
 from os.path import join, abspath, dirname
-from asv import config
-from asv import repo
-from .test_workflow import generate_basic_conf
-from .tools import (locked_cache_dir, run_asv_with_conf, _build_dummy_wheels,
-                    WAIT_TIME, DUMMY1_VERSION, DUMMY2_VERSIONS, WIN, HAS_CONDA,
-                    PYTHON_VER1, PYTHON_VER2)
-from .test_web import _rebuild_basic_html
 
+import pytest
+import selenium
+
+from asv import config, repo
+
+from .test_workflow import generate_basic_conf
+from .tools import (locked_cache_dir, run_asv_with_conf, _build_dummy_wheels, WAIT_TIME,
+                    DUMMY1_VERSION, DUMMY2_VERSIONS, WIN, HAS_CONDA, PYTHON_VER1, PYTHON_VER2)
+from .test_web import _rebuild_basic_html
 
 try:
     import hglib
@@ -50,9 +50,10 @@ def pytest_sessionstart(session):
 
 
 def _monkeypatch_conda_lock(config):
+    import filelock
+
     import asv.plugins.conda
     import asv.util
-    import filelock
 
     @contextlib.contextmanager
     def _conda_lock():

@@ -6,9 +6,8 @@ import platform
 import sys
 import textwrap
 
-from . import console
+from . import console, util
 from .console import log, color_print
-from . import util
 
 
 def iter_machine_files(results_dir):

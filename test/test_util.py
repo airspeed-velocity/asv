@@ -10,11 +10,10 @@ import threading
 import traceback
 import time
 import datetime
+
 import pytest
 
-from asv import console
-from asv import util
-
+from asv import console, util
 
 WIN = (os.name == 'nt')
 

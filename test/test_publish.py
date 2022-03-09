@@ -1,21 +1,20 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import datetime
 import os
-from os.path import abspath, dirname, join, isfile, isdir
 import shutil
+import xml.etree.ElementTree as etree
+from os.path import abspath, dirname, join, isfile, isdir
 
 import pytest
-import xml.etree.ElementTree as etree
+
 try:
     import hglib
 except ImportError:
     hglib = None
 
 
-from asv import config
-from asv import util
+from asv import config, util
 from asv.repo import get_repo
-
 
 from . import tools
 
