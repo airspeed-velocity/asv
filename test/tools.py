@@ -19,8 +19,8 @@ import http.server
 from os.path import abspath, join, dirname, relpath, isdir
 from contextlib import contextmanager
 from hashlib import sha256
-from filelock import FileLock
 
+from filelock import FileLock
 
 try:
     import hglib
@@ -28,16 +28,11 @@ except ImportError:
     hglib = None
 
 import asv
-from asv import util
-from asv import commands
-from asv import config
-from asv import environment
-from asv import runner
+from asv import util, commands, config, environment, runner
 from asv.commands.preview import create_httpd
 from asv.repo import get_repo
 from asv.results import Results
 from asv.plugins.conda import _find_conda
-
 
 # Two Python versions for testing
 PYTHON_VER1, PYTHON_VER2 = '3.7', platform.python_version()
@@ -77,7 +72,7 @@ except (RuntimeError, IOError):
 
 
 try:
-    import virtualenv # noqa F401 checking if installed 
+    import virtualenv  # noqa F401 checking if installed 
     HAS_VIRTUALENV = True
 except ImportError:
     HAS_VIRTUALENV = False

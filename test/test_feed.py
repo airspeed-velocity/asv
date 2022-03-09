@@ -8,7 +8,6 @@ import pytest
 
 from asv import feed
 
-
 try:
     import feedparser
     HAVE_FEEDPARSER = True

@@ -1,15 +1,14 @@
 #!/usr/bin/env python
+import os
+import subprocess
+import ast
+from distutils.errors import (DistutilsError, CCompilerError, DistutilsExecError,
+                              DistutilsPlatformError)
 
 from setuptools import setup, Extension
 from setuptools.command.test import test as TestCommand
 from setuptools.command.sdist import sdist
 from setuptools.command.build_ext import build_ext
-
-from distutils.errors import DistutilsError, CCompilerError, DistutilsExecError, DistutilsPlatformError
-
-import os
-import subprocess
-import ast
 
 
 # A py.test test command

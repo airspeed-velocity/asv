@@ -2,9 +2,11 @@
 
 import os
 import re
-from os.path import abspath, dirname, join, relpath
 import shutil
+from os.path import abspath, dirname, join, relpath
+
 import pytest
+
 from asv import config
 from asv.commands import make_argparser
 

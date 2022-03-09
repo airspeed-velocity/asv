@@ -14,9 +14,8 @@ from . import tools
 from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
 from .test_web import _rebuild_basic_html
 from .test_workflow import generate_basic_conf
-from .tools import (DUMMY1_VERSION, DUMMY2_VERSIONS, HAS_CONDA, PYTHON_VER1,
-                    PYTHON_VER2, WAIT_TIME, WIN, _build_dummy_wheels,
-                    locked_cache_dir, run_asv_with_conf)
+from .tools import (DUMMY1_VERSION, DUMMY2_VERSIONS, HAS_CONDA, PYTHON_VER1, PYTHON_VER2,
+                    WAIT_TIME, WIN, _build_dummy_wheels, locked_cache_dir, run_asv_with_conf)
 
 try:
     import hglib
@@ -52,9 +51,10 @@ def pytest_sessionstart(session):
 
 
 def _monkeypatch_conda_lock(config):
+    import filelock
+
     import asv.plugins.conda
     import asv.util
-    import filelock
 
     @contextlib.contextmanager
     def _conda_lock():
