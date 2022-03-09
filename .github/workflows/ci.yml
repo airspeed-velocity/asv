@@ -49,10 +49,16 @@ jobs:
         run: flake8 .
 
   docs:
-    name: docs check
+    name: builds the documentation using Sphinx
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-      with:
-        build-command: "sphinx-build -W docs/source html"
-        docs-folder: "docs/"
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+      
+      - name: Install asv
+        run: pip install .
+
+      - name: build-command
+        run: sphinx-build -W docs/source html
