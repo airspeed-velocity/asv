@@ -6,9 +6,9 @@ import sys
 import locale
 import itertools
 
-from asv.console import _write_with_fallback, color_print, log
-
 import pytest
+
+from asv.console import _write_with_fallback, color_print, log
 
 
 def test_write_with_fallback(tmpdir, capfd):

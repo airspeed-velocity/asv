@@ -1,10 +1,12 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import os
+
 import pytest
+
+import asv.util
 
 from . import tools
 from .test_publish import generate_result_dir
-import asv.util
 
 
 @pytest.mark.parametrize("rewrite", [False, True], ids=["no-rewrite", "rewrite"])

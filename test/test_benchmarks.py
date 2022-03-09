@@ -3,15 +3,13 @@
 import os
 import sys
 import shutil
-from os.path import join, dirname
-import pytest
 import textwrap
+from os.path import join, dirname
 from hashlib import sha256
 
-from asv import benchmarks
-from asv import config
-from asv import environment
-from asv import util
+import pytest
+
+from asv import benchmarks, config, environment, util
 from asv.repo import get_repo
 
 from . import tools

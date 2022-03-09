@@ -1,12 +1,11 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-from fnmatch import fnmatchcase
 import sys
+from fnmatch import fnmatchcase
 
-from . import Command
+from . import Command, util
 from .. import console
 from ..console import log
 from ..results import iter_results
-from . import util
 
 
 class Rm(Command):

@@ -3,11 +3,9 @@
 import os
 import traceback
 import math
-from . import util
-from . import step_detect
 
+from . import util, step_detect
 from .util import is_na, mean_na, geom_mean_na
-
 
 # This is the maximum number of points to include in summary graphs.
 # It is based on the number of pixels in the summary graph display on
