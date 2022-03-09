@@ -3,8 +3,6 @@ import os
 import textwrap
 from os.path import abspath, dirname, join
 
-import pytest
-
 from asv import config
 
 from . import tools
