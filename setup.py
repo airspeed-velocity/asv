@@ -215,8 +215,8 @@ def run_setup(build_binary=False):
         cmdclass['build_sphinx'] = BuildDoc
 
     setup(
-        version = version,
-        ext_modules = ext_modules,
+        version=version,
+        ext_modules=ext_modules,
         cmdclass=cmdclass,
     )
 
