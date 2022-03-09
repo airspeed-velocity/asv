@@ -18,7 +18,6 @@ from asv.repo import get_repo
 
 
 from . import tools
-from .tools import example_results
 
 BENCHMARK_DIR = abspath(join(dirname(__file__), 'benchmark'))
 
