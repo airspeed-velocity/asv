@@ -19,7 +19,7 @@ from asv import runner
 from asv import util
 from asv.results import Results
 
-from .test_benchmarks import benchmarks_fixture, ASV_CONF_JSON, BENCHMARK_DIR
+from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
 
 
 ON_PYPY = hasattr(sys, 'pypy_version_info')
