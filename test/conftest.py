@@ -12,6 +12,9 @@ from .tools import (locked_cache_dir, run_asv_with_conf, _build_dummy_wheels,
                     WAIT_TIME, DUMMY1_VERSION, DUMMY2_VERSIONS, WIN, HAS_CONDA,
                     PYTHON_VER1, PYTHON_VER2)
 from .test_web import _rebuild_basic_html
+from asv.repo import get_repo
+from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
+from asv import environment
 
 
 try:
@@ -266,3 +269,48 @@ def basic_html(request):
         tmpdir = join(str(cache_dir), 'cached')
         html_dir, dvcs = _rebuild_basic_html(tmpdir)
         return html_dir, dvcs
+
+
+@pytest.fixture
+def benchmarks_fixture(tmpdir):
+    tmpdir = str(tmpdir)
+    os.chdir(tmpdir)
+
+    shutil.copytree(BENCHMARK_DIR, 'benchmark')
+
+    d = {}
+    d.update(ASV_CONF_JSON)
+    d['env_dir'] = "env"
+    d['benchmark_dir'] = 'benchmark'
+    d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
+    d['branches'] = ["master"]
+    conf = config.Config.from_json(d)
+
+    repo = get_repo(conf)
+    envs = list(environment.get_environments(conf, None))
+    commit_hash = repo.get_hash_from_name(repo.get_branch_name())
+
+    return conf, repo, envs, commit_hash
+
+
+@pytest.fixture(params=[
+    "git",
+    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib")),
+])
+def generate_result_dir(request, tmpdir):
+    tmpdir = str(tmpdir)
+    dvcs_type = request.param
+
+    def _generate_result_dir(values, commits_without_result=None):
+        dvcs = tools.generate_repo_from_ops(
+            tmpdir, dvcs_type, [("commit", i) for i in range(len(values))])
+        commits = list(reversed(dvcs.get_branch_hashes()))
+        commit_values = {}
+        commits_without_result = [commits[i] for i in commits_without_result or []]
+        for commit, value in zip(commits, values):
+            if commit not in commits_without_result:
+                commit_values[commit] = value
+        conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
+        repo = get_repo(conf)
+        return conf, repo, commits
+    return _generate_result_dir

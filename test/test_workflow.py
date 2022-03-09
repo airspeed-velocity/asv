@@ -73,11 +73,6 @@ def generate_basic_conf(tmpdir, repo_subdir='', values=dummy_values, dummy_packa
     return tmpdir, local, conf, machine_file
 
 
-@pytest.fixture
-def basic_conf(tmpdir, dummy_packages):
-    return generate_basic_conf(tmpdir)
-
-
 def test_run_publish(capfd, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
     tmpdir = util.long_path(tmpdir)
