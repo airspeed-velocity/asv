@@ -177,8 +177,8 @@ def test_web_regressions(browser, basic_html):
 
         # Check that the expected links appear in the table
         regression_1 = browser.find_element_by_link_text('params_examples.track_find_test(1)')
-        regression_2 = browser.find_element_by_link_text('params_examples.track_find_test(2)')
-        bad_hash_link = browser.find_element_by_link_text(bad_commit_hash[:8])
+        regression_2 = browser.find_element_by_link_text('params_examples.track_find_test(2)')  # noqa F841 assigned to but never used, needed to check the link
+        bad_hash_link = browser.find_element_by_link_text(bad_commit_hash[:8]) # noqa F841 assigned to but never used, needed to check the link
 
         href = regression_1.get_attribute('href')
         assert '/#params_examples.track_find_test?' in href
@@ -256,8 +256,8 @@ def test_web_regressions(browser, basic_html):
         chain.move_to_element(regression_1)
         chain.perform()
 
-        popover = browser.find_element_by_css_selector('div.popover-content')
-        flotplot = browser.find_element_by_css_selector('canvas.flot-base')
+        popover = browser.find_element_by_css_selector('div.popover-content')  # noqa F841 assigned to but never used, needed to check an element
+        flotplot = browser.find_element_by_css_selector('canvas.flot-base')  # noqa F841 assigned to but never used, needed to check an element
 
         # Check group/ungroup button functionality
         group_button, = [button for button in browser.find_elements_by_xpath('//button')
