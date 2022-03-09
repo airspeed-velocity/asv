@@ -14,15 +14,13 @@ import textwrap
 import sys
 import shutil
 import subprocess
+import platform
 import http.server
-
 from os.path import abspath, join, dirname, relpath, isdir
 from contextlib import contextmanager
 from hashlib import sha256
+
 from filelock import FileLock
-
-
-import pytest
 
 try:
     import hglib
@@ -30,23 +28,14 @@ except ImportError:
     hglib = None
 
 import asv
-from asv import util
-from asv import commands
-from asv import config
-from asv import environment
-from asv import runner
+from asv import util, commands, config, environment, runner
 from asv.commands.preview import create_httpd
 from asv.repo import get_repo
 from asv.results import Results
 from asv.plugins.conda import _find_conda
 
-
 # Two Python versions for testing
-PYTHON_VER1 = "{0[0]}.{0[1]}".format(sys.version_info)
-if sys.version_info < (3,):
-    PYTHON_VER2 = "3.6"
-else:
-    PYTHON_VER2 = "2.7"
+PYTHON_VER1, PYTHON_VER2 = '3.7', platform.python_version()
 
 # Installable library versions to use in tests
 DUMMY1_VERSION = "0.14"
@@ -59,7 +48,7 @@ try:
     util.which('pypy')
     HAS_PYPY = True
 except (RuntimeError, IOError):
-    HAS_PYPY = hasattr(sys, 'pypy_version_info') and (sys.version_info[:2] == (2, 7))
+    HAS_PYPY = hasattr(sys, 'pypy_version_info')
 
 
 def _check_conda():
@@ -83,7 +72,7 @@ except (RuntimeError, IOError):
 
 
 try:
-    import virtualenv # noqa F401 checking if installed 
+    import virtualenv  # noqa F401 checking if installed 
     HAS_VIRTUALENV = True
 except ImportError:
     HAS_VIRTUALENV = False
@@ -97,7 +86,6 @@ except (RuntimeError, IOError):
 
 
 try:
-    import selenium
     from selenium.common.exceptions import TimeoutException
     HAVE_WEBDRIVER = True
 except ImportError:
@@ -240,6 +228,8 @@ class Hg:
 
     def __init__(self, path):
         self._fake_date = datetime.datetime.now()
+        if isinstance(path, bytes):
+            path = path.decode('utf-8')
         self.path = abspath(path)
         self._repo = None
 
@@ -506,59 +496,6 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None, updated=None):
     return conf
 
 
-@pytest.fixture(scope="session")
-def browser(request, pytestconfig):
-    """
-    Fixture for Selenium WebDriver browser interface
-    """
-    driver_str = pytestconfig.getoption('webdriver')
-
-    if driver_str == "None":
-        pytest.skip("No webdriver selected for tests (use --webdriver).")
-
-    # Evaluate the options
-    def FirefoxHeadless():
-        options = selenium.webdriver.FirefoxOptions()
-        options.add_argument("-headless")
-        return selenium.webdriver.Firefox(options=options)
-
-    def ChromeHeadless():
-        options = selenium.webdriver.ChromeOptions()
-        options.add_argument('headless')
-        options.add_experimental_option('w3c', False)
-        return selenium.webdriver.Chrome(options=options)
-
-    ns = {}
-    exec("import selenium.webdriver", ns)
-    exec("from selenium.webdriver import *", ns)
-    ns['FirefoxHeadless'] = FirefoxHeadless
-    ns['ChromeHeadless'] = ChromeHeadless
-
-    create_driver = ns.get(driver_str, None)
-    if create_driver is None:
-        src = "def create_driver():\n"
-        src += textwrap.indent(driver_str, "    ")
-        exec(src, ns)
-        create_driver = ns['create_driver']
-
-    # Create the browser
-    browser = create_driver()
-
-    # Set timeouts
-    browser.set_page_load_timeout(WAIT_TIME)
-    browser.set_script_timeout(WAIT_TIME)
-
-    # Clean up on fixture finalization
-    def fin():
-        browser.quit()
-    request.addfinalizer(fin)
-
-    # Set default time to wait for AJAX requests to complete
-    browser.implicitly_wait(WAIT_TIME)
-
-    return browser
-
-
 @contextmanager
 def preview(base_path):
     """
@@ -613,51 +550,6 @@ def get_with_retry(browser, url):
             time.sleep(2)
 
     return browser.get(url)
-
-
-@pytest.fixture
-def dummy_packages(request, monkeypatch):
-    """
-    Build dummy wheels for required packages and set PIP_FIND_LINKS + CONDARC
-    """
-    to_build = [('asv_dummy_test_package_1', DUMMY1_VERSION)]
-    to_build += [('asv_dummy_test_package_2', ver) for ver in DUMMY2_VERSIONS]
-
-    tag = [PYTHON_VER1, PYTHON_VER2, to_build, HAS_CONDA]
-
-    with locked_cache_dir(request.config, "asv-wheels", timeout=900, tag=tag) as cache_dir:
-        wheel_dir = os.path.abspath(join(str(cache_dir), 'wheels'))
-
-        monkeypatch.setenv(str('PIP_FIND_LINKS'), str('file://' + wheel_dir))
-
-        condarc = join(wheel_dir, 'condarc')
-        monkeypatch.setenv(str('CONDARC'), str(condarc))
-
-        if os.path.isdir(wheel_dir):
-            return
-
-        tmpdir = join(str(cache_dir), "tmp")
-        if os.path.isdir(tmpdir):
-            shutil.rmtree(tmpdir)
-        os.makedirs(tmpdir)
-
-        try:
-            os.makedirs(wheel_dir)
-            _build_dummy_wheels(tmpdir, wheel_dir, to_build, build_conda=HAS_CONDA)
-        except Exception:
-            shutil.rmtree(wheel_dir)
-            raise
-
-        # Conda packages were installed in a local channel
-        if not WIN:
-            wheel_dir_str = "file://{0}".format(wheel_dir)
-        else:
-            wheel_dir_str = wheel_dir
-
-        with open(condarc, 'w') as f:
-            f.write("channels:\n"
-                    "- defaults\n"
-                    "- {0}".format(wheel_dir_str))
 
 
 def _build_dummy_wheels(tmpdir, wheel_dir, to_build, build_conda=False):

@@ -5,13 +5,12 @@ import shutil
 import time
 import tempfile
 import contextlib
+import urllib.parse
 from os.path import join, abspath, dirname
 
-import urllib.parse
-
 import pytest
-import asv
 
+import asv
 from asv import config, util
 
 try:
@@ -23,7 +22,7 @@ except ImportError:
     pass
 
 from . import tools
-from .tools import browser, get_with_retry, WAIT_TIME, locked_cache_dir, WIN
+from .tools import get_with_retry, WAIT_TIME, locked_cache_dir, WIN
 
 
 def _rebuild_basic_html(basedir):

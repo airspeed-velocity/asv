@@ -1,18 +1,16 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import os
 import sys
-import pytest
 import json
 
-from asv import config
-from asv import environment
-from asv import util
+import pytest
+
+from asv import config, environment, util
 from asv.repo import get_repo
 from asv.util import shlex_quote as quote
 
-from .tools import (PYTHON_VER1, PYTHON_VER2, DUMMY1_VERSION, DUMMY2_VERSIONS,
-                    WIN, HAS_PYPY, HAS_CONDA, HAS_VIRTUALENV, HAS_PYTHON_VER2,
-                    generate_test_repo, dummy_packages)
+from .tools import (PYTHON_VER1, PYTHON_VER2, DUMMY1_VERSION, DUMMY2_VERSIONS, WIN, HAS_PYPY,
+                    HAS_CONDA, HAS_VIRTUALENV, HAS_PYTHON_VER2, generate_test_repo)
 
 
 @pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),

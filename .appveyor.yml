@@ -26,15 +26,15 @@ install:
 
   # Install the build and runtime dependencies of the project.
   - conda update conda -y
-  - conda install -q --yes python=%PYTHON_VERSION% conda six pip setuptools pytest pytest-xdist pytest-timeout filelock selenium conda-build bzip2
-  - python -mpip install pytest-rerunfailures pytest-faulthandler
+  - conda install -q --yes python=%PYTHON_VERSION% conda six pip pytest pytest-xdist pytest-timeout filelock selenium conda-build bzip2
+  - python -m pip install pytest-rerunfailures
 
   # Check that we have the expected version of Python
   - python --version
 
 build_script:
   # In-place build
-  - python setup.py build_ext -i
+  - pip install .
 
 test_script:
   - python -m pytest -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp -v --environment-type=conda --webdriver=ChromeHeadless --timeout=1800 --durations=100 test

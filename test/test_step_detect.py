@@ -1,13 +1,13 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import random
+
 import pytest
 
 from asv.step_detect import (solve_potts, solve_potts_autogamma, solve_potts_approx,
-                             detect_regressions, golden_search, median, rolling_median_dev,
-                             L1Dist, detect_steps)
+                             detect_regressions, golden_search, median, rolling_median_dev, L1Dist,
+                             detect_steps)
 from asv import step_detect
-
 
 try:
     import numpy as np

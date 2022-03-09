@@ -4,12 +4,9 @@ import logging
 import traceback
 from collections import defaultdict
 
-from . import Command
+from . import Command, common_args
 from ..console import log
-from .. import environment
-from .. import util
-
-from . import common_args
+from .. import environment, util
 
 
 def _create(env):

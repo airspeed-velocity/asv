@@ -2,22 +2,19 @@
 
 import sys
 import os
-from os.path import join
-
-import pytest
 import shutil
 import glob
 import datetime
 import textwrap
+from os.path import join
 
-from asv import results
-from asv import environment
-from asv import repo
-from asv import util
+import pytest
+
+from asv import results, environment, repo, util
 from asv.commands.run import Run
 
 from . import tools
-from .tools import dummy_packages, WIN
+from .tools import WIN
 
 
 def test_set_commit_hash(capsys, existing_env_conf):

@@ -13,9 +13,7 @@ from ..machine import iter_machine_files
 from ..repo import get_repo
 from ..results import iter_results
 from ..publishing import OutputPublisher
-from .. import statistics
-from .. import util
-from .. import __version__
+from .. import statistics, util, __version__
 
 
 def check_benchmark_params(name, benchmark):

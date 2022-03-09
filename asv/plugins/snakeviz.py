@@ -1,7 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from .. import profiling
-from .. import util
+from .. import profiling, util
 
 
 class SnakevizGui(profiling.ProfilerGui):

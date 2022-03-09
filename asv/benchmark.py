@@ -32,24 +32,28 @@ internal commands:
 # there although it's not part of the package, and Python puts it to
 # sys.path[0] on start which can shadow other modules
 import sys
+
 if __name__ == "__main__":
     _old_sys_path_head = sys.path.pop(0)
 else:
     _old_sys_path_head = None
 
 import copy
+
 try:
     import cProfile as profile
 except ImportError:
     profile = None
 import ctypes
+import errno
 from ctypes.util import find_library
 from hashlib import sha256
-import errno
+
 if sys.version_info[0] >= 3:
     import importlib.machinery
 else:
     import imp
+
 import inspect
 import itertools
 import json
@@ -67,7 +71,6 @@ import traceback
 import contextlib
 from importlib import import_module
 from collections import Counter
-
 
 # The best timer we can use is time.process_time, but it is not
 # available in the Python stdlib until Python 3.3.  This is a ctypes
@@ -1346,6 +1349,7 @@ def main_run_server(args):
 
 def main_timing(argv):
     import argparse
+
     import asv.statistics
     import asv.util
     import asv.console

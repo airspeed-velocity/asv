@@ -1,20 +1,26 @@
+import contextlib
 import os
 import shutil
-import contextlib
+import textwrap
+from os.path import abspath, dirname, join
+
 import pytest
-from os.path import join, abspath, dirname
-from asv import config
-from asv import repo
-from .test_workflow import generate_basic_conf
-from .tools import locked_cache_dir, run_asv_with_conf
+import selenium
+
+from asv import config, environment, repo
+from asv.repo import get_repo
+
+from . import tools
+from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
 from .test_web import _rebuild_basic_html
+from .test_workflow import generate_basic_conf
+from .tools import (DUMMY1_VERSION, DUMMY2_VERSIONS, HAS_CONDA, PYTHON_VER1, PYTHON_VER2,
+                    WAIT_TIME, WIN, _build_dummy_wheels, locked_cache_dir, run_asv_with_conf)
 
 try:
     import hglib
 except ImportError:
     hglib = None
-
-from . import tools
 
 
 def pytest_addoption(parser):
@@ -45,9 +51,10 @@ def pytest_sessionstart(session):
 
 
 def _monkeypatch_conda_lock(config):
+    import filelock
+
     import asv.plugins.conda
     import asv.util
-    import filelock
 
     @contextlib.contextmanager
     def _conda_lock():
@@ -158,8 +165,128 @@ def example_results(request):
 
 
 @pytest.fixture(scope="session")
+def browser(request, pytestconfig):
+    """
+    Fixture for Selenium WebDriver browser interface
+    """
+    driver_str = pytestconfig.getoption('webdriver')
+
+    if driver_str == "None":
+        pytest.skip("No webdriver selected for tests (use --webdriver).")
+
+    # Evaluate the options
+    def FirefoxHeadless():
+        options = selenium.webdriver.FirefoxOptions()
+        options.add_argument("-headless")
+        return selenium.webdriver.Firefox(options=options)
+
+    def ChromeHeadless():
+        options = selenium.webdriver.ChromeOptions()
+        options.add_argument('headless')
+        options.add_experimental_option('w3c', False)
+        return selenium.webdriver.Chrome(options=options)
+
+    ns = {}
+    exec("import selenium.webdriver", ns)
+    exec("from selenium.webdriver import *", ns)
+    ns['FirefoxHeadless'] = FirefoxHeadless
+    ns['ChromeHeadless'] = ChromeHeadless
+
+    create_driver = ns.get(driver_str, None)
+    if create_driver is None:
+        src = "def create_driver():\n"
+        src += textwrap.indent(driver_str, "    ")
+        exec(src, ns)
+        create_driver = ns['create_driver']
+
+    # Create the browser
+    browser = create_driver()
+
+    # Set timeouts
+    browser.set_page_load_timeout(WAIT_TIME)
+    browser.set_script_timeout(WAIT_TIME)
+
+    # Clean up on fixture finalization
+    def fin():
+        browser.quit()
+    request.addfinalizer(fin)
+
+    # Set default time to wait for AJAX requests to complete
+    browser.implicitly_wait(WAIT_TIME)
+
+    return browser
+
+
+@pytest.fixture
+def dummy_packages(request, monkeypatch):
+    """
+    Build dummy wheels for required packages and set PIP_FIND_LINKS + CONDARC
+    """
+    to_build = [('asv_dummy_test_package_1', DUMMY1_VERSION)]
+    to_build += [('asv_dummy_test_package_2', ver) for ver in DUMMY2_VERSIONS]
+
+    tag = [PYTHON_VER1, PYTHON_VER2, to_build, HAS_CONDA]
+
+    with locked_cache_dir(request.config, "asv-wheels", timeout=900, tag=tag) as cache_dir:
+        wheel_dir = os.path.abspath(join(str(cache_dir), 'wheels'))
+
+        monkeypatch.setenv(str('PIP_FIND_LINKS'), str('file://' + wheel_dir))
+
+        condarc = join(wheel_dir, 'condarc')
+        monkeypatch.setenv(str('CONDARC'), str(condarc))
+
+        if os.path.isdir(wheel_dir):
+            return
+
+        tmpdir = join(str(cache_dir), "tmp")
+        if os.path.isdir(tmpdir):
+            shutil.rmtree(tmpdir)
+        os.makedirs(tmpdir)
+
+        try:
+            os.makedirs(wheel_dir)
+            _build_dummy_wheels(tmpdir, wheel_dir, to_build, build_conda=HAS_CONDA)
+        except Exception:
+            shutil.rmtree(wheel_dir)
+            raise
+
+        # Conda packages were installed in a local channel
+        if not WIN:
+            wheel_dir_str = "file://{0}".format(wheel_dir)
+        else:
+            wheel_dir_str = wheel_dir
+
+        with open(condarc, 'w') as f:
+            f.write("channels:\n"
+                    "- defaults\n"
+                    "- {0}".format(wheel_dir_str))
+
+
+@pytest.fixture(scope="session")
 def basic_html(request):
     with locked_cache_dir(request.config, "asv-test_web-basic_html", timeout=900) as cache_dir:
         tmpdir = join(str(cache_dir), 'cached')
         html_dir, dvcs = _rebuild_basic_html(tmpdir)
         return html_dir, dvcs
+
+
+@pytest.fixture
+def benchmarks_fixture(tmpdir):
+    tmpdir = str(tmpdir)
+    os.chdir(tmpdir)
+
+    shutil.copytree(BENCHMARK_DIR, 'benchmark')
+
+    d = {}
+    d.update(ASV_CONF_JSON)
+    d['env_dir'] = "env"
+    d['benchmark_dir'] = 'benchmark'
+    d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
+    d['branches'] = ["master"]
+    conf = config.Config.from_json(d)
+
+    repo = get_repo(conf)
+    envs = list(environment.get_environments(conf, None))
+    commit_hash = repo.get_hash_from_name(repo.get_branch_name())
+
+    return conf, repo, envs, commit_hash
