@@ -23,7 +23,7 @@ except ImportError:
     pass
 
 from . import tools
-from .tools import browser, get_with_retry, WAIT_TIME, locked_cache_dir, WIN
+from .tools import get_with_retry, WAIT_TIME, locked_cache_dir, WIN
 
 
 def _rebuild_basic_html(basedir):

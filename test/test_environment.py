@@ -12,7 +12,7 @@ from asv.util import shlex_quote as quote
 
 from .tools import (PYTHON_VER1, PYTHON_VER2, DUMMY1_VERSION, DUMMY2_VERSIONS,
                     WIN, HAS_PYPY, HAS_CONDA, HAS_VIRTUALENV, HAS_PYTHON_VER2,
-                    generate_test_repo, dummy_packages)
+                    generate_test_repo)
 
 
 @pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
