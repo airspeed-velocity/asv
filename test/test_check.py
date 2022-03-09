@@ -1,12 +1,12 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import re
+
 import pytest
 
 from asv import util
 
 from . import tools
-
 from .test_dev import basic_conf
 
 

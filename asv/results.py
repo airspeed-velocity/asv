@@ -8,11 +8,10 @@ import zlib
 import itertools
 import hashlib
 import datetime
-from . import environment
+
+from . import environment, statistics, util
 from .console import log
 from .machine import Machine
-from . import statistics
-from . import util
 
 
 def iter_results_paths(results):

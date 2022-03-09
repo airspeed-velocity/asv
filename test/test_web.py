@@ -5,13 +5,12 @@ import shutil
 import time
 import tempfile
 import contextlib
+import urllib.parse
 from os.path import join, abspath, dirname
 
-import urllib.parse
-
 import pytest
-import asv
 
+import asv
 from asv import config, util
 
 try:
@@ -23,15 +22,7 @@ except ImportError:
     pass
 
 from . import tools
-from .tools import browser, get_with_retry, WAIT_TIME, locked_cache_dir, WIN
-
-
-@pytest.fixture(scope="session")
-def basic_html(request):
-    with locked_cache_dir(request.config, "asv-test_web-basic_html", timeout=900) as cache_dir:
-        tmpdir = join(str(cache_dir), 'cached')
-        html_dir, dvcs = _rebuild_basic_html(tmpdir)
-        return html_dir, dvcs
+from .tools import get_with_retry, WAIT_TIME, locked_cache_dir, WIN
 
 
 def _rebuild_basic_html(basedir):

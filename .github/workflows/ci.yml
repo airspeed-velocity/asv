@@ -5,27 +5,47 @@ on: [push, pull_request]
 jobs:
   test:
     name: test
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.7", "3.10"]
+        os: ["ubuntu-latest"]
+        python-version: ["3.7", "3.10", "pypy-3.7", "pypy-3.8"]
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # We need Python 3.7 to always be installed, so tests with
+      # multiple environments can run.
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Install dependencies
-        run: pip install -r requirements-dev.txt
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Install asv
+        run: pip install .
+
       - name: Run tests
-        run: pytest
+        run: python -m pytest -v --timeout=1800 --durations=20 test
   
-  flake8-formatting:
-    name: code linting with flake8
+  linting:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
       - name: Install dependencies
-        run: pip install flake8
-      - name: Check code with flake8
+        run: python -m pip install flake8 isort
+
+      - name: flake8
         run: flake8 .
+
+      - name: isort
+        run: isort --check-only .

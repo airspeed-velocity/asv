@@ -2,9 +2,11 @@
 
 import os
 from os.path import isfile, join
-from . import tools
-from asv import util
+
 import asv.commands.quickstart
+from asv import util
+
+from . import tools
 
 
 def test_quickstart(tmpdir):

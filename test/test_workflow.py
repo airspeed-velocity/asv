@@ -7,18 +7,16 @@ import shutil
 import sys
 import datetime
 import json
+from os.path import abspath, dirname, join, isfile, relpath
 
 import pytest
-
-from os.path import abspath, dirname, join, isfile, relpath
 
 from asv import config, environment, util
 from asv.results import iter_results_for_machine
 from asv.util import check_output, which
 
 from . import tools
-from .tools import dummy_packages, get_default_environment_type
-
+from .tools import get_default_environment_type
 
 dummy_values = (
     (6, 1),

@@ -8,10 +8,10 @@ import multiprocessing
 import threading
 import traceback
 import datetime
+
 import pytest
 
 from asv import util
-
 
 WIN = (os.name == 'nt')
 

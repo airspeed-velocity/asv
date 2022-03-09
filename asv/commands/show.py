@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 
-from . import Command
+from . import Command, common_args
 from ..benchmarks import Benchmarks
 from ..machine import iter_machine_files
 from ..results import iter_results_for_machine, iter_results_for_machine_and_hash
@@ -12,8 +12,6 @@ from ..util import load_json
 from ..console import log, color_print
 from ..environment import get_environments
 from .. import util
-
-from . import common_args
 
 
 class Show(Command):
