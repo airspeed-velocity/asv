@@ -14,6 +14,7 @@ import textwrap
 import sys
 import shutil
 import subprocess
+import platform
 import http.server
 from os.path import abspath, join, dirname, relpath, isdir
 from contextlib import contextmanager
@@ -39,11 +40,7 @@ from asv.plugins.conda import _find_conda
 
 
 # Two Python versions for testing
-PYTHON_VER1 = "{0[0]}.{0[1]}".format(sys.version_info)
-if sys.version_info < (3,):
-    PYTHON_VER2 = "3.6"
-else:
-    PYTHON_VER2 = "2.7"
+PYTHON_VER1, PYTHON_VER2 = '3.7', platform.python_version()
 
 # Installable library versions to use in tests
 DUMMY1_VERSION = "0.14"
@@ -56,7 +53,7 @@ try:
     util.which('pypy')
     HAS_PYPY = True
 except (RuntimeError, IOError):
-    HAS_PYPY = hasattr(sys, 'pypy_version_info') and (sys.version_info[:2] == (2, 7))
+    HAS_PYPY = hasattr(sys, 'pypy_version_info')
 
 
 def _check_conda():
@@ -236,6 +233,8 @@ class Hg:
 
     def __init__(self, path):
         self._fake_date = datetime.datetime.now()
+        if isinstance(path, bytes):
+            path = path.decode('utf-8')
         self.path = abspath(path)
         self._repo = None
 
