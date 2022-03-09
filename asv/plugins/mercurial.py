@@ -7,6 +7,7 @@ Supports mercurial repositories for the benchmarked project.
 import os
 import sys
 import re
+
 try:
     import hglib
 except ImportError:

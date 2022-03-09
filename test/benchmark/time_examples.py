@@ -1,6 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import sys
+
 if sys.version_info[0] == 3:
     xrange = range
 

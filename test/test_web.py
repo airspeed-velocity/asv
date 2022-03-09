@@ -3,12 +3,12 @@ import os
 import re
 import shutil
 import time
-from os.path import join, abspath, dirname
-
 import urllib.parse
+from os.path import join, abspath, dirname
 
 import pytest
 
+import asv
 from asv import config, util
 
 try:

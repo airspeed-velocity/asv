@@ -1,15 +1,13 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import os
-from os.path import join
-
-import pytest
 import tempfile
 import shutil
 import datetime
+from os.path import join
 
-from asv import config
-from asv import repo
-from asv import util
+import pytest
+
+from asv import config, repo, util
 
 try:
     import hglib

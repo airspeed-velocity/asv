@@ -3,16 +3,12 @@
 import os
 import argparse
 
-from . import Command
+from . import Command, common_args
 from .run import Run
 from .compare import Compare
-
 from ..repo import get_repo, NoSuchNameError
 from ..console import color_print, log
-from .. import results
-from .. import util
-
-from . import common_args
+from .. import results, util
 
 
 class Continuous(Command):

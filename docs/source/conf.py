@@ -11,10 +11,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import asv
-
 import sys
 import os
+
+import asv
 
 try:
     import sphinx_bootstrap_theme

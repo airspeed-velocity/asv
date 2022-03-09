@@ -13,10 +13,10 @@ import socket
 import struct
 import threading
 import traceback
+
 from .console import log
 from .results import Results, format_benchmark_result
 from . import util
-
 
 WIN = (os.name == "nt")
 
