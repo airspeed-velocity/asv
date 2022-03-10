@@ -2,11 +2,9 @@
 
 import argparse
 import sys
-from .. import config
-from .. import util
 
+from .. import config, util
 from . import common_args
-
 
 # This list is ordered in order of average workflow
 command_order = [

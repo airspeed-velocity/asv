@@ -1,16 +1,14 @@
 #!/usr/bin/env python
+import os
+import subprocess
+import ast
+from distutils.errors import (DistutilsError, CCompilerError, DistutilsExecError,
+                              DistutilsPlatformError)
 
 from setuptools import setup, Extension
 from setuptools.command.test import test as TestCommand
 from setuptools.command.sdist import sdist
 from setuptools.command.build_ext import build_ext
-
-from distutils.errors import DistutilsError, CCompilerError, DistutilsExecError, DistutilsPlatformError
-
-import os
-import subprocess
-import sys
-import ast
 
 
 # A py.test test command
@@ -204,17 +202,9 @@ def run_setup(build_binary=False):
     write_version_file(os.path.join(basedir, 'asv', '_version.py'),
                        suffix, git_hash)
 
-    with open('requirements-dev.txt', 'r') as f:
-        tests_require = [x.strip() for x in f.read().splitlines()
-                         if not x.strip().startswith('#')]
-
+    ext_modules = []
     if build_binary:
-        ext_modules = [Extension("asv._rangemedian", ["asv/_rangemedian.cpp"])]
-    else:
-        ext_modules = []
-
-    with open('README.rst', 'r') as f:
-        long_description = f.read()
+        ext_modules = ext_modules.append(Extension("asv._rangemedian", ["asv/_rangemedian.cpp"]))
 
     cmdclass = {'test': PyTest,
                 'build_ext': optional_build_ext,
@@ -224,65 +214,9 @@ def run_setup(build_binary=False):
         cmdclass['build_sphinx'] = BuildDoc
 
     setup(
-        name="asv",
         version=version,
-        packages=['asv',
-                  'asv.commands',
-                  'asv.plugins',
-                  'asv.extern'],
-        ext_modules = ext_modules,
-
-        install_requires=[
-            str('six>=1.4')
-        ],
-
-        extras_require={
-            str('hg'): ["python-hglib>=1.5"],
-            str('testing'): tests_require,
-        },
-
-        package_data={
-            str('asv'): [
-                'www/*.html',
-                'www/*.js',
-                'www/*.css',
-                'www/*.png',
-                'www/*.ico',
-                'www/flot/*.js',
-                'www/vendor/*.css',
-                'www/vendor/*.js',
-                'template/__init__.py',
-                'template/asv.conf.json',
-                'template/benchmarks/*.py'
-            ]
-        },
-
-        entry_points={
-            str('console_scripts'): ['asv = asv.main:main']
-        },
-
-        python_requires='>=3.7',
-
-        zip_safe=False,
-
-        # py.test testing
-        tests_require=tests_require,
+        ext_modules=ext_modules,
         cmdclass=cmdclass,
-
-        author="Michael Droettboom",
-        author_email="mdroe@stsci.edu",
-        description="Airspeed Velocity: A simple Python history benchmarking tool",
-        license="BSD",
-        url="https://github.com/airspeed-velocity/asv",
-        long_description=long_description,
-        classifiers=[
-            'Environment :: Console',
-            'Environment :: Web Environment',
-            'Intended Audience :: Developers',
-            'License :: OSI Approved :: BSD License',
-            'Programming Language :: Python :: 3',
-            'Topic :: Software Development :: Testing',
-        ]
     )
 
 

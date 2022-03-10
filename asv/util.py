@@ -23,8 +23,8 @@ import shlex
 import operator
 import collections
 import multiprocessing
-from .extern import minify_json
 
+from .extern import minify_json
 
 nan = float('nan')
 inf = float('inf')
@@ -995,7 +995,7 @@ def get_cpu_info():
             from win32com.client import GetObject
             cimv = GetObject(r"winmgmts:root\cimv2")
             return cimv.ExecQuery("Select Name from Win32_Processor")[0].name
-        except sys.DoesNotExist:
+        except Exception:
             pass
     return ''
 

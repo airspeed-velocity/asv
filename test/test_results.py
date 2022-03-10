@@ -4,8 +4,10 @@ import os
 import datetime
 import shutil
 from os.path import join
-from asv import results, runner, util
+
 import pytest
+
+from asv import results, runner, util
 
 
 def _truncate_floats(item, digits=5):

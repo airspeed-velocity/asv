@@ -1,5 +1,4 @@
-pytest>=4.4.0; platform_python_implementation != "PyPy"
-pytest>=4.4.0,<5.0; platform_python_implementation == "PyPy"
+pytest
 virtualenv>=1.7
 filelock
 six
@@ -8,14 +7,12 @@ setuptools
 wheel
 # Optional requirements follow:
 numpy
-scipy
+scipy; platform_python_implementation != "PyPy"
 selenium
 pytest-xdist
-pytest-rerunfailures>=8.0; platform_python_implementation != "PyPy"
-pytest-rerunfailures>=8.0,<9.0; platform_python_implementation == "PyPy"
-pytest-faulthandler; platform_python_implementation != "PyPy"
-pytest-faulthandler<2.0; platform_python_implementation == "PyPy"
+pytest-rerunfailures>=10.0
 pytest-timeout
 feedparser
 python-hglib
 flake8
+isort

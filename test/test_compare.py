@@ -1,13 +1,11 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import os
+import shutil
 from os.path import abspath, dirname, join
 
 import pytest
-import shutil
 
-from asv import config
-from asv import util
-
+from asv import config, util
 from asv.commands.compare import Compare
 
 from . import tools
