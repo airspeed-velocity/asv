@@ -369,9 +369,9 @@ def check_num_args(root, benchmark_name, func, min_num_args, max_num_args=None):
             info = inspect.getfullargspec(func)
         else:
             info = inspect.getargspec(func)
-    except Exception:
+    except Exception as exc:
         print(f"{benchmark_name !s}: failed to check "
-              "({func !r}{_get_sourceline_info(func, root) !s}): {Exception !s}")
+              f"({func !r}{_get_sourceline_info(func, root) !s}): {exc !s}")
         return True
 
     max_args = len(info.args)
@@ -397,9 +397,9 @@ def check_num_args(root, benchmark_name, func, min_num_args, max_num_args=None):
             num_args_str = min_num_args
         else:
             num_args_str = f"{min_num_args}-{max_num_args}"
-        print(f"{benchmark_name !s}: wrong number of arguments "
-              "(for {func !r}{_get_sourceline_info(func, root) !s}): expected {num_args_str}, "
-              "has {args_str}")
+        print(f"{benchmark_name !s}: wrong number of arguments"
+              f"(for {func !r}{_get_sourceline_info(func, root) !s}): expected {num_args_str}, "
+              f"has {args_str}")
 
     return ok
 
@@ -542,9 +542,9 @@ class Benchmark:
         try:
             for setup in self._setups:
                 setup(*self._current_params)
-        except NotImplementedError:
+        except NotImplementedError as e:
             # allow skipping test
-            print(f"asv: skipped: {NotImplementedError !r} ")
+            print(f"asv: skipped: {e !r} ")
             return True
         return False
 
@@ -1116,8 +1116,8 @@ def set_cpu_affinity_from_params(extra_params):
     if affinity_list is not None:
         try:
             set_cpu_affinity(affinity_list)
-        except BaseException:
-            print(f"asv: setting cpu affinity {affinity_list !r} failed: {BaseException !r}")
+        except BaseException as exc:
+            print(f"asv: setting cpu affinity {affinity_list !r} failed: {exc !r}")
 
 
 def main_setup_cache(args):
