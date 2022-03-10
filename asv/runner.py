@@ -634,7 +634,7 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
         if benchmark['params'] and out:
             params, = itertools.islice(itertools.product(*benchmark['params']),
                                        param_idx, param_idx + 1)
-            out = f"For parameters: {", ".join(params)}\n{out}"
+            out = f"For parameters: {', '.join(params)}\n{out}"
 
         if profile:
             with io.open(profile_path, 'rb') as profile_fd:
