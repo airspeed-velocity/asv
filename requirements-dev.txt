@@ -5,6 +5,8 @@ six
 pip
 setuptools
 wheel
+sphinx
+sphinx_bootstrap_theme
 # Optional requirements follow:
 numpy
 scipy; platform_python_implementation != "PyPy"

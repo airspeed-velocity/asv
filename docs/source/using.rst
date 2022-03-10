@@ -292,7 +292,7 @@ Or, to benchmark all of the commits since a particular tag (``v0.1``)::
 
     asv run v0.1..master
 
-To benchmark a single commit, or tag, use `^!` (git)::
+To benchmark a single commit, or tag, use ``^!`` (git)::
 
     asv run v0.1^!
 
