@@ -70,7 +70,7 @@ def _color_text(text, color):
         'white': '1;37'}
 
     color_code = color_mapping.get(color, '0;39')
-    return '\033[{0}m{1}\033[0m'.format(color_code, text)
+    return f'\033[{color_code}m{text}\033[0m'
 
 
 # This is a table of Unicode characters that we want to have
@@ -174,7 +174,7 @@ def color_print(*args, **kwargs):
 
 
 def get_answer_default(prompt, default, use_defaults=False):
-    color_print("{0} [{1}]: ".format(prompt, default), end='')
+    color_print(f"{prompt} [{default}]: ", end='')
 
     if use_defaults:
         return default
@@ -218,8 +218,7 @@ class Log:
         continued = getattr(record, 'continued', False)
 
         if self._total:
-            progress_msg = '[{0:6.02f}%] '.format(
-                (float(self._count) / self._total) * 100.0)
+            progress_msg = f'[{(float(self._count) / self._total) * 100.0:6.02f}%] '
             if not continued:
                 color_print(progress_msg, end='')
             indent += len(progress_msg)
@@ -378,7 +377,7 @@ class Log:
         padding = " " * padding_length
 
         self._prev_message = None
-        self.add(" {0}{1}".format(padding, msg))
+        self.add(f" {padding}{msg}")
 
     def flush(self):
         """
