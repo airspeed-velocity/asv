@@ -13,9 +13,9 @@ from asv.step_detect import L1Dist, _rangemedian
 
 from . import tools
 from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
+from .test_step_detect import HAVE_RANGEMEDIAN
 from .test_web import _rebuild_basic_html
 from .test_workflow import generate_basic_conf
-from .test_step_detect import HAVE_RANGEMEDIAN
 from .tools import (DUMMY1_VERSION, DUMMY2_VERSIONS, HAS_CONDA, PYTHON_VER1, PYTHON_VER2,
                     WAIT_TIME, WIN, _build_dummy_wheels, locked_cache_dir, run_asv_with_conf)
 
