@@ -8,7 +8,6 @@ from itertools import product
 import pytest
 
 from asv import statistics
-from asv.util import inf
 
 
 def test_compute_stats():
@@ -17,7 +16,7 @@ def test_compute_stats():
 
     assert statistics.compute_stats([], 1) == (None, None)
     assert statistics.compute_stats([15.0], 1) == (
-        15.0, {'ci_99_a': -inf, 'ci_99_b': inf,
+        15.0, {'ci_99_a': -math.inf, 'ci_99_b': math.inf,
                'number': 1, 'q_25': 15.0, 'q_75': 15.0, 'repeat': 1})
 
     for nsamples, true_mean in product([10, 50, 250], [0, 0.3, 0.6]):
@@ -125,8 +124,8 @@ def test_quantile_ci_small():
     for n in range(1, 7):
         sample = list(range(n))
         _, ci = statistics.quantile_ci(sample, 0.5, 0.99)
-        assert ci[0] == -inf
-        assert ci[1] == inf
+        assert ci[0] == -math.inf
+        assert ci[1] == math.inf
 
 
 def test_quantile_ci_r():
@@ -166,17 +165,6 @@ def test_quantile():
         expected = np.percentile(x, 100 * q)
         got = statistics.quantile(x.tolist(), q)
         assert np.allclose(got, expected), q
-
-
-def test_lgamma():
-    np = pytest.importorskip("numpy")
-    special = pytest.importorskip("scipy.special")
-
-    x = np.arange(1, 5000)
-    expected = special.gammaln(x)
-    got = np.vectorize(statistics.lgamma)(x)
-    assert np.allclose(got, expected, rtol=1e-12, atol=0)
-    assert np.isnan(statistics.lgamma(1.2))
 
 
 def test_binom_pmf():

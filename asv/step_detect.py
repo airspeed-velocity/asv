@@ -361,6 +361,7 @@ currently used to provide relative data weighting (see above).
 import math
 import collections
 import heapq
+from statistics import median
 
 try:
     from . import _rangemedian
@@ -910,16 +911,6 @@ def get_mu_dist(y, w):
         return _rangemedian.RangeMedian(y, w)
     else:
         return L1Dist(y, w)
-
-
-def median(items):
-    """Note: modifies the input list!"""
-    items.sort()
-    k = len(items) // 2
-    if len(items) % 2 == 0:
-        return (items[k] + items[k - 1]) / 2
-    else:
-        return items[k]
 
 
 def rolling_median_dev(items):

@@ -26,9 +26,6 @@ import multiprocessing
 
 from .extern import minify_json
 
-nan = float('nan')
-inf = float('inf')
-
 WIN = (os.name == 'nt')
 
 if not WIN:

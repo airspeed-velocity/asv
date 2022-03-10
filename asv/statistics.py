@@ -2,10 +2,8 @@
 
 # Author: Pauli Virtanen, 2016
 
-import math
-import operator
-
-from .util import inf, nan, is_na
+from operator import index
+from math import lgamma, isinf, floor, sqrt, erfc, log, exp, inf, nan, isnan
 
 
 def compute_stats(samples, number):
@@ -41,16 +39,16 @@ def compute_stats(samples, number):
     # If nonparametric CI estimation didn't give an estimate,
     # use the credible interval of a bayesian posterior distribution.
     a, b = ci_50
-    if (math.isinf(a) or math.isinf(b)) and len(Y) > 1:
+    if (isinf(a) or isinf(b)) and len(Y) > 1:
         # Compute posterior distribution for location, assuming
         # exponential noise. The MLE is equal to the median.
         c = LaplacePosterior(Y)
 
         # Use the CI from that distribution to extend beyond sample
         # bounds
-        if math.isinf(a):
+        if isinf(a):
             a = min(c.ppf(0.01 / 2), min(Y))
-        if math.isinf(b):
+        if isinf(b):
             b = max(c.ppf(1 - 0.01 / 2), max(Y))
 
         ci_50 = (a, b)
@@ -88,7 +86,7 @@ def get_weight(stats):
         a = stats['ci_99_a']
         b = stats['ci_99_b']
 
-        if math.isinf(a) or math.isinf(b):
+        if isinf(a) or isinf(b):
             # Infinite interval is due to too few samples --- consider
             # weight as missing
             return None
@@ -118,8 +116,8 @@ def is_different(samples_a, samples_b, stats_a, stats_b, p_threshold=0.002):
     if samples_a is not None and samples_b is not None:
         # Raw data present: Mann-Whitney U test, but only if there's
         # enough data so that the test can return True
-        a = [x for x in samples_a if not is_na(x)]
-        b = [x for x in samples_b if not is_na(x)]
+        a = [x for x in samples_a if not isnan(x)]
+        b = [x for x in samples_b if not isnan(x)]
 
         p_min = 1 / binom(len(a) + len(b), min(len(a), len(b)))
         if p_min < p_threshold:
@@ -226,7 +224,7 @@ def quantile(x, q):
     n = len(y)
 
     z = (n - 1) * q
-    j = int(math.floor(z))
+    j = int(floor(z))
     z -= j
 
     if j == n - 1:
@@ -304,8 +302,8 @@ def mann_whitney_u(x, y, method='auto'):
     elif method == 'normal':
         N = m + n
         var = m * n * (N + 1) / 12
-        z = (ux - m * n / 2) / math.sqrt(var)
-        cdf = 0.5 * math.erfc(-z / math.sqrt(2))
+        z = (ux - m * n / 2) / sqrt(var)
+        cdf = 0.5 * erfc(-z / sqrt(2))
         p = 2 * cdf
     else:
         raise ValueError("Unknown method {!r}".format(method))
@@ -381,47 +379,18 @@ def binom_pmf(n, k, p):
     elif p == 1.0:
         return 1.0 * (k == n)
 
-    logp = math.log(p)
-    log1mp = math.log(1 - p)
-    return math.exp(lgamma(1 + n) - lgamma(1 + n - k) - lgamma(1 + k) +
+    logp = log(p)
+    log1mp = log(1 - p)
+    return exp(lgamma(1 + n) - lgamma(1 + n - k) - lgamma(1 + k) +
                     k * logp + (n - k) * log1mp)
-
-
-_BERNOULLI = [1.0, -0.5, 0.166666666667, 0.0, -0.0333333333333, 0.0, 0.0238095238095]
-
-
-def lgamma(x):
-    """
-    Log gamma function. Only implemented at integers.
-    """
-
-    if x <= 0:
-        raise ValueError("Domain error")
-
-    if x > 100:
-        # DLMF 5.11.1
-        r = 0.5 * math.log(2 * math.pi) + (x - 0.5) * math.log(x) - x
-        for k in range(1, len(_BERNOULLI) // 2 + 1):
-            r += _BERNOULLI[2 * k] / (2 * k * (2 * k - 1) * x**(2 * k - 1))
-        return r
-
-    # Fall back to math.factorial
-    int_x = int(x)
-    err_int = abs(x - int_x)
-
-    if err_int < 1e-12 * abs(x):
-        return math.log(math.factorial(int_x - 1))
-
-    # Would need full implementation
-    return nan
 
 
 def binom(n, k):
     """
     Binomial coefficient (n over k)
     """
-    n = operator.index(n)
-    k = operator.index(k)
+    n = index(n)
+    k = index(k)
     if not 0 <= k <= n:
         return 0
     m = n + 1
@@ -606,7 +575,7 @@ class LaplacePosterior:
         """
         Probability distribution function
         """
-        return math.exp(self.logpdf(beta))
+        return exp(self.logpdf(beta))
 
     def logpdf(self, beta):
         """
@@ -622,7 +591,7 @@ class LaplacePosterior:
 
         ws = sum(abs(yp - beta) for yp in self.y)
         m = self.nu
-        return -(m + 1) * math.log(ws) - math.log(self._cdf_norm) - math.log(self._y_scale)
+        return -(m + 1) * log(ws) - log(self._cdf_norm) - log(self._y_scale)
 
     def cdf(self, beta):
         """
