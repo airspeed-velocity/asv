@@ -1,25 +1,26 @@
+import contextlib
 import os
 import shutil
-import contextlib
 import textwrap
-from os.path import join, abspath, dirname
+from os.path import abspath, dirname, join
 
 import pytest
 import selenium
 
-from asv import config, repo
+from asv import config, environment, repo
+from asv.repo import get_repo
 
-from .test_workflow import generate_basic_conf
-from .tools import (locked_cache_dir, run_asv_with_conf, _build_dummy_wheels, WAIT_TIME,
-                    DUMMY1_VERSION, DUMMY2_VERSIONS, WIN, HAS_CONDA, PYTHON_VER1, PYTHON_VER2)
+from . import tools
+from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
 from .test_web import _rebuild_basic_html
+from .test_workflow import generate_basic_conf
+from .tools import (DUMMY1_VERSION, DUMMY2_VERSIONS, HAS_CONDA, PYTHON_VER1, PYTHON_VER2,
+                    WAIT_TIME, WIN, _build_dummy_wheels, locked_cache_dir, run_asv_with_conf)
 
 try:
     import hglib
 except ImportError:
     hglib = None
-
-from . import tools
 
 
 def pytest_addoption(parser):
@@ -267,3 +268,25 @@ def basic_html(request):
         tmpdir = join(str(cache_dir), 'cached')
         html_dir, dvcs = _rebuild_basic_html(tmpdir)
         return html_dir, dvcs
+
+
+@pytest.fixture
+def benchmarks_fixture(tmpdir):
+    tmpdir = str(tmpdir)
+    os.chdir(tmpdir)
+
+    shutil.copytree(BENCHMARK_DIR, 'benchmark')
+
+    d = {}
+    d.update(ASV_CONF_JSON)
+    d['env_dir'] = "env"
+    d['benchmark_dir'] = 'benchmark'
+    d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
+    d['branches'] = ["master"]
+    conf = config.Config.from_json(d)
+
+    repo = get_repo(conf)
+    envs = list(environment.get_environments(conf, None))
+    commit_hash = repo.get_hash_from_name(repo.get_branch_name())
+
+    return conf, repo, envs, commit_hash
