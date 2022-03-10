@@ -399,7 +399,6 @@ static PyTypeObject RangeMedianType = {
 
 static PyTypeObject *RangeMedian_init_type(PyObject *m)
 {
-    RangeMedianType.ob_type = &PyType_Type;
     if (PyType_Ready(&RangeMedianType) < 0) {
         return NULL;
     }
