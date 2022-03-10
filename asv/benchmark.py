@@ -259,7 +259,7 @@ def recvall(sock, size):
         data += s
         if not s:
             raise RuntimeError("did not receive data from socket "
-                               "(size {}, got only {!r})".format(size, data))
+                               f"(size {size}, got only {data !r})")
     return data
 
 
@@ -269,9 +269,7 @@ def _get_attr(source, name, ignore_case=False):
                  if key.lower() == name.lower()]
 
         if len(attrs) > 1:
-            raise ValueError(
-                "{0} contains multiple {1} functions.".format(
-                    source.__name__, name))
+            raise ValueError(f"{source.__name__} contains multiple {name} functions.")
         elif len(attrs) == 1:
             return attrs[0]
         else:
@@ -302,7 +300,7 @@ def get_setup_cache_key(func):
     if not mname:
         mname = inspect.getsourcefile(func)
 
-    return '{0}:{1}'.format(mname, inspect.getsourcelines(func)[1])
+    return f'{mname}:{inspect.getsourcelines(func)[1]}'
 
 
 def get_source_code(items):
@@ -357,7 +355,7 @@ def _get_sourceline_info(obj, basedir):
         fn = inspect.getsourcefile(obj)
         fn = os.path.relpath(fn, basedir)
         _, lineno = inspect.getsourcelines(obj)
-        return " in {!s}:{!s}".format(fn, lineno)
+        return f" in {fn !s}:{lineno !s}"
     except Exception:
         return ""
 
@@ -372,8 +370,8 @@ def check_num_args(root, benchmark_name, func, min_num_args, max_num_args=None):
         else:
             info = inspect.getargspec(func)
     except Exception as exc:
-        print("{!s}: failed to check ({!r}{!s}): {!s}".format(
-            benchmark_name, func, _get_sourceline_info(func, root), exc))
+        print(f"{benchmark_name !s}: failed to check "
+              "({func !r}{_get_sourceline_info(func, root) !s}): {exc !s}")
         return True
 
     max_args = len(info.args)
