@@ -7,13 +7,15 @@ from os.path import abspath, dirname, join
 import pytest
 import selenium
 
-from asv import config, environment, repo
+from asv import config, environment, repo, step_detect
 from asv.repo import get_repo
+from asv.step_detect import L1Dist, _rangemedian
 
 from . import tools
 from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
 from .test_web import _rebuild_basic_html
 from .test_workflow import generate_basic_conf
+from .test_step_detect import HAVE_RANGEMEDIAN
 from .tools import (DUMMY1_VERSION, DUMMY2_VERSIONS, HAS_CONDA, PYTHON_VER1, PYTHON_VER2,
                     WAIT_TIME, WIN, _build_dummy_wheels, locked_cache_dir, run_asv_with_conf)
 
@@ -290,3 +292,25 @@ def benchmarks_fixture(tmpdir):
     commit_hash = repo.get_hash_from_name(repo.get_branch_name())
 
     return conf, repo, envs, commit_hash
+
+
+@pytest.fixture(params=[
+    "python",
+    pytest.param("rangemedian",
+                 marks=pytest.mark.skipif(not HAVE_RANGEMEDIAN,
+                                          reason="compiled asv._rangemedian required"))
+])
+def use_rangemedian(request):
+    if request.param == "rangemedian":
+        assert isinstance(step_detect.get_mu_dist([0], [1]), _rangemedian.RangeMedian)
+        return True
+    else:
+        step_detect._rangemedian = None
+
+        def restore():
+            if HAVE_RANGEMEDIAN:
+                step_detect._rangemedian = _rangemedian
+        request.addfinalizer(restore)
+
+        assert isinstance(step_detect.get_mu_dist([0], [1]), L1Dist)
+        return False
