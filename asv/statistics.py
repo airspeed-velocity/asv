@@ -381,8 +381,7 @@ def binom_pmf(n, k, p):
 
     logp = log(p)
     log1mp = log(1 - p)
-    return exp(lgamma(1 + n) - lgamma(1 + n - k) - lgamma(1 + k) +
-                    k * logp + (n - k) * log1mp)
+    return exp(lgamma(1 + n) - lgamma(1 + n - k) - lgamma(1 + k) + k * logp + (n - k) * log1mp)
 
 
 def binom(n, k):
