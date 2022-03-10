@@ -392,14 +392,14 @@ def check_num_args(root, benchmark_name, func, min_num_args, max_num_args=None):
         if min_args == max_args:
             args_str = min_args
         else:
-            args_str = "{}-{}".format(min_args, max_args)
+            args_str = f"{min_args}-{max_args}"
         if min_num_args == max_num_args:
             num_args_str = min_num_args
         else:
-            num_args_str = "{}-{}".format(min_num_args, max_num_args)
-        print("{!s}: wrong number of arguments (for {!r}{!s}): expected {}, has {}".format(
-            benchmark_name, func, _get_sourceline_info(func, root),
-            num_args_str, args_str))
+            num_args_str = f"{min_num_args}-{max_num_args}"
+        print(f"{benchmark_name !s}: wrong number of arguments "
+              "(for {func !r}{_get_sourceline_info(func, root) !s}): expected {num_args_str}, "
+              "has {args_str}")
 
     return ok
 
@@ -488,7 +488,7 @@ class Benchmark:
                 for j in range(len(param)):
                     name = param[j]
                     if name in dupe_dict:
-                        param[j] = name + ' ({})'.format(dupe_dict[name])
+                        param[j] = name + f' ({dupe_dict[name]})'
                         dupe_dict[name] += 1
                 self.params[i] = param
 
@@ -508,7 +508,7 @@ class Benchmark:
         self._current_params = tuple([param] + list(self._current_params))
 
     def __repr__(self):
-        return '<{0} {1}>'.format(self.__class__.__name__, self.name)
+        return f'<{self.__class__.__name__} {self.name}>'
 
     def check(self, root):
         # Check call syntax (number of arguments only...)
@@ -542,9 +542,9 @@ class Benchmark:
         try:
             for setup in self._setups:
                 setup(*self._current_params)
-        except NotImplementedError as e:
+        except NotImplementedError:
             # allow skipping test
-            print("asv: skipped: {!r} ".format(e))
+            print(f"asv: skipped: {NotImplementedError !r} ")
             return True
         return False
 
@@ -1056,7 +1056,7 @@ def get_benchmark_from_name(root, name, extra_params=None):
                 break
         else:
             raise ValueError(
-                "Could not find benchmark '{0}'".format(name))
+                f"Could not find benchmark '{name}'")
 
     if param_idx is not None:
         benchmark.set_param_idx(param_idx)
@@ -1116,9 +1116,8 @@ def set_cpu_affinity_from_params(extra_params):
     if affinity_list is not None:
         try:
             set_cpu_affinity(affinity_list)
-        except BaseException as exc:
-            print("asv: setting cpu affinity {!r} failed: {!r}".format(
-                affinity_list, exc))
+        except BaseException:
+            print(f"asv: setting cpu affinity {affinity_list !r} failed: {BaseException !r}")
 
 
 def main_setup_cache(args):
@@ -1273,7 +1272,7 @@ def main_run_server(args):
             cwd = command.pop('cwd')
 
             if command:
-                raise RuntimeError('Command contained unknown data: {!r}'.format(command_text))
+                raise RuntimeError(f'Command contained unknown data: {command_text !r}')
 
             # Spawn benchmark
             run_args = (benchmark_dir, benchmark_id, params_str, profile_path, result_file)
@@ -1426,7 +1425,7 @@ def main():
         commands[mode](args)
         sys.exit(0)
     else:
-        sys.stderr.write("Unknown mode {0}\n".format(mode))
+        sys.stderr.write(f"Unknown mode {mode}\n")
         sys.exit(1)
 
 
