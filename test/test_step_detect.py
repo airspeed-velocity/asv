@@ -16,7 +16,7 @@ except (ImportError, NameError):
     HAVE_NUMPY = False
 
 try:
-    from asv import _rangemedian
+    from asv import _rangemedian # noqa F401 unused but needed for fixtures
     HAVE_RANGEMEDIAN = True
 except ImportError:
     HAVE_RANGEMEDIAN = False
