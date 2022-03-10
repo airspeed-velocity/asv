@@ -290,3 +290,17 @@ def benchmarks_fixture(tmpdir):
     commit_hash = repo.get_hash_from_name(repo.get_branch_name())
 
     return conf, repo, envs, commit_hash
+
+
+@pytest.fixture
+def show_fixture(tmpdir, example_results):
+    tmpdir = str(tmpdir)
+    os.chdir(tmpdir)
+
+    conf = config.Config.from_json(
+        {'results_dir': example_results,
+         'repo': tools.generate_test_repo(tmpdir).path,
+         'project': 'asv',
+         'environment_type': "shouldn't matter what"})
+
+    return conf
