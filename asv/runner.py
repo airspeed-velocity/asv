@@ -82,11 +82,11 @@ def skip_benchmarks(benchmarks, env, results=None):
     if results is None:
         results = Results.unnamed()
 
-    log.warning("Skipping {0}".format(env.name))
+    log.warning(f"Skipping {env.name}")
     with log.indent():
         for name, benchmark in benchmarks.items():
             log.step()
-            log.warning('{0} skipped'.format(name))
+            log.warning(f'{name} skipped')
 
             started_at = datetime.datetime.utcnow()
             r = fail_benchmark(benchmark)
@@ -222,7 +222,7 @@ def run_benchmarks(benchmarks, env, results=None,
 
     benchmark_durations = {}
 
-    log.info("Benchmarking {0}".format(env.name))
+    log.info(f"Benchmarking {env.name}")
 
     partial_info_time = None
     indent = log.indent()
@@ -283,7 +283,7 @@ def run_benchmarks(benchmarks, env, results=None,
                 cache_dir = cache_dirs[setup_cache_key]
             elif setup_cache_key not in failed_setup_cache:
                 partial_info_time = None
-                log.info("Setting up {0}".format(setup_cache_key), reserve_space=True)
+                log.info(f"Setting up {setup_cache_key}", reserve_space=True)
                 params_str = json.dumps({'cpu_affinity': extra_params.get('cpu_affinity')})
                 cache_dir, stderr = spawner.create_setup_cache(
                     name, setup_cache_timeout[setup_cache_key], params_str)
@@ -304,9 +304,8 @@ def run_benchmarks(benchmarks, env, results=None,
             if setup_cache_key in failed_setup_cache:
                 # Mark benchmark as failed
                 partial_info_time = None
-                log.warning('{0} skipped (setup_cache failed)'.format(name))
-                stderr = 'asv: setup_cache failed\n\n{}'.format(
-                    failed_setup_cache[setup_cache_key])
+                log.warning(f'{name} skipped (setup_cache failed)')
+                stderr = f'asv: setup_cache failed\n\n{failed_setup_cache[setup_cache_key]}'
                 res = fail_benchmark(benchmark, stderr=stderr)
                 results.add_result(benchmark, res,
                                    selected_idx=selected_idx,
@@ -335,7 +334,7 @@ def run_benchmarks(benchmarks, env, results=None,
                 log.info(name, reserve_space=True)
             elif partial_info_time is None or time.time() > partial_info_time + 30:
                 partial_info_time = time.time()
-                log.info('Running ({0}--)'.format(name))
+                log.info(f'Running ({name}--)')
 
             res = run_benchmark(benchmark, spawner,
                                 profile=profile,
@@ -408,7 +407,7 @@ def get_spawner(env, benchmark_dir, launch_method):
                                  "on this platform")
         spawner_cls = ForkServer
     else:
-        raise ValueError("Invalid launch_method: {}".format(launch_method))
+        raise ValueError(f"Invalid launch_method: {launch_method}")
 
     return spawner_cls(env, benchmark_dir)
 
@@ -430,7 +429,7 @@ def log_benchmark_result(results, benchmark, show_stderr=False):
             stderr = ""
         else:
             stderr += "\n"
-        stderr += "asv: benchmark failed (exit status {})".format(errcode)
+        stderr += f"asv: benchmark failed (exit status {errcode})"
 
     if stderr and show_stderr:
         with log.indent():
@@ -606,7 +605,7 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
 
         if errcode != 0:
             if errcode == util.TIMEOUT_RETCODE:
-                out += "\n\nasv: benchmark timed out (timeout {0}s)\n".format(benchmark['timeout'])
+                out += f"\n\nasv: benchmark timed out (timeout {benchmark['timeout']}s)\n"
 
             result = None
             samples = None
@@ -620,7 +619,7 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
             except ValueError as exc:
                 data = None
                 errcode = JSON_ERROR_RETCODE
-                out += "\n\nasv: failed to parse benchmark result: {0}\n".format(exc)
+                out += f"\n\nasv: failed to parse benchmark result: {exc}\n"
 
             # Special parsing for timing benchmark results
             if isinstance(data, dict) and 'samples' in data and 'number' in data:
@@ -635,7 +634,7 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
         if benchmark['params'] and out:
             params, = itertools.islice(itertools.product(*benchmark['params']),
                                        param_idx, param_idx + 1)
-            out = "For parameters: {0}\n{1}".format(", ".join(params), out)
+            out = f"For parameters: {", ".join(params)}\n{out}"
 
         if profile:
             with io.open(profile_path, 'rb') as profile_fd:
@@ -697,7 +696,7 @@ class Spawner:
             return cache_dir, None
         else:
             util.long_path_rmtree(cache_dir, True)
-            out += '\nasv: setup_cache failed (exit status {})'.format(errcode)
+            out += f'\nasv: setup_cache failed (exit status {errcode})'
             return None, out.strip()
 
     def run(self, name, params_str, profile_path, result_file_name, timeout, cwd):
@@ -822,7 +821,7 @@ class ForkServer(Spawner):
         except Exception:
             exitcode = self.server_proc.poll()
             if exitcode is not None:
-                raise util.UserError("Process exited with code {0}".format(exitcode))
+                raise util.UserError(f"Process exited with code {exitcode}")
             raise
         finally:
             s.close()
