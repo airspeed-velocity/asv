@@ -1388,9 +1388,9 @@ def main_timing(argv):
     if not args.json:
         asv.console.color_print(formatted, 'red')
         asv.console.color_print(u"", 'default')
-        asv.console.color_print(u"\n".join(u"{}: {}".format(k, v)
+        asv.console.color_print(u"\n".join(f"{k}: {v}"
                                 for k, v in sorted(stats.items())), 'default')
-        asv.console.color_print(u"samples: {}".format(result['samples']), 'default')
+        asv.console.color_print(f"samples: {result['samples']}", 'default')
     else:
         json.dump({'result': value,
                    'samples': result['samples'],
