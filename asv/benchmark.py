@@ -369,9 +369,9 @@ def check_num_args(root, benchmark_name, func, min_num_args, max_num_args=None):
             info = inspect.getfullargspec(func)
         else:
             info = inspect.getargspec(func)
-    except Exception as exc:
+    except Exception:
         print(f"{benchmark_name !s}: failed to check "
-              "({func !r}{_get_sourceline_info(func, root) !s}): {exc !s}")
+              "({func !r}{_get_sourceline_info(func, root) !s}): {Exception !s}")
         return True
 
     max_args = len(info.args)
