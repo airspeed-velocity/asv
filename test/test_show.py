@@ -3,27 +3,10 @@ import os
 import textwrap
 from os.path import abspath, dirname, join
 
-import pytest
-
-from asv import config
-
 from . import tools
 
 BENCHMARK_DIR = abspath(join(dirname(__file__), 'example_results'))
 MACHINE_FILE = abspath(join(dirname(__file__), 'asv-machine.json'))
-
-@pytest.fixture
-def show_fixture(tmpdir, example_results):
-    tmpdir = str(tmpdir)
-    os.chdir(tmpdir)
-
-    conf = config.Config.from_json(
-        {'results_dir': example_results,
-         'repo': tools.generate_test_repo(tmpdir).path,
-         'project': 'asv',
-         'environment_type': "shouldn't matter what"})
-
-    return conf
 
 
 def test_show(capsys, show_fixture):
