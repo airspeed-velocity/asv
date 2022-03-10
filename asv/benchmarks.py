@@ -6,9 +6,9 @@ import os
 import re
 import tempfile
 import itertools
+
 from .console import log
-from . import util
-from . import runner
+from . import util, runner
 from .repo import NoSuchNameError
 
 

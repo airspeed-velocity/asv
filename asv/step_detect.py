@@ -361,6 +361,7 @@ currently used to provide relative data weighting (see above).
 import math
 import collections
 import heapq
+
 try:
     from . import _rangemedian
 except ImportError:

@@ -3,9 +3,8 @@
 import os
 import sys
 
-from . import commands
+from . import commands, util
 from .console import log
-from . import util
 
 
 def main():

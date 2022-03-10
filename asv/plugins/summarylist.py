@@ -5,7 +5,6 @@ import itertools
 from ..console import log
 from ..publishing import OutputPublisher
 from ..graph import Graph
-
 from .. import util
 
 

@@ -8,7 +8,6 @@ import random
 import socket
 
 from . import Command
-
 from ..console import log
 from .. import util
 

@@ -3,15 +3,13 @@
 import os
 import sys
 import shutil
-from os.path import join, dirname
-import pytest
 import textwrap
+from os.path import join, dirname
 from hashlib import sha256
 
-from asv import benchmarks
-from asv import config
-from asv import environment
-from asv import util
+import pytest
+
+from asv import benchmarks, config, environment, util
 from asv.repo import get_repo
 
 from . import tools
@@ -30,28 +28,6 @@ if hasattr(sys, 'pypy_version_info'):
     ASV_CONF_JSON['pythons'] = ["pypy{0[0]}.{0[1]}".format(sys.version_info)]
 else:
     ON_PYPY = False
-
-
-@pytest.fixture
-def benchmarks_fixture(tmpdir):
-    tmpdir = str(tmpdir)
-    os.chdir(tmpdir)
-
-    shutil.copytree(BENCHMARK_DIR, 'benchmark')
-
-    d = {}
-    d.update(ASV_CONF_JSON)
-    d['env_dir'] = "env"
-    d['benchmark_dir'] = 'benchmark'
-    d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
-    d['branches'] = ["master"]
-    conf = config.Config.from_json(d)
-
-    repo = get_repo(conf)
-    envs = list(environment.get_environments(conf, None))
-    commit_hash = repo.get_hash_from_name(repo.get_branch_name())
-
-    return conf, repo, envs, commit_hash
 
 
 def test_discover_benchmarks(benchmarks_fixture):

@@ -7,7 +7,7 @@ import pstats
 import sys
 import tempfile
 
-from . import Command
+from . import Command, common_args
 from ..benchmarks import Benchmarks
 from ..console import log, color_print
 from ..environment import get_environments, is_existing_only
@@ -18,8 +18,6 @@ from ..results import iter_results_for_machine
 from ..runner import run_benchmarks
 from ..util import hash_equal, iter_subclasses
 from .. import util
-
-from . import common_args
 
 
 @contextlib.contextmanager

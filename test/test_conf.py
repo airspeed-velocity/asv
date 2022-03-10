@@ -3,11 +3,8 @@
 import os
 from os.path import dirname, join
 
-from asv import config
-from asv import commands
+from asv import config, commands, environment, util
 from asv.commands import Command
-from asv import environment
-from asv import util
 
 
 def test_config():

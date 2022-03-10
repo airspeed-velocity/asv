@@ -6,24 +6,18 @@ import traceback
 import time
 import argparse
 import textwrap
-
 from collections import defaultdict
 
-from . import Command
+from . import Command, common_args
 from ..benchmarks import Benchmarks
 from ..console import log
 from ..machine import Machine
 from ..repo import get_repo, NoSuchNameError
-from ..results import (Results, get_existing_hashes,
-                       iter_results_for_machine_and_hash)
+from ..results import Results, get_existing_hashes, iter_results_for_machine_and_hash
 from ..runner import run_benchmarks, skip_benchmarks
-from .. import environment
-from .. import util
-
+from .. import environment, util
 from .setup import Setup
 from .show import Show
-
-from . import common_args
 
 
 def _do_build(args):

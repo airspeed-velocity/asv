@@ -2,6 +2,7 @@
 
 import os
 import sys
+
 # This __version__ assignment is parsed by setup.py; keep it in this form.
 # Development versions end with ".dev" (suffix is added below).
 __version__ = "0.6.dev"

@@ -2,7 +2,7 @@
 
 import itertools
 
-from . import Command
+from . import Command, common_args
 from ..benchmarks import Benchmarks
 from ..machine import iter_machine_files
 from ..results import iter_results_for_machine_and_hash
@@ -10,10 +10,7 @@ from ..repo import get_repo, NoSuchNameError
 from ..util import human_value, load_json
 from ..console import log, color_print
 from ..environment import get_environments
-from .. import util
-from .. import statistics
-
-from . import common_args
+from .. import util, statistics
 
 
 def mean(values):

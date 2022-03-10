@@ -7,10 +7,9 @@ import shutil
 import sys
 import datetime
 import json
+from os.path import abspath, dirname, join, isfile, relpath
 
 import pytest
-
-from os.path import abspath, dirname, join, isfile, relpath
 
 from asv import config, environment, util
 from asv.results import iter_results_for_machine
@@ -18,7 +17,6 @@ from asv.util import check_output, which
 
 from . import tools
 from .tools import get_default_environment_type
-
 
 dummy_values = (
     (6, 1),
@@ -71,11 +69,6 @@ def generate_basic_conf(tmpdir, repo_subdir='', values=dummy_values, dummy_packa
         conf.pythons = ["pypy{0[0]}.{0[1]}".format(sys.version_info)]
 
     return tmpdir, local, conf, machine_file
-
-
-@pytest.fixture
-def basic_conf(tmpdir, dummy_packages):
-    return generate_basic_conf(tmpdir)
 
 
 def test_run_publish(capfd, basic_conf):
