@@ -1,4 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
+import locale # noqa F401 imported but unused see #1106
 import os
 import sys
 import shutil
