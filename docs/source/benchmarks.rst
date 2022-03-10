@@ -146,7 +146,7 @@ Timing benchmarks
   benchmark. Default: 2
 
 - ``timer``: The timing function to use, which can be any source of
-  monotonically increasing numbers, such as `time.time`
+  monotonically increasing numbers, such as ``time.clock``, ``time.time``
   or ``time.process_time``.  If it's not provided, it defaults to
   ``timeit.default_timer``, but other useful values are
   ``process_time``, for which ``asv`` provides a backported version for

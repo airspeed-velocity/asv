@@ -61,5 +61,5 @@ jobs:
       - name: Install asv
         run: pip install .
 
-      - name: build docs
+      - name: Build docs
         run: sphinx-build -W docs/source html
