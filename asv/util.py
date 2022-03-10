@@ -23,8 +23,8 @@ import shlex
 import operator
 import collections
 import multiprocessing
-from .extern import minify_json
 
+from .extern import minify_json
 
 nan = float('nan')
 inf = float('inf')

@@ -1,15 +1,13 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import os
+import textwrap
 from os.path import abspath, dirname, join
 
-import textwrap
+import pytest
 
 from asv import config
 
 from . import tools
-
-import pytest
-
 
 BENCHMARK_DIR = abspath(join(dirname(__file__), 'example_results'))
 MACHINE_FILE = abspath(join(dirname(__file__), 'asv-machine.json'))

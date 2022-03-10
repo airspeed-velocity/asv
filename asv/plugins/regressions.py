@@ -4,13 +4,12 @@ import re
 import itertools
 import datetime
 import urllib.parse
+
 from ..results import iter_results
 from ..console import log
 from ..publishing import OutputPublisher
 from ..step_detect import detect_regressions
-
-from .. import util
-from .. import feed
+from .. import util, feed
 
 
 class Regressions(OutputPublisher):

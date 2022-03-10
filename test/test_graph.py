@@ -2,8 +2,8 @@
 
 import os
 
-from asv.graph import (Graph, RESAMPLED_POINTS, make_summary_graph,
-                       _fill_missing_data, _combine_graph_data)
+from asv.graph import (Graph, RESAMPLED_POINTS, make_summary_graph, _fill_missing_data,
+                       _combine_graph_data)
 from asv import util
 
 

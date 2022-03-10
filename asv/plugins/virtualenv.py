@@ -1,13 +1,11 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-from distutils.version import LooseVersion
 import sys
 import re
 import os
+from distutils.version import LooseVersion
 
-from .. import environment
+from .. import environment, util
 from ..console import log
-from .. import util
-
 
 WIN = (os.name == "nt")
 
@@ -48,7 +46,7 @@ class Virtualenv(environment.Environment):
                                          tagged_env_vars)
 
         try:
-            import virtualenv # noqa F401 unused, but required to test whether virtualenv is installed or not
+            import virtualenv  # noqa F401 unused, but required to test whether virtualenv is installed or not
         except ImportError:
             raise environment.EnvironmentUnavailable(
                 "virtualenv package not installed")

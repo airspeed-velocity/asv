@@ -14,7 +14,6 @@ import time
 
 from . import util
 
-
 WIN = (os.name == "nt")
 
 

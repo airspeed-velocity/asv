@@ -17,3 +17,4 @@ pytest-timeout
 feedparser
 python-hglib
 flake8
+isort

@@ -3,8 +3,7 @@
 import sys
 import pkgutil
 
-from . import commands
-from . import plugins
+from . import commands, plugins
 
 
 class PluginManager:

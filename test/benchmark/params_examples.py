@@ -96,8 +96,9 @@ track_find_test.params = [1, 2]
 
 
 def time_find_test_timeout():
-    import asv_test_repo
     import time
+
+    import asv_test_repo
     if asv_test_repo.dummy_value[1] < 0:
         time.sleep(100)
 

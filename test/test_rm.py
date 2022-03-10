@@ -1,9 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-from os.path import dirname, join
 import shutil
+from os.path import dirname, join
 
-from asv import config
-from asv import results
+from asv import config, results
 
 from . import tools
 
