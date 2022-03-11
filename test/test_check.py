@@ -10,7 +10,7 @@ from . import tools
 
 
 def test_check(capsys, basic_conf):
-    tmpdir, local, conf = basic_conf
+    tmpdir, local, conf, _ = basic_conf
 
     # Test check runs (with full benchmark suite)
     with pytest.raises(util.UserError, match="Benchmark suite check failed"):

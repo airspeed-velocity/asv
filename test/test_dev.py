@@ -49,7 +49,7 @@ def generate_basic_conf(tmpdir, repo_subdir=''):
 
 
 def test_dev(capsys, basic_conf):
-    tmpdir, local, conf = basic_conf
+    tmpdir, local, conf, _ = basic_conf
 
     # Test Dev runs (with full benchmark suite)
     ret = tools.run_asv_with_conf(conf, 'dev', '--quick', '-e',
@@ -70,7 +70,7 @@ def test_dev_with_repo_subdir(capsys, basic_conf_with_subdir):
     """
     Same as test_dev, but with the Python project inside a subdirectory.
     """
-    tmpdir, local, conf = basic_conf_with_subdir
+    tmpdir, local, conf, _ = basic_conf_with_subdir
 
     # Test Dev runs
     tools.run_asv_with_conf(conf, 'dev', '--quick',
@@ -87,7 +87,7 @@ def test_dev_with_repo_subdir(capsys, basic_conf_with_subdir):
 
 
 def test_dev_strict(basic_conf):
-    tmpdir, local, conf = basic_conf
+    tmpdir, local, conf, _ = basic_conf
     ret = tools.run_asv_with_conf(conf, 'dev', '--strict', '--quick',
                                   '--bench=TimeSecondary',
                                   _machine_file=join(tmpdir, 'asv-machine.json'))
@@ -95,7 +95,7 @@ def test_dev_strict(basic_conf):
 
 
 def test_run_python_same(capsys, basic_conf):
-    tmpdir, local, conf = basic_conf
+    tmpdir, local, conf, _ = basic_conf
 
     # Test Run runs with python=same
     tools.run_asv_with_conf(conf, 'run', '--python=same',
@@ -113,7 +113,7 @@ def test_run_python_same(capsys, basic_conf):
 
 
 def test_profile_python_same(capsys, basic_conf):
-    tmpdir, local, conf = basic_conf
+    tmpdir, local, conf, _ = basic_conf
 
     # Test Profile can run with python=same
     tools.run_asv_with_conf(conf, 'profile', '--python=same', "time_secondary.track_value",
