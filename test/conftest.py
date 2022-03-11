@@ -313,3 +313,4 @@ def generate_result_dir(request, tmpdir):
         repo = get_repo(conf)
         return conf, repo, commits
     return _generate_result_dir
+
