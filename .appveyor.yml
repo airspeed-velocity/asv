@@ -35,6 +35,7 @@ install:
 build_script:
   # In-place build
   - python -m pip install .
+  - python -c "import asv; print(asv.__version__)"
 
 test_script:
   - python -m pytest -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp -v --environment-type=conda --webdriver=ChromeHeadless --timeout=1800 --durations=100 test
