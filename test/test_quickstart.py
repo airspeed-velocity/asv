@@ -1,41 +1,39 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import os
-from os.path import isfile, join
+from io import StringIO
+from pathlib import Path
 
-import asv.commands.quickstart
 from asv import util
 
 from . import tools
 
 
-def test_quickstart(tmpdir):
-    tmpdir = str(tmpdir)
+def test_quickstart(tmpdir, monkeypatch):
+    dest = Path(tmpdir, "separate")
+    dest.mkdir()
 
-    dest = join(tmpdir, 'separate')
-    os.makedirs(dest)
+    tools.run_asv("quickstart", "--no-top-level", "--dest", str(dest))
 
-    tools.run_asv('quickstart', '--no-top-level', '--dest', dest)
+    asv_conf_path = Path(dest, "asv.conf.json")
+    assert asv_conf_path.is_file()
+    assert Path(dest, "benchmarks", "benchmarks.py").is_file()
 
-    assert isfile(join(dest, 'asv.conf.json'))
-    assert isfile(join(dest, 'benchmarks', 'benchmarks.py'))
-    conf = util.load_json(join(dest, 'asv.conf.json'), js_comments=True)
-    assert 'env_dir' not in conf
-    assert 'html_dir' not in conf
-    assert 'results_dir' not in conf
+    conf = util.load_json(str(asv_conf_path), js_comments=True)
+    assert "env_dir" not in conf
+    assert "html_dir" not in conf
+    assert "results_dir" not in conf
 
-    dest = join(tmpdir, 'same')
-    os.makedirs(dest)
+    dest = Path(tmpdir, "same")
+    dest.mkdir()
 
-    try:
-        asv.commands.quickstart.raw_input = lambda msg: '1'
-        tools.run_asv('quickstart', '--dest', dest)
-    finally:
-        del asv.commands.quickstart.raw_input
+    monkeypatch.setattr("sys.stdin", StringIO("1"))
+    tools.run_asv("quickstart", "--dest", str(dest))
 
-    assert isfile(join(dest, 'asv.conf.json'))
-    assert isfile(join(dest, 'benchmarks', 'benchmarks.py'))
-    conf = util.load_json(join(dest, 'asv.conf.json'), js_comments=True)
-    assert conf['env_dir'] != 'env'
-    assert conf['html_dir'] != 'html'
-    assert conf['results_dir'] != 'results'
+    asv_conf_path = Path(dest, "asv.conf.json")
+    assert asv_conf_path.is_file()
+    assert Path(dest, "benchmarks", "benchmarks.py").is_file()
+
+    conf = util.load_json(str(asv_conf_path), js_comments=True)
+    assert conf["env_dir"] != "env"
+    assert conf["html_dir"] != "html"
+    assert conf["results_dir"] != "results"
