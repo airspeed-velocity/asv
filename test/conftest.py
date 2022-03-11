@@ -314,3 +314,16 @@ def generate_result_dir(request, tmpdir):
         return conf, repo, commits
     return _generate_result_dir
 
+
+@pytest.fixture
+def show_fixture(tmpdir, example_results):
+    tmpdir = str(tmpdir)
+    os.chdir(tmpdir)
+
+    conf = config.Config.from_json(
+        {'results_dir': example_results,
+         'repo': tools.generate_test_repo(tmpdir).path,
+         'project': 'asv',
+         'environment_type': "shouldn't matter what"})
+
+    return conf
