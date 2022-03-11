@@ -35,6 +35,8 @@ install:
 build_script:
   # In-place build
   - python -m pip install .
+  - conda list
+  - pip list
   - python -c "import asv; print(asv.__version__)"
 
 test_script:
