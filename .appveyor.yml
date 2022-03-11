@@ -34,7 +34,7 @@ install:
 
 build_script:
   # In-place build
-  - pip install .
+  - python -m pip install .
 
 test_script:
   - python -m pytest -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp -v --environment-type=conda --webdriver=ChromeHeadless --timeout=1800 --durations=100 test
