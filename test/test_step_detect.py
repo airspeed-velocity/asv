@@ -15,12 +15,6 @@ try:
 except (ImportError, NameError):
     HAVE_NUMPY = False
 
-try:
-    from asv import _rangemedian # noqa F401 unused but needed for fixtures
-    HAVE_RANGEMEDIAN = True
-except ImportError:
-    HAVE_RANGEMEDIAN = False
-
 
 @pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
 def test_solve_potts(use_rangemedian):

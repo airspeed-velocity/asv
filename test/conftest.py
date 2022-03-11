@@ -9,11 +9,10 @@ import selenium
 
 from asv import config, environment, repo, step_detect
 from asv.repo import get_repo
-from asv.step_detect import L1Dist, _rangemedian
+from asv.step_detect import L1Dist
 
 from . import tools
 from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
-from .test_step_detect import HAVE_RANGEMEDIAN
 from .test_web import _rebuild_basic_html
 from .test_workflow import generate_basic_conf
 from .tools import (DUMMY1_VERSION, DUMMY2_VERSIONS, HAS_CONDA, PYTHON_VER1, PYTHON_VER2,
@@ -23,6 +22,12 @@ try:
     import hglib
 except ImportError:
     hglib = None
+
+try:
+    from asv import _rangemedian
+    HAVE_RANGEMEDIAN = True
+except ImportError:
+    HAVE_RANGEMEDIAN = False
 
 
 def pytest_addoption(parser):
@@ -292,6 +297,20 @@ def benchmarks_fixture(tmpdir):
     commit_hash = repo.get_hash_from_name(repo.get_branch_name())
 
     return conf, repo, envs, commit_hash
+
+
+@pytest.fixture
+def show_fixture(tmpdir, example_results):
+    tmpdir = str(tmpdir)
+    os.chdir(tmpdir)
+
+    conf = config.Config.from_json(
+        {'results_dir': example_results,
+         'repo': tools.generate_test_repo(tmpdir).path,
+         'project': 'asv',
+         'environment_type': "shouldn't matter what"})
+
+    return conf
 
 
 @pytest.fixture(params=[
