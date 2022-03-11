@@ -218,7 +218,7 @@ class Log:
         continued = getattr(record, 'continued', False)
 
         if self._total:
-            progress_msg = f'[{self._count / self._total:6.02f}%] '
+            progress_msg = f'[{self._count / self._total:6.02%}] '
             if not continued:
                 color_print(progress_msg, end='')
             indent += len(progress_msg)
