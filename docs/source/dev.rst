@@ -257,8 +257,7 @@ Additional documentation for Selenium Python bindings is `here
 
 The browser back-end can be selected via::
 
-    python setup.py test -a "--webdriver=PhantomJS"
-    py.test --webdriver=PhantomJS
+    pytest --webdriver=PhantomJS
 
 The allowed values include ``None`` (default), ``PhantomJS``,
 ``Chrome``, ``Firefox``, ``ChromeHeadless``, ``FirefoxHeadless``, or

@@ -46,6 +46,20 @@ jobs:
 
       - name: flake8
         run: flake8 .
-
+      
       - name: isort
         run: isort --check-only .
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+      
+      - name: Install asv
+        run: pip install .
+
+      - name: Build docs
+        run: sphinx-build -W docs/source html

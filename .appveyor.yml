@@ -25,6 +25,7 @@ install:
   - "%CONDA_PATH%\\Scripts\\activate.bat"
 
   # Install the build and runtime dependencies of the project.
+  - conda update conda -y
   - conda install -q --yes python=%PYTHON_VERSION% conda six pip pytest pytest-xdist pytest-timeout filelock selenium conda-build bzip2
   - python -m pip install pytest-rerunfailures
 
