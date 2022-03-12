@@ -398,7 +398,7 @@ def check_num_args(root, benchmark_name, func, min_num_args, max_num_args=None):
             num_args_str = min_num_args
         else:
             num_args_str = f"{min_num_args}-{max_num_args}"
-        print(f"{benchmark_name !s}: wrong number of arguments"
+        print(f"{benchmark_name !s}: wrong number of arguments "
               f"(for {func !r}{_get_sourceline_info(func, root) !s}): expected {num_args_str}, "
               f"has {args_str}")
 
