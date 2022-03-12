@@ -277,7 +277,7 @@ How ASV runs benchmarks is as follows (pseudocode for main idea)::
                     sample = timing_function(<run benchmark `number` times>) / `number`
                     <teardown `benchmark`>
 
-where the actual `rounds`, `repeat`, and `number` are :doc:`attributes
+where the actual ``rounds``, ``repeat``, and ``number`` are :doc:`attributes
 of the benchmark <benchmarks>`.
 
 The default timing function is `timeit.default_timer`, which uses the

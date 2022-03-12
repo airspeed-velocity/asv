@@ -59,10 +59,10 @@ time considerably.
 Running the self-tests
 ----------------------
 
-The self tests are based on `py.test <http://pytest.org/>`__.  If you
+The self tests are based on `pytest <https://docs.pytest.org/>`__.  If you
 don't have it installed, and you have a connection to the Internet, it
 will be installed automatically.
 
 To run **airspeed velocity**'s self tests::
 
-    python setup.py test
+    pytest

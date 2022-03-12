@@ -1,13 +1,12 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 import random
 
 import pytest
 
-from asv.step_detect import (solve_potts, solve_potts_autogamma, solve_potts_approx,
-                             detect_regressions, golden_search, median, rolling_median_dev, L1Dist,
-                             detect_steps)
 from asv import step_detect
+from asv.step_detect import (detect_regressions, detect_steps, golden_search, median,
+                             rolling_median_dev, solve_potts, solve_potts_approx,
+                             solve_potts_autogamma)
 
 try:
     import numpy as np
@@ -15,34 +14,6 @@ try:
     HAVE_NUMPY = True
 except (ImportError, NameError):
     HAVE_NUMPY = False
-
-try:
-    from asv import _rangemedian
-    HAVE_RANGEMEDIAN = True
-except ImportError:
-    HAVE_RANGEMEDIAN = False
-
-
-@pytest.fixture(params=[
-    "python",
-    pytest.param("rangemedian",
-                 marks=pytest.mark.skipif(not HAVE_RANGEMEDIAN,
-                                          reason="compiled asv._rangemedian required"))
-])
-def use_rangemedian(request):
-    if request.param == "rangemedian":
-        assert isinstance(step_detect.get_mu_dist([0], [1]), _rangemedian.RangeMedian)
-        return True
-    else:
-        step_detect._rangemedian = None
-
-        def restore():
-            if HAVE_RANGEMEDIAN:
-                step_detect._rangemedian = _rangemedian
-        request.addfinalizer(restore)
-
-        assert isinstance(step_detect.get_mu_dist([0], [1]), L1Dist)
-        return False
 
 
 @pytest.mark.skipif(not HAVE_NUMPY, reason="test needs numpy")
