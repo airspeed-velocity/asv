@@ -1,7 +1,6 @@
 pytest
 virtualenv>=1.7
 filelock
-six
 pip
 setuptools
 wheel
