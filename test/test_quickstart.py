@@ -14,9 +14,10 @@ def test_quickstart(tmpdir, monkeypatch):
 
     tools.run_asv("quickstart", "--no-top-level", "--dest", str(dest))
 
-    asv_conf_path = Path(dest, "asv.conf.json")
-    assert asv_conf_path.is_file()
-    assert Path(dest, "benchmarks", "benchmarks.py").is_file()
+    asv_conf_path = dest / "asv.conf.json"
+    assert asv_conf_path.exists()
+    benchmark_path = dest / "benchmarks" / "benchmarks.py"
+    assert benchmark_path.exists()
 
     conf = util.load_json(str(asv_conf_path), js_comments=True)
     assert "env_dir" not in conf
@@ -29,9 +30,10 @@ def test_quickstart(tmpdir, monkeypatch):
     monkeypatch.setattr("sys.stdin", StringIO("1"))
     tools.run_asv("quickstart", "--dest", str(dest))
 
-    asv_conf_path = Path(dest, "asv.conf.json")
-    assert asv_conf_path.is_file()
-    assert Path(dest, "benchmarks", "benchmarks.py").is_file()
+    asv_conf_path = dest / "asv.conf.json"
+    assert asv_conf_path.exists()
+    benchmark_path = dest / "benchmarks" / "benchmarks.py"
+    assert benchmark_path.exists()
 
     conf = util.load_json(str(asv_conf_path), js_comments=True)
     assert conf["env_dir"] != "env"
