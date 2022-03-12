@@ -7,8 +7,9 @@ from os.path import abspath, dirname, join
 import pytest
 import selenium
 
-from asv import config, environment, repo
+from asv import config, environment, repo, step_detect
 from asv.repo import get_repo
+from asv.step_detect import L1Dist
 
 from . import tools
 from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
@@ -21,6 +22,12 @@ try:
     import hglib
 except ImportError:
     hglib = None
+
+try:
+    from asv import _rangemedian
+    HAVE_RANGEMEDIAN = True
+except ImportError:
+    HAVE_RANGEMEDIAN = False
 
 
 def pytest_addoption(parser):
@@ -304,3 +311,25 @@ def show_fixture(tmpdir, example_results):
          'environment_type': "shouldn't matter what"})
 
     return conf
+
+
+@pytest.fixture(params=[
+    "python",
+    pytest.param("rangemedian",
+                 marks=pytest.mark.skipif(not HAVE_RANGEMEDIAN,
+                                          reason="compiled asv._rangemedian required"))
+])
+def use_rangemedian(request):
+    if request.param == "rangemedian":
+        assert isinstance(step_detect.get_mu_dist([0], [1]), _rangemedian.RangeMedian)
+        return True
+    else:
+        step_detect._rangemedian = None
+
+        def restore():
+            if HAVE_RANGEMEDIAN:
+                step_detect._rangemedian = _rangemedian
+        request.addfinalizer(restore)
+
+        assert isinstance(step_detect.get_mu_dist([0], [1]), L1Dist)
+        return False
