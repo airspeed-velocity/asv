@@ -32,11 +32,7 @@ inf = float('inf')
 WIN = (os.name == 'nt')
 
 if not WIN:
-    try:
-        from select import PIPE_BUF
-    except ImportError:
-        # PIPE_BUF is not available on Python 2.6
-        PIPE_BUF = os.pathconf('.', os.pathconf_names['PC_PIPE_BUF'])
+    from select import PIPE_BUF
 
 
 TIMEOUT_RETCODE = -256
@@ -521,12 +517,6 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     log.debug("Running '{0}'".format(' '.join(args)))
 
-    if env and WIN and sys.version_info < (3,):
-        # Environment keys and values cannot be unicode
-        def _fix_env(s):
-            return s.encode('mbcs') if isinstance(s, unicode) else s  # noqa F821 'unicode' does not exist in py2
-        env = {_fix_env(k): _fix_env(v) for k, v in env.items()}
-
     kwargs = dict(shell=shell, env=env, cwd=cwd,
                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if redirect_stderr:
@@ -773,10 +763,7 @@ def is_main_thread():
     """
     Return True if the current thread is the main thread.
     """
-    if sys.version_info[0] >= 3:
-        return threading.current_thread() == threading.main_thread()
-    else:
-        return isinstance(threading.current_thread(), threading._MainThread)
+    return threading.current_thread() == threading.main_thread()
 
 
 def write_json(path, data, api_version=None, compact=False):
@@ -806,9 +793,7 @@ def write_json(path, data, api_version=None, compact=False):
         data['version'] = api_version
 
     open_kwargs = {}
-    if sys.version_info[0] >= 3:
-        open_kwargs['encoding'] = 'utf-8'
-
+    open_kwargs['encoding'] = 'utf-8'
     with long_path_open(path, 'w', **open_kwargs) as fd:
         if not compact:
             json.dump(data, fd, indent=4, sort_keys=True)
@@ -837,9 +822,7 @@ def load_json(path, api_version=None, js_comments=False):
     path = os.path.abspath(path)
 
     open_kwargs = {}
-    if sys.version_info[0] >= 3:
-        open_kwargs['encoding'] = 'utf-8'
-
+    open_kwargs['encoding'] = 'utf-8'
     with long_path_open(path, 'r', **open_kwargs) as fd:
         content = fd.read()
 
@@ -1230,11 +1213,8 @@ def sanitize_filename(filename):
 
 def namedtuple_with_doc(name, slots, doc):
     cls = collections.namedtuple(name, slots)
-    if sys.version_info[0] >= 3:
-        cls.__doc__ = doc
-        return cls
-    else:
-        return type(str(name), (cls,), {'__doc__': doc})
+    cls.__doc__ = doc
+    return cls
 
 
 def recvall(sock, size):
