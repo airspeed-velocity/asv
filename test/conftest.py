@@ -7,8 +7,9 @@ from os.path import abspath, dirname, join
 import pytest
 import selenium
 
-from asv import config, environment, repo
+from asv import config, environment, repo, step_detect
 from asv.repo import get_repo
+from asv.step_detect import L1Dist
 
 from . import tools
 from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
@@ -21,6 +22,12 @@ try:
     import hglib
 except ImportError:
     hglib = None
+
+try:
+    from asv import _rangemedian
+    HAVE_RANGEMEDIAN = True
+except ImportError:
+    HAVE_RANGEMEDIAN = False
 
 
 def pytest_addoption(parser):
@@ -290,3 +297,62 @@ def benchmarks_fixture(tmpdir):
     commit_hash = repo.get_hash_from_name(repo.get_branch_name())
 
     return conf, repo, envs, commit_hash
+
+
+@pytest.fixture(params=[
+    "git",
+    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib")),
+])
+def generate_result_dir(request, tmpdir):
+    tmpdir = str(tmpdir)
+    dvcs_type = request.param
+
+    def _generate_result_dir(values, commits_without_result=None):
+        dvcs = tools.generate_repo_from_ops(
+            tmpdir, dvcs_type, [("commit", i) for i in range(len(values))])
+        commits = list(reversed(dvcs.get_branch_hashes()))
+        commit_values = {}
+        commits_without_result = [commits[i] for i in commits_without_result or []]
+        for commit, value in zip(commits, values):
+            if commit not in commits_without_result:
+                commit_values[commit] = value
+        conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
+        repo = get_repo(conf)
+        return conf, repo, commits
+    return _generate_result_dir
+
+
+@pytest.fixture
+def show_fixture(tmpdir, example_results):
+    tmpdir = str(tmpdir)
+    os.chdir(tmpdir)
+
+    conf = config.Config.from_json(
+        {'results_dir': example_results,
+         'repo': tools.generate_test_repo(tmpdir).path,
+         'project': 'asv',
+         'environment_type': "shouldn't matter what"})
+
+    return conf
+
+
+@pytest.fixture(params=[
+    "python",
+    pytest.param("rangemedian",
+                 marks=pytest.mark.skipif(not HAVE_RANGEMEDIAN,
+                                          reason="compiled asv._rangemedian required"))
+])
+def use_rangemedian(request):
+    if request.param == "rangemedian":
+        assert isinstance(step_detect.get_mu_dist([0], [1]), _rangemedian.RangeMedian)
+        return True
+    else:
+        step_detect._rangemedian = None
+
+        def restore():
+            if HAVE_RANGEMEDIAN:
+                step_detect._rangemedian = _rangemedian
+        request.addfinalizer(restore)
+
+        assert isinstance(step_detect.get_mu_dist([0], [1]), L1Dist)
+        return False

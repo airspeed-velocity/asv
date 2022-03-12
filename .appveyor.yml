@@ -25,7 +25,9 @@ install:
   - "%CONDA_PATH%\\Scripts\\activate.bat"
 
   # Install the build and runtime dependencies of the project.
-  - conda install -q --yes python=%PYTHON_VERSION% conda six pip pytest pytest-xdist pytest-timeout filelock selenium conda-build bzip2
+  - conda update conda -y
+  - conda install -q --yes python=%PYTHON_VERSION% conda pip pytest pytest-xdist pytest-timeout filelock selenium conda-build bzip2
+  - python -m pip install -U pip
   - python -m pip install pytest-rerunfailures
 
   # Check that we have the expected version of Python
@@ -33,7 +35,8 @@ install:
 
 build_script:
   # In-place build
-  - pip install .
+  - python -m pip install .
+  - dir asv
 
 test_script:
   - python -m pytest -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp -v --environment-type=conda --webdriver=ChromeHeadless --timeout=1800 --durations=100 test
