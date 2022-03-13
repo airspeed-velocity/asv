@@ -66,7 +66,6 @@ wall_timer = timeit.default_timer
 
 
 if sys.platform.startswith('win'):
-    import ctypes
     import ctypes.wintypes
 
     SIZE_T = ctypes.c_size_t

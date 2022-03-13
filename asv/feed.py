@@ -161,8 +161,7 @@ def write_atom(dest, entries, author, title, address, updated=None, link=None,
     tree = etree.ElementTree(root)
 
     def write(f):
-        tree.write(f, xml_declaration=True, default_namespace=ATOM_NS[1:-1],
-                    encoding=str('utf-8'))
+        tree.write(f, xml_declaration=True, default_namespace=ATOM_NS[1:-1], encoding="utf-8")
 
     if hasattr(dest, 'write'):
         write(dest)
