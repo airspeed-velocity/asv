@@ -792,8 +792,7 @@ class ForkServer(Spawner):
 
     def _send_command(self, msg):
         msg = json.dumps(msg)
-        if sys.version_info[0] >= 3:
-            msg = msg.encode('utf-8')
+        msg = msg.encode('utf-8')
 
         # Connect (with wait+retry)
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -815,8 +814,7 @@ class ForkServer(Spawner):
             # Read result
             read_size, = struct.unpack('<Q', util.recvall(s, 8))
             result_text = util.recvall(s, read_size)
-            if sys.version_info[0] >= 3:
-                result_text = result_text.decode('utf-8')
+            result_text = result_text.decode('utf-8')
             result = json.loads(result_text)
         except Exception:
             exitcode = self.server_proc.poll()

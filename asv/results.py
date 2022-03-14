@@ -1,6 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import sys
 import base64
 import os
 import re
@@ -534,8 +533,7 @@ class Results:
 
         if result.profile:
             profile_data = base64.b64encode(zlib.compress(result.profile))
-            if sys.version_info[0] >= 3:
-                profile_data = profile_data.decode('ascii')
+            profile_data = profile_data.decode('ascii')
             self._profiles[benchmark_name] = profile_data
 
     def get_profile(self, benchmark_name):
@@ -554,8 +552,7 @@ class Results:
 
         """
         profile_data = self._profiles[benchmark_name]
-        if sys.version_info[0] >= 3:
-            profile_data = profile_data.encode('ascii')
+        profile_data = profile_data.encode('ascii')
         return zlib.decompress(base64.b64decode(profile_data))
 
     def has_profile(self, benchmark_name):
