@@ -15,9 +15,6 @@ install:
   # Append webdriver paths
   - "SET PATH=%PATH%;C:\\Tools\\WebDriver;C:\\Program Files (x86)\\Mozilla Firefox"
 
-  # Init and clone submodules
-  - git submodule update --init --recursive
-
   # Clear tmpdir (sometimes left behind by appveyor?)
   - rmdir /s /q %APPVEYOR_BUILD_FOLDER%\\tmp & exit /b 0
 
