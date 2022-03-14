@@ -140,10 +140,7 @@ class Virtualenv(environment.Environment):
         self._install_requirements()
 
     def _install_requirements(self):
-        if sys.version_info[:2] == (3, 2):
-            pip_args = ['install', '-v', 'wheel<0.29.0', 'pip<8']
-        else:
-            pip_args = ['install', '-v', 'wheel', 'pip>=8']
+        pip_args = ['install', '-v', 'wheel', 'pip>=8']
 
         env = dict(os.environ)
         env.update(self.build_env_vars)
