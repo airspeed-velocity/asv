@@ -2,7 +2,7 @@
 
 import random
 import warnings
-from math import factorial, inf
+import math
 from itertools import product
 
 import pytest
@@ -16,7 +16,7 @@ def test_compute_stats():
 
     assert statistics.compute_stats([], 1) == (None, None)
     assert statistics.compute_stats([15.0], 1) == (
-        15.0, {'ci_99_a': -inf, 'ci_99_b': inf,
+        15.0, {'ci_99_a': -math.inf, 'ci_99_b': math.inf,
                'number': 1, 'q_25': 15.0, 'q_75': 15.0, 'repeat': 1})
 
     for nsamples, true_mean in product([10, 50, 250], [0, 0.3, 0.6]):
@@ -124,8 +124,8 @@ def test_quantile_ci_small():
     for n in range(1, 7):
         sample = list(range(n))
         _, ci = statistics.quantile_ci(sample, 0.5, 0.99)
-        assert ci[0] == -inf
-        assert ci[1] == inf
+        assert ci[0] == -math.inf
+        assert ci[1] == math.inf
 
 
 def test_quantile_ci_r():
@@ -442,7 +442,7 @@ def test_binom():
         for k in range(10):
             p = statistics.binom(n, k)
             if 0 <= k <= n:
-                p2 = factorial(n) / factorial(k) / factorial(n - k)
+                p2 = math.factorial(n) / math.factorial(k) / math.factorial(n - k)
             else:
                 p2 = 0
             assert p == p2
