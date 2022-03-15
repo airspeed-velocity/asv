@@ -329,16 +329,14 @@ def test_regression_threshold(generate_result_dir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None,
-                                  2.0, 1.0, [[None, 5, 1.0, 1.1], [None, 10, 1.1, 2.0]],
-    ]]}
+                                 2.0, 1.0, [[None, 5, 1.0, 1.1], [None, 10, 1.1, 2.0]]]]}
     assert regressions == expected
 
     conf.regressions_thresholds = {'.*': 0, 'time_func.*': 0.2}
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None, 2.0, 1.0,
-                                 [[None, 10, 1.1, 2.0]]
-    ]]}
+                                 [[None, 10, 1.1, 2.0]]]]}
     assert regressions == expected
 
 
