@@ -1,6 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import shutil
-from os.path import dirname, join
+from os.path import join
 
 from asv import config, results
 
@@ -17,7 +17,7 @@ def test_rm(tmpdir, example_results):
     conf = config.Config.from_json({
         'results_dir': join(tmpdir, 'example_results'),
         'repo': "### IGNORED, BUT REQUIRED ###"
-        })
+    })
 
     tools.run_asv_with_conf(conf, 'rm', '-y', 'benchmark=time_quantity*')
 
