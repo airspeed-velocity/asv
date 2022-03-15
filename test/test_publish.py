@@ -306,7 +306,7 @@ def test_regression_non_monotonic(dvcs_type, tmpdir):
     now = datetime.datetime.now()
 
     dates = [now + datetime.timedelta(days=i)
-             for i in range(5)] + [now - datetime.timedelta(days=i)for i in range(5)]
+             for i in range(5)] + [now - datetime.timedelta(days=i) for i in range(5)]
     # last commit in the past
     dates[-1] = now - datetime.timedelta(days=1)
 
@@ -331,7 +331,7 @@ def test_regression_threshold(generate_result_dir):
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
     expected = {"regressions": [["time_func", _graph_path(repo.dvcs), {}, None,
-                                2.0, 1.0, [[None, 5, 1.0, 1.1], [None, 10, 1.1, 2.0]], ]]
+                                2.0, 1.0, [[None, 5, 1.0, 1.1], [None, 10, 1.1, 2.0]]]]
                 }
     assert regressions == expected
 
