@@ -1,5 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import math
 from collections import defaultdict
 
 from . import Command, common_args
@@ -249,7 +250,7 @@ class Show(Command):
                         durations[(machine, result.env_name)][key] = duration
 
             if total_duration is None:
-                total_duration = float("nan")
+                total_duration = math.nan
 
             if commits:
                 durations[(machine, result.env_name)][result.commit_hash] = (result.date,

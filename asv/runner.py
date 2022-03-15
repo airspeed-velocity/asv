@@ -13,7 +13,7 @@ import socket
 import struct
 import threading
 import traceback
-from math import nan
+import math
 
 from .console import log
 from .results import Results, format_benchmark_result
@@ -510,7 +510,7 @@ def run_benchmark(benchmark, spawner, profile,
 
     for param_idx, params in param_iter:
         if selected_idx is not None and param_idx not in selected_idx:
-            result.append(nan)
+            result.append(math.nan)
             samples.append(None)
             number.append(None)
             profiles.append(None)

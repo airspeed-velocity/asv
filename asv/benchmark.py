@@ -31,6 +31,7 @@ internal commands:
 # Remove asv package directory from sys.path. This script file resides
 # there although it's not part of the package, and Python puts it to
 # sys.path[0] on start which can shadow other modules
+import math
 import sys
 
 if __name__ == "__main__":
@@ -57,6 +58,7 @@ import struct
 import pkgutil
 import traceback
 import contextlib
+import math
 from hashlib import sha256
 from importlib import import_module
 from collections import Counter
@@ -289,7 +291,7 @@ def check_num_args(root, benchmark_name, func, min_num_args, max_num_args=None):
         min_args = max_args
 
     if info.varargs is not None:
-        max_args = float('inf')
+        max_args = math.inf
 
     ok = (min_args <= max_num_args) and (min_num_args <= max_args)
     if not ok:
@@ -1040,7 +1042,7 @@ def main_run(args):
 
     try:
         if skip:
-            result = float('nan')
+            result = math.nan
         else:
             result = benchmark.do_run()
             if profile_path is not None:

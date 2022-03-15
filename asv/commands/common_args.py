@@ -1,6 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 
+import math
 import multiprocessing
 import argparse
 
@@ -296,7 +297,7 @@ def positive_int_or_inf(string):
     """
     try:
         if string == 'all':
-            return float("inf")
+            return math.inf
         value = int(string)
         if not value > 0:
             raise ValueError()

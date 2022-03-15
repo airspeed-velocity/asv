@@ -582,8 +582,6 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
 
     """
 
-    inf = float('inf')
-
     if len(y) == 0:
         return [], [], []
 
@@ -627,7 +625,7 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
         B = [-gamma] * (i1 - i0 + 1)
         p = [0] * (i1 - i0)
         for r in range(i0, i1):
-            B[r + 1 - i0] = inf
+            B[r + 1 - i0] = math.inf
             a = max(r + 1 - max_size, i0)
             b = max(r + 1 - min_size + 1, i0)
             for l in range(a, b):
@@ -697,7 +695,7 @@ def solve_potts_autogamma(y, w, beta=None, **kw):
     best_r = [None]
     best_v = [None]
     best_d = [None]
-    best_obj = [float('inf')]
+    best_obj = [math.inf]
     best_gamma = [None]
 
     def f(x):

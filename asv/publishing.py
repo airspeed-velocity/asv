@@ -1,5 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import math
+
+
 class OutputPublisher:
     """
     A base class for pages displaying output in the JS application
@@ -7,7 +10,7 @@ class OutputPublisher:
     name = None
     button_label = None
     description = None
-    order = float('inf')
+    order = math.inf
 
     @classmethod
     def publish(cls, conf, repo, benchmarks, graphs, revisions):

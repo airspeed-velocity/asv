@@ -2,8 +2,8 @@
 
 # Author: Pauli Virtanen, 2016
 
+import math
 from operator import index
-from math import lgamma, isinf, floor, sqrt, erfc, log, exp, inf, nan, isnan
 
 
 def compute_stats(samples, number):
@@ -39,16 +39,16 @@ def compute_stats(samples, number):
     # If nonparametric CI estimation didn't give an estimate,
     # use the credible interval of a bayesian posterior distribution.
     a, b = ci_50
-    if (isinf(a) or isinf(b)) and len(Y) > 1:
+    if (math.isinf(a) or math.isinf(b)) and len(Y) > 1:
         # Compute posterior distribution for location, assuming
         # exponential noise. The MLE is equal to the median.
         c = LaplacePosterior(Y)
 
         # Use the CI from that distribution to extend beyond sample
         # bounds
-        if isinf(a):
+        if math.isinf(a):
             a = min(c.ppf(0.01 / 2), min(Y))
-        if isinf(b):
+        if math.isinf(b):
             b = max(c.ppf(1 - 0.01 / 2), max(Y))
 
         ci_50 = (a, b)
@@ -86,7 +86,7 @@ def get_weight(stats):
         a = stats['ci_99_a']
         b = stats['ci_99_b']
 
-        if isinf(a) or isinf(b):
+        if math.isinf(a) or math.isinf(b):
             # Infinite interval is due to too few samples --- consider
             # weight as missing
             return None
@@ -116,8 +116,8 @@ def is_different(samples_a, samples_b, stats_a, stats_b, p_threshold=0.002):
     if samples_a is not None and samples_b is not None:
         # Raw data present: Mann-Whitney U test, but only if there's
         # enough data so that the test can return True
-        a = [x for x in samples_a if not isnan(x)]
-        b = [x for x in samples_b if not isnan(x)]
+        a = [x for x in samples_a if not math.isnan(x)]
+        b = [x for x in samples_b if not math.isnan(x)]
 
         p_min = 1 / binom(len(a) + len(b), min(len(a), len(b)))
         if p_min < p_threshold:
@@ -170,8 +170,8 @@ def quantile_ci(x, q, alpha_min=0.01):
     pa = alpha_min / 2
     pb = 1 - pa
 
-    a = -inf
-    b = inf
+    a = -math.inf
+    b = math.inf
 
     # It's known that
     #
@@ -224,7 +224,7 @@ def quantile(x, q):
     n = len(y)
 
     z = (n - 1) * q
-    j = int(floor(z))
+    j = int(math.floor(z))
     z -= j
 
     if j == n - 1:
@@ -302,8 +302,8 @@ def mann_whitney_u(x, y, method='auto'):
     elif method == 'normal':
         N = m + n
         var = m * n * (N + 1) / 12
-        z = (ux - m * n / 2) / sqrt(var)
-        cdf = 0.5 * erfc(-z / sqrt(2))
+        z = (ux - m * n / 2) / math.sqrt(var)
+        cdf = 0.5 * math.erfc(-z / math.sqrt(2))
         p = 2 * cdf
     else:
         raise ValueError("Unknown method {!r}".format(method))
@@ -379,9 +379,12 @@ def binom_pmf(n, k, p):
     elif p == 1.0:
         return 1.0 * (k == n)
 
-    logp = log(p)
-    log1mp = log(1 - p)
-    return exp(lgamma(1 + n) - lgamma(1 + n - k) - lgamma(1 + k) + k * logp + (n - k) * log1mp)
+    logp = math.log(p)
+    log1mp = math.log(1 - p)
+    lg1pn = math.lgamma(1 + n)
+    lg1pnmk = math.lgamma(1 + n - k)
+    lg1pk = math.lgamma(1 + k)
+    return math.exp(lg1pn - lg1pnmk - lg1pk + k * logp + (n - k) * log1mp)
 
 
 def binom(n, k):
@@ -507,7 +510,7 @@ class LaplacePosterior:
             y = sum(self.y[k:]) - sum(self.y[:k])
 
             if k == 0:
-                a = -inf
+                a = -math.inf
             else:
                 a = self.y[k - 1]
 
@@ -526,7 +529,7 @@ class LaplacePosterior:
             if k != k0:
                 self._cdf_memo[k] = cdf
 
-        if beta == inf:
+        if beta == math.inf:
             self._cdf_memo[len(self.y)] = cdf
 
         return cdf
@@ -555,7 +558,7 @@ class LaplacePosterior:
             if z > 0:
                 beta = (z**(-1 / nu) - y) / c
             else:
-                beta = -inf
+                beta = -math.inf
         elif c == 0:
             beta = a + term * y**(nu + 1)
         else:
@@ -563,7 +566,7 @@ class LaplacePosterior:
             if z > 0:
                 beta = (z**(-1 / nu) - y) / c
             else:
-                beta = inf
+                beta = math.inf
 
         if k < len(self.y):
             beta = min(beta, self.y[k])
@@ -574,23 +577,23 @@ class LaplacePosterior:
         """
         Probability distribution function
         """
-        return exp(self.logpdf(beta))
+        return math.exp(self.logpdf(beta))
 
     def logpdf(self, beta):
         """
         Logarithm of probability distribution function
         """
         if self._y_scale == 0:
-            return inf if beta == self.mle else -inf
+            return math.inf if beta == self.mle else -math.inf
 
         beta = (beta - self.mle) / self._y_scale
 
         if self._cdf_norm is None:
-            self._cdf_norm = self._cdf_unnorm(inf)
+            self._cdf_norm = self._cdf_unnorm(math.inf)
 
         ws = sum(abs(yp - beta) for yp in self.y)
         m = self.nu
-        return -(m + 1) * log(ws) - log(self._cdf_norm) - log(self._y_scale)
+        return -(m + 1) * math.log(ws) - math.log(self._cdf_norm) - math.log(self._y_scale)
 
     def cdf(self, beta):
         """
@@ -602,7 +605,7 @@ class LaplacePosterior:
         beta = (beta - self.mle) / self._y_scale
 
         if self._cdf_norm is None:
-            self._cdf_norm = self._cdf_unnorm(inf)
+            self._cdf_norm = self._cdf_unnorm(math.inf)
         return self._cdf_unnorm(beta) / self._cdf_norm
 
     def ppf(self, cdf):
@@ -610,13 +613,13 @@ class LaplacePosterior:
         Percent point function (inverse function for cdf)
         """
         if cdf < 0 or cdf > 1.0:
-            return nan
+            return math.nan
 
         if self._y_scale == 0:
             return self.mle
 
         if self._cdf_norm is None:
-            self._cdf_norm = self._cdf_unnorm(inf)
+            self._cdf_norm = self._cdf_unnorm(math.inf)
 
         cdfx = min(cdf * self._cdf_norm, self._cdf_norm)
         beta = self._ppf_unnorm(cdfx)
