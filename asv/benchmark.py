@@ -31,7 +31,6 @@ internal commands:
 # Remove asv package directory from sys.path. This script file resides
 # there although it's not part of the package, and Python puts it to
 # sys.path[0] on start which can shadow other modules
-import math
 import sys
 
 if __name__ == "__main__":
