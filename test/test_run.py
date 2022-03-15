@@ -81,8 +81,9 @@ def test_run_spec(basic_conf):
         expected = set(['machine.json'])
         for commit in expected_commits:
             for psver in tools.DUMMY2_VERSIONS:
-                expected.add('{0}-{1}-py{2}-asv_dummy_test_package_1-asv_dummy_test_package_2{3}.json'.format(
-                    commit[:8], tool_name, pyver, psver))
+                expected.add('{0}-{1}-py{2}-asv_dummy_test_package_'
+                             '1-asv_dummy_test_package_2{3}.json'.format(
+                                 commit[:8], tool_name, pyver, psver))
 
         result_files = os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))
 
@@ -365,12 +366,12 @@ def test_format_durations():
     msg = Run.format_durations(durations, 2)
     expected = textwrap.dedent("""\
     =========== ================
-     benchmark   total duration
+     benchmark   total duration   # noqa W291, need it to get the proper table format
     ----------- ----------------
-        quux         3.00s
-        bar          2.00s
-        ...           ...
-       total         6.00s
+        quux         3.00s      
+        bar          2.00s      
+        ...           ...       
+       total         6.00s      
     =========== ================""")
     assert msg == expected
 
