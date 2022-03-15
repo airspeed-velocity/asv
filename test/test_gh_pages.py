@@ -6,7 +6,6 @@ import pytest
 import asv.util
 
 from . import tools
-from .test_publish import generate_result_dir
 
 
 @pytest.mark.parametrize("rewrite", [False, True], ids=["no-rewrite", "rewrite"])

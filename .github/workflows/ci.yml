@@ -12,8 +12,9 @@ jobs:
         os: ["ubuntu-latest"]
         python-version: ["3.7", "3.10", "pypy-3.7", "pypy-3.8"]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       # We need Python 3.7 to always be installed, so tests with
       # multiple environments can run.

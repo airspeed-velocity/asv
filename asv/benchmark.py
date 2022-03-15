@@ -39,21 +39,9 @@ else:
     _old_sys_path_head = None
 
 import copy
-
-try:
-    import cProfile as profile
-except ImportError:
-    profile = None
+import cProfile as profile
 import ctypes
-import errno
-from ctypes.util import find_library
-from hashlib import sha256
-
-if sys.version_info[0] >= 3:
-    import importlib.machinery
-else:
-    import imp
-
+import importlib.machinery
 import inspect
 import itertools
 import json
@@ -69,98 +57,15 @@ import struct
 import pkgutil
 import traceback
 import contextlib
+from hashlib import sha256
 from importlib import import_module
 from collections import Counter
-
-# The best timer we can use is time.process_time, but it is not
-# available in the Python stdlib until Python 3.3.  This is a ctypes
-# backport for Pythons that don't have it.
-
-try:
-    from time import process_time
-except ImportError:  # Python <3.3
-    if sys.platform.startswith("linux"):
-        CLOCK_PROCESS_CPUTIME_ID = 2  # time.h
-
-        clockid_t = ctypes.c_int
-        time_t = ctypes.c_long
-
-        class timespec(ctypes.Structure):
-            _fields_ = [
-                ('tv_sec', time_t),         # seconds
-                ('tv_nsec', ctypes.c_long)  # nanoseconds
-            ]
-        _clock_gettime = ctypes.CDLL(
-            find_library('rt'), use_errno=True).clock_gettime
-        _clock_gettime.argtypes = [clockid_t, ctypes.POINTER(timespec)]
-
-        def process_time():
-            tp = timespec()
-            if _clock_gettime(CLOCK_PROCESS_CPUTIME_ID, ctypes.byref(tp)) < 0:
-                err = ctypes.get_errno()
-                msg = errno.errorcode[err]
-                if err == errno.EINVAL:
-                    msg += (
-                        "The clk_id (4) specified is not supported on this system")
-                raise OSError(err, msg)
-            return tp.tv_sec + tp.tv_nsec * 1e-9
-
-    elif sys.platform == 'darwin':
-        RUSAGE_SELF = 0  # sys/resources.h
-
-        time_t = ctypes.c_long
-        suseconds_t = ctypes.c_int32
-
-        class timeval(ctypes.Structure):
-            _fields_ = [
-                ('tv_sec', time_t),
-                ('tv_usec', suseconds_t)
-            ]
-
-        class rusage(ctypes.Structure):
-            _fields_ = [
-                ('ru_utime', timeval),
-                ('ru_stime', timeval),
-                ('ru_maxrss', ctypes.c_long),
-                ('ru_ixrss', ctypes.c_long),
-                ('ru_idrss', ctypes.c_long),
-                ('ru_isrss', ctypes.c_long),
-                ('ru_minflt', ctypes.c_long),
-                ('ru_majflt', ctypes.c_long),
-                ('ru_nswap', ctypes.c_long),
-                ('ru_inblock', ctypes.c_long),
-                ('ru_oublock', ctypes.c_long),
-                ('ru_msgsnd', ctypes.c_long),
-                ('ru_msgrcv', ctypes.c_long),
-                ('ru_nsignals', ctypes.c_long),
-                ('ru_nvcsw', ctypes.c_long),
-                ('ru_nivcsw', ctypes.c_long)
-            ]
-
-        _getrusage = ctypes.CDLL(find_library('c'), use_errno=True).getrusage
-        _getrusage.argtypes = [ctypes.c_int, ctypes.POINTER(rusage)]
-
-        def process_time():
-            ru = rusage()
-            if _getrusage(RUSAGE_SELF, ctypes.byref(ru)) < 0:
-                err = ctypes.get_errno()
-                msg = errno.errorcode[err]
-                if err == errno.EINVAL:
-                    msg += (
-                        "The clk_id (0) specified is not supported on this system")
-                raise OSError(err, msg)
-            return float(ru.ru_utime.tv_sec + ru.ru_utime.tv_usec * 1e-6 +
-                         ru.ru_stime.tv_sec + ru.ru_stime.tv_usec * 1e-6)
-
-    else:
-        # Fallback to default timer
-        process_time = timeit.default_timer
+from time import process_time
 
 wall_timer = timeit.default_timer
 
 
 if sys.platform.startswith('win'):
-    import ctypes
     import ctypes.wintypes
 
     SIZE_T = ctypes.c_size_t
@@ -367,10 +272,7 @@ def check_num_args(root, benchmark_name, func, min_num_args, max_num_args=None):
         max_num_args = min_num_args
 
     try:
-        if sys.version_info[0] >= 3:
-            info = inspect.getfullargspec(func)
-        else:
-            info = inspect.getargspec(func)
+        info = inspect.getfullargspec(func)
     except Exception as exc:
         print("{!s}: failed to check ({!r}{!s}): {!s}".format(
             benchmark_name, func, _get_sourceline_info(func, root), exc))
@@ -444,10 +346,7 @@ class Benchmark:
         self.setup_cache_timeout = _get_first_attr([self._setup_cache], "timeout", None)
         self.timeout = _get_first_attr(attr_sources, "timeout", 60.0)
         self.code = get_source_code([self.func] + self._setups + [self._setup_cache])
-        if sys.version_info[0] >= 3:
-            code_text = self.code.encode('utf-8')
-        else:
-            code_text = self.code
+        code_text = self.code.encode('utf-8')
         code_hash = sha256(code_text).hexdigest()
         self.version = str(_get_first_attr(attr_sources, "version", code_hash))
         self.type = "base"
@@ -810,10 +709,7 @@ class MemBenchmark(Benchmark):
         # the asv package in the benchmarking process.
         path = os.path.join(
             os.path.dirname(__file__), 'extern', 'asizeof.py')
-        if sys.version_info[0] >= 3:
-            asizeof = importlib.machinery.SourceFileLoader('asizeof', path).load_module()
-        else:
-            asizeof = imp.load_source('asizeof', path)
+        asizeof = importlib.machinery.SourceFileLoader('asizeof', path).load_module()
 
         obj = self.func(*param)
 
@@ -881,23 +777,13 @@ class SpecificImporter:
         self._name = name
         self._root = root
 
-    if sys.version_info[0] >= 3:
-        def find_spec(self, fullname, path, target):
-            if fullname == self._name:
-                if path is not None:
-                    raise ValueError()
-                finder = importlib.machinery.PathFinder()
-                return finder.find_spec(fullname, [self._root], target)
-            return None
-    else:
-        def find_module(self, fullname, path=None):
-            if fullname == self._name:
-                return self
-            return None
-
-        def load_module(self, fullname):
-            file, pathname, desc = imp.find_module(fullname, [self._root])
-            return imp.load_module(fullname, file, pathname, desc)
+    def find_spec(self, fullname, path, target):
+        if fullname == self._name:
+            if path is not None:
+                raise ValueError()
+            finder = importlib.machinery.PathFinder()
+            return finder.find_spec(fullname, [self._root], target)
+        return None
 
 
 def update_sys_path(root):
@@ -952,12 +838,6 @@ def disc_modules(module_name, ignore_import_errors=False):
         except BaseException:
             traceback.print_exc()
             return
-
-    # Exclude sourceless .pyc/.pyo left around (py3 __pycache__
-    # behaves sensibly, so workaround only for py2)
-    if sys.version_info[0] == 2 and not inspect.getsourcefile(module):
-        return
-
     yield module
 
     if getattr(module, '__path__', None):
@@ -1241,8 +1121,7 @@ def main_run_server(args):
             # Read command
             read_size, = struct.unpack('<Q', recvall(conn, 8))
             command_text = recvall(conn, read_size)
-            if sys.version_info[0] >= 3:
-                command_text = command_text.decode('utf-8')
+            command_text = command_text.decode('utf-8')
 
             # Parse command
             command = json.loads(command_text)
@@ -1261,8 +1140,7 @@ def main_run_server(args):
                 with io.open(stdout_file, 'r', errors='replace') as f:
                     out = f.read()
                 out = json.dumps(out)
-                if sys.version_info[0] >= 3:
-                    out = out.encode('utf-8')
+                out = out.encode('utf-8')
                 conn.sendall(struct.pack('<Q', len(out)))
                 conn.sendall(out)
                 continue
@@ -1334,8 +1212,7 @@ def main_run_server(args):
                     'errcode': -256 if is_timeout else retcode}
 
             result_text = json.dumps(info)
-            if sys.version_info[0] >= 3:
-                result_text = result_text.encode('utf-8')
+            result_text = result_text.encode('utf-8')
 
             conn.sendall(struct.pack('<Q', len(result_text)))
             conn.sendall(result_text)

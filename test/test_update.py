@@ -7,7 +7,6 @@ import hashlib
 from asv import util
 
 from . import tools
-from .test_publish import generate_result_dir
 
 
 def test_update_simple(monkeypatch, generate_result_dir):
