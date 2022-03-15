@@ -1,6 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import itertools
+import math
 
 from . import Command, common_args
 from ..benchmarks import Benchmarks
@@ -254,12 +255,12 @@ class Compare(Command):
             if benchmark in results_1:
                 time_1 = results_1[benchmark]
             else:
-                time_1 = float("nan")
+                time_1 = math.nan
 
             if benchmark in results_2:
                 time_2 = results_2[benchmark]
             else:
-                time_2 = float("nan")
+                time_2 = math.nan
 
             if benchmark in ss_1 and ss_1[benchmark][0]:
                 err_1 = statistics.get_err(time_1, ss_1[benchmark][0])

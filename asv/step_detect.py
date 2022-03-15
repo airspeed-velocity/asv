@@ -361,6 +361,7 @@ currently used to provide relative data weighting (see above).
 import math
 import collections
 import heapq
+from statistics import median
 
 try:
     from . import _rangemedian
@@ -581,8 +582,6 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
 
     """
 
-    inf = float('inf')
-
     if len(y) == 0:
         return [], [], []
 
@@ -626,7 +625,7 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
         B = [-gamma] * (i1 - i0 + 1)
         p = [0] * (i1 - i0)
         for r in range(i0, i1):
-            B[r + 1 - i0] = inf
+            B[r + 1 - i0] = math.inf
             a = max(r + 1 - max_size, i0)
             b = max(r + 1 - min_size + 1, i0)
             for l in range(a, b):
@@ -696,7 +695,7 @@ def solve_potts_autogamma(y, w, beta=None, **kw):
     best_r = [None]
     best_v = [None]
     best_d = [None]
-    best_obj = [float('inf')]
+    best_obj = [math.inf]
     best_gamma = [None]
 
     def f(x):
@@ -910,16 +909,6 @@ def get_mu_dist(y, w):
         return _rangemedian.RangeMedian(y, w)
     else:
         return L1Dist(y, w)
-
-
-def median(items):
-    """Note: modifies the input list!"""
-    items.sort()
-    k = len(items) // 2
-    if len(items) % 2 == 0:
-        return (items[k] + items[k - 1]) / 2
-    else:
-        return items[k]
 
 
 def rolling_median_dev(items):
