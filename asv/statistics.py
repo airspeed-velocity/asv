@@ -3,9 +3,7 @@
 # Author: Pauli Virtanen, 2016
 
 import math
-import operator
-
-from .util import inf, nan, is_na
+from operator import index
 
 
 def compute_stats(samples, number):
@@ -118,8 +116,8 @@ def is_different(samples_a, samples_b, stats_a, stats_b, p_threshold=0.002):
     if samples_a is not None and samples_b is not None:
         # Raw data present: Mann-Whitney U test, but only if there's
         # enough data so that the test can return True
-        a = [x for x in samples_a if not is_na(x)]
-        b = [x for x in samples_b if not is_na(x)]
+        a = [x for x in samples_a if not math.isnan(x)]
+        b = [x for x in samples_b if not math.isnan(x)]
 
         p_min = 1 / binom(len(a) + len(b), min(len(a), len(b)))
         if p_min < p_threshold:
@@ -172,8 +170,8 @@ def quantile_ci(x, q, alpha_min=0.01):
     pa = alpha_min / 2
     pb = 1 - pa
 
-    a = -inf
-    b = inf
+    a = -math.inf
+    b = math.inf
 
     # It's known that
     #
@@ -383,45 +381,18 @@ def binom_pmf(n, k, p):
 
     logp = math.log(p)
     log1mp = math.log(1 - p)
-    return math.exp(lgamma(1 + n) - lgamma(1 + n - k) - lgamma(1 + k) +
-                    k * logp + (n - k) * log1mp)
-
-
-_BERNOULLI = [1.0, -0.5, 0.166666666667, 0.0, -0.0333333333333, 0.0, 0.0238095238095]
-
-
-def lgamma(x):
-    """
-    Log gamma function. Only implemented at integers.
-    """
-
-    if x <= 0:
-        raise ValueError("Domain error")
-
-    if x > 100:
-        # DLMF 5.11.1
-        r = 0.5 * math.log(2 * math.pi) + (x - 0.5) * math.log(x) - x
-        for k in range(1, len(_BERNOULLI) // 2 + 1):
-            r += _BERNOULLI[2 * k] / (2 * k * (2 * k - 1) * x**(2 * k - 1))
-        return r
-
-    # Fall back to math.factorial
-    int_x = int(x)
-    err_int = abs(x - int_x)
-
-    if err_int < 1e-12 * abs(x):
-        return math.log(math.factorial(int_x - 1))
-
-    # Would need full implementation
-    return nan
+    lg1pn = math.lgamma(1 + n)
+    lg1pnmk = math.lgamma(1 + n - k)
+    lg1pk = math.lgamma(1 + k)
+    return math.exp(lg1pn - lg1pnmk - lg1pk + k * logp + (n - k) * log1mp)
 
 
 def binom(n, k):
     """
     Binomial coefficient (n over k)
     """
-    n = operator.index(n)
-    k = operator.index(k)
+    n = index(n)
+    k = index(k)
     if not 0 <= k <= n:
         return 0
     m = n + 1
@@ -539,7 +510,7 @@ class LaplacePosterior:
             y = sum(self.y[k:]) - sum(self.y[:k])
 
             if k == 0:
-                a = -inf
+                a = -math.inf
             else:
                 a = self.y[k - 1]
 
@@ -558,7 +529,7 @@ class LaplacePosterior:
             if k != k0:
                 self._cdf_memo[k] = cdf
 
-        if beta == inf:
+        if beta == math.inf:
             self._cdf_memo[len(self.y)] = cdf
 
         return cdf
@@ -587,7 +558,7 @@ class LaplacePosterior:
             if z > 0:
                 beta = (z**(-1 / nu) - y) / c
             else:
-                beta = -inf
+                beta = -math.inf
         elif c == 0:
             beta = a + term * y**(nu + 1)
         else:
@@ -595,7 +566,7 @@ class LaplacePosterior:
             if z > 0:
                 beta = (z**(-1 / nu) - y) / c
             else:
-                beta = inf
+                beta = math.inf
 
         if k < len(self.y):
             beta = min(beta, self.y[k])
@@ -613,12 +584,12 @@ class LaplacePosterior:
         Logarithm of probability distribution function
         """
         if self._y_scale == 0:
-            return inf if beta == self.mle else -inf
+            return math.inf if beta == self.mle else -math.inf
 
         beta = (beta - self.mle) / self._y_scale
 
         if self._cdf_norm is None:
-            self._cdf_norm = self._cdf_unnorm(inf)
+            self._cdf_norm = self._cdf_unnorm(math.inf)
 
         ws = sum(abs(yp - beta) for yp in self.y)
         m = self.nu
@@ -634,7 +605,7 @@ class LaplacePosterior:
         beta = (beta - self.mle) / self._y_scale
 
         if self._cdf_norm is None:
-            self._cdf_norm = self._cdf_unnorm(inf)
+            self._cdf_norm = self._cdf_unnorm(math.inf)
         return self._cdf_unnorm(beta) / self._cdf_norm
 
     def ppf(self, cdf):
@@ -642,13 +613,13 @@ class LaplacePosterior:
         Percent point function (inverse function for cdf)
         """
         if cdf < 0 or cdf > 1.0:
-            return nan
+            return math.nan
 
         if self._y_scale == 0:
             return self.mle
 
         if self._cdf_norm is None:
-            self._cdf_norm = self._cdf_unnorm(inf)
+            self._cdf_norm = self._cdf_unnorm(math.inf)
 
         cdfx = min(cdf * self._cdf_norm, self._cdf_norm)
         beta = self._ppf_unnorm(cdfx)
