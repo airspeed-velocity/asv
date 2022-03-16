@@ -1,9 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import os
 import textwrap
 from os.path import abspath, dirname, join
-
-from asv import config
 
 from . import tools
 
