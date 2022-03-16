@@ -1,71 +1,18 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import os
 import re
-import shutil
-from os.path import abspath, dirname, join, relpath
 
-import pytest
-
-from asv import config
 from asv.commands import make_argparser
 
 from . import tools
 
 
-def generate_basic_conf(tmpdir, repo_subdir=''):
-    tmpdir = str(tmpdir)
-    local = abspath(dirname(__file__))
-    os.chdir(tmpdir)
-
-    # Use relative paths on purpose since this is what will be in
-    # actual config files
-
-    shutil.copytree(os.path.join(local, 'benchmark'), 'benchmark')
-
-    shutil.copyfile(join(local, 'asv-machine.json'),
-                    join(tmpdir, 'asv-machine.json'))
-
-    repo_path = relpath(tools.generate_test_repo(tmpdir,
-                                                 subdir=repo_subdir).path)
-
-    conf_dict = {
-        'env_dir': 'env',
-        'benchmark_dir': 'benchmark',
-        'results_dir': 'results_workflow',
-        'html_dir': 'html',
-        'repo': repo_path,
-        'project': 'asv',
-        'branches': ['master'],
-        'matrix': {
-            "asv-dummy-test-package-1": [None],
-            "asv-dummy-test-package-2": tools.DUMMY2_VERSIONS,
-        },
-    }
-    if repo_subdir:
-        conf_dict['repo_subdir'] = repo_subdir
-
-    conf = config.Config.from_json(conf_dict)
-
-    return tmpdir, local, conf
-
-
-@pytest.fixture
-def basic_conf(tmpdir):
-    return generate_basic_conf(tmpdir)
-
-
-@pytest.fixture
-def basic_conf_with_subdir(tmpdir):
-    return generate_basic_conf(tmpdir, 'some_subdir')
-
-
 def test_dev(capsys, basic_conf):
-    tmpdir, local, conf = basic_conf
+    tmpdir, local, conf, machine_file = basic_conf
 
     # Test Dev runs (with full benchmark suite)
     ret = tools.run_asv_with_conf(conf, 'dev', '--quick', '-e',
-                                  _machine_file=join(tmpdir, 'asv-machine.json'))
+                                  _machine_file=machine_file)
     assert ret is None
     text, err = capsys.readouterr()
 
@@ -82,12 +29,12 @@ def test_dev_with_repo_subdir(capsys, basic_conf_with_subdir):
     """
     Same as test_dev, but with the Python project inside a subdirectory.
     """
-    tmpdir, local, conf = basic_conf_with_subdir
+    tmpdir, local, conf, machine_file = basic_conf_with_subdir
 
     # Test Dev runs
     tools.run_asv_with_conf(conf, 'dev', '--quick',
                             '--bench=time_secondary.track_value',
-                            _machine_file=join(tmpdir, 'asv-machine.json'))
+                            _machine_file=machine_file)
     text, err = capsys.readouterr()
 
     # Benchmarks were found and run
@@ -99,21 +46,21 @@ def test_dev_with_repo_subdir(capsys, basic_conf_with_subdir):
 
 
 def test_dev_strict(basic_conf):
-    tmpdir, local, conf = basic_conf
+    tmpdir, local, conf, machine_file = basic_conf
     ret = tools.run_asv_with_conf(conf, 'dev', '--strict', '--quick',
                                   '--bench=TimeSecondary',
-                                  _machine_file=join(tmpdir, 'asv-machine.json'))
+                                  _machine_file=machine_file)
     assert ret == 2
 
 
 def test_run_python_same(capsys, basic_conf):
-    tmpdir, local, conf = basic_conf
+    tmpdir, local, conf, machine_file = basic_conf
 
     # Test Run runs with python=same
     tools.run_asv_with_conf(conf, 'run', '--python=same',
                             '--bench=time_secondary.TimeSecondary.time_exception',
                             '--bench=time_secondary.track_value',
-                            _machine_file=join(tmpdir, 'asv-machine.json'))
+                            _machine_file=machine_file)
     text, err = capsys.readouterr()
 
     assert re.search("time_exception.*failed", text, re.S)
@@ -125,11 +72,11 @@ def test_run_python_same(capsys, basic_conf):
 
 
 def test_profile_python_same(capsys, basic_conf):
-    tmpdir, local, conf = basic_conf
+    tmpdir, local, conf, machine_file = basic_conf
 
     # Test Profile can run with python=same
     tools.run_asv_with_conf(conf, 'profile', '--python=same', "time_secondary.track_value",
-                            _machine_file=join(tmpdir, 'asv-machine.json'))
+                            _machine_file=machine_file)
     text, err = capsys.readouterr()
 
     # time_with_warnings failure case
