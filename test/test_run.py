@@ -50,7 +50,7 @@ def test_run_spec(basic_conf):
     branch_commit = dvcs.get_hash("some-branch")
     template_dir = os.path.join(tmpdir, "results_workflow_template")
     results_dir = os.path.join(tmpdir, 'results_workflow')
-    tools.run_asv_with_conf(conf, 'run', initial_commit + "^!",
+    tools.run_asv_with_conf(conf, 'run', initial_commit+"^!",
                             '--bench=time_secondary.track_value',
                             '--quick',
                             _machine_file=join(tmpdir, 'asv-machine.json'))
@@ -64,7 +64,7 @@ def test_run_spec(basic_conf):
         args = ["run", "--quick", "--skip-existing-successful",
                 "--bench=time_secondary.track_value",
                 "-s", "1000"  # large number of steps should be noop
-                ]
+               ]
         if range_spec is not None:
             args.append(range_spec)
         conf.branches = branches
@@ -81,9 +81,8 @@ def test_run_spec(basic_conf):
         expected = set(['machine.json'])
         for commit in expected_commits:
             for psver in tools.DUMMY2_VERSIONS:
-                expected.add('{0}-{1}-py{2}-asv_dummy_test_package_'
-                             '1-asv_dummy_test_package_2{3}.json'.format(
-                                 commit[:8], tool_name, pyver, psver))
+                expected.add('{0}-{1}-py{2}-asv_dummy_test_package_1-asv_dummy_test_package_2{3}.json'.format(
+                    commit[:8], tool_name, pyver, psver))
 
         result_files = os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))
 
@@ -145,9 +144,9 @@ def test_run_build_failure(basic_conf):
     # Check results
     hashes = dvcs.get_branch_hashes()
     fn_broken, = glob.glob(join(tmpdir, 'results_workflow', 'orangutan',
-                                hashes[1][:8] + '-*.json'))
+                                    hashes[1][:8] + '-*.json'))
     fn_ok, = glob.glob(join(tmpdir, 'results_workflow', 'orangutan',
-                            hashes[0][:8] + '-*.json'))
+                                hashes[0][:8] + '-*.json'))
 
     data_broken = util.load_json(fn_broken)
     data_ok = util.load_json(fn_ok)
@@ -246,15 +245,13 @@ def test_run_append_samples(basic_conf):
                   if fn != 'machine.json']
 
     data = util.load_json(result_fn)
-    value = dict(zip(data['result_columns'],
-                     data['results']['time_examples.TimeSuite.time_example_benchmark_1']))
+    value = dict(zip(data['result_columns'], data['results']['time_examples.TimeSuite.time_example_benchmark_1']))
     assert value['stats_q_25'][0] is not None
     assert len(value['samples'][0]) == 1
 
     run_it()
     data = util.load_json(result_fn)
-    value = dict(zip(data['result_columns'],
-                     data['results']['time_examples.TimeSuite.time_example_benchmark_1']))
+    value = dict(zip(data['result_columns'], data['results']['time_examples.TimeSuite.time_example_benchmark_1']))
     assert len(value['samples'][0]) == 2
 
 
@@ -269,6 +266,7 @@ def test_cpu_affinity(basic_conf):
                             '--cpu-affinity=0', '-a', 'repeat=(1, 1, 10.0)', '-a', 'rounds=1',
                             '-a', 'number=1', '-a', 'warmup_time=0',
                             _machine_file=machine_file)
+
 
     # Check run produced a result
     result_dir = join(tmpdir, 'results_workflow', 'orangutan')
@@ -366,7 +364,7 @@ def test_format_durations():
     msg = Run.format_durations(durations, 2)
     expected = textwrap.dedent("""\
     =========== ================
-     benchmark   total duration   # noqa W291, need it to get the proper table format
+     benchmark   total duration 
     ----------- ----------------
         quux         3.00s      
         bar          2.00s      
