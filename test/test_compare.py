@@ -1,5 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import os
+import re
 import shutil
 from os.path import abspath, dirname, join
 
@@ -98,7 +99,7 @@ x           1.00s            3.00s     3.00  time_with_version_mismatch_other
 REFERENCE_ONLY_CHANGED = """
        before           after         ratio
      [22b920c6]       [fcf8c079]
-     <name1>          <name2>   
+     <name1>          <name2>
 !             n/a           failed      n/a  params_examples.ParamSuite.track_value
 !           454μs           failed      n/a  time_coordinates.time_latitude
 !           3.00s           failed      n/a  time_other.time_parameterized(3)
@@ -179,6 +180,8 @@ def test_compare(capsys, tmpdir, example_results):
     assert worsened
     assert improved
     text, err = capsys.readouterr()
+    # Removing tailing spaces, so they don't need to be in `REFERENCE_ONLY_CHANGED`
+    text = re.sub(r' *\n', r'\n', text)
     assert text.strip() == REFERENCE_ONLY_CHANGED.strip()
 
     # Check table with multiple environments

@@ -439,14 +439,14 @@ Example::
     "regressions_first_commits": {
         ".*": "v0.1.0",
         "benchmark_1": "80fca08d",
-        "benchmark_2@master": null,
+        "benchmark_2@main": null,
     }
 
 In this case, regressions are detected only for commits after tag
 ``v0.1.0`` for all benchmarks. For ``benchmark_1``, regression
 detection is further limited to commits after the commit given, and
 for ``benchmark_2``, regression detection is skipped completely in the
-``master`` branch.
+``main`` branch.
 
 ``regressions_thresholds``
 --------------------------

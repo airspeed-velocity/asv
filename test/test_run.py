@@ -2,6 +2,7 @@
 
 import sys
 import os
+import re
 import shutil
 import glob
 import datetime
@@ -362,14 +363,16 @@ def test_format_durations():
     durations = {'foo': 1, 'bar': 2, 'quux': 3}
 
     msg = Run.format_durations(durations, 2)
+    # Removing tailing spaces, so they don't need to be in `expect`
+    msg = re.sub(r' *\n', r'\n', msg)
     expected = textwrap.dedent("""\
     =========== ================
-     benchmark   total duration 
+     benchmark   total duration
     ----------- ----------------
-        quux         3.00s      
-        bar          2.00s      
-        ...           ...       
-       total         6.00s      
+        quux         3.00s
+        bar          2.00s
+        ...           ...
+       total         6.00s
     =========== ================""")
     assert msg == expected
 
