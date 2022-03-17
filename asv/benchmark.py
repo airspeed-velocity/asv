@@ -165,7 +165,7 @@ def recvall(sock, size):
         data += s
         if not s:
             raise RuntimeError("did not receive data from socket "
-                               "(size {}, got only {!r})".format(size, data))
+                               f"(size {size}, got only {data !r})")
     return data
 
 
@@ -175,9 +175,7 @@ def _get_attr(source, name, ignore_case=False):
                  if key.lower() == name.lower()]
 
         if len(attrs) > 1:
-            raise ValueError(
-                "{0} contains multiple {1} functions.".format(
-                    source.__name__, name))
+            raise ValueError(f"{source.__name__} contains multiple {name} functions.")
         elif len(attrs) == 1:
             return attrs[0]
         else:
@@ -208,7 +206,7 @@ def get_setup_cache_key(func):
     if not mname:
         mname = inspect.getsourcefile(func)
 
-    return '{0}:{1}'.format(mname, inspect.getsourcelines(func)[1])
+    return f'{mname}:{inspect.getsourcelines(func)[1]}'
 
 
 def get_source_code(items):
@@ -250,7 +248,7 @@ def get_source_code(items):
             src = "class {0}:\n    {1}".format(
                 class_name, src.replace("\n", "\n    "))
         elif class_name:
-            src = "    {0}".format(src.replace("\n", "\n    "))
+            src = "    " + src.replace("\n", "\n    ")
 
         sources.append(src)
         prev_class_name = class_name
@@ -263,7 +261,7 @@ def _get_sourceline_info(obj, basedir):
         fn = inspect.getsourcefile(obj)
         fn = os.path.relpath(fn, basedir)
         _, lineno = inspect.getsourcelines(obj)
-        return " in {!s}:{!s}".format(fn, lineno)
+        return f" in {fn !s}:{lineno !s}"
     except Exception:
         return ""
 
@@ -275,8 +273,8 @@ def check_num_args(root, benchmark_name, func, min_num_args, max_num_args=None):
     try:
         info = inspect.getfullargspec(func)
     except Exception as exc:
-        print("{!s}: failed to check ({!r}{!s}): {!s}".format(
-            benchmark_name, func, _get_sourceline_info(func, root), exc))
+        print(f"{benchmark_name !s}: failed to check "
+              f"({func !r}{_get_sourceline_info(func, root) !s}): {exc !s}")
         return True
 
     max_args = len(info.args)
@@ -297,14 +295,14 @@ def check_num_args(root, benchmark_name, func, min_num_args, max_num_args=None):
         if min_args == max_args:
             args_str = min_args
         else:
-            args_str = "{}-{}".format(min_args, max_args)
+            args_str = f"{min_args}-{max_args}"
         if min_num_args == max_num_args:
             num_args_str = min_num_args
         else:
-            num_args_str = "{}-{}".format(min_num_args, max_num_args)
-        print("{!s}: wrong number of arguments (for {!r}{!s}): expected {}, has {}".format(
-            benchmark_name, func, _get_sourceline_info(func, root),
-            num_args_str, args_str))
+            num_args_str = f"{min_num_args}-{max_num_args}"
+        print(f"{benchmark_name !s}: wrong number of arguments "
+              f"(for {func !r}{_get_sourceline_info(func, root) !s}): expected {num_args_str}, "
+              f"has {args_str}")
 
     return ok
 
@@ -390,7 +388,7 @@ class Benchmark:
                 for j in range(len(param)):
                     name = param[j]
                     if name in dupe_dict:
-                        param[j] = name + ' ({})'.format(dupe_dict[name])
+                        param[j] = name + f' ({dupe_dict[name]})'
                         dupe_dict[name] += 1
                 self.params[i] = param
 
@@ -410,7 +408,7 @@ class Benchmark:
         self._current_params = tuple([param] + list(self._current_params))
 
     def __repr__(self):
-        return '<{0} {1}>'.format(self.__class__.__name__, self.name)
+        return f'<{self.__class__.__name__} {self.name}>'
 
     def check(self, root):
         # Check call syntax (number of arguments only...)
@@ -446,7 +444,7 @@ class Benchmark:
                 setup(*self._current_params)
         except NotImplementedError as e:
             # allow skipping test
-            print("asv: skipped: {!r} ".format(e))
+            print(f"asv: skipped: {e !r} ")
             return True
         return False
 
@@ -939,7 +937,7 @@ def get_benchmark_from_name(root, name, extra_params=None):
                 break
         else:
             raise ValueError(
-                "Could not find benchmark '{0}'".format(name))
+                f"Could not find benchmark '{name}'")
 
     if param_idx is not None:
         benchmark.set_param_idx(param_idx)
@@ -1000,8 +998,7 @@ def set_cpu_affinity_from_params(extra_params):
         try:
             set_cpu_affinity(affinity_list)
         except BaseException as exc:
-            print("asv: setting cpu affinity {!r} failed: {!r}".format(
-                affinity_list, exc))
+            print(f"asv: setting cpu affinity {affinity_list !r} failed: {exc !r}")
 
 
 def main_setup_cache(args):
@@ -1154,7 +1151,7 @@ def main_run_server(args):
             cwd = command.pop('cwd')
 
             if command:
-                raise RuntimeError('Command contained unknown data: {!r}'.format(command_text))
+                raise RuntimeError(f'Command contained unknown data: {command_text !r}')
 
             # Spawn benchmark
             run_args = (benchmark_dir, benchmark_id, params_str, profile_path, result_file)
@@ -1268,10 +1265,10 @@ def main_timing(argv):
 
     if not args.json:
         asv.console.color_print(formatted, 'red')
-        asv.console.color_print(u"", 'default')
-        asv.console.color_print(u"\n".join(u"{}: {}".format(k, v)
+        asv.console.color_print("", 'default')
+        asv.console.color_print("\n".join(f"{k}: {v}"
                                 for k, v in sorted(stats.items())), 'default')
-        asv.console.color_print(u"samples: {}".format(result['samples']), 'default')
+        asv.console.color_print(f"samples: {result['samples']}", 'default')
     else:
         json.dump({'result': value,
                    'samples': result['samples'],
@@ -1306,7 +1303,7 @@ def main():
         commands[mode](args)
         sys.exit(0)
     else:
-        sys.stderr.write("Unknown mode {0}\n".format(mode))
+        sys.stderr.write(f"Unknown mode {mode}\n")
         sys.exit(1)
 
 
