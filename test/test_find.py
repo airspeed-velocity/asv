@@ -7,7 +7,7 @@ import pytest
 from asv.util import check_output, which
 
 from . import tools
-from .test_workflow import generate_basic_conf
+from .conftest import generate_basic_conf
 
 WIN = (os.name == 'nt')
 

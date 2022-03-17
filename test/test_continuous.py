@@ -9,8 +9,8 @@ from . import tools
 from .tools import get_default_environment_type
 
 
-def test_continuous(capfd, basic_conf):
-    tmpdir, local, conf, machine_file = basic_conf
+def test_continuous(capfd, basic_conf_2):
+    tmpdir, local, conf, machine_file = basic_conf_2
 
     python = "{0[0]}.{0[1]}".format(sys.version_info)
     env_type = get_default_environment_type(conf, python)

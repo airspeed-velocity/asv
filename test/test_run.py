@@ -36,8 +36,8 @@ def test_set_commit_hash(capsys, existing_env_conf):
     assert times.commit_hash == commit_hash
 
 
-def test_run_spec(basic_conf):
-    tmpdir, local, conf, machine_file = basic_conf
+def test_run_spec(basic_conf_2):
+    tmpdir, local, conf, machine_file = basic_conf_2
     conf.build_cache_size = 5
 
     extra_branches = [('master~1', 'some-branch', [12])]
@@ -225,8 +225,8 @@ def test_benchmark_param_selection(basic_conf):
                             _machine_file=machine_file)
 
 
-def test_run_append_samples(basic_conf):
-    tmpdir, local, conf, machine_file = basic_conf
+def test_run_append_samples(basic_conf_2):
+    tmpdir, local, conf, machine_file = basic_conf_2
 
     # Only one environment
     conf.matrix['asv_dummy_test_package_2'] = conf.matrix['asv_dummy_test_package_2'][:1]
@@ -306,8 +306,8 @@ def test_env_matrix_value(basic_conf):
     check_env_matrix({'SOME_TEST_VAR': ['1', '2']}, {})
 
 
-def test_parallel(basic_conf, dummy_packages):
-    tmpdir, local, conf, machine_file = basic_conf
+def test_parallel(basic_conf_2, dummy_packages):
+    tmpdir, local, conf, machine_file = basic_conf_2
 
     if WIN and os.path.basename(sys.argv[0]).lower().startswith('py.test'):
         # Multiprocessing in spawn mode can result to problems with py.test
@@ -363,7 +363,7 @@ def test_format_durations():
     durations = {'foo': 1, 'bar': 2, 'quux': 3}
 
     msg = Run.format_durations(durations, 2)
-    # Removing tailing spaces, so they don't need to be in `expect`
+    # Removing tailing spaces, so they don't need to be in `expected`
     msg = re.sub(r' *\n', r'\n', msg)
     expected = textwrap.dedent("""\
     =========== ================
@@ -377,8 +377,8 @@ def test_format_durations():
     assert msg == expected
 
 
-def test_return_code_strict_mode(tmpdir, basic_conf):
-    tmpdir, local, conf, machine_file = basic_conf
+def test_return_code_strict_mode(tmpdir, basic_conf_2):
+    tmpdir, local, conf, machine_file = basic_conf_2
 
     res = tools.run_asv_with_conf(conf, 'run', 'master^!', '--quick',
                                   '--strict', '--bench', 'TimeSecondary',

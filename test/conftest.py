@@ -1,8 +1,9 @@
 import contextlib
+import sys
 import os
 import shutil
 import textwrap
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname, join, relpath
 
 import pytest
 import selenium
@@ -14,7 +15,6 @@ from asv.step_detect import L1Dist
 from . import tools
 from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
 from .test_web import _rebuild_basic_html
-from .test_workflow import generate_basic_conf
 from .tools import (DUMMY1_VERSION, DUMMY2_VERSIONS, HAS_CONDA, PYTHON_VER1, PYTHON_VER2,
                     WAIT_TIME, WIN, _build_dummy_wheels, locked_cache_dir, run_asv_with_conf)
 
@@ -30,6 +30,13 @@ except ImportError:
     HAVE_RANGEMEDIAN = False
 
 
+DUMMY_VALUES = (
+    (6, 1),
+    (6, 6),
+    (6, 6),
+)
+
+
 def pytest_addoption(parser):
     parser.addoption("--webdriver", action="store", default="None",
                      help=("Selenium WebDriver interface to use for running the test. "
@@ -41,6 +48,62 @@ def pytest_addoption(parser):
     parser.addoption("--environment-type", action="store", default=None,
                      choices=("conda", "virtualenv"),
                      help="environment_type to use in tests by default")
+
+
+def generate_basic_conf(tmpdir,
+                        repo_subdir='',
+                        values=DUMMY_VALUES,
+                        dummy_packages=True,
+                        conf_version=1):
+    # conf_version allows to generate different configurations with this same function
+    assert conf_version in (1, 2)
+    tmpdir = str(tmpdir)
+    local = abspath(dirname(__file__))
+    os.chdir(tmpdir)
+
+    # Use relative paths on purpose since this is what will be in
+    # actual config files
+
+    shutil.copytree(os.path.join(local, 'benchmark'), 'benchmark')
+
+    machine_file = join(tmpdir, 'asv-machine.json')
+
+    shutil.copyfile(join(local, 'asv-machine.json'),
+                    machine_file)
+
+    # values not in test_dev.py copy
+    repo_path = tools.generate_test_repo(tmpdir, values,
+                                         subdir=repo_subdir).path
+
+    conf_dict = {
+        'env_dir': 'env',
+        'benchmark_dir': 'benchmark',
+        'results_dir': 'results_workflow',
+        'html_dir': 'html',
+        'repo': relpath(repo_path),
+        'project': 'asv',
+        'dvcs': 'git',
+        'matrix': {
+            "asv-dummy-test-package-1": [None],
+            "asv-dummy-test-package-2": tools.DUMMY2_VERSIONS,
+        },
+    }
+    if not dummy_packages:
+        conf_dict['matrix'] = {}
+    elif conf_version == 2:
+        conf_dict['matrix'] = {
+            "asv_dummy_test_package_1": [""],
+            "asv_dummy_test_package_2": tools.DUMMY2_VERSIONS,
+        }
+    if repo_subdir:
+        conf_dict['repo_subdir'] = repo_subdir
+
+    conf = config.Config.from_json(conf_dict)
+
+    if hasattr(sys, 'pypy_version_info'):
+        conf.pythons = ["pypy{0[0]}.{0[1]}".format(sys.version_info)]
+
+    return tmpdir, local, conf, machine_file
 
 
 def pytest_sessionstart(session):
@@ -132,6 +195,11 @@ def two_branch_repo_case(request, tmpdir):
 @pytest.fixture
 def basic_conf(tmpdir, dummy_packages):
     return generate_basic_conf(tmpdir)
+
+
+@pytest.fixture
+def basic_conf_2(tmpdir, dummy_packages):
+    return generate_basic_conf(tmpdir, conf_version=2)
 
 
 @pytest.fixture
