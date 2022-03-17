@@ -50,7 +50,13 @@ def pytest_addoption(parser):
                      help="environment_type to use in tests by default")
 
 
-def generate_basic_conf(tmpdir, repo_subdir='', values=DUMMY_VALUES, dummy_packages=True):
+def generate_basic_conf(tmpdir,
+                        repo_subdir='',
+                        values=DUMMY_VALUES,
+                        dummy_packages=True,
+                        conf_version=1):
+    # conf_version allows to generate different configurations with this same function
+    assert conf_version in (1, 2)
     tmpdir = str(tmpdir)
     local = abspath(dirname(__file__))
     os.chdir(tmpdir)
@@ -84,6 +90,11 @@ def generate_basic_conf(tmpdir, repo_subdir='', values=DUMMY_VALUES, dummy_packa
     }
     if not dummy_packages:
         conf_dict['matrix'] = {}
+    elif conf_version == 2:
+        conf_dict['matrix'] = {
+            "asv_dummy_test_package_1": [""],
+            "asv_dummy_test_package_2": tools.DUMMY2_VERSIONS,
+        }
     if repo_subdir:
         conf_dict['repo_subdir'] = repo_subdir
 
@@ -184,6 +195,11 @@ def two_branch_repo_case(request, tmpdir):
 @pytest.fixture
 def basic_conf(tmpdir, dummy_packages):
     return generate_basic_conf(tmpdir)
+
+
+@pytest.fixture
+def basic_conf_2(tmpdir, dummy_packages):
+    return generate_basic_conf(tmpdir, conf_version=2)
 
 
 @pytest.fixture

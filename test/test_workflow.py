@@ -13,8 +13,8 @@ from asv import util
 from . import tools
 
 
-def test_run_publish(capfd, basic_conf):
-    tmpdir, local, conf, machine_file = basic_conf
+def test_run_publish(capfd, basic_conf_2):
+    tmpdir, local, conf, machine_file = basic_conf_2
     tmpdir = util.long_path(tmpdir)
 
     conf.matrix = {

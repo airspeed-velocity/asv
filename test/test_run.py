@@ -35,8 +35,8 @@ def test_set_commit_hash(capsys, existing_env_conf):
     assert times.commit_hash == commit_hash
 
 
-def test_run_spec(basic_conf):
-    tmpdir, local, conf, machine_file = basic_conf
+def test_run_spec(basic_conf_2):
+    tmpdir, local, conf, machine_file = basic_conf_2
     conf.build_cache_size = 5
 
     extra_branches = [('master~1', 'some-branch', [12])]
@@ -224,8 +224,8 @@ def test_benchmark_param_selection(basic_conf):
                             _machine_file=machine_file)
 
 
-def test_run_append_samples(basic_conf):
-    tmpdir, local, conf, machine_file = basic_conf
+def test_run_append_samples(basic_conf_2):
+    tmpdir, local, conf, machine_file = basic_conf_2
 
     # Only one environment
     conf.matrix['asv_dummy_test_package_2'] = conf.matrix['asv_dummy_test_package_2'][:1]
