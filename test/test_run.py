@@ -82,7 +82,7 @@ def test_run_spec(basic_conf_2):
         for commit in expected_commits:
             for psver in tools.DUMMY2_VERSIONS:
                 expected.add(f'{commit[:8]}-{tool_name}-py{pyver}-asv_dummy_'
-                             f'test_package_1-asv_dummy_test_package_2{psver}')
+                             f'test_package_1-asv_dummy_test_package_2{psver}.json')
 
         result_files = os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))
 
