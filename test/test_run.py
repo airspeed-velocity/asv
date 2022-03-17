@@ -82,7 +82,7 @@ def test_run_spec(basic_conf_2):
         for commit in expected_commits:
             for psver in tools.DUMMY2_VERSIONS:
                 expected.add(f'{commit[:8]}-{tool_name}-py{pyver}-asv_dummy_'
-                             'test_package_1-asv_dummy_test_package_2{psver}')
+                             f'test_package_1-asv_dummy_test_package_2{psver}')
 
         result_files = os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))
 
@@ -245,15 +245,15 @@ def test_run_append_samples(basic_conf_2):
                   if fn != 'machine.json']
 
     data = util.load_json(result_fn)
-    value = dict(zip(data['result_columns'], data['results']
-                 ['time_examples.TimeSuite.time_example_benchmark_1']))
+    value = dict(zip(data['result_columns'],
+                 data['results']['time_examples.TimeSuite.time_example_benchmark_1']))
     assert value['stats_q_25'][0] is not None
     assert len(value['samples'][0]) == 1
 
     run_it()
     data = util.load_json(result_fn)
-    value = dict(zip(data['result_columns'], data['results']
-                 ['time_examples.TimeSuite.time_example_benchmark_1']))
+    value = dict(zip(data['result_columns'],
+                     data['results']['time_examples.TimeSuite.time_example_benchmark_1']))
     assert len(value['samples'][0]) == 2
 
 
