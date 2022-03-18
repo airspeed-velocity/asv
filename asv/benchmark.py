@@ -128,11 +128,21 @@ if sys.platform.startswith('win'):
         if not ok:
             raise RuntimeError("SetProcessAffinityMask failed")
 else:
-    import resource
+    try:
+        import resource
 
-    def get_maxrss():
-        # convert from kilobytes to bytes
-        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
+        # POSIX
+        if sys.platform == 'darwin':
+            def get_maxrss():
+                # OSX getrusage returns maxrss in bytes
+                # https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man2/getrusage.2.html
+                return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        else:
+            def get_maxrss():
+                # Linux, *BSD return maxrss in kilobytes
+                return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
+    except ImportError:
+        pass
 
     def set_cpu_affinity(affinity_list):
         """Set CPU affinity to CPUs listed (numbered 0...n-1)"""
