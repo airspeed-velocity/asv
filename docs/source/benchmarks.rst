@@ -26,7 +26,7 @@ Benchmark attributes can either be applied directly to the benchmark function::
 
     def time_something():
         pass
-  
+
     time_something.timeout = 123
 
 or appear as class attributes::
