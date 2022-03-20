@@ -53,8 +53,7 @@ class MachineCollection:
                 return d[list(d.keys())[0]]
 
         raise util.UserError(
-            "No information stored about machine '{0}'. I know about {1}.".format(
-                machine_name, util.human_list(d.keys())))
+            f"No information stored about machine '{machine_name}'. I know about {util.human_list(d.keys()))}."
 
     @classmethod
     def save(cls, machine_name, machine_info, _path=None):
@@ -144,7 +143,7 @@ class Machine:
 
         return {
             'machine': node,
-            'os': "{0} {1}".format(system, release),
+            'os': f"{system} {release}",
             'num_cpu': num_cpu,
             'arch': platform.machine(),
             'cpu': cpu,
@@ -170,8 +169,7 @@ class Machine:
         for i, (name, description) in enumerate(Machine.fields):
             print(
                 textwrap.fill(
-                    '{0}. {1}: {2}'.format(
-                        i + 1, name, textwrap.dedent(description)),
+                    f'{i + 1}. {name}: {textwrap.dedent(description)}',
                     subsequent_indent='   '))
             values[name] = console.get_answer_default(name, defaults[name],
                                                       use_defaults=use_defaults)
