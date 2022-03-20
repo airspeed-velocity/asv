@@ -45,7 +45,7 @@ class Rm(Command):
         for pattern in patterns:
             parts = pattern.split('=', 1)
             if len(parts) != 2:
-                raise util.UserError("Invalid pattern '{0}'".format(pattern))
+                raise util.UserError(f"Invalid pattern '{pattern}'")
 
             if parts[0] == 'benchmark':
                 if single_benchmark is not None:
@@ -54,7 +54,7 @@ class Rm(Command):
             else:
                 if parts[0] in global_patterns:
                     raise util.UserError(
-                        "'{0}' appears more than once".format(parts[0]))
+                        f"'{parts[0]}' appears more than once")
                 global_patterns[parts[0]] = parts[1]
 
         for result in iter_results(conf.results_dir):
@@ -87,10 +87,9 @@ class Rm(Command):
                 files_to_remove.add(result)
 
         if single_benchmark is not None:
-            log.info("Removing {0} benchmarks in {1} files".format(
-                count, len(files_to_remove)))
+            log.info(f"Removing {count} benchmarks in {len(files_to_remove)} files")
         else:
-            log.info("Removing {0} files".format(len(files_to_remove)))
+            log.info(f"Removing {len(files_to_remove)} files")
 
         if not y:
             do = console.get_answer_default("Perform operations", "n")
