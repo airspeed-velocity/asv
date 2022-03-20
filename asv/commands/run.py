@@ -235,7 +235,7 @@ class Run(Command):
                 commit_hashes = list(set([repo.get_hash_from_name(branch) for
                                          branch in conf.branches]))
             except NoSuchNameError as exc:
-                raise util.UserError('Unknown branch {0} in configuration'.format(exc))
+                raise util.UserError(f'Unknown branch {exc} in configuration')
         elif range_spec == 'EXISTING':
             commit_hashes = get_existing_hashes(conf.results_dir)
         elif range_spec == "NEW":
@@ -253,7 +253,7 @@ class Run(Command):
                 with open(hashfn, 'r') as f:
                     hashstr = f.read()
             else:
-                log.error('Requested commit hash file "{}" is not a file'.format(hashfn))
+                log.error(f'Requested commit hash file "{hashfn}" is not a file')
                 return 1
             commit_hashes = []
             for h in hashstr.split("\n"):
@@ -262,7 +262,7 @@ class Run(Command):
                     try:
                         commit_hashes.append(repo.get_hash_from_name(h))
                     except NoSuchNameError:
-                        log.warning("Unknown commit hash {0} in input file".format(h))
+                        log.warning(f"Unknown commit hash {h} in input file")
         elif isinstance(range_spec, list):
             commit_hashes = range_spec
         else:
@@ -305,10 +305,9 @@ class Run(Command):
         steps = len(commit_hashes) * benchmark_count * len(environments)
 
         log.info(
-            "Running {0} total benchmarks "
-            "({1} commits * {2} environments * {3} benchmarks)".format(
-                steps, len(commit_hashes),
-                len(environments), len(benchmarks)))
+            f"Running {steps} total benchmarks "
+            f"({len(commit_hashes)} commits * {len(environments)} "
+            f"environments * {len(benchmarks)} benchmarks)")
 
         parallel, multiprocessing = util.get_multiprocessing(parallel)
 
@@ -397,16 +396,13 @@ class Run(Command):
 
             if commit_hash:
                 if interleave_rounds:
-                    round_info = " (round {}/{})".format(
-                        max_rounds - run_rounds[0] + 1,
-                        max_rounds)
+                    round_info = f" (round {max_rounds - run_rounds[0] + 1}/{max_rounds})"
                 else:
                     round_info = ""
 
                 commit_name = repo.get_decorated_hash(commit_hash, 8)
                 log.info(
-                    "For {0} commit {1}{2}:".format(
-                        conf.project, commit_name, round_info))
+                    f"For {conf.project} commit {commit_name}{round_info}:")
 
             with log.indent():
 
@@ -421,7 +417,7 @@ class Run(Command):
                     subenv_name = ', '.join([x.name for x in env_to_install])
 
                     if subenv_name:
-                        log.info("Building for {0}".format(subenv_name))
+                        log.info(f"Building for {subenv_name}")
 
                     with log.indent():
                         args = [(env, conf, repo, commit_hash) for env in env_to_install]
