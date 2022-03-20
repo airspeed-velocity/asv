@@ -72,7 +72,7 @@ except (RuntimeError, IOError):
 
 
 try:
-    import virtualenv  # noqa F401 checking if installed 
+    import virtualenv  # noqa F401 checking if installed
     HAS_VIRTUALENV = True
 except ImportError:
     HAS_VIRTUALENV = False
