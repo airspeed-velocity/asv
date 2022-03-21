@@ -74,8 +74,6 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
         append_samples=True, record_samples=True)
     times = ResultsWrapper(results, b)
 
-    end_timestamp = datetime.datetime.utcnow()
-
     assert len(times) == len(b)
     assert times[
         'time_examples.TimeSuite.time_example_benchmark_1'].result != [None]
@@ -108,15 +106,19 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
 
     assert times['time_examples.TimeWithBadTimer.time_it'].result == [0.0]
 
-    assert times['params_examples.track_param'].params == [["<class 'benchmark.params_examples.ClassOne'>",
-                                                               "<class 'benchmark.params_examples.ClassTwo'>"]]
+    assert times['params_examples.track_param'].params == [
+        [
+            "<class 'benchmark.params_examples.ClassOne'>",
+            "<class 'benchmark.params_examples.ClassTwo'>"
+        ]
+    ]
     assert times['params_examples.track_param'].result == [42, 42]
 
     assert times['params_examples.mem_param'].params == [['10', '20'], ['2', '3']]
-    assert len(times['params_examples.mem_param'].result) == 2*2
+    assert len(times['params_examples.mem_param'].result) == 2 * 2
 
     assert times['params_examples.ParamSuite.track_value'].params == [["'a'", "'b'", "'c'"]]
-    assert times['params_examples.ParamSuite.track_value'].result == [1+0, 2+0, 3+0]
+    assert times['params_examples.ParamSuite.track_value'].result == [1 + 0, 2 + 0, 3 + 0]
 
     assert isinstance(times['params_examples.TuningTest.time_it'].result[0], float)
     assert isinstance(times['params_examples.TuningTest.time_it'].result[1], float)
@@ -154,7 +156,7 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     assert times['time_examples.TimeWithRepeat.time_it'].stderr.split() == expected
 
     # Calibration of iterations should not rerun setup
-    expected = (['setup']*2, ['setup']*3)
+    expected = (['setup'] * 2, ['setup'] * 3)
     assert times['time_examples.TimeWithRepeatCalibrate.time_it'].stderr.split() in expected
 
     # Check tuple-form repeat attribute produced results
@@ -207,13 +209,21 @@ def test_skip_param_selection():
     results = Results.unnamed()
     b = benchmarks.Benchmarks(conf, d, [r'test_nonparam', r'test_param\([23]\)'])
 
-    results.add_result(b['test_param'],
-                       runner.BenchmarkResult(result=[1, 2, 3], samples=[None]*3, number=[None]*3,
-                                              errcode=0, stderr='', profile=None))
+    results.add_result(
+        b['test_param'],
+        runner.BenchmarkResult(
+            result=[1, 2, 3],
+            samples=[None] * 3,
+            number=[None] * 3,
+            errcode=0,
+            stderr='',
+            profile=None
+        )
+    )
 
     runner.skip_benchmarks(b, DummyEnv(), results)
 
-    assert results._results.get('test_nonparam') == None
+    assert results._results.get('test_nonparam') is None
     assert results._results['test_param'] == [1, None, None]
 
 
@@ -307,7 +317,7 @@ def test_forkserver_preimport(tmpdir):
     finally:
         spawner.close()
 
-    assert success == True
+    assert success is True
     assert out.rstrip() == "message"
 
     #
@@ -327,7 +337,7 @@ def test_forkserver_preimport(tmpdir):
     finally:
         spawner.close()
 
-    assert success == False
+    assert success is False
     assert out.startswith('asv: benchmark runner crashed')
 
     #
@@ -348,7 +358,7 @@ def test_forkserver_preimport(tmpdir):
     finally:
         spawner.close()
 
-    assert success == True
+    assert success is True
     assert out.startswith('Traceback')
 
 
