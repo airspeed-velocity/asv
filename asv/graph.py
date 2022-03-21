@@ -118,11 +118,11 @@ class Graph:
         l = list(params.items())
         for key, val in l:
             if val is None:
-                part = '{0}-null'.format(key)
+                part = f'{key}-null'
             elif val:
-                part = '{0}-{1}'.format(key, val)
+                part = f'{key}-{val}'
             else:
-                part = '{0}'.format(key)
+                part = f'{key}'
             parts.append(util.sanitize_filename(part))
         parts.sort()
         parts.insert(0, 'graphs')
