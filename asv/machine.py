@@ -53,7 +53,8 @@ class MachineCollection:
                 return d[list(d.keys())[0]]
 
         raise util.UserError(
-            f"No information stored about machine '{machine_name}'. I know about {util.human_list(d.keys())}.")
+            f"No information stored about machine '{machine_name}'. "
+            f"I know about {util.human_list(d.keys())}.")
 
     @classmethod
     def save(cls, machine_name, machine_info, _path=None):
