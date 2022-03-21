@@ -9,4 +9,4 @@ coverage:
         target: 1
     patch: false
     changes: false
-comment: off
+comment: false
