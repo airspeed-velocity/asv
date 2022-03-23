@@ -1,246 +1,406 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import os
-import re
-import shutil
-from os.path import abspath, dirname, join
 
-import pytest
+import itertools
+import math
 
-from asv import config, util
-from asv.commands.compare import Compare
-
-from . import tools
-
-try:
-    import hglib
-except ImportError:
-    hglib = None
+from . import Command, common_args
+from ..benchmarks import Benchmarks
+from ..machine import iter_machine_files
+from ..results import iter_results_for_machine_and_hash
+from ..repo import get_repo, NoSuchNameError
+from ..util import human_value, load_json
+from ..console import log, color_print
+from ..environment import get_environments
+from .. import util, statistics
 
 
-MACHINE_FILE = abspath(join(dirname(__file__), 'asv-machine.json'))
-
-REFERENCE = """
-All benchmarks:
-
-       before           after         ratio
-     [22b920c6]       [fcf8c079]
-!             n/a           failed      n/a  params_examples.ParamSuite.track_value
-           failed           failed      n/a  time_AAA_failure
-              n/a              n/a      n/a  time_AAA_skip
-          1.00±1s          3.00±1s    ~3.00  time_ci_big
-+         1.00±0s          3.00±0s     3.00  time_ci_small
-!           454μs           failed      n/a  time_coordinates.time_latitude
-            1.00s            1.00s     1.00  time_other.time_parameterized(1)
-            2.00s            4.00s     2.00  time_other.time_parameterized(2)
-!           3.00s           failed      n/a  time_other.time_parameterized(3)
-+          1.75ms            153ms    87.28  time_quantity.time_quantity_array_conversion
-+           934μs            108ms   115.90  time_quantity.time_quantity_init_array
-           83.6μs           55.4μs     0.66  time_quantity.time_quantity_init_scalar
-            282μs            147μs     0.52  time_quantity.time_quantity_scalar_conversion
-+          1.31ms           7.75ms     5.91  time_quantity.time_quantity_ufunc_sin
-               42               42     1.00  time_secondary.track_value
-            5.73m            5.73m     1.00  time_units.mem_unit
-+           125μs           3.81ms    30.42  time_units.time_simple_unit_parse
-           1.64ms           1.53ms     0.93  time_units.time_unit_compose
-+           372μs           11.5ms    30.81  time_units.time_unit_parse
--          69.1μs           18.3μs     0.27  time_units.time_unit_to
-           11.9μs           13.1μs     1.10  time_units.time_very_simple_unit_parse
-+           1.00s            3.00s     3.00  time_with_version_match
-+           1.00s            3.00s     3.00  time_with_version_mismatch_bench
-x           1.00s            3.00s     3.00  time_with_version_mismatch_other
-"""
-
-REFERENCE_SPLIT = """
-Benchmarks that have improved:
-
-       before           after         ratio
-     [22b920c6]       [fcf8c079]
--          69.1μs           18.3μs     0.27  time_units.time_unit_to
-
-Benchmarks that have stayed the same:
-
-       before           after         ratio
-     [22b920c6]       [fcf8c079]
-           failed           failed      n/a  time_AAA_failure
-              n/a              n/a      n/a  time_AAA_skip
-          1.00±1s          3.00±1s    ~3.00  time_ci_big
-            1.00s            1.00s     1.00  time_other.time_parameterized(1)
-            2.00s            4.00s     2.00  time_other.time_parameterized(2)
-           83.6μs           55.4μs     0.66  time_quantity.time_quantity_init_scalar
-            282μs            147μs     0.52  time_quantity.time_quantity_scalar_conversion
-               42               42     1.00  time_secondary.track_value
-            5.73m            5.73m     1.00  time_units.mem_unit
-           1.64ms           1.53ms     0.93  time_units.time_unit_compose
-           11.9μs           13.1μs     1.10  time_units.time_very_simple_unit_parse
-
-Benchmarks that have got worse:
-
-       before           after         ratio
-     [22b920c6]       [fcf8c079]
-!             n/a           failed      n/a  params_examples.ParamSuite.track_value
-+         1.00±0s          3.00±0s     3.00  time_ci_small
-!           454μs           failed      n/a  time_coordinates.time_latitude
-!           3.00s           failed      n/a  time_other.time_parameterized(3)
-+          1.75ms            153ms    87.28  time_quantity.time_quantity_array_conversion
-+           934μs            108ms   115.90  time_quantity.time_quantity_init_array
-+          1.31ms           7.75ms     5.91  time_quantity.time_quantity_ufunc_sin
-+           125μs           3.81ms    30.42  time_units.time_simple_unit_parse
-+           372μs           11.5ms    30.81  time_units.time_unit_parse
-+           1.00s            3.00s     3.00  time_with_version_match
-+           1.00s            3.00s     3.00  time_with_version_mismatch_bench
-
-Benchmarks that are not comparable:
-
-       before           after         ratio
-     [22b920c6]       [fcf8c079]
-x           1.00s            3.00s     3.00  time_with_version_mismatch_other
-"""
-
-REFERENCE_ONLY_CHANGED = """
-       before           after         ratio
-     [22b920c6]       [fcf8c079]
-     <name1>          <name2>
-!             n/a           failed      n/a  params_examples.ParamSuite.track_value
-!           454μs           failed      n/a  time_coordinates.time_latitude
-!           3.00s           failed      n/a  time_other.time_parameterized(3)
-+           934μs            108ms   115.90  time_quantity.time_quantity_init_array
-+          1.75ms            153ms    87.28  time_quantity.time_quantity_array_conversion
-+           372μs           11.5ms    30.81  time_units.time_unit_parse
-+           125μs           3.81ms    30.42  time_units.time_simple_unit_parse
-+          1.31ms           7.75ms     5.91  time_quantity.time_quantity_ufunc_sin
-+         1.00±0s          3.00±0s     3.00  time_ci_small
-+           1.00s            3.00s     3.00  time_with_version_match
-+           1.00s            3.00s     3.00  time_with_version_mismatch_bench
--          69.1μs           18.3μs     0.27  time_units.time_unit_to
-"""
-
-REFERENCE_ONLY_CHANGED_MULTIENV = """
-       before           after         ratio
-     [22b920c6]       [fcf8c079]
-!             n/a           failed      n/a  params_examples.ParamSuite.track_value [cheetah/py2.7-numpy1.8]
-!           454μs           failed      n/a  time_coordinates.time_latitude [cheetah/py2.7-numpy1.8]
-!           3.00s           failed      n/a  time_other.time_parameterized(3) [cheetah/py2.7-numpy1.8]
-+           934μs            108ms   115.90  time_quantity.time_quantity_init_array [cheetah/py2.7-numpy1.8]
-+          1.75ms            153ms    87.28  time_quantity.time_quantity_array_conversion [cheetah/py2.7-numpy1.8]
-+           372μs           11.5ms    30.81  time_units.time_unit_parse [cheetah/py2.7-numpy1.8]
-+           125μs           3.81ms    30.42  time_units.time_simple_unit_parse [cheetah/py2.7-numpy1.8]
-+          1.31ms           7.75ms     5.91  time_quantity.time_quantity_ufunc_sin [cheetah/py2.7-numpy1.8]
-+         1.00±0s          3.00±0s     3.00  time_ci_small [cheetah/py2.7-numpy1.8]
-+           1.00s            3.00s     3.00  time_with_version_match [cheetah/py2.7-numpy1.8]
-+           1.00s            3.00s     3.00  time_with_version_mismatch_bench [cheetah/py2.7-numpy1.8]
--          69.1μs           18.3μs     0.27  time_units.time_unit_to [cheetah/py2.7-numpy1.8]
-"""
-
-REFERENCE_ONLY_CHANGED_NOSTATS = """
-       before           after         ratio
-     [22b920c6]       [fcf8c079]
-!             n/a           failed      n/a  params_examples.ParamSuite.track_value
-!           454μs           failed      n/a  time_coordinates.time_latitude
-!           3.00s           failed      n/a  time_other.time_parameterized(3)
-+           934μs            108ms   115.90  time_quantity.time_quantity_init_array
-+          1.75ms            153ms    87.28  time_quantity.time_quantity_array_conversion
-+           372μs           11.5ms    30.81  time_units.time_unit_parse
-+           125μs           3.81ms    30.42  time_units.time_simple_unit_parse
-+          1.31ms           7.75ms     5.91  time_quantity.time_quantity_ufunc_sin
-+         1.00±1s          3.00±1s     3.00  time_ci_big
-+         1.00±0s          3.00±0s     3.00  time_ci_small
-+           1.00s            3.00s     3.00  time_with_version_match
-+           1.00s            3.00s     3.00  time_with_version_mismatch_bench
--          69.1μs           18.3μs     0.27  time_units.time_unit_to
-"""
+def mean(values):
+    if all([value is None for value in values]):
+        return None
+    else:
+        values = [value for value in values if value is not None]
+        return sum(values) / float(len(values))
 
 
-def test_compare(capsys, tmpdir, example_results):
-    tmpdir = str(tmpdir)
-    os.chdir(tmpdir)
+def unroll_result(benchmark_name, params, *values):
+    """
+    Iterate through parameterized result values
 
-    conf = config.Config.from_json(
-        {'results_dir': example_results,
-         'repo': tools.generate_test_repo(tmpdir).path,
-         'project': 'asv',
-         'environment_type': "shouldn't matter what"})
+    Yields
+    ------
+    name
+        Strings of the form "benchmark_name(value1, value2)" with
+        parameter values substituted in. For non-parameterized
+        results, simply the benchmark name.
+    value
+        Benchmark timing or other scalar value.
 
-    tools.run_asv_with_conf(conf, 'compare', '22b920c6', 'fcf8c079', '--machine=cheetah',
-                            '--factor=2', '--environment=py2.7-numpy1.8')
+    """
+    num_comb = 1
+    for p in params:
+        num_comb *= len(p)
 
-    text, err = capsys.readouterr()
-    assert text.strip() == REFERENCE.strip()
+    values = list(values)
+    for j in range(len(values)):
+        if values[j] is None:
+            values[j] = [None] * num_comb
 
-    tools.run_asv_with_conf(conf, 'compare', '22b920c6', 'fcf8c079', '--machine=cheetah',
-                            '--factor=2', '--split', '--environment=py2.7-numpy1.8')
-    text, err = capsys.readouterr()
-    assert text.strip() == REFERENCE_SPLIT.strip()
-
-    # Check print_table output as called from Continuous
-    status = Compare.print_table(conf, '22b920c6', 'fcf8c079', factor=2, machine='cheetah',
-                                 split=False, only_changed=True, sort='ratio',
-                                 env_names=["py2.7-numpy1.8"],
-                                 commit_names={'22b920c6': 'name1', 'fcf8c079': 'name2'})
-    worsened, improved = status
-    assert worsened
-    assert improved
-    text, err = capsys.readouterr()
-    # Removing tailing spaces, so they don't need to be in `REFERENCE_ONLY_CHANGED`
-    text = re.sub(r' *\n', r'\n', text)
-    assert text.strip() == REFERENCE_ONLY_CHANGED.strip()
-
-    # Check table with multiple environments
-    status = Compare.print_table(conf, '22b920c6', 'fcf8c079', factor=2, machine='cheetah',
-                                 split=False, only_changed=True, sort='ratio')
-    text, err = capsys.readouterr()
-    assert text.strip() == REFERENCE_ONLY_CHANGED_MULTIENV.strip()
-
-    # Check results with no stats
-    tools.run_asv_with_conf(conf, 'compare', '22b920c6', 'fcf8c079', '--machine=cheetah',
-                            '--factor=2', '--sort=ratio', '--environment=py2.7-numpy1.8',
-                            '--no-stats', '--only-changed')
-    text, err = capsys.readouterr()
-    assert text.strip() == REFERENCE_ONLY_CHANGED_NOSTATS.strip()
-    assert "time_ci_big" in text.strip()
+    for params, value in zip(itertools.product(*params), zip(*values)):
+        if params == ():
+            name = benchmark_name
+        else:
+            name = "%s(%s)" % (benchmark_name, ", ".join(params))
+        yield (name,) + value
 
 
-@pytest.mark.parametrize("dvcs_type", [
-    "git",
-    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))
-])
-def test_compare_name_lookup(dvcs_type, capsys, tmpdir, example_results):
-    tmpdir = str(tmpdir)
-    os.chdir(tmpdir)
+def _isna(value):
+    # None (failed) or NaN (skipped)
+    return value is None or value != value
 
-    repo = tools.generate_test_repo(tmpdir, dvcs_type=dvcs_type)
-    branch_name = 'master' if dvcs_type == 'git' else 'default'
-    commit_hash = repo.get_branch_hashes(branch_name)[0]
 
-    result_dir = os.path.join(tmpdir, 'results')
+def _is_result_better(a, b, a_ss, b_ss, factor, use_stats=True):
+    """
+    Check if result 'a' is better than 'b' by the given factor,
+    possibly taking confidence intervals into account.
 
-    src = os.path.join(example_results, 'cheetah')
-    dst = os.path.join(result_dir, 'cheetah')
-    os.makedirs(dst)
+    """
 
-    for fn in ['feea15ca-py2.7-Cython-numpy1.8.json', 'machine.json']:
-        shutil.copyfile(os.path.join(src, fn), os.path.join(dst, fn))
+    if use_stats and a_ss and b_ss and a_ss[0] and b_ss[0] and (
+            a_ss[0].get('repeat', 0) != 1 and b_ss[0].get('repeat', 0) != 1):
+        # Return False if estimates don't differ.
+        #
+        # Special-case the situation with only one sample, in which
+        # case we do the comparison only based on `factor` as there's
+        # not enough data to do statistics.
+        if not statistics.is_different(a_ss[1], b_ss[1],
+                                       a_ss[0], b_ss[0]):
+            return False
 
-    shutil.copyfile(os.path.join(example_results, 'benchmarks.json'),
-                    os.path.join(result_dir, 'benchmarks.json'))
+    return a < b / factor
 
-    # Copy to different commit
-    fn_1 = os.path.join(dst, 'feea15ca-py2.7-Cython-numpy1.8.json')
-    fn_2 = os.path.join(dst, commit_hash[:8] + '-py2.7-Cython-numpy1.8.json')
-    data = util.load_json(fn_1)
-    data['commit_hash'] = commit_hash
-    util.write_json(fn_2, data)
 
-    conf = config.Config.from_json(
-        {'results_dir': result_dir,
-         'repo': repo.path,
-         'project': 'asv',
-         'environment_type': "shouldn't matter what"})
+class Compare(Command):
 
-    # Lookup with symbolic name
-    tools.run_asv_with_conf(conf, 'compare', branch_name, 'feea15ca', '--machine=cheetah',
-                            '--factor=2', '--environment=py2.7-Cython-numpy1.8',
-                            '--only-changed')
+    @classmethod
+    def setup_arguments(cls, subparsers):
+        parser = subparsers.add_parser(
+            "compare",
+            help="""Compare the benchmark results between two revisions
+                    (averaged over configurations)""",
+            description="Compare two sets of results")
 
-    # Nothing should be printed since no results were changed
-    text, err = capsys.readouterr()
-    assert text.strip() == ''
+        parser.add_argument(
+            'revision1',
+            help="""The reference revision.""")
+
+        parser.add_argument(
+            'revision2',
+            help="""The revision being compared.""")
+
+        common_args.add_compare(parser, sort_default='name', only_changed_default=False)
+
+        parser.add_argument(
+            '--machine', '-m', type=str, default=None,
+            help="""The machine to compare the revisions for.""")
+
+        common_args.add_environment(parser)
+
+        parser.set_defaults(func=cls.run_from_args)
+
+        return parser
+
+    @classmethod
+    def run_from_conf_args(cls, conf, args):
+        return cls.run(conf=conf,
+                       hash_1=args.revision1,
+                       hash_2=args.revision2,
+                       factor=args.factor, split=args.split,
+                       only_changed=args.only_changed, sort=args.sort,
+                       machine=args.machine,
+                       env_spec=args.env_spec,
+                       use_stats=args.use_stats)
+
+    @classmethod
+    def run(cls, conf, hash_1, hash_2, factor=None, split=False, only_changed=False,
+            sort='name', machine=None, env_spec=None, use_stats=True):
+
+        repo = get_repo(conf)
+        try:
+            hash_1 = repo.get_hash_from_name(hash_1)
+        except NoSuchNameError:
+            pass
+
+        try:
+            hash_2 = repo.get_hash_from_name(hash_2)
+        except NoSuchNameError:
+            pass
+
+        if env_spec:
+            env_names = ([env.name for env in get_environments(conf, env_spec, verbose=False)] +
+                         list(env_spec))
+        else:
+            env_names = None
+
+        machines = []
+        for path in iter_machine_files(conf.results_dir):
+            d = load_json(path)
+            machines.append(d['machine'])
+
+        if len(machines) == 0:
+            raise util.UserError("No results found")
+        elif machine is None:
+            if len(machines) > 1:
+                raise util.UserError(
+                    "Results available for several machines: {0} - "
+                    "specify which one to use with the --machine option".format(
+                        '/'.join(machines)))
+            else:
+                machine = machines[0]
+        elif machine not in machines:
+            raise util.UserError(
+                "Results for machine '{0} not found".format(machine))
+
+        commit_names = {hash_1: repo.get_name_from_hash(hash_1),
+                        hash_2: repo.get_name_from_hash(hash_2)}
+
+        cls.print_table(conf, hash_1, hash_2, factor=factor, split=split, use_stats=use_stats,
+                        only_changed=only_changed, sort=sort,
+                        machine=machine, env_names=env_names, commit_names=commit_names)
+
+    @classmethod
+    def print_table(cls, conf, hash_1, hash_2, factor, split,
+                    resultset_1=None, resultset_2=None, machine=None,
+                    only_changed=False, sort='name', use_stats=True, env_names=None,
+                    commit_names=None):
+        results_1 = {}
+        results_2 = {}
+        ss_1 = {}
+        ss_2 = {}
+        versions_1 = {}
+        versions_2 = {}
+        units = {}
+
+        benchmarks = Benchmarks.load(conf)
+
+        if commit_names is None:
+            commit_names = {}
+
+        def results_default_iter(commit_hash):
+            for result in iter_results_for_machine_and_hash(
+                    conf.results_dir, machine, commit_hash):
+                if env_names is not None and result.env_name not in env_names:
+                    continue
+                for key in result.get_all_result_keys():
+                    params = result.get_result_params(key)
+                    result_value = result.get_result_value(key, params)
+                    result_stats = result.get_result_stats(key, params)
+                    result_samples = result.get_result_samples(key, params)
+                    result_version = result.benchmark_version.get(key)
+                    yield (key, params, result_value, result_stats, result_samples,
+                           result_version, result.params['machine'], result.env_name)
+
+        if resultset_1 is None:
+            resultset_1 = results_default_iter(hash_1)
+
+        if resultset_2 is None:
+            resultset_2 = results_default_iter(hash_2)
+
+        machine_env_names = set()
+
+        for key, params, value, stats, samples, version, machine, env_name in resultset_1:
+            machine_env_name = "{}/{}".format(machine, env_name)
+            machine_env_names.add(machine_env_name)
+            for name, value, stats, samples in unroll_result(key, params, value, stats, samples):
+                units[(name, machine_env_name)] = benchmarks.get(key, {}).get('unit')
+                results_1[(name, machine_env_name)] = value
+                ss_1[(name, machine_env_name)] = (stats, samples)
+                versions_1[(name, machine_env_name)] = version
+
+        for key, params, value, stats, samples, version, machine, env_name in resultset_2:
+            machine_env_name = "{}/{}".format(machine, env_name)
+            machine_env_names.add(machine_env_name)
+            for name, value, stats, samples in unroll_result(key, params, value, stats, samples):
+                units[(name, machine_env_name)] = benchmarks.get(key, {}).get('unit')
+                results_2[(name, machine_env_name)] = value
+                ss_2[(name, machine_env_name)] = (stats, samples)
+                versions_2[(name, machine_env_name)] = version
+
+        if len(results_1) == 0:
+            raise util.UserError(
+                "Did not find results for commit {0}".format(hash_1))
+
+        if len(results_2) == 0:
+            raise util.UserError(
+                "Did not find results for commit {0}".format(hash_2))
+
+        benchmarks_1 = set(results_1.keys())
+        benchmarks_2 = set(results_2.keys())
+
+        joint_benchmarks = sorted(list(benchmarks_1 | benchmarks_2))
+
+        bench = {}
+
+        if split:
+            bench['green'] = []
+            bench['red'] = []
+            bench['lightgrey'] = []
+            bench['default'] = []
+        else:
+            bench['all'] = []
+
+        worsened = False
+        improved = False
+
+        for benchmark in joint_benchmarks:
+            if benchmark in results_1:
+                time_1 = results_1[benchmark]
+            else:
+                time_1 = math.nan
+
+            if benchmark in results_2:
+                time_2 = results_2[benchmark]
+            else:
+                time_2 = math.nan
+
+            if benchmark in ss_1 and ss_1[benchmark][0]:
+                err_1 = statistics.get_err(time_1, ss_1[benchmark][0])
+            else:
+                err_1 = None
+
+            if benchmark in ss_2 and ss_2[benchmark][0]:
+                err_2 = statistics.get_err(time_2, ss_2[benchmark][0])
+            else:
+                err_2 = None
+
+            version_1 = versions_1.get(benchmark)
+            version_2 = versions_2.get(benchmark)
+
+            if _isna(time_1) or _isna(time_2):
+                ratio = 'n/a'
+                ratio_num = 1e9
+            else:
+                try:
+                    ratio_num = time_2 / time_1
+                    ratio = "{0:6.2f}".format(ratio_num)
+                except ZeroDivisionError:
+                    ratio_num = 1e9
+                    ratio = "n/a"
+
+            if (version_1 is not None and version_2 is not None and
+                    version_1 != version_2):
+                # not comparable
+                color = 'lightgrey'
+                mark = 'x'
+            elif time_1 is not None and time_2 is None:
+                # introduced a failure
+                color = 'red'
+                mark = '!'
+                worsened = True
+            elif time_1 is None and time_2 is not None:
+                # fixed a failure
+                color = 'green'
+                mark = ' '
+                improved = True
+            elif time_1 is None and time_2 is None:
+                # both failed
+                color = 'default'
+                mark = ' '
+            elif _isna(time_1) or _isna(time_2):
+                # either one was skipped
+                color = 'default'
+                mark = ' '
+            elif _is_result_better(time_2, time_1,
+                                   ss_2.get(benchmark), ss_1.get(benchmark),
+                                   factor, use_stats=use_stats):
+                color = 'green'
+                mark = '-'
+                improved = True
+            elif _is_result_better(time_1, time_2,
+                                   ss_1.get(benchmark), ss_2.get(benchmark),
+                                   factor, use_stats=use_stats):
+                color = 'red'
+                mark = '+'
+                worsened = True
+            else:
+                color = 'default'
+                mark = ' '
+
+                # Mark statistically insignificant results
+                if (_is_result_better(time_1, time_2, None, None, factor) or
+                        _is_result_better(time_2, time_1, None, None, factor)):
+                    ratio = "~" + ratio.strip()
+
+            if only_changed and mark in (' ', 'x'):
+                continue
+
+            unit = units[benchmark]
+
+            details = "{0:1s} {1:>15s}  {2:>15s} {3:>8s}  ".format(
+                mark,
+                human_value(time_1, unit, err=err_1),
+                human_value(time_2, unit, err=err_2),
+                ratio)
+
+            if split:
+                bench[color].append((color, details, benchmark, ratio_num))
+            else:
+                bench['all'].append((color, details, benchmark, ratio_num))
+
+        if split:
+            keys = ['green', 'default', 'red', 'lightgrey']
+        else:
+            keys = ['all']
+
+        titles = {}
+        titles['green'] = "Benchmarks that have improved:"
+        titles['default'] = "Benchmarks that have stayed the same:"
+        titles['red'] = "Benchmarks that have got worse:"
+        titles['lightgrey'] = "Benchmarks that are not comparable:"
+        titles['all'] = "All benchmarks:"
+
+        log.flush()
+
+        for key in keys:
+
+            if len(bench[key]) == 0:
+                continue
+
+            if not only_changed:
+                color_print("")
+                color_print(titles[key])
+                color_print("")
+            color_print("       before           after         ratio")
+            color_print("     [{0:8s}]       [{1:8s}]".format(hash_1[:8], hash_2[:8]))
+
+            name_1 = commit_names.get(hash_1)
+            if name_1:
+                name_1 = '<{0}>'.format(name_1)
+            else:
+                name_1 = ''
+
+            name_2 = commit_names.get(hash_2)
+            if name_2:
+                name_2 = '<{0}>'.format(name_2)
+            else:
+                name_2 = ''
+
+            if name_1 or name_2:
+                color_print("     {0:10s}       {1:10s}".format(name_1, name_2))
+
+            if sort == 'ratio':
+                bench[key].sort(key=lambda v: v[3], reverse=True)
+            elif sort == 'name':
+                bench[key].sort(key=lambda v: v[2])
+            else:
+                raise ValueError("Unknown 'sort'")
+
+            for color, details, benchmark, ratio in bench[key]:
+                if len(machine_env_names) > 1:
+                    benchmark_name = "{} [{}]".format(*benchmark)
+                else:
+                    benchmark_name = benchmark[0]
+
+                color_print(details, color, end='')
+                color_print(benchmark_name)
+
+        return worsened, improved

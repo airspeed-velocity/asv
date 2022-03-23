@@ -117,30 +117,18 @@ REFERENCE_ONLY_CHANGED = """
 REFERENCE_ONLY_CHANGED_MULTIENV = """
        before           after         ratio
      [22b920c6]       [fcf8c079]
-!             n/a           failed      n/a
-params_examples.ParamSuite.track_value [cheetah/py2.7-numpy1.8]
-!           454μs           failed      n/a
-time_coordinates.time_latitude [cheetah/py2.7-numpy1.8]
-!           3.00s           failed      n/a
-time_other.time_parameterized(3) [cheetah/py2.7-numpy1.8]
-+           934μs            108ms   115.90
-time_quantity.time_quantity_init_array [cheetah/py2.7-numpy1.8]
-+          1.75ms            153ms    87.28
-time_quantity.time_quantity_array_conversion [cheetah/py2.7-numpy1.8]
-+           372μs           11.5ms    30.81
-time_units.time_unit_parse [cheetah/py2.7-numpy1.8]
-+           125μs           3.81ms    30.42
-time_units.time_simple_unit_parse [cheetah/py2.7-numpy1.8]
-+          1.31ms           7.75ms     5.91
-time_quantity.time_quantity_ufunc_sin [cheetah/py2.7-numpy1.8]
-+         1.00±0s          3.00±0s     3.00
-time_ci_small [cheetah/py2.7-numpy1.8]
-+           1.00s            3.00s     3.00
-time_with_version_match [cheetah/py2.7-numpy1.8]
-+           1.00s            3.00s     3.00
-time_with_version_mismatch_bench [cheetah/py2.7-numpy1.8]
--          69.1μs           18.3μs     0.27
-time_units.time_unit_to [cheetah/py2.7-numpy1.8]
+!             n/a           failed      n/a  params_examples.ParamSuite.track_value [cheetah/py2.7-numpy1.8]
+!           454μs           failed      n/a  time_coordinates.time_latitude [cheetah/py2.7-numpy1.8]
+!           3.00s           failed      n/a  time_other.time_parameterized(3) [cheetah/py2.7-numpy1.8]
++           934μs            108ms   115.90  time_quantity.time_quantity_init_array [cheetah/py2.7-numpy1.8]
++          1.75ms            153ms    87.28  time_quantity.time_quantity_array_conversion [cheetah/py2.7-numpy1.8]
++           372μs           11.5ms    30.81  time_units.time_unit_parse [cheetah/py2.7-numpy1.8]
++           125μs           3.81ms    30.42  time_units.time_simple_unit_parse [cheetah/py2.7-numpy1.8]
++          1.31ms           7.75ms     5.91  time_quantity.time_quantity_ufunc_sin [cheetah/py2.7-numpy1.8]
++         1.00±0s          3.00±0s     3.00  time_ci_small [cheetah/py2.7-numpy1.8]
++           1.00s            3.00s     3.00  time_with_version_match [cheetah/py2.7-numpy1.8]
++           1.00s            3.00s     3.00  time_with_version_mismatch_bench [cheetah/py2.7-numpy1.8]
+-          69.1μs           18.3μs     0.27  time_units.time_unit_to [cheetah/py2.7-numpy1.8]
 """
 
 REFERENCE_ONLY_CHANGED_NOSTATS = """
