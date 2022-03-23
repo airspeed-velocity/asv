@@ -129,7 +129,7 @@ REFERENCE_ONLY_CHANGED_MULTIENV = """
 +           1.00s            3.00s     3.00  time_with_version_match [cheetah/py2.7-numpy1.8]
 +           1.00s            3.00s     3.00  time_with_version_mismatch_bench [cheetah/py2.7-numpy1.8]
 -          69.1μs           18.3μs     0.27  time_units.time_unit_to [cheetah/py2.7-numpy1.8]
-""" # noqa :E501 line too long
+"""  # noqa: E501 line too long
 
 REFERENCE_ONLY_CHANGED_NOSTATS = """
        before           after         ratio
