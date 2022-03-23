@@ -207,8 +207,7 @@ class Show(Command):
                 values = [f"({util.human_value(x[0], benchmark['unit'])}, "
                           f"{util.human_value(x[1], benchmark['unit'])})"
                           if x is not None else None
-                          for x in values
-                         ]
+                          for x in values]
             elif any(isinstance(x, float) for x in values):
                 values = [util.human_value(x, benchmark['unit']) if x is not None else None
                           for x in values]
