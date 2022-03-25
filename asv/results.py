@@ -31,7 +31,7 @@ def iter_results_paths(results):
         except util.UserError as err:
             machine_json_err = f"Skipping results: {str(err)}"
         except IOError:
-            machine_json_err = "Skipping results: could not load {machine_json}"
+            machine_json_err = f"Skipping results: could not load {machine_json}"
         else:
             machine_json_err = None
 
@@ -147,7 +147,7 @@ def get_filename(machine, commit_hash, env_name):
 
     return os.path.join(
         machine,
-        "{commit_hash[:8]}-{env_name}.json")
+        f"{commit_hash[:8]}-{env_name}.json")
 
 
 def _compatible_results(result, result_params, params):
