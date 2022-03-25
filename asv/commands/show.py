@@ -153,7 +153,7 @@ class Show(Command):
 
         log.flush()
 
-        color_print(f"Commit: {repo.get_decorated_hash(commit_hash,conf.hash_length)}",
+        color_print(f"Commit: {repo.get_decorated_hash(commit_hash, conf.hash_length)}",
                     "blue")
         color_print("")
 
