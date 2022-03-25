@@ -60,7 +60,7 @@ class Config:
             return cls.from_json(d)
         except ValueError:
             raise util.UserError(
-                "No repo specified in {path} config file.")
+                f"No repo specified in {path} config file.")
 
     @classmethod
     def from_json(cls, d):
