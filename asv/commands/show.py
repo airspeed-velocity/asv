@@ -153,7 +153,7 @@ class Show(Command):
 
         log.flush()
 
-        color_print(f"Commit: {repo.get_decorated_hash(commit_hash,conf.hash_length)}",
+        color_print(f"Commit: {repo.get_decorated_hash(commit_hash, conf.hash_length)}",
                     "blue")
         color_print("")
 
@@ -202,10 +202,10 @@ class Show(Command):
 
         for key in ['repeat', 'number', 'ci_99', 'mean', 'std', 'min', 'max']:
             values = get_stat_info(key)
-
             if key == 'ci_99':
-                values = [f"({util.human_value(x[0], benchmark['unit'])}, "
-                          f"{util.human_value(x[1], benchmark['unit'])})"
+                benchmark_unit1 = util.human_value(x[0], benchmark['unit'])
+                benchmark_unit2 = util.human_value(x[1], benchmark['unit'])
+                values = [f"({benchmark_unit1},{benchmark_unit2}"
                           if x is not None else None
                           for x in values]
             elif any(isinstance(x, float) for x in values):
@@ -286,7 +286,7 @@ class Show(Command):
 
         log.flush()
 
-        color_print(f"Commit: {repo.get_decorated_hash(commit_hash,conf.hash_length)}",
+        color_print(f"Commit: {repo.get_decorated_hash(commit_hash, conf.hash_length)}",
                     "blue")
         color_print("")
 
