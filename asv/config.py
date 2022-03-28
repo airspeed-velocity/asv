@@ -21,7 +21,7 @@ class Config:
         self.repo = None
         self.repo_subdir = ""
         self.branches = [None]
-        self.pythons = ["{0[0]}.{0[1]}".format(sys.version_info)]
+        self.pythons = [f"{sys.version_info[0]}.{sys.version_info[1]}"]
         self.matrix = {}
         self.exclude = []
         self.include = []
@@ -53,14 +53,14 @@ class Config:
             path = "asv.conf.json"
 
         if not os.path.isfile(path):
-            raise util.UserError("Config file {0} not found.".format(path))
+            raise util.UserError(f"Config file {path} not found.")
 
         d = util.load_json(path, cls.api_version, js_comments=True)
         try:
             return cls.from_json(d)
         except ValueError:
             raise util.UserError(
-                "No repo specified in {0} config file.".format(path))
+                f"No repo specified in {path} config file.")
 
     @classmethod
     def from_json(cls, d):
