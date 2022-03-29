@@ -205,7 +205,7 @@ class Show(Command):
             if key == 'ci_99':
                 benchmark_unit1 = util.human_value(x[0], benchmark['unit'])
                 benchmark_unit2 = util.human_value(x[1], benchmark['unit'])
-                values = [f"({benchmark_unit1},{benchmark_unit2}"
+                values = [f"({benchmark_unit1}, {benchmark_unit2})"
                           if x is not None else None
                           for x in values]
             elif any(isinstance(x, float) for x in values):
