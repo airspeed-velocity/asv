@@ -45,11 +45,11 @@ class Repo:
         but appears incorrect.
         """
         raise util.UserError(f"Directory '{path}' already exists, but is not a mirror "
-                             f"of the project repository. Please remove it and try again. "
-                             f"If the benchmark suite is in the project repository, you can "
-                             f"also adjust the configuration to use the current "
-                             f"repository (e.g. \"repo\": \".\") instead of a remote URL "
-                             f"as the source.")
+                             "of the project repository. Please remove it and try again. "
+                             "If the benchmark suite is in the project repository, you can "
+                             "also adjust the configuration to use the current "
+                             "repository (e.g. \"repo\": \".\") instead of a remote URL "
+                             "as the source.")
 
     def checkout(self, path, commit_hash):
         """

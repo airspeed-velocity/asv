@@ -29,7 +29,7 @@ def iter_results_paths(results):
             if not isinstance(machine_name, str):
                 raise util.UserError(f"malformed {machine_json}")
         except util.UserError as err:
-            machine_json_err = f"Skipping results: {str(err)}"
+            machine_json_err = f"Skipping results: {err}"
         except IOError:
             machine_json_err = f"Skipping results: could not load {machine_json}"
         else:
@@ -723,7 +723,7 @@ class Results:
             obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
         except KeyError as exc:
             raise util.UserError(
-                f"Error loading results file '{path}': missing key {str(exc)}")
+                f"Error loading results file '{path}': missing key {exc}")
 
         if machine_name is not None and obj.params.get('machine') != machine_name:
             raise util.UserError(
@@ -869,7 +869,7 @@ class Results:
             return d2
         except KeyError as exc:
             raise util.UserError(
-                f"Error loading results data: missing key {str(exc)}")
+                f"Error loading results data: missing key {exc}")
 
 
 def format_benchmark_result(results, benchmark):
