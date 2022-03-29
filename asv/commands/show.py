@@ -69,7 +69,7 @@ class Show(Command):
             machines = [machine]
         else:
             raise util.UserError(
-                f"Results for machine '{machine} not found")
+                f"Results for machine '{machine}' not found")
 
         benchmarks = Benchmarks.load(conf, regex=bench)
 
