@@ -27,12 +27,11 @@ def iter_results_paths(results):
             data = util.load_json(machine_json, api_version=Machine.api_version)
             machine_name = data.get('machine')
             if not isinstance(machine_name, str):
-                raise util.UserError("malformed {0}".format(machine_json))
+                raise util.UserError(f"malformed {machine_json}")
         except util.UserError as err:
-            machine_json_err = "Skipping results: {0}".format(str(err))
+            machine_json_err = f"Skipping results: {err}"
         except IOError:
-            machine_json_err = "Skipping results: could not load {0}".format(
-                machine_json)
+            machine_json_err = f"Skipping results: could not load {machine_json}"
         else:
             machine_json_err = None
 
@@ -117,8 +116,8 @@ def get_result_hash_from_prefix(results, machine_name, commit_prefix):
 
     for (root, filename, r_machine_name) in iter_results_paths(path):
         if r_machine_name != machine_name:
-            log.warning("Skipping results '{0}': machine name is not '{1}'".format(
-                os.path.join(root, filename), machine_name))
+            log.warning(f"Skipping results '{os.path.join(root, filename)}':"
+                        f" machine name is not '{machine_name}'")
             continue
 
         results_commit = filename.split('-')[0]
@@ -128,8 +127,8 @@ def get_result_hash_from_prefix(results, machine_name, commit_prefix):
 
     if len(commits) > 1:
         commit_list_str = ', '.join(sorted(commits))
-        raise util.UserError('Git hash prefix could represent one of ' +
-                             'multiple commits: {0}'.format(commit_list_str))
+        raise util.UserError('Git hash prefix could represent one of '
+                             f'multiple commits: {commit_list_str}')
     elif len(commits) == 1:
         return list(commits)[0]
     else:
@@ -148,9 +147,7 @@ def get_filename(machine, commit_hash, env_name):
 
     return os.path.join(
         machine,
-        "{0}-{1}.json".format(
-            commit_hash[:8],
-            env_name))
+        f"{commit_hash[:8]}-{env_name}.json")
 
 
 def _compatible_results(result, result_params, params):
@@ -274,7 +271,7 @@ class Results:
         self._duration["<build>"] = float(value)
 
     def set_setup_cache_duration(self, setup_cache_key, value):
-        self._duration["<setup_cache {}>".format(setup_cache_key)] = float(value)
+        self._duration[f"<setup_cache {setup_cache_key}>"] = float(value)
 
     @property
     def benchmark_version(self):
@@ -717,7 +714,7 @@ class Results:
                                 if v is not None:
                                     obj._stats[name][j][stats_key] = v
                     else:
-                        raise KeyError("unknown data key {}".format(key))
+                        raise KeyError(f"unknown data key {key}")
 
                 for key_dict in simple_keys.values():
                     key_dict.setdefault(name, None)
@@ -726,13 +723,11 @@ class Results:
             obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
         except KeyError as exc:
             raise util.UserError(
-                "Error loading results file '{0}': missing key {1}".format(
-                    path, str(exc)))
+                f"Error loading results file '{path}': missing key {exc}")
 
         if machine_name is not None and obj.params.get('machine') != machine_name:
             raise util.UserError(
-                "Error loading results file '{0}': machine name is not '{1}'".format(
-                    path, machine_name))
+                f"Error loading results file '{path}': machine name is not '{machine_name}'")
 
         return obj
 
@@ -874,8 +869,7 @@ class Results:
             return d2
         except KeyError as exc:
             raise util.UserError(
-                "Error loading results data: missing key {}".format(
-                    str(exc)))
+                f"Error loading results data: missing key {exc}")
 
 
 def format_benchmark_result(results, benchmark):
@@ -913,7 +907,7 @@ def format_benchmark_result(results, benchmark):
         if failure_count == total_count:
             info = "failed"
         else:
-            info = "{0}/{1} failed".format(failure_count, total_count)
+            info = f"{failure_count}/{total_count} failed"
 
     # Display results
     if benchmark['params']:

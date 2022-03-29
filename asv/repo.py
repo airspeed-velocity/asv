@@ -44,12 +44,12 @@ class Repo:
         Internal routine for raising an error message if mirror directory already exists,
         but appears incorrect.
         """
-        raise util.UserError("Directory '{0}' already exists, but is not a mirror "
+        raise util.UserError(f"Directory '{path}' already exists, but is not a mirror "
                              "of the project repository. Please remove it and try again. "
                              "If the benchmark suite is in the project repository, you can "
                              "also adjust the configuration to use the current "
                              "repository (e.g. \"repo\": \".\") instead of a remote URL "
-                             "as the source.".format(path))
+                             "as the source.")
 
     def checkout(self, path, commit_hash):
         """
@@ -140,7 +140,7 @@ class Repo:
         """
         name = self.get_name_from_hash(commit)
         if name is not None:
-            return "{0} <{1}>".format(commit[:hash_length], name)
+            return f"{commit[:hash_length]} <{name}>"
         else:
             return commit[:hash_length]
 
@@ -306,4 +306,4 @@ def get_repo(conf):
                 return cls(conf.repo, conf.project)
 
     raise util.UserError(
-        "Can not determine what kind of DVCS to use for URL '{0}'".format(conf.repo))
+        f"Can not determine what kind of DVCS to use for URL '{conf.repo}'")
