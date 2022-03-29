@@ -69,7 +69,7 @@ class Show(Command):
             machines = [machine]
         else:
             raise util.UserError(
-                "Results for machine '{0} not found".format(machine))
+                f"Results for machine '{machine}' not found")
 
         benchmarks = Benchmarks.load(conf, regex=bench)
 
@@ -134,8 +134,8 @@ class Show(Command):
         color_print("")
 
         for machine, env_name in sorted(commits.keys()):
-            color_print("Machine    : {}".format(machine))
-            color_print("Environment: {}".format(env_name))
+            color_print(f"Machine    : {machine}")
+            color_print(f"Environment: {env_name}")
             color_print("")
 
             cur_commits = commits[(machine, env_name)]
@@ -143,7 +143,7 @@ class Show(Command):
             commit_order.sort(key=lambda x: cur_commits[x])
 
             for commit in commit_order:
-                color_print("    {}".format(commit[:conf.hash_length]))
+                color_print(f"    {commit[:conf.hash_length]}")
 
             color_print("")
 
@@ -153,8 +153,7 @@ class Show(Command):
 
         log.flush()
 
-        color_print("Commit: {}".format(repo.get_decorated_hash(commit_hash,
-                                                                conf.hash_length)),
+        color_print(f"Commit: {repo.get_decorated_hash(commit_hash, conf.hash_length)}",
                     "blue")
         color_print("")
 
@@ -165,13 +164,11 @@ class Show(Command):
 
     @classmethod
     def _print_benchmark(cls, machine, result, benchmark, show_details=False):
-        color_print("{} [{}/{}]".format(benchmark['name'],
-                                        machine,
-                                        result.env_name),
+        color_print(f"{benchmark['name']} [{machine}/{result.env_name}]",
                     'green')
 
         info, details = format_benchmark_result(result, benchmark)
-        color_print("  {}".format(info), 'red')
+        color_print(f"  {info}", 'red')
         if details:
             color_print("  " + details.replace("\n", "\n  "))
 
@@ -189,8 +186,7 @@ class Show(Command):
             duration = "n/a"
 
         if started_at != "n/a" or duration != "n/a":
-            color_print('  started: {}, duration: {}'.format(
-                started_at, duration))
+            color_print(f'  started: {started_at}, duration: {duration}')
 
         if not show_details:
             color_print("")
@@ -206,7 +202,6 @@ class Show(Command):
 
         for key in ['repeat', 'number', 'ci_99', 'mean', 'std', 'min', 'max']:
             values = get_stat_info(key)
-
             if key == 'ci_99':
                 values = ["({}, {})".format(util.human_value(x[0], benchmark['unit']),
                                             util.human_value(x[1], benchmark['unit']))
@@ -217,11 +212,11 @@ class Show(Command):
                           for x in values]
 
             if not all(x is None for x in values):
-                color_print("  {}: {}".format(key, ", ".join(map(str, values))))
+                color_print(f'  {key}: {", ".join(map(str, values))}')
 
         samples = result.get_result_samples(benchmark['name'], benchmark['params'])
         if not all(x is None for x in samples):
-            color_print("  samples: {}".format(samples))
+            color_print(f"  samples: {samples}")
 
         color_print("")
 
@@ -237,7 +232,7 @@ class Show(Command):
             for key in result.get_result_keys(benchmarks):
                 setup_cache_key = benchmarks[key].get('setup_cache_key')
                 if setup_cache_key is not None:
-                    keys.append("<setup_cache {}>".format(setup_cache_key))
+                    keys.append(f"<setup_cache {setup_cache_key}>")
 
             for key in keys:
                 duration = result.duration.get(key)
@@ -268,8 +263,8 @@ class Show(Command):
         color_print("")
 
         for machine, env_name in sorted(durations.keys()):
-            color_print("Machine    : {}".format(machine))
-            color_print("Environment: {}".format(env_name))
+            color_print(f"Machine    : {machine}")
+            color_print(f"Environment: {env_name}")
             color_print("")
 
             cur_durations = durations[(machine, env_name)]
@@ -278,8 +273,7 @@ class Show(Command):
 
             for commit in commit_order:
                 seconds = cur_durations[commit][1]
-                color_print("    {}  {}".format(
-                    commit, util.human_time(seconds)))
+                color_print(f"    {commit}  {util.human_time(seconds)}")
 
             color_print("")
 
@@ -291,14 +285,13 @@ class Show(Command):
 
         log.flush()
 
-        color_print("Commit: {}".format(repo.get_decorated_hash(commit_hash,
-                                                                conf.hash_length)),
+        color_print(f"Commit: {repo.get_decorated_hash(commit_hash, conf.hash_length)}",
                     "blue")
         color_print("")
 
         for machine, env_name in sorted(durations.keys()):
-            color_print("Machine    : {}".format(machine))
-            color_print("Environment: {}".format(env_name))
+            color_print(f"Machine    : {machine}")
+            color_print(f"Environment: {env_name}")
             color_print("")
 
             cur_durations = durations[(machine, env_name)]
@@ -310,8 +303,7 @@ class Show(Command):
             for name in order:
                 seconds = cur_durations[name]
                 total += seconds
-                color_print("    {}  {}".format(
-                    name, util.human_time(seconds)))
+                color_print(f"    {name}  {util.human_time(seconds)}")
 
             color_print("")
-            color_print("    total duration: {}".format(util.human_time(total)))
+            color_print(f"    total duration: {util.human_time(total)}")
