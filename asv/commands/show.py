@@ -203,9 +203,8 @@ class Show(Command):
         for key in ['repeat', 'number', 'ci_99', 'mean', 'std', 'min', 'max']:
             values = get_stat_info(key)
             if key == 'ci_99':
-                benchmark_unit1 = util.human_value(x[0], benchmark['unit'])
-                benchmark_unit2 = util.human_value(x[1], benchmark['unit'])
-                values = [f"({benchmark_unit1}, {benchmark_unit2})"
+                values = ["({}, {})".format(util.human_value(x[0], benchmark['unit']),
+                                            util.human_value(x[1], benchmark['unit']))
                           if x is not None else None
                           for x in values]
             elif any(isinstance(x, float) for x in values):
