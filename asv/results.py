@@ -127,7 +127,7 @@ def get_result_hash_from_prefix(results, machine_name, commit_prefix):
 
     if len(commits) > 1:
         commit_list_str = ', '.join(sorted(commits))
-        raise util.UserError(f'Git hash prefix could represent one of '
+        raise util.UserError('Git hash prefix could represent one of '
                              f'multiple commits: {commit_list_str}')
     elif len(commits) == 1:
         return list(commits)[0]
