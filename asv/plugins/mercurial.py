@@ -92,10 +92,10 @@ class Hg(Repo):
         return False
 
     def get_range_spec(self, commit_a, commit_b):
-        return '{0}::{1} and not {0}'.format(commit_a, commit_b)
+        return f'{commit_a}::{commit_b} and not {commit_a}'
 
     def get_new_range_spec(self, latest_result, branch=None):
-        return '{0}::{1}'.format(latest_result, self.get_branch_name(branch))
+        return f'{latest_result}::{self.get_branch_name(branch)}'
 
     def pull(self):
         # We assume the remote isn't updated during the run of asv
@@ -138,7 +138,7 @@ class Hg(Repo):
         return int(rev.date.strftime("%s")) * 1000
 
     def get_hashes_from_range(self, range_spec, **kwargs):
-        range_spec = self._encode("sort({0}, -rev)".format(range_spec))
+        range_spec = self._encode(f"sort({range_spec}, -rev)")
         return [self._decode(rev.node) for rev in self._repo.log(range_spec, **kwargs)]
 
     def get_hash_from_name(self, name):
@@ -152,7 +152,7 @@ class Hg(Repo):
             raise
 
     def get_hash_from_parent(self, name):
-        return self.get_hash_from_name('p1({0})'.format(name))
+        return self.get_hash_from_name(f'p1({name})')
 
     def get_name_from_hash(self, commit):
         # XXX: implement
@@ -169,11 +169,10 @@ class Hg(Repo):
 
     def get_branch_commits(self, branch):
         if self._repo.version >= (4, 5):
-            query = "branch({0})"
+            query = f"branch({self.get_branch_name(branch)})"
         else:
-            query = "ancestors({0})"
-        return self.get_hashes_from_range(query.format(self.get_branch_name(branch)),
-                                          followfirst=True)
+            query = f"ancestors({self.get_branch_name(branch)})"
+        return self.get_hashes_from_range(query, followfirst=True)
 
     def get_revisions(self, commits):
         revisions = {}
