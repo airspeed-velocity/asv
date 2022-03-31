@@ -124,7 +124,7 @@ class Conda(environment.Environment):
                         '--yes',
                         '-p',
                         path,
-                        'python={0}'.format(python),
+                        f'python={python}',
                         '--dry-run'], display_error=False, dots=False)
             except util.ProcessError:
                 return False
@@ -132,7 +132,7 @@ class Conda(environment.Environment):
                 return True
 
     def _setup(self):
-        log.info("Creating conda environment for {0}".format(self.name))
+        log.info(f"Creating conda environment for {self.name}")
 
         conda_args, pip_args = self._get_requirements()
         env = dict(os.environ)
@@ -140,14 +140,14 @@ class Conda(environment.Environment):
 
         if not self._conda_environment_file:
             # The user-provided env file is assumed to set the python version
-            conda_args = ['python={0}'.format(self._python), 'wheel', 'pip'] + conda_args
+            conda_args = [f'python={self._python}', 'wheel', 'pip'] + conda_args
 
         # Create a temporary environment.yml file
         # and use that to generate the env for benchmarking.
         env_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=".yml")
         try:
-            env_file.write('name: {0}\n'
-                           'channels:\n'.format(self.name))
+            env_file.write(f'name: {self.name}\n'
+                           'channels:\n')
             env_file.writelines(('   - %s\n' % ch for ch in self._conda_channels))
             env_file.write('dependencies:\n')
 
@@ -176,12 +176,12 @@ class Conda(environment.Environment):
             except Exception:
                 if env_file_name != env_file.name:
                     log.info("conda env create/update failed: "
-                             "in {} with file {}".format(self._path, env_file_name))
+                             f"in {self._path} with file {env_file_name}")
                 elif os.path.isfile(env_file_name):
                     with open(env_file_name, 'r') as f:
                         text = f.read()
                     log.info("conda env create/update failed: "
-                             "in {} with:\n{}".format(self._path, text))
+                             f"in {self._path} with:\n{text}")
                 raise
         finally:
             os.unlink(env_file.name)
@@ -195,12 +195,12 @@ class Conda(environment.Environment):
             for key, val in self._requirements.items():
                 if key.startswith('pip+'):
                     if val:
-                        pip_args.append("{0}=={1}".format(key[4:], val))
+                        pip_args.append(f"{key[4:]}=={val}")
                     else:
                         pip_args.append(key[4:])
                 else:
                     if val:
-                        conda_args.append("{0}={1}".format(key, val))
+                        conda_args.append(f"{key}={val}")
                     else:
                         conda_args.append(key)
 
@@ -221,7 +221,7 @@ class Conda(environment.Environment):
             return util.check_output([conda] + args, env=env)
 
     def run(self, args, **kwargs):
-        log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
+        log.debug(f"Running '{' '.join(args)}' in {self.name}")
         return self.run_executable('python', args, **kwargs)
 
     def run_executable(self, executable, args, **kwargs):
