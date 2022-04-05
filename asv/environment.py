@@ -173,7 +173,7 @@ def _parse_matrix(matrix, bare_keys=()):
         # Check if spurious keys left
         remaining_keys = tuple(matrix.keys())
         if remaining_keys:
-            raise util.UserError(f'Unknown keys in "matrix" configuration: {remaining_keys} ,'
+            raise util.UserError(f'Unknown keys in "matrix" configuration: {remaining_keys}, '
                                  f'expected: {matrix_types + tuple(bare_keys)}')
     else:
         # Backward-compatibility for old-style config
