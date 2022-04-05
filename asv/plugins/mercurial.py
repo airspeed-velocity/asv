@@ -169,10 +169,11 @@ class Hg(Repo):
 
     def get_branch_commits(self, branch):
         if self._repo.version >= (4, 5):
-            query = f"branch({self.get_branch_name(branch)})"
+            query = "branch({})"
         else:
-            query = f"ancestors({self.get_branch_name(branch)})"
-        return self.get_hashes_from_range(query, followfirst=True)
+            query = "ancestors({})"
+        return self.get_hashes_from_range(query.format(self.get_branch_name(branch)),
+                                          followfirst=True)
 
     def get_revisions(self, commits):
         revisions = {}
