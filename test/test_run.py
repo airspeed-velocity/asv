@@ -13,6 +13,7 @@ import pytest
 
 from asv import results, environment, repo, util
 from asv.commands.run import Run
+from asv.commands import make_argparser
 
 from . import tools
 from .tools import WIN
@@ -387,3 +388,37 @@ def test_return_code(tmpdir, basic_conf_2):
                                   '--bench', 'TimeSecondary',
                                   _machine_file=machine_file)
     assert res == 2
+
+
+def test_run_python_same(capsys, basic_conf):
+    tmpdir, local, conf, machine_file = basic_conf
+
+    # Test Run runs with python=same
+    tools.run_asv_with_conf(conf, 'run', '--python=same',
+                            '--bench=time_secondary.TimeSecondary.time_exception',
+                            '--bench=time_secondary.track_value',
+                            _machine_file=machine_file)
+    text, err = capsys.readouterr()
+
+    assert re.search("time_exception.*failed", text, re.S)
+    assert re.search(r"time_secondary.track_value\s+42.0", text)
+
+    # Check that it did not clone or install
+    assert "Cloning" not in text
+    assert "Installing" not in text
+
+
+def test_run_python_arg():
+    parser, subparsers = make_argparser()
+
+    argv = ['run', 'ALL']
+    args = parser.parse_args(argv)
+    assert args.env_spec == []
+
+
+def test_run_steps_arg():
+    parser, subparsers = make_argparser()
+
+    argv = ['run', '--steps=20', 'ALL']
+    args = parser.parse_args(argv)
+    assert args.steps == 20
