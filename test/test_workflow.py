@@ -28,7 +28,7 @@ def test_run_publish(capfd, basic_conf_2):
                                   '-a', 'warmup_time=0',
                                   '--durations=5',
                                   _machine_file=machine_file)
-    assert ret is None
+    assert ret == 2
     text, err = capfd.readouterr()
 
     assert len(os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))) == 5

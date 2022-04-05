@@ -13,7 +13,7 @@ def test_dev(capsys, basic_conf):
     # Test Dev runs (with full benchmark suite)
     ret = tools.run_asv_with_conf(conf, 'dev', '--quick', '-e',
                                   _machine_file=machine_file)
-    assert ret is None
+    assert ret == 2
     text, err = capsys.readouterr()
 
     # time_with_warnings failure case
