@@ -8,6 +8,7 @@ New Features
 
 API Changes
 ^^^^^^^^^^^
+- Removed ``asv dev`` in favor of using ``asv run`` with the right arguments (#1200)
 - ``asv run`` and ``asv continuous`` don't implement the ``--strict`` option anymore,
   and they will always return a non-zero (i.e. ``2``) exit status if any benchmark fail.
 
