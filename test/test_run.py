@@ -378,10 +378,10 @@ def test_format_durations():
     assert msg == expected
 
 
-def test_return_code_strict_mode(tmpdir, basic_conf_2):
+def test_return_code(tmpdir, basic_conf_2):
     tmpdir, local, conf, machine_file = basic_conf_2
 
     res = tools.run_asv_with_conf(conf, 'run', 'master^!', '--quick',
-                                  '--strict', '--bench', 'TimeSecondary',
+                                  '--bench', 'TimeSecondary',
                                   _machine_file=machine_file)
     assert res == 2

@@ -47,7 +47,7 @@ def test_dev_with_repo_subdir(capsys, basic_conf_with_subdir):
 
 def test_dev_strict(basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
-    ret = tools.run_asv_with_conf(conf, 'dev', '--strict', '--quick',
+    ret = tools.run_asv_with_conf(conf, 'dev', '--quick',
                                   '--bench=TimeSecondary',
                                   _machine_file=machine_file)
     assert ret == 2
