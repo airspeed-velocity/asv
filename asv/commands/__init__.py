@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+import abc
 
 from .. import config, util
 from . import common_args
@@ -25,11 +26,18 @@ command_order = [
 ]
 
 
-class Command:
+class Command(abc.ABC):
     @classmethod
+    @abc.abstractmethod
     def setup_arguments(cls, subparsers):
-        # TODO: Document me
-        raise NotImplementedError()
+        """
+        Method to add the parser and arguments of the command.
+
+        In most cases, `subparser.add_parser(cmd_name)` should be called to
+        add the command (where `cmd_name` is for example `run` or `continuous`).
+        And then call `add_argument` to the returned parser, to add the command
+        arguments.
+        """
 
     @classmethod
     def run_from_args(cls, args):
@@ -40,8 +48,13 @@ class Command:
         return cls.run_from_conf_args(conf, args)
 
     @classmethod
+    @abc.abstractmethod
     def run_from_conf_args(cls, conf, args):
-        raise NotImplementedError()
+        """
+        Call the run method (i.e. `cls.run`) with the right arguments from
+        `conf` and `args`. In most cases this is just something like
+        `clf.run(conf=conf, my_arg_1=args.my_arg_1, my_arg_2=args.my_arg_2, ...)`.
+        """
 
 
 def make_argparser():
