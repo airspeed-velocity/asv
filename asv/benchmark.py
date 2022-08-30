@@ -538,6 +538,8 @@ class TimeBenchmark(Benchmark):
         if warmup_time < 0:
             if '__pypy__' in sys.modules:
                 warmup_time = 1.0
+            elif '__graalpython__' in sys.modules:
+                warmup_time = 5.0
             else:
                 # Transient effects exist also on CPython, e.g. from
                 # OS scheduling
