@@ -169,8 +169,10 @@ class Publish(Command):
             for results in cls.iter_results(conf, repo, range_spec):
                 log.dot()
 
+                repo_tags = repo.get_tags()
                 branches_for_commit = [branch for branch, commits in branches.items() if
-                                       results.commit_hash in commits]
+                                       results.commit_hash in commits or
+                                       results.commit_hash in repo_tags.values()]
 
                 # Print a warning message if we couldn't find the branch of a commit
                 if not len(branches_for_commit):
