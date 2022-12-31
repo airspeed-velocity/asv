@@ -166,7 +166,8 @@ class Publish(Command):
         log.info("Loading results")
         with log.indent():
             # Generate all graphs
-            for results in cls.iter_results(conf, repo, range_spec):
+            sorted_results = sorted({res.date:res for res in cls.iter_results(conf,  repo, range_spec)}.items())
+            for _, results in sorted_results:
                 log.dot()
 
                 repo_tags = repo.get_tags()
