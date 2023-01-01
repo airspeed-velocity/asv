@@ -174,6 +174,7 @@ class Git:
         self.run_git(['init'])
         self.run_git(['config', 'user.email', 'robot@asv'])
         self.run_git(['config', 'user.name', 'Robotic Swallow'])
+        self.run_git(['config', 'protocol.file.allow', 'always'])
 
     def commit(self, message, date=None):
         if date is None:
