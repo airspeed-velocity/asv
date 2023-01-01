@@ -704,12 +704,7 @@ class MemBenchmark(Benchmark):
         self.unit = "bytes"
 
     def run(self, *param):
-        # We can't import asizeof directly, because we haven't loaded
-        # the asv package in the benchmarking process.
-        path = os.path.join(
-            os.path.dirname(__file__), 'extern', 'asizeof.py')
-        asizeof = importlib.machinery.SourceFileLoader('asizeof', path).load_module()
-
+        from pympler import asizeof
         obj = self.func(*param)
 
         sizeof2 = asizeof.asizeof([obj, obj])

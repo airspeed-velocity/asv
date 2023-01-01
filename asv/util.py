@@ -24,7 +24,7 @@ import operator
 import collections
 import multiprocessing
 
-from .extern import minify_json
+import pyjson5
 
 WIN = (os.name == 'nt')
 
@@ -824,35 +824,34 @@ def load_json(path, api_version=None, js_comments=False):
         content = fd.read()
 
     if js_comments:
-        content = minify_json.json_minify(content)
-        content = content.replace(",]", "]")
-        content = content.replace(",}", "}")
-
-    try:
-        d = json.loads(content)
-    except ValueError as e:
-        raise UserError(
-            "Error parsing JSON in file '{0}': {1}".format(
-                path, str(e)))
+        # strips comments out
+        data = pyjson5.loads(content)
+    else:
+        try:
+            data = json.loads(content)
+        except ValueError as err:
+            raise UserError(
+                "Error parsing JSON in file '{0}': {1}".format(
+                    path, str(err)))
 
     if api_version is not None:
-        if 'version' in d:
-            if d['version'] < api_version:
+        if 'version' in data:
+            if data['version'] < api_version:
                 raise UserError(
                     "{0} is stored in an old file format.  Run "
                     "`asv update` to update it.".format(path))
-            elif d['version'] > api_version:
+            elif data['version'] > api_version:
                 raise UserError(
                     "{0} is stored in a format that is newer than "
                     "what this version of asv understands.  Update "
                     "asv to use this file.".format(path))
 
-            del d['version']
+            del data['version']
         else:
             raise UserError(
                 "No version specified in {0}.".format(path))
 
-    return d
+    return data
 
 
 def update_json(cls, path, api_version, compact=False):
