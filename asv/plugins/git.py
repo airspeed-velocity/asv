@@ -15,12 +15,15 @@ from .. import util
 
 class Git(Repo):
     dvcs = "git"
-    _default_branch = "master"
 
     def __init__(self, url, mirror_path):
         self._git = util.which("git")
         self._path = os.path.abspath(mirror_path)
         self._pulled = False
+        # default branch
+        self._default_branch = self._run_git(['config',
+                                              'init.defaultBranch'],
+                                             cwd=None)
 
         if self.is_local_repo(url):
             # Local repository, no need for mirror
