@@ -263,14 +263,14 @@ def test_git_submodule(tmpdir):
     commit_hash_0 = dvcs.get_hash("master")
 
     # State 1 (one submodule)
-    dvcs.run_git(['submodule', 'add', sub_dvcs.path, 'sub1'])
+    dvcs.run_git(['-c','protocol.file.allow=always', 'submodule', 'add', sub_dvcs.path, 'sub1'])
     dvcs.commit('Add sub1')
     commit_hash_1 = dvcs.get_hash("master")
 
     # State 2 (one submodule with sub-submodule)
-    dvcs.run_git(['submodule', 'update', '--init'])
+    dvcs.run_git(['-c','protocol.file.allow=always', 'submodule', 'update', '--init'])
     sub1_dvcs = tools.Git(join(dvcs.path, 'sub1'))
-    sub_dvcs.run_git(['submodule', 'add', ssub_dvcs.path, 'ssub1'])
+    sub_dvcs.run_git(['-c','protocol.file.allow=always', 'submodule', 'add', ssub_dvcs.path, 'ssub1'])
     sub_dvcs.commit('Add sub1')
     sub1_dvcs.run_git(['pull'])
     dvcs.run_git(['add', 'sub1'])
