@@ -3,10 +3,13 @@ import os
 
 import pytest
 
-import asv.util
+from asv import util
 
 from . import tools
 
+# Variables
+defaultBranch = util.check_output([util.which('git'),
+                                   'config', 'init.defaultBranch']).strip()
 
 @pytest.mark.parametrize("rewrite", [False, True], ids=["no-rewrite", "rewrite"])
 def test_gh_pages(rewrite, tmpdir, generate_result_dir, monkeypatch):
@@ -43,7 +46,7 @@ def test_gh_pages(rewrite, tmpdir, generate_result_dir, monkeypatch):
     dvcs.checkout('gh-pages')
     assert os.path.isfile(os.path.join(dvcs_dir, 'index.html'))
     assert len(dvcs.run_git(['rev-list', 'gh-pages']).splitlines()) == 1
-    dvcs.checkout('master')
+    dvcs.checkout(f"{defaultBranch}")
     assert not os.path.isfile(os.path.join(dvcs_dir, 'index.html'))
 
     # Check with existing (and checked out) gh-pages branch, with no changes
@@ -55,13 +58,13 @@ def test_gh_pages(rewrite, tmpdir, generate_result_dir, monkeypatch):
     else:
         # Timestamp may have changed
         assert len(dvcs.run_git(['rev-list', 'gh-pages']).splitlines()) <= 2
-    dvcs.checkout('master')
+    dvcs.checkout(f"{defaultBranch}")
 
     # Check with existing (not checked out) gh-pages branch, with some changes
     benchmarks_json = os.path.join(conf.results_dir, 'benchmarks.json')
-    data = asv.util.load_json(benchmarks_json)
+    data = util.load_json(benchmarks_json)
     data['time_func']['pretty_name'] = 'something changed'
-    asv.util.write_json(benchmarks_json, data)
+    util.write_json(benchmarks_json, data)
 
     prev_len = len(dvcs.run_git(['rev-list', 'gh-pages']).splitlines())
     tools.run_asv_with_conf(conf, "gh-pages", "--no-push", *rewrite_args)

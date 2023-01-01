@@ -11,8 +11,13 @@ import pytest
 
 from asv import benchmarks, config, environment, util
 from asv.repo import get_repo
+from asv import util
 
 from . import tools
+
+# Variables
+defaultBranch = util.check_output([util.which('git'),
+                                   'config', 'init.defaultBranch']).strip()
 
 BENCHMARK_DIR = join(dirname(__file__), 'benchmark')
 
@@ -38,7 +43,7 @@ def test_discover_benchmarks(benchmarks_fixture):
     assert len(b) == 6
 
     old_branches = conf.branches
-    conf.branches = ["master", "some-missing-branch"]  # missing branches ignored
+    conf.branches = [f"{defaultBranch}", "some-missing-branch"]  # missing branches ignored
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                                        regex='example')
     conf.branches = old_branches

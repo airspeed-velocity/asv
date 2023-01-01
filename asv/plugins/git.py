@@ -23,7 +23,7 @@ class Git(Repo):
         # default branch
         self._default_branch = self._run_git(['config',
                                               'init.defaultBranch'],
-                                             cwd=None)
+                                             cwd=None).strip()
 
         if self.is_local_repo(url):
             # Local repository, no need for mirror

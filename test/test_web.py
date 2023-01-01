@@ -21,6 +21,9 @@ except ImportError:
 from . import tools
 from .tools import get_with_retry, WAIT_TIME, WIN
 
+# Variables
+defaultBranch = util.check_output([util.which('git'),
+                                   'config', 'init.defaultBranch']).strip()
 
 def _rebuild_basic_html(basedir):
     local = abspath(dirname(__file__))
@@ -44,7 +47,7 @@ def _rebuild_basic_html(basedir):
                                     3, 3, 3, 3, 3,
                                     2, 2, 2, 2, 2]]
         dvcs = tools.generate_test_repo(basedir, values)
-        first_tested_commit_hash = dvcs.get_hash('master~14')
+        first_tested_commit_hash = dvcs.get_hash(f'{defaultBranch}~14')
 
         repo_path = dvcs.path
         shutil.move(repo_path, join(basedir, 'repo'))
@@ -86,7 +89,7 @@ def _rebuild_basic_html(basedir):
 
         util.write_json(machine_file, info, api_version=1)
 
-        tools.run_asv_with_conf(conf, 'run', 'master~10..', '--steps=3',
+        tools.run_asv_with_conf(conf, 'run', f'{defaultBranch}~10..', '--steps=3',
                                 '--show-stderr', '--quick',
                                 '--bench=params_examples[a-z0-9_.]*track_',
                                 _machine_file=machine_file)
@@ -157,7 +160,7 @@ def test_web_summarygrid(browser, basic_html):
 def test_web_regressions(browser, basic_html):
     html_dir, dvcs = basic_html
 
-    bad_commit_hash = dvcs.get_hash('master~9')
+    bad_commit_hash = dvcs.get_hash(f'{defaultBranch}~9')
 
     ignore_exc = (NoSuchElementException, StaleElementReferenceException)
 
@@ -286,7 +289,7 @@ def test_web_summarylist(browser, basic_html):
 
     html_dir, dvcs = basic_html
 
-    last_change_hash = dvcs.get_hash('master~4')
+    last_change_hash = dvcs.get_hash(f'{defaultBranch}~4')
 
     browser.set_window_size(1200, 900)
 

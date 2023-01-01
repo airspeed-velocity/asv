@@ -8,7 +8,7 @@ from os.path import abspath, dirname, join, relpath
 import pytest
 import selenium
 
-from asv import config, environment, repo, step_detect
+from asv import config, environment, repo, step_detect, util
 from asv.repo import get_repo
 from asv.step_detect import L1Dist
 
@@ -29,13 +29,15 @@ try:
 except ImportError:
     HAVE_RANGEMEDIAN = False
 
-
 DUMMY_VALUES = (
     (6, 1),
     (6, 6),
     (6, 6),
 )
 
+# Variables
+defaultBranch = util.check_output([util.which('git'),
+                                   'config', 'init.defaultBranch']).strip()
 
 def pytest_addoption(parser):
     parser.addoption("--webdriver", action="store", default="None",
@@ -166,7 +168,7 @@ def two_branch_repo_case(request, tmpdir):
     dvcs_type = request.param
     tmpdir = str(tmpdir)
     if dvcs_type == "git":
-        master = "master"
+        master = f"{defaultBranch}"
     elif dvcs_type == "hg":
         master = "default"
     dvcs = tools.generate_repo_from_ops(tmpdir, dvcs_type, [

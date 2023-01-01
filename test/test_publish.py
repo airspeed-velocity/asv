@@ -20,6 +20,9 @@ from . import tools
 
 BENCHMARK_DIR = abspath(join(dirname(__file__), 'benchmark'))
 
+# Variables
+defaultBranch = util.check_output([util.which('git'),
+                                   'config', 'init.defaultBranch']).strip()
 
 def test_publish(tmpdir, example_results):
     tmpdir = str(tmpdir)
@@ -36,11 +39,11 @@ def test_publish(tmpdir, example_results):
     master_values = list(range(len(result_files) * 2 // 3))
     branch_values = list(range(len(master_values), len(result_files)))
     dvcs = tools.generate_test_repo(tmpdir, master_values, 'git',
-                                    [('master~6', 'some-branch', branch_values)])
+                                    [(f'{defaultBranch}~6', 'some-branch', branch_values)])
 
     # Copy and modify result files, fixing commit hashes and setting result
     # dates to distinguish the two branches
-    master_commits = dvcs.get_branch_hashes('master')
+    master_commits = dvcs.get_branch_hashes(f'{defaultBranch}')
     only_branch = [x for x in dvcs.get_branch_hashes('some-branch')
                    if x not in master_commits]
     commits = master_commits + only_branch
@@ -82,7 +85,7 @@ def test_publish(tmpdir, example_results):
     assert not isdir(join(tmpdir, 'html', 'graphs', 'Cython-null', 'arch-x86_64',
                           'branch-some-branch'))
     index = util.load_json(join(tmpdir, 'html', 'index.json'))
-    assert index['params']['branch'] == ['master']
+    assert index['params']['branch'] == [f'{defaultBranch}']
 
     repo = get_repo(conf)
     revision_to_hash = dict((r, h) for h, r in repo.get_revisions(commits).items())
@@ -94,7 +97,7 @@ def test_publish(tmpdir, example_results):
                   'time_coordinates.time_latitude.json')
         data = util.load_json(fn)
         data_commits = [revision_to_hash[x[0]] for x in data]
-        if branch == "master":
+        if branch == f'{defaultBranch}':
             assert all(c in master_commits for c in data_commits)
         else:
             # Must contains commits from some-branch
@@ -105,21 +108,21 @@ def test_publish(tmpdir, example_results):
         # Check that revisions are strictly increasing
         assert all(x[0] < y[0] for x, y in zip(data, data[1:]))
 
-    check_file("master", "Cython")
-    check_file("master", "Cython-null")
+    check_file(f"{defaultBranch}", "Cython")
+    check_file(f"{defaultBranch}", "Cython-null")
 
     # Publish with branches set in the config
-    conf.branches = ['master', 'some-branch']
+    conf.branches = [f'{defaultBranch}', 'some-branch']
     tools.run_asv_with_conf(conf, 'publish')
 
     # Check output
-    check_file("master", "Cython")
-    check_file("master", "Cython-null")
+    check_file(f"{defaultBranch}", "Cython")
+    check_file(f"{defaultBranch}", "Cython-null")
     check_file("some-branch", "Cython")
     check_file("some-branch", "Cython-null")
 
     index = util.load_json(join(tmpdir, 'html', 'index.json'))
-    assert index['params']['branch'] == ['master', 'some-branch']
+    assert index['params']['branch'] == [f'{defaultBranch}', 'some-branch']
     assert index['params']['Cython'] == ['', None]
     assert index['params']['ram'] == ['8.2G', 8804682956.8]
 
@@ -131,7 +134,7 @@ def test_publish(tmpdir, example_results):
                             'os': 'Linux (Fedora 20)',
                             'python': '2.7',
                             'ram': '8.2G'}
-                           for cython in ["", None] for branch in ["master", "some-branch"]]
+                           for cython in ["", None] for branch in [f"{defaultBranch}", "some-branch"]]
     d = dict(expected_graph_list[0])
     d['ram'] = 8804682956.8
     expected_graph_list.append(d)
@@ -143,7 +146,7 @@ def test_publish(tmpdir, example_results):
 
 def _graph_path(dvcs_type):
     if dvcs_type == "git":
-        master = "master"
+        master = f"{defaultBranch}"
     elif dvcs_type == "hg":
         master = "default"
     return join("graphs", "branch-{0}".format(master), "machine-tarzan", "time_func.json")
@@ -252,7 +255,7 @@ def test_regression_parameterized(generate_result_dir):
 def test_regression_multiple_branches(dvcs_type, tmpdir):
     tmpdir = str(tmpdir)
     if dvcs_type == "git":
-        master = "master"
+        master = f"{defaultBranch}"
     elif dvcs_type == "hg":
         master = "default"
     dvcs = tools.generate_repo_from_ops(

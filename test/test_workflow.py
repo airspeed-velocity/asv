@@ -12,6 +12,11 @@ from asv import util
 
 from . import tools
 
+from pathlib import Path
+
+# Variables
+defaultBranch = util.check_output([util.which('git'),
+                                   'config', 'init.defaultBranch']).strip()
 
 def test_run_publish(capfd, basic_conf_2):
     tmpdir, local, conf, machine_file = basic_conf_2
@@ -23,7 +28,7 @@ def test_run_publish(capfd, basic_conf_2):
     }
 
     # Tests a typical complete run/publish workflow
-    ret = tools.run_asv_with_conf(conf, 'run', "master", '--steps=2',
+    ret = tools.run_asv_with_conf(conf, 'run', f"{defaultBranch}", '--steps=2',
                                   '--quick', '--show-stderr', '--profile',
                                   '-a', 'warmup_time=0',
                                   '--durations=5',
@@ -65,12 +70,12 @@ def test_run_publish(capfd, basic_conf_2):
 
     # Check that the skip options work
     capfd.readouterr()
-    tools.run_asv_with_conf(conf, 'run', "master", '--steps=2',
+    tools.run_asv_with_conf(conf, 'run', f"{defaultBranch}", '--steps=2',
                             '--quick', '--skip-existing-successful',
                             '--bench=time_secondary.track_value',
                             '--skip-existing-failed',
                             _machine_file=join(tmpdir, 'asv-machine.json'))
-    tools.run_asv_with_conf(conf, 'run', "master", '--steps=2',
+    tools.run_asv_with_conf(conf, 'run', f"{defaultBranch}", '--steps=2',
                             '--bench=time_secondary.track_value',
                             '--quick', '--skip-existing-commits',
                             _machine_file=join(tmpdir, 'asv-machine.json'))
