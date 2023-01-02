@@ -4,10 +4,10 @@ import sys
 import re
 
 from asv.results import iter_results_for_machine
+from asv import util
 
 from . import tools
 from .tools import get_default_environment_type
-from asv import util
 
 # Variables
 try:
