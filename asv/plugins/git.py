@@ -170,7 +170,7 @@ class Git(Repo):
 
     def get_tags(self):
         tags = {}
-        for tag in self._run_git(["tag", "-l"]).splitlines():
+        for tag in self._run_git(["tag", "-l", "--sort=taggerdate"]).splitlines():
             tags[tag] = self._run_git(["rev-list", "-n", "1", tag]).strip()
         return tags
 
