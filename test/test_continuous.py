@@ -4,9 +4,19 @@ import sys
 import re
 
 from asv.results import iter_results_for_machine
+from asv import util
 
 from . import tools
 from .tools import get_default_environment_type
+
+# Variables
+try:
+    defaultBranch = util.check_output([util.which('git'),
+                                       'config', 'init.defaultBranch'],
+                                      display_error=False
+                                      ).strip()
+except util.ProcessError:
+    defaultBranch = 'master'
 
 
 def test_continuous(capfd, basic_conf_2):
@@ -17,7 +27,7 @@ def test_continuous(capfd, basic_conf_2):
     env_spec = ("-E", env_type + ":" + python)
 
     # Check that asv continuous runs
-    tools.run_asv_with_conf(conf, 'continuous', "master^", '--show-stderr',
+    tools.run_asv_with_conf(conf, 'continuous', f"{defaultBranch}^", '--show-stderr',
                             '--bench=params_examples.track_find_test',
                             '--bench=params_examples.track_param',
                             '--bench=time_examples.TimeSuite.time_example_benchmark_1',

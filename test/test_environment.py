@@ -648,7 +648,15 @@ def test_build_isolation(tmpdir):
                 'requires = ["wheel", "setuptools"]')
     dvcs.add(fn)
     dvcs.commit("Add pyproject.toml")
-    commit_hash = dvcs.get_hash("master")
+    # Variables
+    try:
+        defaultBranch = util.check_output([util.which('git'),
+                                           'config', 'init.defaultBranch'],
+                                          display_error=False).strip()
+    except util.ProcessError:
+        defaultBranch = 'master'
+
+    commit_hash = dvcs.get_hash(f"{defaultBranch}")
 
     # Setup config
     conf = config.Config()

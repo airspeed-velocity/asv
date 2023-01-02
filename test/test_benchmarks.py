@@ -14,6 +14,15 @@ from asv.repo import get_repo
 
 from . import tools
 
+# Variables
+try:
+    defaultBranch = util.check_output([util.which('git'),
+                                       'config', 'init.defaultBranch'
+                                       ], display_error=False).strip()
+except util.ProcessError:
+    defaultBranch = 'master'
+
+
 BENCHMARK_DIR = join(dirname(__file__), 'benchmark')
 
 INVALID_BENCHMARK_DIR = join(
@@ -38,7 +47,7 @@ def test_discover_benchmarks(benchmarks_fixture):
     assert len(b) == 6
 
     old_branches = conf.branches
-    conf.branches = ["master", "some-missing-branch"]  # missing branches ignored
+    conf.branches = [f"{defaultBranch}", "some-missing-branch"]  # missing branches ignored
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash],
                                        regex='example')
     conf.branches = old_branches

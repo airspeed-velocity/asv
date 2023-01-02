@@ -15,12 +15,19 @@ from .. import util
 
 class Git(Repo):
     dvcs = "git"
-    _default_branch = "master"
 
     def __init__(self, url, mirror_path):
         self._git = util.which("git")
         self._path = os.path.abspath(mirror_path)
         self._pulled = False
+        # default branch
+        try:
+            self._default_branch = self._run_git(['config',
+                                                  'init.defaultBranch',
+                                                  ], display_error=False,
+                                                 cwd=None).strip()
+        except util.ProcessError:
+            self._default_branch = 'master'
 
         if self.is_local_repo(url):
             # Local repository, no need for mirror
@@ -87,13 +94,15 @@ class Git(Repo):
     def checkout(self, path, commit_hash):
         def checkout_existing(display_error):
             # Deinit fails if no submodules, so ignore its failure
-            self._run_git(['-c','protocol.file.allow=always', 'submodule', 'deinit', '-f', '.'],
+            self._run_git(['-c', 'protocol.file.allow=always',
+                           'submodule', 'deinit', '-f', '.'],
                           cwd=path, display_error=False, valid_return_codes=None)
             self._run_git(['checkout', '-f', commit_hash],
                           cwd=path, display_error=display_error)
             self._run_git(['clean', '-fdx'],
                           cwd=path, display_error=display_error)
-            self._run_git(['-c','protocol.file.allow=always', 'submodule', 'update', '--init', '--recursive'],
+            self._run_git(['-c', 'protocol.file.allow=always',
+                           'submodule', 'update', '--init', '--recursive'],
                           cwd=path, display_error=display_error)
 
         if os.path.isdir(path):
@@ -161,7 +170,7 @@ class Git(Repo):
 
     def get_tags(self):
         tags = {}
-        for tag in self._run_git(["tag", "-l"]).splitlines():
+        for tag in self._run_git(["tag", "-l", "--sort=taggerdate"]).splitlines():
             tags[tag] = self._run_git(["rev-list", "-n", "1", tag]).strip()
         return tags
 
