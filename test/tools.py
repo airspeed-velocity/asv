@@ -213,7 +213,7 @@ class Git:
             try:
                 branch = self.run_git(["config", "init.defaultBranch"],
                                       display_error=False).strip()
-            except:
+            except util.ProcessError:
                 branch = 'master'
         return [x.strip() for x in self.run_git(['rev-list', branch]).splitlines()
                 if x.strip()]

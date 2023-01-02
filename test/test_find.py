@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from asv.util import check_output, which
+from asv.util import check_output, which, ProcessError
 
 from . import tools
 from .conftest import generate_basic_conf
@@ -13,11 +13,12 @@ WIN = (os.name == 'nt')
 
 # Variables
 try:
-    defaultBranch = util.check_output([util.which('git'),
-                                       'config', 'init.defaultBranch'],
-                                      display_error=False).strip()
-except:
+    defaultBranch = check_output([which('git'),
+                                  'config', 'init.defaultBranch'],
+                                 display_error=False).strip()
+except ProcessError:
     defaultBranch = 'master'
+
 
 def test_find(capfd, tmpdir):
     values = [
@@ -38,7 +39,9 @@ def test_find(capfd, tmpdir):
                                                             dummy_packages=False)
 
     # Test find at least runs
-    tools.run_asv_with_conf(conf, 'find', f"{defaultBranch}~5..{defaultBranch}", "params_examples.track_find_test",
+    tools.run_asv_with_conf(conf, 'find',
+                            f"{defaultBranch}~5..{defaultBranch}",
+                            "params_examples.track_find_test",
                             _machine_file=machine_file)
 
     # Check it found the first commit after the initially tested one
@@ -63,7 +66,9 @@ def test_find_timeout(capfd, tmpdir):
                                                             dummy_packages=False)
 
     # Test find at least runs
-    tools.run_asv_with_conf(conf, 'find', "-e", f"{defaultBranch}", "params_examples.time_find_test_timeout",
+    tools.run_asv_with_conf(conf, 'find', "-e",
+                            f"{defaultBranch}",
+                            "params_examples.time_find_test_timeout",
                             _machine_file=machine_file)
 
     # Check it found the first commit after the initially tested one

@@ -11,7 +11,6 @@ import pytest
 
 from asv import benchmarks, config, environment, util
 from asv.repo import get_repo
-from asv import util
 
 from . import tools
 
@@ -19,9 +18,10 @@ from . import tools
 try:
     defaultBranch = util.check_output([util.which('git'),
                                        'config', 'init.defaultBranch'
-                                       ],display_error=False).strip()
-except:
+                                       ], display_error=False).strip()
+except util.ProcessError:
     defaultBranch = 'master'
+
 
 BENCHMARK_DIR = join(dirname(__file__), 'benchmark')
 

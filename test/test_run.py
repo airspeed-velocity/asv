@@ -22,8 +22,9 @@ try:
     defaultBranch = util.check_output([util.which('git'),
                                        'config', 'init.defaultBranch'],
                                       display_error=False).strip()
-except:
+except util.ProcessError:
     defaultBranch = 'master'
+
 
 def test_set_commit_hash(capsys, existing_env_conf):
     tmpdir, local, conf, machine_file = existing_env_conf

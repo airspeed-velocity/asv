@@ -653,7 +653,7 @@ def test_build_isolation(tmpdir):
         defaultBranch = util.check_output([util.which('git'),
                                            'config', 'init.defaultBranch'],
                                           display_error=False).strip()
-    except:
+    except util.ProcessError:
         defaultBranch = 'master'
 
     commit_hash = dvcs.get_hash(f"{defaultBranch}")

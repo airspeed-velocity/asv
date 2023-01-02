@@ -15,7 +15,7 @@ try:
                                        'config', 'init.defaultBranch'],
                                       display_error=False
                                       ).strip()
-except:
+except util.ProcessError:
     defaultBranch = 'master'
 
 

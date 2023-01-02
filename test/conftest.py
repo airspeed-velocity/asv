@@ -40,8 +40,9 @@ try:
     defaultBranch = util.check_output([util.which('git'),
                                        'config', 'init.defaultBranch'],
                                       display_error=False).strip()
-except:
+except util.ProcessError:
     defaultBranch = 'master'
+
 
 def pytest_addoption(parser):
     parser.addoption("--webdriver", action="store", default="None",

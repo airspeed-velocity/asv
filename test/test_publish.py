@@ -25,8 +25,9 @@ try:
     defaultBranch = util.check_output([util.which('git'),
                                        'config', 'init.defaultBranch'],
                                       display_error=False).strip()
-except:
+except util.ProcessError:
     defaultBranch = 'master'
+
 
 def test_publish(tmpdir, example_results):
     tmpdir = str(tmpdir)
@@ -138,7 +139,9 @@ def test_publish(tmpdir, example_results):
                             'os': 'Linux (Fedora 20)',
                             'python': '2.7',
                             'ram': '8.2G'}
-                           for cython in ["", None] for branch in [f"{defaultBranch}", "some-branch"]]
+                           for cython in ["",
+                                          None] for branch in [f"{defaultBranch}",
+                                                               "some-branch"]]
     d = dict(expected_graph_list[0])
     d['ram'] = 8804682956.8
     expected_graph_list.append(d)

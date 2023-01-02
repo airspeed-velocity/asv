@@ -26,8 +26,9 @@ try:
     defaultBranch = util.check_output([util.which('git'),
                                        'config', 'init.defaultBranch',
                                        ], display_error=False).strip()
-except:
+except util.ProcessError:
     defaultBranch = 'master'
+
 
 def _rebuild_basic_html(basedir):
     local = abspath(dirname(__file__))

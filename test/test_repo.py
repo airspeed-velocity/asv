@@ -21,8 +21,9 @@ try:
     defaultBranch = util.check_output([util.which('git'),
                                        'config', 'init.defaultBranch'],
                                       display_error=False).strip()
-except:
+except util.ProcessError:
     defaultBranch = 'master'
+
 
 def _test_generic_repo(conf, tmpdir, hash_range, master, branch, is_remote=False):
     workcopy_dir = tempfile.mkdtemp(dir=tmpdir, prefix="workcopy")
@@ -98,8 +99,10 @@ def _test_branches(conf, branch_commits, require_describe=False):
 def test_repo_git(tmpdir):
     tmpdir = str(tmpdir)
 
-    dvcs = tools.generate_test_repo(tmpdir, list(range(10)), dvcs_type='git',
-                                    extra_branches=[(f'{defaultBranch}~4', 'some-branch', [11, 12, 13])])
+    dvcs = tools.generate_test_repo(tmpdir, list(range(10)),
+                                    dvcs_type='git',
+                                    extra_branches=[(f'{defaultBranch}~4',
+                                                     'some-branch', [11, 12, 13])])
 
     mirror_dir = join(tmpdir, "repo")
 
@@ -114,8 +117,10 @@ def test_repo_git(tmpdir):
 
         conf.branches = [f'{defaultBranch}', 'some-branch']
         branch_commits = {
-            f'{defaultBranch}': [dvcs.get_hash(f'{defaultBranch}'), dvcs.get_hash(f'{defaultBranch}~6')],
-            'some-branch': [dvcs.get_hash('some-branch'), dvcs.get_hash('some-branch~6')]
+            f'{defaultBranch}': [dvcs.get_hash(f'{defaultBranch}'),
+                                 dvcs.get_hash(f'{defaultBranch}~6')],
+            'some-branch': [dvcs.get_hash('some-branch'),
+                            dvcs.get_hash('some-branch~6')]
         }
         _test_branches(conf, branch_commits, require_describe=True)
 
@@ -271,14 +276,17 @@ def test_git_submodule(tmpdir):
     commit_hash_0 = dvcs.get_hash(f"{defaultBranch}")
 
     # State 1 (one submodule)
-    dvcs.run_git(['-c','protocol.file.allow=always', 'submodule', 'add', sub_dvcs.path, 'sub1'])
+    dvcs.run_git(['-c', 'protocol.file.allow=always',
+                  'submodule', 'add', sub_dvcs.path, 'sub1'])
     dvcs.commit('Add sub1')
     commit_hash_1 = dvcs.get_hash(f"{defaultBranch}")
 
     # State 2 (one submodule with sub-submodule)
-    dvcs.run_git(['-c','protocol.file.allow=always', 'submodule', 'update', '--init'])
+    dvcs.run_git(['-c', 'protocol.file.allow=always',
+                  'submodule', 'update', '--init'])
     sub1_dvcs = tools.Git(join(dvcs.path, 'sub1'))
-    sub_dvcs.run_git(['-c','protocol.file.allow=always', 'submodule', 'add', ssub_dvcs.path, 'ssub1'])
+    sub_dvcs.run_git(['-c', 'protocol.file.allow=always',
+                      'submodule', 'add', ssub_dvcs.path, 'ssub1'])
     sub_dvcs.commit('Add sub1')
     sub1_dvcs.run_git(['pull'])
     dvcs.run_git(['add', 'sub1'])

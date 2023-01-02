@@ -215,7 +215,7 @@ def test_compare_name_lookup(dvcs_type, capsys, tmpdir, example_results):
                                            'config',
                                            'init.defaultBranch'],
                                           display_error=False).strip()
-    except:
+    except util.ProcessError:
         defaultBranch = 'master'
 
     branch_name = defaultBranch if dvcs_type == 'git' else 'default'
