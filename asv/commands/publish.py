@@ -166,20 +166,24 @@ class Publish(Command):
         log.info("Loading results")
         with log.indent():
             # Generate all graphs
-            sorted_results = sorted({res.date:res for res in cls.iter_results(conf,  repo, range_spec)}.items())
-            for _, results in sorted_results:
+            for results in cls.iter_results(conf, repo, range_spec):
                 log.dot()
 
-                repo_tags = repo.get_tags()
                 branches_for_commit = [branch for branch, commits in branches.items() if
-                                       results.commit_hash in commits or
-                                       results.commit_hash in repo_tags.values()]
+                                       results.commit_hash in commits]
 
-                # Print a warning message if we couldn't find the branch of a commit
+                # Print a warning message if the commit isn't from a tag
                 if not len(branches_for_commit):
-                    msg = "Couldn't find {} in branches ({})"
-                    log.warning(msg.format(results.commit_hash[:conf.hash_length],
-                                           ", ".join(str(branch) for branch in branches.keys())))
+                    # Assume that these must be tags
+                    repo_tags = repo.get_tags()
+                    branches_for_commit = [branch for branch, commits in branches.items() if
+                                           results.commit_hash in repo_tags.values()]
+                    if not len(branches_for_commit):
+                        # Not tags, print a warning
+                        msg = "Couldn't find {} in branches ({})"
+                        log.warning(msg.format(results.commit_hash[:conf.hash_length],
+                                               ", ".join(str(branch) for
+                                                         branch in branches.keys())))
 
                 for key in results.get_result_keys(benchmarks):
                     b = benchmarks[key]
