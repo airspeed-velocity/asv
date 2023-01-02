@@ -8,8 +8,12 @@ from asv import util
 from . import tools
 
 # Variables
-defaultBranch = util.check_output([util.which('git'),
-                                   'config', 'init.defaultBranch']).strip()
+try:
+    defaultBranch = util.check_output([util.which('git'),
+                                       'config', 'init.defaultBranch'],
+                                      display_error=False).strip()
+except:
+    defaultBranch = 'master'
 
 @pytest.mark.parametrize("rewrite", [False, True], ids=["no-rewrite", "rewrite"])
 def test_gh_pages(rewrite, tmpdir, generate_result_dir, monkeypatch):

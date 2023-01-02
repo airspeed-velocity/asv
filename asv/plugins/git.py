@@ -21,9 +21,13 @@ class Git(Repo):
         self._path = os.path.abspath(mirror_path)
         self._pulled = False
         # default branch
-        self._default_branch = self._run_git(['config',
-                                              'init.defaultBranch'],
-                                             cwd=None).strip()
+        try:
+            self._default_branch = self._run_git(['config',
+                                                  'init.defaultBranch',
+                                                  ], display_error=False,
+                                                 cwd=None).strip()
+        except:
+            self._default_branch = 'master'
 
         if self.is_local_repo(url):
             # Local repository, no need for mirror

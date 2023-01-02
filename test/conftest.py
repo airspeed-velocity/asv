@@ -36,8 +36,12 @@ DUMMY_VALUES = (
 )
 
 # Variables
-defaultBranch = util.check_output([util.which('git'),
-                                   'config', 'init.defaultBranch']).strip()
+try:
+    defaultBranch = util.check_output([util.which('git'),
+                                       'config', 'init.defaultBranch'],
+                                      display_error=False).strip()
+except:
+    defaultBranch = 'master'
 
 def pytest_addoption(parser):
     parser.addoption("--webdriver", action="store", default="None",

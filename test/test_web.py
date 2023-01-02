@@ -22,8 +22,12 @@ from . import tools
 from .tools import get_with_retry, WAIT_TIME, WIN
 
 # Variables
-defaultBranch = util.check_output([util.which('git'),
-                                   'config', 'init.defaultBranch']).strip()
+try:
+    defaultBranch = util.check_output([util.which('git'),
+                                       'config', 'init.defaultBranch',
+                                       ], display_error=False).strip()
+except:
+    defaultBranch = 'master'
 
 def _rebuild_basic_html(basedir):
     local = abspath(dirname(__file__))

@@ -21,8 +21,12 @@ from . import tools
 BENCHMARK_DIR = abspath(join(dirname(__file__), 'benchmark'))
 
 # Variables
-defaultBranch = util.check_output([util.which('git'),
-                                   'config', 'init.defaultBranch']).strip()
+try:
+    defaultBranch = util.check_output([util.which('git'),
+                                       'config', 'init.defaultBranch'],
+                                      display_error=False).strip()
+except:
+    defaultBranch = 'master'
 
 def test_publish(tmpdir, example_results):
     tmpdir = str(tmpdir)

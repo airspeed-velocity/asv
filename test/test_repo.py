@@ -17,8 +17,12 @@ except ImportError:
 from . import tools
 
 # Variables
-defaultBranch = util.check_output([util.which('git'),
-                                   'config', 'init.defaultBranch']).strip()
+try:
+    defaultBranch = util.check_output([util.which('git'),
+                                       'config', 'init.defaultBranch'],
+                                      display_error=False).strip()
+except:
+    defaultBranch = 'master'
 
 def _test_generic_repo(conf, tmpdir, hash_range, master, branch, is_remote=False):
     workcopy_dir = tempfile.mkdtemp(dir=tmpdir, prefix="workcopy")

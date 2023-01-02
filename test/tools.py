@@ -210,7 +210,11 @@ class Git:
 
     def get_branch_hashes(self, branch=None):
         if branch is None:
-            branch = self.run_git(["config", "init.defaultBranch"]).strip()
+            try:
+                branch = self.run_git(["config", "init.defaultBranch"],
+                                      display_error=False).strip()
+            except:
+                branch = 'master'
         return [x.strip() for x in self.run_git(['rev-list', branch]).splitlines()
                 if x.strip()]
 

@@ -12,8 +12,12 @@ from .conftest import generate_basic_conf
 WIN = (os.name == 'nt')
 
 # Variables
-defaultBranch = check_output([which('git'),
-                              'config', 'init.defaultBranch']).strip()
+try:
+    defaultBranch = util.check_output([util.which('git'),
+                                       'config', 'init.defaultBranch'],
+                                      display_error=False).strip()
+except:
+    defaultBranch = 'master'
 
 def test_find(capfd, tmpdir):
     values = [
