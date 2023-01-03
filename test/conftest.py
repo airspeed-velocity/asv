@@ -35,14 +35,6 @@ DUMMY_VALUES = (
     (6, 6),
 )
 
-# Variables
-try:
-    defaultBranch = util.check_output([util.which('git'),
-                                       'config', 'init.defaultBranch'],
-                                      display_error=False).strip()
-except util.ProcessError:
-    defaultBranch = 'master'
-
 
 def pytest_addoption(parser):
     parser.addoption("--webdriver", action="store", default="None",
@@ -173,7 +165,7 @@ def two_branch_repo_case(request, tmpdir):
     dvcs_type = request.param
     tmpdir = str(tmpdir)
     if dvcs_type == "git":
-        master = f"{defaultBranch}"
+        master = f"{util.git_default_branch()}"
     elif dvcs_type == "hg":
         master = "default"
     dvcs = tools.generate_repo_from_ops(tmpdir, dvcs_type, [

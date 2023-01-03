@@ -1380,3 +1380,13 @@ except ImportError:
         # use single quotes, and put single quotes into double quotes
         # the string $'b is then quoted as '$'"'"'b'
         return "'" + s.replace("'", "'\"'\"'") + "'"
+
+
+def git_default_branch():
+    try:
+        default_branch = check_output([which('git'),
+                                       'config', 'init.defaultBranch'],
+                                      display_error=False).strip()
+    except ProcessError:
+        default_branch = 'master'
+    return default_branch

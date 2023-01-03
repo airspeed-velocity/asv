@@ -17,14 +17,6 @@ from asv.commands.run import Run
 from . import tools
 from .tools import WIN
 
-# Variables
-try:
-    defaultBranch = util.check_output([util.which('git'),
-                                       'config', 'init.defaultBranch'],
-                                      display_error=False).strip()
-except util.ProcessError:
-    defaultBranch = 'master'
-
 
 def test_set_commit_hash(capsys, existing_env_conf):
     tmpdir, local, conf, machine_file = existing_env_conf
@@ -48,14 +40,14 @@ def test_run_spec(basic_conf_2):
     tmpdir, local, conf, machine_file = basic_conf_2
     conf.build_cache_size = 5
 
-    extra_branches = [(f'{defaultBranch}~1', 'some-branch', [12])]
+    extra_branches = [(f'{util.git_default_branch()}~1', 'some-branch', [12])]
     dvcs_path = os.path.join(tmpdir, 'test_repo2')
     dvcs = tools.generate_test_repo(dvcs_path, [1, 2],
                                     extra_branches=extra_branches)
     conf.repo = dvcs.path
 
-    initial_commit = dvcs.get_hash(f"{defaultBranch}~1")
-    master_commit = dvcs.get_hash(f"{defaultBranch}")
+    initial_commit = dvcs.get_hash(f"{util.git_default_branch()}~1")
+    master_commit = dvcs.get_hash(f"{util.git_default_branch()}")
     branch_commit = dvcs.get_hash("some-branch")
     template_dir = os.path.join(tmpdir, "results_workflow_template")
     results_dir = os.path.join(tmpdir, 'results_workflow')
@@ -104,7 +96,8 @@ def test_run_spec(basic_conf_2):
         (["some-branch"], [initial_commit, branch_commit]),
 
         # With two branch in config, should apply to specified branches
-        ([f"{defaultBranch}", "some-branch"], [initial_commit, master_commit, branch_commit]),
+        ([f"{util.git_default_branch()}", "some-branch"],
+         [initial_commit, master_commit, branch_commit]),
     ):
         for range_spec in (None, "NEW", "ALL"):
             _test_run(range_spec, branches, expected_commits)
@@ -114,9 +107,9 @@ def test_run_spec(basic_conf_2):
     with open(os.path.join(tmpdir, 'hashes_to_benchmark'), 'w') as f:
         for commit in expected_commits:
             f.write(commit + "\n")
-        f.write(f"{defaultBranch}~1\n")
+        f.write(f"{util.git_default_branch()}~1\n")
         f.write("some-bad-hash-that-will-be-ignored\n")
-        expected_commits += (dvcs.get_hash(f"{defaultBranch}~1"),)
+        expected_commits += (dvcs.get_hash(f"{util.git_default_branch()}~1"),)
     _test_run('HASHFILE:hashes_to_benchmark', [None], expected_commits)
 
 

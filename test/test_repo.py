@@ -16,14 +16,6 @@ except ImportError:
 
 from . import tools
 
-# Variables
-try:
-    defaultBranch = util.check_output([util.which('git'),
-                                       'config', 'init.defaultBranch'],
-                                      display_error=False).strip()
-except util.ProcessError:
-    defaultBranch = 'master'
-
 
 def _test_generic_repo(conf, tmpdir, hash_range, master, branch, is_remote=False):
     workcopy_dir = tempfile.mkdtemp(dir=tmpdir, prefix="workcopy")
@@ -101,7 +93,7 @@ def test_repo_git(tmpdir):
 
     dvcs = tools.generate_test_repo(tmpdir, list(range(10)),
                                     dvcs_type='git',
-                                    extra_branches=[(f'{defaultBranch}~4',
+                                    extra_branches=[(f'{util.git_default_branch()}~4',
                                                      'some-branch', [11, 12, 13])])
 
     mirror_dir = join(tmpdir, "repo")
@@ -111,14 +103,16 @@ def test_repo_git(tmpdir):
 
         conf.project = mirror_dir
         conf.repo = dvcs.path
-        _test_generic_repo(conf, tmpdir, f'{defaultBranch}~4..{defaultBranch}',
-                           f'{defaultBranch}', 'tag5',
+        _test_generic_repo(conf, tmpdir,
+                           f'{util.git_default_branch()}~4..{util.git_default_branch()}',
+                           f'{util.git_default_branch()}', 'tag5',
                            is_remote=is_remote)
 
-        conf.branches = [f'{defaultBranch}', 'some-branch']
+        conf.branches = [f'{util.git_default_branch()}', 'some-branch']
         branch_commits = {
-            f'{defaultBranch}': [dvcs.get_hash(f'{defaultBranch}'),
-                                 dvcs.get_hash(f'{defaultBranch}~6')],
+            f'{util.git_default_branch()}':
+            [dvcs.get_hash(f'{util.git_default_branch()}'),
+             dvcs.get_hash(f'{util.git_default_branch()}~6')],
             'some-branch': [dvcs.get_hash('some-branch'),
                             dvcs.get_hash('some-branch~6')]
         }
@@ -273,13 +267,13 @@ def test_git_submodule(tmpdir):
     dvcs = tools.generate_test_repo(tmpdir, values=[0], dvcs_type='git')
     sub_dvcs = tools.generate_test_repo(tmpdir, values=[0], dvcs_type='git')
     ssub_dvcs = tools.generate_test_repo(tmpdir, values=[0], dvcs_type='git')
-    commit_hash_0 = dvcs.get_hash(f"{defaultBranch}")
+    commit_hash_0 = dvcs.get_hash(f"{util.git_default_branch()}")
 
     # State 1 (one submodule)
     dvcs.run_git(['-c', 'protocol.file.allow=always',
                   'submodule', 'add', sub_dvcs.path, 'sub1'])
     dvcs.commit('Add sub1')
-    commit_hash_1 = dvcs.get_hash(f"{defaultBranch}")
+    commit_hash_1 = dvcs.get_hash(f"{util.git_default_branch()}")
 
     # State 2 (one submodule with sub-submodule)
     dvcs.run_git(['-c', 'protocol.file.allow=always',
@@ -291,8 +285,8 @@ def test_git_submodule(tmpdir):
     sub1_dvcs.run_git(['pull'])
     dvcs.run_git(['add', 'sub1'])
     dvcs.commit('Update sub1')
-    sub1_hash_2 = sub1_dvcs.get_hash(f"{defaultBranch}")
-    commit_hash_2 = dvcs.get_hash(f"{defaultBranch}")
+    sub1_hash_2 = sub1_dvcs.get_hash(f"{util.git_default_branch()}")
+    commit_hash_2 = dvcs.get_hash(f"{util.git_default_branch()}")
 
     # State 3 (one submodule; sub-submodule removed)
     sub_dvcs.run_git(['rm', '-f', 'ssub1'])
@@ -300,18 +294,18 @@ def test_git_submodule(tmpdir):
     sub1_dvcs.run_git(['pull'])
     dvcs.run_git(['add', 'sub1'])
     dvcs.commit('Update sub1 again')
-    commit_hash_3 = dvcs.get_hash(f"{defaultBranch}")
+    commit_hash_3 = dvcs.get_hash(f"{util.git_default_branch()}")
 
     # State 4 (back to one submodule with sub-submodule)
     sub1_dvcs.run_git(['checkout', sub1_hash_2])
     dvcs.run_git(['add', 'sub1'])
     dvcs.commit('Update sub1 3rd time')
-    commit_hash_4 = dvcs.get_hash(f"{defaultBranch}")
+    commit_hash_4 = dvcs.get_hash(f"{util.git_default_branch()}")
 
     # State 5 (remove final submodule)
     dvcs.run_git(['rm', '-f', 'sub1'])
     dvcs.commit('Remove sub1')
-    commit_hash_5 = dvcs.get_hash(f"{defaultBranch}")
+    commit_hash_5 = dvcs.get_hash(f"{util.git_default_branch()}")
     # Verify clean operation
     conf = config.Config()
     conf.branches = [None]

@@ -4,20 +4,12 @@ import os
 
 import pytest
 
-from asv.util import check_output, which, ProcessError
+from asv.util import check_output, which, git_default_branch
 
 from . import tools
 from .conftest import generate_basic_conf
 
 WIN = (os.name == 'nt')
-
-# Variables
-try:
-    defaultBranch = check_output([which('git'),
-                                  'config', 'init.defaultBranch'],
-                                 display_error=False).strip()
-except ProcessError:
-    defaultBranch = 'master'
 
 
 def test_find(capfd, tmpdir):
@@ -40,7 +32,7 @@ def test_find(capfd, tmpdir):
 
     # Test find at least runs
     tools.run_asv_with_conf(conf, 'find',
-                            f"{defaultBranch}~5..{defaultBranch}",
+                            f"{git_default_branch()}~5..{git_default_branch()}",
                             "params_examples.track_find_test",
                             _machine_file=machine_file)
 
@@ -48,7 +40,7 @@ def test_find(capfd, tmpdir):
     output, err = capfd.readouterr()
 
     regression_hash = check_output(
-        [which('git'), 'rev-parse', f'{defaultBranch}^'], cwd=conf.repo)
+        [which('git'), 'rev-parse', f'{git_default_branch()}^'], cwd=conf.repo)
 
     assert "Greatest regression found: {0}".format(regression_hash[:8]) in output
 
@@ -67,7 +59,7 @@ def test_find_timeout(capfd, tmpdir):
 
     # Test find at least runs
     tools.run_asv_with_conf(conf, 'find', "-e",
-                            f"{defaultBranch}",
+                            f"{git_default_branch()}",
                             "params_examples.time_find_test_timeout",
                             _machine_file=machine_file)
 
@@ -75,7 +67,7 @@ def test_find_timeout(capfd, tmpdir):
     output, err = capfd.readouterr()
 
     regression_hash = check_output(
-        [which('git'), 'rev-parse', f'{defaultBranch}'], cwd=conf.repo)
+        [which('git'), 'rev-parse', f'{git_default_branch()}'], cwd=conf.repo)
 
     assert "Greatest regression found: {0}".format(regression_hash[:8]) in output
     assert "asv: benchmark timed out (timeout 1.0s)" in output
@@ -94,14 +86,14 @@ def test_find_inverted(capfd, tmpdir):
                                                             values=values,
                                                             dummy_packages=False)
     tools.run_asv_with_conf(*[conf, 'find',
-                              "-i", f"{defaultBranch}~4..{defaultBranch}",
+                              "-i", f"{git_default_branch()}~4..{git_default_branch()}",
                               "params_examples.track_find_test"],
                             _machine_file=machine_file)
 
     output, err = capfd.readouterr()
 
     regression_hash = check_output(
-        [which('git'), 'rev-parse', f'{defaultBranch}^'], cwd=conf.repo)
+        [which('git'), 'rev-parse', f'{git_default_branch()}^'], cwd=conf.repo)
 
     formatted = "Greatest improvement found: {0}".format(regression_hash[:8])
     assert formatted in output

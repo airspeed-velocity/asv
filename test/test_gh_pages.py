@@ -7,14 +7,6 @@ from asv import util
 
 from . import tools
 
-# Variables
-try:
-    defaultBranch = util.check_output([util.which('git'),
-                                       'config', 'init.defaultBranch'],
-                                      display_error=False).strip()
-except util.ProcessError:
-    defaultBranch = 'master'
-
 
 @pytest.mark.parametrize("rewrite", [False, True], ids=["no-rewrite", "rewrite"])
 def test_gh_pages(rewrite, tmpdir, generate_result_dir, monkeypatch):
@@ -51,7 +43,7 @@ def test_gh_pages(rewrite, tmpdir, generate_result_dir, monkeypatch):
     dvcs.checkout('gh-pages')
     assert os.path.isfile(os.path.join(dvcs_dir, 'index.html'))
     assert len(dvcs.run_git(['rev-list', 'gh-pages']).splitlines()) == 1
-    dvcs.checkout(f"{defaultBranch}")
+    dvcs.checkout(f"{util.git_default_branch()}")
     assert not os.path.isfile(os.path.join(dvcs_dir, 'index.html'))
 
     # Check with existing (and checked out) gh-pages branch, with no changes
@@ -63,7 +55,7 @@ def test_gh_pages(rewrite, tmpdir, generate_result_dir, monkeypatch):
     else:
         # Timestamp may have changed
         assert len(dvcs.run_git(['rev-list', 'gh-pages']).splitlines()) <= 2
-    dvcs.checkout(f"{defaultBranch}")
+    dvcs.checkout(f"{util.git_default_branch()}")
 
     # Check with existing (not checked out) gh-pages branch, with some changes
     benchmarks_json = os.path.join(conf.results_dir, 'benchmarks.json')
