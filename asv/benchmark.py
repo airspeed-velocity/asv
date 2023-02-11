@@ -65,6 +65,7 @@ from time import process_time
 
 wall_timer = timeit.default_timer
 
+ON_PYPY = hasattr(sys, 'pypy_version_info')
 
 if sys.platform.startswith('win'):
     import ctypes.wintypes
@@ -704,11 +705,17 @@ class MemBenchmark(Benchmark):
         self.unit = "bytes"
 
     def run(self, *param):
-        from pympler import asizeof
+        if ON_PYPY:
+            raise UserWarning("asizeof doesn't work on pypy")
+            return
+        try:
+            from pympler.asizeof import asizeof
+        except ImportError:
+            raise UserWarning("pympler not found, memory benchmarks shall fail")
         obj = self.func(*param)
 
-        sizeof2 = asizeof.asizeof([obj, obj])
-        sizeofcopy = asizeof.asizeof([obj, copy.copy(obj)])
+        sizeof2 = asizeof([obj, obj])
+        sizeofcopy = asizeof([obj, copy.copy(obj)])
 
         return sizeofcopy - sizeof2
 
