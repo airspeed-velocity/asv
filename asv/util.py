@@ -24,7 +24,7 @@ import operator
 import collections
 import multiprocessing
 
-import pyjson5
+import json5
 
 WIN = (os.name == 'nt')
 
@@ -825,7 +825,7 @@ def load_json(path, api_version=None, js_comments=False):
 
     if js_comments:
         # strips comments out
-        data = pyjson5.loads(content)
+        data = json5.loads(content)
     else:
         try:
             data = json.loads(content)
