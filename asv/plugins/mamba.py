@@ -129,6 +129,10 @@ class Mamba(environment.Environment):
         mamba_path = str(Path(env['CONDA_EXE']).parent/"mamba")
         return util.check_output([mamba_path] + args, **kwargs)
 
+    def run(self, args, **kwargs):
+        log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
+        return self.run_executable('python', args, **kwargs)
+
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when
         # upgrading pip itself, and avoids shebang length limit on Linux
