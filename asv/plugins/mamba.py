@@ -5,7 +5,13 @@ import tempfile
 import contextlib
 from pathlib import Path
 
-from mamba.api import create, install
+from yaml import load, dump
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
+
+from mamba.api import libmambapy, MambaSolver
 
 from .. import environment, util
 from ..console import log
@@ -70,15 +76,25 @@ class Mamba(environment.Environment):
                 self._run_pip(pargs + pip_args)
 
         else:
-            # Fallback for named environments
+            # For named environments
             env_file_name = self._mamba_environment_file
+            env_data = yaml.load(Path(env_file_name).open(), Loader=Loader)
+            mamba_pkgs = [x for x in aa.get('dependencies') if isinstance(x, str)]
             self._run_mamba(['env', 'create', '-f', env_file_name,
                              '-p', self._path, '--force'],
                             env=env)
-            if not len(mamba_args) == 0:
-                self._run_mamba(['env', 'update', '-f', env_file_name,
-                                 '-p', self._path],
-                                env=env)
+            solver = MambaSolver(self._mamba_channels,
+                                            None, # or target_platform
+                                            self.context)
+            transaction = solver.solve(mamba_pkgs + mamba_args)
+            transaction.execute(libmambapy.PrefixData(self._path))
+            # Handle possible pip keys
+            pip_maybe = [x for x in aa.get('dependencies') if isinstance(x, dict)]
+            if len(pip_maybe) == 1:
+                try:
+                    pip_args += pip_maybe[0]['pip']
+                except KeyError:
+                    raise KeyError("Only pip is supported in conda environments as a secondary key")
             if not len(pip_args) == 0:
                 pargs = ['install', '-v', '--upgrade-strategy', 'only-if-needed']
                 self._run_pip(pargs + pip_args)
