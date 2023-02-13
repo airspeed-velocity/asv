@@ -122,8 +122,7 @@ class Mamba(environment.Environment):
         return super(Mamba, self).run_executable(executable, args, **kwargs)
 
     def _run_mamba(self, args, **kwargs):
-        env = kwargs.pop("env", os.environ).copy()
-        mamba_path = str(Path(env['CONDA_EXE']).parent/"mamba")
+        mamba_path = str(Path(os.getenv('CONDA_EXE')).parent/"mamba")
         return util.check_output([mamba_path] + args, **kwargs)
 
     def run(self, args, **kwargs):
