@@ -3,6 +3,7 @@ import re
 import os
 import tempfile
 import contextlib
+from pathlib import Path
 
 from mamba.api import create, install
 
@@ -100,6 +101,8 @@ class Mamba(environment.Environment):
             return [], []
 
     def run_executable(self, executable, args, **kwargs):
+        if self._mamba_environment_file is not None:
+            return super(Mamba, self).run_executable(executable, args, **kwargs)
         env = kwargs.pop("env", os.environ).copy()
         mamba_bin_path = os.path.join(self._path, f"envs/{self.name}/bin")
         kwargs["env"] = dict(env,
@@ -108,6 +111,10 @@ class Mamba(environment.Environment):
         exe = util.which(executable, [mamba_bin_path])
         return util.check_output([exe] + args, **kwargs)
 
+    def _run_mamba(self, args, **kwargs):
+        env = kwargs.pop("env", os.environ).copy()
+        mamba_path = str(Path(env['CONDA_EXE']).parent/"mamba")
+        return util.check_output([mamba_path] + args, **kwargs)
 
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when
