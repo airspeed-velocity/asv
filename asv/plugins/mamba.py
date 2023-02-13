@@ -40,11 +40,15 @@ class Mamba(environment.Environment):
         self._python = python
         self._requirements = requirements
         self._mamba_channels = conf.conda_channels
+        if not "conda-forge" in conf.conda_channels:
+            self._mamba_channels += ["conda-forge"]
         self._mamba_environment_file = conf.conda_environment_file
         super(Mamba, self).__init__(conf,
                                     python,
                                     requirements,
                                     tagged_env_vars)
+        self.context = libmambapy.Context()
+        self.context.target_prefix = self._path
 
     def _setup(self):
         log.info("Creating mamba environment for {0}".format(self.name))
@@ -56,16 +60,17 @@ class Mamba(environment.Environment):
         if not self._mamba_environment_file:
             # Construct payload, env file sets python version
             mamba_pkgs = [f'python={self._python}', 'wheel', 'pip'] + mamba_args
-            create(self.name,
-                   mamba_pkgs,
-                   self._mamba_channels + ["conda-forge"],
-                   base_prefix = self._path)
+            solver = MambaSolver(self._mamba_channels,
+                                            None, # or target_platform
+                                            self.context)
+            transaction = solver.solve(mamba_pkgs)
+            transaction.execute(libmambapy.PrefixData(self._path))
             if not len(pip_args) == 0:
                 pargs = ['install', '-v', '--upgrade-strategy', 'only-if-needed']
                 self._run_pip(pargs + pip_args)
 
         else:
-            # File based fallback named environments
+            # Fallback for named environments
             env_file_name = self._mamba_environment_file
             self._run_mamba(['env', 'create', '-f', env_file_name,
                              '-p', self._path, '--force'],
@@ -101,15 +106,7 @@ class Mamba(environment.Environment):
             return [], []
 
     def run_executable(self, executable, args, **kwargs):
-        if self._mamba_environment_file is not None:
-            return super(Mamba, self).run_executable(executable, args, **kwargs)
-        env = kwargs.pop("env", os.environ).copy()
-        mamba_bin_path = os.path.join(self._path, f"envs/{self.name}/bin")
-        kwargs["env"] = dict(env,
-                             PIP_USER=str("false"),
-                             PATH=mamba_bin_path)
-        exe = util.which(executable, [mamba_bin_path])
-        return util.check_output([exe] + args, **kwargs)
+        return super(Mamba, self).run_executable(executable, args, **kwargs)
 
     def _run_mamba(self, args, **kwargs):
         env = kwargs.pop("env", os.environ).copy()
