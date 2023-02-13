@@ -78,8 +78,8 @@ class Mamba(environment.Environment):
         else:
             # For named environments
             env_file_name = self._mamba_environment_file
-            env_data = yaml.load(Path(env_file_name).open(), Loader=Loader)
-            mamba_pkgs = [x for x in aa.get('dependencies') if isinstance(x, str)]
+            env_data = load(Path(env_file_name).open(), Loader=Loader)
+            mamba_pkgs = [x for x in env_data.get('dependencies') if isinstance(x, str)]
             self._run_mamba(['env', 'create', '-f', env_file_name,
                              '-p', self._path, '--force'],
                             env=env)
@@ -89,7 +89,7 @@ class Mamba(environment.Environment):
             transaction = solver.solve(mamba_pkgs + mamba_args)
             transaction.execute(libmambapy.PrefixData(self._path))
             # Handle possible pip keys
-            pip_maybe = [x for x in aa.get('dependencies') if isinstance(x, dict)]
+            pip_maybe = [x for x in env_data.get('dependencies') if isinstance(x, dict)]
             if len(pip_maybe) == 1:
                 try:
                     pip_args += pip_maybe[0]['pip']
