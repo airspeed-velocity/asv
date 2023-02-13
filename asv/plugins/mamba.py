@@ -1,15 +1,12 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import re
 import os
-import tempfile
-import contextlib
 from pathlib import Path
 
-from yaml import load, dump
+from yaml import load
 try:
-    from yaml import CLoader as Loader, CDumper as Dumper
+    from yaml import CLoader as Loader
 except ImportError:
-    from yaml import Loader, Dumper
+    from yaml import Loader
 
 from mamba.api import libmambapy, MambaSolver
 
@@ -46,7 +43,7 @@ class Mamba(environment.Environment):
         self._python = python
         self._requirements = requirements
         self._mamba_channels = conf.conda_channels
-        if not "conda-forge" in conf.conda_channels:
+        if "conda-forge" not in conf.conda_channels:
             self._mamba_channels += ["conda-forge"]
         self._mamba_environment_file = conf.conda_environment_file
         super(Mamba, self).__init__(conf,
@@ -94,7 +91,7 @@ class Mamba(environment.Environment):
                 try:
                     pip_args += pip_maybe[0]['pip']
                 except KeyError:
-                    raise KeyError("Only pip is supported in conda environments as a secondary key")
+                    raise KeyError("Only pip is supported as a secondary key")
             if not len(pip_args) == 0:
                 pargs = ['install', '-v', '--upgrade-strategy', 'only-if-needed']
                 self._run_pip(pargs + pip_args)
