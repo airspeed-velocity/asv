@@ -60,7 +60,7 @@ A benchmark suite directory has the following layout.  The
       save on disk space.
 
       The project is built in this directory with the standard
-      ``distutils`` ``python setup.py build`` command.  This means
+      ``python setup.py build`` command.  This means
       repeated builds happen in the same place and `ccache
       <https://ccache.samba.org>`__ is able to cache and reuse many of
       the build products.
