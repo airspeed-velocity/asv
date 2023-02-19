@@ -29,6 +29,7 @@ class Hg(Repo):
         # this context.  So here, we always make full clones for
         # each of the environments.
 
+        self._repo = None  # Initialize
         self._path = os.path.abspath(mirror_path)
         self._pulled = False
         if hglib is None:
