@@ -16,6 +16,12 @@ from ..console import log
 
 WIN = (os.name == "nt")
 
+# Like Conda, Mamba also needs to be serialized
+util.new_multiprocessing_lock("mamba_lock")
+
+def _mamba_lock():
+    # function; for easier monkeypatching
+    return util.get_multiprocessing_lock("mamba_lock")
 
 class Mamba(environment.Environment):
     """
@@ -69,8 +75,10 @@ class Mamba(environment.Environment):
             solver = MambaSolver(self._mamba_channels,
                                             None, # or target_platform
                                             self.context)
-            transaction = solver.solve(mamba_pkgs)
-            transaction.execute(libmambapy.PrefixData(self._path))
+
+            with _mamba_lock():
+                transaction = solver.solve(mamba_pkgs)
+                transaction.execute(libmambapy.PrefixData(self._path))
             if not len(pip_args) == 0:
                 pargs = ['install', '-v', '--upgrade-strategy', 'only-if-needed']
                 self._run_pip(pargs + pip_args)
@@ -80,14 +88,16 @@ class Mamba(environment.Environment):
             env_file_name = self._mamba_environment_file
             env_data = load(Path(env_file_name).open(), Loader=Loader)
             mamba_pkgs = [x for x in env_data.get('dependencies') if isinstance(x, str)]
-            self._run_mamba(['env', 'create', '-f', env_file_name,
-                             '-p', self._path, '--force'],
-                            env=env)
+            with _mamba_lock():
+                self._run_mamba(['env', 'create', '-f', env_file_name,
+                                 '-p', self._path, '--force'],
+                                env=env)
             solver = MambaSolver(self._mamba_channels,
                                             None, # or target_platform
                                             self.context)
-            transaction = solver.solve(mamba_pkgs + mamba_args)
-            transaction.execute(libmambapy.PrefixData(self._path))
+            with _mamba_lock():
+                transaction = solver.solve(mamba_pkgs + mamba_args)
+                transaction.execute(libmambapy.PrefixData(self._path))
             # Handle possible pip keys
             pip_maybe = [x for x in env_data.get('dependencies') if isinstance(x, dict)]
             if len(pip_maybe) == 1:
@@ -126,7 +136,8 @@ class Mamba(environment.Environment):
 
     def _run_mamba(self, args, **kwargs):
         mamba_path = str(Path(os.getenv('CONDA_EXE')).parent/"mamba")
-        return util.check_output([mamba_path] + args, **kwargs)
+        with _mamba_lock():
+            return util.check_output([mamba_path] + args, **kwargs)
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
