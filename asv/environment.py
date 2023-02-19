@@ -436,6 +436,8 @@ def get_environment_class_by_name(environment_type):
     Find the environment class with the given name.
     """
     for cls in util.iter_subclasses(Environment):
+        if 'mamba' in environment_type and ( sys.version_info.major >= 3 and sys.version_info.minor < 8 ):
+            environment_type = 'conda'
         if cls.tool_name == environment_type:
             return cls
     raise EnvironmentUnavailable(
