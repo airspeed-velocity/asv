@@ -2,7 +2,7 @@
 import sys
 import re
 import os
-from distutils.version import LooseVersion
+from packaging.version import Version
 
 from .. import environment, util
 from ..console import log
@@ -108,11 +108,11 @@ class Virtualenv(environment.Environment):
         except ImportError:
             return False
         else:
-            if LooseVersion(virtualenv.__version__) == LooseVersion('1.11.0'):
+            if Version(virtualenv.__version__) == Version('1.11.0'):
                 log.warning(
                     "asv is not compatible with virtualenv 1.11 due to a bug in "
                     "setuptools.")
-            if LooseVersion(virtualenv.__version__) < LooseVersion('1.10'):
+            if Version(virtualenv.__version__) < Version('1.10'):
                 log.warning(
                     "If using virtualenv, it much be at least version 1.10")
 

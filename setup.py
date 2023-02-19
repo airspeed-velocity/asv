@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-from distutils.errors import CompileError
 
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+from setuptools.errors import CompileError
 
 
 class optional_build_ext(build_ext):
