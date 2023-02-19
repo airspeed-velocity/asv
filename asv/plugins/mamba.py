@@ -59,6 +59,8 @@ class Mamba(environment.Environment):
         mamba_args, pip_args = self._get_requirements()
         env = dict(os.environ)
         env.update(self.build_env_vars)
+        Path(f"{self._path}/conda-meta").mkdir(parents=True,
+                                               exist_ok=True)
 
         if not self._mamba_environment_file:
             # Construct payload, env file sets python version
