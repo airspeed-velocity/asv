@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 from yaml import load
+
 try:
     from yaml import CLoader as Loader
 except ImportError:
@@ -14,14 +15,16 @@ from mamba.api import libmambapy, MambaSolver
 from .. import environment, util
 from ..console import log
 
-WIN = (os.name == "nt")
+WIN = os.name == "nt"
 
 # Like Conda, Mamba also needs to be serialized
 util.new_multiprocessing_lock("mamba_lock")
 
+
 def _mamba_lock():
     # function; for easier monkeypatching
     return util.get_multiprocessing_lock("mamba_lock")
+
 
 class Mamba(environment.Environment):
     """
@@ -31,6 +34,7 @@ class Mamba(environment.Environment):
     project is installed using ``pip`` (since ``mamba`` doesn't have a
     method to install from an arbitrary ``setup.py``).
     """
+
     tool_name = "mamba"
     _matches_cache = {}
 
@@ -53,10 +57,7 @@ class Mamba(environment.Environment):
         if "conda-forge" not in conf.conda_channels:
             self._mamba_channels += ["conda-forge"]
         self._mamba_environment_file = conf.conda_environment_file
-        super(Mamba, self).__init__(conf,
-                                    python,
-                                    requirements,
-                                    tagged_env_vars)
+        super(Mamba, self).__init__(conf, python, requirements, tagged_env_vars)
         self.context = libmambapy.Context()
         self.context.target_prefix = self._path
 
@@ -66,47 +67,47 @@ class Mamba(environment.Environment):
         mamba_args, pip_args = self._get_requirements()
         env = dict(os.environ)
         env.update(self.build_env_vars)
-        Path(f"{self._path}/conda-meta").mkdir(parents=True,
-                                               exist_ok=True)
+        Path(f"{self._path}/conda-meta").mkdir(parents=True, exist_ok=True)
 
         if not self._mamba_environment_file:
             # Construct payload, env file sets python version
-            mamba_pkgs = [f'python={self._python}', 'wheel', 'pip'] + mamba_args
-            solver = MambaSolver(self._mamba_channels,
-                                            None, # or target_platform
-                                            self.context)
+            mamba_pkgs = [f"python={self._python}", "wheel", "pip"] + mamba_args
+            solver = MambaSolver(
+                self._mamba_channels, None, self.context  # or target_platform
+            )
 
             with _mamba_lock():
                 transaction = solver.solve(mamba_pkgs)
                 transaction.execute(libmambapy.PrefixData(self._path))
             if not len(pip_args) == 0:
-                pargs = ['install', '-v', '--upgrade-strategy', 'only-if-needed']
+                pargs = ["install", "-v", "--upgrade-strategy", "only-if-needed"]
                 self._run_pip(pargs + pip_args)
 
         else:
             # For named environments
             env_file_name = self._mamba_environment_file
             env_data = load(Path(env_file_name).open(), Loader=Loader)
-            mamba_pkgs = [x for x in env_data.get('dependencies') if isinstance(x, str)]
+            mamba_pkgs = [x for x in env_data.get("dependencies") if isinstance(x, str)]
             with _mamba_lock():
-                self._run_mamba(['env', 'create', '-f', env_file_name,
-                                 '-p', self._path, '--force'],
-                                env=env)
-            solver = MambaSolver(self._mamba_channels,
-                                            None, # or target_platform
-                                            self.context)
+                self._run_mamba(
+                    ["env", "create", "-f", env_file_name, "-p", self._path, "--force"],
+                    env=env,
+                )
+            solver = MambaSolver(
+                self._mamba_channels, None, self.context  # or target_platform
+            )
             with _mamba_lock():
                 transaction = solver.solve(mamba_pkgs + mamba_args)
                 transaction.execute(libmambapy.PrefixData(self._path))
             # Handle possible pip keys
-            pip_maybe = [x for x in env_data.get('dependencies') if isinstance(x, dict)]
+            pip_maybe = [x for x in env_data.get("dependencies") if isinstance(x, dict)]
             if len(pip_maybe) == 1:
                 try:
-                    pip_args += pip_maybe[0]['pip']
+                    pip_args += pip_maybe[0]["pip"]
                 except KeyError:
                     raise KeyError("Only pip is supported as a secondary key")
             if not len(pip_args) == 0:
-                pargs = ['install', '-v', '--upgrade-strategy', 'only-if-needed']
+                pargs = ["install", "-v", "--upgrade-strategy", "only-if-needed"]
                 self._run_pip(pargs + pip_args)
 
     def _get_requirements(self):
@@ -116,7 +117,7 @@ class Mamba(environment.Environment):
             pip_args = []
 
             for key, val in self._requirements.items():
-                if key.startswith('pip+'):
+                if key.startswith("pip+"):
                     if val:
                         pip_args.append("{0}=={1}".format(key[4:], val))
                     else:
@@ -135,15 +136,15 @@ class Mamba(environment.Environment):
         return super(Mamba, self).run_executable(executable, args, **kwargs)
 
     def _run_mamba(self, args, **kwargs):
-        mamba_path = str(Path(os.getenv('CONDA_EXE')).parent/"mamba")
+        mamba_path = str(Path(os.getenv("CONDA_EXE")).parent / "mamba")
         with _mamba_lock():
             return util.check_output([mamba_path] + args, **kwargs)
 
     def run(self, args, **kwargs):
-        log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
-        return self.run_executable('python', args, **kwargs)
+        log.debug("Running '{0}' in {1}".format(" ".join(args), self.name))
+        return self.run_executable("python", args, **kwargs)
 
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when
         # upgrading pip itself, and avoids shebang length limit on Linux
-        return self.run_executable('python', ['-mpip'] + list(args), **kwargs)
+        return self.run_executable("python", ["-mpip"] + list(args), **kwargs)

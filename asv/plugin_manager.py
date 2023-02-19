@@ -16,14 +16,19 @@ class PluginManager:
     Then, any modules specified in the ``plugins`` entry in the
     ``asv.conf.json`` file are loaded.
     """
+
     def __init__(self):
         self._plugins = []
 
     def load_plugins(self, package):
-        prefix = package.__name__ + '.'
-        for module_finder, name, ispkg in pkgutil.iter_modules(package.__path__, prefix):
-            if 'mamba' in name and ( sys.version_info.major >= 3 and sys.version_info.minor < 8 ):
-                continue # Don't when mamba.api was not defined
+        prefix = package.__name__ + "."
+        for module_finder, name, ispkg in pkgutil.iter_modules(
+            package.__path__, prefix
+        ):
+            if "mamba" in name and (
+                sys.version_info.major >= 3 and sys.version_info.minor < 8
+            ):
+                continue  # Don't when mamba.api was not defined
             else:
                 __import__(name)
                 mod = sys.modules[name]
@@ -32,9 +37,9 @@ class PluginManager:
 
     def import_plugin(self, name):
         extended = False
-        if name.startswith('.'):
+        if name.startswith("."):
             extended = True
-            sys.path.insert(0, '.')
+            sys.path.insert(0, ".")
             name = name[1:]
         try:
             mod = __import__(name, {}, {}, [], level=0)
@@ -45,7 +50,7 @@ class PluginManager:
                 del sys.path[0]
 
     def init_plugin(self, mod):
-        if hasattr(mod, 'setup'):
+        if hasattr(mod, "setup"):
             mod.setup()
 
     def run_hook(self, hook_name, args, kwargs):
