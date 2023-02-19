@@ -22,6 +22,8 @@ class PluginManager:
     def load_plugins(self, package):
         prefix = package.__name__ + '.'
         for module_finder, name, ispkg in pkgutil.iter_modules(package.__path__, prefix):
+            if 'mamba' in name and ( sys.version_info.major > 3 and sys.version_info.minor < 8 ):
+                continue # Don't when mamba.api was not defined
             __import__(name)
             mod = sys.modules[name]
             self.init_plugin(mod)

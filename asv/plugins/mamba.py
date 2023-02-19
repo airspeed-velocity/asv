@@ -1,4 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
+# ONLY works on newer python versions
 import os
 from pathlib import Path
 
