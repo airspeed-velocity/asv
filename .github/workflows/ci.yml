@@ -40,13 +40,17 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
 
       - name: Install dependencies
         run: python -m pip install -r requirements-dev.txt
 
       - name: Install asv
-        run: pip install .
+        run: pip install ".[doc]"
 
       - name: Build docs
         run: sphinx-build -W docs/source html
