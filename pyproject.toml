@@ -2,7 +2,7 @@
 name = "asv"
 description = "Airspeed Velocity: A simple Python history benchmarking tool"
 readme = { file = "README.rst", content-type = "text/x-rst" }
-license = { file = "LICENSE.rst", content-type = "text/plain" }
+license = { text = "BSD-3-Clause" }
 requires-python = ">=3.7"
 authors = [
     { name = "Michael Droettboom", email = "mdroe@stsci.edu" },
