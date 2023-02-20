@@ -46,6 +46,7 @@ test = [
     "selenium",
     "pytest-rerunfailures",
     "python-hglib",
+    "pympler; platform_python_implementation != \"PyPy\"",
 ]
 doc = [
     "sphinx",

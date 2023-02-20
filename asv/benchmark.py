@@ -706,12 +706,18 @@ class MemBenchmark(Benchmark):
 
     def run(self, *param):
         if ON_PYPY:
-            raise UserWarning("asizeof doesn't work on pypy")
+            raise NotImplementedError("asizeof doesn't work on pypy")
             return
+
         try:
             from pympler.asizeof import asizeof
         except ImportError:
-            raise UserWarning("pympler not found, memory benchmarks shall fail")
+            try:
+                subprocess.check_output(["python", "-mpip", "install", "pympler==0.9"])
+            except subprocess.CalledProcessError as e:
+                raise NotImplementedError(f"Failed to install pympler: {e.output.decode()}")
+            raise NotImplementedError("pympler not found, installed successfully")
+
         obj = self.func(*param)
 
         sizeof2 = asizeof([obj, obj])

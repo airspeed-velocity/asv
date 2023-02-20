@@ -18,3 +18,4 @@ python-hglib
 flake8
 isort>= 5.11.5
 json5
+pympler; platform_python_implementation != "PyPy"
