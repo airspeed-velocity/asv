@@ -13,6 +13,7 @@ selenium
 pytest-xdist
 pytest-rerunfailures>=10.0
 pytest-timeout
+pytest-cov
 feedparser
 python-hglib
 flake8
