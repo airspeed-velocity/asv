@@ -209,16 +209,7 @@ def test_compare_name_lookup(dvcs_type, capsys, tmpdir, example_results):
 
     repo = tools.generate_test_repo(tmpdir, dvcs_type=dvcs_type)
 
-    # Variables
-    try:
-        defaultBranch = util.check_output([util.which('git'),
-                                           'config',
-                                           'init.defaultBranch'],
-                                          display_error=False).strip()
-    except util.ProcessError:
-        defaultBranch = 'master'
-
-    branch_name = defaultBranch if dvcs_type == 'git' else 'default'
+    branch_name = util.git_default_branch() if dvcs_type == 'git' else 'default'
     commit_hash = repo.get_branch_hashes(branch_name)[0]
 
     result_dir = os.path.join(tmpdir, 'results')

@@ -17,14 +17,6 @@ from asv.commands.run import Run
 from . import tools
 from .tools import WIN
 
-# Variables
-try:
-    defaultBranch = util.check_output([util.which('git'),
-                                       'config', 'init.defaultBranch'],
-                                      display_error=False).strip()
-except util.ProcessError:
-    defaultBranch = 'master'
-
 
 def test_set_commit_hash(capsys, existing_env_conf):
     tmpdir, local, conf, machine_file = existing_env_conf
@@ -48,14 +40,14 @@ def test_run_spec(basic_conf_2):
     tmpdir, local, conf, machine_file = basic_conf_2
     conf.build_cache_size = 5
 
-    extra_branches = [(f'{defaultBranch}~1', 'some-branch', [12])]
+    extra_branches = [(f'{util.git_default_branch()}~1', 'some-branch', [12])]
     dvcs_path = os.path.join(tmpdir, 'test_repo2')
     dvcs = tools.generate_test_repo(dvcs_path, [1, 2],
                                     extra_branches=extra_branches)
     conf.repo = dvcs.path
 
-    initial_commit = dvcs.get_hash(f"{defaultBranch}~1")
-    master_commit = dvcs.get_hash(f"{defaultBranch}")
+    initial_commit = dvcs.get_hash(f"{util.git_default_branch()}~1")
+    master_commit = dvcs.get_hash(f"{util.git_default_branch()}")
     branch_commit = dvcs.get_hash("some-branch")
     template_dir = os.path.join(tmpdir, "results_workflow_template")
     results_dir = os.path.join(tmpdir, 'results_workflow')
@@ -104,7 +96,8 @@ def test_run_spec(basic_conf_2):
         (["some-branch"], [initial_commit, branch_commit]),
 
         # With two branch in config, should apply to specified branches
-        ([f"{defaultBranch}", "some-branch"], [initial_commit, master_commit, branch_commit]),
+        ([f"{util.git_default_branch()}", "some-branch"],
+         [initial_commit, master_commit, branch_commit]),
     ):
         for range_spec in (None, "NEW", "ALL"):
             _test_run(range_spec, branches, expected_commits)
@@ -114,9 +107,9 @@ def test_run_spec(basic_conf_2):
     with open(os.path.join(tmpdir, 'hashes_to_benchmark'), 'w') as f:
         for commit in expected_commits:
             f.write(commit + "\n")
-        f.write(f"{defaultBranch}~1\n")
+        f.write(f"{util.git_default_branch()}~1\n")
         f.write("some-bad-hash-that-will-be-ignored\n")
-        expected_commits += (dvcs.get_hash(f"{defaultBranch}~1"),)
+        expected_commits += (dvcs.get_hash(f"{util.git_default_branch()}~1"),)
     _test_run('HASHFILE:hashes_to_benchmark', [None], expected_commits)
 
 
@@ -143,7 +136,8 @@ def test_run_build_failure(basic_conf):
     timestamp = util.datetime_to_js_timestamp(datetime.datetime.utcnow())
 
     bench_name = 'time_secondary.track_value'
-    for commit in ['master^!', 'master~1^!']:
+    for commit in [f'{util.git_default_branch()}^!',
+                   f'{util.git_default_branch()}~1^!']:
         tools.run_asv_with_conf(conf, 'run', commit,
                                 '--quick', '--show-stderr',
                                 '--bench', bench_name,
@@ -189,7 +183,7 @@ def test_run_with_repo_subdir(basic_conf_with_subdir):
     # This benchmark imports the project under test (asv_test_repo)
     bench_name = 'params_examples.track_find_test'
     # Test with a single changeset
-    tools.run_asv_with_conf(conf, 'run', 'master^!',
+    tools.run_asv_with_conf(conf, 'run', f'{util.git_default_branch()}^!',
                             '--quick', '--show-stderr',
                             '--bench', bench_name,
                             _machine_file=machine_file)
@@ -208,7 +202,7 @@ def test_benchmark_param_selection(basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
     conf.matrix = {}
     tools.generate_test_repo(tmpdir, values=[(1, 2, 3)])
-    tools.run_asv_with_conf(conf, 'run', 'master^!',
+    tools.run_asv_with_conf(conf, 'run', f'{util.git_default_branch()}^!',
                             '--quick', '--show-stderr',
                             '--bench', r'track_param_selection\(.*, 3\)',
                             _machine_file=machine_file)
@@ -240,7 +234,7 @@ def test_run_append_samples(basic_conf_2):
 
     # Tests multiple calls to "asv run --append-samples"
     def run_it():
-        tools.run_asv_with_conf(conf, 'run', "master^!",
+        tools.run_asv_with_conf(conf, 'run', f"{util.git_default_branch()}^!",
                                 '--bench', 'time_examples.TimeSuite.time_example_benchmark_1',
                                 '--append-samples', '-a', 'repeat=(1, 1, 10.0)', '-a', 'rounds=1',
                                 '-a', 'number=1', '-a', 'warmup_time=0',
@@ -273,7 +267,7 @@ def test_cpu_affinity(basic_conf):
     # Only one environment
     conf.matrix = {}
 
-    tools.run_asv_with_conf(conf, 'run', "master^!",
+    tools.run_asv_with_conf(conf, 'run', f"{util.git_default_branch()}^!",
                             '--bench', 'time_examples.TimeSuite.time_example_benchmark_1',
                             '--cpu-affinity=0', '-a', 'repeat=(1, 1, 10.0)', '-a', 'rounds=1',
                             '-a', 'number=1', '-a', 'warmup_time=0',
@@ -294,7 +288,7 @@ def test_env_matrix_value(basic_conf):
     def check_env_matrix(env_build, env_nobuild):
         conf.matrix = {"env": env_build, "env_nobuild": env_nobuild}
 
-        tools.run_asv_with_conf(conf, 'run', "master^!",
+        tools.run_asv_with_conf(conf, 'run', f"{util.git_default_branch()}^!",
                                 '--bench', 'time_secondary.track_environment_value',
                                 _machine_file=machine_file)
 
@@ -330,7 +324,7 @@ def test_parallel(basic_conf_2, dummy_packages):
         "env_nobuild": {"SOME_OTHER_TEST_VAR": ["1", "2"]}
     }
 
-    tools.run_asv_with_conf(conf, 'run', "master^!",
+    tools.run_asv_with_conf(conf, 'run', f"{util.git_default_branch()}^!",
                             '--bench', 'time_secondary.track_environment_value',
                             '--parallel=2', _machine_file=machine_file)
 
@@ -352,7 +346,7 @@ def test_filter_date_period(tmpdir, basic_conf):
     conf.repo = dvcs.path
     conf.matrix = {}
 
-    tools.run_asv_with_conf(conf, 'run', 'master',
+    tools.run_asv_with_conf(conf, 'run', f'{util.git_default_branch()}',
                             '--date-period=1w',
                             '--quick', '--show-stderr',
                             '--bench=time_secondary.track_value',
@@ -389,7 +383,7 @@ def test_format_durations():
 def test_return_code(tmpdir, basic_conf_2):
     tmpdir, local, conf, machine_file = basic_conf_2
 
-    res = tools.run_asv_with_conf(conf, 'run', 'master^!', '--quick',
+    res = tools.run_asv_with_conf(conf, 'run', f'{util.git_default_branch()}^!', '--quick',
                                   '--bench', 'TimeSecondary',
                                   _machine_file=machine_file)
     assert res == 2
