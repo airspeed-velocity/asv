@@ -1176,6 +1176,7 @@ def main_run_server(args):
             # (Poll in a loop is simplest --- also used by subprocess.py)
             start_time = wall_timer()
             is_timeout = False
+            time2sleep = 1e-15
             while True:
                 res, status = os.waitpid(pid, os.WNOHANG)
                 if res != 0:
@@ -1188,8 +1189,8 @@ def main_run_server(args):
                     else:
                         os.kill(pid, signal.SIGTERM)
                     is_timeout = True
-
-                time.sleep(0.05)
+                time2sleep *= 1e+1
+                time.sleep(min(time2sleep, 0.001))
 
             # Report result
             with io.open(stdout_file, 'r', errors='replace') as f:
