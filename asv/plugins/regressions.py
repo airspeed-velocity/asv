@@ -146,23 +146,23 @@ class Regressions(OutputPublisher):
                 params = dict(graph_params)
 
                 if rev1 is None:
-                    params['commits'] = '{0}'.format(revision_to_hash[rev2])
+                    params['commits'] = f'{revision_to_hash[rev2]}'
                 else:
                     params['commits'] = '{0}-{1}'.format(revision_to_hash[rev1],
                                                          revision_to_hash[rev2])
 
-                link = 'index.html#{0}?{1}'.format(benchmark_name, urllib.parse.urlencode(params))
+                link = f'index.html#{benchmark_name}?{urllib.parse.urlencode(params)}'
 
                 try:
                     best_percentage = "{0:.2f}%".format(100 *
                                                         (last_value - best_value) / best_value)
                 except ZeroDivisionError:
-                    best_percentage = "{0:.2g} units".format(last_value - best_value)
+                    best_percentage = f"{last_value - best_value:.2g} units"
 
                 try:
-                    percentage = "{0:.2f}%".format(100 * (value2 - value1) / value1)
+                    percentage = f"{100 * (value2 - value1) / value1:.2f}%"
                 except ZeroDivisionError:
-                    percentage = "{0:.2g} units".format(value2 - value1)
+                    percentage = f"{value2 - value1:.2g} units"
 
                 jump_date = datetime.datetime.fromtimestamp(revision_timestamps[rev2] / 1000)
                 jump_date_str = jump_date.strftime('%Y-%m-%d %H:%M:%S')
@@ -181,7 +181,7 @@ class Regressions(OutputPublisher):
                 else:
                     commit_a = revision_to_hash[rev2]
                     commit_url = conf.show_commit_url + commit_a
-                    commit_ref = 'in commit <a href="{0}">{1}</a>'.format(commit_url, commit_a[:8])
+                    commit_ref = f'in commit <a href="{commit_url}">{commit_a[:8]}</a>'
 
                 unit = benchmark.get('unit', '')
                 best_value_str = util.human_value(best_value, unit)
@@ -210,9 +210,9 @@ class Regressions(OutputPublisher):
         entries.sort(key=lambda x: x.updated, reverse=True)
 
         feed.write_atom(filename, entries,
-                        title='{0} performance regressions'.format(conf.project),
+                        title=f'{conf.project} performance regressions',
                         author='Airspeed Velocity',
-                        address='{0}.asv'.format(conf.project))
+                        address=f'{conf.project}.asv')
 
 
 class _GraphDataFilter:
@@ -254,7 +254,7 @@ class _GraphDataFilter:
             if param is None:
                 entry_name = benchmark['name']
             else:
-                entry_name = benchmark['name'] + '({0})'.format(', '.join(param))
+                entry_name = benchmark['name'] + f"({', '.join(param)})"
 
             start_revision = self._get_start_revision(graph, benchmark, entry_name)
             threshold = self._get_threshold(graph, benchmark, entry_name)

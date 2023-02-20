@@ -49,7 +49,7 @@ def unroll_result(benchmark_name, params, *values):
         if params == ():
             name = benchmark_name
         else:
-            name = "%s(%s)" % (benchmark_name, ", ".join(params))
+            name = f"{benchmark_name}({', '.join(params)})"
         yield (name,) + value
 
 
@@ -158,7 +158,7 @@ class Compare(Command):
                 machine = machines[0]
         elif machine not in machines:
             raise util.UserError(
-                "Results for machine '{0} not found".format(machine))
+                f"Results for machine '{machine} not found")
 
         commit_names = {hash_1: repo.get_name_from_hash(hash_1),
                         hash_2: repo.get_name_from_hash(hash_2)}
@@ -208,7 +208,7 @@ class Compare(Command):
         machine_env_names = set()
 
         for key, params, value, stats, samples, version, machine, env_name in resultset_1:
-            machine_env_name = "{}/{}".format(machine, env_name)
+            machine_env_name = f"{machine}/{env_name}"
             machine_env_names.add(machine_env_name)
             for name, value, stats, samples in unroll_result(key, params, value, stats, samples):
                 units[(name, machine_env_name)] = benchmarks.get(key, {}).get('unit')
@@ -217,7 +217,7 @@ class Compare(Command):
                 versions_1[(name, machine_env_name)] = version
 
         for key, params, value, stats, samples, version, machine, env_name in resultset_2:
-            machine_env_name = "{}/{}".format(machine, env_name)
+            machine_env_name = f"{machine}/{env_name}"
             machine_env_names.add(machine_env_name)
             for name, value, stats, samples in unroll_result(key, params, value, stats, samples):
                 units[(name, machine_env_name)] = benchmarks.get(key, {}).get('unit')
@@ -227,11 +227,11 @@ class Compare(Command):
 
         if len(results_1) == 0:
             raise util.UserError(
-                "Did not find results for commit {0}".format(hash_1))
+                f"Did not find results for commit {hash_1}")
 
         if len(results_2) == 0:
             raise util.UserError(
-                "Did not find results for commit {0}".format(hash_2))
+                f"Did not find results for commit {hash_2}")
 
         benchmarks_1 = set(results_1.keys())
         benchmarks_2 = set(results_2.keys())
@@ -281,7 +281,7 @@ class Compare(Command):
             else:
                 try:
                     ratio_num = time_2 / time_1
-                    ratio = "{0:6.2f}".format(ratio_num)
+                    ratio = f"{ratio_num:6.2f}"
                 except ZeroDivisionError:
                     ratio_num = 1e9
                     ratio = "n/a"
@@ -370,22 +370,22 @@ class Compare(Command):
                 color_print(titles[key])
                 color_print("")
             color_print("       before           after         ratio")
-            color_print("     [{0:8s}]       [{1:8s}]".format(hash_1[:8], hash_2[:8]))
+            color_print(f"     [{hash_1[:8]:8s}]       [{hash_2[:8]:8s}]")
 
             name_1 = commit_names.get(hash_1)
             if name_1:
-                name_1 = '<{0}>'.format(name_1)
+                name_1 = f'<{name_1}>'
             else:
                 name_1 = ''
 
             name_2 = commit_names.get(hash_2)
             if name_2:
-                name_2 = '<{0}>'.format(name_2)
+                name_2 = f'<{name_2}>'
             else:
                 name_2 = ''
 
             if name_1 or name_2:
-                color_print("     {0:10s}       {1:10s}".format(name_1, name_2))
+                color_print(f"     {name_1:10s}       {name_2:10s}")
 
             if sort == 'ratio':
                 bench[key].sort(key=lambda v: v[3], reverse=True)

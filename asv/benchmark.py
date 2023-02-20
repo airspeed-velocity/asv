@@ -361,12 +361,12 @@ class Benchmark:
         try:
             self.param_names = [str(x) for x in list(self.param_names)]
         except ValueError:
-            raise ValueError("%s.param_names is not a list of strings" % (name,))
+            raise ValueError(f"{name}.param_names is not a list of strings")
 
         try:
             self._params = list(self._params)
         except ValueError:
-            raise ValueError("%s.params is not a list" % (name,))
+            raise ValueError(f"{name}.params is not a list")
 
         if self._params and not isinstance(self._params[0], (tuple, list)):
             # Accept a single list for one parameter only
@@ -399,7 +399,7 @@ class Benchmark:
                 param_idx, param_idx + 1)
         except ValueError:
             raise ValueError(
-                "Invalid benchmark parameter permutation index: %r" % (param_idx,))
+                f"Invalid benchmark parameter permutation index: {param_idx!r}")
 
     def insert_param(self, param):
         """
@@ -897,7 +897,7 @@ def get_benchmark_from_name(root, name, extra_params=None):
             name, param_idx = name.split('-', 1)
             param_idx = int(param_idx)
         except ValueError:
-            raise ValueError("Benchmark id %r is invalid" % (name,))
+            raise ValueError(f"Benchmark id {name!r} is invalid")
     else:
         param_idx = None
 

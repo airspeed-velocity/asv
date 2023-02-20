@@ -71,7 +71,7 @@ def human_list(input_list):
     """
     Formats a list of strings in a human-friendly way.
     """
-    input_list = ["'{0}'".format(x) for x in input_list]
+    input_list = [f"'{x}'" for x in input_list]
 
     if len(input_list) == 0:
         return 'nothing'
@@ -94,7 +94,7 @@ def human_float(value, significant=3, truncate_small=None, significant_zeros=Fal
     if value == 0:
         return "0"
     elif math.isinf(value) or math.isnan(value):
-        return "{}".format(value)
+        return f"{value}"
     elif value < 0:
         sign = "-"
         value = -value
@@ -111,7 +111,7 @@ def human_float(value, significant=3, truncate_small=None, significant_zeros=Fal
 
     if magnitude <= -5 or magnitude >= 9:
         # Too many digits, use scientific notation
-        fmt = "{{0:.{0}e}}".format(significant)
+        fmt = f"{{0:.{significant}e}}"
     elif value == int(value):
         value = int(round(value, num_digits))
         fmt = "{0:d}"
@@ -119,7 +119,7 @@ def human_float(value, significant=3, truncate_small=None, significant_zeros=Fal
         value = int(round(value, num_digits))
         fmt = "{0:d}"
     else:
-        fmt = "{{0:.{0}f}}".format(num_digits)
+        fmt = f"{{0:.{num_digits}f}}"
 
     formatted = sign + fmt.format(value)
 
@@ -177,10 +177,10 @@ def human_file_size(size, err=None):
     str_value = human_float(value, 3)
 
     if err is None:
-        return "{0:s}{1}".format(str_value, suffix)
+        return f"{str_value:s}{suffix}"
     else:
         str_err = human_float(err / scale, 1, truncate_small=2)
-        return "{0:s}±{1:s}{2}".format(str_value, str_err, suffix)
+        return f"{str_value:s}±{str_err:s}{suffix}"
 
 
 _human_time_units = (
@@ -243,10 +243,10 @@ def human_time(seconds, err=None):
         if scale < units[i + 1][1]:
             str_time = human_float(seconds / units[i][1], 3, significant_zeros=True)
             if err is None:
-                return "{0:s}{1}".format(str_time, units[i][0])
+                return f"{str_time:s}{units[i][0]}"
             else:
                 str_err = human_float(err / units[i][1], 1, truncate_small=2)
-                return "{0:s}±{1:s}{2}".format(str_time, str_err, units[i][0])
+                return f"{str_time:s}±{str_err:s}{units[i][0]}"
     return '~0'
 
 
@@ -276,7 +276,7 @@ def human_value(value, unit, err=None):
         else:
             display = json.dumps(value)
             if err is not None:
-                display += "±{:.2g}".format(err)
+                display += f"±{err:.2g}"
     elif value is None:
         display = "failed"
     else:
@@ -344,7 +344,7 @@ def which(filename, paths=None):
             loc_info = 'PATH'
         else:
             loc_info = os.pathsep.join(locations)
-        raise IOError("Could not find '{0}' in {1}".format(filename, loc_info))
+        raise IOError(f"Could not find '{filename}' in {loc_info}")
 
     return candidates[0]
 
@@ -370,8 +370,7 @@ class ProcessError(subprocess.CalledProcessError):
 
     def __str__(self):
         if self.retcode == TIMEOUT_RETCODE:
-            return "Command '{0}' timed out".format(
-                ' '.join(self.args))
+            return f"Command '{' '.join(self.args)}' timed out"
         else:
             return "Command '{0}' returned non-zero exit status {1}".format(
                 ' '.join(self.args), self.retcode)
@@ -512,7 +511,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
     if isinstance(args, str):
         args = [args]
 
-    log.debug("Running '{0}'".format(' '.join(args)))
+    log.debug(f"Running '{' '.join(args)}'")
 
     kwargs = dict(shell=shell, env=env, cwd=cwd,
                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -726,7 +725,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         retcode = proc.returncode
 
     if valid_return_codes is not None and retcode not in valid_return_codes:
-        header = 'Error running {0} (exit status {1})'.format(' '.join(args), retcode)
+        header = f"Error running {' '.join(args)} (exit status {retcode})"
         if display_error:
             if log.is_debug_enabled():
                 # Output was already printed
@@ -832,8 +831,7 @@ def load_json(path, api_version=None, js_comments=False):
         d = json.loads(content)
     except ValueError as e:
         raise UserError(
-            "Error parsing JSON in file '{0}': {1}".format(
-                path, str(e)))
+            f"Error parsing JSON in file '{path}': {str(e)}")
 
     if api_version is not None:
         if 'version' in d:
@@ -850,7 +848,7 @@ def load_json(path, api_version=None, js_comments=False):
             del d['version']
         else:
             raise UserError(
-                "No version specified in {0}.".format(path))
+                f"No version specified in {path}.")
 
     return d
 
@@ -877,11 +875,11 @@ def update_json(cls, path, api_version, compact=False):
     d = load_json(path)
     if 'version' not in d:
         raise UserError(
-            "No version specified in {0}.".format(path))
+            f"No version specified in {path}.")
 
     if d['version'] < api_version:
         for x in range(d['version'] + 1, api_version + 1):
-            d = getattr(cls, 'update_to_{0}'.format(x), lambda x: x)(d)
+            d = getattr(cls, f'update_to_{x}', lambda x: x)(d)
         write_json(path, d, api_version, compact=compact)
     elif d['version'] > api_version:
         raise UserError(
@@ -1020,7 +1018,7 @@ def format_text_table(rows, num_headers=0,
     """
 
     # Format content
-    text_rows = [["{0}".format(item).replace("\n", " ") for item in row]
+    text_rows = [[f"{item}".replace("\n", " ") for item in row]
                  for row in rows]
 
     # Ensure same number of items on all rows
@@ -1333,7 +1331,7 @@ def truncate_float_list(item, digits=5):
     representation.
     """
     if isinstance(item, float):
-        fmt = '{{:.{}e}}'.format(digits - 1)
+        fmt = f'{{:.{digits - 1}e}}'
         return float(fmt.format(item))
     elif isinstance(item, list):
         return [truncate_float_list(x, digits) for x in item]

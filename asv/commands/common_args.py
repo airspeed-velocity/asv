@@ -89,14 +89,14 @@ class DictionaryArgAction(argparse.Action):
                 key, value = values.split("=", 1)
             except ValueError:
                 raise argparse.ArgumentError(self,
-                                             "{!r} is not a key=value assignment".format(values))
+                                             f"{values!r} is not a key=value assignment")
         else:
             key = self.dict_dest
             value = values
 
         if self.__choices is not None and key not in self.__choices:
             raise argparse.ArgumentError(self,
-                                         "{!r} cannot be set".format(key))
+                                         f"{key!r} cannot be set")
 
         dest_key = key
         conv = self.converters.get(key, None)
@@ -108,7 +108,7 @@ class DictionaryArgAction(argparse.Action):
                 value = conv(value)
             except ValueError as exc:
                 raise argparse.ArgumentError(self,
-                                             "{!r}: {}".format(key, exc))
+                                             f"{key!r}: {exc}")
 
         # Store value
         result = getattr(namespace, self.dest, None)
@@ -153,7 +153,7 @@ def add_bench(parser):
         num_cpu = multiprocessing.cpu_count()
         for n in affinity_list:
             if not (0 <= n < num_cpu):
-                raise ValueError("CPU {!r} not in range 0-{!r}".format(n, num_cpu - 1))
+                raise ValueError(f"CPU {n!r} not in range 0-{num_cpu - 1!r}")
 
         return affinity_list
 
@@ -288,7 +288,7 @@ def positive_int(string):
             raise ValueError()
         return value
     except ValueError:
-        raise argparse.ArgumentTypeError("%r is not a positive integer" % (string,))
+        raise argparse.ArgumentTypeError(f"{string!r} is not a positive integer")
 
 
 def positive_int_or_inf(string):
@@ -303,7 +303,7 @@ def positive_int_or_inf(string):
             raise ValueError()
         return value
     except ValueError:
-        raise argparse.ArgumentTypeError("%r is not a positive integer or 'all'" % (string,))
+        raise argparse.ArgumentTypeError(f"{string!r} is not a positive integer or 'all'")
 
 
 def time_period(string, base_period='d'):

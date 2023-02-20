@@ -102,7 +102,7 @@ def _make_docstring():
     lines = []
 
     for p in subparsers.choices.values():
-        lines.append('.. _cmd-{0}:'.format(p.prog.replace(' ', '-')))
+        lines.append(f".. _cmd-{p.prog.replace(' ', '-')}:")
         lines.append('')
         lines.append(p.prog)
         lines.append('-' * len(p.prog))

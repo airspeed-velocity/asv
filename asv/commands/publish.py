@@ -27,8 +27,7 @@ def check_benchmark_params(name, benchmark):
         benchmark['params'] = []
         benchmark['param_names'] = []
 
-    msg = "Information in benchmarks.json for benchmark %s is malformed" % (
-        name)
+    msg = f"Information in benchmarks.json for benchmark {name} is malformed"
     if (not isinstance(benchmark['params'], list) or
             not isinstance(benchmark['param_names'], list)):
         raise ValueError(msg)
@@ -142,7 +141,7 @@ class Publish(Command):
 
                 for name, val in results.env_vars.items():
                     # Prefix them in case of name collision
-                    env_vars["env-{}".format(name)].add(val)
+                    env_vars[f"env-{name}"].add(val)
 
             params.update(env_vars)
 
@@ -200,7 +199,7 @@ class Publish(Command):
 
                     for branch in branches_for_commit:
                         cur_params = dict(results.params)
-                        cur_env = {'env-{}'.format(name): val
+                        cur_env = {f'env-{name}': val
                                    for name, val in results.env_vars.items()}
                         cur_params.update(cur_env)
                         cur_params['branch'] = repo.get_branch_name(branch)
@@ -250,7 +249,7 @@ class Publish(Command):
                          key=lambda cls: cls.order)
         for cls in classes:
             log.step()
-            log.info("Generating output for {0}".format(cls.__name__))
+            log.info(f"Generating output for {cls.__name__}")
             with log.indent():
                 cls.publish(conf, repo, benchmarks, graphs, revisions)
                 pages.append([cls.name, cls.button_label, cls.description])

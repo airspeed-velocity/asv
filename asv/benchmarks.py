@@ -55,9 +55,7 @@ class Benchmarks(dict):
                 self._benchmark_selection[benchmark['name']] = []
                 for idx, param_set in enumerate(
                         itertools.product(*benchmark['params'])):
-                    name = '%s(%s)' % (
-                        benchmark['name'],
-                        ', '.join(param_set))
+                    name = f"{benchmark['name']}({', '.join(param_set)})"
                     if not regex or any(re.search(reg, name) for reg in regex):
                         self[benchmark['name']] = benchmark
                         self._benchmark_selection[benchmark['name']].append(idx)
@@ -265,7 +263,7 @@ class Benchmarks(dict):
             # Not a Python package directory
             if require_init_py:
                 raise util.UserError(
-                    "No __init__.py file in '{0}'".format(root))
+                    f"No __init__.py file in '{root}'")
             else:
                 return
 
@@ -326,7 +324,7 @@ class Benchmarks(dict):
         try:
             path = cls.get_benchmark_file_path(conf.results_dir)
             if not os.path.isfile(path):
-                raise util.UserError("Benchmark list file {} missing!".format(path))
+                raise util.UserError(f"Benchmark list file {path} missing!")
             d = util.load_json(path, api_version=cls.api_version)
             benchmarks = d.values()
             return cls(conf, benchmarks, regex=regex)

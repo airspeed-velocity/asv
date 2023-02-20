@@ -189,7 +189,7 @@ downgrading Pympler to version 0.3.x.
 import sys
 
 if sys.version_info < (2, 6, 0):
-    raise NotImplementedError('%s requires Python 2.6 or newer' % ('asizeof',))
+    raise NotImplementedError(f"{'asizeof'} requires Python 2.6 or newer")
 
 import types as Types
 import warnings
@@ -570,7 +570,7 @@ def _objs_opts_x(objs, all=None, **opts):
         t = _getobjects()
         x = True
     else:
-        raise ValueError('invalid option: %s=%r' % ('all', all))
+        raise ValueError(f"invalid option: {'all'}={all!r}")
     return t, opts, x
 
 
@@ -668,7 +668,7 @@ def _SI(size, K=1024, i='i'):
         for si in iter('KMGPTE'):
             f /= K
             if f < K:
-                return ' or %.1f %s%sB' % (f, si, i)
+                return f' or {f:.1f} {si}{i}B'
     return ''
 
 
@@ -718,7 +718,7 @@ def _dict_refs(obj, named):
                 yield k
                 yield v
     except (KeyError, ReferenceError, TypeError) as x:
-        warnings.warn("Iterating '%s': %r" % (_classof(obj), x))
+        warnings.warn(f"Iterating '{_classof(obj)}': {x!r}")
 
 
 def _enum_refs(obj, named):
@@ -1016,11 +1016,11 @@ class _Claskey:
     def __str__(self):
         r = str(self._obj)
         if r.endswith('>'):
-            r = '%s%s def>' % (r[:-1], self._sty)
+            r = f'{r[:-1]}{self._sty} def>'
         elif self._sty is _old_style and not r.startswith('class '):
-            r = 'class %s%s def' % (r, self._sty)
+            r = f'class {r}{self._sty} def'
         else:
-            r = '%s%s def' % (r, self._sty)
+            r = f'{r}{self._sty} def'
         return r
     __repr__ = __str__
 
@@ -1225,7 +1225,7 @@ class _Typedef:
         if not self.both:
             c = ' (code only)'
         if self.leng:
-            n = ' (%s)' % _nameof(self.leng)
+            n = f' ({_nameof(self.leng)})'
         return dict(base=self.base, item=i, leng=n, code=c,
                     kind=self.kind)
 
@@ -1254,8 +1254,8 @@ class _Typedef:
         elif t not in _typedefs:
             if not _isbuiltin2(t):  # array, range, xrange in Python 2.x
                 s = ' '.join((self.vari, _moduleof(t), _nameof(t)))
-                s = '%r %s %s' % ((c, k), self.both, s.strip())
-                raise KeyError('asizeof typedef %r bad: %s' % (self, s))
+                s = f'{c, k!r} {self.both} {s.strip()}'
+                raise KeyError(f'asizeof typedef {self!r} bad: {s}')
 
             _typedefs[t] = _Typedef(base=_basicsize(t, base=base),
                                     both=False, kind=_kind_ignored, type=t)
@@ -1275,33 +1275,33 @@ class _Typedef:
         '''Reset all specified attributes.
         '''
         if base < 0:
-            raise ValueError('invalid option: %s=%r' % ('base', base))
+            raise ValueError(f"invalid option: {'base'}={base!r}")
         else:
             self.base = base
         if item < 0:
-            raise ValueError('invalid option: %s=%r' % ('item', item))
+            raise ValueError(f"invalid option: {'item'}={item!r}")
         else:
             self.item = item
         if leng in _all_lens:  # XXX or _callable(leng)
             self.leng = leng
         else:
-            raise ValueError('invalid option: %s=%r' % ('leng', leng))
+            raise ValueError(f"invalid option: {'leng'}={leng!r}")
         if refs in _all_refs:  # XXX or _callable(refs)
             self.refs = refs
         else:
-            raise ValueError('invalid option: %s=%r' % ('refs', refs))
+            raise ValueError(f"invalid option: {'refs'}={refs!r}")
         if both in (False, True):
             self.both = both
         else:
-            raise ValueError('invalid option: %s=%r' % ('both', both))
+            raise ValueError(f"invalid option: {'both'}={both!r}")
         if kind in _all_kinds:
             self.kind = kind
         else:
-            raise ValueError('invalid option: %s=%r' % ('kind', kind))
+            raise ValueError(f"invalid option: {'kind'}={kind!r}")
         self.type = type
         self.vari = vari or _Not_vari
         if str(self.vari) != self.vari:
-            raise ValueError('invalid option: %s=%r' % ('vari', vari))
+            raise ValueError(f"invalid option: {'vari'}={vari!r}")
 
 
 _typedefs = {}  # [key] = _Typedef()
@@ -1510,7 +1510,7 @@ try:  # MCCABE 14
             if _isnumpy(d):  # double check
                 _typedef_both(t, **_numpy_kwds(d))
             else:
-                raise AssertionError('not %s: %r' % ('numpy', d))
+                raise AssertionError(f"not {'numpy'}: {d!r}")
 
     # sizing numpy 1.13 arrays works fine, but 1.8 and older
     # appears to suffer from sys.getsizeof() bug like array
@@ -1771,7 +1771,7 @@ class _Prof:
             o = o()
         t = _SI2(self.total)
         if grand:
-            t += ' (%s)' % _p100(self.total, grand, prec=0)
+            t += f' ({_p100(self.total, grand, prec=0)})'
         return dict(avg=_SI2(a), high=_SI2(self.high),
                     lengstr=_lengstr(o), obj=_repr(o, clip=clip),
                     plural=p, total=t)
@@ -1819,11 +1819,11 @@ class _Rank:
         if self.weak:
             o = o()
         if self.deep > 0:
-            d = ' (at %s)' % (self.deep,)
+            d = f' (at {self.deep})'
         else:
             d = ''
         if self.pid:
-            p = ', pix %s' % (id2x.get(self.pid, '?'),)
+            p = f", pix {id2x.get(self.pid, '?')}"
         else:
             p = ''
         return '%s: %s%s, ix %d%s%s' % (_prepr(self.key, clip=clip),
@@ -2295,7 +2295,7 @@ class Asizer:
                          linesep, w, len(t), _plural(len(t)), s, self._incl, **print3options)
             r = len(t)
             for v, k in sorted(t, reverse=True):
-                s = 'object%(plural)s:  %(total)s, %(avg)s, %(high)s:  %(obj)s%(lengstr)s' % v.format(self._clip_, self._total)
+                s = f"object{v.format(self._clip_, self._total)['plural']}:  {v.format(self._clip_, self._total)['total']}, {v.format(self._clip_, self._total)['avg']}, {v.format(self._clip_, self._total)['high']}:  {v.format(self._clip_, self._total)['obj']}{v.format(self._clip_, self._total)['lengstr']}"
                 self._printf('%*d %s %s', w, v.number, self._prepr(k), s, **print3options)
                 r -= 1
                 if r > 1 and v.total < C:
@@ -2518,7 +2518,7 @@ class Asizer:
             if align > 1:
                 self._mask = align - 1
                 if (self._mask & align) != 0:
-                    raise ValueError('invalid option: %s=%r' % ('align', align))
+                    raise ValueError(f"invalid option: {'align'}={align!r}")
             else:
                 self._mask = 0
         if code is not None:
@@ -2533,7 +2533,7 @@ class Asizer:
             self._limit_ = limit
         if stats is not None:
             if stats < 0:
-                raise ValueError('invalid option: %s=%r' % ('stats', stats))
+                raise ValueError(f"invalid option: {'stats'}={stats!r}")
             # for backward compatibility, cutoff from fractional stats
             s, c = self._c100(stats)
             self._cutoff_ = int(cutoff) if cutoff else c
@@ -2802,7 +2802,7 @@ def flatsize(obj, align=0, **opts):
         if align > 1:
             m = align - 1
             if (align & m) != 0:
-                raise ValueError('invalid option: %s=%r' % ('align', align))
+                raise ValueError(f"invalid option: {'align'}={align!r}")
         else:
             m = 0
         f = t.flat(obj, mask=m)
@@ -2889,7 +2889,7 @@ if __name__ == '__main__':
         _printf('%s%d type definitions: %s and %s, kind ... %s', linesep,
                  n, 'basic-', 'itemsize (leng)', '-type[def]s')
         for k, v in sorted((_prepr(k), v) for k, v in _items(_typedefs)):
-            s = '%(base)s and %(item)s%(leng)s, %(kind)s%(code)s' % v.format()
+            s = f"{v.format()['base']} and {v.format()['item']}{v.format()['leng']}, {v.format()['kind']}{v.format()['code']}"
             _printf('%s %s: %s', w, k, s)
 
     else:

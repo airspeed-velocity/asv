@@ -97,12 +97,12 @@ class Profile(Command):
             log.info("Available profiler GUIs:")
             with log.indent():
                 for x in cls.guis.values():
-                    log.info("{0}: {1}".format(x.name, x.description))
+                    log.info(f"{x.name}: {x.description}")
             return
 
         if gui is not None and gui not in cls.guis:
             raise util.UserError(
-                "Unknown profiler GUI {0}".format(gui))
+                f"Unknown profiler GUI {gui}")
 
         if benchmark is None:
             raise util.UserError(
@@ -126,7 +126,7 @@ class Profile(Command):
         try:
             commit_hash = repo.get_hash_from_name(rev)
         except NoSuchNameError as exc:
-            raise util.UserError("Unknown commit {0}".format(exc))
+            raise util.UserError(f"Unknown commit {exc}")
 
         profile_data = None
         checked_out = set()
@@ -171,10 +171,10 @@ class Profile(Command):
 
             benchmarks = Benchmarks.discover(conf, repo, environments,
                                              [commit_hash],
-                                             regex='^{0}$'.format(benchmark))
+                                             regex=f'^{benchmark}$')
 
             if len(benchmarks) == 0:
-                raise util.UserError("'{0}' benchmark not found".format(benchmark))
+                raise util.UserError(f"'{benchmark}' benchmark not found")
             elif len(benchmarks) > 1:
                 exact_matches = benchmarks.filter_out([x for x in benchmarks if x != benchmark])
                 if len(exact_matches) == 1:
@@ -182,7 +182,7 @@ class Profile(Command):
                                 "using exact match".format(benchmark))
                     benchmarks = exact_matches
                 else:
-                    raise util.UserError("'{0}' matches more than one benchmark".format(benchmark))
+                    raise util.UserError(f"'{benchmark}' matches more than one benchmark")
 
             benchmark_name, = benchmarks.keys()
 
@@ -204,7 +204,7 @@ class Profile(Command):
         log.flush()
 
         if gui is not None:
-            log.debug("Opening gui {0}".format(gui))
+            log.debug(f"Opening gui {gui}")
             with temp_profile(profile_data) as profile_path:
                 return cls.guis[gui].open_profiler_gui(profile_path)
         elif output is not None:
