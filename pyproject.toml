@@ -1,6 +1,91 @@
+[project]
+name = "asv"
+description = "Airspeed Velocity: A simple Python history benchmarking tool"
+readme = { file = "README.rst", content-type = "text/x-rst" }
+license = { text = "BSD-3-Clause" }
+requires-python = ">=3.7"
+authors = [
+    { name = "Michael Droettboom", email = "mdroe@stsci.edu" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Environment :: Web Environment",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Software Development :: Testing",
+]
+dynamic = [
+    "version",
+]
+
+[project.urls]
+"Source Code" = "https://github.com/airspeed-velocity/asv"
+Documentation = "https://asv.readthedocs.io/en/stable/"
+
+[project.scripts]
+asv = "asv.__main__:main"
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-xdist",
+    "pytest-timeout",
+    "pytest-rerunfailures>=10.0",
+    "filelock",
+    "virtualenv",
+    "numpy",
+    "scipy; platform_python_implementation != \"PyPy\"",
+    "feedparser",
+    "selenium",
+    "pytest-rerunfailures",
+    "python-hglib",
+]
+doc = [
+    "sphinx",
+    "sphinx_bootstrap_theme",
+]
+dev = [
+    "flake8",
+    "isort >= 5.11.5",
+]
+hg = [
+    "python-hglib",
+]
+
 [build-system]
-requires = ["wheel", "setuptools>=45", "setuptools_scm[toml]>=6.2"]
+requires = [
+    "wheel",
+    "setuptools>=61.2",
+    "setuptools_scm[toml]>=6.2",
+]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+platforms = [
+    "any",
+]
+zip-safe = false
+include-package-data = true
+license-files = [
+    "LICENSE.rst",
+]
+
+[tool.setuptools.packages.find]
+namespaces = false
+
+[tool.pytest.ini_options]
+addopts = "-p no:logging"
+
+[tool.isort]
+line_length = 99
+only_sections = true
 
 [tool.setuptools_scm]
 write_to = "asv/_version.py"
