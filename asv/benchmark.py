@@ -58,6 +58,9 @@ import pkgutil
 import traceback
 import contextlib
 import math
+import site
+import os
+from pathlib import Path
 from hashlib import sha256
 from importlib import import_module
 from collections import Counter
@@ -709,15 +712,25 @@ class MemBenchmark(Benchmark):
             raise NotImplementedError("asizeof doesn't work on pypy")
             return
 
+
+        def import_asizeof():
+            """Import asizeof, searching system Pythons in PATH."""
+            for path in os.environ.get("PATH", "").split(os.pathsep):
+                python_path = os.path.join(path, "python")
+                if os.path.isfile(python_path) and os.access(python_path, os.X_OK):
+                    cand_path = Path(python_path).parent.parent/"lib"
+                    asizeof_paths = [x for x in cand_path.rglob("asizeof.py")]
+                    if len(asizeof_paths) > 0:
+                        # FIXME: This will return the first path found
+                        asizeof = importlib.machinery.SourceFileLoader('asizeof', str(asizeof_paths[0])).load_module()
+                        return asizeof
+            return NotImplementedError("asizeof not found anywhere")
+
         try:
             from pympler.asizeof import asizeof
         except ImportError:
-            try:
-                subprocess.check_output(["python", "-mpip",
-                                         "install", "pympler==1.0.1"])
-                from pympler.asizeof import asizeof
-            except subprocess.CalledProcessError as e:
-                raise NotImplementedError(f"Failed to install pympler: {e.output.decode()}")
+            asizeof = import_asizeof()
+            from asizeof import asizeof
 
         obj = self.func(*param)
 
