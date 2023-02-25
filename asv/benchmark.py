@@ -712,17 +712,20 @@ class MemBenchmark(Benchmark):
 
         def import_asizeof():
             """Import asizeof, searching system Pythons in PATH."""
+            asizeof_paths = set()
             for path in os.environ.get("PATH", "").split(os.pathsep):
                 python_path = os.path.join(path, "python")
                 if os.path.isfile(python_path) and os.access(python_path, os.X_OK):
                     cand_path = Path(python_path).parent.parent / "lib"
-                    asizeof_paths = [x for x in cand_path.rglob("asizeof.py")]
-                    if len(asizeof_paths) > 0:
-                        # FIXME: This will return the first path found
-                        asizeof = importlib.machinery.SourceFileLoader(
-                            "asizeof", str(asizeof_paths[0])
-                        ).load_module()
-                        return asizeof
+                    if cand_path not in asizeof_paths:
+                        asizeof_paths.add(cand_path)
+                        for asizeof_path in cand_path.rglob("asizeof.py"):
+                            try:  # Still returns the first importable asizeof
+                                return importlib.machinery.SourceFileLoader(
+                                    "asizeof", str(asizeof_path)
+                                ).load_module()
+                            except ImportError:
+                                pass
             return NotImplementedError("asizeof not found anywhere")
 
         try:
