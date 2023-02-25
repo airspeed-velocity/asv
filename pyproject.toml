@@ -46,6 +46,7 @@ test = [
     "selenium",
     "pytest-rerunfailures",
     "python-hglib",
+    "json5",
     "pympler; platform_python_implementation != \"PyPy\"",
 ]
 doc = [
