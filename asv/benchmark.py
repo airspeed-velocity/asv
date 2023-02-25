@@ -713,10 +713,11 @@ class MemBenchmark(Benchmark):
             from pympler.asizeof import asizeof
         except ImportError:
             try:
-                subprocess.check_output(["python", "-mpip", "install", "pympler==0.9"])
+                subprocess.check_output(["python", "-mpip",
+                                         "install", "pympler==1.0.1"])
+                from pympler.asizeof import asizeof
             except subprocess.CalledProcessError as e:
                 raise NotImplementedError(f"Failed to install pympler: {e.output.decode()}")
-            raise NotImplementedError("pympler not found, installed successfully")
 
         obj = self.func(*param)
 
