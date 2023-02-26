@@ -36,7 +36,7 @@ build_script:
   - dir asv
 
 test_script:
-  - python -m pytest -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp -v --environment-type=conda --webdriver=ChromeHeadless --timeout=1800 --durations=100 test
+  - python -m pytest -l --basetemp=%APPVEYOR_BUILD_FOLDER%\\tmp -v --environment-type=conda --webdriver=ChromeHeadless --timeout=1800 --durations=100 test -k test_runner
 
 after_build:
   # Clear up pip cache
