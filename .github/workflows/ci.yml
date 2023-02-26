@@ -38,7 +38,7 @@ jobs:
         run: pip install .
 
       - name: Run tests
-        run: python -m pytest -v --timeout=1800 --durations=20 test
+        run: python -m pytest -v --timeout=300 --durations=100 test
 
   docs:
     runs-on: ubuntu-latest
