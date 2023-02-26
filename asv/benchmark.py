@@ -741,7 +741,7 @@ class MemBenchmark(Benchmark):
             except KeyError:
                 pass
             else:
-                cand_path = Path(env_path) / "lib" / "python" / "site-packages"
+                cand_path = Path(env_path) / "lib"
                 if cand_path not in asizeof_paths:
                     asizeof_paths.add(cand_path)
                     for asizeof_path in cand_path.rglob("asizeof.py"):
@@ -759,13 +759,7 @@ class MemBenchmark(Benchmark):
             from pympler.asizeof import asizeof
         except ImportError:
             asizeof = import_asizeof()
-            try:
-                from asizeof import asizeof
-            except ImportError:
-                subprocess.run([sys.executable, "-m", "pip",
-                                "install", "pympler"],
-                               check=True)
-                from pympler.asizeof import asizeof
+            from asizeof import asizeof
 
         obj = self.func(*param)
 
