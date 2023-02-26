@@ -126,16 +126,19 @@ class Virtualenv(environment.Environment):
         Then, all of the requirements are installed into
         it using `pip install`.
         """
+        import virtualenv
+
         env = dict(os.environ)
         env.update(self.build_env_vars)
 
         log.info(f"Creating virtualenv for {self.name}")
-        util.check_call([
-            sys.executable,
-            "-mvirtualenv",
-            "-p",
-            self._executable,
-            self._path], env=env)
+        virtualenv.cli_run(["-p",
+                            self._executable,
+                            self._path,
+                            "--seeder",
+                            "pip",
+                            "--download",
+                            ], env=env)
 
         log.info(f"Installing requirements for {self.name}")
         self._install_requirements()
