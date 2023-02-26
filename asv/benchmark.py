@@ -42,6 +42,7 @@ import copy
 import cProfile as profile
 import ctypes
 import importlib.machinery
+import importlib.util
 import inspect
 import itertools
 import json
@@ -727,11 +728,31 @@ class MemBenchmark(Benchmark):
                         asizeof_paths.add(cand_path)
                         for asizeof_path in cand_path.rglob("asizeof.py"):
                             try:  # Still returns the first importable asizeof
-                                return importlib.machinery.SourceFileLoader(
+                                loader = importlib.machinery.SourceFileLoader(
                                     "asizeof", str(asizeof_path)
-                                ).load_module()
+                                )
+                                return loader.load_module()
                             except ImportError:
                                 pass
+
+            # Try conda
+            try:
+                env_path = os.environ["CONDA_PREFIX"]
+            except KeyError:
+                pass
+            else:
+                cand_path = Path(env_path) / "lib" / "python" / "site-packages"
+                if cand_path not in asizeof_paths:
+                    asizeof_paths.add(cand_path)
+                    for asizeof_path in cand_path.rglob("asizeof.py"):
+                        try:  # Still returns the first importable asizeof
+                            loader = importlib.machinery.SourceFileLoader(
+                                "asizeof", str(asizeof_path)
+                            )
+                            return loader.load_module()
+                        except ImportError:
+                            pass
+
             return NotImplementedError("asizeof not found anywhere")
 
         try:
