@@ -759,7 +759,13 @@ class MemBenchmark(Benchmark):
             from pympler.asizeof import asizeof
         except ImportError:
             asizeof = import_asizeof()
-            from asizeof import asizeof
+            try:
+                from asizeof import asizeof
+            except ImportError:
+                subprocess.run([sys.executable, "-m", "pip",
+                                "install", "pympler"],
+                               check=True)
+                from pympler.asizeof import asizeof
 
         obj = self.func(*param)
 
