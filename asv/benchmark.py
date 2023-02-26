@@ -712,8 +712,14 @@ class MemBenchmark(Benchmark):
 
         def import_asizeof():
             """Import asizeof, searching system Pythons in PATH."""
+            path_dirs = os.environ.get("PATH", "").split(os.pathsep)
+
+            # On Windows, append the directories containing the Python executables
+            if os.name == "nt":
+                path_dirs += [sys.base_exec_prefix, sys.base_exec_prefix + "/Scripts"]
+
             asizeof_paths = set()
-            for path in os.environ.get("PATH", "").split(os.pathsep):
+            for path in path_dirs:
                 python_path = os.path.join(path, "python")
                 if os.path.isfile(python_path) and os.access(python_path, os.X_OK):
                     cand_path = Path(python_path).parent.parent / "lib"
