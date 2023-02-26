@@ -735,7 +735,7 @@ class MemBenchmark(Benchmark):
                             except ImportError:
                                 pass
 
-            # Try conda
+            # Try conda, mamba explicitly, needed on Windows
             try:
                 env_path = os.environ["CONDA_PREFIX"]
             except KeyError:
