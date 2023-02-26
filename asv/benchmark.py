@@ -64,6 +64,7 @@ from hashlib import sha256
 from importlib import import_module
 from collections import Counter
 from time import process_time
+from pathlib import Path
 
 wall_timer = timeit.default_timer
 
@@ -771,6 +772,40 @@ class MemBenchmark(Benchmark):
         return sizeofcopy - sizeof2
 
 
+class RayMemBenchmark(Benchmark):
+    """
+    A single benchmark for tracking the memory of an object with memray
+    """
+
+    name_regex = re.compile("^(Ray[A-Z_].+)|(ray_.+)$")
+
+    def __init__(self, name, func, attr_sources):
+        Benchmark.__init__(self, name, func, attr_sources)
+        self.type = "memory"
+        self.unit = "bytes"
+        pass
+
+    def run(self, *param):
+        try:
+            import memray
+            from memray import FileReader
+        except ImportError:
+            subprocess.check_output([sys.executable, "-mpip", "install", "memray"])
+            import memray
+            from memray import FileReader
+        import uuid
+
+        u_id = uuid.uuid4()
+        temp_dir = tempfile.gettempdir()
+        tfile_loc = Path(f"{temp_dir}/{u_id}.bin")
+        with memray.Tracker(
+            destination=memray.FileDestination(tfile_loc, overwrite=True)
+        ):
+            self.func(*param)
+        freader = FileReader(str(tfile_loc))
+        return freader.metadata.peak_memory
+
+
 class PeakMemBenchmark(Benchmark):
     """
     Represents a single benchmark for tracking the peak memory consumption
@@ -809,7 +844,8 @@ class TrackBenchmark(Benchmark):
 
 
 benchmark_types = [
-    TimerawBenchmark, TimeBenchmark, MemBenchmark, PeakMemBenchmark, TrackBenchmark
+    TimerawBenchmark, TimeBenchmark, MemBenchmark, PeakMemBenchmark,
+    RayMemBenchmark, TrackBenchmark
 ]
 
 
