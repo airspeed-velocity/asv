@@ -55,6 +55,8 @@ doc = [
 ]
 dev = [
     "flake8",
+    "tomli",  # yapf pyproject.toml dep
+    "yapf",
     "isort >= 5.11.5",
 ]
 hg = [
@@ -85,9 +87,20 @@ namespaces = false
 [tool.pytest.ini_options]
 addopts = "-p no:logging"
 
-[tool.isort]
-line_length = 99
-only_sections = true
+[tool.flake8]
+format = "yapf"
 
-[tool.setuptools_scm]
-write_to = "asv/_version.py"
+[tool.yapf]
+based_on_style = "facebook"
+column_limit = 99
+indent_width = 4
+use_tabs = false
+continuation_indent_width = 4
+align_closing_bracket_with_visual_indent = true
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 99

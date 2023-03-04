@@ -1,3 +1,5 @@
+default_language_version:
+    python: python3.9
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
@@ -17,4 +19,15 @@ repos:
     rev: 6.0.0
     hooks:
     -   id: flake8
-        exclude: ^(asv/extern|test/example_results/cheetah)
+        exclude: ^(asv|test/example_results/cheetah)
+-   repo: https://github.com/google/yapf
+    rev: 261841c1ab8c6698c7fb58b9186e620c64b05243  # Use the sha / tag you want to point at
+    hooks:
+    - id: yapf
+      name: yapf
+      description: A formatter for Python files.
+      entry: yapf
+      language: python
+      types: [python]
+      additional_dependencies:
+        - tomli

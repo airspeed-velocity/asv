@@ -6,5 +6,6 @@ ignore =
 # W504: Line break occurred after a binary operator
     W504,
 # E741: Do not use variables named 'I', 'O', or 'l'
-    E741
-exclude = asv/extern
+    E741,
+# Another non-PEP8 option, breaks before a binary op
+    W503,
