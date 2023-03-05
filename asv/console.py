@@ -1,5 +1,4 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 """
 A set of utilities for writing output to the console.
 """
@@ -67,7 +66,8 @@ def _color_text(text, color):
         'lightblue': '1;34',
         'lightmagenta': '1;35',
         'lightcyan': '1;36',
-        'white': '1;37'}
+        'white': '1;37'
+    }
 
     color_code = color_mapping.get(color, '0;39')
     return f'\033[{color_code}m{text}\033[0m'
@@ -83,11 +83,7 @@ def _color_text(text, color):
 #    grep -P  -n '[^\x00-\x7F]' -r *
 # in the `asv` source directory.
 
-_unicode_translations = {
-    ord('μ'): 'u',
-    ord('·'): '-',
-    ord('±'): '~'
-}
+_unicode_translations = {ord('μ'): 'u', ord('·'): '-', ord('±'): '~'}
 
 
 def _write_with_fallback(s, fileobj):
@@ -324,8 +320,7 @@ class Log:
     def is_debug_enabled(self):
         return self._logger.getEffectiveLevel() <= logging.DEBUG
 
-    def _message(self, routine, message, reserve_space=False, color=None,
-                 continued=False):
+    def _message(self, routine, message, reserve_space=False, color=None, continued=False):
         kwargs = {}
         extra = {}
         if color is not None:

@@ -37,8 +37,10 @@ def test_parallelfailure():
 
     if WIN and os.path.basename(sys.argv[0]).lower().startswith('py.test'):
         # Multiprocessing in spawn mode can result to problems with py.test
-        pytest.skip("Multiprocessing spawn mode on Windows not safe to run "
-                    "from py.test runner.")
+        pytest.skip(
+            "Multiprocessing spawn mode on Windows not safe to run "
+            "from py.test runner."
+        )
 
     # The exception class must be pickleable
     exc = util.ParallelFailure("test", Exception, "something")
@@ -111,11 +113,7 @@ def test_which_path(tmpdir):
 
 
 def test_write_load_json(tmpdir):
-    data = {
-        'a': 1,
-        'b': 2,
-        'c': 3
-    }
+    data = {'a': 1, 'b': 2, 'c': 3}
     orig_data = dict(data)
 
     filename = os.path.join(str(tmpdir), 'test.json')
@@ -300,29 +298,34 @@ def test_json_non_ascii(tmpdir):
 
 def test_interpolate_command():
     good_items = [
-        ('python {inputs}', dict(inputs='9'),
-         ['python', '9'], {}, {0}, None),
-
-        ('python "{inputs}"', dict(inputs='9'),
-         ['python', '9'], {}, {0}, None),
-
-        ('python {inputs}', dict(inputs=''),
-         ['python', ''], {}, {0}, None),
-
-        ('HELLO="asd" python "{inputs}"', dict(inputs='9'),
-         ['python', '9'], {'HELLO': 'asd'}, {0}, None),
-
-        ('HELLO="asd" return-code=any python "{inputs}"', dict(inputs='9'),
-         ['python', '9'], {'HELLO': 'asd'}, None, None),
-
-        ('HELLO="asd" return-code=255 python "{inputs}"', dict(inputs='9'),
-         ['python', '9'], {'HELLO': 'asd'}, {255}, None),
-
-        ('HELLO="asd" return-code=255 python "{inputs}"', dict(inputs='9'),
-         ['python', '9'], {'HELLO': 'asd'}, {255}, None),
-
-        ('HELLO="asd" in-dir="{somedir}" python', dict(somedir='dir'),
-         ['python'], {'HELLO': 'asd'}, {0}, 'dir'),
+        ('python {inputs}', dict(inputs='9'), ['python', '9'], {}, {0}, None),
+        ('python "{inputs}"', dict(inputs='9'), ['python', '9'], {}, {0}, None),
+        ('python {inputs}', dict(inputs=''), ['python', ''], {}, {0}, None),
+        (
+            'HELLO="asd" python "{inputs}"', dict(inputs='9'), ['python', '9'], {
+                'HELLO': 'asd'
+            }, {0}, None
+        ),
+        (
+            'HELLO="asd" return-code=any python "{inputs}"', dict(inputs='9'), ['python', '9'], {
+                'HELLO': 'asd'
+            }, None, None
+        ),
+        (
+            'HELLO="asd" return-code=255 python "{inputs}"', dict(inputs='9'), ['python', '9'], {
+                'HELLO': 'asd'
+            }, {255}, None
+        ),
+        (
+            'HELLO="asd" return-code=255 python "{inputs}"', dict(inputs='9'), ['python', '9'], {
+                'HELLO': 'asd'
+            }, {255}, None
+        ),
+        (
+            'HELLO="asd" in-dir="{somedir}" python', dict(somedir='dir'), ['python'], {
+                'HELLO': 'asd'
+            }, {0}, 'dir'
+        ),
     ]
 
     bad_items = [
@@ -349,8 +352,7 @@ def test_interpolate_command():
 
 
 def test_datetime_to_js_timestamp():
-    tss = [0, 0.5, -0.5, 12345.6789, -12345.6789,
-           1535910708.7767508]
+    tss = [0, 0.5, -0.5, 12345.6789, -12345.6789, 1535910708.7767508]
     for ts in tss:
         t = datetime.datetime.utcfromtimestamp(ts)
         ts2 = util.datetime_to_js_timestamp(t)
@@ -369,8 +371,7 @@ def test_datetime_to_js_timestamp():
 
 
 def test_datetime_to_timestamp():
-    tss = [0, 0.5, -0.5, 12345.6789, -12345.6789,
-           1535910708.7767508]
+    tss = [0, 0.5, -0.5, 12345.6789, -12345.6789, 1535910708.7767508]
     for ts in tss:
         t = datetime.datetime.utcfromtimestamp(ts)
         ts2 = util.datetime_to_timestamp(t)

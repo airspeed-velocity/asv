@@ -1,10 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 """
 Manages an environment -- a combination of a version of Python and set
 of dependencies.
 """
-
 
 import hashlib
 import os
@@ -83,8 +81,7 @@ def iter_matrix(environment_type, pythons, conf, explicit_selection=False):
             else:
                 # not excluded
                 empty_matrix = False
-                yield dict(item for item in zip(all_keys, combination)
-                           if item[1] is not None)
+                yield dict(item for item in zip(all_keys, combination) if item[1] is not None)
 
         # If the user explicitly selected environment/python, yield it
         # even if matrix contains no packages to be installed
@@ -173,8 +170,11 @@ def _parse_matrix(matrix, bare_keys=()):
         # Check if spurious keys left
         remaining_keys = tuple(matrix.keys())
         if remaining_keys:
-            raise util.UserError('Unknown keys in "matrix" configuration: {}, expected: {}'.format(
-                remaining_keys, matrix_types + tuple(bare_keys)))
+            raise util.UserError(
+                'Unknown keys in "matrix" configuration: {}, expected: {}'.format(
+                    remaining_keys, matrix_types + tuple(bare_keys)
+                )
+            )
     else:
         # Backward-compatibility for old-style config
         matrices = [('req', matrix)]
@@ -319,7 +319,8 @@ def get_environments(conf, env_specifiers, verbose=True):
         if not conf.environment_type and verbose:
             log.warning(
                 "No `environment_type` specified in asv.conf.json. "
-                "This will be required in the future.")
+                "This will be required in the future."
+            )
     else:
         all_environments = list(get_environments(conf, None, verbose=verbose))
 
@@ -348,8 +349,7 @@ def get_environments(conf, env_specifiers, verbose=True):
                 pythons = conf.pythons
 
         if env_type != "existing":
-            requirements_iter = iter_matrix(env_type, pythons, conf,
-                                            explicit_selection)
+            requirements_iter = iter_matrix(env_type, pythons, conf, explicit_selection)
         else:
             # Ignore requirement matrix
             requirements_iter = [{('python', None): python} for python in pythons]
@@ -427,8 +427,7 @@ def get_environment_class(conf, python):
     for cls in classes:
         if cls.matches_python_fallback and cls.matches(python):
             return cls
-    raise EnvironmentUnavailable(
-        "No way to create environment for python='{0}'".format(python))
+    raise EnvironmentUnavailable("No way to create environment for python='{0}'".format(python))
 
 
 def get_environment_class_by_name(environment_type):
@@ -438,8 +437,7 @@ def get_environment_class_by_name(environment_type):
     for cls in util.iter_subclasses(Environment):
         if cls.tool_name == environment_type:
             return cls
-    raise EnvironmentUnavailable(
-        "Unknown environment type '{0}'".format(environment_type))
+    raise EnvironmentUnavailable("Unknown environment type '{0}'".format(environment_type))
 
 
 def is_existing_only(environments):
@@ -493,8 +491,7 @@ class Environment:
         self._repo_subdir = conf.repo_subdir
         self._install_timeout = conf.install_timeout  # GH391
         self._tagged_env_vars = tagged_env_vars
-        self._path = os.path.abspath(os.path.join(
-            self._env_dir, self.dir_name))
+        self._path = os.path.abspath(os.path.join(self._env_dir, self.dir_name))
         self._project = conf.project
 
         self._is_setup = False
@@ -559,12 +556,10 @@ class Environment:
         return data.get('commit_hash', None)
 
     def _get_install_checksum(self):
-        return [self._repo_subdir,
-                self._install_timeout,
-                self._project,
-                self._build_command,
-                self._install_command,
-                self._uninstall_command]
+        return [
+            self._repo_subdir, self._install_timeout, self._project, self._build_command,
+            self._install_command, self._uninstall_command
+        ]
 
     @property
     def installed_commit_hash(self):
@@ -583,10 +578,9 @@ class Environment:
         """
         Get a name to uniquely identify this environment.
         """
-        return get_env_name(self.tool_name,
-                            self._python,
-                            self._requirements,
-                            self._tagged_env_vars)
+        return get_env_name(
+            self.tool_name, self._python, self._requirements, self._tagged_env_vars
+        )
 
     @property
     def hashname(self):
@@ -602,11 +596,9 @@ class Environment:
         This is not necessarily unique, and may be shared across
         different environments.
         """
-        name = get_env_name(self.tool_name,
-                            self._python,
-                            self._requirements,
-                            self._tagged_env_vars,
-                            build=True)
+        name = get_env_name(
+            self.tool_name, self._python, self._requirements, self._tagged_env_vars, build=True
+        )
         return hashlib.md5(name.encode('utf-8')).hexdigest()
 
     @property
@@ -770,8 +762,14 @@ class Environment:
             environ.update(env)
             if cwd is None:
                 cwd = default_cwd
-            self.run_executable(cmd[0], cmd[1:], timeout=self._install_timeout, cwd=cwd,
-                                env=environ, valid_return_codes=return_codes)
+            self.run_executable(
+                cmd[0],
+                cmd[1:],
+                timeout=self._install_timeout,
+                cwd=cwd,
+                env=environ,
+                valid_return_codes=return_codes
+            )
 
     def checkout_project(self, repo, commit_hash):
         """
@@ -837,8 +835,9 @@ class Environment:
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)
             log.info("Installing {0} into {1}".format(commit_name, self.name))
-            self._interpolate_and_run_commands(cmd, default_cwd=build_dir,
-                                               extra_env=self.build_env_vars)
+            self._interpolate_and_run_commands(
+                cmd, default_cwd=build_dir, extra_env=self.build_env_vars
+            )
 
     def _uninstall_project(self):
         """
@@ -855,8 +854,9 @@ class Environment:
 
         if cmd:
             log.info("Uninstalling from {0}".format(self.name))
-            self._interpolate_and_run_commands(cmd, default_cwd=self._env_dir,
-                                               extra_env=self.build_env_vars)
+            self._interpolate_and_run_commands(
+                cmd, default_cwd=self._env_dir, extra_env=self.build_env_vars
+            )
 
     def _build_project(self, repo, commit_hash, build_dir):
         """
@@ -864,15 +864,20 @@ class Environment:
         """
         cmd = self._build_command
         if cmd is None:
-            cmd = ["python setup.py build",
-                   ("PIP_NO_BUILD_ISOLATION=false "
-                    "python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}")]
+            cmd = [
+                "python setup.py build",
+                (
+                    "PIP_NO_BUILD_ISOLATION=false "
+                    "python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}"
+                )
+            ]
 
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)
             log.info("Building {0} for {1}".format(commit_name, self.name))
-            self._interpolate_and_run_commands(cmd, default_cwd=build_dir,
-                                               extra_env=self.build_env_vars)
+            self._interpolate_and_run_commands(
+                cmd, default_cwd=build_dir, extra_env=self.build_env_vars
+            )
 
     def can_install_project(self):
         """
@@ -890,9 +895,11 @@ class Environment:
 
         # Assume standard virtualenv/Conda layout
         if WIN:
-            paths = [self._path,
-                     os.path.join(self._path, 'Scripts'),
-                     os.path.join(self._path, 'bin')]
+            paths = [
+                self._path,
+                os.path.join(self._path, 'Scripts'),
+                os.path.join(self._path, 'bin')
+            ]
         else:
             paths = [os.path.join(self._path, 'bin')]
 
@@ -912,10 +919,7 @@ class Environment:
             paths = []
 
         if WIN:
-            subpaths = ['Library\\mingw-w64\\bin',
-                        'Library\\bin',
-                        'Library\\usr\\bin',
-                        'Scripts']
+            subpaths = ['Library\\mingw-w64\\bin', 'Library\\bin', 'Library\\usr\\bin', 'Scripts']
             for sub in subpaths[::-1]:
                 paths.insert(0, os.path.join(self._path, sub))
             paths.insert(0, self._path)
@@ -933,9 +937,7 @@ class Environment:
         # When running pip, we need to set PIP_USER to false, as --user (which
         # may have been set from a pip config file) is incompatible with
         # virtualenvs.
-        kwargs["env"] = dict(env,
-                             PIP_USER=str("false"),
-                             PATH=str(os.pathsep.join(paths)))
+        kwargs["env"] = dict(env, PIP_USER=str("false"), PATH=str(os.pathsep.join(paths)))
         exe = self.find_executable(executable)
         return util.check_output([exe] + args, **kwargs)
 
@@ -969,21 +971,18 @@ class ExistingEnvironment(Environment):
             executable = os.path.abspath(util.which(executable))
 
             self._python = util.check_output(
-                [executable,
-                 '-c',
-                 'import sys; '
-                 'print(str(sys.version_info[0]) + "." + str(sys.version_info[1]))'
-                 ]).strip()
+                [
+                    executable, '-c', 'import sys; '
+                    'print(str(sys.version_info[0]) + "." + str(sys.version_info[1]))'
+                ]
+            ).strip()
         except (util.ProcessError, OSError, IOError):
             raise EnvironmentUnavailable()
 
         self._executable = executable
         self._requirements = {}
 
-        super(ExistingEnvironment, self).__init__(conf,
-                                                  executable,
-                                                  requirements,
-                                                  tagged_env_vars)
+        super(ExistingEnvironment, self).__init__(conf, executable, requirements, tagged_env_vars)
         self._global_env_vars.pop('ASV_ENV_DIR')
 
     @property
@@ -1004,10 +1003,9 @@ class ExistingEnvironment(Environment):
 
     @property
     def name(self):
-        return get_env_name(self.tool_name,
-                            self._executable.replace(os.path.sep, '_'),
-                            {},
-                            self._tagged_env_vars)
+        return get_env_name(
+            self.tool_name, self._executable.replace(os.path.sep, '_'), {}, self._tagged_env_vars
+        )
 
     def check_presence(self):
         return True
@@ -1026,5 +1024,4 @@ class ExistingEnvironment(Environment):
 
     def run(self, args, **kwargs):
         log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
-        return util.check_output([
-            self._executable] + args, **kwargs)
+        return util.check_output([self._executable] + args, **kwargs)

@@ -9,20 +9,8 @@ from . import common_args
 
 # This list is ordered in order of average workflow
 command_order = [
-    'Quickstart',
-    'Machine',
-    'Setup',
-    'Run',
-    'Dev',
-    'Continuous',
-    'Find',
-    'Rm',
-    'Publish',
-    'Preview',
-    'Profile',
-    'Update',
-    'Show',
-    'Compare'
+    'Quickstart', 'Machine', 'Setup', 'Run', 'Dev', 'Continuous', 'Find', 'Rm', 'Publish',
+    'Preview', 'Profile', 'Update', 'Show', 'Compare'
 ]
 
 
@@ -69,17 +57,14 @@ def make_argparser():
         sys.exit(0)
 
     parser = argparse.ArgumentParser(
-        "asv",
-        description="Airspeed Velocity: Simple benchmarking tool for Python")
+        "asv", description="Airspeed Velocity: Simple benchmarking tool for Python"
+    )
 
     common_args.add_global_arguments(parser, suppress_defaults=False)
 
-    subparsers = parser.add_subparsers(
-        title='subcommands',
-        description='valid subcommands')
+    subparsers = parser.add_subparsers(title='subcommands', description='valid subcommands')
 
-    help_parser = subparsers.add_parser(
-        "help", help="Display usage information")
+    help_parser = subparsers.add_parser("help", help="Display usage information")
     help_parser.set_defaults(func=help)
 
     commands = dict((x.__name__, x) for x in util.iter_subclasses(Command))

@@ -1,5 +1,4 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 """
 This file contains utilities to generate test repositories.
 """
@@ -41,7 +40,6 @@ PYTHON_VER1, PYTHON_VER2 = '3.7', platform.python_version()
 DUMMY1_VERSION = "0.14"
 DUMMY2_VERSIONS = ["0.3.7", "0.3.9"]
 
-
 WIN = (os.name == "nt")
 
 try:
@@ -56,9 +54,9 @@ def _check_conda():
     conda = _find_conda()
     with _conda_lock():
         try:
-            subprocess.check_call([conda, 'build', '--version'],
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE)
+            subprocess.check_call(
+                [conda, 'build', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
         except subprocess.CalledProcessError:
             raise RuntimeError("conda-build is missing")
 
@@ -70,13 +68,11 @@ try:
 except (RuntimeError, IOError):
     HAS_CONDA = False
 
-
 try:
     import virtualenv  # noqa F401 checking if installed
     HAS_VIRTUALENV = True
 except ImportError:
     HAS_VIRTUALENV = False
-
 
 try:
     util.which('python{}'.format(PYTHON_VER2))
@@ -84,13 +80,11 @@ try:
 except (RuntimeError, IOError):
     HAS_PYTHON_VER2 = False
 
-
 try:
     from selenium.common.exceptions import TimeoutException
     HAVE_WEBDRIVER = True
 except ImportError:
     HAVE_WEBDRIVER = False
-
 
 WAIT_TIME = 20.0
 
@@ -155,6 +149,7 @@ def run_asv_with_conf(conf, *argv, **kwargs):
 # operations to the repository, and the others should be read-only for
 # safety.
 
+
 class Git:
     def __init__(self, path):
         self.path = abspath(path)
@@ -167,8 +162,7 @@ class Git:
         else:
             cwd = None
         kwargs['cwd'] = cwd
-        return util.check_output(
-            [self._git] + args, **kwargs)
+        return util.check_output([self._git] + args, **kwargs)
 
     def init(self):
         self.run_git(['init'])
@@ -181,12 +175,10 @@ class Git:
             self._fake_date += datetime.timedelta(seconds=1)
             date = self._fake_date
 
-        self.run_git(['commit', '--date', date.isoformat(),
-                     '-m', message])
+        self.run_git(['commit', '--date', date.isoformat(), '-m', message])
 
     def tag(self, number):
-        self.run_git(['tag', '-a', '-m', 'Tag {0}'.format(number),
-                      'tag{0}'.format(number)])
+        self.run_git(['tag', '-a', '-m', 'Tag {0}'.format(number), 'tag{0}'.format(number)])
 
     def add(self, filename):
         self.run_git(['add', relpath(filename, self.path)])
@@ -211,8 +203,7 @@ class Git:
     def get_branch_hashes(self, branch=None):
         if branch is None:
             branch = util.git_default_branch()
-        return [x.strip() for x in self.run_git(['rev-list', branch]).splitlines()
-                if x.strip()]
+        return [x.strip() for x in self.run_git(['rev-list', branch]).splitlines() if x.strip()]
 
     def get_commit_message(self, commit_hash):
         return self.run_git(["log", "-n", "1", "--format=%s", commit_hash]).strip()
@@ -243,8 +234,9 @@ class Hg:
         hglib.init(self.path)
         with io.open(join(self.path, '.hg', 'hgrc'), 'w', encoding="utf-8") as fd:
             fd.write(_hg_config)
-        self._repo = hglib.open(self.path.encode(sys.getfilesystemencoding()),
-                                encoding=self.encoding)
+        self._repo = hglib.open(
+            self.path.encode(sys.getfilesystemencoding()), encoding=self.encoding
+        )
 
     def commit(self, message, date=None):
         if date is None:
@@ -252,8 +244,7 @@ class Hg:
             date = self._fake_date
         date = "{0} 0".format(util.datetime_to_timestamp(date))
 
-        self._repo.commit(message.encode(self.encoding),
-                          date=date.encode(self.encoding))
+        self._repo.commit(message.encode(self.encoding), date=date.encode(self.encoding))
 
     def tag(self, number):
         self._fake_date += datetime.timedelta(seconds=1)
@@ -262,7 +253,8 @@ class Hg:
         self._repo.tag(
             ['tag{0}'.format(number).encode(self.encoding)],
             message="Tag {0}".format(number).encode(self.encoding),
-            date=date.encode(self.encoding))
+            date=date.encode(self.encoding)
+        )
 
     def add(self, filename):
         self._repo.add([filename.encode(sys.getfilesystemencoding())])
@@ -275,8 +267,7 @@ class Hg:
             self._repo.update(branch_name.encode(self.encoding))
 
     def merge(self, branch_name, commit_message=None):
-        self._repo.merge(branch_name.encode(self.encoding),
-                         tool=b"internal:other")
+        self._repo.merge(branch_name.encode(self.encoding), tool=b"internal:other")
         if commit_message is None:
             commit_message = "Merge {0}".format(branch_name)
         self.commit(commit_message)
@@ -327,8 +318,7 @@ def copy_template(src, dst, dvcs, values):
             dvcs.add(dst_path)
 
 
-def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
-                       extra_branches=(), subdir=''):
+def generate_test_repo(tmpdir, values=[0], dvcs_type='git', extra_branches=(), subdir=''):
     """
     Generate a test repository
 
@@ -374,10 +364,7 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
         os.makedirs(project_path)
 
     for i, value in enumerate(values):
-        mapping = {
-            'version': i,
-            'dummy_value': value
-        }
+        mapping = {'version': i, 'dummy_value': value}
 
         copy_template(template_path, project_path, dvcs, mapping)
 
@@ -388,10 +375,7 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
         for start_commit, branch_name, values in extra_branches:
             dvcs.checkout(branch_name, start_commit)
             for i, value in enumerate(values):
-                mapping = {
-                    'version': "{0}".format(i),
-                    'dummy_value': value
-                }
+                mapping = {'version': "{0}".format(i), 'dummy_value': value}
                 copy_template(template_path, project_path, dvcs, mapping)
                 dvcs.commit("Revision {0}.{1}".format(branch_name, i))
 
@@ -417,10 +401,12 @@ def generate_repo_from_ops(tmpdir, dvcs_type, operations):
     version = 0
     for op in operations:
         if op[0] == "commit":
-            copy_template(template_path, dvcs_path, dvcs, {
-                "version": version,
-                "dummy_value": op[1],
-            })
+            copy_template(
+                template_path, dvcs_path, dvcs, {
+                    "version": version,
+                    "dummy_value": op[1],
+                }
+            )
             version += 1
             dvcs.commit("Revision {0}".format(version), *op[2:])
         elif op[0] == "checkout":
@@ -443,13 +429,15 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None, updated=None):
     if branches is None:
         branches = [None]
 
-    conf = config.Config.from_json({
-        'results_dir': result_dir,
-        'html_dir': html_dir,
-        'repo': dvcs.path,
-        'project': 'asv',
-        'branches': branches or [None],
-    })
+    conf = config.Config.from_json(
+        {
+            'results_dir': result_dir,
+            'html_dir': html_dir,
+            'repo': dvcs.path,
+            'project': 'asv',
+            'branches': branches or [None],
+        }
+    )
     repo = get_repo(conf)
 
     util.write_json(join(machine_dir, "machine.json"), {
@@ -470,30 +458,44 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None, updated=None):
             value = value["result"]
         else:
             value = [value]
-        result = Results({"machine": "tarzan"}, {}, commit,
-                         repo.get_date_from_name(commit), "2.7", None, {})
+        result = Results(
+            {"machine": "tarzan"}, {}, commit, repo.get_date_from_name(commit), "2.7", None, {}
+        )
         value = runner.BenchmarkResult(
             result=value,
             samples=[None] * len(value),
             number=[None] * len(value),
             errcode=0,
             stderr='',
-            profile=None)
-        result.add_result({"name": "time_func", "version": benchmark_version, "params": params},
-                          value, started_at=updated, duration=1.0)
+            profile=None
+        )
+        result.add_result(
+            {
+                "name": "time_func",
+                "version": benchmark_version,
+                "params": params
+            },
+            value,
+            started_at=updated,
+            duration=1.0
+        )
         result.save(result_dir)
 
     if params:
         param_names = ["param{}".format(k) for k in range(len(params))]
 
-    util.write_json(join(result_dir, "benchmarks.json"), {
-        "time_func": {
-            "name": "time_func",
-            "params": params or [],
-            "param_names": param_names or [],
-            "version": benchmark_version,
-        }
-    }, api_version=2)
+    util.write_json(
+        join(result_dir, "benchmarks.json"), {
+            "time_func":
+                {
+                    "name": "time_func",
+                    "params": params or [],
+                    "param_names": param_names or [],
+                    "version": benchmark_version,
+                }
+        },
+        api_version=2
+    )
     return conf
 
 
@@ -508,7 +510,6 @@ def preview(base_path):
         Path to serve files from
 
     """
-
     class Handler(http.server.SimpleHTTPRequestHandler):
         def translate_path(self, path):
             # Don't serve from cwd, but from a different directory
@@ -561,18 +562,19 @@ def _build_dummy_wheels(tmpdir, wheel_dir, to_build, build_conda=False):
         os.makedirs(build_dir)
 
         with open(join(build_dir, 'setup.py'), 'w') as f:
-            f.write("from setuptools import setup; "
-                    "setup(name='{name}', version='{version}', packages=['{name}'])"
-                    "".format(name=name, version=version))
+            f.write(
+                "from setuptools import setup; "
+                "setup(name='{name}', version='{version}', packages=['{name}'])"
+                "".format(name=name, version=version)
+            )
         os.makedirs(join(build_dir, name))
         with open(join(build_dir, name, '__init__.py'), 'w') as f:
             f.write("__version__ = '{0}'".format(version))
 
-        subprocess.check_call([sys.executable, '-mpip', 'wheel',
-                               '--build-option=--universal',
-                               '-w', wheel_dir,
-                               '.'],
-                              cwd=build_dir)
+        subprocess.check_call(
+            [sys.executable, '-mpip', 'wheel', '--build-option=--universal', '-w', wheel_dir, '.'],
+            cwd=build_dir
+        )
 
         if build_conda:
             _build_dummy_conda_pkg(name, version, build_dir, wheel_dir)
@@ -585,7 +587,9 @@ def _build_dummy_conda_pkg(name, version, build_dir, dst):
     build_dir = os.path.abspath(build_dir)
 
     with open(join(build_dir, 'meta.yaml'), 'w') as f:
-        f.write(textwrap.dedent("""\
+        f.write(
+            textwrap.dedent(
+                """\
         package:
           name: "{name}"
           version: "{version}"
@@ -603,17 +607,18 @@ def _build_dummy_conda_pkg(name, version, build_dir, dst):
         about:
           license: BSD
           summary: Dummy test package
-        """.format(name=name,
-                   version=version,
-                   build_dir=util.shlex_quote(build_dir))))
+        """.format(name=name, version=version, build_dir=util.shlex_quote(build_dir))
+            )
+        )
 
     conda = _find_conda()
 
     for pyver in [PYTHON_VER1, PYTHON_VER2]:
         with _conda_lock():
-            subprocess.check_call([conda, 'build',
-                                   '--output-folder=' + dst,
-                                   '--no-anaconda-upload',
-                                   '--python=' + pyver,
-                                   '.'],
-                                  cwd=build_dir)
+            subprocess.check_call(
+                [
+                    conda, 'build', '--output-folder=' + dst, '--no-anaconda-upload',
+                    '--python=' + pyver, '.'
+                ],
+                cwd=build_dir
+            )

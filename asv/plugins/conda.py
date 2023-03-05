@@ -9,7 +9,6 @@ from ..console import log
 
 WIN = (os.name == "nt")
 
-
 # Conda (as of version 4.7.5) is not safe to run in parallel.
 # See https://github.com/conda/conda/issues/8870
 # Hence, serialize the calls to it.
@@ -87,10 +86,7 @@ class Conda(environment.Environment):
         self._requirements = requirements
         self._conda_channels = conf.conda_channels
         self._conda_environment_file = conf.conda_environment_file
-        super(Conda, self).__init__(conf,
-                                    python,
-                                    requirements,
-                                    tagged_env_vars)
+        super(Conda, self).__init__(conf, python, requirements, tagged_env_vars)
 
     @classmethod
     def matches(cls, python):
@@ -118,14 +114,14 @@ class Conda(environment.Environment):
             # Check that the version number is valid
             try:
                 with _conda_lock():
-                    util.check_call([
-                        conda,
-                        'create',
-                        '--yes',
-                        '-p',
-                        path,
-                        'python={0}'.format(python),
-                        '--dry-run'], display_error=False, dots=False)
+                    util.check_call(
+                        [
+                            conda, 'create', '--yes', '-p', path, 'python={0}'.format(python),
+                            '--dry-run'
+                        ],
+                        display_error=False,
+                        dots=False
+                    )
             except util.ProcessError:
                 return False
             else:
@@ -163,25 +159,29 @@ class Conda(environment.Environment):
 
             try:
                 env_file_name = self._conda_environment_file or env_file.name
-                self._run_conda(['env', 'create', '-f', env_file_name,
-                                 '-p', self._path, '--force'],
-                                env=env)
+                self._run_conda(
+                    ['env', 'create', '-f', env_file_name, '-p', self._path, '--force'], env=env
+                )
 
                 if self._conda_environment_file and (conda_args or pip_args):
                     # Add extra packages
                     env_file_name = env_file.name
-                    self._run_conda(['env', 'update', '-f', env_file_name,
-                                     '-p', self._path],
-                                    env=env)
+                    self._run_conda(
+                        ['env', 'update', '-f', env_file_name, '-p', self._path], env=env
+                    )
             except Exception:
                 if env_file_name != env_file.name:
-                    log.info("conda env create/update failed: "
-                             "in {} with file {}".format(self._path, env_file_name))
+                    log.info(
+                        "conda env create/update failed: "
+                        "in {} with file {}".format(self._path, env_file_name)
+                    )
                 elif os.path.isfile(env_file_name):
                     with open(env_file_name, 'r') as f:
                         text = f.read()
-                    log.info("conda env create/update failed: "
-                             "in {} with:\n{}".format(self._path, text))
+                    log.info(
+                        "conda env create/update failed: "
+                        "in {} with:\n{}".format(self._path, text)
+                    )
                 raise
         finally:
             os.unlink(env_file.name)
@@ -233,8 +233,7 @@ class Conda(environment.Environment):
             lock = _dummy_lock
 
         # Conda doesn't guarantee that user site directories are excluded
-        kwargs["env"] = dict(kwargs.pop("env", os.environ),
-                             PYTHONNOUSERSITE=str("True"))
+        kwargs["env"] = dict(kwargs.pop("env", os.environ), PYTHONNOUSERSITE=str("True"))
 
         with lock():
             return super(Conda, self).run_executable(executable, args, **kwargs)

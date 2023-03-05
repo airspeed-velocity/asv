@@ -11,23 +11,36 @@ class Quickstart(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "quickstart", help="Create a new benchmarking suite",
-            description="Creates a new benchmarking suite")
+            "quickstart",
+            help="Create a new benchmarking suite",
+            description="Creates a new benchmarking suite"
+        )
 
         parser.add_argument(
-            "--dest", "-d", default=".",
+            "--dest",
+            "-d",
+            default=".",
             help="The destination directory for the new benchmarking "
-            "suite")
+            "suite"
+        )
 
         grp = parser.add_mutually_exclusive_group()
         grp.add_argument(
-            "--top-level", action="store_true", dest="top_level", default=None,
+            "--top-level",
+            action="store_true",
+            dest="top_level",
+            default=None,
             help="Use layout suitable for putting the benchmark suite on "
-            "the top level of the project's repository")
+            "the top level of the project's repository"
+        )
         grp.add_argument(
-            "--no-top-level", action="store_false", dest="top_level", default=None,
+            "--no-top-level",
+            action="store_false",
+            dest="top_level",
+            default=None,
             help="Use layout suitable for putting the benchmark suite in "
-            "a separate repository")
+            "a separate repository"
+        )
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -58,8 +71,7 @@ class Quickstart(Command):
                     break
             color_print("")
 
-        template_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), '..', 'template')
+        template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'template')
         for entry in os.listdir(template_path):
             path = os.path.join(template_path, entry)
             dest_path = os.path.join(dest, entry)
@@ -82,10 +94,12 @@ class Quickstart(Command):
             with open(conf_file, 'r') as f:
                 conf = f.read()
 
-            reps = [('"repo": "",', '"repo": ".",'),
-                    ('// "env_dir": "env",', '"env_dir": ".asv/env",'),
-                    ('// "results_dir": "results",', '"results_dir": ".asv/results",'),
-                    ('// "html_dir": "html",', '"html_dir": ".asv/html",')]
+            reps = [
+                ('"repo": "",', '"repo": ".",'),
+                ('// "env_dir": "env",', '"env_dir": ".asv/env",'),
+                ('// "results_dir": "results",', '"results_dir": ".asv/results",'),
+                ('// "html_dir": "html",', '"html_dir": ".asv/html",')
+            ]
             for src, dst in reps:
                 conf = conf.replace(src, dst)
 

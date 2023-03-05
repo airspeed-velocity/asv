@@ -16,10 +16,12 @@ class Update(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "update", help="Update the results and config files "
+            "update",
+            help="Update the results and config files "
             "to the current version",
             description="Update the results and config files "
-            "to the current version")
+            "to the current version"
+        )
 
         parser.set_defaults(func=cls.run_from_args)
 

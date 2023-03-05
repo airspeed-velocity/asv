@@ -21,9 +21,12 @@ ON_PYPY = hasattr(sys, 'pypy_version_info')
 
 
 class ResultsWrapper:
-    tuple_type = collections.namedtuple('tuple_type', ['result', 'stats', 'samples',
-                                                       'params', 'stderr', 'errcode',
-                                                       'profile', 'started_at', 'duration'])
+    tuple_type = collections.namedtuple(
+        'tuple_type', [
+            'result', 'stats', 'samples', 'params', 'stderr', 'errcode', 'profile', 'started_at',
+            'duration'
+        ]
+    )
 
     def __init__(self, results, benchmarks):
         self.results = results
@@ -38,16 +41,17 @@ class ResultsWrapper:
 
     def __getitem__(self, key):
         params = self.benchmarks[key]['params']
-        return self.tuple_type(result=self.results.get_result_value(key, params),
-                               stats=self.results.get_result_stats(key, params),
-                               samples=self.results.get_result_samples(key, params),
-                               stderr=self.results.stderr.get(key),
-                               errcode=self.results.errcode.get(key),
-                               params=params,
-                               profile=(self.results.get_profile(key)
-                                        if self.results.has_profile(key) else None),
-                               started_at=self.results.started_at[key],
-                               duration=self.results.duration.get(key))
+        return self.tuple_type(
+            result=self.results.get_result_value(key, params),
+            stats=self.results.get_result_stats(key, params),
+            samples=self.results.get_result_samples(key, params),
+            stderr=self.results.stderr.get(key),
+            errcode=self.results.errcode.get(key),
+            params=params,
+            profile=(self.results.get_profile(key) if self.results.has_profile(key) else None),
+            started_at=self.results.started_at[key],
+            duration=self.results.duration.get(key)
+        )
 
 
 @pytest.mark.flaky(reruns=1, reruns_delay=5)
@@ -61,22 +65,28 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     # Old results to append to
     results = Results.unnamed()
     name = 'time_examples.TimeSuite.time_example_benchmark_1'
-    results.add_result(b[name],
-                       runner.BenchmarkResult(result=[1],
-                                              samples=[[42.0, 24.0]],
-                                              number=[1],
-                                              errcode=0, stderr='', profile=None),
-                       record_samples=True)
+    results.add_result(
+        b[name],
+        runner.BenchmarkResult(
+            result=[1], samples=[[42.0, 24.0]], number=[1], errcode=0, stderr='', profile=None
+        ),
+        record_samples=True
+    )
 
     # Run
     runner.run_benchmarks(
-        b, envs[0], results=results, profile=True, show_stderr=True,
-        append_samples=True, record_samples=True)
+        b,
+        envs[0],
+        results=results,
+        profile=True,
+        show_stderr=True,
+        append_samples=True,
+        record_samples=True
+    )
     times = ResultsWrapper(results, b)
 
     assert len(times) == len(b)
-    assert times[
-        'time_examples.TimeSuite.time_example_benchmark_1'].result != [None]
+    assert times['time_examples.TimeSuite.time_example_benchmark_1'].result != [None]
     stats = results.get_result_stats(name, b[name]['params'])
     assert isinstance(stats[0]['q_25'], float)
     # The exact number of samples may vary if the calibration is not fully accurate
@@ -85,17 +95,13 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     # Explicitly provided 'prev_samples` should come first
     assert samples[0][:2] == [42.0, 24.0]
     # Benchmarks that raise exceptions should have a time of "None"
-    assert times[
-        'time_secondary.TimeSecondary.time_exception'].result == [None]
-    assert times[
-        'subdir.time_subdir.time_foo'].result != [None]
+    assert times['time_secondary.TimeSecondary.time_exception'].result == [None]
+    assert times['subdir.time_subdir.time_foo'].result != [None]
     if not ON_PYPY:
         # XXX: the memory benchmarks don't work on Pypy, since asizeof
         # is CPython-only
-        assert times[
-            'mem_examples.mem_list'].result[0] > 1000
-    assert times[
-        'time_secondary.track_value'].result == [42.0]
+        assert times['mem_examples.mem_list'].result[0] > 1000
+    assert times['time_secondary.track_value'].result == [42.0]
     assert times['time_secondary.track_value'].profile is not None
     assert isinstance(times['time_examples.time_with_warnings'].stderr, type(''))
     assert times['time_examples.time_with_warnings'].errcode != 0
@@ -199,11 +205,16 @@ def test_skip_param_selection():
         name = 'env'
 
     d = [
-        {'name': 'test_nonparam', 'params': [], 'version': '1'},
-        {'name': 'test_param',
-         'params': [['1', '2', '3']],
-         'param_names': ['n'],
-         'version': '1'}
+        {
+            'name': 'test_nonparam',
+            'params': [],
+            'version': '1'
+        }, {
+            'name': 'test_param',
+            'params': [['1', '2', '3']],
+            'param_names': ['n'],
+            'version': '1'
+        }
     ]
 
     results = Results.unnamed()
@@ -227,8 +238,10 @@ def test_skip_param_selection():
     assert results._results['test_param'] == [1, None, None]
 
 
-@pytest.mark.skipif(not (hasattr(os, 'fork') and hasattr(socket, 'AF_UNIX')),
-                    reason="test requires fork and unix sockets")
+@pytest.mark.skipif(
+    not (hasattr(os, 'fork') and hasattr(socket, 'AF_UNIX')),
+    reason="test requires fork and unix sockets"
+)
 def test_forkserver(tmpdir):
     tmpdir = str(tmpdir)
     os.chdir(tmpdir)
@@ -254,11 +267,9 @@ def test_forkserver(tmpdir):
     result_file = os.path.join(tmpdir, 'run-result')
 
     try:
-        out, errcode = spawner.run('time_examples.TimeWithRepeat.time_it', '{}',
-                                   None,
-                                   result_file,
-                                   60,
-                                   os.getcwd())
+        out, errcode = spawner.run(
+            'time_examples.TimeWithRepeat.time_it', '{}', None, result_file, 60, os.getcwd()
+        )
     finally:
         spawner.close()
 
@@ -272,7 +283,8 @@ def test_forkserver(tmpdir):
 
 needs_unix_socket_mark = pytest.mark.skipif(
     not (hasattr(os, 'fork') and hasattr(socket, 'AF_UNIX')),
-    reason="test requires fork and unix sockets")
+    reason="test requires fork and unix sockets"
+)
 
 
 def clear_pyc(path):
@@ -362,10 +374,9 @@ def test_forkserver_preimport(tmpdir):
     assert out.startswith('Traceback')
 
 
-@pytest.mark.parametrize('launch_method', [
-    'spawn',
-    pytest.param('forkserver', marks=needs_unix_socket_mark)
-])
+@pytest.mark.parametrize(
+    'launch_method', ['spawn', pytest.param('forkserver', marks=needs_unix_socket_mark)]
+)
 def test_run_import_failure(capsys, benchmarks_fixture, launch_method):
     conf, repo, envs, commit_hash = benchmarks_fixture
 
@@ -374,8 +385,10 @@ def test_run_import_failure(capsys, benchmarks_fixture, launch_method):
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
 
-    skip_names = [name for name in b.keys()
-                  if name not in ('time_secondary.track_value', 'unimportable.track_unimportable')]
+    skip_names = [
+        name for name in b.keys()
+        if name not in ('time_secondary.track_value', 'unimportable.track_unimportable')
+    ]
     b2 = b.filter_out(skip_names)
 
     #

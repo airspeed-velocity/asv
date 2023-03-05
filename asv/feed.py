@@ -10,7 +10,6 @@ from . import util
 
 __all__ = ['FeedEntry', 'write_atom']
 
-
 ATOM_NS = "{http://www.w3.org/2005/Atom}"
 XML_NS = "{http://www.w3.org/XML/1998/namespace}"
 
@@ -91,8 +90,7 @@ class FeedEntry:
         return item
 
 
-def write_atom(dest, entries, author, title, address, updated=None, link=None,
-               language="en"):
+def write_atom(dest, entries, author, title, address, updated=None, link=None, language="en"):
     """
     Write an atom feed to a file.
 

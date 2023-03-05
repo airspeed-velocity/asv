@@ -30,9 +30,7 @@ def test_config_default_install_timeout():
 class CustomCommand(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
-        parser = subparsers.add_parser(
-            "custom", help="Custom command",
-            description="Juts a test.")
+        parser = subparsers.add_parser("custom", help="Custom command", description="Juts a test.")
 
         parser.set_defaults(func=cls.run_from_args)
 

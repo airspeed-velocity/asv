@@ -28,7 +28,6 @@ class BuildCache:
     keeping in mind that ``build_cache_size`` may be 0.
 
     """
-
     def __init__(self, conf, root):
         self._root = root
         self._path = os.path.join(root, 'asv-build-cache')
@@ -84,9 +83,7 @@ class BuildCache:
 
     def get_cache_dir(self, commit_hash):
         path, stamp = self._get_cache_dir(commit_hash)
-        if (os.path.isdir(path) and
-                os.path.isfile(stamp) and
-                os.listdir(path)):
+        if (os.path.isdir(path) and os.path.isfile(stamp) and os.listdir(path)):
             return path
 
         return None

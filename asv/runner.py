@@ -21,20 +21,14 @@ from . import util
 
 WIN = (os.name == "nt")
 
-
 # Can't use benchmark.__file__, because that points to the compiled
 # file, so it can't be run by another version of Python.
-BENCHMARK_RUN_SCRIPT = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "benchmark.py")
-
+BENCHMARK_RUN_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "benchmark.py")
 
 JSON_ERROR_RETCODE = -257
 
-
 BenchmarkResult = util.namedtuple_with_doc(
-    'BenchmarkResult',
-    ['result', 'samples', 'number', 'errcode', 'stderr', 'profile'],
-    """
+    'BenchmarkResult', ['result', 'samples', 'number', 'errcode', 'stderr', 'profile'], """
     Postprocessed benchmark result
 
     Attributes
@@ -57,7 +51,8 @@ BenchmarkResult = util.namedtuple_with_doc(
         If `profile` is `True` and run was at least partially successful,
         this key will be a byte string containing the cProfile data.
         Otherwise, None.
-    """)
+    """
+)
 
 
 def skip_benchmarks(benchmarks, env, results=None):
@@ -91,19 +86,29 @@ def skip_benchmarks(benchmarks, env, results=None):
 
             started_at = datetime.datetime.utcnow()
             r = fail_benchmark(benchmark)
-            results.add_result(benchmark, r,
-                               selected_idx=benchmarks.benchmark_selection.get(name),
-                               started_at=started_at)
+            results.add_result(
+                benchmark,
+                r,
+                selected_idx=benchmarks.benchmark_selection.get(name),
+                started_at=started_at
+            )
 
     return results
 
 
-def run_benchmarks(benchmarks, env, results=None,
-                   show_stderr=False, quick=False, profile=False,
-                   extra_params=None,
-                   record_samples=False, append_samples=False,
-                   run_rounds=None,
-                   launch_method=None):
+def run_benchmarks(
+    benchmarks,
+    env,
+    results=None,
+    show_stderr=False,
+    quick=False,
+    profile=False,
+    extra_params=None,
+    record_samples=False,
+    append_samples=False,
+    run_rounds=None,
+    launch_method=None
+):
     """
     Run all of the benchmarks in the given `Environment`.
 
@@ -175,9 +180,10 @@ def run_benchmarks(benchmarks, env, results=None,
 
     for name, benchmark in sorted(benchmarks.items()):
         key = benchmark.get('setup_cache_key')
-        setup_cache_timeout[key] = max(benchmark.get('setup_cache_timeout',
-                                                     benchmark['timeout']),
-                                       setup_cache_timeout.get(key, 0))
+        setup_cache_timeout[key] = max(
+            benchmark.get('setup_cache_timeout', benchmark['timeout']),
+            setup_cache_timeout.get(key, 0)
+        )
         benchmark_order.setdefault(key, []).append((name, benchmark))
         max_rounds = max(max_rounds, get_rounds(benchmark))
         cache_users.setdefault(key, set()).add(name)
@@ -197,9 +203,10 @@ def run_benchmarks(benchmarks, env, results=None,
                     rounds = get_rounds(benchmark)
 
                     if run_round > rounds:
-                        if (not append_samples and
-                            run_round == run_rounds[-1] and
-                                name in existing_results):
+                        if (
+                            not append_samples and run_round == run_rounds[-1] and
+                            name in existing_results
+                        ):
                             # We need to remove samples here so that
                             # append_samples=False has an effect on all
                             # benchmarks regardless of whether they were
@@ -229,8 +236,7 @@ def run_benchmarks(benchmarks, env, results=None,
     indent = log.indent()
     indent.__enter__()
 
-    spawner = get_spawner(env, benchmarks.benchmark_dir,
-                          launch_method=launch_method)
+    spawner = get_spawner(env, benchmarks.benchmark_dir, launch_method=launch_method)
 
     try:
         # Preimport benchmark suite (if using forkserver)
@@ -255,10 +261,13 @@ def run_benchmarks(benchmarks, env, results=None,
                 selected_idx = benchmarks.benchmark_selection.get(name)
                 started_at = datetime.datetime.utcnow()
                 res = fail_benchmark(benchmark, stderr=stderr)
-                results.add_result(benchmark, res,
-                                   selected_idx=selected_idx,
-                                   started_at=started_at,
-                                   record_samples=record_samples)
+                results.add_result(
+                    benchmark,
+                    res,
+                    selected_idx=selected_idx,
+                    started_at=started_at,
+                    record_samples=record_samples
+                )
                 failed_benchmarks.add(name)
             return results
 
@@ -273,8 +282,7 @@ def run_benchmarks(benchmarks, env, results=None,
                 if is_final:
                     partial_info_time = None
                     log.info(name, reserve_space=True)
-                    log_benchmark_result(results, benchmark,
-                                         show_stderr=show_stderr)
+                    log_benchmark_result(results, benchmark, show_stderr=show_stderr)
                 continue
 
             # Setup cache first, if needed
@@ -287,7 +295,8 @@ def run_benchmarks(benchmarks, env, results=None,
                 log.info(f"Setting up {setup_cache_key}", reserve_space=True)
                 params_str = json.dumps({'cpu_affinity': extra_params.get('cpu_affinity')})
                 cache_dir, stderr = spawner.create_setup_cache(
-                    name, setup_cache_timeout[setup_cache_key], params_str)
+                    name, setup_cache_timeout[setup_cache_key], params_str
+                )
                 if cache_dir is not None:
                     log.add_padded('ok')
                     cache_dirs[setup_cache_key] = cache_dir
@@ -308,10 +317,13 @@ def run_benchmarks(benchmarks, env, results=None,
                 log.warning(f'{name} skipped (setup_cache failed)')
                 stderr = f'asv: setup_cache failed\n\n{failed_setup_cache[setup_cache_key]}'
                 res = fail_benchmark(benchmark, stderr=stderr)
-                results.add_result(benchmark, res,
-                                   selected_idx=selected_idx,
-                                   started_at=started_at,
-                                   record_samples=record_samples)
+                results.add_result(
+                    benchmark,
+                    res,
+                    selected_idx=selected_idx,
+                    started_at=started_at,
+                    record_samples=record_samples
+                )
                 failed_benchmarks.add(name)
                 continue
 
@@ -337,11 +349,14 @@ def run_benchmarks(benchmarks, env, results=None,
                 partial_info_time = time.time()
                 log.info(f'Running ({name}--)')
 
-            res = run_benchmark(benchmark, spawner,
-                                profile=profile,
-                                selected_idx=selected_idx,
-                                extra_params=cur_extra_params,
-                                cwd=cache_dir)
+            res = run_benchmark(
+                benchmark,
+                spawner,
+                profile=profile,
+                selected_idx=selected_idx,
+                extra_params=cur_extra_params,
+                cwd=cache_dir
+            )
 
             # Retain runtime durations
             ended_at = datetime.datetime.utcnow()
@@ -351,12 +366,15 @@ def run_benchmarks(benchmarks, env, results=None,
                 benchmark_durations[name] = (ended_at - started_at).total_seconds()
 
             # Save result
-            results.add_result(benchmark, res,
-                               selected_idx=selected_idx,
-                               started_at=started_at,
-                               duration=benchmark_durations[name],
-                               record_samples=(not is_final or record_samples),
-                               append_samples=(name in previous_result_keys))
+            results.add_result(
+                benchmark,
+                res,
+                selected_idx=selected_idx,
+                started_at=started_at,
+                duration=benchmark_durations[name],
+                record_samples=(not is_final or record_samples),
+                append_samples=(name in previous_result_keys)
+            )
 
             previous_result_keys.add(name)
 
@@ -366,8 +384,7 @@ def run_benchmarks(benchmarks, env, results=None,
             # Log result
             if is_final:
                 partial_info_time = None
-                log_benchmark_result(results, benchmark,
-                                     show_stderr=show_stderr)
+                log_benchmark_result(results, benchmark, show_stderr=show_stderr)
             else:
                 log.add('.')
 
@@ -395,7 +412,7 @@ def get_spawner(env, benchmark_dir, launch_method):
     if launch_method in (None, 'auto'):
         # Don't use ForkServer as default on OSX, because many Apple
         # things are not fork-safe
-        if has_fork and sys.platform not in ('darwin',):
+        if has_fork and sys.platform not in ('darwin', ):
             launch_method = "forkserver"
         else:
             launch_method = "spawn"
@@ -452,19 +469,19 @@ def fail_benchmark(benchmark, stderr='', errcode=1):
         samples = [None]
         number = [None]
 
-    return BenchmarkResult(result=result,
-                           samples=samples,
-                           number=number,
-                           errcode=errcode,
-                           stderr=stderr,
-                           profile=None)
+    return BenchmarkResult(
+        result=result,
+        samples=samples,
+        number=number,
+        errcode=errcode,
+        stderr=stderr,
+        profile=None
+    )
 
 
-def run_benchmark(benchmark, spawner, profile,
-                  selected_idx=None,
-                  extra_params=None,
-                  cwd=None,
-                  prev_result=None):
+def run_benchmark(
+    benchmark, spawner, profile, selected_idx=None, extra_params=None, cwd=None, prev_result=None
+):
     """
     Run a benchmark.
 
@@ -522,9 +539,8 @@ def run_benchmark(benchmark, spawner, profile,
             cur_extra_params = extra_params
 
         res = _run_benchmark_single_param(
-            benchmark, spawner, param_idx,
-            extra_params=cur_extra_params, profile=profile,
-            cwd=cwd)
+            benchmark, spawner, param_idx, extra_params=cur_extra_params, profile=profile, cwd=cwd
+        )
 
         result += res.result
         samples += res.samples
@@ -549,8 +565,7 @@ def run_benchmark(benchmark, spawner, profile,
     )
 
 
-def _run_benchmark_single_param(benchmark, spawner, param_idx,
-                                profile, extra_params, cwd):
+def _run_benchmark_single_param(benchmark, spawner, param_idx, profile, extra_params, cwd):
     """
     Run a benchmark, for single parameter combination index in case it
     is parameterized
@@ -579,7 +594,7 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
     """
     name = benchmark['name']
     if benchmark['params']:
-        name += '-%d' % (param_idx,)
+        name += '-%d' % (param_idx, )
 
     if profile:
         profile_fd, profile_path = tempfile.mkstemp()
@@ -599,10 +614,13 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
         result_file.close()
 
         out, errcode = spawner.run(
-            name=name, params_str=params_str, profile_path=profile_path,
+            name=name,
+            params_str=params_str,
+            profile_path=profile_path,
             result_file_name=result_file.name,
             timeout=benchmark['timeout'],
-            cwd=real_cwd)
+            cwd=real_cwd
+        )
 
         if errcode != 0:
             if errcode == util.TIMEOUT_RETCODE:
@@ -633,8 +651,9 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
                 number = None
 
         if benchmark['params'] and out:
-            params, = itertools.islice(itertools.product(*benchmark['params']),
-                                       param_idx, param_idx + 1)
+            params, = itertools.islice(
+                itertools.product(*benchmark['params']), param_idx, param_idx + 1
+            )
             out = f"For parameters: {', '.join(params)}\n{out}"
 
         if profile:
@@ -650,7 +669,8 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
             number=[number],
             errcode=errcode,
             stderr=out.strip(),
-            profile=profile_data)
+            profile=profile_data
+        )
 
     except KeyboardInterrupt:
         spawner.interrupt()
@@ -667,7 +687,6 @@ class Spawner:
     """
     Manage launching individual benchmark.py commands
     """
-
     def __init__(self, env, benchmark_dir):
         self.env = env
         self.benchmark_dir = os.path.abspath(benchmark_dir)
@@ -683,15 +702,19 @@ class Spawner:
         env_vars.update(self.env.env_vars)
 
         out, _, errcode = self.env.run(
-            [BENCHMARK_RUN_SCRIPT, 'setup_cache',
-             os.path.abspath(self.benchmark_dir),
-             benchmark_id, params_str],
-            dots=False, display_error=False,
-            return_stderr=True, valid_return_codes=None,
+            [
+                BENCHMARK_RUN_SCRIPT, 'setup_cache',
+                os.path.abspath(self.benchmark_dir), benchmark_id, params_str
+            ],
+            dots=False,
+            display_error=False,
+            return_stderr=True,
+            valid_return_codes=None,
             redirect_stderr=True,
             cwd=cache_dir,
             timeout=timeout,
-            env=env_vars)
+            env=env_vars
+        )
 
         if errcode == 0:
             return cache_dir, None
@@ -705,12 +728,20 @@ class Spawner:
         env_vars.update(self.env.env_vars)
 
         out, _, errcode = self.env.run(
-            [BENCHMARK_RUN_SCRIPT, 'run', os.path.abspath(self.benchmark_dir),
-             name, params_str, profile_path, result_file_name],
-            dots=False, timeout=timeout,
-            display_error=False, return_stderr=True, redirect_stderr=True,
-            valid_return_codes=None, cwd=cwd,
-            env=env_vars)
+            [
+                BENCHMARK_RUN_SCRIPT, 'run',
+                os.path.abspath(self.benchmark_dir), name, params_str, profile_path,
+                result_file_name
+            ],
+            dots=False,
+            timeout=timeout,
+            display_error=False,
+            return_stderr=True,
+            redirect_stderr=True,
+            valid_return_codes=None,
+            cwd=cwd,
+            env=env_vars
+        )
         return out, errcode
 
     def preimport(self):
@@ -737,7 +768,8 @@ class ForkServer(Spawner):
             [BENCHMARK_RUN_SCRIPT, 'run_server', self.benchmark_dir, self.socket_name],
             return_popen=True,
             redirect_stderr=True,
-            env=env_vars)
+            env=env_vars
+        )
 
         self._server_output = None
         self.stdout_reader_thread = threading.Thread(target=self._stdout_reader)
@@ -765,13 +797,15 @@ class ForkServer(Spawner):
         self._server_output = out
 
     def run(self, name, params_str, profile_path, result_file_name, timeout, cwd):
-        msg = {'action': 'run',
-               'benchmark_id': name,
-               'params_str': params_str,
-               'profile_path': profile_path,
-               'result_file': result_file_name,
-               'timeout': timeout,
-               'cwd': cwd}
+        msg = {
+            'action': 'run',
+            'benchmark_id': name,
+            'params_str': params_str,
+            'profile_path': profile_path,
+            'result_file': result_file_name,
+            'timeout': timeout,
+            'cwd': cwd
+        }
         result = self._send_command(msg)
         return result['out'], result['errcode']
 

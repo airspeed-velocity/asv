@@ -6,7 +6,6 @@ import sys
 if sys.version_info[0] == 3:
     xrange = range
 
-
 # Test that local imports work
 from .shared import shared_function
 

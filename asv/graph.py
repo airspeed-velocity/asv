@@ -17,7 +17,6 @@ RESAMPLED_POINTS = (3840 / 5 / 2)
 
 class GraphSet:
     """Manage multiple `Graph`"""
-
     def __init__(self):
         self._graphs = {}
         self._groups = {}
@@ -178,8 +177,7 @@ class Graph:
         def mean_axis0(v):
             if not v:
                 return [None] * self.n_series
-            return [mean_na(x[j] for x in v)
-                    for j in range(self.n_series)]
+            return [mean_na(x[j] for x in v) for j in range(self.n_series)]
 
         # Average data over commit log
         val = []
@@ -259,7 +257,7 @@ class Graph:
         if pool is None:
             self._steps = [_compute_graph_steps(item, reraise=False) for item in items]
         else:
-            self._steps = [pool.apply_async(_compute_graph_steps, (item,)) for item in items]
+            self._steps = [pool.apply_async(_compute_graph_steps, (item, )) for item in items]
 
     def get_steps(self):
         """
@@ -380,8 +378,7 @@ def _fill_missing_data(y, max_gap_fraction=0.1):
             if 0 < gap_size <= max_gap_size and not is_na(prev):
                 # Interpolate gap
                 for k in range(1, gap_size + 1):
-                    filled[prev_idx + k] = (
-                        v * k + (gap_size + 1 - k) * prev) / (gap_size + 1)
+                    filled[prev_idx + k] = (v * k + (gap_size + 1 - k) * prev) / (gap_size + 1)
 
             prev = v
             prev_idx = i

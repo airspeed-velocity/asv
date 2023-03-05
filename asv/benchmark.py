@@ -93,9 +93,9 @@ if sys.platform.startswith('win'):
     GetCurrentProcess.restype = ctypes.wintypes.HANDLE
 
     GetProcessMemoryInfo = ctypes.windll.psapi.GetProcessMemoryInfo
-    GetProcessMemoryInfo.argtypes = (ctypes.wintypes.HANDLE,
-                                     ctypes.POINTER(PROCESS_MEMORY_COUNTERS),
-                                     ctypes.wintypes.DWORD)
+    GetProcessMemoryInfo.argtypes = (
+        ctypes.wintypes.HANDLE, ctypes.POINTER(PROCESS_MEMORY_COUNTERS), ctypes.wintypes.DWORD
+    )
     GetProcessMemoryInfo.restype = ctypes.wintypes.BOOL
 
     def get_maxrss():
@@ -136,11 +136,13 @@ else:
 
         # POSIX
         if sys.platform == 'darwin':
+
             def get_maxrss():
                 # OSX getrusage returns maxrss in bytes
                 # https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man2/getrusage.2.html
                 return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         else:
+
             def get_maxrss():
                 # Linux, *BSD return maxrss in kilobytes
                 return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
@@ -167,15 +169,16 @@ def recvall(sock, size):
         s = sock.recv(size - len(data))
         data += s
         if not s:
-            raise RuntimeError("did not receive data from socket "
-                               f"(size {size}, got only {data !r})")
+            raise RuntimeError(
+                "did not receive data from socket "
+                f"(size {size}, got only {data !r})"
+            )
     return data
 
 
 def _get_attr(source, name, ignore_case=False):
     if ignore_case:
-        attrs = [getattr(source, key) for key in dir(source)
-                 if key.lower() == name.lower()]
+        attrs = [getattr(source, key) for key in dir(source) if key.lower() == name.lower()]
 
         if len(attrs) > 1:
             raise ValueError(f"{source.__name__} contains multiple {name} functions.")
@@ -248,8 +251,7 @@ def get_source_code(items):
                     class_name = names[-2]
 
         if class_name and prev_class_name != class_name:
-            src = "class {0}:\n    {1}".format(
-                class_name, src.replace("\n", "\n    "))
+            src = "class {0}:\n    {1}".format(class_name, src.replace("\n", "\n    "))
         elif class_name:
             src = "    " + src.replace("\n", "\n    ")
 
@@ -276,8 +278,10 @@ def check_num_args(root, benchmark_name, func, min_num_args, max_num_args=None):
     try:
         info = inspect.getfullargspec(func)
     except Exception as exc:
-        print(f"{benchmark_name !s}: failed to check "
-              f"({func !r}{_get_sourceline_info(func, root) !s}): {exc !s}")
+        print(
+            f"{benchmark_name !s}: failed to check "
+            f"({func !r}{_get_sourceline_info(func, root) !s}): {exc !s}"
+        )
         return True
 
     max_args = len(info.args)
@@ -303,9 +307,11 @@ def check_num_args(root, benchmark_name, func, min_num_args, max_num_args=None):
             num_args_str = min_num_args
         else:
             num_args_str = f"{min_num_args}-{max_num_args}"
-        print(f"{benchmark_name !s}: wrong number of arguments "
-              f"(for {func !r}{_get_sourceline_info(func, root) !s}): expected {num_args_str}, "
-              f"has {args_str}")
+        print(
+            f"{benchmark_name !s}: wrong number of arguments "
+            f"(for {func !r}{_get_sourceline_info(func, root) !s}): expected {num_args_str}, "
+            f"has {args_str}"
+        )
 
     return ok
 
@@ -364,12 +370,12 @@ class Benchmark:
         try:
             self.param_names = [str(x) for x in list(self.param_names)]
         except ValueError:
-            raise ValueError("%s.param_names is not a list of strings" % (name,))
+            raise ValueError("%s.param_names is not a list of strings" % (name, ))
 
         try:
             self._params = list(self._params)
         except ValueError:
-            raise ValueError("%s.params is not a list" % (name,))
+            raise ValueError("%s.params is not a list" % (name, ))
 
         if self._params and not isinstance(self._params[0], (tuple, list)):
             # Accept a single list for one parameter only
@@ -379,8 +385,9 @@ class Benchmark:
 
         if len(self.param_names) != len(self._params):
             self.param_names = self.param_names[:len(self._params)]
-            self.param_names += ['param%d' % (k + 1,) for k in range(len(self.param_names),
-                                                                     len(self._params))]
+            self.param_names += [
+                'param%d' % (k + 1, ) for k in range(len(self.param_names), len(self._params))
+            ]
 
         # Exported parameter representations
         self.params = [[_repr_no_address(item) for item in entry] for entry in self._params]
@@ -398,11 +405,10 @@ class Benchmark:
     def set_param_idx(self, param_idx):
         try:
             self._current_params, = itertools.islice(
-                itertools.product(*self._params),
-                param_idx, param_idx + 1)
+                itertools.product(*self._params), param_idx, param_idx + 1
+            )
         except ValueError:
-            raise ValueError(
-                "Invalid benchmark parameter permutation index: %r" % (param_idx,))
+            raise ValueError("Invalid benchmark parameter permutation index: %r" % (param_idx, ))
 
     def insert_param(self, param):
         """
@@ -424,20 +430,22 @@ class Benchmark:
         max_num_args = min_num_args
 
         if self.setup_cache_key is not None:
-            ok = ok and check_num_args(root, self.name + ": setup_cache",
-                                       self._setup_cache, 0)
+            ok = ok and check_num_args(root, self.name + ": setup_cache", self._setup_cache, 0)
             max_num_args += 1
 
         for setup in self._setups:
-            ok = ok and check_num_args(root, self.name + ": setup",
-                                       setup, min_num_args, max_num_args)
+            ok = ok and check_num_args(
+                root, self.name + ": setup", setup, min_num_args, max_num_args
+            )
 
-        ok = ok and check_num_args(root, self.name + ": call",
-                                   self.func, min_num_args, max_num_args)
+        ok = ok and check_num_args(
+            root, self.name + ": call", self.func, min_num_args, max_num_args
+        )
 
         for teardown in self._teardowns:
-            ok = ok and check_num_args(root, self.name + ": teardown",
-                                       teardown, min_num_args, max_num_args)
+            ok = ok and check_num_args(
+                root, self.name + ": teardown", teardown, min_num_args, max_num_args
+            )
 
         return ok
 
@@ -484,17 +492,14 @@ class Benchmark:
 
             self.redo_setup()
 
-            profile.runctx(
-                code, {'run': self.func, 'params': self._current_params},
-                {}, filename)
+            profile.runctx(code, {'run': self.func, 'params': self._current_params}, {}, filename)
 
 
 class TimeBenchmark(Benchmark):
     """
     Represents a single benchmark for timing.
     """
-    name_regex = re.compile(
-        '^(Time[A-Z_].+)|(time_.+)$')
+    name_regex = re.compile('^(Time[A-Z_].+)|(time_.+)$')
 
     def __init__(self, name, func, attr_sources):
         Benchmark.__init__(self, name, func, attr_sources)
@@ -521,15 +526,13 @@ class TimeBenchmark(Benchmark):
 
     def _get_timer(self, *param):
         if param:
+
             def func():
                 self.func(*param)
         else:
             func = self.func
 
-        timer = timeit.Timer(
-            stmt=func,
-            setup=self.redo_setup,
-            timer=self.timer)
+        timer = timeit.Timer(stmt=func, setup=self.redo_setup, timer=self.timer)
 
         return timer
 
@@ -564,17 +567,22 @@ class TimeBenchmark(Benchmark):
         max_repeat = int(max_repeat)
         max_time = float(max_time)
 
-        samples, number = self.benchmark_timing(timer, min_repeat, max_repeat,
-                                                max_time=max_time,
-                                                warmup_time=warmup_time,
-                                                number=self.number,
-                                                min_run_count=self.min_run_count)
+        samples, number = self.benchmark_timing(
+            timer,
+            min_repeat,
+            max_repeat,
+            max_time=max_time,
+            warmup_time=warmup_time,
+            number=self.number,
+            min_run_count=self.min_run_count
+        )
 
         samples = [s / number for s in samples]
         return {'samples': samples, 'number': number}
 
-    def benchmark_timing(self, timer, min_repeat, max_repeat, max_time, warmup_time,
-                         number, min_run_count):
+    def benchmark_timing(
+        self, timer, min_repeat, max_repeat, max_time, warmup_time, number, min_run_count
+    ):
 
         sample_time = self.sample_time
         start_time = wall_timer()
@@ -642,11 +650,13 @@ class TimeBenchmark(Benchmark):
 
 
 class _SeparateProcessTimer:
-    subprocess_tmpl = textwrap.dedent('''
+    subprocess_tmpl = textwrap.dedent(
+        '''
         from __future__ import print_function
         from timeit import timeit, default_timer as timer
         print(repr(timeit(stmt="""{stmt}""", setup="""{setup}""", number={number}, timer=timer)))
-    ''').strip()
+    '''
+    ).strip()
 
     def __init__(self, func):
         self.func = func
@@ -673,8 +683,7 @@ class TimerawBenchmark(TimeBenchmark):
     Represents a benchmark for tracking timing benchmarks run once in
     a separate process.
     """
-    name_regex = re.compile(
-        '^(Timeraw[A-Z_].+)|(timeraw_.+)$')
+    name_regex = re.compile('^(Timeraw[A-Z_].+)|(timeraw_.+)$')
 
     def _load_vars(self):
         TimeBenchmark._load_vars(self)
@@ -683,6 +692,7 @@ class TimerawBenchmark(TimeBenchmark):
 
     def _get_timer(self, *param):
         if param:
+
             def func():
                 self.func(*param)
         else:
@@ -698,8 +708,7 @@ class MemBenchmark(Benchmark):
     Represents a single benchmark for tracking the memory consumption
     of an object.
     """
-    name_regex = re.compile(
-        '^(Mem[A-Z_].+)|(mem_.+)$')
+    name_regex = re.compile('^(Mem[A-Z_].+)|(mem_.+)$')
 
     def __init__(self, name, func, attr_sources):
         Benchmark.__init__(self, name, func, attr_sources)
@@ -774,8 +783,7 @@ class PeakMemBenchmark(Benchmark):
     Represents a single benchmark for tracking the peak memory consumption
     of the whole program.
     """
-    name_regex = re.compile(
-        '^(PeakMem[A-Z_].+)|(peakmem_.+)$')
+    name_regex = re.compile('^(PeakMem[A-Z_].+)|(peakmem_.+)$')
 
     def __init__(self, name, func, attr_sources):
         Benchmark.__init__(self, name, func, attr_sources)
@@ -791,8 +799,7 @@ class TrackBenchmark(Benchmark):
     """
     Represents a single benchmark for tracking an arbitrary value.
     """
-    name_regex = re.compile(
-        '^(Track[A-Z_].+)|(track_.+)$')
+    name_regex = re.compile('^(Track[A-Z_].+)|(track_.+)$')
 
     def __init__(self, name, func, attr_sources):
         Benchmark.__init__(self, name, func, attr_sources)
@@ -805,10 +812,7 @@ class TrackBenchmark(Benchmark):
 
 # TODO: Support the creation of custom benchmark types
 
-
-benchmark_types = [
-    TimerawBenchmark, TimeBenchmark, MemBenchmark, PeakMemBenchmark, TrackBenchmark
-]
+benchmark_types = [TimerawBenchmark, TimeBenchmark, MemBenchmark, PeakMemBenchmark, TrackBenchmark]
 
 
 class SpecificImporter:
@@ -822,7 +826,6 @@ class SpecificImporter:
     project module (common situation if asv.conf.json is on project
     repository top level).
     """
-
     def __init__(self, name, root):
         self._name = name
         self._root = root
@@ -837,8 +840,7 @@ class SpecificImporter:
 
 
 def update_sys_path(root):
-    sys.meta_path.insert(0, SpecificImporter(os.path.basename(root),
-                                             os.path.dirname(root)))
+    sys.meta_path.insert(0, SpecificImporter(os.path.basename(root), os.path.dirname(root)))
 
 
 def _get_benchmark(attr_name, module, klass, func):
@@ -912,16 +914,12 @@ def disc_benchmarks(root, ignore_import_errors=False):
 
     for module in disc_modules(root_name, ignore_import_errors=ignore_import_errors):
         for attr_name, module_attr in (
-            (k, v) for k, v in module.__dict__.items()
-            if not k.startswith('_')
+            (k, v) for k, v in module.__dict__.items() if not k.startswith('_')
         ):
-            if (inspect.isclass(module_attr) and
-                    not inspect.isabstract(module_attr)):
+            if (inspect.isclass(module_attr) and not inspect.isabstract(module_attr)):
                 for name, class_attr in inspect.getmembers(module_attr):
-                    if (inspect.isfunction(class_attr) or
-                            inspect.ismethod(class_attr)):
-                        benchmark = _get_benchmark(name, module, module_attr,
-                                                   class_attr)
+                    if (inspect.isfunction(class_attr) or inspect.ismethod(class_attr)):
+                        benchmark = _get_benchmark(name, module, module_attr, class_attr)
                         if benchmark is not None:
                             yield benchmark
             elif inspect.isfunction(module_attr):
@@ -948,7 +946,7 @@ def get_benchmark_from_name(root, name, extra_params=None):
             name, param_idx = name.split('-', 1)
             param_idx = int(param_idx)
         except ValueError:
-            raise ValueError("Benchmark id %r is invalid" % (name,))
+            raise ValueError("Benchmark id %r is invalid" % (name, ))
     else:
         param_idx = None
 
@@ -976,10 +974,8 @@ def get_benchmark_from_name(root, name, extra_params=None):
                 class_attr = getattr(module_attr, parts[-1])
             except AttributeError:
                 break
-            if (inspect.isfunction(class_attr) or
-                    inspect.ismethod(class_attr)):
-                benchmark = _get_benchmark(parts[-1], module, module_attr,
-                                           class_attr)
+            if (inspect.isfunction(class_attr) or inspect.ismethod(class_attr)):
+                benchmark = _get_benchmark(parts[-1], module, module_attr, class_attr)
                 break
 
     if benchmark is None:
@@ -987,15 +983,16 @@ def get_benchmark_from_name(root, name, extra_params=None):
             if benchmark.name == name:
                 break
         else:
-            raise ValueError(
-                f"Could not find benchmark '{name}'")
+            raise ValueError(f"Could not find benchmark '{name}'")
 
     if param_idx is not None:
         benchmark.set_param_idx(param_idx)
 
     if extra_params:
+
         class ExtraBenchmarkAttrs:
             pass
+
         for key, value in extra_params.items():
             setattr(ExtraBenchmarkAttrs, key, value)
         benchmark._attr_sources.insert(0, ExtraBenchmarkAttrs)
@@ -1018,8 +1015,8 @@ def list_benchmarks(root, fp):
             fp.write(', ')
         clean = dict(
             (k, v) for (k, v) in benchmark.__dict__.items()
-            if isinstance(v, (str, int, float, list, dict, bool)) and not
-            k.startswith('_'))
+            if isinstance(v, (str, int, float, list, dict, bool)) and not k.startswith('_')
+        )
         json.dump(clean, fp, skipkeys=True)
         first = False
     fp.write(']')
@@ -1076,8 +1073,7 @@ def main_run(args):
     if profile_path == 'None':
         profile_path = None
 
-    benchmark = get_benchmark_from_name(
-        benchmark_dir, benchmark_id, extra_params=extra_params)
+    benchmark = get_benchmark_from_name(benchmark_dir, benchmark_id, extra_params=extra_params)
 
     if benchmark.setup_cache_key is not None:
         with open("cache.pickle", "rb") as fd:
@@ -1258,8 +1254,7 @@ def main_run_server(args):
                 # shouldn't happen, but fail silently
                 retcode = -128
 
-            info = {'out': out,
-                    'errcode': -256 if is_timeout else retcode}
+            info = {'out': out, 'errcode': -256 if is_timeout else retcode}
 
             result_text = json.dumps(info)
             result_text = result_text.encode('utf-8')
@@ -1281,16 +1276,22 @@ def main_timing(argv):
     import asv.util
     import asv.console
 
-    if (_old_sys_path_head is not None and
-            os.path.abspath(_old_sys_path_head) != os.path.abspath(os.path.dirname(__file__))):
+    if (
+        _old_sys_path_head is not None and
+        os.path.abspath(_old_sys_path_head) != os.path.abspath(os.path.dirname(__file__))
+    ):
         sys.path.insert(0, _old_sys_path_head)
 
     parser = argparse.ArgumentParser(usage="python -masv.benchmark timing [options] STATEMENT")
     parser.add_argument("--setup", action="store", default=(lambda: None))
     parser.add_argument("--number", action="store", type=int, default=0)
     parser.add_argument("--repeat", action="store", type=int, default=0)
-    parser.add_argument("--timer", action="store", choices=("process_time", "perf_counter"),
-                        default="perf_counter")
+    parser.add_argument(
+        "--timer",
+        action="store",
+        choices=("process_time", "perf_counter"),
+        default="perf_counter"
+    )
     parser.add_argument("--json", action="store_true")
     parser.add_argument("statement")
     args = parser.parse_args(argv)
@@ -1318,13 +1319,12 @@ def main_timing(argv):
     if not args.json:
         asv.console.color_print(formatted, 'red')
         asv.console.color_print("", 'default')
-        asv.console.color_print("\n".join(f"{k}: {v}"
-                                for k, v in sorted(stats.items())), 'default')
+        asv.console.color_print(
+            "\n".join(f"{k}: {v}" for k, v in sorted(stats.items())), 'default'
+        )
         asv.console.color_print(f"samples: {result['samples']}", 'default')
     else:
-        json.dump({'result': value,
-                   'samples': result['samples'],
-                   'stats': stats}, sys.stdout)
+        json.dump({'result': value, 'samples': result['samples'], 'stats': stats}, sys.stdout)
 
 
 def main_help(args):

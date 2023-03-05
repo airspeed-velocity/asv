@@ -1,9 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 """
 Various low-level utilities.
 """
-
 
 import datetime
 import json
@@ -31,7 +29,6 @@ WIN = (os.name == 'nt')
 if not WIN:
     from select import PIPE_BUF
 
-
 TIMEOUT_RETCODE = -256
 terminal_width = shutil.get_terminal_size().columns
 
@@ -56,9 +53,9 @@ class ParallelFailure(Exception):
         return (ParallelFailure, (self.message, self.exc_cls, self.traceback_str))
 
     def __str__(self):
-        return "{0}: {1}\n    {2}".format(self.exc_cls.__name__,
-                                          self.message,
-                                          self.traceback_str.replace("\n", "\n    "))
+        return "{0}: {1}\n    {2}".format(
+            self.exc_cls.__name__, self.message, self.traceback_str.replace("\n", "\n    ")
+        )
 
     def reraise(self):
         if self.exc_cls is UserError:
@@ -184,15 +181,8 @@ def human_file_size(size, err=None):
 
 
 _human_time_units = (
-    ('ns', 0.000000001),
-    ('μs', 0.000001),
-    ('ms', 0.001),
-    ('s', 1),
-    ('m', 60),
-    ('h', 60 * 60),
-    ('d', 60 * 60 * 24),
-    ('w', 60 * 60 * 24 * 7),
-    ('y', 60 * 60 * 24 * 7 * 52),
+    ('ns', 0.000000001), ('μs', 0.000001), ('ms', 0.001), ('s', 1), ('m', 60), ('h', 60 * 60),
+    ('d', 60 * 60 * 24), ('w', 60 * 60 * 24 * 7), ('y', 60 * 60 * 24 * 7 * 52),
     ('C', 60 * 60 * 24 * 7 * 52 * 100)
 )
 
@@ -303,8 +293,7 @@ def parse_human_time(string, base_period='d'):
             raise ValueError()
         return float(m.group(1)) * units[m.group(2)]
     except ValueError:
-        raise ValueError("%r is not a valid time period (valid units: %s)"
-                         % (string, suffixes))
+        raise ValueError("%r is not a valid time period (valid units: %s)" % (string, suffixes))
 
 
 def which(filename, paths=None):
@@ -324,8 +313,10 @@ def which(filename, paths=None):
         locations = os.environ.get("PATH", "").split(os.pathsep)
         if WIN:
             # On windows, an entry in %PATH% may be quoted
-            locations = [path[1:-1] if len(path) > 2 and path[0] == path[-1] == '"' else path
-                         for path in locations]
+            locations = [
+                path[1:-1] if len(path) > 2 and path[0] == path[-1] == '"' else path
+                for path in locations
+            ]
 
     if WIN:
         filenames = [filename + ext for ext in ('.exe', '.bat', '.com', '')]
@@ -370,15 +361,23 @@ class ProcessError(subprocess.CalledProcessError):
 
     def __str__(self):
         if self.retcode == TIMEOUT_RETCODE:
-            return "Command '{0}' timed out".format(
-                ' '.join(self.args))
+            return "Command '{0}' timed out".format(' '.join(self.args))
         else:
             return "Command '{0}' returned non-zero exit status {1}".format(
-                ' '.join(self.args), self.retcode)
+                ' '.join(self.args), self.retcode
+            )
 
 
-def check_call(args, valid_return_codes=(0,), timeout=600, dots=True,
-               display_error=True, shell=False, env=None, cwd=None):
+def check_call(
+    args,
+    valid_return_codes=(0, ),
+    timeout=600,
+    dots=True,
+    display_error=True,
+    shell=False,
+    env=None,
+    cwd=None
+):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.
@@ -389,9 +388,15 @@ def check_call(args, valid_return_codes=(0,), timeout=600, dots=True,
     __tracebackhide__ = operator.methodcaller('errisinstance', ProcessError)
 
     check_output(
-        args, valid_return_codes=valid_return_codes, timeout=timeout,
-        dots=dots, display_error=display_error, shell=shell, env=env,
-        cwd=cwd)
+        args,
+        valid_return_codes=valid_return_codes,
+        timeout=timeout,
+        dots=dots,
+        display_error=display_error,
+        shell=shell,
+        env=env,
+        cwd=cwd
+    )
 
 
 class DebugLogBuffer:
@@ -431,9 +436,19 @@ class DebugLogBuffer:
             self.log.debug(text, continued=True)
 
 
-def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
-                 display_error=True, shell=False, return_stderr=False,
-                 env=None, cwd=None, redirect_stderr=False, return_popen=False):
+def check_output(
+    args,
+    valid_return_codes=(0, ),
+    timeout=600,
+    dots=True,
+    display_error=True,
+    shell=False,
+    return_stderr=False,
+    env=None,
+    cwd=None,
+    redirect_stderr=False,
+    return_popen=False
+):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.  Returns stdout as a string on success.
@@ -496,17 +511,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         if header is not None:
             content.append(header)
         if redirect_stderr:
-            content.extend([
-                'OUTPUT -------->',
-                stdout[:-1]
-            ])
+            content.extend(['OUTPUT -------->', stdout[:-1]])
         else:
-            content.extend([
-                'STDOUT -------->',
-                stdout[:-1],
-                'STDERR -------->',
-                stderr[:-1]
-            ])
+            content.extend(['STDOUT -------->', stdout[:-1], 'STDERR -------->', stderr[:-1]])
         return '\n'.join(content)
 
     if isinstance(args, str):
@@ -514,8 +521,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     log.debug("Running '{0}'".format(' '.join(args)))
 
-    kwargs = dict(shell=shell, env=env, cwd=cwd,
-                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    kwargs = dict(shell=shell, env=env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if redirect_stderr:
         kwargs['stderr'] = subprocess.STDOUT
     if WIN:
@@ -546,6 +552,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         debug_log = DebugLogBuffer(log)
         dots = False
     else:
+
         def debug_log(c):
             return None
 
@@ -573,8 +580,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         all_threads = [stdout_reader]
 
         if not redirect_stderr:
-            stderr_reader = threading.Thread(target=stream_reader,
-                                             args=(proc.stderr, stderr_chunks))
+            stderr_reader = threading.Thread(
+                target=stream_reader, args=(proc.stderr, stderr_chunks)
+            )
             stderr_reader.daemon = True
             stderr_reader.start()
             all_threads.append(stderr_reader)
@@ -637,6 +645,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                     _killpg_safe(proc.pid, signum)
                     if signum == signal.SIGTSTP:
                         os.kill(os.getpid(), signal.SIGSTOP)
+
                 signal.signal(signal.SIGTSTP, sig_forward)
                 signal.signal(signal.SIGCONT, sig_forward)
 
@@ -647,11 +656,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
             while proc.poll() is None:
                 try:
                     if timeout is None:
-                        rlist, wlist, xlist = select.select(
-                            list(fds.keys()), [], [])
+                        rlist, wlist, xlist = select.select(list(fds.keys()), [], [])
                     else:
-                        rlist, wlist, xlist = select.select(
-                            list(fds.keys()), [], [], timeout)
+                        rlist, wlist, xlist = select.select(list(fds.keys()), [], [], timeout)
                 except select.error as err:
                     if err.args[0] == errno.EINTR:
                         # interrupted by signal handler; try again
@@ -830,26 +837,25 @@ def load_json(path, api_version=None, js_comments=False):
         try:
             data = json.loads(content)
         except ValueError as err:
-            raise UserError(
-                "Error parsing JSON in file '{0}': {1}".format(
-                    path, str(err)))
+            raise UserError("Error parsing JSON in file '{0}': {1}".format(path, str(err)))
 
     if api_version is not None:
         if 'version' in data:
             if data['version'] < api_version:
                 raise UserError(
                     "{0} is stored in an old file format.  Run "
-                    "`asv update` to update it.".format(path))
+                    "`asv update` to update it.".format(path)
+                )
             elif data['version'] > api_version:
                 raise UserError(
                     "{0} is stored in a format that is newer than "
                     "what this version of asv understands.  Update "
-                    "asv to use this file.".format(path))
+                    "asv to use this file.".format(path)
+                )
 
             del data['version']
         else:
-            raise UserError(
-                "No version specified in {0}.".format(path))
+            raise UserError("No version specified in {0}.".format(path))
 
     return data
 
@@ -875,8 +881,7 @@ def update_json(cls, path, api_version, compact=False):
 
     d = load_json(path)
     if 'version' not in d:
-        raise UserError(
-            "No version specified in {0}.".format(path))
+        raise UserError("No version specified in {0}.".format(path))
 
     if d['version'] < api_version:
         for x in range(d['version'] + 1, api_version + 1):
@@ -887,7 +892,8 @@ def update_json(cls, path, api_version, compact=False):
             "{0} is stored in a format that is newer than "
             "what this version of asv understands. "
             "Upgrade asv in order to use or add to "
-            "these results.".format(path))
+            "these results.".format(path)
+        )
 
 
 def iter_chunks(s, n):
@@ -1001,9 +1007,7 @@ def get_memsize():
     return ''
 
 
-def format_text_table(rows, num_headers=0,
-                      top_header_span_start=0,
-                      top_header_text=None):
+def format_text_table(rows, num_headers=0, top_header_span_start=0, top_header_text=None):
     """
     Format rows in as a reStructuredText table, in the vein of::
 
@@ -1019,8 +1023,7 @@ def format_text_table(rows, num_headers=0,
     """
 
     # Format content
-    text_rows = [["{0}".format(item).replace("\n", " ") for item in row]
-                 for row in rows]
+    text_rows = [["{0}".format(item).replace("\n", " ") for item in row] for row in rows]
 
     # Ensure same number of items on all rows
     num_items = max(len(row) for row in text_rows)
@@ -1028,12 +1031,10 @@ def format_text_table(rows, num_headers=0,
         row.extend([''] * (num_items - len(row)))
 
     # Determine widths
-    col_widths = [max(len(row[j]) for row in text_rows) + 2
-                  for j in range(num_items)]
+    col_widths = [max(len(row[j]) for row in text_rows) + 2 for j in range(num_items)]
 
     # Pad content
-    text_rows = [[item.center(w) for w, item in zip(col_widths, row)]
-                 for row in text_rows]
+    text_rows = [[item.center(w) for w, item in zip(col_widths, row)] for row in text_rows]
 
     # Generate result
     headers = [" ".join(row) for row in text_rows[:num_headers]]
@@ -1149,6 +1150,7 @@ if not WIN:
     def long_path(path):
         return path
 else:
+
     def long_path(path):
         if path.startswith("\\\\"):
             return path
@@ -1177,9 +1179,7 @@ else:
             onerror = None
         else:
             onerror = _remove_readonly
-        shutil.rmtree(long_path(path),
-                      ignore_errors=ignore_errors,
-                      onerror=onerror)
+        shutil.rmtree(long_path(path), ignore_errors=ignore_errors, onerror=onerror)
 
 
 def sanitize_filename(filename):
@@ -1197,10 +1197,10 @@ def sanitize_filename(filename):
     filename = re.sub('[<>:"/\\^|?*\x00-\x1f]', '_', filename)
 
     # ntfs
-    forbidden = ["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3",
-                 "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1",
-                 "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8",
-                 "LPT9"]
+    forbidden = [
+        "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
+        "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+    ]
     if filename.upper() in forbidden:
         filename = filename + "_"
 
@@ -1222,8 +1222,10 @@ def recvall(sock, size):
         s = sock.recv(size - len(data))
         data += s
         if not s:
-            raise RuntimeError("did not receive data from socket "
-                               "(size {}, got only {!r})".format(size, data))
+            raise RuntimeError(
+                "did not receive data from socket "
+                "(size {}, got only {!r})".format(size, data)
+            )
     return data
 
 
@@ -1264,10 +1266,12 @@ def interpolate_command(command, variables):
     try:
         result = [c.format(**variables) for c in parts]
     except KeyError as exc:
-        raise UserError("Configuration error: {{{0}}} not available "
-                        "when substituting into command {1!r} "
-                        "Available: {2!r}"
-                        "".format(exc.args[0], command, variables))
+        raise UserError(
+            "Configuration error: {{{0}}} not available "
+            "when substituting into command {1!r} "
+            "Available: {2!r}"
+            "".format(exc.args[0], command, variables)
+        )
 
     env = {}
 
@@ -1284,9 +1288,11 @@ def interpolate_command(command, variables):
 
         if result[0].startswith('return-code='):
             if return_codes_set:
-                raise UserError("Configuration error: multiple return-code specifications "
-                                "in command {0!r} "
-                                "".format(command))
+                raise UserError(
+                    "Configuration error: multiple return-code specifications "
+                    "in command {0!r} "
+                    "".format(command)
+                )
                 break
 
             if result[0] == 'return-code=any':
@@ -1305,15 +1311,19 @@ def interpolate_command(command, variables):
                 except ValueError:
                     pass
 
-            raise UserError("Configuration error: invalid return-code specification "
-                            "{0!r} when substituting into command {1!r} "
-                            "".format(result[0], command))
+            raise UserError(
+                "Configuration error: invalid return-code specification "
+                "{0!r} when substituting into command {1!r} "
+                "".format(result[0], command)
+            )
 
         if result[0].startswith('in-dir='):
             if cwd is not None:
-                raise UserError("Configuration error: multiple in-dir specifications "
-                                "in command {0!r} "
-                                "".format(command))
+                raise UserError(
+                    "Configuration error: multiple in-dir specifications "
+                    "in command {0!r} "
+                    "".format(command)
+                )
                 break
 
             cwd = result[0][7:]
@@ -1360,8 +1370,7 @@ def get_multiprocessing_lock(name):
 
 def get_multiprocessing_pool(parallel=None):
     """Create a multiprocessing.Pool, managing global locks properly"""
-    return multiprocessing.Pool(initializer=_init_global_locks,
-                                initargs=(_global_locks,))
+    return multiprocessing.Pool(initializer=_init_global_locks, initargs=(_global_locks, ))
 
 
 try:
@@ -1383,9 +1392,9 @@ except ImportError:
 
 def git_default_branch():
     try:
-        default_branch = check_output([which('git'),
-                                       'config', 'init.defaultBranch'],
-                                      display_error=False).strip()
+        default_branch = check_output(
+            [which('git'), 'config', 'init.defaultBranch'], display_error=False
+        ).strip()
     except ProcessError:
         default_branch = 'master'
     return default_branch

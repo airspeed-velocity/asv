@@ -16,8 +16,15 @@ def test_compute_stats():
 
     assert statistics.compute_stats([], 1) == (None, None)
     assert statistics.compute_stats([15.0], 1) == (
-        15.0, {'ci_99_a': -math.inf, 'ci_99_b': math.inf,
-               'number': 1, 'q_25': 15.0, 'q_75': 15.0, 'repeat': 1})
+        15.0, {
+            'ci_99_a': -math.inf,
+            'ci_99_b': math.inf,
+            'number': 1,
+            'q_25': 15.0,
+            'q_75': 15.0,
+            'repeat': 1
+        }
+    )
 
     for nsamples, true_mean in product([10, 50, 250], [0, 0.3, 0.6]):
         samples = np.random.randn(nsamples) + true_mean
@@ -109,8 +116,9 @@ def test_quantile_ci():
     np.random.seed(1)
 
     for sampler in [sample_exp, sample_normal]:
-        cis = _check_ci(lambda z, alpha: statistics.quantile_ci(z, 0.5, alpha),
-                        sampler, nsamples=300)
+        cis = _check_ci(
+            lambda z, alpha: statistics.quantile_ci(z, 0.5, alpha), sampler, nsamples=300
+        )
         atol = 5 / 300
         for size, alpha, alpha_got in cis:
             if size < 20:
@@ -130,8 +138,10 @@ def test_quantile_ci_small():
 
 def test_quantile_ci_r():
     # Compare to R
-    x = [-2.47946614, -1.49595963, -1.02812482, -0.76592323, -0.09452743, 0.10732743,
-         0.27798342, 0.50173779, 0.57829823, 0.60474948, 0.94695675, 1.20159789]
+    x = [
+        -2.47946614, -1.49595963, -1.02812482, -0.76592323, -0.09452743, 0.10732743, 0.27798342,
+        0.50173779, 0.57829823, 0.60474948, 0.94695675, 1.20159789
+    ]
 
     # quantile(x, type=7, prob=p)
     q_20_e = -0.9756845
@@ -317,39 +327,28 @@ def test_mann_whitney_u_cdf():
                 assert p2 == pytest.approx(p, abs=1e-3, rel=0), (m, n, u, p2, p)
 
     # Tables from Mann & Whitney, Ann. Math. Statist. 18, 50 (1947).
-    tbl = [[.250, .100, .050],
-           [.500, .200, .100],
-           [.750, .400, .200],
-           [None, .600, .350],
-           [None, None, .500],
-           [None, None, .650]]
+    tbl = [
+        [.250, .100, .050], [.500, .200, .100], [.750, .400, .200], [None, .600, .350],
+        [None, None, .500], [None, None, .650]
+    ]
     check_table(3, tbl)
 
-    tbl = [[.200, .067, .028, .014],
-           [.400, .133, .057, .029],
-           [.600, .267, .114, .057],
-           [None, .400, .200, .100],
-           [None, .600, .314, .171],
-           [None, None, .429, .243],
-           [None, None, .571, .343],
-           [None, None, None, .443],
-           [None, None, None, .557]]
+    tbl = [
+        [.200, .067, .028, .014], [.400, .133, .057, .029], [.600, .267, .114, .057],
+        [None, .400, .200, .100], [None, .600, .314, .171], [None, None, .429, .243],
+        [None, None, .571, .343], [None, None, None, .443], [None, None, None, .557]
+    ]
     check_table(4, tbl)
 
-    tbl = [[.167, .047, .018, .008, .004],
-           [.333, .095, .036, .016, .008],
-           [.500, .190, .071, .032, .016],
-           [.667, .286, .125, .056, .028],
-           [None, .429, .196, .095, .048],
-           [None, .571, .286, .143, .075],
-           [None, None, .393, .206, .111],
-           [None, None, .500, .278, .155],
-           [None, None, .607, .365, .210],
-           [None, None, None, .452, .274],
-           [None, None, None, .548, .345],
-           [None, None, None, None, .421],
-           [None, None, None, None, .500],
-           [None, None, None, None, .579]]
+    tbl = [
+        [.167, .047, .018, .008, .004], [.333, .095, .036, .016, .008],
+        [.500, .190, .071, .032, .016], [.667, .286, .125, .056, .028],
+        [None, .429, .196, .095, .048], [None, .571, .286, .143, .075],
+        [None, None, .393, .206, .111], [None, None, .500, .278, .155],
+        [None, None, .607, .365, .210], [None, None, None, .452, .274],
+        [None, None, None, .548, .345], [None, None, None, None, .421],
+        [None, None, None, None, .500], [None, None, None, None, .579]
+    ]
     check_table(5, tbl)
 
 
@@ -419,8 +418,7 @@ def test_mann_whitney_u_R():
         for n in range(1, len(b) + 1):
             u, p = statistics.mann_whitney_u(a[:m], b[:n])
 
-            r = wilcox_test(robjects.FloatVector(a[:m]),
-                            robjects.FloatVector(b[:n]))
+            r = wilcox_test(robjects.FloatVector(a[:m]), robjects.FloatVector(b[:n]))
 
             if max(m, n) <= 20:
                 err = 1e-10  # exact method

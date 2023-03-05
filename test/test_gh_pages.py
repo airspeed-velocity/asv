@@ -34,7 +34,7 @@ def test_gh_pages(rewrite, tmpdir, generate_result_dir, monkeypatch):
     dvcs.commit('Initial commit')
 
     if rewrite:
-        rewrite_args = ("--rewrite",)
+        rewrite_args = ("--rewrite", )
     else:
         rewrite_args = ()
 

@@ -63,7 +63,7 @@ class TimeWithRepeat:
     def teardown(self):
         assert self.called is True
         self.called = None
-        print("<%d>" % (self.count,))
+        print("<%d>" % (self.count, ))
 
     def time_it(self):
         assert self.called is False

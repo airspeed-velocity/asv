@@ -11,8 +11,7 @@ def test_dev(capsys, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
     # Test Dev runs (with full benchmark suite)
-    ret = tools.run_asv_with_conf(conf, 'dev', '--quick', '-e',
-                                  _machine_file=machine_file)
+    ret = tools.run_asv_with_conf(conf, 'dev', '--quick', '-e', _machine_file=machine_file)
     assert ret == 2
     text, err = capsys.readouterr()
 
@@ -32,9 +31,9 @@ def test_dev_with_repo_subdir(capsys, basic_conf_with_subdir):
     tmpdir, local, conf, machine_file = basic_conf_with_subdir
 
     # Test Dev runs
-    tools.run_asv_with_conf(conf, 'dev', '--quick',
-                            '--bench=time_secondary.track_value',
-                            _machine_file=machine_file)
+    tools.run_asv_with_conf(
+        conf, 'dev', '--quick', '--bench=time_secondary.track_value', _machine_file=machine_file
+    )
     text, err = capsys.readouterr()
 
     # Benchmarks were found and run
@@ -47,9 +46,9 @@ def test_dev_with_repo_subdir(capsys, basic_conf_with_subdir):
 
 def test_dev_strict(basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
-    ret = tools.run_asv_with_conf(conf, 'dev', '--quick',
-                                  '--bench=TimeSecondary',
-                                  _machine_file=machine_file)
+    ret = tools.run_asv_with_conf(
+        conf, 'dev', '--quick', '--bench=TimeSecondary', _machine_file=machine_file
+    )
     assert ret == 2
 
 
@@ -57,10 +56,14 @@ def test_run_python_same(capsys, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
     # Test Run runs with python=same
-    tools.run_asv_with_conf(conf, 'run', '--python=same',
-                            '--bench=time_secondary.TimeSecondary.time_exception',
-                            '--bench=time_secondary.track_value',
-                            _machine_file=machine_file)
+    tools.run_asv_with_conf(
+        conf,
+        'run',
+        '--python=same',
+        '--bench=time_secondary.TimeSecondary.time_exception',
+        '--bench=time_secondary.track_value',
+        _machine_file=machine_file
+    )
     text, err = capsys.readouterr()
 
     assert re.search("time_exception.*failed", text, re.S)
@@ -75,8 +78,9 @@ def test_profile_python_same(capsys, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
     # Test Profile can run with python=same
-    tools.run_asv_with_conf(conf, 'profile', '--python=same', "time_secondary.track_value",
-                            _machine_file=machine_file)
+    tools.run_asv_with_conf(
+        conf, 'profile', '--python=same', "time_secondary.track_value", _machine_file=machine_file
+    )
     text, err = capsys.readouterr()
 
     # time_with_warnings failure case

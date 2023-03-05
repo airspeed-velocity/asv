@@ -56,12 +56,14 @@ def compute_stats(samples, number):
     # Produce results
     result = y_50
 
-    stats = {'ci_99_a': ci_50[0],
-             'ci_99_b': ci_50[1],
-             'q_25': y_25,
-             'q_75': y_75,
-             'repeat': len(Y),
-             'number': number}
+    stats = {
+        'ci_99_a': ci_50[0],
+        'ci_99_b': ci_50[1],
+        'q_25': y_25,
+        'q_75': y_75,
+        'repeat': len(Y),
+        'number': number
+    }
 
     return result, stats
 
@@ -363,8 +365,7 @@ def mann_whitney_u_r(m, n, u, memo=None):
         if value is not None:
             return value
 
-        value = (mann_whitney_u_r(m, n - 1, u, memo) +
-                 mann_whitney_u_r(m - 1, n, u - n, memo))
+        value = (mann_whitney_u_r(m, n - 1, u, memo) + mann_whitney_u_r(m - 1, n, u - n, memo))
 
         memo[key] = value
     return value
@@ -444,7 +445,6 @@ class LaplacePosterior:
     the standard textbook formulas for the mean.
 
     """
-
     def __init__(self, y, nu=None):
         if len(y) == 0:
             raise ValueError("empty input")

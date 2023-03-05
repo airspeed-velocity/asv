@@ -10,14 +10,14 @@ from . import tools
 def test_rm(tmpdir, example_results):
     tmpdir = str(tmpdir)
 
-    shutil.copytree(
-        example_results,
-        join(tmpdir, 'example_results'))
+    shutil.copytree(example_results, join(tmpdir, 'example_results'))
 
-    conf = config.Config.from_json({
-        'results_dir': join(tmpdir, 'example_results'),
-        'repo': "### IGNORED, BUT REQUIRED ###"
-    })
+    conf = config.Config.from_json(
+        {
+            'results_dir': join(tmpdir, 'example_results'),
+            'repo': "### IGNORED, BUT REQUIRED ###"
+        }
+    )
 
     tools.run_asv_with_conf(conf, 'rm', '-y', 'benchmark=time_quantity*')
 

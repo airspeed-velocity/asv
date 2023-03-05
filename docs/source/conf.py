@@ -18,7 +18,8 @@ try:
 except ImportError:
     raise ImportError(
         "sphinx_bootstrap_theme must be installed to build the docs."
-        "  Try `pip install sphinx_bootstrap_theme`.")
+        "  Try `pip install sphinx_bootstrap_theme`."
+    )
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -30,18 +31,13 @@ except ImportError:
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.0'
 
-intersphinx_mapping = {
-    'python': ('http://docs.python.org/', None)
-}
+intersphinx_mapping = {'python': ('http://docs.python.org/', None)}
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.mathjax'
+    'sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.mathjax'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -110,7 +106,6 @@ pygments_style = 'sphinx'
 # If true, keep warnings as "system message" paragraphs in the built documents.
 # keep_warnings = False
 
-
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -164,9 +159,7 @@ html_static_path = ['_static']
 # html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {
-    '**': []
-}
+html_sidebars = {'**': []}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -201,7 +194,6 @@ html_show_sourcelink = False
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'airspeedvelocitydoc'
 
-
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
@@ -219,8 +211,10 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    ('index', 'airspeedvelocity.tex', 'airspeed velocity Documentation',
-     'Michael Droettboom', 'manual'),
+    (
+        'index', 'airspeedvelocity.tex', 'airspeed velocity Documentation', 'Michael Droettboom',
+        'manual'
+    ),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -243,7 +237,6 @@ latex_documents = [
 # If false, no module index is generated.
 # latex_domain_indices = True
 
-
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples
@@ -255,16 +248,16 @@ man_pages = [
 # If true, show URL addresses after external links.
 # man_show_urls = False
 
-
 # -- Options for Texinfo output -------------------------------------------
 
 # Grouping the document tree into Texinfo files. List of tuples
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'airspeedvelocity', 'airspeed velocity Documentation',
-     'Michael Droettboom', 'airspeedvelocity', 'One line description of project.',
-     'Miscellaneous'),
+    (
+        'index', 'airspeedvelocity', 'airspeed velocity Documentation', 'Michael Droettboom',
+        'airspeedvelocity', 'One line description of project.', 'Miscellaneous'
+    ),
 ]
 
 # Documents to append as an appendix to all manuals.

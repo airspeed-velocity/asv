@@ -36,13 +36,9 @@ def _rebuild_basic_html(basedir):
     try:
         machine_file = join(basedir, 'asv-machine.json')
 
-        shutil.copyfile(join(local, 'asv-machine.json'),
-                        machine_file)
+        shutil.copyfile(join(local, 'asv-machine.json'), machine_file)
 
-        values = [[x] * 2 for x in [0, 0, 0, 0, 0,
-                                    1, 1, 1, 1, 1,
-                                    3, 3, 3, 3, 3,
-                                    2, 2, 2, 2, 2]]
+        values = [[x] * 2 for x in [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2]]
         dvcs = tools.generate_test_repo(basedir, values)
         first_tested_commit_hash = dvcs.get_hash(f'{util.git_default_branch()}~14')
 
@@ -50,19 +46,25 @@ def _rebuild_basic_html(basedir):
         shutil.move(repo_path, join(basedir, 'repo'))
         dvcs = tools.Git(join(basedir, 'repo'))
 
-        conf = config.Config.from_json({
-            'env_dir': join(basedir, 'env'),
-            'benchmark_dir': join(local, 'benchmark'),
-            'results_dir': join(basedir, 'results_workflow'),
-            'html_dir': join(basedir, 'html'),
-            'repo': join(basedir, 'repo'),
-            'dvcs': 'git',
-            'project': 'asv',
-            'matrix': {"env": {"SOME_TEST_VAR": ["1"]}},
-            'regressions_first_commits': {
-                '.*': first_tested_commit_hash
-            },
-        })
+        conf = config.Config.from_json(
+            {
+                'env_dir': join(basedir, 'env'),
+                'benchmark_dir': join(local, 'benchmark'),
+                'results_dir': join(basedir, 'results_workflow'),
+                'html_dir': join(basedir, 'html'),
+                'repo': join(basedir, 'repo'),
+                'dvcs': 'git',
+                'project': 'asv',
+                'matrix': {
+                    "env": {
+                        "SOME_TEST_VAR": ["1"]
+                    }
+                },
+                'regressions_first_commits': {
+                    '.*': first_tested_commit_hash
+                },
+            }
+        )
 
         if WIN:
             # Tell conda to not use hardlinks: on Windows it's not possible
@@ -71,10 +73,15 @@ def _rebuild_basic_html(basedir):
             # same cache directory may get reused).
             conf.matrix["env"]["CONDA_ALWAYS_COPY"] = ["True"]
 
-        tools.run_asv_with_conf(conf, 'run', 'ALL',
-                                '--show-stderr', '--quick',
-                                '--bench=params_examples[a-z0-9_.]*track_',
-                                _machine_file=machine_file)
+        tools.run_asv_with_conf(
+            conf,
+            'run',
+            'ALL',
+            '--show-stderr',
+            '--quick',
+            '--bench=params_examples[a-z0-9_.]*track_',
+            _machine_file=machine_file
+        )
 
         # Swap CPU info and obtain some results
         info = util.load_json(machine_file, api_version=1)
@@ -86,10 +93,16 @@ def _rebuild_basic_html(basedir):
 
         util.write_json(machine_file, info, api_version=1)
 
-        tools.run_asv_with_conf(conf, 'run', f'{util.git_default_branch()}~10..', '--steps=3',
-                                '--show-stderr', '--quick',
-                                '--bench=params_examples[a-z0-9_.]*track_',
-                                _machine_file=machine_file)
+        tools.run_asv_with_conf(
+            conf,
+            'run',
+            f'{util.git_default_branch()}~10..',
+            '--steps=3',
+            '--show-stderr',
+            '--quick',
+            '--bench=params_examples[a-z0-9_.]*track_',
+            _machine_file=machine_file
+        )
 
         # Output
         tools.run_asv_with_conf(conf, 'publish')
@@ -110,8 +123,7 @@ def test_web_summarygrid(browser, basic_html):
     with tools.preview(html_dir) as base_url:
         get_with_retry(browser, base_url)
 
-        WebDriverWait(browser, WAIT_TIME).until(EC.title_is(
-            'airspeed velocity of an unladen asv'))
+        WebDriverWait(browser, WAIT_TIME).until(EC.title_is('airspeed velocity of an unladen asv'))
 
         # Verify benchmark names are displayed as expected
         for href, expected in (
@@ -121,7 +133,8 @@ def test_web_summarygrid(browser, basic_html):
             ('#named.track_custom_pretty_name', u'this.is/the.answer'),
         ):
             item = browser.find_element_by_xpath(
-                "//a[@href='{}']/div[@class='benchmark-text']".format(href))
+                "//a[@href='{}']/div[@class='benchmark-text']".format(href)
+            )
             assert item.text == expected
 
         # Open a graph display, scroll to item and click
@@ -143,6 +156,7 @@ def test_web_summarygrid(browser, basic_html):
         def check(*args):
             param_button = browser.find_element_by_link_text('benchmark.params_examples.ClassOne')
             return 'active' not in param_button.get_attribute('class').split()
+
         WebDriverWait(browser, WAIT_TIME, ignored_exceptions=ignore_exc).until(check)
 
         # Check there's no error popup; needs an explicit wait because
@@ -170,9 +184,11 @@ def test_web_regressions(browser, basic_html):
         regressions_btn.click()
 
         # Wait for element to appear in the table
-        WebDriverWait(browser, WAIT_TIME).until(EC.text_to_be_present_in_element(
-            ('xpath', '//table[1]/tbody/tr[2]/td[1]'), 'params_examples.track_find_test'
-        ))
+        WebDriverWait(browser, WAIT_TIME).until(
+            EC.text_to_be_present_in_element(
+                ('xpath', '//table[1]/tbody/tr[2]/td[1]'), 'params_examples.track_find_test'
+            )
+        )
 
         # Check that the expected links appear in the table
         regression_1 = browser.find_element_by_link_text('params_examples.track_find_test(1)')
@@ -185,9 +201,11 @@ def test_web_regressions(browser, basic_html):
 
         # Sort the tables vs. benchmark name (PhantomJS doesn't allow doing it via actionchains)
         browser.execute_script("$('thead th').eq(0).stupidsort('asc')")
-        WebDriverWait(browser, WAIT_TIME).until(EC.text_to_be_present_in_element(
-            ('xpath', '//table[1]/tbody/tr[1]/td[1]'), 'params_examples.track_find_test(1)'
-        ))
+        WebDriverWait(browser, WAIT_TIME).until(
+            EC.text_to_be_present_in_element(
+                ('xpath', '//table[1]/tbody/tr[1]/td[1]'), 'params_examples.track_find_test(1)'
+            )
+        )
 
         # Check the contents of the table
         table_rows = browser.find_elements_by_xpath('//table[1]/tbody/tr')
@@ -205,8 +223,10 @@ def test_web_regressions(browser, basic_html):
         assert cols2[2:] == [bad_commit_hash[:8], '2.00x', '1.00', '2.00', 'Ignore']
 
         # Check that the ignore buttons work as expected
-        buttons = [button for button in browser.find_elements_by_xpath('//button')
-                   if button.text == 'Ignore']
+        buttons = [
+            button
+            for button in browser.find_elements_by_xpath('//button') if button.text == 'Ignore'
+        ]
         buttons[0].click()
 
         # The button should disappear, together with the link
@@ -218,8 +238,10 @@ def test_web_regressions(browser, basic_html):
 
         # There's a second button for showing the links, clicking
         # which makes the elements reappear
-        show_button = [button for button in browser.find_elements_by_xpath('//button')
-                       if button.text == 'Show ignored regressions...'][0]
+        show_button = [
+            button for button in browser.find_elements_by_xpath('//button')
+            if button.text == 'Show ignored regressions...'
+        ][0]
         show_button.click()
 
         regression_1 = browser.find_element_by_link_text('params_examples.track_find_test(1)')
@@ -233,8 +255,10 @@ def test_web_regressions(browser, basic_html):
         assert "params_examples\\\\.track_find_test\\\\(1\\\\)" in pre_div.text
 
         # There's an unignore button that moves the element back to the main table
-        unignore_button = [button for button in browser.find_elements_by_xpath('//button')
-                           if button.text == 'Unignore'][0]
+        unignore_button = [
+            button
+            for button in browser.find_elements_by_xpath('//button') if button.text == 'Unignore'
+        ][0]
         unignore_button.click()
 
         # wait until the table has two rows
@@ -259,8 +283,10 @@ def test_web_regressions(browser, basic_html):
         browser.find_element_by_css_selector('canvas.flot-base')
 
         # Check group/ungroup button functionality
-        group_button, = [button for button in browser.find_elements_by_xpath('//button')
-                         if button.text == "Group regressions"]
+        group_button, = [
+            button for button in browser.find_elements_by_xpath('//button')
+            if button.text == "Group regressions"
+        ]
         group_button.click()
 
         def check(*args):
@@ -269,8 +295,10 @@ def test_web_regressions(browser, basic_html):
 
         WebDriverWait(browser, WAIT_TIME, ignored_exceptions=ignore_exc).until(check)
 
-        ungroup_button, = [button for button in browser.find_elements_by_xpath('//button')
-                           if button.text == "Ungroup regressions"]
+        ungroup_button, = [
+            button for button in browser.find_elements_by_xpath('//button')
+            if button.text == "Ungroup regressions"
+        ]
         ungroup_button.click()
 
         def check(*args):
@@ -299,9 +327,10 @@ def test_web_summarylist(browser, basic_html):
         # Check text content in the table
         base_link = browser.find_element_by_link_text('params_examples.track_find_test')
         cur_row = base_link.find_element_by_xpath('../..')
-        m = re.match('params_examples.track_find_test \\([12]\\) 2.00 \u221233.3% \\(-1.00\\).*' +
-                     last_change_hash[:8],
-                     cur_row.text)
+        m = re.match(
+            'params_examples.track_find_test \\([12]\\) 2.00 \u221233.3% \\(-1.00\\).*' +
+            last_change_hash[:8], cur_row.text
+        )
         assert m, cur_row.text
 
         # Check units in row
@@ -313,16 +342,21 @@ def test_web_summarylist(browser, basic_html):
         # Check link
         base_href, qs = urllib.parse.splitquery(base_link.get_attribute('href'))
         base_url, tag = urllib.parse.splittag(base_href)
-        assert urllib.parse.parse_qs(qs) == {'ram': ['128GB'], 'cpu': ['Blazingly fast'],
-                                             'NUL': ['[none]']}
+        assert urllib.parse.parse_qs(qs) == {
+            'ram': ['128GB'],
+            'cpu': ['Blazingly fast'],
+            'NUL': ['[none]']
+        }
         assert tag == 'params_examples.track_find_test'
 
         # Change table sort (sorting is async, so needs waits)
         sort_th = browser.find_element_by_xpath('//th[text()="Recent change"]')
         sort_th.click()
         WebDriverWait(browser, WAIT_TIME).until(
-            EC.text_to_be_present_in_element(('xpath', '//tbody/tr[1]'),
-                                             'params_examples.track_find_test'))
+            EC.text_to_be_present_in_element(
+                ('xpath', '//tbody/tr[1]'), 'params_examples.track_find_test'
+            )
+        )
 
         # Try to click cpu selector link in the panel
         cpu_select = browser.find_element_by_link_text('Not /really/ <fast>')
@@ -334,17 +368,19 @@ def test_web_summarylist(browser, basic_html):
             links = browser.find_elements_by_link_text('params_examples.track_find_test')
             visible_links = [item for item in links if item.is_displayed()]
 
-            row_texts = [link.find_element_by_xpath('../..').text
-                         for link in visible_links]
+            row_texts = [link.find_element_by_xpath('../..').text for link in visible_links]
             row_texts.sort()
 
             if len(row_texts) != 2:
                 return False
 
-            ok = (re.match(r'^params_examples\.track_find_test \(1\) 2\.00 .*\(-1\.00\).*$',
-                           row_texts[0]) and
-                  re.match(r'^params_examples\.track_find_test \(2\) 2\.00 .*\(-1\.00\).*$',
-                  row_texts[1]))
+            ok = (
+                re.match(
+                    r'^params_examples\.track_find_test \(1\) 2\.00 .*\(-1\.00\).*$', row_texts[0]
+                ) and re.match(
+                    r'^params_examples\.track_find_test \(2\) 2\.00 .*\(-1\.00\).*$', row_texts[1]
+                )
+            )
             return ok
 
         WebDriverWait(browser, WAIT_TIME, ignored_exceptions=ignore_exc).until(check)

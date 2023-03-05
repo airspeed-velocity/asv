@@ -9,13 +9,10 @@ class KCachegrindGui(profiling.ProfilerGui):
 
     @classmethod
     def is_available(cls):
-        return (
-            util.has_command("kcachegrind") and
-            util.has_command("pyprof2calltree"))
+        return (util.has_command("kcachegrind") and util.has_command("pyprof2calltree"))
 
     @classmethod
     def open_profiler_gui(cls, profiler_file):
         command = util.which("pyprof2calltree")
 
-        return util.check_call(
-            [command, '-i', profiler_file, '-k'], timeout=None)
+        return util.check_call([command, '-i', profiler_file, '-k'], timeout=None)

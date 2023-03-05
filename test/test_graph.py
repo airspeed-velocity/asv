@@ -2,8 +2,13 @@
 
 import os
 
-from asv.graph import (Graph, RESAMPLED_POINTS, make_summary_graph, _fill_missing_data,
-                       _combine_graph_data)
+from asv.graph import (
+    Graph,
+    RESAMPLED_POINTS,
+    make_summary_graph,
+    _fill_missing_data,
+    _combine_graph_data,
+)
 from asv import util
 
 
@@ -52,21 +57,13 @@ def test_graph_single():
 
 def test_graph_multi():
     vals = [
-        (0, [None, None, None], [None] * 3),
-        (1, [1, None, float('nan')], [None] * 3),
-        (2, [2, 5, 4], [1] * 3),
-        (3, [3, 4, -60], [None] * 3),
-        (4, [4, 3, 2], [None] * 3),
-        (5, [None, 2, None], [None] * 3),
-        (6, [6, 1, None], [None] * 3)
+        (0, [None, None, None], [None] * 3), (1, [1, None, float('nan')], [None] * 3),
+        (2, [2, 5, 4], [1] * 3), (3, [3, 4, -60], [None] * 3), (4, [4, 3, 2], [None] * 3),
+        (5, [None, 2, None], [None] * 3), (6, [6, 1, None], [None] * 3)
     ]
 
     filled_vals = [
-        (1, [1, None, None]),
-        (2, [2, 5, 4]),
-        (3, [3, 4, -60]),
-        (4, [4, 3, 2]),
-        (5, [5, 2, None]),
+        (1, [1, None, None]), (2, [2, 5, 4]), (3, [3, 4, -60]), (4, [4, 3, 2]), (5, [5, 2, None]),
         (6, [6, 1, None])
     ]
 
@@ -220,15 +217,16 @@ def test__combine_graph_data():
 
     x, ys = _combine_graph_data([g1, g2, g3])
     assert x == [0, 1, 2, 3, 4]
-    assert ys == [[None, None, None, None, None],
-                  [0, 1, 2, 3, 4],
-                  [0, -1, -2, None, None],
-                  [0, -2, -4, None, None]]
+    assert ys == [
+        [None, None, None, None, None], [0, 1, 2, 3, 4], [0, -1, -2, None, None],
+        [0, -2, -4, None, None]
+    ]
 
 
 def test_graph_steps():
-    vals = [(1, 1), (5, 1), (6, 1), (7, 1), (8, 1),
-            (11, 2), (15, 2), (16, 2 + 1e-5), (17, 2), (18, 2)]
+    vals = [
+        (1, 1), (5, 1), (6, 1), (7, 1), (8, 1), (11, 2), (15, 2), (16, 2 + 1e-5), (17, 2), (18, 2)
+    ]
 
     g = Graph('foo', {})
     for x, y in vals:

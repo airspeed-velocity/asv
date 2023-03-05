@@ -42,15 +42,17 @@ class Regressions(OutputPublisher):
             log.dot()
 
             for graph_data in data_filter.get_graph_data(graph, benchmark):
-                cls._process_regression(regressions, revision_to_hash, repo, all_params,
-                                        graph_data, graph)
+                cls._process_regression(
+                    regressions, revision_to_hash, repo, all_params, graph_data, graph
+                )
 
         cls._save(conf, {'regressions': regressions})
         cls._save_feed(conf, benchmarks, regressions, revisions, revision_to_hash)
 
     @classmethod
-    def _process_regression(cls, regressions, revision_to_hash, repo,
-                            all_params, graph_data, graph):
+    def _process_regression(
+        cls, regressions, revision_to_hash, repo, all_params, graph_data, graph
+    ):
         j, entry_name, steps, threshold = graph_data
 
         last_v, best_v, jumps = detect_regressions(steps, threshold)
@@ -131,14 +133,16 @@ class Regressions(OutputPublisher):
                 graph_params = dict(graph_params)
 
                 # Add URL parameters
-                param_values, = itertools.islice(itertools.product(*benchmark['params']),
-                                                 idx, idx + 1)
+                param_values, = itertools.islice(
+                    itertools.product(*benchmark['params']), idx, idx + 1
+                )
                 for k, v in zip(benchmark['param_names'], param_values):
                     graph_params['p-' + k] = v
 
             for rev1, rev2, value1, value2 in jumps:
-                timestamps = (run_timestamps[benchmark_name, t]
-                              for t in (rev1, rev2) if t is not None)
+                timestamps = (
+                    run_timestamps[benchmark_name, t] for t in (rev1, rev2) if t is not None
+                )
                 last_timestamp = max(timestamps)
 
                 updated = datetime.datetime.fromtimestamp(last_timestamp / 1000)
@@ -148,14 +152,16 @@ class Regressions(OutputPublisher):
                 if rev1 is None:
                     params['commits'] = '{0}'.format(revision_to_hash[rev2])
                 else:
-                    params['commits'] = '{0}-{1}'.format(revision_to_hash[rev1],
-                                                         revision_to_hash[rev2])
+                    params['commits'] = '{0}-{1}'.format(
+                        revision_to_hash[rev1], revision_to_hash[rev2]
+                    )
 
                 link = 'index.html#{0}?{1}'.format(benchmark_name, urllib.parse.urlencode(params))
 
                 try:
-                    best_percentage = "{0:.2f}%".format(100 *
-                                                        (last_value - best_value) / best_value)
+                    best_percentage = "{0:.2f}%".format(
+                        100 * (last_value - best_value) / best_value
+                    )
                 except ZeroDivisionError:
                     best_percentage = "{0:.2g} units".format(last_value - best_value)
 
@@ -171,13 +177,14 @@ class Regressions(OutputPublisher):
                     commit_a = revision_to_hash[rev1]
                     commit_b = revision_to_hash[rev2]
                     if 'github.com' in conf.show_commit_url:
-                        commit_url = (conf.show_commit_url + '../compare/' +
-                                      commit_a + "..." + commit_b)
+                        commit_url = (
+                            conf.show_commit_url + '../compare/' + commit_a + "..." + commit_b
+                        )
                     else:
                         commit_url = conf.show_commit_url + commit_a
-                    commit_ref = 'in commits <a href="{0}">{1}...{2}</a>'.format(commit_url,
-                                                                                 commit_a[:8],
-                                                                                 commit_b[:8])
+                    commit_ref = 'in commits <a href="{0}">{1}...{2}</a>'.format(
+                        commit_url, commit_a[:8], commit_b[:8]
+                    )
                 else:
                     commit_a = revision_to_hash[rev2]
                     commit_url = conf.show_commit_url + commit_a
@@ -209,17 +216,19 @@ class Regressions(OutputPublisher):
 
         entries.sort(key=lambda x: x.updated, reverse=True)
 
-        feed.write_atom(filename, entries,
-                        title='{0} performance regressions'.format(conf.project),
-                        author='Airspeed Velocity',
-                        address='{0}.asv'.format(conf.project))
+        feed.write_atom(
+            filename,
+            entries,
+            title='{0} performance regressions'.format(conf.project),
+            author='Airspeed Velocity',
+            address='{0}.asv'.format(conf.project)
+        )
 
 
 class _GraphDataFilter:
     """
     Obtain data sets from graphs, following configuration settings.
     """
-
     def __init__(self, conf, repo, revisions):
         self.conf = conf
         self.repo = repo
@@ -245,8 +254,7 @@ class _GraphDataFilter:
 
         """
         if benchmark.get('params'):
-            param_iter = enumerate(zip(itertools.product(*benchmark['params']),
-                                       graph.get_steps()))
+            param_iter = enumerate(zip(itertools.product(*benchmark['params']), graph.get_steps()))
         else:
             param_iter = [(None, (None, graph.get_steps()))]
 
@@ -304,8 +312,12 @@ class _GraphDataFilter:
                             break
                     else:
                         # Commit not found in the branch --- warn and ignore.
-                        log.warning(("Commit {0} specified in `regressions_first_commits` "
-                                     "not found in branch").format(start_commit))
+                        log.warning(
+                            (
+                                "Commit {0} specified in `regressions_first_commits` "
+                                "not found in branch"
+                            ).format(start_commit)
+                        )
                         self._start_revisions[key] = -1
 
                 start_revision = max(start_revision, self._start_revisions[key] + 1)
@@ -328,8 +340,9 @@ class _GraphDataFilter:
                 try:
                     threshold = float(threshold)
                 except ValueError:
-                    raise util.UserError("Non-float threshold in asv.conf.json: {!r}"
-                                         .format(threshold))
+                    raise util.UserError(
+                        "Non-float threshold in asv.conf.json: {!r}".format(threshold)
+                    )
 
                 if max_threshold is None:
                     max_threshold = threshold
