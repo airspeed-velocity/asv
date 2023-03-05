@@ -26,7 +26,7 @@ class PluginManager:
             package.__path__, prefix
         ):
             if "mamba" in name and (
-                sys.version_info.major >= 3 and sys.version_info.minor < 8
+                sys.version_info.major >= 3 and sys.version_info.minor > 8
             ):
                 continue  # Don't when mamba.api was not defined
             else:
