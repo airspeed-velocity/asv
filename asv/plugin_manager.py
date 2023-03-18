@@ -4,6 +4,7 @@ import sys
 import pkgutil
 
 from . import commands, plugins
+from .console import log
 
 
 class PluginManager:
