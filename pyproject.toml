@@ -44,6 +44,7 @@ test = [
     "scipy; platform_python_implementation != \"PyPy\"",
     "feedparser",
     "selenium",
+    "pytest-rerunfailures",
     "python-hglib",
     "json5",
     "pympler; platform_python_implementation != \"PyPy\"",
