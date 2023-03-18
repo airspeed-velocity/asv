@@ -26,8 +26,13 @@ class PluginManager:
             package.__path__, prefix
         ):
             if "mamba" in name and (
-                sys.version_info.major >= 3 and sys.version_info.minor > 8
+                sys.version_info.major < 3 and sys.version_info.minor < 8
             ):
+                log.info(
+                    "Python version is less than 3.8, found "
+                    f"{sys.version_info.major}.{sys.version_info.minor}"
+                    ", will not load the mamba plugin"
+                )
                 continue  # Don't when mamba.api was not defined
             else:
                 __import__(name)
