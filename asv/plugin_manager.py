@@ -4,7 +4,6 @@ import sys
 import pkgutil
 
 from . import commands, plugins
-from .console import log
 
 
 class PluginManager:
@@ -26,20 +25,13 @@ class PluginManager:
         for module_finder, name, ispkg in pkgutil.iter_modules(
             package.__path__, prefix
         ):
-            if "mamba" in name and (
-                sys.version_info.major < 3 and sys.version_info.minor < 8
-            ):
-                log.info(
-                    "Python version is less than 3.8, found "
-                    f"{sys.version_info.major}.{sys.version_info.minor}"
-                    ", will not load the mamba plugin"
-                )
-                continue  # Don't when mamba.api was not defined
-            else:
+            try:
                 __import__(name)
                 mod = sys.modules[name]
                 self.init_plugin(mod)
                 self._plugins.append(mod)
+            except ModuleNotFoundError:
+                continue  # Couldn't find mamba
 
     def import_plugin(self, name):
         extended = False
