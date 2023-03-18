@@ -10,7 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.7", "3.10", "=3.8[build=*_pypy]", "=3.9[build=*_pypy]"]
+        python-version: ["3.7", "3.10", "pypy-3.7", "pypy-3.8"]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v3
@@ -24,27 +24,21 @@ jobs:
         with:
           python-version: 3.7
 
-      - name: Setup Conda with ${{ matrix.python-version }}
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          channels: conda-forge
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
       - name: Install dependencies
-        shell: bash -el {0}
-        run: pip install -r requirements-dev.txt
-
-      - name: Get mamba
-        shell: bash -el {0}
-        run: conda install mamba -c conda-forge
+        run: python -m pip install -r requirements-dev.txt
 
       - name: Install asv
-        shell: bash -el {0}
         run: pip install .
 
       - name: Run tests
-        shell: bash -el {0}
-        run: python -m pytest -v --timeout=300 --durations=20 test
+        run: python -m pytest -v --timeout=300 --durations=100 test
 
   docs:
     runs-on: ubuntu-latest
@@ -57,23 +51,11 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
 
-      - name: Setup Conda
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-          channels: conda-forge
-
-      - name: Get mamba
-        shell: bash -el {0}
-        run: conda install mamba -c conda-forge
-
       - name: Install dependencies
-        shell: bash -el {0}
         run: python -m pip install -r requirements-dev.txt
 
       - name: Install asv
-        shell: bash -el {0}
         run: pip install ".[doc]"
 
       - name: Build docs
-        shell: bash -el {0}
         run: sphinx-build -W docs/source html
