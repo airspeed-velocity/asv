@@ -420,10 +420,6 @@ def get_environment_class(conf, python):
     classes = list(util.iter_subclasses(Environment))[::-1]
 
     if conf.environment_type:
-        if "mamba" in environment_type and (
-            sys.version_info.major >= 3 and sys.version_info.minor < 8
-        ):
-            environment_type = "conda"
         cls = get_environment_class_by_name(conf.environment_type)
         classes.remove(cls)
         classes.insert(0, cls)
