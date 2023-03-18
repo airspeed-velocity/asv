@@ -4,6 +4,7 @@ import sys
 import pkgutil
 
 from . import commands, plugins
+from .console import log
 
 
 class PluginManager:
@@ -30,7 +31,8 @@ class PluginManager:
                 mod = sys.modules[name]
                 self.init_plugin(mod)
                 self._plugins.append(mod)
-            except ModuleNotFoundError:
+            except ModuleNotFoundError as err:
+                log.error(f"Couldn't load {name} because\n{err}")
                 continue  # Couldn't find mamba
 
     def import_plugin(self, name):
