@@ -561,6 +561,10 @@ class Results:
         profile_data = self._profiles[benchmark_name]
         profile_data = profile_data.encode('ascii')
         profile_bytes = zlib.decompress(base64.b64decode(profile_data))
+        return profile_bytes
+
+    def get_profile_stats(self, benchmark_name):
+        profile_bytes = self.get_profile(benchmark_name)
         return self._mk_pstats(profile_bytes)
 
     def has_profile(self, benchmark_name):
