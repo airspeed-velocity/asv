@@ -53,6 +53,7 @@ test = [
     "selenium",
     "pytest-rerunfailures",
     "python-hglib",
+    "rpy2",
 ]
 doc = [
     "sphinx",
