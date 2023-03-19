@@ -7,6 +7,8 @@ import zlib
 import itertools
 import hashlib
 import datetime
+import tempfile
+import pstats
 
 from . import environment, statistics, util
 from .console import log
@@ -533,6 +535,14 @@ class Results:
             profile_data = profile_data.decode('ascii')
             self._profiles[benchmark_name] = profile_data
 
+    def _mk_pstats(self, bytedata):
+        fd, fpath = tempfile.mkstemp()
+        with os.fdopen(fd, 'wb') as hp:
+            hp.write(bytedata)
+        pstat = pstats.Stats(fpath)
+        os.remove(fpath)
+        return pstat
+
     def get_profile(self, benchmark_name):
         """
         Get the profile data for the given benchmark name.
@@ -550,7 +560,8 @@ class Results:
         """
         profile_data = self._profiles[benchmark_name]
         profile_data = profile_data.encode('ascii')
-        return zlib.decompress(base64.b64decode(profile_data))
+        profile_bytes = zlib.decompress(base64.b64decode(profile_data))
+        return self._mk_pstats(profile_bytes)
 
     def has_profile(self, benchmark_name):
         """
