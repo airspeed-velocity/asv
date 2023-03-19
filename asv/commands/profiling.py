@@ -214,5 +214,6 @@ class Profile(Command):
             color_print('')
             with temp_profile(profile_data) as profile_path:
                 stats = pstats.Stats(profile_path)
+                stats.strip_dirs()  # Addresses gh-71
                 stats.sort_stats('cumulative')
                 stats.print_stats()
