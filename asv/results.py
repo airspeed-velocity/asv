@@ -554,8 +554,8 @@ class Results:
 
         Returns
         -------
-        profile_data : bytes
-            Raw profile data
+        profile_data : pstats.Stats
+            Profile data
 
         """
         profile_data = self._profiles[benchmark_name]

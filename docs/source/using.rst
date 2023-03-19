@@ -553,7 +553,25 @@ the ``--gui=runsnake`` to ``asv profile``, the profile is collected
 You can also get the raw profiling data by using the ``--output``
 argument to ``asv profile``.
 
+.. note::
+
+   Since the method name is passed as a regex, parenthesis need to be escaped, e.g.
+   ``asv profile 'benchmarks.MyBench.time_sort\(500\)' HEAD --gui snakeviz``
+
 See :ref:`cmd-asv-profile` for more options.
+
+To extract information from ``--profile`` runs of ``asv``::
+
+    $ python
+    import asv
+    results_asv = asv.results.iter_results(".asv")
+    res_objects = list(results_asv)
+    prof_data = res_objects[0].get_profile('benchmarks.MyBench.time_sort')
+    prof_data.sort_stats('cumulative').print_stats()
+
+Where different benchmarks may be used. A specific ``json`` may also be loaded
+directly with ``asv.results.Results.load(<json_path>)``, after which
+``get_profile`` can be used.
 
 .. _comparing:
 
