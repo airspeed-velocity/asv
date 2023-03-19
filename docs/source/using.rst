@@ -567,6 +567,7 @@ To extract information from ``--profile`` runs of ``asv``::
     results_asv = asv.results.iter_results(".asv")
     res_objects = list(results_asv)
     prof_data = res_objects[0].get_profile_stats('benchmarks.MyBench.time_sort')
+    prof_data.strip_dirs() # Remove machine specific info
     prof_data.sort_stats('cumulative').print_stats()
 
 Where different benchmarks may be used. A specific ``json`` may also be loaded
