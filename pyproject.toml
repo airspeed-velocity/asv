@@ -53,7 +53,7 @@ test = [
     "selenium",
     "pytest-rerunfailures",
     "python-hglib",
-    "rpy2",
+    "rpy2; platform_python_implementation != \"PyPy\"",
 ]
 doc = [
     "sphinx",

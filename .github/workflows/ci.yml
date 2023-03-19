@@ -11,6 +11,7 @@ jobs:
       matrix:
         os: ["ubuntu-latest"]
         python-version: ["3.7", "3.10", "pypy-3.8", "pypy-3.9"]
+        r-version: ['release']
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v3
@@ -24,7 +25,7 @@ jobs:
         with:
           python-version: 3.7
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python version ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
@@ -33,6 +34,11 @@ jobs:
 
       - name: Setup a browser for more tests
         uses: browser-actions/setup-chrome@latest
+
+      - name: Set up R version ${{ matrix.r-version }}
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.r-version }}
 
       - name: Install dependencies
         run: python -m pip install ".[test,hg]"
