@@ -428,7 +428,7 @@ def get_environment_class(conf, python):
         if cls.matches_python_fallback and cls.matches(python):
             return cls
     raise EnvironmentUnavailable(
-        "No way to create environment for python='{python}'")
+        f"No way to create environment for python='{python}'")
 
 
 def get_environment_class_by_name(environment_type):
