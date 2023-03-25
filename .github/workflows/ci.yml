@@ -3,30 +3,52 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  build:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
-    with:
-      envs: |
-        - linux: build-dist
-        - linux: build-docs
   test:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@main
-    with:
-      envs: |
-        - linux: test-xdist
-          python-version: "3.7"
-        - linux: test-xdist
-          python-version: "pypy3.7"
-        - linux: test-mindeps-xdist
-          python-version: "3.8"
-        - linux: test-xdist
-          python-version: "pypy3.8"
-        - linux: test-xdist
-          python-version: "3.10"
-        - linux: test-xdist
-          python-version: "3.11"
-        - macos: test-xdist
-          python-version: "3.11"
-        - linux: test-devdeps-xdist
-        - linux: test-xdist-cov
-          coverage: codecov
+    name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.runs-on }})
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: ["ubuntu-latest"]
+        python-version: ["3.7", "3.8", "pypy3.8", "3.10", "3.11"]
+        toxenv: ["test-xdist"]
+        include:
+          - runs-on: ubuntu-latest
+            python-version: "3.8"
+            toxenv: test-mindeps-xdist
+          - runs-on: ubuntu-latest
+            python-version: "3.11"
+            toxenv: test-devdeps-xdist
+          - runs-on: ubuntu-latest
+            python-version: "3.x"
+            toxenv: test-xdist-cov
+          - runs-on: macos-latest
+            python-version: "3.x"
+            toxenv: test-xdist-cov
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install tox
+      - run: tox -e ${{ matrix.toxenv }}
+  build:
+    name: ${{ matrix.toxenv }} (Python ${{ matrix.python-version }}, ${{ matrix.runs-on }})
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: ["ubuntu-latest"]
+        python-version: ["3.x"]
+        toxenv: ["build-docs", "build-dist"]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install tox
+      - run: tox -e ${{ matrix.toxenv }}
