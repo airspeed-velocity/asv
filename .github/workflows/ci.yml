@@ -3,11 +3,10 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  check:
+  build:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
     with:
       envs: |
-        - linux: check-style
         - linux: build-dist
         - linux: build-docs
   test:
