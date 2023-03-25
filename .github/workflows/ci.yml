@@ -13,12 +13,12 @@ jobs:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@main
     with:
       envs: |
-        - linux: test-mindeps-xdist
-          python-version: "3.7"
         - linux: test-xdist
           python-version: "3.7"
         - linux: test-xdist
           python-version: "pypy3.7"
+        - linux: test-mindeps-xdist
+          python-version: "3.8"
         - linux: test-xdist
           python-version: "pypy3.8"
         - linux: test-xdist
