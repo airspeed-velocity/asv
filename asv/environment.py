@@ -12,6 +12,7 @@ import re
 import sys
 import itertools
 import subprocess
+from pathlib import Path
 
 from .console import log
 from . import util, build_cache
@@ -862,11 +863,39 @@ class Environment:
         """
         Run build commands
         """
+        build_dir_path = Path(build_dir)
+
+        def has_file(file_name):
+            return (build_dir_path / file_name).exists()
+
         cmd = self._build_command
+
         if cmd is None:
-            cmd = ["python setup.py build",
-                   ("PIP_NO_BUILD_ISOLATION=false "
-                    "python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}")]
+            if has_file('pyproject.toml'):
+                if has_file('pdm.lock'):
+                    cmd = [
+                        "python -mpip install pdm",
+                        "pdm install --prod",
+                        "pdm build --wheel --no-isolation --output {build_cache_dir}"
+                    ]
+                elif has_file('poetry.lock'):
+                    cmd = [
+                        "python -mpip install poetry",
+                        "poetry install",
+                        "poetry build --format wheel --output {build_cache_dir}"
+                    ]
+                else:
+                    cmd = [
+                        ("PIP_NO_BUILD_ISOLATION=false "
+                         "python -mpip wheel --no-deps --no-index "
+                         "-w {build_cache_dir} {build_dir}")
+                    ]
+            else:
+                cmd = [
+                    "python setup.py build",
+                    ("PIP_NO_BUILD_ISOLATION=false "
+                     "python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}")
+                ]
 
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)
