@@ -45,7 +45,7 @@ def pytest_addoption(parser):
                            "example 'return Chrome()'"))
 
     parser.addoption("--environment-type", action="store", default=None,
-                     choices=("conda", "virtualenv"),
+                     choices=("conda", "virtualenv", "mamba"),
                      help="environment_type to use in tests by default")
 
 

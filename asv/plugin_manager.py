@@ -4,6 +4,7 @@ import sys
 import pkgutil
 
 from . import commands, plugins
+from .console import log
 
 
 class PluginManager:
@@ -16,22 +17,29 @@ class PluginManager:
     Then, any modules specified in the ``plugins`` entry in the
     ``asv.conf.json`` file are loaded.
     """
+
     def __init__(self):
         self._plugins = []
 
     def load_plugins(self, package):
-        prefix = package.__name__ + '.'
-        for module_finder, name, ispkg in pkgutil.iter_modules(package.__path__, prefix):
-            __import__(name)
-            mod = sys.modules[name]
-            self.init_plugin(mod)
-            self._plugins.append(mod)
+        prefix = package.__name__ + "."
+        for module_finder, name, ispkg in pkgutil.iter_modules(
+            package.__path__, prefix
+        ):
+            try:
+                __import__(name)
+                mod = sys.modules[name]
+                self.init_plugin(mod)
+                self._plugins.append(mod)
+            except ModuleNotFoundError as err:
+                log.error(f"Couldn't load {name} because\n{err}")
+                continue  # Couldn't find mamba
 
     def import_plugin(self, name):
         extended = False
-        if name.startswith('.'):
+        if name.startswith("."):
             extended = True
-            sys.path.insert(0, '.')
+            sys.path.insert(0, ".")
             name = name[1:]
         try:
             mod = __import__(name, {}, {}, [], level=0)
@@ -42,7 +50,7 @@ class PluginManager:
                 del sys.path[0]
 
     def init_plugin(self, mod):
-        if hasattr(mod, 'setup'):
+        if hasattr(mod, "setup"):
             mod.setup()
 
     def run_hook(self, hook_name, args, kwargs):
