@@ -3,6 +3,8 @@
 import itertools
 import math
 
+import tabulate
+
 from . import Command, common_args
 from ..benchmarks import Benchmarks
 from ..machine import iter_machine_files
@@ -97,7 +99,7 @@ class Compare(Command):
             'revision2',
             help="""The revision being compared.""")
 
-        common_args.add_compare(parser, sort_default='name', only_changed_default=False)
+        common_args.add_compare(parser, sort_default='default', only_changed_default=False)
 
         parser.add_argument(
             '--machine', '-m', type=str, default=None,
@@ -122,7 +124,7 @@ class Compare(Command):
 
     @classmethod
     def run(cls, conf, hash_1, hash_2, factor=None, split=False, only_changed=False,
-            sort='name', machine=None, env_spec=None, use_stats=True):
+            sort='default', machine=None, env_spec=None, use_stats=True):
 
         repo = get_repo(conf)
         try:
@@ -170,8 +172,8 @@ class Compare(Command):
     @classmethod
     def print_table(cls, conf, hash_1, hash_2, factor, split,
                     resultset_1=None, resultset_2=None, machine=None,
-                    only_changed=False, sort='name', use_stats=True, env_names=None,
-                    commit_names=None):
+                    only_changed=False, sort='default',
+                    use_stats=True, env_names=None, commit_names=None):
         results_1 = {}
         results_2 = {}
         ss_1 = {}
@@ -340,11 +342,19 @@ class Compare(Command):
                 human_value(time_1, unit, err=err_1),
                 human_value(time_2, unit, err=err_2),
                 ratio)
-
-            if split:
-                bench[color].append((color, details, benchmark, ratio_num))
+            split_line = details.split()
+            if len(machine_env_names) > 1:
+                benchmark_name = "{} [{}]".format(*benchmark)
             else:
-                bench['all'].append((color, details, benchmark, ratio_num))
+                benchmark_name = benchmark[0]
+            if len(split_line) == 4:
+                split_line += [benchmark_name]
+            else:
+                split_line = [' '] + split_line + [benchmark_name]
+            if split:
+                bench[color].append(split_line)
+            else:
+                bench['all'].append(split_line)
 
         if split:
             keys = ['green', 'default', 'red', 'lightgrey']
@@ -369,8 +379,6 @@ class Compare(Command):
                 color_print("")
                 color_print(titles[key])
                 color_print("")
-            color_print("       before           after         ratio")
-            color_print("     [{0:8s}]       [{1:8s}]".format(hash_1[:8], hash_2[:8]))
 
             name_1 = commit_names.get(hash_1)
             if name_1:
@@ -384,23 +392,20 @@ class Compare(Command):
             else:
                 name_2 = ''
 
-            if name_1 or name_2:
-                color_print("     {0:10s}       {1:10s}".format(name_1, name_2))
-
-            if sort == 'ratio':
+            if sort == 'default':
+                pass
+            elif sort == 'ratio':
                 bench[key].sort(key=lambda v: v[3], reverse=True)
             elif sort == 'name':
                 bench[key].sort(key=lambda v: v[2])
             else:
                 raise ValueError("Unknown 'sort'")
 
-            for color, details, benchmark, ratio in bench[key]:
-                if len(machine_env_names) > 1:
-                    benchmark_name = "{} [{}]".format(*benchmark)
-                else:
-                    benchmark_name = benchmark[0]
-
-                color_print(details, color, end='')
-                color_print(benchmark_name)
+            print(tabulate.tabulate(bench[key],
+                                    headers=['Change',
+                                             f'Before [{hash_1[:8]}] {name_1}',
+                                             f'After [{hash_2[:8]}] {name_2}',
+                                             'Ratio', 'Benchmark (Parameter)'],
+                                    tablefmt="github"))
 
         return worsened, improved

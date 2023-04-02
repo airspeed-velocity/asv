@@ -59,7 +59,7 @@ def add_compare(parser, only_changed_default=False, sort_default='name'):
     parser.add_argument('--no-only-changed', dest='only_changed', action='store_false')
 
     parser.add_argument(
-        '--sort', action='store', type=str, choices=('name', 'ratio'),
+        '--sort', action='store', type=str, choices=('name', 'ratio', 'default'),
         default=sort_default, help="""Sort order""")
 
 
