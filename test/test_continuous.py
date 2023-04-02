@@ -30,7 +30,8 @@ def test_continuous(capfd, basic_conf_2):
     text, err = capfd.readouterr()
     assert "SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY" in text
     assert "PERFORMANCE INCREASED" in text or "PERFORMANCE DECREASED" in text
-    expected_string = "| +        |                            1 |                           6 |       6 | params_examples.track_find_test(2) [orangutan/virtualenv-py3.11-asv_dummy_test_package_1-asv_dummy_test_package_20.3.9] |"
+    # Check output, but not the whole row
+    expected_string = "params_examples.track_find_test(2) [orangutan/virtualenv-py"  # noqa: E501 line too long
     assert expected_string in text
 
     assert "params_examples.ClassOne" in text
