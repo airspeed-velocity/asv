@@ -22,32 +22,32 @@ MACHINE_FILE = abspath(join(dirname(__file__), 'asv-machine.json'))
 REFERENCE = """
 All benchmarks:
 
-       before           after         ratio
-     [22b920c6]       [fcf8c079]
-!             n/a           failed      n/a  params_examples.ParamSuite.track_value
-           failed           failed      n/a  time_AAA_failure
-              n/a              n/a      n/a  time_AAA_skip
-          1.00±1s          3.00±1s    ~3.00  time_ci_big
-+         1.00±0s          3.00±0s     3.00  time_ci_small
-!           454μs           failed      n/a  time_coordinates.time_latitude
-            1.00s            1.00s     1.00  time_other.time_parameterized(1)
-            2.00s            4.00s     2.00  time_other.time_parameterized(2)
-!           3.00s           failed      n/a  time_other.time_parameterized(3)
-+          1.75ms            153ms    87.28  time_quantity.time_quantity_array_conversion
-+           934μs            108ms   115.90  time_quantity.time_quantity_init_array
-           83.6μs           55.4μs     0.66  time_quantity.time_quantity_init_scalar
-            282μs            147μs     0.52  time_quantity.time_quantity_scalar_conversion
-+          1.31ms           7.75ms     5.91  time_quantity.time_quantity_ufunc_sin
-               42               42     1.00  time_secondary.track_value
-            5.73m            5.73m     1.00  time_units.mem_unit
-+           125μs           3.81ms    30.42  time_units.time_simple_unit_parse
-           1.64ms           1.53ms     0.93  time_units.time_unit_compose
-+           372μs           11.5ms    30.81  time_units.time_unit_parse
--          69.1μs           18.3μs     0.27  time_units.time_unit_to
-           11.9μs           13.1μs     1.10  time_units.time_very_simple_unit_parse
-+           1.00s            3.00s     3.00  time_with_version_match
-+           1.00s            3.00s     3.00  time_with_version_mismatch_bench
-x           1.00s            3.00s     3.00  time_with_version_mismatch_other
+| Change   | Before [22b920c6]    | After [fcf8c079]    | Ratio   | Benchmark (Parameter)                         |
+|----------|----------------------|---------------------|---------|-----------------------------------------------|
+| !        | n/a                  | failed              | n/a     | params_examples.ParamSuite.track_value        |
+|          | failed               | failed              | n/a     | time_AAA_failure                              |
+|          | n/a                  | n/a                 | n/a     | time_AAA_skip                                 |
+|          | 1.00±1s              | 3.00±1s             | ~3.00   | time_ci_big                                   |
+| +        | 1.00±0s              | 3.00±0s             | 3.00    | time_ci_small                                 |
+| !        | 454μs                | failed              | n/a     | time_coordinates.time_latitude                |
+|          | 1.00s                | 1.00s               | 1.00    | time_other.time_parameterized(1)              |
+|          | 2.00s                | 4.00s               | 2.00    | time_other.time_parameterized(2)              |
+| !        | 3.00s                | failed              | n/a     | time_other.time_parameterized(3)              |
+| +        | 1.75ms               | 153ms               | 87.28   | time_quantity.time_quantity_array_conversion  |
+| +        | 934μs                | 108ms               | 115.90  | time_quantity.time_quantity_init_array        |
+|          | 83.6μs               | 55.4μs              | 0.66    | time_quantity.time_quantity_init_scalar       |
+|          | 282μs                | 147μs               | 0.52    | time_quantity.time_quantity_scalar_conversion |
+| +        | 1.31ms               | 7.75ms              | 5.91    | time_quantity.time_quantity_ufunc_sin         |
+|          | 42                   | 42                  | 1.00    | time_secondary.track_value                    |
+|          | 5.73m                | 5.73m               | 1.00    | time_units.mem_unit                           |
+| +        | 125μs                | 3.81ms              | 30.42   | time_units.time_simple_unit_parse             |
+|          | 1.64ms               | 1.53ms              | 0.93    | time_units.time_unit_compose                  |
+| +        | 372μs                | 11.5ms              | 30.81   | time_units.time_unit_parse                    |
+| -        | 69.1μs               | 18.3μs              | 0.27    | time_units.time_unit_to                       |
+|          | 11.9μs               | 13.1μs              | 1.10    | time_units.time_very_simple_unit_parse        |
+| +        | 1.00s                | 3.00s               | 3.00    | time_with_version_match                       |
+| +        | 1.00s                | 3.00s               | 3.00    | time_with_version_mismatch_bench              |
+| x        | 1.00s                | 3.00s               | 3.00    | time_with_version_mismatch_other              |
 """
 
 REFERENCE_SPLIT = """
