@@ -3,6 +3,8 @@
 import logging
 import traceback
 from collections import defaultdict
+import pkg_resources
+from pathlib import Path
 
 from . import Command, common_args
 from ..console import log
@@ -80,3 +82,10 @@ class Setup(Command):
                     exc.reraise()
             else:
                 list(map(_create, environments))
+
+        for env in environments:
+            asv_path = Path(pkg_resources.resource_filename('asv.runner','')).parent
+            env._interpolate_and_run_commands(["pip install json5 tabulate pyyaml"],
+                                              default_cwd=asv_path)
+            env._interpolate_and_run_commands(["pip install -e ."],
+                                              default_cwd=asv_path)
