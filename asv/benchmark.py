@@ -59,7 +59,6 @@ import pkgutil
 import traceback
 import contextlib
 import math
-from pathlib import Path
 from hashlib import sha256
 from importlib import import_module
 from collections import Counter
@@ -711,55 +710,7 @@ class MemBenchmark(Benchmark):
             raise NotImplementedError("asizeof doesn't work on pypy")
             return
 
-        def import_asizeof():
-            """Import asizeof, searching system Pythons in PATH."""
-            path_dirs = os.environ.get("PATH", "").split(os.pathsep)
-
-            # On Windows, append the directories containing the Python executables
-            if os.name == "nt":
-                path_dirs += [sys.base_exec_prefix, sys.base_exec_prefix + "/Scripts"]
-
-            asizeof_paths = set()
-            for path in path_dirs:
-                python_path = os.path.join(path, "python")
-                if os.path.isfile(python_path) and os.access(python_path, os.X_OK):
-                    cand_path = Path(python_path).parent.parent / "lib"
-                    if cand_path not in asizeof_paths:
-                        asizeof_paths.add(cand_path)
-                        for asizeof_path in cand_path.rglob("asizeof.py"):
-                            try:  # Still returns the first importable asizeof
-                                loader = importlib.machinery.SourceFileLoader(
-                                    "asizeof", str(asizeof_path)
-                                )
-                                return loader.load_module()
-                            except ImportError:
-                                pass
-
-            # Try conda, mamba explicitly, needed on Windows
-            try:
-                env_path = os.environ["CONDA_PREFIX"]
-            except KeyError:
-                pass
-            else:
-                cand_path = Path(env_path) / "lib"
-                if cand_path not in asizeof_paths:
-                    asizeof_paths.add(cand_path)
-                    for asizeof_path in cand_path.rglob("asizeof.py"):
-                        try:  # Still returns the first importable asizeof
-                            loader = importlib.machinery.SourceFileLoader(
-                                "asizeof", str(asizeof_path)
-                            )
-                            return loader.load_module()
-                        except ImportError:
-                            pass
-
-            return NotImplementedError("asizeof not found anywhere")
-
-        try:
-            from pympler.asizeof import asizeof
-        except ImportError:
-            asizeof = import_asizeof()
-            from asizeof import asizeof
+        from pympler.asizeof import asizeof
 
         obj = self.func(*param)
 
