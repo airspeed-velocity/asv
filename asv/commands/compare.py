@@ -22,6 +22,13 @@ def mean(values):
         return sum(values) / float(len(values))
 
 
+def format_benchmark_name(benchmark_name_parts):
+    if len(benchmark_name_parts) == 0:
+        return benchmark_name_parts[0]
+
+    return "%s(%s)" % (benchmark_name_parts[0], ", ".join(benchmark_name_parts[1:]))
+
+
 def unroll_result(benchmark_name, params, *values):
     """
     Iterate through parameterized result values
@@ -47,9 +54,9 @@ def unroll_result(benchmark_name, params, *values):
 
     for params, value in zip(itertools.product(*params), zip(*values)):
         if params == ():
-            name = benchmark_name
+            name = [benchmark_name]
         else:
-            name = "%s(%s)" % (benchmark_name, ", ".join(params))
+            name = [benchmark_name] + list(params)
         yield (name,) + value
 
 
@@ -77,6 +84,21 @@ def _is_result_better(a, b, a_ss, b_ss, factor, use_stats=True):
             return False
 
     return a < b / factor
+
+
+def results_default_iter(commit_hash, conf, machine, env_names):
+    for result in iter_results_for_machine_and_hash(
+            conf.results_dir, machine, commit_hash):
+        if env_names is not None and result.env_name not in env_names:
+            continue
+        for key in result.get_all_result_keys():
+            params = result.get_result_params(key)
+            result_value = result.get_result_value(key, params)
+            result_stats = result.get_result_stats(key, params)
+            result_samples = result.get_result_samples(key, params)
+            result_version = result.benchmark_version.get(key)
+            yield (key, params, result_value, result_stats, result_samples,
+                   result_version, result.params['machine'], result.env_name)
 
 
 class Compare(Command):
@@ -185,32 +207,19 @@ class Compare(Command):
         if commit_names is None:
             commit_names = {}
 
-        def results_default_iter(commit_hash):
-            for result in iter_results_for_machine_and_hash(
-                    conf.results_dir, machine, commit_hash):
-                if env_names is not None and result.env_name not in env_names:
-                    continue
-                for key in result.get_all_result_keys():
-                    params = result.get_result_params(key)
-                    result_value = result.get_result_value(key, params)
-                    result_stats = result.get_result_stats(key, params)
-                    result_samples = result.get_result_samples(key, params)
-                    result_version = result.benchmark_version.get(key)
-                    yield (key, params, result_value, result_stats, result_samples,
-                           result_version, result.params['machine'], result.env_name)
-
         if resultset_1 is None:
-            resultset_1 = results_default_iter(hash_1)
+            resultset_1 = results_default_iter(hash_1, conf, machine, env_names)
 
         if resultset_2 is None:
-            resultset_2 = results_default_iter(hash_2)
+            resultset_2 = results_default_iter(hash_2, conf, machine, env_names)
 
         machine_env_names = set()
 
         for key, params, value, stats, samples, version, machine, env_name in resultset_1:
             machine_env_name = "{}/{}".format(machine, env_name)
             machine_env_names.add(machine_env_name)
-            for name, value, stats, samples in unroll_result(key, params, value, stats, samples):
+            for name_parts, value, stats, samples in unroll_result(key, params, value, stats, samples):
+                name = format_benchmark_name(name_parts)
                 units[(name, machine_env_name)] = benchmarks.get(key, {}).get('unit')
                 results_1[(name, machine_env_name)] = value
                 ss_1[(name, machine_env_name)] = (stats, samples)
@@ -219,7 +228,8 @@ class Compare(Command):
         for key, params, value, stats, samples, version, machine, env_name in resultset_2:
             machine_env_name = "{}/{}".format(machine, env_name)
             machine_env_names.add(machine_env_name)
-            for name, value, stats, samples in unroll_result(key, params, value, stats, samples):
+            for name_parts, value, stats, samples in unroll_result(key, params, value, stats, samples):
+                name = format_benchmark_name(name_parts)
                 units[(name, machine_env_name)] = benchmarks.get(key, {}).get('unit')
                 results_2[(name, machine_env_name)] = value
                 ss_2[(name, machine_env_name)] = (stats, samples)
@@ -233,6 +243,106 @@ class Compare(Command):
             raise util.UserError(
                 "Did not find results for commit {0}".format(hash_2))
 
+        bench, worsened, improved = cls.dispatch_results(
+            results_1,
+            results_2,
+            units,
+            split,
+            ss_1,
+            ss_2,
+            versions_1,
+            versions_2,
+            factor,
+            use_stats,
+            only_changed,
+        )
+
+        if split:
+            keys = ['green', 'default', 'red', 'lightgrey']
+        else:
+            keys = ['all']
+
+        titles = {}
+        titles['green'] = "Benchmarks that have improved:"
+        titles['default'] = "Benchmarks that have stayed the same:"
+        titles['red'] = "Benchmarks that have got worse:"
+        titles['lightgrey'] = "Benchmarks that are not comparable:"
+        titles['all'] = "All benchmarks:"
+
+        # Compute headers
+        for key in keys:
+
+            if len(bench[key]) == 0:
+                continue
+
+            header = []
+
+            if not only_changed:
+                header.append("")
+                header.append(titles[key])
+                header.append("")
+            header.append("       before           after         ratio")
+            header.append("     [{0:8s}]       [{1:8s}]".format(hash_1[:8], hash_2[:8]))
+
+            name_1 = commit_names.get(hash_1)
+            if name_1:
+                name_1 = '<{0}>'.format(name_1)
+            else:
+                name_1 = ''
+
+            name_2 = commit_names.get(hash_2)
+            if name_2:
+                name_2 = '<{0}>'.format(name_2)
+            else:
+                name_2 = ''
+
+            if name_1 or name_2:
+                header.append("     {0:10s}       {1:10s}".format(name_1, name_2))
+
+            cls.display_result(bench, key, sort, header, machine_env_names)
+
+        return worsened, improved
+
+
+    @classmethod
+    def display_result(cls, bench, key, sort, header, machine_env_names):
+        log.flush()
+
+        for header_line in header:
+            color_print(header_line)
+
+        if sort == 'ratio':
+            bench[key].sort(key=lambda v: v[3], reverse=True)
+        elif sort == 'name':
+            bench[key].sort(key=lambda v: v[2])
+        else:
+            raise ValueError("Unknown 'sort'")
+
+        for color, details, benchmark, ratio in bench[key]:
+            if len(machine_env_names) > 1:
+                benchmark_name = "{} [{}]".format(*benchmark)
+            else:
+                benchmark_name = benchmark[0]
+
+            color_print(details, color, end='')
+            color_print(benchmark_name)
+
+
+    @classmethod
+    def dispatch_results(
+        cls,
+        results_1,
+        results_2,
+        units,
+        split,
+        ss_1,
+        ss_2,
+        versions_1,
+        versions_2,
+        factor,
+        use_stats,
+        only_changed,
+    ):
         benchmarks_1 = set(results_1.keys())
         benchmarks_2 = set(results_2.keys())
 
@@ -346,61 +456,4 @@ class Compare(Command):
             else:
                 bench['all'].append((color, details, benchmark, ratio_num))
 
-        if split:
-            keys = ['green', 'default', 'red', 'lightgrey']
-        else:
-            keys = ['all']
-
-        titles = {}
-        titles['green'] = "Benchmarks that have improved:"
-        titles['default'] = "Benchmarks that have stayed the same:"
-        titles['red'] = "Benchmarks that have got worse:"
-        titles['lightgrey'] = "Benchmarks that are not comparable:"
-        titles['all'] = "All benchmarks:"
-
-        log.flush()
-
-        for key in keys:
-
-            if len(bench[key]) == 0:
-                continue
-
-            if not only_changed:
-                color_print("")
-                color_print(titles[key])
-                color_print("")
-            color_print("       before           after         ratio")
-            color_print("     [{0:8s}]       [{1:8s}]".format(hash_1[:8], hash_2[:8]))
-
-            name_1 = commit_names.get(hash_1)
-            if name_1:
-                name_1 = '<{0}>'.format(name_1)
-            else:
-                name_1 = ''
-
-            name_2 = commit_names.get(hash_2)
-            if name_2:
-                name_2 = '<{0}>'.format(name_2)
-            else:
-                name_2 = ''
-
-            if name_1 or name_2:
-                color_print("     {0:10s}       {1:10s}".format(name_1, name_2))
-
-            if sort == 'ratio':
-                bench[key].sort(key=lambda v: v[3], reverse=True)
-            elif sort == 'name':
-                bench[key].sort(key=lambda v: v[2])
-            else:
-                raise ValueError("Unknown 'sort'")
-
-            for color, details, benchmark, ratio in bench[key]:
-                if len(machine_env_names) > 1:
-                    benchmark_name = "{} [{}]".format(*benchmark)
-                else:
-                    benchmark_name = benchmark[0]
-
-                color_print(details, color, end='')
-                color_print(benchmark_name)
-
-        return worsened, improved
+        return bench, worsened, improved
