@@ -1389,3 +1389,20 @@ def git_default_branch():
     except ProcessError:
         default_branch = 'master'
     return default_branch
+
+
+def search_channels(cli_path, pkg, version):
+    try:
+        result = subprocess.run([cli_path, "search",
+                                 f"{pkg}=={version}"],
+                                capture_output=True,
+                                text=True,
+                                check=False)
+    except subprocess.CalledProcessError as e:
+        print(f"Error searching for {pkg} {version}, got:\n {e}",
+              file=sys.stderr)
+        return False
+    if f"No match found for: {pkg}=={version}." in result.stdout:
+        return False
+    # Worked!
+    return True

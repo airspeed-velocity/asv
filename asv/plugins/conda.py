@@ -102,34 +102,14 @@ class Conda(environment.Environment):
     @classmethod
     def _matches(cls, python):
         if not re.match(r'^[0-9].*$', python):
-            # The python name should be a version number
-            return False
-
-        try:
-            conda = _find_conda()
-        except IOError:
             return False
         else:
-            # This directory never gets created, since we're just
-            # doing a dry run below.  All it needs to be is something
-            # that doesn't already exist.
-            path = os.path.join(tempfile.gettempdir(), 'check')
-
-            # Check that the version number is valid
+            conda = _find_conda()
             try:
                 with _conda_lock():
-                    util.check_call([
-                        conda,
-                        'create',
-                        '--yes',
-                        '-p',
-                        path,
-                        'python={0}'.format(python),
-                        '--dry-run'], display_error=False, dots=False)
+                    return util.search_channels(conda, "python", python)
             except util.ProcessError:
                 return False
-            else:
-                return True
 
     def _setup(self):
         log.info("Creating conda environment for {0}".format(self.name))
