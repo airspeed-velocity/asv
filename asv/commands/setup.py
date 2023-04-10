@@ -2,7 +2,6 @@
 
 import logging
 import traceback
-import sys
 from collections import defaultdict
 from pathlib import Path
 
@@ -11,8 +10,6 @@ import pkg_resources
 from . import Command, common_args
 from ..console import log
 from .. import environment, util
-
-ON_PYPY = hasattr(sys, 'pypy_version_info')
 
 
 def _create(env):
@@ -89,11 +86,7 @@ class Setup(Command):
 
         for env in environments:
             asv_path = Path(pkg_resources.resource_filename(__name__, '')).parent.parent
-            if ON_PYPY:
-                env._interpolate_and_run_commands(["pip install json5 tabulate pyyaml"],
-                                                  default_cwd=asv_path)
-            else:
-                env._interpolate_and_run_commands(["pip install json5 tabulate pyyaml pympler"],
-                                                  default_cwd=asv_path)
+            env._interpolate_and_run_commands(["pip install -r requirements-dev.txt"],
+                                              default_cwd=asv_path)
             env._interpolate_and_run_commands(["pip install -e ."],
                                               default_cwd=asv_path)
