@@ -88,7 +88,7 @@ class Setup(Command):
                 list(map(_create, environments))
 
         for env in environments:
-            asv_path = Path(pkg_resources.resource_filename(__name__, ''))
+            asv_path = Path(pkg_resources.resource_filename(__name__, '')).parent.parent
             if ON_PYPY:
                 env._interpolate_and_run_commands(["pip install json5 tabulate pyyaml"],
                                                   default_cwd=asv_path)
