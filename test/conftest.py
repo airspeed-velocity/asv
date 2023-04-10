@@ -106,7 +106,7 @@ def generate_basic_conf(tmpdir,
 
 
 def pytest_sessionstart(session):
-    os.environ['PIP_NO_INDEX'] = '1'
+    # os.environ['PIP_NO_INDEX'] = '0'
     _monkeypatch_conda_lock(session.config)
 
     # Unregister unwanted environment types
