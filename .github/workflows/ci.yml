@@ -31,6 +31,9 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
 
+      - name: Setup a browser for more tests
+        uses: browser-actions/setup-chrome@latest
+
       - name: Install dependencies
         run: python -m pip install -r requirements-dev.txt
 
@@ -38,7 +41,7 @@ jobs:
         run: pip install .
 
       - name: Run tests
-        run: python -m pytest -v --timeout=300 --durations=100 test
+        run: python -m pytest -v --timeout=300 --webdriver=ChromeHeadless --durations=100 test
 
   docs:
     runs-on: ubuntu-latest
