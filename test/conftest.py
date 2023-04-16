@@ -257,7 +257,6 @@ def browser(request, pytestconfig):
     def ChromeHeadless():
         options = selenium.webdriver.ChromeOptions()
         options.add_argument('headless')
-        options.add_experimental_option('w3c', False)
         return selenium.webdriver.Chrome(options=options)
 
     ns = {}
