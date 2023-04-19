@@ -920,6 +920,10 @@ def format_benchmark_result(results, benchmark):
         display = _format_benchmark_result(display_result, benchmark)
         display = "\n".join(display).strip()
         details = display
+
+        # Display error if stderr is present
+        if failure_count > 0 and bool(results.stderr):
+            details += f"\n{results.stderr[name]}"
     else:
         if failure_count == 0:
             # Failure already shown above
