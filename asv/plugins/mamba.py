@@ -1,6 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 # ONLY works on newer python versions
 import os
+import re
 from pathlib import Path
 
 from yaml import load
@@ -60,6 +61,24 @@ class Mamba(environment.Environment):
         super(Mamba, self).__init__(conf, python, requirements, tagged_env_vars)
         self.context = libmambapy.Context()
         self.context.target_prefix = self._path
+
+    @classmethod
+    def matches(cls, python):
+        # Calling mamba can take a long time, so remember the result
+        if python not in cls._matches_cache:
+            cls._matches_cache[python] = cls._matches(python)
+        return cls._matches_cache[python]
+
+    @classmethod
+    def _matches(cls, python):
+        if not re.match(r'^[0-9].*$', python):
+            return False
+        else:
+            mamba_path = str(Path(os.getenv("CONDA_EXE")).parent / "mamba")
+            try:
+                return util.search_channels(mamba_path, "python", python)
+            except util.ProcessError:
+                return False
 
     def _setup(self):
         log.info("Creating mamba environment for {0}".format(self.name))
