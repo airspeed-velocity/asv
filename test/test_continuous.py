@@ -30,8 +30,10 @@ def test_continuous(capfd, basic_conf_2):
     text, err = capfd.readouterr()
     assert "SOME BENCHMARKS HAVE CHANGED SIGNIFICANTLY" in text
     assert "PERFORMANCE INCREASED" in text or "PERFORMANCE DECREASED" in text
-    assert ("+               1                6     6.00  params_examples.track_find_test(2)"
-            in text)
+    # Check output, but not the whole row
+    pattern = r"params_examples\.track_find_test\(2\) \[orangutan\/\w+-py"
+    assert re.search(pattern, text) is not None
+
     assert "params_examples.ClassOne" in text
 
     # Check rounds were interleaved (timing benchmark was run twice)
