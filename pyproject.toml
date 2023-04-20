@@ -97,7 +97,6 @@ extend-ignore = [
     "E741", # Do not use variables named 'I', 'O', or 'l'
 ]
 extend-exclude = [
-    "asv/extern",
     "test/example_results/cheetah",
 ]
 
