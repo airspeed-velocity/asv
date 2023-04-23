@@ -233,7 +233,7 @@ $(document).ready(function() {
                 return;
             }
 
-            var benchmark_basename = benchmark_name.replace(/\(.*/, '');
+            var benchmark_basename = benchmark_name.replace(/\([\s\S]*/, '');
             var benchmark = $.asv.master_json.benchmarks[benchmark_basename];
             var url_params = {};
 
