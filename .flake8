@@ -7,4 +7,3 @@ ignore =
     W504,
 # E741: Do not use variables named 'I', 'O', or 'l'
     E741
-exclude = asv/extern
