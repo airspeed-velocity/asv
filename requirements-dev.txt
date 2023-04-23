@@ -6,6 +6,7 @@ setuptools
 wheel
 sphinx
 sphinx_bootstrap_theme
+colorama; os_name == 'nt'
 # Optional requirements follow:
 numpy
 scipy; platform_python_implementation != "PyPy"

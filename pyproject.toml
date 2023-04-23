@@ -24,6 +24,12 @@ classifiers = [
 dynamic = [
     "version",
 ]
+dependencies = [
+    "json5",
+    "tabulate",
+    "colorama; os_name == 'nt'",
+    "pympler; platform_python_implementation != \"PyPy\"",
+]
 
 [project.urls]
 "Source Code" = "https://github.com/airspeed-velocity/asv"
@@ -46,8 +52,6 @@ test = [
     "selenium",
     "pytest-rerunfailures",
     "python-hglib",
-    "json5",
-    "pympler; platform_python_implementation != \"PyPy\"",
 ]
 doc = [
     "sphinx",
