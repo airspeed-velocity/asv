@@ -8,8 +8,7 @@ import traceback
 import datetime
 
 try:
-    import dill as pickle
-    pickle.settings['recurse'] = True
+    import cloudpickle as pickle
 except ImportError:
     import pickle
 

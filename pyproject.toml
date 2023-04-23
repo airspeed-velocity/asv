@@ -41,7 +41,7 @@ asv = "asv.__main__:main"
 
 [project.optional-dependencies]
 perf = [
-    "dill",
+    "cloudpickle",
 ]
 test = [
     "pytest",

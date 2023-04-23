@@ -65,8 +65,7 @@ from collections import Counter
 from time import process_time
 
 try:
-    import dill as pickle
-    pickle.settings['recurse'] = True
+    import cloudpickle as pickle
 except ImportError:
     import pickle
 
