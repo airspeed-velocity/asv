@@ -37,7 +37,7 @@ def create_httpd(handler_cls, port=0):
     for port in random_ports(port, 5):
         try:
             httpd = MyTCPServer(("", port), handler_cls)
-            base_url = "http://127.0.0.1:{0}/".format(port)
+            base_url = f"http://127.0.0.1:{port}/"
             break
         except socket.error as e:
             if e.errno == errno.EADDRINUSE:
@@ -91,7 +91,7 @@ class Preview(Command):
 
         httpd, base_url = create_httpd(Handler, port=port)
 
-        log.info("Serving at {0}".format(base_url))
+        log.info(f"Serving at {base_url}")
 
         if browser:
             import webbrowser

@@ -325,14 +325,12 @@ def dummy_packages(request, monkeypatch):
 
         # Conda packages were installed in a local channel
         if not WIN:
-            wheel_dir_str = "file://{0}".format(wheel_dir)
+            wheel_dir_str = f"file://{wheel_dir}"
         else:
             wheel_dir_str = wheel_dir
 
         with open(condarc, 'w') as f:
-            f.write("channels:\n"
-                    "- defaults\n"
-                    "- {0}".format(wheel_dir_str))
+            f.write(f"channels:\n- defaults\n- {wheel_dir_str}")
 
 
 @pytest.fixture(scope="session")

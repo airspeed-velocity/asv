@@ -81,7 +81,7 @@ class Mamba(environment.Environment):
                 return False
 
     def _setup(self):
-        log.info("Creating mamba environment for {0}".format(self.name))
+        log.info(f"Creating mamba environment for {self.name}")
 
         mamba_args, pip_args = self._get_requirements()
         env = dict(os.environ)
@@ -138,12 +138,12 @@ class Mamba(environment.Environment):
             for key, val in self._requirements.items():
                 if key.startswith("pip+"):
                     if val:
-                        pip_args.append("{0}=={1}".format(key[4:], val))
+                        pip_args.append(f"{key[4:]}=={val}")
                     else:
                         pip_args.append(key[4:])
                 else:
                     if val:
-                        mamba_args.append("{0}={1}".format(key, val))
+                        mamba_args.append(f"{key}={val}")
                     else:
                         mamba_args.append(key)
 
@@ -160,7 +160,7 @@ class Mamba(environment.Environment):
             return util.check_output([mamba_path] + args, **kwargs)
 
     def run(self, args, **kwargs):
-        log.debug("Running '{0}' in {1}".format(" ".join(args), self.name))
+        log.debug(f"Running '{' '.join(args)}' in {self.name}")
         return self.run_executable("python", args, **kwargs)
 
     def _run_pip(self, args, **kwargs):

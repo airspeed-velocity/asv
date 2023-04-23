@@ -42,7 +42,7 @@ def test_find(capfd, tmpdir):
     regression_hash = check_output(
         [which('git'), 'rev-parse', f'{git_default_branch()}^'], cwd=conf.repo)
 
-    assert "Greatest regression found: {0}".format(regression_hash[:8]) in output
+    assert f"Greatest regression found: {regression_hash[:8]}" in output
 
 
 @pytest.mark.flaky(reruns=1, reruns_delay=5)  # depends on a timeout
@@ -69,7 +69,7 @@ def test_find_timeout(capfd, tmpdir):
     regression_hash = check_output(
         [which('git'), 'rev-parse', f'{git_default_branch()}'], cwd=conf.repo)
 
-    assert "Greatest regression found: {0}".format(regression_hash[:8]) in output
+    assert f"Greatest regression found: {regression_hash[:8]}" in output
     assert "asv: benchmark timed out (timeout 1.0s)" in output
 
 
@@ -95,5 +95,5 @@ def test_find_inverted(capfd, tmpdir):
     regression_hash = check_output(
         [which('git'), 'rev-parse', f'{git_default_branch()}^'], cwd=conf.repo)
 
-    formatted = "Greatest improvement found: {0}".format(regression_hash[:8])
+    formatted = f"Greatest improvement found: {regression_hash[:8]}"
     assert formatted in output

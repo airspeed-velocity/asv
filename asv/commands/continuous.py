@@ -93,7 +93,7 @@ class Continuous(Command):
             else:
                 parent = repo.get_hash_from_name(base)
         except NoSuchNameError as exc:
-            raise util.UserError("Unknown commit {0}".format(exc))
+            raise util.UserError(f"Unknown commit {exc}")
 
         commit_hashes = [head, parent]
         run_objs = {}
