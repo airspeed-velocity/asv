@@ -24,6 +24,9 @@ classifiers = [
 dynamic = [
     "version",
 ]
+dependencies = [
+  "colorama; os_name == 'nt'",
+]
 
 [project.urls]
 "Source Code" = "https://github.com/airspeed-velocity/asv"

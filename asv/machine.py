@@ -152,7 +152,7 @@ class Machine:
 
     @staticmethod
     def generate_machine_file(use_defaults=False):
-        if not sys.stdout.isatty() and not use_defaults:
+        if not sys.stdout.isatty() and not use_defaults and not log._colorama:
             raise util.UserError(
                 "Run asv at the console the first time to generate "
                 "one, or run `asv machine --yes`.")
