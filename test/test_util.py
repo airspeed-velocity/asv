@@ -2,11 +2,16 @@
 import os
 import sys
 import shutil
-import pickle
 import multiprocessing
 import threading
 import traceback
 import datetime
+
+try:
+    import dill as pickle
+    pickle.settings['recurse'] = True
+except ImportError:
+    import pickle
 
 import pytest
 

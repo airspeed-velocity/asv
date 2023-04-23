@@ -47,7 +47,6 @@ import inspect
 import itertools
 import json
 import os
-import pickle
 import re
 import subprocess
 import textwrap
@@ -64,6 +63,12 @@ from hashlib import sha256
 from importlib import import_module
 from collections import Counter
 from time import process_time
+
+try:
+    import dill as pickle
+    pickle.settings['recurse'] = True
+except ImportError:
+    import pickle
 
 wall_timer = timeit.default_timer
 

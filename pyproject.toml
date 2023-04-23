@@ -40,6 +40,9 @@ Documentation = "https://asv.readthedocs.io/en/stable/"
 asv = "asv.__main__:main"
 
 [project.optional-dependencies]
+perf = [
+    "dill",
+]
 test = [
     "pytest",
     "pytest-xdist",
