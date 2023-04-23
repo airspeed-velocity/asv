@@ -46,7 +46,7 @@ class Profile(Command):
             help="""The benchmark to profile.  Must be a
             fully-specified benchmark name. For parameterized benchmark, it
             must include the parameter combination to use, e.g.:
-            benchmark_name(param0, param1, ...)""")
+            benchmark_name\\(param0, param1, ...\\)""")
         parser.add_argument(
             'revision', nargs='?',
             help="""The revision of the project to profile.  May be a
@@ -214,5 +214,6 @@ class Profile(Command):
             color_print('')
             with temp_profile(profile_data) as profile_path:
                 stats = pstats.Stats(profile_path)
+                stats.strip_dirs()  # Addresses gh-71
                 stats.sort_stats('cumulative')
                 stats.print_stats()
