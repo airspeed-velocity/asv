@@ -28,6 +28,7 @@ dependencies = [
     "json5",
     "tabulate",
     "colorama; os_name == 'nt'",
+    "pyyaml; platform_python_implementation != \"PyPy\"",
     "pympler; platform_python_implementation != \"PyPy\"",
 ]
 
