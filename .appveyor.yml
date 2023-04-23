@@ -25,7 +25,7 @@ install:
   - conda update conda -y
   - conda install -q --yes python=%PYTHON_VERSION% conda pip pytest pytest-xdist pytest-timeout filelock selenium conda-build bzip2 pympler
   - python -m pip install -U pip
-  - python -m pip install pytest-rerunfailures json5 pympler tabulate
+  - python -m pip install pytest-rerunfailures json5 pympler tabulate colorama
 
   # Check that we have the expected version of Python
   - python --version
