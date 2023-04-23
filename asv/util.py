@@ -1383,11 +1383,25 @@ except ImportError:
 
 def git_default_branch():
     try:
-        default_branch = check_output([which('git'),
-                                       'config', 'init.defaultBranch'],
-                                      display_error=False).strip()
+        # Local name gets precedence
+        default_branch = check_output(
+            [which('git'), 'config', 'init.defaultBranch'],
+            display_error=False).strip()
     except ProcessError:
-        default_branch = 'master'
+        # Check global
+        try:
+            default_branch = check_output(
+                [which('git'), 'config', '--global', 'init.defaultBranch'],
+                display_error=False).strip()
+        except ProcessError:
+            # Check system
+            try:
+                default_branch = check_output(
+                    [which('git'), 'config', '--system', 'init.defaultBranch'],
+                    display_error=False).strip()
+            except ProcessError:
+                # Default to master when global and system are not set
+                default_branch = 'master'
     return default_branch
 
 
