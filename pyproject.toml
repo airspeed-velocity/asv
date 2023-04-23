@@ -25,7 +25,10 @@ dynamic = [
     "version",
 ]
 dependencies = [
-  "colorama; os_name == 'nt'",
+    "json5",
+    "tabulate",
+    "colorama; os_name == 'nt'",
+    "pympler; platform_python_implementation != \"PyPy\"",
 ]
 
 [project.urls]
@@ -49,8 +52,6 @@ test = [
     "selenium",
     "pytest-rerunfailures",
     "python-hglib",
-    "json5",
-    "pympler; platform_python_implementation != \"PyPy\"",
 ]
 doc = [
     "sphinx",
