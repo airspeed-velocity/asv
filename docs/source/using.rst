@@ -78,9 +78,10 @@ suite are:
   ``http://github.com/$OWNER/$REPO/commit/``.
 
 - ``environment_type``: The tool used to create environments.  May be
-  ``conda`` or ``virtualenv``.  If Conda supports the dependencies you
-  need, that is the recommended method.  See :ref:`environments` for
-  more information.
+  ``conda`` or ``virtualenv`` or ``mamba``.  If Conda supports the
+  dependencies you need, that is the recommended method. Mamba is faster
+  but needs a newer Python version (3.8 or greater).
+  See :ref:`environments` for more information.
 
 - ``matrix``: Dependencies you want to preinstall into the environment
   where benchmarks are run.
@@ -177,8 +178,9 @@ the benchmarks are run, things will start much faster.
 
 Environments can be created using different tools.  By default,
 ``asv`` ships with support for `anaconda
-<https://store.continuum.io/cshop/anaconda/>`__ and `virtualenv
-<https://pypi.python.org/pypi/virtualenv>`__, though plugins may be
+<https://store.continuum.io/cshop/anaconda/>`__,
+`mamba <https://mamba.readthedocs.io/en/latest/index.html/>`__, and
+`virtualenv <https://pypi.python.org/pypi/virtualenv>`__, though plugins may be
 installed to support other environment tools.  The
 ``environment_type`` key in ``asv.conf.json`` is used to select the
 tool used to create environments.

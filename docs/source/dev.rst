@@ -13,9 +13,6 @@ Development setup
 The required packages to the full ``asv`` test suite, are listed in
 ``requirements-dev.txt``. The minimal set of packages required for
 testing are: ``pytest virtualenv filelock six pip setuptools wheel``.
-Tox_ configuration is also available in ``tox.ini``.
-
-.. _Tox: https://tox.readthedocs.io/
 
 
 Benchmark suite layout and file formats
