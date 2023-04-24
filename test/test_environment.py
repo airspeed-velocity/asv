@@ -55,7 +55,7 @@ def test_large_environment_matrix(tmpdir):
     conf.env_dir = str(tmpdir.join("env"))
     conf.pythons = [PYTHON_VER1]
     for i in range(25):
-        conf.matrix['foo{0}'.format(i)] = []
+        conf.matrix[f'foo{i}'] = []
 
     environments = list(environment.get_environments(conf, None))
 
@@ -685,9 +685,9 @@ def test_custom_commands(tmpdir):
     conf.matrix = {}
     conf.build_cache_size = 0
 
-    conf.build_command = ["python {0} {{build_cache_dir}}".format(quote(build_py))]
-    conf.install_command = ["python {0} {{env_dir}} {{build_cache_dir}}".format(quote(install_py))]
-    conf.uninstall_command = ["python {0} {{env_dir}}".format(quote(uninstall_py))]
+    conf.build_command = [f"python {quote(build_py)} {{build_cache_dir}}"]
+    conf.install_command = [f"python {quote(install_py)} {{env_dir}} {{build_cache_dir}}"]
+    conf.uninstall_command = [f"python {quote(uninstall_py)} {{env_dir}}"]
 
     with open(build_py, 'wb') as f:
         f.write(b"import os, sys\n"

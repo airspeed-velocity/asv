@@ -12,7 +12,7 @@ from asv import results, runner, util
 
 def _truncate_floats(item, digits=5):
     if isinstance(item, float):
-        fmt = '{{:.{}e}}'.format(digits - 1)
+        fmt = f'{{:.{digits - 1}e}}'
         return float(fmt.format(item))
     elif isinstance(item, list):
         return [_truncate_floats(x, digits) for x in item]
@@ -138,7 +138,7 @@ def test_get_result_hash_from_prefix(tmpdir):
     shutil.copyfile(machine_json, join(str(machine_dir), 'machine.json'))
 
     for f in ['e5b6cdbc', 'e5bfoo12']:
-        open(join(str(machine_dir), '{0}-py2.7-Cython-numpy1.8.json'.format(f)), 'a').close()
+        open(join(str(machine_dir), f'{f}-py2.7-Cython-numpy1.8.json'), 'a').close()
 
     # check unique, valid case
     full_commit = results.get_result_hash_from_prefix(str(results_dir), 'cheetah', 'e5b6')

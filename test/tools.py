@@ -79,7 +79,7 @@ except ImportError:
 
 
 try:
-    util.which('python{}'.format(PYTHON_VER2))
+    util.which(f'python{PYTHON_VER2}')
     HAS_PYTHON_VER2 = True
 except (RuntimeError, IOError):
     HAS_PYTHON_VER2 = False
@@ -185,8 +185,8 @@ class Git:
                      '-m', message])
 
     def tag(self, number):
-        self.run_git(['tag', '-a', '-m', 'Tag {0}'.format(number),
-                      'tag{0}'.format(number)])
+        self.run_git(['tag', '-a', '-m', f'Tag {number}',
+                      f'tag{number}'])
 
     def add(self, filename):
         self.run_git(['add', relpath(filename, self.path)])
@@ -202,7 +202,7 @@ class Git:
     def merge(self, branch_name, commit_message=None):
         self.run_git(["merge", "--no-ff", "--no-commit", "-X", "theirs", branch_name])
         if commit_message is None:
-            commit_message = "Merge {0}".format(branch_name)
+            commit_message = f"Merge {branch_name}"
         self.commit(commit_message)
 
     def get_hash(self, name):
@@ -250,18 +250,18 @@ class Hg:
         if date is None:
             self._fake_date += datetime.timedelta(seconds=1)
             date = self._fake_date
-        date = "{0} 0".format(util.datetime_to_timestamp(date))
+        date = f"{util.datetime_to_timestamp(date)} 0"
 
         self._repo.commit(message.encode(self.encoding),
                           date=date.encode(self.encoding))
 
     def tag(self, number):
         self._fake_date += datetime.timedelta(seconds=1)
-        date = "{0} 0".format(util.datetime_to_timestamp(self._fake_date))
+        date = f"{util.datetime_to_timestamp(self._fake_date)} 0"
 
         self._repo.tag(
-            ['tag{0}'.format(number).encode(self.encoding)],
-            message="Tag {0}".format(number).encode(self.encoding),
+            [f'tag{number}'.encode(self.encoding)],
+            message=f"Tag {number}".encode(self.encoding),
             date=date.encode(self.encoding))
 
     def add(self, filename):
@@ -278,7 +278,7 @@ class Hg:
         self._repo.merge(branch_name.encode(self.encoding),
                          tool=b"internal:other")
         if commit_message is None:
-            commit_message = "Merge {0}".format(branch_name)
+            commit_message = f"Merge {branch_name}"
         self.commit(commit_message)
 
     def get_hash(self, name):
@@ -290,7 +290,7 @@ class Hg:
     def get_branch_hashes(self, branch=None):
         if branch is None:
             branch = "default"
-        log = self._repo.log('sort(ancestors({0}), -rev)'.format(branch).encode(self.encoding))
+        log = self._repo.log(f'sort(ancestors({branch}), -rev)'.encode(self.encoding))
         return [entry[1].decode(self.encoding) for entry in log]
 
     def get_commit_message(self, commit_hash):
@@ -359,7 +359,7 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
     elif dvcs_type == 'hg':
         dvcs_cls = Hg
     else:
-        raise ValueError("Unknown dvcs type {0}".format(dvcs_type))
+        raise ValueError(f"Unknown dvcs type {dvcs_type}")
 
     template_path = join(dirname(__file__), 'test_repo_template')
 
@@ -381,7 +381,7 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
 
         copy_template(template_path, project_path, dvcs, mapping)
 
-        dvcs.commit("Revision {0}".format(i))
+        dvcs.commit(f"Revision {i}")
         dvcs.tag(i)
 
     if extra_branches:
@@ -389,11 +389,11 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
             dvcs.checkout(branch_name, start_commit)
             for i, value in enumerate(values):
                 mapping = {
-                    'version': "{0}".format(i),
+                    'version': f"{i}",
                     'dummy_value': value
                 }
                 copy_template(template_path, project_path, dvcs, mapping)
-                dvcs.commit("Revision {0}.{1}".format(branch_name, i))
+                dvcs.commit(f"Revision {branch_name}.{i}")
 
     return dvcs
 
@@ -404,7 +404,7 @@ def generate_repo_from_ops(tmpdir, dvcs_type, operations):
     elif dvcs_type == 'hg':
         dvcs_cls = Hg
     else:
-        raise ValueError("Unknown dvcs type {0}".format(dvcs_type))
+        raise ValueError(f"Unknown dvcs type {dvcs_type}")
 
     template_path = join(dirname(__file__), 'test_repo_template')
 
@@ -422,13 +422,13 @@ def generate_repo_from_ops(tmpdir, dvcs_type, operations):
                 "dummy_value": op[1],
             })
             version += 1
-            dvcs.commit("Revision {0}".format(version), *op[2:])
+            dvcs.commit(f"Revision {version}", *op[2:])
         elif op[0] == "checkout":
             dvcs.checkout(*op[1:])
         elif op[0] == "merge":
             dvcs.merge(*op[1:])
         else:
-            raise ValueError("Unknown dvcs operation {0}".format(op))
+            raise ValueError(f"Unknown dvcs operation {op}")
 
     return dvcs
 
@@ -484,7 +484,7 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None, updated=None):
         result.save(result_dir)
 
     if params:
-        param_names = ["param{}".format(k) for k in range(len(params))]
+        param_names = [f"param{k}" for k in range(len(params))]
 
     util.write_json(join(result_dir, "benchmarks.json"), {
         "time_func": {
@@ -566,7 +566,7 @@ def _build_dummy_wheels(tmpdir, wheel_dir, to_build, build_conda=False):
                     "".format(name=name, version=version))
         os.makedirs(join(build_dir, name))
         with open(join(build_dir, name, '__init__.py'), 'w') as f:
-            f.write("__version__ = '{0}'".format(version))
+            f.write(f"__version__ = '{version}'")
 
         subprocess.check_call([sys.executable, '-mpip', 'wheel',
                                '--build-option=--universal',

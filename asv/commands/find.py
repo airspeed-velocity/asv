@@ -92,7 +92,7 @@ class Find(Command):
         benchmarks = Benchmarks.discover(conf, repo, environments,
                                          commit_hashes, regex=bench)
         if len(benchmarks) == 0:
-            log.error("'{0}' benchmark not found".format(bench))
+            log.error(f"'{bench}' benchmark not found")
             return 1
         elif len(benchmarks) > 1:
             exact_matches = benchmarks.filter_out([x for x in benchmarks if x != bench])
@@ -101,7 +101,7 @@ class Find(Command):
                             "using exact match".format(bench))
                 benchmarks = exact_matches
             else:
-                log.error("'{0}' matches more than one benchmark".format(bench))
+                log.error(f"'{bench}' matches more than one benchmark")
                 return 1
 
         benchmark_name, = benchmarks.keys()
@@ -125,8 +125,7 @@ class Find(Command):
 
             commit_name = repo.get_decorated_hash(commit_hash, 8)
             log.info(
-                "For {0} commit {1}:".format(
-                    conf.project, commit_name))
+                f"For {conf.project} commit {commit_name}:")
 
             env.install_project(conf, repo, commit_hash)
 
@@ -184,8 +183,7 @@ class Find(Command):
             mid = int(math.floor((hi - lo) / 2) + lo)
 
             log.info(
-                "Testing {0}".format(
-                    draw_graph(lo, mid, hi, len(commit_hashes))))
+                f"Testing {draw_graph(lo, mid, hi, len(commit_hashes))}")
 
             with log.indent():
                 lo_result = None
@@ -231,6 +229,6 @@ class Find(Command):
         else:
             direction = "regression"
 
-        log.info("Greatest {0} found: {1}".format(direction, commit_name))
+        log.info(f"Greatest {direction} found: {commit_name}")
 
         return 0

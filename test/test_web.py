@@ -129,7 +129,7 @@ def test_web_summarygrid(browser, basic_html):
         item = browser.find_element(By.LINK_TEXT, 'track_param')
 
         y = item.location['y']
-        browser.execute_script('window.scrollTo(0, {0})'.format(y - 200))
+        browser.execute_script(f'window.scrollTo(0, {y - 200})')
 
         item.click()
 
@@ -250,7 +250,7 @@ def test_web_regressions(browser, basic_html):
         regression_1 = browser.find_element(By.LINK_TEXT, 'params_examples.track_find_test(1)')
 
         y = regression_1.location['y']
-        browser.execute_script('window.scrollTo(0, {0})'.format(y - 200))
+        browser.execute_script(f'window.scrollTo(0, {y - 200})')
 
         chain = ActionChains(browser)
         chain.move_to_element(regression_1)

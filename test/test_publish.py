@@ -149,7 +149,7 @@ def _graph_path(dvcs_type):
         master = f"{util.git_default_branch()}"
     elif dvcs_type == "hg":
         master = "default"
-    return join("graphs", "branch-{0}".format(master), "machine-tarzan", "time_func.json")
+    return join("graphs", f"branch-{master}", "machine-tarzan", "time_func.json")
 
 
 def test_publish_range_spec(generate_result_dir):

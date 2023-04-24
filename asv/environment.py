@@ -205,7 +205,7 @@ def _parse_exclude_include_rule(rule, is_include=False):
         Dictionary of {(key_type, key): value, ...}
     """
     if is_include and 'python' not in rule:
-        raise util.UserError("include rule '{0}' does not specify Python version".format(rule))
+        raise util.UserError(f"include rule '{rule}' does not specify Python version")
 
     bare_keys = ('python', 'environment_type', 'sys_platform')
     return _parse_matrix(rule, bare_keys)
@@ -266,7 +266,7 @@ def get_env_name(tool_name, python, requirements, tagged_env_vars, build=False):
         # Backward compatibility vs. result file names
         name = []
 
-    name.append("py{0}".format(python))
+    name.append(f"py{python}")
     reqs = list(requirements.items())
     reqs.sort()
     for key, val in reqs:
@@ -389,7 +389,7 @@ def _parse_matrix_entries(entries):
             requirements[key] = value
         else:
             # Shouldn't happen
-            raise ValueError("Invalid matrix key type {0}".format(key))
+            raise ValueError(f"Invalid matrix key type {key}")
     return python, requirements, tagged_env_vars
 
 
@@ -440,7 +440,7 @@ def get_environment_class_by_name(environment_type):
         if cls.tool_name == environment_type:
             return cls
     raise EnvironmentUnavailable(
-        "Unknown environment type '{0}'".format(environment_type))
+        f"Unknown environment type '{environment_type}'")
 
 
 def is_existing_only(environments):
@@ -695,7 +695,7 @@ class Environment:
             try:
                 self._setup()
             except Exception:
-                log.error("Failure creating environment for {0}".format(self.name))
+                log.error(f"Failure creating environment for {self.name}")
                 if os.path.exists(self._path):
                     util.long_path_rmtree(self._path)
                 raise
@@ -837,7 +837,7 @@ class Environment:
 
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)
-            log.info("Installing {0} into {1}".format(commit_name, self.name))
+            log.info(f"Installing {commit_name} into {self.name}")
             self._interpolate_and_run_commands(cmd, default_cwd=build_dir,
                                                extra_env=self.build_env_vars)
 
@@ -855,7 +855,7 @@ class Environment:
             cmd = ['return-code=any python -mpip uninstall -y {project}']
 
         if cmd:
-            log.info("Uninstalling from {0}".format(self.name))
+            log.info(f"Uninstalling from {self.name}")
             self._interpolate_and_run_commands(cmd, default_cwd=self._env_dir,
                                                extra_env=self.build_env_vars)
 
@@ -899,7 +899,7 @@ class Environment:
 
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)
-            log.info("Building {0} for {1}".format(commit_name, self.name))
+            log.info(f"Building {commit_name} for {self.name}")
             self._interpolate_and_run_commands(cmd, default_cwd=build_dir,
                                                extra_env=self.build_env_vars)
 
@@ -1054,6 +1054,6 @@ class ExistingEnvironment(Environment):
         return False
 
     def run(self, args, **kwargs):
-        log.debug("Running '{0}' in {1}".format(' '.join(args), self.name))
+        log.debug(f"Running '{' '.join(args)}' in {self.name}")
         return util.check_output([
             self._executable] + args, **kwargs)

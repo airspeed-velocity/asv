@@ -47,7 +47,7 @@ class Update(Command):
                         Results.update(path)
                     except util.UserError as err:
                         # Conversion failed: just skip the file
-                        log.warning("{}: {}".format(path, err))
+                        log.warning(f"{path}: {err}")
                         continue
 
                     # Rename files if necessary
@@ -60,9 +60,9 @@ class Update(Command):
                                     raise OSError()
                                 os.rename(path, new_path)
                             except OSError:
-                                log.warning("{}: should be renamed to {}".format(path, new_path))
+                                log.warning(f"{path}: should be renamed to {new_path}")
                     else:
-                        log.warning("{}: unrecognized file name".format(path))
+                        log.warning(f"{path}: unrecognized file name")
 
         # Check benchmarks.json
         log.info("Updating benchmarks.json...")
