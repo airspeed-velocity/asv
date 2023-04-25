@@ -404,7 +404,7 @@ def test_mann_whitney_u_basic():
 
 
 def test_mann_whitney_u_R():
-    robjects = pytest.importorskip("rpi2.robjects")
+    robjects = pytest.importorskip("rpy2.robjects")
 
     random.seed(1)
 
