@@ -503,6 +503,12 @@ class Environment:
         self._cache = build_cache.BuildCache(conf, self._path)
         self._build_root = os.path.abspath(os.path.join(self._path, 'project'))
 
+        if (Path.cwd() / "poetry.lock").exists():
+            self._requirements["poetry"] = ""
+
+        if (Path.cwd() / "pdm.lock").exists():
+            self._requirements["pdm"] = ""
+
         self._build_command = conf.build_command
         self._install_command = conf.install_command
         self._uninstall_command = conf.uninstall_command
@@ -872,24 +878,11 @@ class Environment:
 
         if cmd is None:
             if has_file('pyproject.toml'):
-                if has_file('pdm.lock'):
-                    cmd = [
-                        "python -mpip install pdm",
-                        "pdm install --prod",
-                        "pdm build --wheel --no-isolation --output {build_cache_dir}"
-                    ]
-                elif has_file('poetry.lock'):
-                    cmd = [
-                        "python -mpip install poetry",
-                        "poetry install",
-                        "poetry build --format wheel --output {build_cache_dir}"
-                    ]
-                else:
-                    cmd = [
-                        ("PIP_NO_BUILD_ISOLATION=false "
-                         "python -mpip wheel --no-deps --no-index "
-                         "-w {build_cache_dir} {build_dir}")
-                    ]
+                cmd = [
+                    ("PIP_NO_BUILD_ISOLATION=false "
+                     "python -mpip wheel --no-deps --no-index "
+                     "-w {build_cache_dir} {build_dir}")
+                ]
             else:
                 cmd = [
                     "python setup.py build",
