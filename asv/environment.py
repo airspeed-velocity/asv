@@ -504,7 +504,7 @@ class Environment:
         self._build_root = os.path.abspath(os.path.join(self._path, 'project'))
 
         if (Path.cwd() / "poetry.lock").exists():
-            self._requirements["poetry"] = ""
+            self._requirements["poetry-core"] = ""
 
         if (Path.cwd() / "pdm.lock").exists():
             self._requirements["pdm"] = ""
