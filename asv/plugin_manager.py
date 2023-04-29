@@ -33,6 +33,14 @@ class PluginManager:
                 log.error(f"Couldn't load {name} because\n{err}")
                 continue  # Couldn't find mamba
 
+    def _load_plugin_by_name(self, name):
+        prefix = plugins.__name__ + "."
+        for module_finder, module_name, ispkg in pkgutil.iter_modules(plugins.__path__, prefix):
+            if name in module_name:
+                mod = importlib.import_module(module_name)
+                return mod
+        return None
+
     def import_plugin(self, name):
         extended = False
         if name.startswith("."):
@@ -40,9 +48,13 @@ class PluginManager:
             sys.path.insert(0, ".")
             name = name[1:]
         try:
-            mod = importlib.import_module(name)
-            self.init_plugin(mod)
-            self._plugins.append(mod)
+            if extended:
+                mod = importlib.import_module(name)
+            else:
+                mod = self._load_plugin_by_name(name)
+            if mod:
+                self.init_plugin(mod)
+                self._plugins.append(mod)
         finally:
             if extended:
                 del sys.path[0]
