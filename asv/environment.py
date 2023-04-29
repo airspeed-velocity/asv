@@ -503,6 +503,7 @@ class Environment:
         self._cache = build_cache.BuildCache(conf, self._path)
         self._build_root = os.path.abspath(os.path.join(self._path, 'project'))
 
+        self._requirements = requirements
         if (Path.cwd() / "poetry.lock").exists():
             self._requirements["poetry-core"] = ""
 
@@ -618,6 +619,7 @@ class Environment:
 
     @property
     def requirements(self):
+        """Return the requirements"""
         return self._requirements
 
     @property
