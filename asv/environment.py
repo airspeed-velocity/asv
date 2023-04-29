@@ -514,6 +514,9 @@ class Environment:
         self._install_command = conf.install_command
         self._uninstall_command = conf.uninstall_command
 
+        # XXX: Make this conditional on something!!
+        self._requirements["pip+memray"] = ""
+
         self._global_env_vars = {}
         self._global_env_vars['ASV'] = 'true'
         self._global_env_vars['ASV_PROJECT'] = conf.project

@@ -64,7 +64,6 @@ from hashlib import sha256
 from importlib import import_module
 from collections import Counter
 from time import process_time
-from pathlib import Path
 
 wall_timer = timeit.default_timer
 
@@ -786,13 +785,8 @@ class RayMemBenchmark(Benchmark):
         pass
 
     def run(self, *param):
-        try:
-            import memray
-            from memray import FileReader
-        except ImportError:
-            subprocess.check_output([sys.executable, "-mpip", "install", "memray"])
-            import memray
-            from memray import FileReader
+        import memray
+        from memray import FileReader
         import uuid
 
         u_id = uuid.uuid4()
