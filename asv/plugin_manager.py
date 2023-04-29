@@ -2,6 +2,7 @@
 
 import sys
 import pkgutil
+import importlib
 
 from . import commands, plugins
 from .console import log
@@ -23,12 +24,9 @@ class PluginManager:
 
     def load_plugins(self, package):
         prefix = package.__name__ + "."
-        for module_finder, name, ispkg in pkgutil.iter_modules(
-            package.__path__, prefix
-        ):
+        for module_finder, name, ispkg in pkgutil.iter_modules(package.__path__, prefix):
             try:
-                __import__(name)
-                mod = sys.modules[name]
+                mod = importlib.import_module(name)
                 self.init_plugin(mod)
                 self._plugins.append(mod)
             except ModuleNotFoundError as err:
@@ -42,7 +40,7 @@ class PluginManager:
             sys.path.insert(0, ".")
             name = name[1:]
         try:
-            mod = __import__(name, {}, {}, [], level=0)
+            mod = importlib.import_module(name)
             self.init_plugin(mod)
             self._plugins.append(mod)
         finally:
