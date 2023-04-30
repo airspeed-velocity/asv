@@ -158,6 +158,28 @@ else:
                 p.cpu_affinity(affinity_list)
 
 
+def import_module_from_path(name, path):
+    # Resolve the path and get the module file
+    module_file = (path / f"{name}.py").resolve()
+
+    # Create a module spec from the module file location
+    spec = importlib.util.spec_from_file_location(name, module_file)
+
+    # Create a new module using the spec
+    module = importlib.util.module_from_spec(spec)
+
+    # Execute the module and add it to the sys.modules dictionary
+    spec.loader.exec_module(module)
+    sys.modules[name] = module
+
+    return module
+
+# Import the asv_memray module from the specific path
+module_name = 'asvmemray'
+module_path = Path(__file__).parent / "plugins/benchmarks"
+asvmemray = import_module_from_path(module_name, module_path)
+
+
 def recvall(sock, size):
     """
     Receive data of given size from a socket connection
@@ -771,35 +793,6 @@ class MemBenchmark(Benchmark):
         return sizeofcopy - sizeof2
 
 
-class RayMemBenchmark(Benchmark):
-    """
-    A single benchmark for tracking the memory of an object with memray
-    """
-
-    name_regex = re.compile("^(Ray[A-Z_].+)|(ray_.+)$")
-
-    def __init__(self, name, func, attr_sources):
-        Benchmark.__init__(self, name, func, attr_sources)
-        self.type = "memory"
-        self.unit = "bytes"
-        pass
-
-    def run(self, *param):
-        import memray
-        from memray import FileReader
-        import uuid
-
-        u_id = uuid.uuid4()
-        temp_dir = tempfile.gettempdir()
-        tfile_loc = Path(f"{temp_dir}/{u_id}.bin")
-        with memray.Tracker(
-            destination=memray.FileDestination(tfile_loc, overwrite=True)
-        ):
-            self.func(*param)
-        freader = FileReader(str(tfile_loc))
-        return freader.metadata.peak_memory
-
-
 class PeakMemBenchmark(Benchmark):
     """
     Represents a single benchmark for tracking the peak memory consumption
@@ -839,7 +832,7 @@ class TrackBenchmark(Benchmark):
 
 benchmark_types = [
     TimerawBenchmark, TimeBenchmark, MemBenchmark, PeakMemBenchmark,
-    RayMemBenchmark, TrackBenchmark
+    asvmemray.RayMemBenchmark, TrackBenchmark
 ]
 
 
