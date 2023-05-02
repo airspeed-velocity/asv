@@ -1,9 +1,0 @@
-# flake8 does not support pyproject.toml (https://github.com/PyCQA/flake8/issues/234)
-
-[flake8]
-max-line-length = 99
-ignore =
-# W504: Line break occurred after a binary operator
-    W504,
-# E741: Do not use variables named 'I', 'O', or 'l'
-    E741

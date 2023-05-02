@@ -13,8 +13,8 @@ repos:
     hooks:
     -   id: isort
         name: isort (python)
--   repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
+-   repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: 'v0.0.257'
     hooks:
-    -   id: flake8
-        exclude: ^(asv/extern|test/example_results/cheetah)
+    -   id: ruff
+        args: ["--fix"]

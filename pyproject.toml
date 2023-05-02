@@ -60,7 +60,7 @@ doc = [
     "sphinx_bootstrap_theme",
 ]
 dev = [
-    "flake8",
+    "ruff",
     "isort >= 5.11.5",
 ]
 hg = [
@@ -90,6 +90,15 @@ namespaces = false
 
 [tool.pytest.ini_options]
 addopts = "-p no:logging"
+
+[tool.ruff]
+line-length = 99
+extend-ignore = [
+    "E741", # Do not use variables named 'I', 'O', or 'l'
+]
+extend-exclude = [
+    "test/example_results/cheetah",
+]
 
 [tool.isort]
 line_length = 99
