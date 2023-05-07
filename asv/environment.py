@@ -504,6 +504,7 @@ class Environment:
         self._build_root = os.path.abspath(os.path.join(self._path, 'project'))
 
         self._requirements = requirements
+        self._requirements["pip+asvcore"] = ""
         if (Path.cwd() / "poetry.lock").exists():
             self._requirements["poetry-core"] = ""
 
