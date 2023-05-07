@@ -18,27 +18,27 @@ class ClassLevelSetup:
 def setup_cache():
     with open("data.txt", "wb") as fd:
         fd.write(b"42\n")
-    return {'foo': 42, 'bar': 12}
+    return {"foo": 42, "bar": 12}
 
 
 def track_cache_foo(d):
     assert os.path.isfile("data.txt")
     with open("data.txt", "rb") as fd:
-        assert fd.read().strip() == b'42'
-    return d['foo']
+        assert fd.read().strip() == b"42"
+    return d["foo"]
 
 
 def track_cache_bar(d):
-    return d['bar']
+    return d["bar"]
 
 
 def my_setup_cache():
-    return {'foo': 0, 'bar': 1}
+    return {"foo": 0, "bar": 1}
 
 
 def track_my_cache_foo(d):
     assert not os.path.isfile("data.txt")
-    return d['foo']
+    return d["foo"]
 
 
 track_my_cache_foo.setup_cache = my_setup_cache

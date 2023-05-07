@@ -9,20 +9,20 @@ from . import common_args
 
 # This list is ordered in order of average workflow
 command_order = [
-    'Quickstart',
-    'Machine',
-    'Setup',
-    'Run',
-    'Dev',
-    'Continuous',
-    'Find',
-    'Rm',
-    'Publish',
-    'Preview',
-    'Profile',
-    'Update',
-    'Show',
-    'Compare'
+    "Quickstart",
+    "Machine",
+    "Setup",
+    "Run",
+    "Dev",
+    "Continuous",
+    "Find",
+    "Rm",
+    "Publish",
+    "Preview",
+    "Profile",
+    "Update",
+    "Show",
+    "Compare",
 ]
 
 
@@ -42,6 +42,7 @@ class Command(abc.ABC):
     @classmethod
     def run_from_args(cls, args):
         from ..plugin_manager import plugin_manager
+
         conf = config.Config.load(args.config)
         for plugin in conf.plugins:
             plugin_manager.import_plugin(plugin)
@@ -64,22 +65,20 @@ def make_argparser():
     Most of the real work is handled by the subcommands in the
     commands subpackage.
     """
+
     def help(args):
         parser.print_help()
         sys.exit(0)
 
     parser = argparse.ArgumentParser(
-        "asv",
-        description="Airspeed Velocity: Simple benchmarking tool for Python")
+        "asv", description="Airspeed Velocity: Simple benchmarking tool for Python"
+    )
 
     common_args.add_global_arguments(parser, suppress_defaults=False)
 
-    subparsers = parser.add_subparsers(
-        title='subcommands',
-        description='valid subcommands')
+    subparsers = parser.add_subparsers(title="subcommands", description="valid subcommands")
 
-    help_parser = subparsers.add_parser(
-        "help", help="Display usage information")
+    help_parser = subparsers.add_parser("help", help="Display usage information")
     help_parser.set_defaults(func=help)
 
     commands = dict((x.__name__, x) for x in util.iter_subclasses(Command))
@@ -103,12 +102,12 @@ def _make_docstring():
 
     for p in subparsers.choices.values():
         lines.append(f".. _cmd-{p.prog.replace(' ', '-')}:")
-        lines.append('')
+        lines.append("")
         lines.append(p.prog)
-        lines.append('-' * len(p.prog))
-        lines.append('::')
-        lines.append('')
-        lines.extend('   ' + x for x in p.format_help().splitlines())
-        lines.append('')
+        lines.append("-" * len(p.prog))
+        lines.append("::")
+        lines.append("")
+        lines.extend("   " + x for x in p.format_help().splitlines())
+        lines.append("")
 
-    return '\n'.join(lines)
+    return "\n".join(lines)

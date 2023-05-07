@@ -14,7 +14,7 @@ import time
 
 from . import util
 
-WIN = (os.name == "nt")
+WIN = os.name == "nt"
 
 
 def isatty(file):
@@ -25,7 +25,7 @@ def isatty(file):
     but some user-defined types may not, so this assumes those are not
     ttys.
     """
-    if hasattr(file, 'isatty'):
+    if hasattr(file, "isatty"):
         return file.isatty()
     return False
 
@@ -51,26 +51,27 @@ def _color_text(text, color):
         lightmagenta, lightcyan, white, or '' (the empty string).
     """
     color_mapping = {
-        'black': '0;30',
-        'red': '0;31',
-        'green': '0;32',
-        'brown': '0;33',
-        'blue': '0;34',
-        'magenta': '0;35',
-        'cyan': '0;36',
-        'lightgrey': '0;37',
-        'default': '0;39',
-        'darkgrey': '1;30',
-        'lightred': '1;31',
-        'lightgreen': '1;32',
-        'yellow': '1;33',
-        'lightblue': '1;34',
-        'lightmagenta': '1;35',
-        'lightcyan': '1;36',
-        'white': '1;37'}
+        "black": "0;30",
+        "red": "0;31",
+        "green": "0;32",
+        "brown": "0;33",
+        "blue": "0;34",
+        "magenta": "0;35",
+        "cyan": "0;36",
+        "lightgrey": "0;37",
+        "default": "0;39",
+        "darkgrey": "1;30",
+        "lightred": "1;31",
+        "lightgreen": "1;32",
+        "yellow": "1;33",
+        "lightblue": "1;34",
+        "lightmagenta": "1;35",
+        "lightcyan": "1;36",
+        "white": "1;37",
+    }
 
-    color_code = color_mapping.get(color, '0;39')
-    return f'\033[{color_code}m{text}\033[0m'
+    color_code = color_mapping.get(color, "0;39")
+    return f"\033[{color_code}m{text}\033[0m"
 
 
 # This is a table of Unicode characters that we want to have
@@ -83,11 +84,7 @@ def _color_text(text, color):
 #    grep -P  -n '[^\x00-\x7F]' -r *
 # in the `asv` source directory.
 
-_unicode_translations = {
-    ord('μ'): 'u',
-    ord('·'): '-',
-    ord('±'): '~'
-}
+_unicode_translations = {ord("μ"): "u", ord("·"): "-", ord("±"): "~"}
 
 
 def _write_with_fallback(s, fileobj):
@@ -113,7 +110,7 @@ def _write_with_fallback(s, fileobj):
         b = s.encode(enc)
     except UnicodeError:
         s = s.translate(_unicode_translations)
-        b = s.encode(enc, errors='replace')
+        b = s.encode(enc, errors="replace")
 
     fileobj.flush()
     fileobj.buffer.write(b)
@@ -150,14 +147,14 @@ def color_print(*args, **kwargs):
         be printed after resetting any color or font state.
     """
 
-    file = kwargs.get('file', sys.stdout)
-    end = kwargs.get('end', '\n')
+    file = kwargs.get("file", sys.stdout)
+    end = kwargs.get("end", "\n")
 
     if isatty(file) and not WIN:
         for i in range(0, len(args), 2):
             msg = args[i]
             if i + 1 == len(args):
-                color = ''
+                color = ""
             else:
                 color = args[i + 1]
 
@@ -174,20 +171,20 @@ def color_print(*args, **kwargs):
 
 
 def get_answer_default(prompt, default, use_defaults=False):
-    color_print(f"{prompt} [{default}]: ", end='')
+    color_print(f"{prompt} [{default}]: ", end="")
 
     if use_defaults:
         return default
 
     x = input()
-    if x.strip() == '':
+    if x.strip() == "":
         return default
     return x
 
 
 def truncate_left(s, l):
     if len(s) > l:
-        return '...' + s[-(l - 3):]
+        return "..." + s[-(l - 3) :]
     else:
         return s
 
@@ -200,21 +197,22 @@ class Log:
         self._logger = logging.getLogger()
         self._needs_newline = False
         self._last_dot = time.time()
-        if sys.platform in {'win32', 'cli'}:
+        if sys.platform in {"win32", "cli"}:
             try:
                 import colorama
+
                 colorama.init()
                 self._colorama = True
             except Exception as exc:
                 print(f"On Windows, colorama is suggested, but got {exc}")
 
     def _stream_formatter(self, record):
-        '''
+        """
         The formatter for standard output
-        '''
+        """
         if self._needs_newline:
-            color_print('')
-        parts = record.msg.split('\n', 1)
+            color_print("")
+        parts = record.msg.split("\n", 1)
         first_line = parts[0]
         if len(parts) == 1:
             rest = None
@@ -222,45 +220,45 @@ class Log:
             rest = parts[1]
 
         indent = self._indent + 1
-        continued = getattr(record, 'continued', False)
+        continued = getattr(record, "continued", False)
 
         if self._total:
-            progress_msg = f'[{self._count / self._total:6.02%}] '
+            progress_msg = f"[{self._count / self._total:6.02%}] "
             if not continued:
-                color_print(progress_msg, end='')
+                color_print(progress_msg, end="")
             indent += len(progress_msg)
 
         if not continued:
-            color_print('·' * self._indent, end='')
-            color_print(' ', end='')
+            color_print("·" * self._indent, end="")
+            color_print(" ", end="")
         else:
-            color_print(' ' * indent, end='')
+            color_print(" " * indent, end="")
 
-        if hasattr(record, 'color'):
+        if hasattr(record, "color"):
             color = record.color
         elif record.levelno < logging.DEBUG:
-            color = 'default'
+            color = "default"
         elif record.levelno < logging.INFO:
-            color = 'default'
+            color = "default"
         elif record.levelno < logging.WARN:
             if self._indent == 1:
-                color = 'green'
+                color = "green"
             elif self._indent == 2:
-                color = 'blue'
+                color = "blue"
             else:
-                color = 'default'
+                color = "default"
         elif record.levelno < logging.ERROR:
-            color = 'brown'
+            color = "brown"
         else:
-            color = 'red'
+            color = "red"
 
-        spaces = ' ' * indent
-        color_print(first_line, color, end='')
+        spaces = " " * indent
+        color_print(first_line, color, end="")
         if rest is not None:
-            color_print('')
+            color_print("")
             detail = textwrap.dedent(rest)
-            for line in detail.split('\n'):
-                color_print(spaces, end='')
+            for line in detail.split("\n"):
+                color_print(spaces, end="")
                 color_print(line)
 
         self._needs_newline = True
@@ -278,7 +276,7 @@ class Log:
     def dot(self):
         if isatty(sys.stdout):
             if time.time() > self._last_dot + 1.0:
-                color_print('.', 'darkgrey', end='')
+                color_print(".", "darkgrey", end="")
                 sys.stdout.flush()
                 self._last_dot = time.time()
 
@@ -331,16 +329,15 @@ class Log:
     def is_debug_enabled(self):
         return self._logger.getEffectiveLevel() <= logging.DEBUG
 
-    def _message(self, routine, message, reserve_space=False, color=None,
-                 continued=False):
+    def _message(self, routine, message, reserve_space=False, color=None, continued=False):
         kwargs = {}
         extra = {}
         if color is not None:
-            extra['color'] = color
+            extra["color"] = color
         if continued:
-            extra['continued'] = True
+            extra["continued"] = True
         if extra:
-            kwargs['extra'] = extra
+            kwargs["extra"] = extra
 
         if reserve_space:
             max_width = max(16, util.terminal_width - 33)
@@ -392,7 +389,7 @@ class Log:
         to stdout via other means, after using Log.
         """
         if self._needs_newline:
-            color_print('')
+            color_print("")
             self._needs_newline = False
         sys.stdout.flush()
 

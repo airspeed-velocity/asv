@@ -7,11 +7,13 @@ class Dev(Run):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "dev", help="Do a test run of a benchmark suite during development",
+            "dev",
+            help="Do a test run of a benchmark suite during development",
             description="""
                 This runs a benchmark suite in a mode that is useful
                 during development.  It is equivalent to
-                ``asv run --python=same``""")
+                ``asv run --python=same``""",
+        )
 
         cls._setup_arguments(parser, env_default_same=True)
 

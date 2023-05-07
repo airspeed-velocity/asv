@@ -1,5 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+
 class ClassOne:
     pass
 
@@ -20,14 +21,14 @@ def mem_param(n, m):
 
 
 mem_param.params = ([10, 20], [2, 3])
-mem_param.param_names = ['number', 'depth']
+mem_param.param_names = ["number", "depth"]
 
 
 class ParamSuite:
-    params = ['a', 'b', 'c']
+    params = ["a", "b", "c"]
 
     def setup(self, p):
-        values = {'a': 1, 'b': 2, 'c': 3}
+        values = {"a": 1, "b": 2, "c": 3}
         self.count = 0
         self.value = values[p]
 
@@ -40,12 +41,11 @@ class ParamSuite:
 
 
 class FunctionParamSuite:
-    params = [track_param,
-              lambda x: x]
-    param_names = ['func']
+    params = [track_param, lambda x: x]
+    param_names = ["func"]
 
     def time_func(self, func):
-        return func('foo')
+        return func("foo")
 
 
 class TuningTest:
@@ -68,8 +68,9 @@ class TuningTest:
     def teardown(self, n):
         # The time benchmark may call it one additional time
         if not (self.counter[0] <= n + 1 and self.counter[1] == 1):
-            raise RuntimeError("Number and repeat didn't have effect: {} {}".format(
-                self.counter, n))
+            raise RuntimeError(
+                "Number and repeat didn't have effect: {} {}".format(self.counter, n)
+            )
 
 
 def setup_skip(n):
@@ -99,6 +100,7 @@ def time_find_test_timeout():
     import time
 
     import asv_test_repo
+
     if asv_test_repo.dummy_value[1] < 0:
         time.sleep(100)
 
@@ -113,7 +115,7 @@ def track_param_selection(a, b):
     return a + b
 
 
-track_param_selection.param_names = ['a', 'b']
+track_param_selection.param_names = ["a", "b"]
 track_param_selection.params = [[1, 2], [3, 5]]
 
 

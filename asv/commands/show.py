@@ -19,18 +19,18 @@ class Show(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "show", help="Print recorded data",
-            description="""Print saved benchmark results.""")
+            "show", help="Print recorded data", description="""Print saved benchmark results."""
+        )
 
         parser.add_argument(
-            'commit', nargs='?', default=None,
-            help="""The commit to show data for""")
+            "commit", nargs="?", default=None, help="""The commit to show data for"""
+        )
         parser.add_argument(
-            '--details', action='store_true', default=False,
-            help="""Show all result details""")
+            "--details", action="store_true", default=False, help="""Show all result details"""
+        )
         parser.add_argument(
-            '--durations', action='store_true', default=False,
-            help="""Show only run durations""")
+            "--durations", action="store_true", default=False, help="""Show only run durations"""
+        )
         common_args.add_bench(parser)
         common_args.add_machine(parser)
         common_args.add_environment(parser)
@@ -41,25 +41,38 @@ class Show(Command):
     @classmethod
     def run_from_conf_args(cls, conf, args, **kwargs):
         return cls.run(
-            conf=conf, commit=args.commit, bench=args.bench,
-            machine=args.machine, env_spec=args.env_spec,
-            details=args.details, durations=args.durations,
-            **kwargs
+            conf=conf,
+            commit=args.commit,
+            bench=args.bench,
+            machine=args.machine,
+            env_spec=args.env_spec,
+            details=args.details,
+            durations=args.durations,
+            **kwargs,
         )
 
     @classmethod
-    def run(cls, conf, commit=None, bench=None, machine=None, env_spec=None,
-            details=False, durations=False):
+    def run(
+        cls,
+        conf,
+        commit=None,
+        bench=None,
+        machine=None,
+        env_spec=None,
+        details=False,
+        durations=False,
+    ):
         if env_spec:
-            env_names = ([env.name for env in get_environments(conf, env_spec, verbose=False)] +
-                         list(env_spec))
+            env_names = [
+                env.name for env in get_environments(conf, env_spec, verbose=False)
+            ] + list(env_spec)
         else:
             env_names = None
 
         machines = []
         for path in iter_machine_files(conf.results_dir):
             d = load_json(path)
-            machines.append(d['machine'])
+            machines.append(d["machine"])
 
         if len(machines) == 0:
             raise util.UserError("No results found")
@@ -68,8 +81,7 @@ class Show(Command):
         elif machine in machines:
             machines = [machine]
         else:
-            raise util.UserError(
-                f"Results for machine '{machine}' not found")
+            raise util.UserError(f"Results for machine '{machine}' not found")
 
         benchmarks = Benchmarks.load(conf, regex=bench)
 
@@ -84,8 +96,7 @@ class Show(Command):
             if durations:
                 cls._print_result_durations(conf, commit, result_iter, benchmarks)
             else:
-                cls._print_results(conf, commit, result_iter,
-                                   benchmarks, show_details=details)
+                cls._print_results(conf, commit, result_iter, benchmarks, show_details=details)
 
     @classmethod
     def _iter_results(cls, conf, machines, env_names, commit_hash=None):
@@ -109,10 +120,10 @@ class Show(Command):
         for machine in machines:
             if commit_hash is not None:
                 result_iter = iter_results_for_machine_and_hash(
-                    conf.results_dir, machine, commit_hash)
+                    conf.results_dir, machine, commit_hash
+                )
             else:
-                result_iter = iter_results_for_machine(
-                    conf.results_dir, machine)
+                result_iter = iter_results_for_machine(conf.results_dir, machine)
 
             for result in result_iter:
                 if env_names is not None and result.env_name not in env_names:
@@ -153,68 +164,73 @@ class Show(Command):
 
         log.flush()
 
-        color_print(f"Commit: {repo.get_decorated_hash(commit_hash, conf.hash_length)}",
-                    "blue")
+        color_print(f"Commit: {repo.get_decorated_hash(commit_hash, conf.hash_length)}", "blue")
         color_print("")
 
         for machine, result in result_iter:
             for name in sorted(result.get_result_keys(benchmarks)):
-                cls._print_benchmark(machine, result, benchmarks[name],
-                                     show_details=show_details)
+                cls._print_benchmark(machine, result, benchmarks[name], show_details=show_details)
 
     @classmethod
     def _print_benchmark(cls, machine, result, benchmark, show_details=False):
-        color_print(f"{benchmark['name']} [{machine}/{result.env_name}]",
-                    'green')
+        color_print(f"{benchmark['name']} [{machine}/{result.env_name}]", "green")
 
         info, details = format_benchmark_result(result, benchmark)
-        color_print(f"  {info}", 'red')
+        color_print(f"  {info}", "red")
         if details:
             color_print("  " + details.replace("\n", "\n  "))
 
-        started_at = result.started_at.get(benchmark['name'])
+        started_at = result.started_at.get(benchmark["name"])
         if started_at is not None:
             started_at = util.js_timestamp_to_datetime(started_at)
-            started_at = started_at.strftime('%Y-%m-%d %H:%M:%S')
+            started_at = started_at.strftime("%Y-%m-%d %H:%M:%S")
         else:
             started_at = "n/a"
 
-        duration = result.duration.get(benchmark['name'])
+        duration = result.duration.get(benchmark["name"])
         if duration is not None:
             duration = util.human_time(duration)
         else:
             duration = "n/a"
 
         if started_at != "n/a" or duration != "n/a":
-            color_print(f'  started: {started_at}, duration: {duration}')
+            color_print(f"  started: {started_at}, duration: {duration}")
 
         if not show_details:
             color_print("")
             return
 
-        stats = result.get_result_stats(benchmark['name'], benchmark['params'])
+        stats = result.get_result_stats(benchmark["name"], benchmark["params"])
 
         def get_stat_info(key):
-            if key == 'ci_99':
-                return [(x.get('ci_99_a'), x.get('ci_99_b')) if x is not None else None
-                        for x in stats]
+            if key == "ci_99":
+                return [
+                    (x.get("ci_99_a"), x.get("ci_99_b")) if x is not None else None for x in stats
+                ]
             return [x.get(key) if x is not None else None for x in stats]
 
-        for key in ['repeat', 'number', 'ci_99', 'mean', 'std', 'min', 'max']:
+        for key in ["repeat", "number", "ci_99", "mean", "std", "min", "max"]:
             values = get_stat_info(key)
-            if key == 'ci_99':
-                values = ["({}, {})".format(util.human_value(x[0], benchmark['unit']),
-                                            util.human_value(x[1], benchmark['unit']))
-                          if x is not None else None
-                          for x in values]
+            if key == "ci_99":
+                values = [
+                    "({}, {})".format(
+                        util.human_value(x[0], benchmark["unit"]),
+                        util.human_value(x[1], benchmark["unit"]),
+                    )
+                    if x is not None
+                    else None
+                    for x in values
+                ]
             elif any(isinstance(x, float) for x in values):
-                values = [util.human_value(x, benchmark['unit']) if x is not None else None
-                          for x in values]
+                values = [
+                    util.human_value(x, benchmark["unit"]) if x is not None else None
+                    for x in values
+                ]
 
             if not all(x is None for x in values):
                 color_print(f'  {key}: {", ".join(map(str, values))}')
 
-        samples = result.get_result_samples(benchmark['name'], benchmark['params'])
+        samples = result.get_result_samples(benchmark["name"], benchmark["params"])
         if not all(x is None for x in samples):
             color_print(f"  samples: {samples}")
 
@@ -230,7 +246,7 @@ class Show(Command):
             keys += ["<build>"]
 
             for key in result.get_result_keys(benchmarks):
-                setup_cache_key = benchmarks[key].get('setup_cache_key')
+                setup_cache_key = benchmarks[key].get("setup_cache_key")
                 if setup_cache_key is not None:
                     keys.append(f"<setup_cache {setup_cache_key}>")
 
@@ -248,8 +264,10 @@ class Show(Command):
                 total_duration = math.nan
 
             if commits:
-                durations[(machine, result.env_name)][result.commit_hash] = (result.date,
-                                                                             total_duration)
+                durations[(machine, result.env_name)][result.commit_hash] = (
+                    result.date,
+                    total_duration,
+                )
 
         return durations
 
@@ -285,8 +303,7 @@ class Show(Command):
 
         log.flush()
 
-        color_print(f"Commit: {repo.get_decorated_hash(commit_hash, conf.hash_length)}",
-                    "blue")
+        color_print(f"Commit: {repo.get_decorated_hash(commit_hash, conf.hash_length)}", "blue")
         color_print("")
 
         for machine, env_name in sorted(durations.keys()):

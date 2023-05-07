@@ -15,6 +15,7 @@ if sys.version_info[0] < 3:
     import commands
 try:
     import commands.quickstart  # noqa F401 unused import
+
     assert False
 except ImportError:
     # OK
@@ -47,7 +48,7 @@ def test_shared_code():
 
 
 def track_environment_value():
-    v = os.environ.get('SOME_TEST_VAR', '0')
+    v = os.environ.get("SOME_TEST_VAR", "0")
     try:
         return int(v)
     except (ValueError, TypeError):
@@ -55,7 +56,7 @@ def track_environment_value():
 
 
 def track_fail_errcode_123():
-    if hasattr(os, '_exit'):
+    if hasattr(os, "_exit"):
         os._exit(123)
     else:
         sys.exit(123)

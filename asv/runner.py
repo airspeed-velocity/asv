@@ -19,21 +19,20 @@ from .console import log
 from .results import Results, format_benchmark_result
 from . import util
 
-WIN = (os.name == "nt")
+WIN = os.name == "nt"
 
 
 # Can't use benchmark.__file__, because that points to the compiled
 # file, so it can't be run by another version of Python.
-BENCHMARK_RUN_SCRIPT = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "benchmark.py")
+BENCHMARK_RUN_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "benchmark.py")
 
 
 JSON_ERROR_RETCODE = -257
 
 
 BenchmarkResult = util.namedtuple_with_doc(
-    'BenchmarkResult',
-    ['result', 'samples', 'number', 'errcode', 'stderr', 'profile'],
+    "BenchmarkResult",
+    ["result", "samples", "number", "errcode", "stderr", "profile"],
     """
     Postprocessed benchmark result
 
@@ -57,7 +56,8 @@ BenchmarkResult = util.namedtuple_with_doc(
         If `profile` is `True` and run was at least partially successful,
         this key will be a byte string containing the cProfile data.
         Otherwise, None.
-    """)
+    """,
+)
 
 
 def skip_benchmarks(benchmarks, env, results=None):
@@ -87,23 +87,33 @@ def skip_benchmarks(benchmarks, env, results=None):
     with log.indent():
         for name, benchmark in benchmarks.items():
             log.step()
-            log.warning(f'{name} skipped')
+            log.warning(f"{name} skipped")
 
             started_at = datetime.datetime.utcnow()
             r = fail_benchmark(benchmark)
-            results.add_result(benchmark, r,
-                               selected_idx=benchmarks.benchmark_selection.get(name),
-                               started_at=started_at)
+            results.add_result(
+                benchmark,
+                r,
+                selected_idx=benchmarks.benchmark_selection.get(name),
+                started_at=started_at,
+            )
 
     return results
 
 
-def run_benchmarks(benchmarks, env, results=None,
-                   show_stderr=False, quick=False, profile=False,
-                   extra_params=None,
-                   record_samples=False, append_samples=False,
-                   run_rounds=None,
-                   launch_method=None):
+def run_benchmarks(
+    benchmarks,
+    env,
+    results=None,
+    show_stderr=False,
+    quick=False,
+    profile=False,
+    extra_params=None,
+    record_samples=False,
+    append_samples=False,
+    run_rounds=None,
+    launch_method=None,
+):
     """
     Run all of the benchmarks in the given `Environment`.
 
@@ -152,10 +162,10 @@ def run_benchmarks(benchmarks, env, results=None,
         extra_params = dict(extra_params)
 
     if quick:
-        extra_params['number'] = 1
-        extra_params['repeat'] = 1
-        extra_params['warmup_time'] = 0
-        extra_params['rounds'] = 1
+        extra_params["number"] = 1
+        extra_params["repeat"] = 1
+        extra_params["warmup_time"] = 0
+        extra_params["rounds"] = 1
 
     if results is None:
         results = Results.unnamed()
@@ -168,16 +178,17 @@ def run_benchmarks(benchmarks, env, results=None,
 
     def get_rounds(benchmark):
         """Get number of rounds to use for a job"""
-        if 'rounds' in extra_params:
-            return int(extra_params['rounds'])
+        if "rounds" in extra_params:
+            return int(extra_params["rounds"])
         else:
-            return int(benchmark.get('rounds', 1))
+            return int(benchmark.get("rounds", 1))
 
     for name, benchmark in sorted(benchmarks.items()):
-        key = benchmark.get('setup_cache_key')
-        setup_cache_timeout[key] = max(benchmark.get('setup_cache_timeout',
-                                                     benchmark['timeout']),
-                                       setup_cache_timeout.get(key, 0))
+        key = benchmark.get("setup_cache_key")
+        setup_cache_timeout[key] = max(
+            benchmark.get("setup_cache_timeout", benchmark["timeout"]),
+            setup_cache_timeout.get(key, 0),
+        )
         benchmark_order.setdefault(key, []).append((name, benchmark))
         max_rounds = max(max_rounds, get_rounds(benchmark))
         cache_users.setdefault(key, set()).add(name)
@@ -197,9 +208,11 @@ def run_benchmarks(benchmarks, env, results=None,
                     rounds = get_rounds(benchmark)
 
                     if run_round > rounds:
-                        if (not append_samples and
-                            run_round == run_rounds[-1] and
-                                name in existing_results):
+                        if (
+                            not append_samples
+                            and run_round == run_rounds[-1]
+                            and name in existing_results
+                        ):
                             # We need to remove samples here so that
                             # append_samples=False has an effect on all
                             # benchmarks regardless of whether they were
@@ -208,7 +221,7 @@ def run_benchmarks(benchmarks, env, results=None,
                             results.remove_samples(name, selected_idx)
                         continue
 
-                    is_final = (run_round == 1)
+                    is_final = run_round == 1
                     yield name, benchmark, setup_cache_key, is_final
 
     # Run benchmarks in order
@@ -229,8 +242,7 @@ def run_benchmarks(benchmarks, env, results=None,
     indent = log.indent()
     indent.__enter__()
 
-    spawner = get_spawner(env, benchmarks.benchmark_dir,
-                          launch_method=launch_method)
+    spawner = get_spawner(env, benchmarks.benchmark_dir, launch_method=launch_method)
 
     try:
         # Preimport benchmark suite (if using forkserver)
@@ -247,7 +259,7 @@ def run_benchmarks(benchmarks, env, results=None,
                 with log.indent():
                     log.error(out)
 
-            stderr = 'asv: benchmark suite import failed'
+            stderr = "asv: benchmark suite import failed"
             for name, benchmark, setup_cache_key, is_final in iter_run_items():
                 if name in failed_benchmarks:
                     continue
@@ -255,10 +267,13 @@ def run_benchmarks(benchmarks, env, results=None,
                 selected_idx = benchmarks.benchmark_selection.get(name)
                 started_at = datetime.datetime.utcnow()
                 res = fail_benchmark(benchmark, stderr=stderr)
-                results.add_result(benchmark, res,
-                                   selected_idx=selected_idx,
-                                   started_at=started_at,
-                                   record_samples=record_samples)
+                results.add_result(
+                    benchmark,
+                    res,
+                    selected_idx=selected_idx,
+                    started_at=started_at,
+                    record_samples=record_samples,
+                )
                 failed_benchmarks.add(name)
             return results
 
@@ -273,8 +288,7 @@ def run_benchmarks(benchmarks, env, results=None,
                 if is_final:
                     partial_info_time = None
                     log.info(name, reserve_space=True)
-                    log_benchmark_result(results, benchmark,
-                                         show_stderr=show_stderr)
+                    log_benchmark_result(results, benchmark, show_stderr=show_stderr)
                 continue
 
             # Setup cache first, if needed
@@ -285,14 +299,15 @@ def run_benchmarks(benchmarks, env, results=None,
             elif setup_cache_key not in failed_setup_cache:
                 partial_info_time = None
                 log.info(f"Setting up {setup_cache_key}", reserve_space=True)
-                params_str = json.dumps({'cpu_affinity': extra_params.get('cpu_affinity')})
+                params_str = json.dumps({"cpu_affinity": extra_params.get("cpu_affinity")})
                 cache_dir, stderr = spawner.create_setup_cache(
-                    name, setup_cache_timeout[setup_cache_key], params_str)
+                    name, setup_cache_timeout[setup_cache_key], params_str
+                )
                 if cache_dir is not None:
-                    log.add_padded('ok')
+                    log.add_padded("ok")
                     cache_dirs[setup_cache_key] = cache_dir
                 else:
-                    log.add_padded('failed')
+                    log.add_padded("failed")
                     if stderr and show_stderr:
                         with log.indent():
                             log.error(stderr)
@@ -305,13 +320,16 @@ def run_benchmarks(benchmarks, env, results=None,
             if setup_cache_key in failed_setup_cache:
                 # Mark benchmark as failed
                 partial_info_time = None
-                log.warning(f'{name} skipped (setup_cache failed)')
-                stderr = f'asv: setup_cache failed\n\n{failed_setup_cache[setup_cache_key]}'
+                log.warning(f"{name} skipped (setup_cache failed)")
+                stderr = f"asv: setup_cache failed\n\n{failed_setup_cache[setup_cache_key]}"
                 res = fail_benchmark(benchmark, stderr=stderr)
-                results.add_result(benchmark, res,
-                                   selected_idx=selected_idx,
-                                   started_at=started_at,
-                                   record_samples=record_samples)
+                results.add_result(
+                    benchmark,
+                    res,
+                    selected_idx=selected_idx,
+                    started_at=started_at,
+                    record_samples=record_samples,
+                )
                 failed_benchmarks.add(name)
                 continue
 
@@ -320,13 +338,13 @@ def run_benchmarks(benchmarks, env, results=None,
             cur_extra_params = extra_params
             if name in previous_result_keys:
                 cur_extra_params = []
-                prev_stats = results.get_result_stats(name, benchmark['params'])
+                prev_stats = results.get_result_stats(name, benchmark["params"])
                 for s in prev_stats:
-                    if s is None or 'number' not in s:
+                    if s is None or "number" not in s:
                         p = extra_params
                     else:
                         p = dict(extra_params)
-                        p['number'] = s['number']
+                        p["number"] = s["number"]
                     cur_extra_params.append(p)
 
             # Run benchmark
@@ -335,13 +353,16 @@ def run_benchmarks(benchmarks, env, results=None,
                 log.info(name, reserve_space=True)
             elif partial_info_time is None or time.time() > partial_info_time + 30:
                 partial_info_time = time.time()
-                log.info(f'Running ({name}--)')
+                log.info(f"Running ({name}--)")
 
-            res = run_benchmark(benchmark, spawner,
-                                profile=profile,
-                                selected_idx=selected_idx,
-                                extra_params=cur_extra_params,
-                                cwd=cache_dir)
+            res = run_benchmark(
+                benchmark,
+                spawner,
+                profile=profile,
+                selected_idx=selected_idx,
+                extra_params=cur_extra_params,
+                cwd=cache_dir,
+            )
 
             # Retain runtime durations
             ended_at = datetime.datetime.utcnow()
@@ -351,12 +372,15 @@ def run_benchmarks(benchmarks, env, results=None,
                 benchmark_durations[name] = (ended_at - started_at).total_seconds()
 
             # Save result
-            results.add_result(benchmark, res,
-                               selected_idx=selected_idx,
-                               started_at=started_at,
-                               duration=benchmark_durations[name],
-                               record_samples=(not is_final or record_samples),
-                               append_samples=(name in previous_result_keys))
+            results.add_result(
+                benchmark,
+                res,
+                selected_idx=selected_idx,
+                started_at=started_at,
+                duration=benchmark_durations[name],
+                record_samples=(not is_final or record_samples),
+                append_samples=(name in previous_result_keys),
+            )
 
             previous_result_keys.add(name)
 
@@ -366,10 +390,9 @@ def run_benchmarks(benchmarks, env, results=None,
             # Log result
             if is_final:
                 partial_info_time = None
-                log_benchmark_result(results, benchmark,
-                                     show_stderr=show_stderr)
+                log_benchmark_result(results, benchmark, show_stderr=show_stderr)
             else:
-                log.add('.')
+                log.add(".")
 
             # Cleanup setup cache, if no users left
             if cache_dir is not None and is_final:
@@ -390,12 +413,12 @@ def run_benchmarks(benchmarks, env, results=None,
 
 
 def get_spawner(env, benchmark_dir, launch_method):
-    has_fork = hasattr(os, 'fork') and hasattr(socket, 'AF_UNIX')
+    has_fork = hasattr(os, "fork") and hasattr(socket, "AF_UNIX")
 
-    if launch_method in (None, 'auto'):
+    if launch_method in (None, "auto"):
         # Don't use ForkServer as default on OSX, because many Apple
         # things are not fork-safe
-        if has_fork and sys.platform not in ('darwin',):
+        if has_fork and sys.platform not in ("darwin",):
             launch_method = "forkserver"
         else:
             launch_method = "spawn"
@@ -404,8 +427,7 @@ def get_spawner(env, benchmark_dir, launch_method):
         spawner_cls = Spawner
     elif launch_method == "forkserver":
         if not has_fork:
-            raise util.UserError("'forkserver' launch method not available "
-                                 "on this platform")
+            raise util.UserError("'forkserver' launch method not available " "on this platform")
         spawner_cls = ForkServer
     else:
         raise ValueError(f"Invalid launch_method: {launch_method}")
@@ -418,11 +440,11 @@ def log_benchmark_result(results, benchmark, show_stderr=False):
 
     log.add_padded(info)
     if details:
-        log.info(details, color='default')
+        log.info(details, color="default")
 
     # Dump program output
-    stderr = results.stderr.get(benchmark['name'])
-    errcode = results.errcode.get(benchmark['name'])
+    stderr = results.stderr.get(benchmark["name"])
+    errcode = results.errcode.get(benchmark["name"])
 
     if errcode not in (None, 0, util.TIMEOUT_RETCODE, JSON_ERROR_RETCODE):
         # Display also error code
@@ -437,13 +459,13 @@ def log_benchmark_result(results, benchmark, show_stderr=False):
             log.error(stderr)
 
 
-def fail_benchmark(benchmark, stderr='', errcode=1):
+def fail_benchmark(benchmark, stderr="", errcode=1):
     """
     Return a BenchmarkResult describing a failed benchmark.
     """
-    if benchmark['params']:
+    if benchmark["params"]:
         # Mark only selected parameter combinations skipped
-        params = itertools.product(*benchmark['params'])
+        params = itertools.product(*benchmark["params"])
         result = [None for idx in params]
         samples = [None] * len(result)
         number = [None] * len(result)
@@ -452,19 +474,14 @@ def fail_benchmark(benchmark, stderr='', errcode=1):
         samples = [None]
         number = [None]
 
-    return BenchmarkResult(result=result,
-                           samples=samples,
-                           number=number,
-                           errcode=errcode,
-                           stderr=stderr,
-                           profile=None)
+    return BenchmarkResult(
+        result=result, samples=samples, number=number, errcode=errcode, stderr=stderr, profile=None
+    )
 
 
-def run_benchmark(benchmark, spawner, profile,
-                  selected_idx=None,
-                  extra_params=None,
-                  cwd=None,
-                  prev_result=None):
+def run_benchmark(
+    benchmark, spawner, profile, selected_idx=None, extra_params=None, cwd=None, prev_result=None
+):
     """
     Run a benchmark.
 
@@ -500,11 +517,11 @@ def run_benchmark(benchmark, spawner, profile,
     samples = []
     number = []
     profiles = []
-    stderr = ''
+    stderr = ""
     errcode = 0
 
-    if benchmark['params']:
-        param_iter = enumerate(itertools.product(*benchmark['params']))
+    if benchmark["params"]:
+        param_iter = enumerate(itertools.product(*benchmark["params"]))
     else:
         param_iter = [(0, None)]
 
@@ -522,9 +539,8 @@ def run_benchmark(benchmark, spawner, profile,
             cur_extra_params = extra_params
 
         res = _run_benchmark_single_param(
-            benchmark, spawner, param_idx,
-            extra_params=cur_extra_params, profile=profile,
-            cwd=cwd)
+            benchmark, spawner, param_idx, extra_params=cur_extra_params, profile=profile, cwd=cwd
+        )
 
         result += res.result
         samples += res.samples
@@ -545,12 +561,11 @@ def run_benchmark(benchmark, spawner, profile,
         number=number,
         errcode=errcode,
         stderr=stderr.strip(),
-        profile=_combine_profile_data(profiles)
+        profile=_combine_profile_data(profiles),
     )
 
 
-def _run_benchmark_single_param(benchmark, spawner, param_idx,
-                                profile, extra_params, cwd):
+def _run_benchmark_single_param(benchmark, spawner, param_idx, profile, extra_params, cwd):
     """
     Run a benchmark, for single parameter combination index in case it
     is parameterized
@@ -577,15 +592,15 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
         Result data.
 
     """
-    name = benchmark['name']
-    if benchmark['params']:
-        name += '-%d' % (param_idx,)
+    name = benchmark["name"]
+    if benchmark["params"]:
+        name += "-%d" % (param_idx,)
 
     if profile:
         profile_fd, profile_path = tempfile.mkstemp()
         os.close(profile_fd)
     else:
-        profile_path = 'None'
+        profile_path = "None"
 
     params_str = json.dumps(extra_params)
 
@@ -599,10 +614,13 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
         result_file.close()
 
         out, errcode = spawner.run(
-            name=name, params_str=params_str, profile_path=profile_path,
+            name=name,
+            params_str=params_str,
+            profile_path=profile_path,
             result_file_name=result_file.name,
-            timeout=benchmark['timeout'],
-            cwd=real_cwd)
+            timeout=benchmark["timeout"],
+            cwd=real_cwd,
+        )
 
         if errcode != 0:
             if errcode == util.TIMEOUT_RETCODE:
@@ -612,7 +630,7 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
             samples = None
             number = None
         else:
-            with open(result_file.name, 'r') as stream:
+            with open(result_file.name, "r") as stream:
                 data = stream.read()
 
             try:
@@ -623,22 +641,23 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
                 out += f"\n\nasv: failed to parse benchmark result: {exc}\n"
 
             # Special parsing for timing benchmark results
-            if isinstance(data, dict) and 'samples' in data and 'number' in data:
+            if isinstance(data, dict) and "samples" in data and "number" in data:
                 result = True
-                samples = data['samples']
-                number = data['number']
+                samples = data["samples"]
+                number = data["number"]
             else:
                 result = data
                 samples = None
                 number = None
 
-        if benchmark['params'] and out:
-            params, = itertools.islice(itertools.product(*benchmark['params']),
-                                       param_idx, param_idx + 1)
+        if benchmark["params"] and out:
+            (params,) = itertools.islice(
+                itertools.product(*benchmark["params"]), param_idx, param_idx + 1
+            )
             out = f"For parameters: {', '.join(params)}\n{out}"
 
         if profile:
-            with io.open(profile_path, 'rb') as profile_fd:
+            with io.open(profile_path, "rb") as profile_fd:
                 profile_data = profile_fd.read()
             profile_data = profile_data if profile_data else None
         else:
@@ -650,7 +669,8 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
             number=[number],
             errcode=errcode,
             stderr=out.strip(),
-            profile=profile_data)
+            profile=profile_data,
+        )
 
     except KeyboardInterrupt:
         spawner.interrupt()
@@ -683,21 +703,28 @@ class Spawner:
         env_vars.update(self.env.env_vars)
 
         out, _, errcode = self.env.run(
-            [BENCHMARK_RUN_SCRIPT, 'setup_cache',
-             os.path.abspath(self.benchmark_dir),
-             benchmark_id, params_str],
-            dots=False, display_error=False,
-            return_stderr=True, valid_return_codes=None,
+            [
+                BENCHMARK_RUN_SCRIPT,
+                "setup_cache",
+                os.path.abspath(self.benchmark_dir),
+                benchmark_id,
+                params_str,
+            ],
+            dots=False,
+            display_error=False,
+            return_stderr=True,
+            valid_return_codes=None,
             redirect_stderr=True,
             cwd=cache_dir,
             timeout=timeout,
-            env=env_vars)
+            env=env_vars,
+        )
 
         if errcode == 0:
             return cache_dir, None
         else:
             util.long_path_rmtree(cache_dir, True)
-            out += f'\nasv: setup_cache failed (exit status {errcode})'
+            out += f"\nasv: setup_cache failed (exit status {errcode})"
             return None, out.strip()
 
     def run(self, name, params_str, profile_path, result_file_name, timeout, cwd):
@@ -705,12 +732,24 @@ class Spawner:
         env_vars.update(self.env.env_vars)
 
         out, _, errcode = self.env.run(
-            [BENCHMARK_RUN_SCRIPT, 'run', os.path.abspath(self.benchmark_dir),
-             name, params_str, profile_path, result_file_name],
-            dots=False, timeout=timeout,
-            display_error=False, return_stderr=True, redirect_stderr=True,
-            valid_return_codes=None, cwd=cwd,
-            env=env_vars)
+            [
+                BENCHMARK_RUN_SCRIPT,
+                "run",
+                os.path.abspath(self.benchmark_dir),
+                name,
+                params_str,
+                profile_path,
+                result_file_name,
+            ],
+            dots=False,
+            timeout=timeout,
+            display_error=False,
+            return_stderr=True,
+            redirect_stderr=True,
+            valid_return_codes=None,
+            cwd=cwd,
+            env=env_vars,
+        )
         return out, errcode
 
     def preimport(self):
@@ -724,20 +763,21 @@ class ForkServer(Spawner):
     def __init__(self, env, root):
         super(ForkServer, self).__init__(env, root)
 
-        if not (hasattr(os, 'fork') and hasattr(os, 'setpgid')):
+        if not (hasattr(os, "fork") and hasattr(os, "setpgid")):
             raise RuntimeError("ForkServer only available on POSIX")
 
-        self.tmp_dir = tempfile.mkdtemp(prefix='asv-forkserver-')
-        self.socket_name = os.path.join(self.tmp_dir, 'socket')
+        self.tmp_dir = tempfile.mkdtemp(prefix="asv-forkserver-")
+        self.socket_name = os.path.join(self.tmp_dir, "socket")
 
         env_vars = dict(os.environ)
         env_vars.update(env.env_vars)
 
         self.server_proc = env.run(
-            [BENCHMARK_RUN_SCRIPT, 'run_server', self.benchmark_dir, self.socket_name],
+            [BENCHMARK_RUN_SCRIPT, "run_server", self.benchmark_dir, self.socket_name],
             return_popen=True,
             redirect_stderr=True,
-            env=env_vars)
+            env=env_vars,
+        )
 
         self._server_output = None
         self.stdout_reader_thread = threading.Thread(target=self._stdout_reader)
@@ -757,29 +797,32 @@ class ForkServer(Spawner):
         try:
             out = self.server_proc.stdout.read()
             self.server_proc.stdout.close()
-            out = out.decode('utf-8', 'replace')
+            out = out.decode("utf-8", "replace")
         except Exception:
             import traceback
+
             out = traceback.format_exc()
 
         self._server_output = out
 
     def run(self, name, params_str, profile_path, result_file_name, timeout, cwd):
-        msg = {'action': 'run',
-               'benchmark_id': name,
-               'params_str': params_str,
-               'profile_path': profile_path,
-               'result_file': result_file_name,
-               'timeout': timeout,
-               'cwd': cwd}
+        msg = {
+            "action": "run",
+            "benchmark_id": name,
+            "params_str": params_str,
+            "profile_path": profile_path,
+            "result_file": result_file_name,
+            "timeout": timeout,
+            "cwd": cwd,
+        }
         result = self._send_command(msg)
-        return result['out'], result['errcode']
+        return result["out"], result["errcode"]
 
     def preimport(self):
         success = True
         out = ""
         try:
-            out = self._send_command({'action': 'preimport'})
+            out = self._send_command({"action": "preimport"})
         except Exception as exc:
             success = False
             out = "asv: benchmark runner crashed\n"
@@ -793,7 +836,7 @@ class ForkServer(Spawner):
 
     def _send_command(self, msg):
         msg = json.dumps(msg)
-        msg = msg.encode('utf-8')
+        msg = msg.encode("utf-8")
 
         # Connect (with wait+retry)
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -809,13 +852,13 @@ class ForkServer(Spawner):
 
         # Send command
         try:
-            s.sendall(struct.pack('<Q', len(msg)))
+            s.sendall(struct.pack("<Q", len(msg)))
             s.sendall(msg)
 
             # Read result
-            read_size, = struct.unpack('<Q', util.recvall(s, 8))
+            (read_size,) = struct.unpack("<Q", util.recvall(s, 8))
             result_text = util.recvall(s, read_size)
-            result_text = result_text.decode('utf-8')
+            result_text = result_text.decode("utf-8")
             result = json.loads(result_text)
         except Exception:
             exitcode = self.server_proc.poll()
@@ -884,7 +927,7 @@ def _combine_profile_data(datasets):
     try:
         f.close()
         stats.dump_stats(f.name)
-        with open(f.name, 'rb') as fp:
+        with open(f.name, "rb") as fp:
             return fp.read()
     finally:
         os.remove(f.name)

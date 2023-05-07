@@ -71,7 +71,7 @@ class Mamba(environment.Environment):
 
     @classmethod
     def _matches(cls, python):
-        if not re.match(r'^[0-9].*$', python):
+        if not re.match(r"^[0-9].*$", python):
             return False
         else:
             mamba_path = str(Path(os.getenv("CONDA_EXE")).parent / "mamba")
@@ -91,9 +91,7 @@ class Mamba(environment.Environment):
         if not self._mamba_environment_file:
             # Construct payload, env file sets python version
             mamba_pkgs = [f"python={self._python}", "wheel", "pip"] + mamba_args
-            solver = MambaSolver(
-                self._mamba_channels, None, self.context  # or target_platform
-            )
+            solver = MambaSolver(self._mamba_channels, None, self.context)  # or target_platform
 
             with _mamba_lock():
                 transaction = solver.solve(mamba_pkgs)
@@ -112,9 +110,7 @@ class Mamba(environment.Environment):
                     ["env", "create", "-f", env_file_name, "-p", self._path, "--force"],
                     env=env,
                 )
-            solver = MambaSolver(
-                self._mamba_channels, None, self.context  # or target_platform
-            )
+            solver = MambaSolver(self._mamba_channels, None, self.context)  # or target_platform
             with _mamba_lock():
                 transaction = solver.solve(mamba_pkgs + mamba_args)
                 transaction.execute(libmambapy.PrefixData(self._path))

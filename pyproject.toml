@@ -62,6 +62,7 @@ doc = [
 dev = [
     "ruff",
     "isort >= 5.11.5",
+    "black",
 ]
 hg = [
     "python-hglib",
@@ -100,9 +101,14 @@ extend-exclude = [
     "test/example_results/cheetah",
 ]
 
+[tool.black]
+line-length = 99
+target-version = ['py37']
+
 [tool.isort]
 line_length = 99
 only_sections = true
+profile = "black"
 
 [tool.setuptools_scm]
 write_to = "asv/_version.py"

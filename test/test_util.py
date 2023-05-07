@@ -12,7 +12,7 @@ import pytest
 
 from asv import util
 
-WIN = (os.name == 'nt')
+WIN = os.name == "nt"
 
 
 def _multiprocessing_raise_processerror(arg):
@@ -35,10 +35,11 @@ def _multiprocessing_raise_usererror(arg):
 def test_parallelfailure():
     # Check the workaround for https://bugs.python.org/issue9400 works
 
-    if WIN and os.path.basename(sys.argv[0]).lower().startswith('py.test'):
+    if WIN and os.path.basename(sys.argv[0]).lower().startswith("py.test"):
         # Multiprocessing in spawn mode can result to problems with py.test
-        pytest.skip("Multiprocessing spawn mode on Windows not safe to run "
-                    "from py.test runner.")
+        pytest.skip(
+            "Multiprocessing spawn mode on Windows not safe to run " "from py.test runner."
+        )
 
     # The exception class must be pickleable
     exc = util.ParallelFailure("test", Exception, "something")
@@ -75,50 +76,46 @@ def test_parallelfailure():
 
 
 def test_which_path(tmpdir):
-    dirname = os.path.abspath(os.path.join(str(tmpdir), 'name with spaces'))
-    fn = 'asv_test_exe_1234.exe'
-    fn2 = 'asv_test_exe_4321.bat'
+    dirname = os.path.abspath(os.path.join(str(tmpdir), "name with spaces"))
+    fn = "asv_test_exe_1234.exe"
+    fn2 = "asv_test_exe_4321.bat"
 
     os.makedirs(dirname)
     shutil.copyfile(sys.executable, os.path.join(dirname, fn))
     shutil.copyfile(sys.executable, os.path.join(dirname, fn2))
 
-    old_path = os.environ.get('PATH', '')
+    old_path = os.environ.get("PATH", "")
     try:
         if WIN:
-            os.environ['PATH'] = old_path + os.pathsep + '"' + dirname + '"'
-            util.which('asv_test_exe_1234')
-            util.which('asv_test_exe_1234.exe')
-            util.which('asv_test_exe_4321')
-            util.which('asv_test_exe_4321.bat')
+            os.environ["PATH"] = old_path + os.pathsep + '"' + dirname + '"'
+            util.which("asv_test_exe_1234")
+            util.which("asv_test_exe_1234.exe")
+            util.which("asv_test_exe_4321")
+            util.which("asv_test_exe_4321.bat")
 
-        os.environ['PATH'] = old_path + os.pathsep + dirname
-        util.which('asv_test_exe_1234.exe')
-        util.which('asv_test_exe_4321.bat')
+        os.environ["PATH"] = old_path + os.pathsep + dirname
+        util.which("asv_test_exe_1234.exe")
+        util.which("asv_test_exe_4321.bat")
         if WIN:
-            util.which('asv_test_exe_1234')
-            util.which('asv_test_exe_4321')
+            util.which("asv_test_exe_1234")
+            util.which("asv_test_exe_4321")
 
         # Check the paths= argument
-        util.which('asv_test_exe_1234.exe', paths=[dirname])
-        util.which('asv_test_exe_4321.bat', paths=[dirname])
+        util.which("asv_test_exe_1234.exe", paths=[dirname])
+        util.which("asv_test_exe_4321.bat", paths=[dirname])
 
         # Check non-existent files
         with pytest.raises(IOError):
-            util.which('nonexistent.exe', paths=[dirname])
+            util.which("nonexistent.exe", paths=[dirname])
     finally:
-        os.environ['PATH'] = old_path
+        os.environ["PATH"] = old_path
 
 
 def test_write_load_json(tmpdir):
-    data = {
-        'a': 1,
-        'b': 2,
-        'c': 3
-    }
+    data = {"a": 1, "b": 2, "c": 3}
     orig_data = dict(data)
 
-    filename = os.path.join(str(tmpdir), 'test.json')
+    filename = os.path.join(str(tmpdir), "test.json")
 
     util.write_json(filename, data)
     data2 = util.load_json(filename)
@@ -143,7 +140,6 @@ def test_write_load_json(tmpdir):
 def test_human_float():
     items = [
         # (expected, value, significant, truncate_small, significant_zeros, reference_value)
-
         # significant
         ("1", 1.2345, 1),
         ("1.2", 1.2345, 2),
@@ -154,7 +150,6 @@ def test_human_float():
         ("123.5", 123.45, 4),
         ("0.001", 0.0012346, 1),
         ("0.001235", 0.0012346, 4),
-
         # significant zeros
         ("0.001", 0.001, 1, None, True),
         ("0.0010", 0.001, 2, None, True),
@@ -162,17 +157,14 @@ def test_human_float():
         ("1", 1, 1, None, True),
         ("1.0", 1, 2, None, True),
         ("1.00", 1, 3, None, True),
-
         # truncate small
         ("0", 0.001, 2, 0),
         ("0", 0.001, 2, 1),
         ("0.001", 0.001, 2, 2),
-
         # non-finite
-        ("inf", float('inf'), 1),
-        ("-inf", -float('inf'), 1),
-        ("nan", float('nan'), 1),
-
+        ("inf", float("inf"), 1),
+        ("-inf", -float("inf"), 1),
+        ("nan", float("nan"), 1),
         # negative
         ("-1", -1.2345, 1),
         ("-0.00100", -0.001, 3, None, True),
@@ -189,7 +181,6 @@ def test_human_float():
 def test_human_time():
     items = [
         # (expected, value, err)
-
         # scales
         ("1.00ns", 1e-9),
         ("1.10μs", 1.1e-6),
@@ -200,7 +191,6 @@ def test_human_time():
         ("2.00h", 3600 * 2),
         ("0s", 0),
         ("n/a", float("nan")),
-
         # err
         ("1.00±1ns", 1e-9, 1e-9),
         ("1.00±0.1ns", 1e-9, 0.1e-9),
@@ -217,14 +207,13 @@ def test_human_time():
         expected = item[0]
         got = util.human_time(*item[1:])
         assert got == expected, item
-        got = util.human_value(item[1], 'seconds', *item[2:])
+        got = util.human_value(item[1], "seconds", *item[2:])
         assert got == expected, item
 
 
 def test_human_file_size():
     items = [
         # (expected, value, err)
-
         # scales
         ("1", 1),
         ("999", 999),
@@ -232,7 +221,6 @@ def test_human_file_size():
         ("1.1M", 1.1e6),
         ("1.12G", 1.12e9),
         ("1.12T", 1.123e12),
-
         # err
         ("1±2", 1, 2),
         ("1±0.1k", 1e3, 123),
@@ -243,7 +231,7 @@ def test_human_file_size():
         expected = item[0]
         got = util.human_file_size(*item[1:])
         assert got == expected, item
-        got = util.human_value(item[1], 'bytes', *item[2:])
+        got = util.human_value(item[1], "bytes", *item[2:])
         assert got == expected, item
 
 
@@ -273,7 +261,7 @@ def test_parse_human_time():
 def test_is_main_thread():
     if sys.version_info[0] >= 3:
         # NB: the test itself doesn't necessarily run in main thread...
-        is_main = (threading.current_thread() == threading.main_thread())
+        is_main = threading.current_thread() == threading.main_thread()
         assert util.is_main_thread() == is_main
 
     results = []
@@ -289,7 +277,7 @@ def test_is_main_thread():
 
 
 def test_json_non_ascii(tmpdir):
-    non_ascii_data = [{'😼': '難', 'ä': 3}]
+    non_ascii_data = [{"😼": "難", "ä": 3}]
 
     fn = os.path.join(str(tmpdir), "nonascii.json")
     util.write_json(fn, non_ascii_data)
@@ -300,40 +288,60 @@ def test_json_non_ascii(tmpdir):
 
 def test_interpolate_command():
     good_items = [
-        ('python {inputs}', dict(inputs='9'),
-         ['python', '9'], {}, {0}, None),
-
-        ('python "{inputs}"', dict(inputs='9'),
-         ['python', '9'], {}, {0}, None),
-
-        ('python {inputs}', dict(inputs=''),
-         ['python', ''], {}, {0}, None),
-
-        ('HELLO="asd" python "{inputs}"', dict(inputs='9'),
-         ['python', '9'], {'HELLO': 'asd'}, {0}, None),
-
-        ('HELLO="asd" return-code=any python "{inputs}"', dict(inputs='9'),
-         ['python', '9'], {'HELLO': 'asd'}, None, None),
-
-        ('HELLO="asd" return-code=255 python "{inputs}"', dict(inputs='9'),
-         ['python', '9'], {'HELLO': 'asd'}, {255}, None),
-
-        ('HELLO="asd" return-code=255 python "{inputs}"', dict(inputs='9'),
-         ['python', '9'], {'HELLO': 'asd'}, {255}, None),
-
-        ('HELLO="asd" in-dir="{somedir}" python', dict(somedir='dir'),
-         ['python'], {'HELLO': 'asd'}, {0}, 'dir'),
+        ("python {inputs}", dict(inputs="9"), ["python", "9"], {}, {0}, None),
+        ('python "{inputs}"', dict(inputs="9"), ["python", "9"], {}, {0}, None),
+        ("python {inputs}", dict(inputs=""), ["python", ""], {}, {0}, None),
+        (
+            'HELLO="asd" python "{inputs}"',
+            dict(inputs="9"),
+            ["python", "9"],
+            {"HELLO": "asd"},
+            {0},
+            None,
+        ),
+        (
+            'HELLO="asd" return-code=any python "{inputs}"',
+            dict(inputs="9"),
+            ["python", "9"],
+            {"HELLO": "asd"},
+            None,
+            None,
+        ),
+        (
+            'HELLO="asd" return-code=255 python "{inputs}"',
+            dict(inputs="9"),
+            ["python", "9"],
+            {"HELLO": "asd"},
+            {255},
+            None,
+        ),
+        (
+            'HELLO="asd" return-code=255 python "{inputs}"',
+            dict(inputs="9"),
+            ["python", "9"],
+            {"HELLO": "asd"},
+            {255},
+            None,
+        ),
+        (
+            'HELLO="asd" in-dir="{somedir}" python',
+            dict(somedir="dir"),
+            ["python"],
+            {"HELLO": "asd"},
+            {0},
+            "dir",
+        ),
     ]
 
     bad_items = [
-        ('python {foo}', {}),
-        ('HELLO={foo} python', {}),
-        ('return-code=none python', {}),
-        ('return-code= python', {}),
-        ('return-code=, python', {}),
-        ('return-code=1,,2 python', {}),
-        ('return-code=1 return-code=2 python', {}),
-        ('in-dir=a in-dir=b python', {}),
+        ("python {foo}", {}),
+        ("HELLO={foo} python", {}),
+        ("return-code=none python", {}),
+        ("return-code= python", {}),
+        ("return-code=, python", {}),
+        ("return-code=1,,2 python", {}),
+        ("return-code=1 return-code=2 python", {}),
+        ("in-dir=a in-dir=b python", {}),
     ]
 
     for value, variables, e_parts, e_env, e_codes, e_cwd in good_items:
@@ -349,8 +357,7 @@ def test_interpolate_command():
 
 
 def test_datetime_to_js_timestamp():
-    tss = [0, 0.5, -0.5, 12345.6789, -12345.6789,
-           1535910708.7767508]
+    tss = [0, 0.5, -0.5, 12345.6789, -12345.6789, 1535910708.7767508]
     for ts in tss:
         t = datetime.datetime.utcfromtimestamp(ts)
         ts2 = util.datetime_to_js_timestamp(t)
@@ -369,8 +376,7 @@ def test_datetime_to_js_timestamp():
 
 
 def test_datetime_to_timestamp():
-    tss = [0, 0.5, -0.5, 12345.6789, -12345.6789,
-           1535910708.7767508]
+    tss = [0, 0.5, -0.5, 12345.6789, -12345.6789, 1535910708.7767508]
     for ts in tss:
         t = datetime.datetime.utcfromtimestamp(ts)
         ts2 = util.datetime_to_timestamp(t)
@@ -385,12 +391,12 @@ def test_datetime_to_timestamp():
 
 def test_check_output_exit_code(capsys):
     with pytest.raises(util.ProcessError):
-        util.check_output([sys.executable, '-c', 'import sys; sys.exit(1)'])
+        util.check_output([sys.executable, "-c", "import sys; sys.exit(1)"])
     out, err = capsys.readouterr()
-    assert '(exit status 1)' in out
+    assert "(exit status 1)" in out
 
 
 def test_geom_mean_na():
     for x in [[1, 2, -3], [1, 2, 3], [3, 1, 3, None, None]]:
-        expected = abs(x[0] * x[1] * x[2])**(1 / 3)
+        expected = abs(x[0] * x[1] * x[2]) ** (1 / 3)
         assert abs(util.geom_mean_na(x) - expected) < 1e-10

@@ -16,7 +16,7 @@ def iter_machine_files(results_dir):
     """
     for root, dirs, files in os.walk(results_dir):
         for filename in files:
-            if filename == 'machine.json':
+            if filename == "machine.json":
                 path = os.path.join(root, filename)
                 yield path
 
@@ -31,11 +31,12 @@ class MachineCollection:
     Stores information about 1 or more machines in the
     ~/.asv-machine.json file.
     """
+
     api_version = 1
 
     @staticmethod
     def get_machine_file_path():
-        return os.path.expanduser('~/.asv-machine.json')
+        return os.path.expanduser("~/.asv-machine.json")
 
     @classmethod
     def load(cls, machine_name, _path=None):
@@ -54,7 +55,8 @@ class MachineCollection:
 
         raise util.UserError(
             f"No information stored about machine '{machine_name}'. "
-            f"I know about {util.human_list(d.keys())}.")
+            f"I know about {util.human_list(d.keys())}."
+        )
 
     @classmethod
     def save(cls, machine_name, machine_info, _path=None):
@@ -83,11 +85,13 @@ class Machine:
     """
     Stores information about a particular machine.
     """
+
     api_version = 1
 
     fields = [
-        ("machine",
-         """
+        (
+            "machine",
+            """
          A unique name to identify this machine in the results.  May
          be anything, as long as it is unique across all the machines used
          to benchmark this project.
@@ -95,33 +99,39 @@ class Machine:
          NOTE: If changed from the default, it will no longer match
          the hostname of this machine, and you may need to explicitly
          use the --machine argument to asv.
-         """),
-
-        ("os",
-         """
+         """,
+        ),
+        (
+            "os",
+            """
          The OS type and version of this machine.  For example,
-         'Macintosh OS-X 10.8'."""),
-
-        ("arch",
-         """
+         'Macintosh OS-X 10.8'.""",
+        ),
+        (
+            "arch",
+            """
          The generic CPU architecture of this machine.  For
-         example, 'i386' or 'x86_64'."""),
-
-        ("cpu",
-         """
+         example, 'i386' or 'x86_64'.""",
+        ),
+        (
+            "cpu",
+            """
          A specific description of the CPU of this machine,
          including its speed and class.  For example, 'Intel(R)
-         Core(TM) i5-2520M CPU @ 2.50GHz (4 cores)'."""),
-
-        ("num_cpu",
-         """
+         Core(TM) i5-2520M CPU @ 2.50GHz (4 cores)'.""",
+        ),
+        (
+            "num_cpu",
+            """
          The number of CPUs in the system. For example,
-         '4'."""),
-
-        ("ram",
-         """
+         '4'.""",
+        ),
+        (
+            "ram",
+            """
          The amount of physical RAM on this machine.  For example,
-         '4GB'.""")
+         '4GB'.""",
+        ),
     ]
 
     hardcoded_machine_name = None
@@ -143,25 +153,28 @@ class Machine:
         num_cpu = str(mp.cpu_count())
 
         return {
-            'machine': node,
-            'os': f"{system} {release}",
-            'num_cpu': num_cpu,
-            'arch': platform.machine(),
-            'cpu': cpu,
-            'ram': ram}
+            "machine": node,
+            "os": f"{system} {release}",
+            "num_cpu": num_cpu,
+            "arch": platform.machine(),
+            "cpu": cpu,
+            "ram": ram,
+        }
 
     @staticmethod
     def generate_machine_file(use_defaults=False):
         if not sys.stdout.isatty() and not use_defaults and not log._colorama:
             raise util.UserError(
                 "Run asv at the console the first time to generate "
-                "one, or run `asv machine --yes`.")
+                "one, or run `asv machine --yes`."
+            )
 
         log.flush()
 
         color_print(
             "I will now ask you some questions about this machine to "
-            "identify it in the benchmarks.")
+            "identify it in the benchmarks."
+        )
         color_print("")
 
         defaults = Machine.get_defaults()
@@ -170,16 +183,25 @@ class Machine:
         for i, (name, description) in enumerate(Machine.fields):
             print(
                 textwrap.fill(
-                    f'{i + 1}. {name}: {textwrap.dedent(description)}',
-                    subsequent_indent='   '))
-            values[name] = console.get_answer_default(name, defaults[name],
-                                                      use_defaults=use_defaults)
+                    f"{i + 1}. {name}: {textwrap.dedent(description)}", subsequent_indent="   "
+                )
+            )
+            values[name] = console.get_answer_default(
+                name, defaults[name], use_defaults=use_defaults
+            )
 
         return values
 
     @classmethod
-    def load(cls, interactive=False, force_interactive=False, _path=None,
-             machine_name=None, use_defaults=False, **kwargs):
+    def load(
+        cls,
+        interactive=False,
+        force_interactive=False,
+        _path=None,
+        machine_name=None,
+        use_defaults=False,
+        **kwargs,
+    ):
         self = Machine()
 
         if machine_name is None:
@@ -187,20 +209,20 @@ class Machine:
         try:
             d = MachineCollection.load(machine_name, _path=_path)
         except util.UserError as e:
-            console.log.error(str(e) + '\n')
+            console.log.error(str(e) + "\n")
             d = {}
         d.update(kwargs)
         if (not len(d) and interactive) or force_interactive:
             d.update(self.generate_machine_file(use_defaults=use_defaults))
 
-        machine_name = d['machine']
+        machine_name = d["machine"]
 
         self.__dict__.update(d)
         MachineCollection.save(machine_name, self.__dict__, _path=_path)
         return self
 
     def save(self, results_dir):
-        path = os.path.join(results_dir, self.machine, 'machine.json')
+        path = os.path.join(results_dir, self.machine, "machine.json")
         util.write_json(path, self.__dict__, self.api_version)
 
     @classmethod

@@ -15,8 +15,18 @@ from asv.step_detect import L1Dist
 from . import tools
 from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
 from .test_web import _rebuild_basic_html
-from .tools import (DUMMY1_VERSION, DUMMY2_VERSIONS, HAS_CONDA, PYTHON_VER1, PYTHON_VER2,
-                    WAIT_TIME, WIN, _build_dummy_wheels, locked_cache_dir, run_asv_with_conf)
+from .tools import (
+    DUMMY1_VERSION,
+    DUMMY2_VERSIONS,
+    HAS_CONDA,
+    PYTHON_VER1,
+    PYTHON_VER2,
+    WAIT_TIME,
+    WIN,
+    _build_dummy_wheels,
+    locked_cache_dir,
+    run_asv_with_conf,
+)
 
 try:
     import hglib
@@ -25,6 +35,7 @@ except ImportError:
 
 try:
     from asv import _rangemedian
+
     HAVE_RANGEMEDIAN = True
 except ImportError:
     HAVE_RANGEMEDIAN = False
@@ -37,23 +48,31 @@ DUMMY_VALUES = (
 
 
 def pytest_addoption(parser):
-    parser.addoption("--webdriver", action="store", default="None",
-                     help=("Selenium WebDriver interface to use for running the test. "
-                           "Choices: None, PhantomJS, Chrome, Firefox, ChromeHeadless, "
-                           "FirefoxHeadless. Alternatively, it can be arbitrary Python code "
-                           "with a return statement with selenium.webdriver object, for "
-                           "example 'return Chrome()'"))
+    parser.addoption(
+        "--webdriver",
+        action="store",
+        default="None",
+        help=(
+            "Selenium WebDriver interface to use for running the test. "
+            "Choices: None, PhantomJS, Chrome, Firefox, ChromeHeadless, "
+            "FirefoxHeadless. Alternatively, it can be arbitrary Python code "
+            "with a return statement with selenium.webdriver object, for "
+            "example 'return Chrome()'"
+        ),
+    )
 
-    parser.addoption("--environment-type", action="store", default=None,
-                     choices=("conda", "virtualenv", "mamba"),
-                     help="environment_type to use in tests by default")
+    parser.addoption(
+        "--environment-type",
+        action="store",
+        default=None,
+        choices=("conda", "virtualenv", "mamba"),
+        help="environment_type to use in tests by default",
+    )
 
 
-def generate_basic_conf(tmpdir,
-                        repo_subdir='',
-                        values=DUMMY_VALUES,
-                        dummy_packages=True,
-                        conf_version=1):
+def generate_basic_conf(
+    tmpdir, repo_subdir="", values=DUMMY_VALUES, dummy_packages=True, conf_version=1
+):
     # conf_version allows to generate different configurations with this same function
     assert conf_version in (1, 2)
     tmpdir = str(tmpdir)
@@ -63,43 +82,41 @@ def generate_basic_conf(tmpdir,
     # Use relative paths on purpose since this is what will be in
     # actual config files
 
-    shutil.copytree(os.path.join(local, 'benchmark'), 'benchmark')
+    shutil.copytree(os.path.join(local, "benchmark"), "benchmark")
 
-    machine_file = join(tmpdir, 'asv-machine.json')
+    machine_file = join(tmpdir, "asv-machine.json")
 
-    shutil.copyfile(join(local, 'asv-machine.json'),
-                    machine_file)
+    shutil.copyfile(join(local, "asv-machine.json"), machine_file)
 
     # values not in test_dev.py copy
-    repo_path = tools.generate_test_repo(tmpdir, values,
-                                         subdir=repo_subdir).path
+    repo_path = tools.generate_test_repo(tmpdir, values, subdir=repo_subdir).path
 
     conf_dict = {
-        'env_dir': 'env',
-        'benchmark_dir': 'benchmark',
-        'results_dir': 'results_workflow',
-        'html_dir': 'html',
-        'repo': relpath(repo_path),
-        'project': 'asv',
-        'dvcs': 'git',
-        'matrix': {
+        "env_dir": "env",
+        "benchmark_dir": "benchmark",
+        "results_dir": "results_workflow",
+        "html_dir": "html",
+        "repo": relpath(repo_path),
+        "project": "asv",
+        "dvcs": "git",
+        "matrix": {
             "asv-dummy-test-package-1": [None],
             "asv-dummy-test-package-2": tools.DUMMY2_VERSIONS,
         },
     }
     if not dummy_packages:
-        conf_dict['matrix'] = {}
+        conf_dict["matrix"] = {}
     elif conf_version == 2:
-        conf_dict['matrix'] = {
+        conf_dict["matrix"] = {
             "asv_dummy_test_package_1": [""],
             "asv_dummy_test_package_2": tools.DUMMY2_VERSIONS,
         }
     if repo_subdir:
-        conf_dict['repo_subdir'] = repo_subdir
+        conf_dict["repo_subdir"] = repo_subdir
 
     conf = config.Config.from_json(conf_dict)
 
-    if hasattr(sys, 'pypy_version_info'):
+    if hasattr(sys, "pypy_version_info"):
         conf.pythons = ["pypy{0[0]}.{0[1]}".format(sys.version_info)]
 
     return tmpdir, local, conf, machine_file
@@ -109,13 +126,13 @@ def pytest_sessionstart(session):
     _monkeypatch_conda_lock(session.config)
 
     # Unregister unwanted environment types
-    env_type = session.config.getoption('environment_type')
+    env_type = session.config.getoption("environment_type")
     if env_type is not None:
         import asv.environment
         import asv.util
 
         for cls in asv.util.iter_subclasses(asv.environment.Environment):
-            cls.matches_python_fallback = (cls.tool_name in (env_type, "existing"))
+            cls.matches_python_fallback = cls.tool_name in (env_type, "existing")
 
 
 def _monkeypatch_conda_lock(config):
@@ -130,14 +147,16 @@ def _monkeypatch_conda_lock(config):
         with conda_lock, filelock.FileLock(str(path)):
             yield
 
-    path = config.cache.makedir('conda-lock') / 'lock'
+    path = config.cache.makedir("conda-lock") / "lock"
     asv.plugins.conda._conda_lock = _conda_lock
 
 
-@pytest.fixture(params=[
-    "git",
-    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib")),
-])
+@pytest.fixture(
+    params=[
+        "git",
+        pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib")),
+    ]
+)
 def two_branch_repo_case(request, tmpdir):
     r"""
     This test ensure we follow the first parent in case of merges
@@ -167,20 +186,24 @@ def two_branch_repo_case(request, tmpdir):
         master = f"{util.git_default_branch()}"
     elif dvcs_type == "hg":
         master = "default"
-    dvcs = tools.generate_repo_from_ops(tmpdir, dvcs_type, [
-        ("commit", 1),
-        ("checkout", "stable", master),
-        ("commit", 2),
-        ("checkout", master),
-        ("commit", 3),
-        ("merge", "stable"),
-        ("commit", 4),
-        ("checkout", "stable"),
-        ("merge", master, "Merge master"),
-        ("commit", 5),
-        ("checkout", master),
-        ("commit", 6),
-    ])
+    dvcs = tools.generate_repo_from_ops(
+        tmpdir,
+        dvcs_type,
+        [
+            ("commit", 1),
+            ("checkout", "stable", master),
+            ("commit", 2),
+            ("checkout", master),
+            ("commit", 3),
+            ("merge", "stable"),
+            ("commit", 4),
+            ("checkout", "stable"),
+            ("merge", master, "Merge master"),
+            ("commit", 5),
+            ("checkout", master),
+            ("commit", 6),
+        ],
+    )
 
     conf = config.Config()
     conf.branches = [master, "stable"]
@@ -202,7 +225,7 @@ def basic_conf_2(tmpdir, dummy_packages):
 
 @pytest.fixture
 def basic_conf_with_subdir(tmpdir, dummy_packages):
-    return generate_basic_conf(tmpdir, 'some_subdir')
+    return generate_basic_conf(tmpdir, "some_subdir")
 
 
 @pytest.fixture
@@ -216,23 +239,21 @@ def existing_env_conf(tmpdir):
 @pytest.fixture(scope="session")
 def example_results(request):
     with locked_cache_dir(request.config, "example-results") as cache_dir:
-        src = abspath(join(dirname(__file__), 'example_results'))
-        dst = abspath(join(cache_dir, 'results'))
+        src = abspath(join(dirname(__file__), "example_results"))
+        dst = abspath(join(cache_dir, "results"))
 
         if os.path.isdir(dst):
             return dst
 
         shutil.copytree(src, dst)
 
-        src_machine = join(dirname(__file__), 'asv-machine.json')
-        dst_machine = join(cache_dir, 'asv-machine.json')
+        src_machine = join(dirname(__file__), "asv-machine.json")
+        dst_machine = join(cache_dir, "asv-machine.json")
         shutil.copyfile(src_machine, dst_machine)
 
         # Convert to current file format
-        conf = config.Config.from_json({'results_dir': dst,
-                                        'repo': 'none',
-                                        'project': 'asv'})
-        run_asv_with_conf(conf, 'update', _machine_file=dst_machine)
+        conf = config.Config.from_json({"results_dir": dst, "repo": "none", "project": "asv"})
+        run_asv_with_conf(conf, "update", _machine_file=dst_machine)
 
         return dst
 
@@ -242,7 +263,7 @@ def browser(request, pytestconfig):
     """
     Fixture for Selenium WebDriver browser interface
     """
-    driver_str = pytestconfig.getoption('webdriver')
+    driver_str = pytestconfig.getoption("webdriver")
 
     if driver_str == "None":
         pytest.skip("No webdriver selected for tests (use --webdriver).")
@@ -255,21 +276,21 @@ def browser(request, pytestconfig):
 
     def ChromeHeadless():
         options = selenium.webdriver.ChromeOptions()
-        options.add_argument('headless')
+        options.add_argument("headless")
         return selenium.webdriver.Chrome(options=options)
 
     ns = {}
     exec("import selenium.webdriver", ns)
     exec("from selenium.webdriver import *", ns)
-    ns['FirefoxHeadless'] = FirefoxHeadless
-    ns['ChromeHeadless'] = ChromeHeadless
+    ns["FirefoxHeadless"] = FirefoxHeadless
+    ns["ChromeHeadless"] = ChromeHeadless
 
     create_driver = ns.get(driver_str, None)
     if create_driver is None:
         src = "def create_driver():\n"
         src += textwrap.indent(driver_str, "    ")
         exec(src, ns)
-        create_driver = ns['create_driver']
+        create_driver = ns["create_driver"]
 
     # Create the browser
     browser = create_driver()
@@ -281,6 +302,7 @@ def browser(request, pytestconfig):
     # Clean up on fixture finalization
     def fin():
         browser.quit()
+
     request.addfinalizer(fin)
 
     # Set default time to wait for AJAX requests to complete
@@ -294,18 +316,18 @@ def dummy_packages(request, monkeypatch):
     """
     Build dummy wheels for required packages and set PIP_FIND_LINKS + CONDARC
     """
-    to_build = [('asv_dummy_test_package_1', DUMMY1_VERSION)]
-    to_build += [('asv_dummy_test_package_2', ver) for ver in DUMMY2_VERSIONS]
+    to_build = [("asv_dummy_test_package_1", DUMMY1_VERSION)]
+    to_build += [("asv_dummy_test_package_2", ver) for ver in DUMMY2_VERSIONS]
 
     tag = [PYTHON_VER1, PYTHON_VER2, to_build, HAS_CONDA]
 
     with locked_cache_dir(request.config, "asv-wheels", timeout=900, tag=tag) as cache_dir:
-        wheel_dir = os.path.abspath(join(str(cache_dir), 'wheels'))
+        wheel_dir = os.path.abspath(join(str(cache_dir), "wheels"))
 
-        monkeypatch.setenv(str('PIP_FIND_LINKS'), str('file://' + wheel_dir))
+        monkeypatch.setenv(str("PIP_FIND_LINKS"), str("file://" + wheel_dir))
 
-        condarc = join(wheel_dir, 'condarc')
-        monkeypatch.setenv(str('CONDARC'), str(condarc))
+        condarc = join(wheel_dir, "condarc")
+        monkeypatch.setenv(str("CONDARC"), str(condarc))
 
         if os.path.isdir(wheel_dir):
             return
@@ -328,14 +350,14 @@ def dummy_packages(request, monkeypatch):
         else:
             wheel_dir_str = wheel_dir
 
-        with open(condarc, 'w') as f:
+        with open(condarc, "w") as f:
             f.write(f"channels:\n- defaults\n- {wheel_dir_str}")
 
 
 @pytest.fixture(scope="session")
 def basic_html(request):
     with locked_cache_dir(request.config, "asv-test_web-basic_html", timeout=900) as cache_dir:
-        tmpdir = join(str(cache_dir), 'cached')
+        tmpdir = join(str(cache_dir), "cached")
         html_dir, dvcs = _rebuild_basic_html(tmpdir)
         return html_dir, dvcs
 
@@ -345,14 +367,14 @@ def benchmarks_fixture(tmpdir):
     tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
-    shutil.copytree(BENCHMARK_DIR, 'benchmark')
+    shutil.copytree(BENCHMARK_DIR, "benchmark")
 
     d = {}
     d.update(ASV_CONF_JSON)
-    d['env_dir'] = "env"
-    d['benchmark_dir'] = 'benchmark'
-    d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
-    d['branches'] = ["master"]
+    d["env_dir"] = "env"
+    d["benchmark_dir"] = "benchmark"
+    d["repo"] = tools.generate_test_repo(tmpdir, [0]).path
+    d["branches"] = ["master"]
     conf = config.Config.from_json(d)
 
     repo = get_repo(conf)
@@ -362,17 +384,20 @@ def benchmarks_fixture(tmpdir):
     return conf, repo, envs, commit_hash
 
 
-@pytest.fixture(params=[
-    "git",
-    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib")),
-])
+@pytest.fixture(
+    params=[
+        "git",
+        pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib")),
+    ]
+)
 def generate_result_dir(request, tmpdir):
     tmpdir = str(tmpdir)
     dvcs_type = request.param
 
     def _generate_result_dir(values, commits_without_result=None):
         dvcs = tools.generate_repo_from_ops(
-            tmpdir, dvcs_type, [("commit", i) for i in range(len(values))])
+            tmpdir, dvcs_type, [("commit", i) for i in range(len(values))]
+        )
         commits = list(reversed(dvcs.get_branch_hashes()))
         commit_values = {}
         commits_without_result = [commits[i] for i in commits_without_result or []]
@@ -382,6 +407,7 @@ def generate_result_dir(request, tmpdir):
         conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
         repo = get_repo(conf)
         return conf, repo, commits
+
     return _generate_result_dir
 
 
@@ -391,20 +417,28 @@ def show_fixture(tmpdir, example_results):
     os.chdir(tmpdir)
 
     conf = config.Config.from_json(
-        {'results_dir': example_results,
-         'repo': tools.generate_test_repo(tmpdir).path,
-         'project': 'asv',
-         'environment_type': "shouldn't matter what"})
+        {
+            "results_dir": example_results,
+            "repo": tools.generate_test_repo(tmpdir).path,
+            "project": "asv",
+            "environment_type": "shouldn't matter what",
+        }
+    )
 
     return conf
 
 
-@pytest.fixture(params=[
-    "python",
-    pytest.param("rangemedian",
-                 marks=pytest.mark.skipif(not HAVE_RANGEMEDIAN,
-                                          reason="compiled asv._rangemedian required"))
-])
+@pytest.fixture(
+    params=[
+        "python",
+        pytest.param(
+            "rangemedian",
+            marks=pytest.mark.skipif(
+                not HAVE_RANGEMEDIAN, reason="compiled asv._rangemedian required"
+            ),
+        ),
+    ]
+)
 def use_rangemedian(request):
     if request.param == "rangemedian":
         assert isinstance(step_detect.get_mu_dist([0], [1]), _rangemedian.RangeMedian)
@@ -415,6 +449,7 @@ def use_rangemedian(request):
         def restore():
             if HAVE_RANGEMEDIAN:
                 step_detect._rangemedian = _rangemedian
+
         request.addfinalizer(restore)
 
         assert isinstance(step_detect.get_mu_dist([0], [1]), L1Dist)

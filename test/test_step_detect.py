@@ -4,12 +4,20 @@ import random
 import pytest
 
 from asv import step_detect
-from asv.step_detect import (detect_regressions, detect_steps, golden_search, median,
-                             rolling_median_dev, solve_potts, solve_potts_approx,
-                             solve_potts_autogamma)
+from asv.step_detect import (
+    detect_regressions,
+    detect_steps,
+    golden_search,
+    median,
+    rolling_median_dev,
+    solve_potts,
+    solve_potts_approx,
+    solve_potts_autogamma,
+)
 
 try:
     import numpy as np
+
     np.random.seed
     HAVE_NUMPY = True
 except (ImportError, NameError):
@@ -37,11 +45,7 @@ def test_solve_potts(use_rangemedian):
 
     # Bigger case, exact solver
     t = np.arange(100)
-    y0 = (+ 0.4 * (t >= 5) +
-          0.9 * (t >= 10) -
-          0.2 * (t >= 20) +
-          0.2 * (t >= 50) +
-          1.1 * (t >= 70))
+    y0 = +0.4 * (t >= 5) + 0.9 * (t >= 10) - 0.2 * (t >= 20) + 0.2 * (t >= 50) + 1.1 * (t >= 70)
     y = y0 + 0.05 * np.random.rand(y0.size)
     right, values, dists = solve_potts(y.tolist(), w=[1] * len(y), gamma=0.1)
     assert right == [5, 10, 20, 50, 70, 100]
@@ -52,12 +56,14 @@ def test_solve_potts(use_rangemedian):
 
     # Larger case
     t = np.arange(3000)
-    y0 = (+ 0.4 * (t >= 10) +
-          0.9 * (t >= 30) -
-          0.2 * (t >= 200) +
-          0.2 * (t >= 600) +
-          1.1 * (t >= 2500) -
-          0.5 * (t >= 2990))
+    y0 = (
+        +0.4 * (t >= 10)
+        + 0.9 * (t >= 30)
+        - 0.2 * (t >= 200)
+        + 0.2 * (t >= 600)
+        + 1.1 * (t >= 2500)
+        - 0.5 * (t >= 2990)
+    )
 
     # Small amount of noise shouldn't disturb step finding
     y = y0 + 0.05 * np.random.randn(y0.size)
@@ -74,8 +80,9 @@ def test_solve_potts(use_rangemedian):
     # steps in the former
     y = y0 + 0.025 * np.random.rand(y.size)
     ypad = 0.025 * np.random.randn(10000 - 3000)
-    right, values, dists, gamma = solve_potts_autogamma(y.tolist() + ypad.tolist(),
-                                                        w=[1] * (len(y) + len(ypad)))
+    right, values, dists, gamma = solve_potts_autogamma(
+        y.tolist() + ypad.tolist(), w=[1] * (len(y) + len(ypad))
+    )
     assert right == [10, 30, 200, 600, 2500, 2990, 3000, 10000]
 
 
@@ -101,11 +108,7 @@ def test_weighted():
     np.random.seed(1234)
 
     t = np.arange(100)
-    y0 = (+ 0.4 * (t >= 5) +
-          0.9 * (t >= 10) -
-          0.2 * (t >= 20) +
-          0.2 * (t >= 50) +
-          1.1 * (t >= 70))
+    y0 = +0.4 * (t >= 5) + 0.9 * (t >= 10) - 0.2 * (t >= 20) + 0.2 * (t >= 50) + 1.1 * (t >= 70)
     y = y0 + 0.05 * np.random.rand(y0.size)
 
     y = y.tolist()
@@ -158,13 +161,15 @@ def test_detect_regressions(use_rangemedian):
         steps_lr = [(l, r) for l, r, _, _, _ in steps]
         k = steps[0][1]
         assert 990 <= k <= 1010
-        assert steps_lr == [(0, k),
-                            (k, 3234 + (seed % 123)),
-                            (3234 + (seed % 123), 3264 + (seed % 53)),
-                            (3264 + (seed % 53), 3350),
-                            (3350, 3500 + (seed % 71)),
-                            (3500 + (seed % 71), 3700),
-                            (3700, 4000)]
+        assert steps_lr == [
+            (0, k),
+            (k, 3234 + (seed % 123)),
+            (3234 + (seed % 123), 3264 + (seed % 53)),
+            (3264 + (seed % 53), 3350),
+            (3350, 3500 + (seed % 71)),
+            (3500 + (seed % 71), 3700),
+            (3700, 4000),
+        ]
         steps_v = [x[2] for x in steps]
         assert np.allclose(steps_v, [0.35, 0.05, 2.05, 4.05, 1.15, 4.05, 2.05], rtol=0.3)
 
@@ -174,10 +179,10 @@ def test_detect_regressions(use_rangemedian):
 
         # Check detect_regressions
         new_value, best_value, regression_pos = detect_regressions(steps)
-        assert regression_pos == [(3233 + (seed % 123), (3233 + (seed % 123) + 1),
-                                   steps_v[1], min(steps_v[2:])),
-                                  (3499 + (seed % 71), 3499 + (seed % 71) + 1,
-                                   steps_v[4], min(steps_v[5:]))]
+        assert regression_pos == [
+            (3233 + (seed % 123), (3233 + (seed % 123) + 1), steps_v[1], min(steps_v[2:])),
+            (3499 + (seed % 71), 3499 + (seed % 71) + 1, steps_v[4], min(steps_v[5:])),
+        ]
         assert np.allclose(best_value, 0.7 / 2 - 0.3, rtol=0.3, atol=0)
         assert np.allclose(new_value, 0.7 / 2 - 0.3 + 2, rtol=0.3, atol=0)
 
@@ -185,6 +190,7 @@ def test_detect_regressions(use_rangemedian):
 def test_golden_search():
     def f(x):
         return 1 + x**3 + x**4
+
     x = golden_search(f, -1, -0.25, xatol=1e-5, ftol=0)
     assert abs(x - (-3 / 4)) < 1e-4
     x = golden_search(f, -0.25, 0.25, xatol=1e-5, ftol=0)
@@ -201,10 +207,7 @@ def rolling_median_dev_naive(items):
 def test_rolling_median():
     random.seed(1)
 
-    datasets = [
-        [1, 1, 10, 3, 5, 1, -16, -3, 4, 9],
-        [random.gauss(0, 1) for j in range(500)]
-    ]
+    datasets = [[1, 1, 10, 3, 5, 1, -16, -3, 4, 9], [random.gauss(0, 1) for j in range(500)]]
 
     for x in datasets:
         got = list(rolling_median_dev(x))
@@ -221,7 +224,7 @@ def test_l1dist(use_rangemedian):
     datasets = [
         ([1, 1, 10, 3, 5, 1, -16, -3, 4, 9], [1] * 10),
         ([random.gauss(0, 1) for j in range(50)], [1] * 50),
-        ([1, 2, 3, 4], [1, 2, 1, 2])
+        ([1, 2, 3, 4], [1, 2, 1, 2]),
     ]
 
     def median_iter(y, w):
@@ -249,9 +252,7 @@ def test_l1dist(use_rangemedian):
 
 
 def test_regression_threshold():
-    steps = [(0, 1, 1.0, 1.0, 0.0),
-             (1, 2, 1.1, 1.1, 0.0),
-             (2, 3, 2.0, 2.0, 0.0)]
+    steps = [(0, 1, 1.0, 1.0, 0.0), (1, 2, 1.1, 1.1, 0.0), (2, 3, 2.0, 2.0, 0.0)]
 
     latest, best, pos = detect_regressions(steps, threshold=0.05, min_size=1)
     assert latest == 2
@@ -273,9 +274,7 @@ def test_regression_threshold():
     assert best is None
     assert pos is None
 
-    steps = [(0, 1, 1.0, 1.0, 0.0),
-             (1, 2, 1.3, 1.3, 0.0),
-             (2, 3, 1.1, 1.1, 0.0)]
+    steps = [(0, 1, 1.0, 1.0, 0.0), (1, 2, 1.3, 1.3, 0.0), (2, 3, 1.1, 1.1, 0.0)]
 
     latest, best, pos = detect_regressions(steps, threshold=0.2, min_size=1)
     assert latest is None
@@ -284,9 +283,7 @@ def test_regression_threshold():
 
     # Gradual change should result to a regression detected somewhere,
     # even if the individual steps are smaller than the threshold
-    steps = [(0, 1, 1.0, 1.0, 0.0),
-             (1, 2, 1.04, 1.04, 0.0),
-             (2, 3, 1.08, 1.08, 0.0)]
+    steps = [(0, 1, 1.0, 1.0, 0.0), (1, 2, 1.04, 1.04, 0.0), (2, 3, 1.08, 1.08, 0.0)]
 
     latest, best, pos = detect_regressions(steps, threshold=0.05)
     assert pos == [(0, 1, 1.0, 1.04)]
@@ -310,9 +307,7 @@ def test_zero_weight():
 
 
 def test_regression_min_size():
-    steps = [(0, 2, 1.0, 1.0, 0.0),
-             (2, 3, 0.0, 0.0, 0.0),
-             (3, 5, 1.0, 1.0, 0.0)]
+    steps = [(0, 2, 1.0, 1.0, 0.0), (2, 3, 0.0, 0.0, 0.0), (3, 5, 1.0, 1.0, 0.0)]
 
     latest, best, pos = detect_regressions(steps)
     assert latest is None and best is None and pos is None
@@ -322,9 +317,7 @@ def test_regression_min_size():
     assert best == 0.0
     assert pos == [(2, 3, 0.0, 1.0)]
 
-    steps = [(0, 2, 1.0, 1.0, 0.0),
-             (2, 3, 0.0, 0.0, 0.0),
-             (3, 5, 2.0, 1.0, 0.0)]
+    steps = [(0, 2, 1.0, 1.0, 0.0), (2, 3, 0.0, 0.0, 0.0), (3, 5, 2.0, 1.0, 0.0)]
 
     latest, best, pos = detect_regressions(steps)
     assert latest == 2.0
@@ -333,14 +326,110 @@ def test_regression_min_size():
 
 
 def test_solve_potts_approx_bug():
-    y = [2.9, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1,
-         3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1,
-         3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.2, 3.1, 3.1, 3.1, 3.1,
-         3.1, 3.1, 3.1, 3.1, 2.9, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1]
-    w = [86.1, 1.0, 1.0, 1.0, 0.8, 1.0, 0.8, 1.0, 1.0, 0.9, 0.9, 1.0,
-         0.8, 1.0, 1.0, 1.0, 1.0, 0.9, 0.6, 0.9, 0.5, 1.0, 1.0, 1.0, 1.0,
-         1.0, 1.0, 1.0, 1.0, 1.0, 0.9, 1.0, 1.0, 0.7, 1.0, 1.0, 1.0, 1.0,
-         1.0, 1.0, 0.8, 0.8, 50.0, 0.8, 1.0, 1.0, 0.6, 0.8, 1.0, 1.0]
+    y = [
+        2.9,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.2,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        2.9,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+        3.1,
+    ]
+    w = [
+        86.1,
+        1.0,
+        1.0,
+        1.0,
+        0.8,
+        1.0,
+        0.8,
+        1.0,
+        1.0,
+        0.9,
+        0.9,
+        1.0,
+        0.8,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9,
+        0.6,
+        0.9,
+        0.5,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9,
+        1.0,
+        1.0,
+        0.7,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.8,
+        0.8,
+        50.0,
+        0.8,
+        1.0,
+        1.0,
+        0.6,
+        0.8,
+        1.0,
+        1.0,
+    ]
     gamma = 0.3
 
     r0, v0, d0 = solve_potts(y, w, gamma=gamma)

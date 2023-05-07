@@ -38,10 +38,10 @@ def test_write_with_fallback(tmpdir, capfd):
                 _write_with_fallback(value, stream)
 
             # Check writing to a file
-            fn = os.path.join(tmpdir, 'tmp.txt')
-            with io.open(fn, 'w', encoding=stream_encoding) as stream:
+            fn = os.path.join(tmpdir, "tmp.txt")
+            with io.open(fn, "w", encoding=stream_encoding) as stream:
                 _write_with_fallback(value, stream)
-            with open(fn, 'rb') as stream:
+            with open(fn, "rb") as stream:
                 got = stream.read()
                 assert got == expected
         finally:
@@ -54,7 +54,7 @@ def test_write_with_fallback(tmpdir, capfd):
     # - Otherwise, map characters produced by asv to ascii equivalents, and
     #   - Try to print in latin1
     #   - Try to print in ascii, replacing all non-ascii characters
-    encodings = ['utf-8', 'latin1', 'ascii', 'euc-jp']
+    encodings = ["utf-8", "latin1", "ascii", "euc-jp"]
     strings = ["helloμ", "hello·", "hello難", "helloä", "hello±"]
     repmap = {"helloμ": "hellou", "hello·": "hello-", "hello±": "hello~"}
 
@@ -69,7 +69,7 @@ def test_write_with_fallback(tmpdir, capfd):
                 pass
         else:
             s2 = repmap.get(s, s)
-            expected = s2.encode(pref_enc, errors='replace')
+            expected = s2.encode(pref_enc, errors="replace")
 
         check_write(s, expected, stream_enc, pref_enc)
 
@@ -87,8 +87,8 @@ def test_color_print_nofail(capfd):
         color_print(b"really\xfe", "green", "not really")
 
     out, err = capfd.readouterr()
-    assert 'hello' in out
-    assert 'indeed' in out
+    assert "hello" in out
+    assert "indeed" in out
 
 
 def test_log_indent(capsys):
@@ -97,11 +97,11 @@ def test_log_indent(capsys):
 
     out, err = capsys.readouterr()
     lines = out.lstrip().splitlines()
-    assert lines[0].index('First') == lines[1].index('Second')
+    assert lines[0].index("First") == lines[1].index("Second")
 
     log.set_nitems(1)
     log.info("First\nSecond")
 
     out, err = capsys.readouterr()
     lines = out.lstrip().splitlines()
-    assert lines[0].index('First') == lines[1].index('Second')
+    assert lines[0].index("First") == lines[1].index("Second")

@@ -14,24 +14,23 @@ def test_machine(tmpdir):
         arch="MIPS",
         cpu="10 MHz",
         ram="640k",
-        _path=join(tmpdir, 'asv-machine.json'))
+        _path=join(tmpdir, "asv-machine.json"),
+    )
 
-    m = machine.Machine.load(
-        _path=join(tmpdir, 'asv-machine.json'), interactive=False)
+    m = machine.Machine.load(_path=join(tmpdir, "asv-machine.json"), interactive=False)
 
-    assert m.machine == 'orangutan'
-    assert m.os == 'BeOS'
-    assert m.arch == 'MIPS'
-    assert m.cpu == '10 MHz'
-    assert m.ram == '640k'
+    assert m.machine == "orangutan"
+    assert m.os == "BeOS"
+    assert m.arch == "MIPS"
+    assert m.cpu == "10 MHz"
+    assert m.ram == "640k"
 
 
 def test_machine_defaults(tmpdir):
     tmpdir = str(tmpdir)
 
     m = machine.Machine.load(
-        interactive=True,
-        use_defaults=True,
-        _path=join(tmpdir, 'asv-machine.json'))
+        interactive=True, use_defaults=True, _path=join(tmpdir, "asv-machine.json")
+    )
 
     assert m.__dict__ == m.get_defaults()

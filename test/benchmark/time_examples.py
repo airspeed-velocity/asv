@@ -15,15 +15,15 @@ class TimeSuite:
         self.n = 100
 
     def time_example_benchmark_1(self):
-        s = ''
+        s = ""
         for i in xrange(self.n):
-            s = s + 'x'
+            s = s + "x"
 
     def time_example_benchmark_2(self):
         s = []
         for i in xrange(self.n):
-            s.append('x')
-        ''.join(s)
+            s.append("x")
+        "".join(s)
 
 
 class TimeSuiteSub(TimeSuite):
@@ -31,10 +31,10 @@ class TimeSuiteSub(TimeSuite):
 
 
 def time_with_warnings():
-    print('hi')
-    warnings.warn('before')
+    print("hi")
+    warnings.warn("before")
     1 / 0
-    warnings.warn('after')
+    warnings.warn("after")
 
 
 time_with_warnings.sample_time = 0.1

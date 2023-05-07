@@ -50,9 +50,9 @@ class Hg(Repo):
 
             # Mercurial branches are global, so there is no need for
             # an analog of git --mirror
-            hglib.clone(self._encode_filename(url),
-                        dest=self._encode_filename(self._path),
-                        noupdate=True)
+            hglib.clone(
+                self._encode_filename(url), dest=self._encode_filename(self._path), noupdate=True
+            )
 
         self._repo = hglib.open(self._encode_filename(self._path))
 
@@ -72,15 +72,11 @@ class Hg(Repo):
 
     @classmethod
     def is_local_repo(cls, path):
-        return (os.path.isdir(path) and
-                os.path.isdir(os.path.join(path, '.hg')))
+        return os.path.isdir(path) and os.path.isdir(os.path.join(path, ".hg"))
 
     @classmethod
     def url_match(cls, url):
-        regexes = [
-            r'^hg\+https?://.*$',
-            r'^https?://.*?\.hg$',
-            r'^ssh://hg@.*$']
+        regexes = [r"^hg\+https?://.*$", r"^https?://.*?\.hg$", r"^ssh://hg@.*$"]
 
         for regex in regexes:
             if re.match(regex, url):
@@ -93,10 +89,10 @@ class Hg(Repo):
         return False
 
     def get_range_spec(self, commit_a, commit_b):
-        return '{0}::{1} and not {0}'.format(commit_a, commit_b)
+        return "{0}::{1} and not {0}".format(commit_a, commit_b)
 
     def get_new_range_spec(self, latest_result, branch=None):
-        return f'{latest_result}::{self.get_branch_name(branch)}'
+        return f"{latest_result}::{self.get_branch_name(branch)}"
 
     def pull(self):
         # We assume the remote isn't updated during the run of asv
@@ -116,10 +112,7 @@ class Hg(Repo):
             with hglib.open(self._encode_filename(path)) as subrepo:
                 subrepo.pull()
                 subrepo.update(self._encode(commit_hash), clean=True)
-                subrepo.rawcommand([b"--config",
-                                    b"extensions.purge=",
-                                    b"purge",
-                                    b"--all"])
+                subrepo.rawcommand([b"--config", b"extensions.purge=", b"purge", b"--all"])
 
         if os.path.isdir(path):
             try:
@@ -129,8 +122,7 @@ class Hg(Repo):
                 util.long_path_rmtree(path)
 
         if not os.path.isdir(path):
-            hglib.clone(self._encode_filename(self._path),
-                        dest=self._encode_filename(path))
+            hglib.clone(self._encode_filename(self._path), dest=self._encode_filename(path))
             checkout_existing()
 
     def get_date(self, hash):
@@ -148,12 +140,12 @@ class Hg(Repo):
         try:
             return self._decode(self._repo.log(self._encode(name))[0].node)
         except hglib.error.CommandError as err:
-            if b'unknown revision' in err.err:
+            if b"unknown revision" in err.err:
                 raise NoSuchNameError(name)
             raise
 
     def get_hash_from_parent(self, name):
-        return self.get_hash_from_name(f'p1({name})')
+        return self.get_hash_from_name(f"p1({name})")
 
     def get_name_from_hash(self, commit):
         # XXX: implement
@@ -173,8 +165,9 @@ class Hg(Repo):
             query = "branch({0})"
         else:
             query = "ancestors({0})"
-        return self.get_hashes_from_range(query.format(self.get_branch_name(branch)),
-                                          followfirst=True)
+        return self.get_hashes_from_range(
+            query.format(self.get_branch_name(branch)), followfirst=True
+        )
 
     def get_revisions(self, commits):
         revisions = {}

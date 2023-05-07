@@ -8,7 +8,7 @@ import xml.etree.ElementTree as etree
 
 from . import util
 
-__all__ = ['FeedEntry', 'write_atom']
+__all__ = ["FeedEntry", "write_atom"]
 
 
 ATOM_NS = "{http://www.w3.org/2005/Atom}"
@@ -39,6 +39,7 @@ class FeedEntry:
         Default: same as *updated*
 
     """
+
     def __init__(self, title, updated, link=None, content=None, id_context=None, id_date=None):
         self.title = title
         self.link = link
@@ -48,7 +49,7 @@ class FeedEntry:
         self.id_date = id_date
 
     def get_atom(self, id_prefix, language):
-        item = etree.Element(ATOM_NS + 'entry')
+        item = etree.Element(ATOM_NS + "entry")
 
         id_context = ["entry"]
         if self.id_context is None:
@@ -61,38 +62,37 @@ class FeedEntry:
         else:
             id_date = self.id_date
 
-        el = etree.Element(ATOM_NS + 'id')
+        el = etree.Element(ATOM_NS + "id")
         el.text = _get_id(id_prefix, id_date, id_context)
         item.append(el)
 
-        el = etree.Element(ATOM_NS + 'title')
-        el.attrib[XML_NS + 'lang'] = language
+        el = etree.Element(ATOM_NS + "title")
+        el.attrib[XML_NS + "lang"] = language
         el.text = self.title
         item.append(el)
 
-        el = etree.Element(ATOM_NS + 'updated')
-        el.text = self.updated.strftime('%Y-%m-%dT%H:%M:%SZ')
+        el = etree.Element(ATOM_NS + "updated")
+        el.text = self.updated.strftime("%Y-%m-%dT%H:%M:%SZ")
         item.append(el)
 
         if self.link:
-            el = etree.Element(ATOM_NS + 'link')
-            el.attrib[ATOM_NS + 'href'] = self.link
+            el = etree.Element(ATOM_NS + "link")
+            el.attrib[ATOM_NS + "href"] = self.link
             item.append(el)
 
-        el = etree.Element(ATOM_NS + 'content')
-        el.attrib[XML_NS + 'lang'] = language
+        el = etree.Element(ATOM_NS + "content")
+        el.attrib[XML_NS + "lang"] = language
         if self.content:
             el.text = self.content
-            el.attrib[ATOM_NS + 'type'] = 'html'
+            el.attrib[ATOM_NS + "type"] = "html"
         else:
-            el.text = ' '
+            el.text = " "
         item.append(el)
 
         return item
 
 
-def write_atom(dest, entries, author, title, address, updated=None, link=None,
-               language="en"):
+def write_atom(dest, entries, author, title, address, updated=None, link=None, language="en"):
     """
     Write an atom feed to a file.
 
@@ -123,35 +123,35 @@ def write_atom(dest, entries, author, title, address, updated=None, link=None,
         else:
             updated = datetime.datetime.utcnow()
 
-    root = etree.Element(ATOM_NS + 'feed')
+    root = etree.Element(ATOM_NS + "feed")
 
     # id (obligatory)
-    el = etree.Element(ATOM_NS + 'id')
+    el = etree.Element(ATOM_NS + "id")
     el.text = _get_id(address, None, ["feed", author, title])
     root.append(el)
 
     # author (obligatory)
-    el = etree.Element(ATOM_NS + 'author')
-    el2 = etree.Element(ATOM_NS + 'name')
+    el = etree.Element(ATOM_NS + "author")
+    el2 = etree.Element(ATOM_NS + "name")
     el2.text = author
     el.append(el2)
     root.append(el)
 
     # title (obligatory)
-    el = etree.Element(ATOM_NS + 'title')
-    el.attrib[XML_NS + 'lang'] = language
+    el = etree.Element(ATOM_NS + "title")
+    el.attrib[XML_NS + "lang"] = language
     el.text = title
     root.append(el)
 
     # updated (obligatory)
-    el = etree.Element(ATOM_NS + 'updated')
-    el.text = updated.strftime('%Y-%m-%dT%H:%M:%SZ')
+    el = etree.Element(ATOM_NS + "updated")
+    el.text = updated.strftime("%Y-%m-%dT%H:%M:%SZ")
     root.append(el)
 
     # link
     if link is not None:
-        el = etree.Element(ATOM_NS + 'link')
-        el.attrib[ATOM_NS + 'href'] = link
+        el = etree.Element(ATOM_NS + "link")
+        el.attrib[ATOM_NS + "href"] = link
         root.append(el)
 
     # entries
@@ -163,10 +163,10 @@ def write_atom(dest, entries, author, title, address, updated=None, link=None,
     def write(f):
         tree.write(f, xml_declaration=True, default_namespace=ATOM_NS[1:-1], encoding="utf-8")
 
-    if hasattr(dest, 'write'):
+    if hasattr(dest, "write"):
         write(dest)
     else:
-        with util.long_path_open(dest, 'wb') as f:
+        with util.long_path_open(dest, "wb") as f:
             write(f)
 
 
@@ -176,13 +176,13 @@ def _get_id(owner, date, content):
     """
     h = hashlib.sha256()
     # Hash still contains the original project url, keep as is
-    h.update("github.com/spacetelescope/asv".encode('utf-8'))
+    h.update("github.com/spacetelescope/asv".encode("utf-8"))
     for x in content:
         if x is None:
-            h.update(",".encode('utf-8'))
+            h.update(",".encode("utf-8"))
         else:
-            h.update(x.encode('utf-8'))
-        h.update(",".encode('utf-8'))
+            h.update(x.encode("utf-8"))
+        h.update(",".encode("utf-8"))
 
     if date is None:
         date = datetime.datetime(1970, 1, 1)

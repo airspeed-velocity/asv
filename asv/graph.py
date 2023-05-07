@@ -12,7 +12,7 @@ from .util import is_na, mean_na, geom_mean_na
 # a recent Retina MacBook Pro (3840 pixels across the screen, divided
 # by 5 summaries across, divided by 2 for good measure and to account
 # for width of the line).
-RESAMPLED_POINTS = (3840 / 5 / 2)
+RESAMPLED_POINTS = 3840 / 5 / 2
 
 
 class GraphSet:
@@ -81,6 +81,7 @@ class Graph:
     Unlike "results", which contain the timings for a single commit,
     these contain the timings for a single benchmark.
     """
+
     def __init__(self, benchmark_name, params):
         """
         Initially the graph contains no data.  It must be added using
@@ -118,14 +119,14 @@ class Graph:
         l = list(params.items())
         for key, val in l:
             if val is None:
-                part = f'{key}-null'
+                part = f"{key}-null"
             elif val:
-                part = f'{key}-{val}'
+                part = f"{key}-{val}"
             else:
-                part = f'{key}'
+                part = f"{key}"
             parts.append(util.sanitize_filename(part))
         parts.sort()
-        parts.insert(0, 'graphs')
+        parts.insert(0, "graphs")
         parts.append(util.sanitize_filename(benchmark_name))
         return os.path.join(*parts)
 
@@ -149,7 +150,7 @@ class Graph:
         self.data_points.setdefault(revision, [])
         self.data_weights.setdefault(revision, [])
         if not is_na(value):
-            if not hasattr(value, '__len__'):
+            if not hasattr(value, "__len__"):
                 value = [value]
                 weight = [weight]
             else:
@@ -178,8 +179,7 @@ class Graph:
         def mean_axis0(v):
             if not v:
                 return [None] * self.n_series
-            return [mean_na(x[j] for x in v)
-                    for j in range(self.n_series)]
+            return [mean_na(x[j] for x in v) for j in range(self.n_series)]
 
         # Average data over commit log
         val = []
@@ -203,7 +203,7 @@ class Graph:
             if any(not is_na(v) for v in val[j][1]):
                 break
 
-        val = val[i:j + 1]
+        val = val[i : j + 1]
 
         # Single-element series
         if self.scalar_series:
@@ -318,7 +318,7 @@ def make_summary_graph(graphs):
     val = resample_data(val)
 
     # Return as a graph
-    graph = Graph(graphs[0].benchmark_name, {'summary': ''})
+    graph = Graph(graphs[0].benchmark_name, {"summary": ""})
     for x, y in val:
         graph.add_data_point(x, y)
     return graph
@@ -380,8 +380,7 @@ def _fill_missing_data(y, max_gap_fraction=0.1):
             if 0 < gap_size <= max_gap_size and not is_na(prev):
                 # Interpolate gap
                 for k in range(1, gap_size + 1):
-                    filled[prev_idx + k] = (
-                        v * k + (gap_size + 1 - k) * prev) / (gap_size + 1)
+                    filled[prev_idx + k] = (v * k + (gap_size + 1 - k) * prev) / (gap_size + 1)
 
             prev = v
             prev_idx = i
