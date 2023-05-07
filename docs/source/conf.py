@@ -18,7 +18,8 @@ try:
 except ImportError:
     raise ImportError(
         "sphinx_bootstrap_theme must be installed to build the docs."
-        "  Try `pip install sphinx_bootstrap_theme`.")
+        "  Try `pip install sphinx_bootstrap_theme`."
+    )
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -30,35 +31,33 @@ except ImportError:
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.0'
 
-intersphinx_mapping = {
-    'python': ('http://docs.python.org/', None)
-}
+intersphinx_mapping = {"python": ("http://docs.python.org/", None)}
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.mathjax'
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.todo",
+    "sphinx.ext.mathjax",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
-project = u'airspeed velocity'
-copyright = u'2013-2023, Michael Droettboom, Pauli Virtanen'
+project = "airspeed velocity"
+copyright = "2013-2023, Michael Droettboom, Pauli Virtanen"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -85,7 +84,7 @@ exclude_patterns = []
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
-default_role = 'obj'
+default_role = "obj"
 
 # Warn about all references where the target cannot be found.
 nitpicky = True
@@ -102,7 +101,7 @@ nitpicky = True
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -115,7 +114,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'bootstrap'
+html_theme = "bootstrap"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -123,7 +122,7 @@ html_theme = 'bootstrap'
 html_theme_options = {
     # This is a workaround for a bug in `sphinx_bootstrap_theme` for
     # Python 3.x
-    'bootswatch_theme': None
+    "bootswatch_theme": None
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
@@ -143,12 +142,12 @@ html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-html_favicon = '_static/swallow.ico'
+html_favicon = "_static/swallow.ico"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -164,9 +163,7 @@ html_static_path = ['_static']
 # html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {
-    '**': []
-}
+html_sidebars = {"**": []}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -199,7 +196,7 @@ html_show_sourcelink = False
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'airspeedvelocitydoc'
+htmlhelp_basename = "airspeedvelocitydoc"
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -207,10 +204,8 @@ htmlhelp_basename = 'airspeedvelocitydoc'
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     # 'papersize': 'letterpaper',
-
     # The font size ('10pt', '11pt' or '12pt').
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
     # 'preamble': '',
 }
@@ -219,8 +214,13 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    ('index', 'airspeedvelocity.tex', 'airspeed velocity Documentation',
-     'Michael Droettboom', 'manual'),
+    (
+        "index",
+        "airspeedvelocity.tex",
+        "airspeed velocity Documentation",
+        "Michael Droettboom",
+        "manual",
+    ),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -249,7 +249,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('manindex', 'asv', u'Airspeed Velocity', [u'Michael Droettboom', u'Pauli Virtanen'], '1'),
+    ("manindex", "asv", "Airspeed Velocity", ["Michael Droettboom", "Pauli Virtanen"], "1"),
 ]
 
 # If true, show URL addresses after external links.
@@ -262,9 +262,15 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'airspeedvelocity', 'airspeed velocity Documentation',
-     'Michael Droettboom', 'airspeedvelocity', 'One line description of project.',
-     'Miscellaneous'),
+    (
+        "index",
+        "airspeedvelocity",
+        "airspeed velocity Documentation",
+        "Michael Droettboom",
+        "airspeedvelocity",
+        "One line description of project.",
+        "Miscellaneous",
+    ),
 ]
 
 # Documents to append as an appendix to all manuals.

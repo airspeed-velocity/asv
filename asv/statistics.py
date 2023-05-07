@@ -56,12 +56,14 @@ def compute_stats(samples, number):
     # Produce results
     result = y_50
 
-    stats = {'ci_99_a': ci_50[0],
-             'ci_99_b': ci_50[1],
-             'q_25': y_25,
-             'q_75': y_75,
-             'repeat': len(Y),
-             'number': number}
+    stats = {
+        "ci_99_a": ci_50[0],
+        "ci_99_b": ci_50[1],
+        "q_25": y_25,
+        "q_75": y_75,
+        "repeat": len(Y),
+        "number": number,
+    }
 
     return result, stats
 
@@ -71,7 +73,7 @@ def get_err(result, stats):
     Return an 'error measure' suitable for informing the user
     about the spread of the measurement results.
     """
-    a, b = stats['q_25'], stats['q_75']
+    a, b = stats["q_25"], stats["q_75"]
     return (b - a) / 2
 
 
@@ -79,12 +81,12 @@ def get_weight(stats):
     """
     Return a data point weight for the result.
     """
-    if stats is None or 'ci_99_a' not in stats or 'ci_99_b' not in stats:
+    if stats is None or "ci_99_a" not in stats or "ci_99_b" not in stats:
         return None
 
     try:
-        a = stats['ci_99_a']
-        b = stats['ci_99_b']
+        a = stats["ci_99_a"]
+        b = stats["ci_99_b"]
 
         if math.isinf(a) or math.isinf(b):
             # Infinite interval is due to too few samples --- consider
@@ -129,8 +131,8 @@ def is_different(samples_a, samples_b, stats_a, stats_b, p_threshold=0.002):
     # which generally can be significantly smaller than p <= 0.01
     # depending on the actual data. For normal test (known variance),
     # 0.00027 <= p <= 0.01.
-    ci_a = (stats_a['ci_99_a'], stats_a['ci_99_b'])
-    ci_b = (stats_b['ci_99_a'], stats_b['ci_99_b'])
+    ci_a = (stats_a["ci_99_a"], stats_a["ci_99_b"])
+    ci_b = (stats_b["ci_99_a"], stats_b["ci_99_b"])
 
     if ci_a[1] >= ci_b[0] and ci_a[0] <= ci_b[1]:
         return False
@@ -238,7 +240,7 @@ def quantile(x, q):
 _mann_whitney_u_memo = {}
 
 
-def mann_whitney_u(x, y, method='auto'):
+def mann_whitney_u(x, y, method="auto"):
     """
     Mann-Whitney U test
 
@@ -273,11 +275,11 @@ def mann_whitney_u(x, y, method='auto'):
     m = len(x)
     n = len(y)
 
-    if method == 'auto':
+    if method == "auto":
         if max(m, n) > 20:
-            method = 'normal'
+            method = "normal"
         else:
-            method = 'exact'
+            method = "exact"
 
     u, ties = mann_whitney_u_u(x, y)
 
@@ -295,11 +297,11 @@ def mann_whitney_u(x, y, method='auto'):
         ux = ux2
 
     # Get p-value
-    if method == 'exact':
+    if method == "exact":
         p1 = mann_whitney_u_cdf(m, n, ux, memo)
         p2 = 1.0 - mann_whitney_u_cdf(m, n, max(m * n // 2, m * n - ux - 1), memo)
         p = p1 + p2
-    elif method == 'normal':
+    elif method == "normal":
         N = m + n
         var = m * n * (N + 1) / 12
         z = (ux - m * n / 2) / math.sqrt(var)
@@ -363,8 +365,7 @@ def mann_whitney_u_r(m, n, u, memo=None):
         if value is not None:
             return value
 
-        value = (mann_whitney_u_r(m, n - 1, u, memo) +
-                 mann_whitney_u_r(m - 1, n, u - n, memo))
+        value = mann_whitney_u_r(m, n - 1, u, memo) + mann_whitney_u_r(m - 1, n, u - n, memo)
 
         memo[key] = value
     return value
@@ -464,7 +465,7 @@ class LaplacePosterior:
         # when computing the unnormalized CDF integrals below.
         self.mle = quantile(y, 0.5)
         self._y_scale = sum(abs(yp - self.mle) for yp in y)
-        self._y_scale *= self.nu**(1 / (self.nu + 1))
+        self._y_scale *= self.nu ** (1 / (self.nu + 1))
 
         # Shift and scale
         if self._y_scale != 0:
@@ -520,9 +521,9 @@ class LaplacePosterior:
                 b = self.y[k]
 
             if c == 0:
-                term = (b - a) / y**(nu + 1)
+                term = (b - a) / y ** (nu + 1)
             else:
-                term = 1 / (nu * c) * ((a * c + y)**(-nu) - (b * c + y)**(-nu))
+                term = 1 / (nu * c) * ((a * c + y) ** (-nu) - (b * c + y) ** (-nu))
 
             cdf += max(0, term)  # avoid rounding error
 
@@ -556,15 +557,15 @@ class LaplacePosterior:
         if k == 0:
             z = -nu * c * term
             if z > 0:
-                beta = (z**(-1 / nu) - y) / c
+                beta = (z ** (-1 / nu) - y) / c
             else:
                 beta = -math.inf
         elif c == 0:
-            beta = a + term * y**(nu + 1)
+            beta = a + term * y ** (nu + 1)
         else:
-            z = (a * c + y)**(-nu) - nu * c * term
+            z = (a * c + y) ** (-nu) - nu * c * term
             if z > 0:
-                beta = (z**(-1 / nu) - y) / c
+                beta = (z ** (-1 / nu) - y) / c
             else:
                 beta = math.inf
 

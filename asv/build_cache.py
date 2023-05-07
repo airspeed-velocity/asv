@@ -31,8 +31,8 @@ class BuildCache:
 
     def __init__(self, conf, root):
         self._root = root
-        self._path = os.path.join(root, 'asv-build-cache')
-        self._cache_size = getattr(conf, 'build_cache_size', 2)
+        self._path = os.path.join(root, "asv-build-cache")
+        self._cache_size = getattr(conf, "build_cache_size", 2)
 
     def _get_cache_dir(self, commit_hash):
         """
@@ -79,14 +79,12 @@ class BuildCache:
 
         # Then remove old items
         names = self._get_cache_contents()
-        for name in names[self._cache_size:]:
+        for name in names[self._cache_size :]:
             self._remove_cache_dir(name)
 
     def get_cache_dir(self, commit_hash):
         path, stamp = self._get_cache_dir(commit_hash)
-        if (os.path.isdir(path) and
-                os.path.isfile(stamp) and
-                os.listdir(path)):
+        if os.path.isdir(path) and os.path.isfile(stamp) and os.listdir(path):
             return path
 
         return None
@@ -103,7 +101,7 @@ class BuildCache:
 
         if os.path.isdir(path) and os.listdir(path):
             # Finalize
-            with open(stamp, 'wb'):
+            with open(stamp, "wb"):
                 pass
 
         # Cleanup build cache

@@ -17,10 +17,10 @@ def track_pretty_source_test():
     return 0
 
 
-track_pretty_source_test.pretty_source = '''
+track_pretty_source_test.pretty_source = """
     int track_pretty_source_test() {
         return 0;
-    }'''
+    }"""
 
 
 class MyClass:

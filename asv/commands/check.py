@@ -1,4 +1,3 @@
-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 from ..benchmarks import Benchmarks
@@ -11,10 +10,12 @@ class Check(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "check", help="Import and check benchmark suite, but do not run benchmarks",
+            "check",
+            help="Import and check benchmark suite, but do not run benchmarks",
             description="""
                 This imports and checks basic validity of the benchmark suite, but
-                does not run the benchmark target code""")
+                does not run the benchmark target code""",
+        )
 
         common_args.add_environment(parser, default_same=False)
         parser.set_defaults(func=cls.run_from_args)

@@ -10,6 +10,7 @@ from asv import feed
 
 try:
     import feedparser
+
     HAVE_FEEDPARSER = True
 except ImportError:
     HAVE_FEEDPARSER = False
@@ -17,6 +18,7 @@ except ImportError:
 
 try:
     import feedvalidator
+
     HAVE_FEEDVALIDATOR = True
 except ImportError:
     HAVE_FEEDVALIDATOR = False
@@ -27,21 +29,25 @@ def prettify_xml(text):
 
 
 def dummy_feed_xml():
-    entry_1 = feed.FeedEntry(title='Some title', updated=datetime.datetime(1993, 1, 1))
-    entry_2 = feed.FeedEntry(title='Another title', updated=datetime.datetime(1990, 1, 1),
-                             link='http://foo', content='More text', id_context=['something'],
-                             id_date=datetime.datetime(2000, 1, 1))
+    entry_1 = feed.FeedEntry(title="Some title", updated=datetime.datetime(1993, 1, 1))
+    entry_2 = feed.FeedEntry(
+        title="Another title",
+        updated=datetime.datetime(1990, 1, 1),
+        link="http://foo",
+        content="More text",
+        id_context=["something"],
+        id_date=datetime.datetime(2000, 1, 1),
+    )
 
     stream = io.BytesIO()
-    feed.write_atom(stream, [entry_1, entry_2], author='Me', title='Feed title',
-                    address='baz.com')
+    feed.write_atom(stream, [entry_1, entry_2], author="Me", title="Feed title", address="baz.com")
 
     return stream.getvalue()
 
 
 def test_dummy_xml():
     xml = dummy_feed_xml()
-    text = xml.decode('utf-8').replace('>', '>\n')
+    text = xml.decode("utf-8").replace(">", ">\n")
 
     expected = """\
 <?xml version='1.0' encoding='utf-8'?>
@@ -90,12 +96,12 @@ def test_feedparser():
     xml = dummy_feed_xml()
     feed = feedparser.parse(xml)
 
-    assert feed['entries'][0]['title'] == 'Some title'
-    assert feed['entries'][1]['content'][0]['type'] == 'text/html'
-    assert feed['entries'][1]['content'][0]['value'] == 'More text'
-    assert feed['entries'][1]['links'] == [{'href': 'http://foo',
-                                            'type': 'text/html',
-                                            'rel': 'alternate'}]
+    assert feed["entries"][0]["title"] == "Some title"
+    assert feed["entries"][1]["content"][0]["type"] == "text/html"
+    assert feed["entries"][1]["content"][0]["value"] == "More text"
+    assert feed["entries"][1]["links"] == [
+        {"href": "http://foo", "type": "text/html", "rel": "alternate"}
+    ]
 
 
 @pytest.mark.skipif(not HAVE_FEEDVALIDATOR, reason="test requires feedvalidator module")
@@ -105,9 +111,9 @@ def test_feedvalidator():
 
     ok_messages = (feedvalidator.ValidValue, feedvalidator.MissingSelf)
 
-    assert result['feedType'] == feedvalidator.TYPE_ATOM
+    assert result["feedType"] == feedvalidator.TYPE_ATOM
 
-    for message in result['loggedEvents']:
+    for message in result["loggedEvents"]:
         if not isinstance(message, ok_messages):
             print(xml)
             print(message.params)

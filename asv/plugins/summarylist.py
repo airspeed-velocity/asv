@@ -20,10 +20,10 @@ def benchmark_param_iter(benchmark):
         Tuple of parameter values.
 
     """
-    if not benchmark['params']:
+    if not benchmark["params"]:
         yield None, ()
     else:
-        for item in enumerate(itertools.product(*benchmark['params'])):
+        for item in enumerate(itertools.product(*benchmark["params"])):
             yield item
 
 
@@ -47,12 +47,12 @@ class SummaryList(OutputPublisher):
             for idx, benchmark_param in benchmark_param_iter(benchmark):
                 pretty_name = benchmark_name
 
-                if benchmark.get('pretty_name'):
-                    pretty_name = benchmark['pretty_name']
+                if benchmark.get("pretty_name"):
+                    pretty_name = benchmark["pretty_name"]
 
                 if idx is not None:
                     bench_param = ", ".join(benchmark_param)
-                    pretty_name = f'{pretty_name}({bench_param})'
+                    pretty_name = f"{pretty_name}({bench_param})"
 
                 # Each environment parameter combination is reported
                 # separately on the summarylist page
@@ -89,23 +89,26 @@ class SummaryList(OutputPublisher):
                                 # Revision range (left-exclusive)
                                 change_rev = [prev_piece[1] - 1, last_piece[0]]
 
-                    row = dict(name=benchmark_name,
-                               idx=idx,
-                               pretty_name=pretty_name,
-                               last_rev=last_rev,
-                               last_value=last_value,
-                               last_err=last_err,
-                               prev_value=prev_value,
-                               change_rev=change_rev)
+                    row = dict(
+                        name=benchmark_name,
+                        idx=idx,
+                        pretty_name=pretty_name,
+                        last_rev=last_rev,
+                        last_value=last_value,
+                        last_err=last_err,
+                        prev_value=prev_value,
+                        change_rev=change_rev,
+                    )
 
                     # Generate summary data filename.
                     # Note that 'summary' is not a valid benchmark name, so that we can
                     # be sure it can be always used.
-                    path = Graph.get_file_path(graph.params, 'summary') + ".json"
+                    path = Graph.get_file_path(graph.params, "summary") + ".json"
                     results.setdefault(path, []).append(row)
 
         # Write results to files
         for path, data in results.items():
             filename = os.path.join(conf.html_dir, path)
-            util.write_json(filename, sorted(data, key=lambda x: (x['name'], x['idx'])),
-                            compact=True)
+            util.write_json(
+                filename, sorted(data, key=lambda x: (x["name"], x["idx"])), compact=True
+            )

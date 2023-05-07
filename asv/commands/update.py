@@ -16,10 +16,10 @@ class Update(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "update", help="Update the results and config files "
-            "to the current version",
-            description="Update the results and config files "
-            "to the current version")
+            "update",
+            help="Update the results and config files " "to the current version",
+            description="Update the results and config files " "to the current version",
+        )
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -38,11 +38,11 @@ class Update(Command):
         for root, dirs, files in os.walk(conf.results_dir):
             for filename in files:
                 path = os.path.join(root, filename)
-                if filename == 'machine.json':
+                if filename == "machine.json":
                     Machine.update(path)
                 elif filename == "benchmarks.json":
                     pass
-                elif filename.endswith('.json'):
+                elif filename.endswith(".json"):
                     try:
                         Results.update(path)
                     except util.UserError as err:
@@ -51,7 +51,7 @@ class Update(Command):
                         continue
 
                     # Rename files if necessary
-                    m = re.match(r'^([0-9a-f]+)-(.*)\.json$', os.path.basename(path), re.I)
+                    m = re.match(r"^([0-9a-f]+)-(.*)\.json$", os.path.basename(path), re.I)
                     if m:
                         new_path = get_filename(root, m.group(1), m.group(2))
                         if new_path != path:
@@ -76,4 +76,4 @@ class Update(Command):
         if not ok:
             # Regenerating the file is needed
             with log.indent():
-                Run.run(conf, bench=['just-discover'])
+                Run.run(conf, bench=["just-discover"])

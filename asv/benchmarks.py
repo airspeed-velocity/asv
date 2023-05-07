@@ -16,6 +16,7 @@ class Benchmarks(dict):
     """
     Manages and runs the set of benchmarks in the project.
     """
+
     api_version = 2
 
     def __init__(self, conf, benchmarks, regex=None):
@@ -50,19 +51,18 @@ class Benchmarks(dict):
         self._all_benchmarks = {}
         self._benchmark_selection = {}
         for benchmark in benchmarks:
-            self._all_benchmarks[benchmark['name']] = benchmark
-            if benchmark['params']:
-                self._benchmark_selection[benchmark['name']] = []
-                for idx, param_set in enumerate(
-                        itertools.product(*benchmark['params'])):
+            self._all_benchmarks[benchmark["name"]] = benchmark
+            if benchmark["params"]:
+                self._benchmark_selection[benchmark["name"]] = []
+                for idx, param_set in enumerate(itertools.product(*benchmark["params"])):
                     name = f"{benchmark['name']}({', '.join(param_set)})"
                     if not regex or any(re.search(reg, name) for reg in regex):
-                        self[benchmark['name']] = benchmark
-                        self._benchmark_selection[benchmark['name']].append(idx)
+                        self[benchmark["name"]] = benchmark
+                        self._benchmark_selection[benchmark["name"]].append(idx)
             else:
-                self._benchmark_selection[benchmark['name']] = None
-                if not regex or any(re.search(reg, benchmark['name']) for reg in regex):
-                    self[benchmark['name']] = benchmark
+                self._benchmark_selection[benchmark["name"]] = None
+                if not regex or any(re.search(reg, benchmark["name"]) for reg in regex):
+                    self[benchmark["name"]] = benchmark
 
     @property
     def benchmark_selection(self):
@@ -100,8 +100,7 @@ class Benchmarks(dict):
         return benchmarks
 
     @classmethod
-    def discover(cls, conf, repo, environments, commit_hash, regex=None,
-                 check=False):
+    def discover(cls, conf, repo, environments, commit_hash, regex=None, check=False):
         """
         Discover benchmarks in the given `benchmark_dir`.
 
@@ -186,17 +185,21 @@ class Benchmarks(dict):
                     env_vars = dict(os.environ)
                     env_vars.update(env.env_vars)
 
-                    result_file = os.path.join(result_dir, 'result.json')
+                    result_file = os.path.join(result_dir, "result.json")
                     env.run(
-                        [runner.BENCHMARK_RUN_SCRIPT, 'discover',
-                         os.path.abspath(root),
-                         os.path.abspath(result_file)],
+                        [
+                            runner.BENCHMARK_RUN_SCRIPT,
+                            "discover",
+                            os.path.abspath(root),
+                            os.path.abspath(result_file),
+                        ],
                         cwd=result_dir,
                         env=env_vars,
-                        dots=False)
+                        dots=False,
+                    )
 
                     try:
-                        with open(result_file, 'r') as fp:
+                        with open(result_file, "r") as fp:
                             benchmarks = json.load(fp)
                     except (IOError, ValueError):
                         log.error("Invalid discovery output")
@@ -219,14 +222,14 @@ class Benchmarks(dict):
                 result_dir = tempfile.mkdtemp()
                 try:
                     out, err, retcode = env.run(
-                        [runner.BENCHMARK_RUN_SCRIPT, 'check',
-                         os.path.abspath(root)],
+                        [runner.BENCHMARK_RUN_SCRIPT, "check", os.path.abspath(root)],
                         cwd=result_dir,
                         dots=False,
                         env=env_vars,
                         valid_return_codes=None,
                         return_stderr=True,
-                        redirect_stderr=True)
+                        redirect_stderr=True,
+                    )
                 finally:
                     util.long_path_rmtree(result_dir)
 
@@ -256,14 +259,13 @@ class Benchmarks(dict):
             A .py file and directory with the same name (excluding the
             extension) were found.
         """
-        if os.path.basename(root) == '__pycache__':
+        if os.path.basename(root) == "__pycache__":
             return
 
-        if not os.path.isfile(os.path.join(root, '__init__.py')):
+        if not os.path.isfile(os.path.join(root, "__init__.py")):
             # Not a Python package directory
             if require_init_py:
-                raise util.UserError(
-                    f"No __init__.py file in '{root}'")
+                raise util.UserError(f"No __init__.py file in '{root}'")
             else:
                 return
 
@@ -275,7 +277,7 @@ class Benchmarks(dict):
             path = os.path.join(root, filename)
             if os.path.isfile(path):
                 filename, ext = os.path.splitext(filename)
-                if ext == '.py':
+                if ext == ".py":
                     found.add(filename)
 
         for dirname in os.listdir(root):
@@ -284,7 +286,8 @@ class Benchmarks(dict):
                 if dirname in found:
                     raise util.UserError(
                         "Found a directory and python file with same name in "
-                        "benchmark tree: '{0}'".format(path))
+                        "benchmark tree: '{0}'".format(path)
+                    )
                 cls.check_tree(path, require_init_py=False)
 
     @classmethod
@@ -332,5 +335,7 @@ class Benchmarks(dict):
             if "asv update" in str(err):
                 # Don't give conflicting instructions
                 raise
-            raise util.UserError("{}\nUse `asv run --bench just-discover` to "
-                                 "regenerate benchmarks.json".format(str(err)))
+            raise util.UserError(
+                "{}\nUse `asv run --bench just-discover` to "
+                "regenerate benchmarks.json".format(str(err))
+            )

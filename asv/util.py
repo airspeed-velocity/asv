@@ -26,7 +26,7 @@ import multiprocessing
 
 import json5
 
-WIN = (os.name == 'nt')
+WIN = os.name == "nt"
 
 if not WIN:
     from select import PIPE_BUF
@@ -45,6 +45,7 @@ class ParallelFailure(Exception):
     Custom exception to work around a multiprocessing bug
     https://bugs.python.org/issue9400
     """
+
     def __new__(cls, message, exc_cls, traceback_str):
         self = Exception.__new__(cls)
         self.message = message
@@ -56,9 +57,9 @@ class ParallelFailure(Exception):
         return (ParallelFailure, (self.message, self.exc_cls, self.traceback_str))
 
     def __str__(self):
-        return "{0}: {1}\n    {2}".format(self.exc_cls.__name__,
-                                          self.message,
-                                          self.traceback_str.replace("\n", "\n    "))
+        return "{0}: {1}\n    {2}".format(
+            self.exc_cls.__name__, self.message, self.traceback_str.replace("\n", "\n    ")
+        )
 
     def reraise(self):
         if self.exc_cls is UserError:
@@ -74,13 +75,13 @@ def human_list(input_list):
     input_list = [f"'{x}'" for x in input_list]
 
     if len(input_list) == 0:
-        return 'nothing'
+        return "nothing"
     elif len(input_list) == 1:
         return input_list[0]
     elif len(input_list) == 2:
-        return ' and '.join(input_list)
+        return " and ".join(input_list)
     else:
-        return ', '.join(input_list[:-1]) + ' and ' + input_list[-1]
+        return ", ".join(input_list[:-1]) + " and " + input_list[-1]
 
 
 def human_float(value, significant=3, truncate_small=None, significant_zeros=False):
@@ -123,12 +124,12 @@ def human_float(value, significant=3, truncate_small=None, significant_zeros=Fal
 
     formatted = sign + fmt.format(value)
 
-    if not significant_zeros and '.' in formatted and 'e' not in fmt:
-        formatted = formatted.rstrip('0')
-        if formatted[-1] == '.':
+    if not significant_zeros and "." in formatted and "e" not in fmt:
+        formatted = formatted.rstrip("0")
+        if formatted[-1] == ".":
             formatted = formatted[:-1]
 
-    if significant_zeros and '.' not in formatted:
+    if significant_zeros and "." not in formatted:
         if len(formatted) < significant:
             formatted += "." + "0" * (significant - len(formatted))
 
@@ -162,13 +163,13 @@ def human_file_size(size, err=None):
     if size < 1:
         size = 0.0
 
-    suffixes = ' kMGTPEH'
+    suffixes = " kMGTPEH"
     if size == 0:
         num_scale = 0
     else:
         num_scale = int(math.floor(math.log(size) / math.log(1000)))
     if num_scale > 7:
-        suffix = '?'
+        suffix = "?"
     else:
         suffix = suffixes[num_scale].strip()
     scale = int(math.pow(1000, num_scale))
@@ -184,16 +185,16 @@ def human_file_size(size, err=None):
 
 
 _human_time_units = (
-    ('ns', 0.000000001),
-    ('μs', 0.000001),
-    ('ms', 0.001),
-    ('s', 1),
-    ('m', 60),
-    ('h', 60 * 60),
-    ('d', 60 * 60 * 24),
-    ('w', 60 * 60 * 24 * 7),
-    ('y', 60 * 60 * 24 * 7 * 52),
-    ('C', 60 * 60 * 24 * 7 * 52 * 100)
+    ("ns", 0.000000001),
+    ("μs", 0.000001),
+    ("ms", 0.001),
+    ("s", 1),
+    ("m", 60),
+    ("h", 60 * 60),
+    ("d", 60 * 60 * 24),
+    ("w", 60 * 60 * 24 * 7),
+    ("y", 60 * 60 * 24 * 7 * 52),
+    ("C", 60 * 60 * 24 * 7 * 52 * 100),
 )
 
 
@@ -233,7 +234,7 @@ def human_time(seconds, err=None):
 
     if scale == 0:
         # Represent zero in reasonable units
-        units = [('s', 1), ('m', 60)]
+        units = [("s", 1), ("m", 60)]
 
     if scale != scale:
         # nan
@@ -247,7 +248,7 @@ def human_time(seconds, err=None):
             else:
                 str_err = human_float(err / units[i][1], 1, truncate_small=2)
                 return f"{str_time:s}±{str_err:s}{units[i][0]}"
-    return '~0'
+    return "~0"
 
 
 def human_value(value, unit, err=None):
@@ -269,9 +270,9 @@ def human_value(value, unit, err=None):
         if value != value:
             # nan
             display = "n/a"
-        elif unit == 'seconds':
+        elif unit == "seconds":
             display = human_time(value, err=err)
-        elif unit == 'bytes':
+        elif unit == "bytes":
             display = human_file_size(value, err=err)
         else:
             display = json.dumps(value)
@@ -285,7 +286,7 @@ def human_value(value, unit, err=None):
     return display
 
 
-def parse_human_time(string, base_period='d'):
+def parse_human_time(string, base_period="d"):
     """
     Parse a human-specified time period to an integer number of seconds.
     The following format is accepted: <number><suffix>
@@ -293,18 +294,17 @@ def parse_human_time(string, base_period='d'):
     Raises a ValueError on parse error.
     """
     units = dict(_human_time_units)
-    units[''] = units[base_period]
+    units[""] = units[base_period]
 
-    suffixes = '|'.join(units.keys())
+    suffixes = "|".join(units.keys())
 
     try:
-        m = re.match(r'^\s*([0-9.]+)\s*({})\s*$'.format(suffixes), string)
+        m = re.match(r"^\s*([0-9.]+)\s*({})\s*$".format(suffixes), string)
         if m is None:
             raise ValueError()
         return float(m.group(1)) * units[m.group(2)]
     except ValueError:
-        raise ValueError("%r is not a valid time period (valid units: %s)"
-                         % (string, suffixes))
+        raise ValueError("%r is not a valid time period (valid units: %s)" % (string, suffixes))
 
 
 def which(filename, paths=None):
@@ -314,21 +314,23 @@ def which(filename, paths=None):
     Raises an IOError if no result is found.
     """
     # Hide traceback from expected exceptions in pytest reports
-    __tracebackhide__ = operator.methodcaller('errisinstance', IOError)
+    __tracebackhide__ = operator.methodcaller("errisinstance", IOError)
 
     if os.path.sep in filename:
-        locations = ['']
+        locations = [""]
     elif paths is not None:
         locations = paths
     else:
         locations = os.environ.get("PATH", "").split(os.pathsep)
         if WIN:
             # On windows, an entry in %PATH% may be quoted
-            locations = [path[1:-1] if len(path) > 2 and path[0] == path[-1] == '"' else path
-                         for path in locations]
+            locations = [
+                path[1:-1] if len(path) > 2 and path[0] == path[-1] == '"' else path
+                for path in locations
+            ]
 
     if WIN:
-        filenames = [filename + ext for ext in ('.exe', '.bat', '.com', '')]
+        filenames = [filename + ext for ext in (".exe", ".bat", ".com", "")]
     else:
         filenames = [filename]
 
@@ -341,7 +343,7 @@ def which(filename, paths=None):
 
     if len(candidates) == 0:
         if paths is None:
-            loc_info = 'PATH'
+            loc_info = "PATH"
         else:
             loc_info = os.pathsep.join(locations)
         raise IOError(f"Could not find '{filename}' in {loc_info}")
@@ -373,11 +375,20 @@ class ProcessError(subprocess.CalledProcessError):
             return f"Command '{' '.join(self.args)}' timed out"
         else:
             return "Command '{0}' returned non-zero exit status {1}".format(
-                ' '.join(self.args), self.retcode)
+                " ".join(self.args), self.retcode
+            )
 
 
-def check_call(args, valid_return_codes=(0,), timeout=600, dots=True,
-               display_error=True, shell=False, env=None, cwd=None):
+def check_call(
+    args,
+    valid_return_codes=(0,),
+    timeout=600,
+    dots=True,
+    display_error=True,
+    shell=False,
+    env=None,
+    cwd=None,
+):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.
@@ -385,19 +396,25 @@ def check_call(args, valid_return_codes=(0,), timeout=600, dots=True,
     See `check_output` for parameters.
     """
     # Hide traceback from expected exceptions in pytest reports
-    __tracebackhide__ = operator.methodcaller('errisinstance', ProcessError)
+    __tracebackhide__ = operator.methodcaller("errisinstance", ProcessError)
 
     check_output(
-        args, valid_return_codes=valid_return_codes, timeout=timeout,
-        dots=dots, display_error=display_error, shell=shell, env=env,
-        cwd=cwd)
+        args,
+        valid_return_codes=valid_return_codes,
+        timeout=timeout,
+        dots=dots,
+        display_error=display_error,
+        shell=shell,
+        env=env,
+        cwd=cwd,
+    )
 
 
 class DebugLogBuffer:
     def __init__(self, log):
         self.buf = []
         self.first = True
-        self.linebreak_re = re.compile(b'.*\n')
+        self.linebreak_re = re.compile(b".*\n")
         self.log = log
         self.lock = threading.Lock()
 
@@ -409,7 +426,7 @@ class DebugLogBuffer:
         if c is None:
             text = b"".join(self.buf)
             del self.buf[:]
-        elif b'\n' in c:
+        elif b"\n" in c:
             m = self.linebreak_re.match(c)
             j = m.end()
             self.buf.append(c[:j])
@@ -419,20 +436,30 @@ class DebugLogBuffer:
             self.buf.append(c)
             return
 
-        text = text.decode('utf-8', 'replace')
-        if text.endswith('\n'):
+        text = text.decode("utf-8", "replace")
+        if text.endswith("\n"):
             text = text[:-1]
 
         if text:
             if self.first:
-                self.log.debug('OUTPUT -------->', continued=True)
+                self.log.debug("OUTPUT -------->", continued=True)
                 self.first = False
             self.log.debug(text, continued=True)
 
 
-def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
-                 display_error=True, shell=False, return_stderr=False,
-                 env=None, cwd=None, redirect_stderr=False, return_popen=False):
+def check_output(
+    args,
+    valid_return_codes=(0,),
+    timeout=600,
+    dots=True,
+    display_error=True,
+    shell=False,
+    return_stderr=False,
+    env=None,
+    cwd=None,
+    redirect_stderr=False,
+    return_popen=False,
+):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.  Returns stdout as a string on success.
@@ -488,48 +515,39 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
     from .console import log
 
     # Hide traceback from expected exceptions in pytest reports
-    __tracebackhide__ = operator.methodcaller('errisinstance', ProcessError)
+    __tracebackhide__ = operator.methodcaller("errisinstance", ProcessError)
 
     def get_content(header=None):
         content = []
         if header is not None:
             content.append(header)
         if redirect_stderr:
-            content.extend([
-                'OUTPUT -------->',
-                stdout[:-1]
-            ])
+            content.extend(["OUTPUT -------->", stdout[:-1]])
         else:
-            content.extend([
-                'STDOUT -------->',
-                stdout[:-1],
-                'STDERR -------->',
-                stderr[:-1]
-            ])
-        return '\n'.join(content)
+            content.extend(["STDOUT -------->", stdout[:-1], "STDERR -------->", stderr[:-1]])
+        return "\n".join(content)
 
     if isinstance(args, str):
         args = [args]
 
     log.debug(f"Running '{' '.join(args)}'")
 
-    kwargs = dict(shell=shell, env=env, cwd=cwd,
-                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    kwargs = dict(shell=shell, env=env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if redirect_stderr:
-        kwargs['stderr'] = subprocess.STDOUT
+        kwargs["stderr"] = subprocess.STDOUT
     if WIN:
-        kwargs['close_fds'] = False
-        kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
+        kwargs["close_fds"] = False
+        kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
     else:
-        kwargs['close_fds'] = True
-        posix = getattr(os, 'setpgid', None)
+        kwargs["close_fds"] = True
+        posix = getattr(os, "setpgid", None)
         if posix:
             # Run the subprocess in a separate process group, so that we
             # can kill it and all child processes it spawns e.g. on
             # timeouts. Note that subprocess.Popen will wait until exec()
             # before returning in parent process, so there is no race
             # condition in setting the process group vs. calls to os.killpg
-            kwargs['preexec_fn'] = lambda: os.setpgid(0, 0)
+            kwargs["preexec_fn"] = lambda: os.setpgid(0, 0)
 
     proc = subprocess.Popen(args, **kwargs)
 
@@ -545,6 +563,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         debug_log = DebugLogBuffer(log)
         dots = False
     else:
+
         def debug_log(c):
             return None
 
@@ -572,8 +591,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         all_threads = [stdout_reader]
 
         if not redirect_stderr:
-            stderr_reader = threading.Thread(target=stream_reader,
-                                             args=(proc.stderr, stderr_chunks))
+            stderr_reader = threading.Thread(
+                target=stream_reader, args=(proc.stderr, stderr_chunks)
+            )
             stderr_reader.daemon = True
             stderr_reader.start()
             all_threads.append(stderr_reader)
@@ -636,6 +656,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                     _killpg_safe(proc.pid, signum)
                     if signum == signal.SIGTSTP:
                         os.kill(os.getpid(), signal.SIGSTOP)
+
                 signal.signal(signal.SIGTSTP, sig_forward)
                 signal.signal(signal.SIGCONT, sig_forward)
 
@@ -646,11 +667,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
             while proc.poll() is None:
                 try:
                     if timeout is None:
-                        rlist, wlist, xlist = select.select(
-                            list(fds.keys()), [], [])
+                        rlist, wlist, xlist = select.select(list(fds.keys()), [], [])
                     else:
-                        rlist, wlist, xlist = select.select(
-                            list(fds.keys()), [], [], timeout)
+                        rlist, wlist, xlist = select.select(list(fds.keys()), [], [], timeout)
                 except select.error as err:
                     if err.args[0] == errno.EINTR:
                         # interrupted by signal handler; try again
@@ -713,11 +732,11 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
     def debug_log(c):
         return None
 
-    stdout = b''.join(stdout_chunks)
-    stderr = b''.join(stderr_chunks)
+    stdout = b"".join(stdout_chunks)
+    stderr = b"".join(stderr_chunks)
 
-    stdout = stdout.decode('utf-8', 'replace')
-    stderr = stderr.decode('utf-8', 'replace')
+    stdout = stdout.decode("utf-8", "replace")
+    stderr = stderr.decode("utf-8", "replace")
 
     if is_timeout:
         retcode = TIMEOUT_RETCODE
@@ -786,11 +805,11 @@ def write_json(path, data, api_version=None, compact=False):
 
     if api_version is not None:
         data = dict(data)
-        data['version'] = api_version
+        data["version"] = api_version
 
     open_kwargs = {}
-    open_kwargs['encoding'] = 'utf-8'
-    with long_path_open(path, 'w', **open_kwargs) as fd:
+    open_kwargs["encoding"] = "utf-8"
+    with long_path_open(path, "w", **open_kwargs) as fd:
         if not compact:
             json.dump(data, fd, indent=4, sort_keys=True)
         else:
@@ -813,13 +832,13 @@ def load_json(path, api_version=None, js_comments=False):
         significantly.
     """
     # Hide traceback from expected exceptions in pytest reports
-    __tracebackhide__ = operator.methodcaller('errisinstance', UserError)
+    __tracebackhide__ = operator.methodcaller("errisinstance", UserError)
 
     path = os.path.abspath(path)
 
     open_kwargs = {}
-    open_kwargs['encoding'] = 'utf-8'
-    with long_path_open(path, 'r', **open_kwargs) as fd:
+    open_kwargs["encoding"] = "utf-8"
+    with long_path_open(path, "r", **open_kwargs) as fd:
         content = fd.read()
 
     if js_comments:
@@ -829,25 +848,25 @@ def load_json(path, api_version=None, js_comments=False):
         try:
             data = json.loads(content)
         except ValueError as err:
-            raise UserError(
-                f"Error parsing JSON in file '{path}': {str(err)}")
+            raise UserError(f"Error parsing JSON in file '{path}': {str(err)}")
 
     if api_version is not None:
-        if 'version' in data:
-            if data['version'] < api_version:
+        if "version" in data:
+            if data["version"] < api_version:
                 raise UserError(
                     "{0} is stored in an old file format.  Run "
-                    "`asv update` to update it.".format(path))
-            elif data['version'] > api_version:
+                    "`asv update` to update it.".format(path)
+                )
+            elif data["version"] > api_version:
                 raise UserError(
                     "{0} is stored in a format that is newer than "
                     "what this version of asv understands.  Update "
-                    "asv to use this file.".format(path))
+                    "asv to use this file.".format(path)
+                )
 
-            del data['version']
+            del data["version"]
         else:
-            raise UserError(
-                f"No version specified in {path}.")
+            raise UserError(f"No version specified in {path}.")
 
     return data
 
@@ -869,23 +888,23 @@ def update_json(cls, path, api_version, compact=False):
         The current API version
     """
     # Hide traceback from expected exceptions in pytest reports
-    __tracebackhide__ = operator.methodcaller('errisinstance', UserError)
+    __tracebackhide__ = operator.methodcaller("errisinstance", UserError)
 
     d = load_json(path)
-    if 'version' not in d:
-        raise UserError(
-            f"No version specified in {path}.")
+    if "version" not in d:
+        raise UserError(f"No version specified in {path}.")
 
-    if d['version'] < api_version:
-        for x in range(d['version'] + 1, api_version + 1):
-            d = getattr(cls, f'update_to_{x}', lambda x: x)(d)
+    if d["version"] < api_version:
+        for x in range(d["version"] + 1, api_version + 1):
+            d = getattr(cls, f"update_to_{x}", lambda x: x)(d)
         write_json(path, d, api_version, compact=compact)
-    elif d['version'] > api_version:
+    elif d["version"] > api_version:
         raise UserError(
             "{0} is stored in a format that is newer than "
             "what this version of asv understands. "
             "Upgrade asv in order to use or add to "
-            "these results.".format(path))
+            "these results.".format(path)
+        )
 
 
 def iter_chunks(s, n):
@@ -903,8 +922,7 @@ def iter_chunks(s, n):
 
 
 def pick_n(items, n):
-    """Pick n items, attempting to get equal index spacing.
-    """
+    """Pick n items, attempting to get equal index spacing."""
     if not (n > 0):
         raise ValueError("Invalid number of items to pick")
     spacing = max(float(len(items)) / n, 1)
@@ -924,6 +942,7 @@ def get_multiprocessing(parallel):
     """
     if parallel != 1:
         import multiprocessing
+
         if parallel <= 0:
             parallel = multiprocessing.cpu_count()
         return parallel, multiprocessing
@@ -954,27 +973,28 @@ def get_cpu_info():
 
     Returns '' if it can't be obtained.
     """
-    if sys.platform.startswith('linux'):
+    if sys.platform.startswith("linux"):
         with open("/proc/cpuinfo", "rb") as fd:
             lines = fd.readlines()
         for line in lines:
-            if b':' in line:
-                key, val = line.split(b':', 1)
+            if b":" in line:
+                key, val = line.split(b":", 1)
                 key = key.strip()
                 val = val.strip()
-                if key == b'model name':
-                    return val.decode('ascii')
-    elif sys.platform.startswith('darwin'):
-        sysctl = which('sysctl')
-        return check_output([sysctl, '-n', 'machdep.cpu.brand_string']).strip()
-    elif sys.platform.startswith('win'):
+                if key == b"model name":
+                    return val.decode("ascii")
+    elif sys.platform.startswith("darwin"):
+        sysctl = which("sysctl")
+        return check_output([sysctl, "-n", "machdep.cpu.brand_string"]).strip()
+    elif sys.platform.startswith("win"):
         try:
             from win32com.client import GetObject
+
             cimv = GetObject(r"winmgmts:root\cimv2")
             return cimv.ExecQuery("Select Name from Win32_Processor")[0].name
         except Exception:
             pass
-    return ''
+    return ""
 
 
 def get_memsize():
@@ -983,25 +1003,23 @@ def get_memsize():
 
     Returns '' if it can't be obtained.
     """
-    if sys.platform.startswith('linux'):
+    if sys.platform.startswith("linux"):
         with open("/proc/meminfo", "rb") as fd:
             lines = fd.readlines()
         for line in lines:
-            if b':' in line:
-                key, val = line.split(b':', 1)
+            if b":" in line:
+                key, val = line.split(b":", 1)
                 key = key.strip()
                 val = val.strip()
-                if key == b'MemTotal':
+                if key == b"MemTotal":
                     return int(val.split()[0])
-    elif sys.platform.startswith('darwin'):
-        sysctl = which('sysctl')
-        return int(check_output([sysctl, '-n', 'hw.memsize']).strip())
-    return ''
+    elif sys.platform.startswith("darwin"):
+        sysctl = which("sysctl")
+        return int(check_output([sysctl, "-n", "hw.memsize"]).strip())
+    return ""
 
 
-def format_text_table(rows, num_headers=0,
-                      top_header_span_start=0,
-                      top_header_text=None):
+def format_text_table(rows, num_headers=0, top_header_span_start=0, top_header_text=None):
     """
     Format rows in as a reStructuredText table, in the vein of::
 
@@ -1017,21 +1035,18 @@ def format_text_table(rows, num_headers=0,
     """
 
     # Format content
-    text_rows = [[f"{item}".replace("\n", " ") for item in row]
-                 for row in rows]
+    text_rows = [[f"{item}".replace("\n", " ") for item in row] for row in rows]
 
     # Ensure same number of items on all rows
     num_items = max(len(row) for row in text_rows)
     for row in text_rows:
-        row.extend([''] * (num_items - len(row)))
+        row.extend([""] * (num_items - len(row)))
 
     # Determine widths
-    col_widths = [max(len(row[j]) for row in text_rows) + 2
-                  for j in range(num_items)]
+    col_widths = [max(len(row[j]) for row in text_rows) + 2 for j in range(num_items)]
 
     # Pad content
-    text_rows = [[item.center(w) for w, item in zip(col_widths, row)]
-                 for row in text_rows]
+    text_rows = [[item.center(w) for w, item in zip(col_widths, row)] for row in text_rows]
 
     # Generate result
     headers = [" ".join(row) for row in text_rows[:num_headers]]
@@ -1128,7 +1143,7 @@ def geom_mean_na(values):
         prod = 1.0
         acc = 0
         for x in values:
-            prod *= abs(x)**exponent
+            prod *= abs(x) ** exponent
             acc += x
         return prod if acc >= 0 else -prod
     else:
@@ -1146,7 +1161,9 @@ if not WIN:
 
     def long_path(path):
         return path
+
 else:
+
     def long_path(path):
         if path.startswith("\\\\"):
             return path
@@ -1175,9 +1192,7 @@ else:
             onerror = None
         else:
             onerror = _remove_readonly
-        shutil.rmtree(long_path(path),
-                      ignore_errors=ignore_errors,
-                      onerror=onerror)
+        shutil.rmtree(long_path(path), ignore_errors=ignore_errors, onerror=onerror)
 
 
 def sanitize_filename(filename):
@@ -1192,13 +1207,33 @@ def sanitize_filename(filename):
         filename = filename.decode(sys.getfilesystemencoding())
 
     # ntfs & ext3
-    filename = re.sub('[<>:"/\\^|?*\x00-\x1f]', '_', filename)
+    filename = re.sub('[<>:"/\\^|?*\x00-\x1f]', "_", filename)
 
     # ntfs
-    forbidden = ["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3",
-                 "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1",
-                 "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8",
-                 "LPT9"]
+    forbidden = [
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        "COM1",
+        "COM2",
+        "COM3",
+        "COM4",
+        "COM5",
+        "COM6",
+        "COM7",
+        "COM8",
+        "COM9",
+        "LPT1",
+        "LPT2",
+        "LPT3",
+        "LPT4",
+        "LPT5",
+        "LPT6",
+        "LPT7",
+        "LPT8",
+        "LPT9",
+    ]
     if filename.upper() in forbidden:
         filename = filename + "_"
 
@@ -1220,8 +1255,9 @@ def recvall(sock, size):
         s = sock.recv(size - len(data))
         data += s
         if not s:
-            raise RuntimeError("did not receive data from socket "
-                               "(size {}, got only {!r})".format(size, data))
+            raise RuntimeError(
+                "did not receive data from socket " "(size {}, got only {!r})".format(size, data)
+            )
     return data
 
 
@@ -1262,10 +1298,12 @@ def interpolate_command(command, variables):
     try:
         result = [c.format(**variables) for c in parts]
     except KeyError as exc:
-        raise UserError("Configuration error: {{{0}}} not available "
-                        "when substituting into command {1!r} "
-                        "Available: {2!r}"
-                        "".format(exc.args[0], command, variables))
+        raise UserError(
+            "Configuration error: {{{0}}} not available "
+            "when substituting into command {1!r} "
+            "Available: {2!r}"
+            "".format(exc.args[0], command, variables)
+        )
 
     env = {}
 
@@ -1274,26 +1312,28 @@ def interpolate_command(command, variables):
     cwd = None
 
     while result:
-        m = re.match('^([A-Za-z_][A-Za-z0-9_]*)=(.*)$', result[0])
+        m = re.match("^([A-Za-z_][A-Za-z0-9_]*)=(.*)$", result[0])
         if m:
             env[m.group(1)] = m.group(2)
             del result[0]
             continue
 
-        if result[0].startswith('return-code='):
+        if result[0].startswith("return-code="):
             if return_codes_set:
-                raise UserError("Configuration error: multiple return-code specifications "
-                                "in command {0!r} "
-                                "".format(command))
+                raise UserError(
+                    "Configuration error: multiple return-code specifications "
+                    "in command {0!r} "
+                    "".format(command)
+                )
                 break
 
-            if result[0] == 'return-code=any':
+            if result[0] == "return-code=any":
                 return_codes = None
                 return_codes_set = True
                 del result[0]
                 continue
 
-            m = re.match('^return-code=([0-9,]+)$', result[0])
+            m = re.match("^return-code=([0-9,]+)$", result[0])
             if m:
                 try:
                     return_codes = set(int(x) for x in m.group(1).split(","))
@@ -1303,15 +1343,19 @@ def interpolate_command(command, variables):
                 except ValueError:
                     pass
 
-            raise UserError("Configuration error: invalid return-code specification "
-                            "{0!r} when substituting into command {1!r} "
-                            "".format(result[0], command))
+            raise UserError(
+                "Configuration error: invalid return-code specification "
+                "{0!r} when substituting into command {1!r} "
+                "".format(result[0], command)
+            )
 
-        if result[0].startswith('in-dir='):
+        if result[0].startswith("in-dir="):
             if cwd is not None:
-                raise UserError("Configuration error: multiple in-dir specifications "
-                                "in command {0!r} "
-                                "".format(command))
+                raise UserError(
+                    "Configuration error: multiple in-dir specifications "
+                    "in command {0!r} "
+                    "".format(command)
+                )
                 break
 
             cwd = result[0][7:]
@@ -1330,7 +1374,7 @@ def truncate_float_list(item, digits=5):
     representation.
     """
     if isinstance(item, float):
-        fmt = f'{{:.{digits - 1}e}}'
+        fmt = f"{{:.{digits - 1}e}}"
         return float(fmt.format(item))
     elif isinstance(item, list):
         return [truncate_float_list(x, digits) for x in item]
@@ -1358,14 +1402,13 @@ def get_multiprocessing_lock(name):
 
 def get_multiprocessing_pool(parallel=None):
     """Create a multiprocessing.Pool, managing global locks properly"""
-    return multiprocessing.Pool(initializer=_init_global_locks,
-                                initargs=(_global_locks,))
+    return multiprocessing.Pool(initializer=_init_global_locks, initargs=(_global_locks,))
 
 
 try:
     from shlex import quote as shlex_quote
 except ImportError:
-    _find_unsafe = re.compile(r'[^\w@%+=:,./-]').search
+    _find_unsafe = re.compile(r"[^\w@%+=:,./-]").search
 
     def shlex_quote(s):
         """Return a shell-escaped version of the string *s*."""
@@ -1383,36 +1426,33 @@ def git_default_branch():
     try:
         # Local name gets precedence
         default_branch = check_output(
-            [which('git'), 'config', 'init.defaultBranch'],
-            display_error=False).strip()
+            [which("git"), "config", "init.defaultBranch"], display_error=False
+        ).strip()
     except ProcessError:
         # Check global
         try:
             default_branch = check_output(
-                [which('git'), 'config', '--global', 'init.defaultBranch'],
-                display_error=False).strip()
+                [which("git"), "config", "--global", "init.defaultBranch"], display_error=False
+            ).strip()
         except ProcessError:
             # Check system
             try:
                 default_branch = check_output(
-                    [which('git'), 'config', '--system', 'init.defaultBranch'],
-                    display_error=False).strip()
+                    [which("git"), "config", "--system", "init.defaultBranch"], display_error=False
+                ).strip()
             except ProcessError:
                 # Default to master when global and system are not set
-                default_branch = 'master'
+                default_branch = "master"
     return default_branch
 
 
 def search_channels(cli_path, pkg, version):
     try:
-        result = subprocess.run([cli_path, "search",
-                                 f"{pkg}=={version}"],
-                                capture_output=True,
-                                text=True,
-                                check=False)
+        result = subprocess.run(
+            [cli_path, "search", f"{pkg}=={version}"], capture_output=True, text=True, check=False
+        )
     except subprocess.CalledProcessError as e:
-        print(f"Error searching for {pkg} {version}, got:\n {e}",
-              file=sys.stderr)
+        print(f"Error searching for {pkg} {version}, got:\n {e}", file=sys.stderr)
         return False
     if f"No match found for: {pkg}=={version}." in result.stdout:
         return False

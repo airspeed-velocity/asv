@@ -13,6 +13,7 @@ class Config:
     """
     Manages the configuration for a benchmark project.
     """
+
     api_version = 1
 
     def __init__(self):
@@ -59,27 +60,26 @@ class Config:
         try:
             return cls.from_json(d)
         except ValueError:
-            raise util.UserError(
-                f"No repo specified in {path} config file.")
+            raise util.UserError(f"No repo specified in {path} config file.")
 
     @classmethod
     def from_json(cls, d):
-        if 'wheel_cache_size' in d:
-            log.warning("`wheel_cache_size` has been renamed to `build_cache_size`."
-                        " Update your `asv.conf.json` accordingly.")
-            d.setdefault('build_cache_size', d['wheel_cache_size'])
+        if "wheel_cache_size" in d:
+            log.warning(
+                "`wheel_cache_size` has been renamed to `build_cache_size`."
+                " Update your `asv.conf.json` accordingly."
+            )
+            d.setdefault("build_cache_size", d["wheel_cache_size"])
 
         conf = cls()
         conf.__dict__.update(d)
 
         if not getattr(conf, "repo", None):
-            raise util.UserError(
-                "No repo specified in config file.")
+            raise util.UserError("No repo specified in config file.")
 
         if not getattr(conf, "branches", [None]):
             # If 'branches' attribute is present, at least some must
             # be listed.
-            raise util.UserError(
-                "No branches specified in config file.")
+            raise util.UserError("No branches specified in config file.")
 
         return conf

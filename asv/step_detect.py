@@ -373,6 +373,7 @@ except ImportError:
 # Detecting regressions
 #
 
+
 def detect_steps(y, w=None):
     """
     Detect steps in a (noisy) signal.
@@ -436,11 +437,9 @@ def detect_steps(y, w=None):
     steps = []
     l = 0
     for r, v, d in zip(right, values, dists):
-        steps.append((index_map[l],
-                     index_map[r - 1] + 1,
-                     v,
-                     min(y_filtered[l:r]),
-                     abs(d / (r - l))))
+        steps.append(
+            (index_map[l], index_map[r - 1] + 1, v, min(y_filtered[l:r]), abs(d / (r - l)))
+        )
         l = r
     return steps
 
@@ -530,8 +529,8 @@ def detect_regressions(steps, threshold=0, min_size=2):
 # Fitting piecewise constant functions to noisy data
 #
 
-def solve_potts(y, w, gamma, min_size=1, max_size=None,
-                min_pos=None, max_pos=None, mu_dist=None):
+
+def solve_potts(y, w, gamma, min_size=1, max_size=None, min_pos=None, max_pos=None, mu_dist=None):
     """Fit penalized stepwise constant function (Potts model) to data.
 
     Given a time series y = {y_1, ..., y_n}, fit series x = {x_1, ..., x_n}
@@ -616,7 +615,7 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
     #     the best (exclusive) left edge is at l=p[r].
     #     Where intervals overlap, the rightmost one has priority.
 
-    if hasattr(mu_dist, 'find_best_partition'):
+    if hasattr(mu_dist, "find_best_partition"):
         p = mu_dist.find_best_partition(gamma, min_size, max_size, min_pos, max_pos)
     else:
         i0 = min_pos
@@ -718,8 +717,9 @@ def solve_potts_autogamma(y, w, beta=None, **kw):
                 l = r
             return s
 
-        rho_best = golden_search(lambda rho: sigma_star(r, v, rho), -1, 1,
-                                 xatol=0.05, expand_bounds=True)
+        rho_best = golden_search(
+            lambda rho: sigma_star(r, v, rho), -1, 1, xatol=0.05, expand_bounds=True
+        )
 
         # Measurement noise floor
         if len(v) > 2:
@@ -765,10 +765,10 @@ def solve_potts_approx(y, w, gamma=None, min_size=1, **kw):
     if n == 0:
         return [], [], []
 
-    mu_dist = kw.get('mu_dist')
+    mu_dist = kw.get("mu_dist")
     if mu_dist is None:
         mu_dist = get_mu_dist(y, w)
-        kw['mu_dist'] = mu_dist
+        kw["mu_dist"] = mu_dist
 
     if gamma is None:
         dist = mu_dist.dist
@@ -805,8 +805,9 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
 
             # Check whether merging consecutive intervals results to
             # decrease in the cost function
-            change = (dist(l, right[j] - 1) -
-                      (dist(l, right[j - 1] - 1) + dist(right[j - 1], right[j] - 1) + gamma))
+            change = dist(l, right[j] - 1) - (
+                dist(l, right[j - 1] - 1) + dist(right[j - 1], right[j] - 1) + gamma
+            )
             if change <= min_change:
                 min_change = change
                 min_change_j = j - 1
@@ -865,6 +866,7 @@ class L1Dist:
     prefactors, which for Python means minimal code.
 
     """
+
     def __init__(self, y, w):
         self.y = y
         self.w = w
@@ -872,7 +874,7 @@ class L1Dist:
         class mu_dict(collections.defaultdict):
             def __missing__(self, a):
                 l, r = a
-                v = weighted_median(y[l:r + 1], w[l:r + 1])
+                v = weighted_median(y[l : r + 1], w[l : r + 1])
                 self[a] = v
                 return v
 
@@ -882,7 +884,7 @@ class L1Dist:
             def __missing__(self, a):
                 l, r = a
                 m = mu[l, r]
-                v = sum(wx * abs(x - m) for x, wx in zip(y[l:r + 1], w[l:r + 1]))
+                v = sum(wx * abs(x - m) for x, wx in zip(y[l : r + 1], w[l : r + 1]))
                 self[a] = v
                 return v
 
@@ -920,8 +922,8 @@ def rolling_median_dev(items):
     """
     min_heap = []
     max_heap = []
-    min_heap_sum = 0   # equal to -sum(min_heap)
-    max_heap_sum = 0   # equal to sum(max_heap)
+    min_heap_sum = 0  # equal to -sum(min_heap)
+    max_heap_sum = 0  # equal to sum(max_heap)
     s = iter(items)
     try:
         while True:
@@ -1028,9 +1030,9 @@ def _plot_potts(x, sol):
     t = np.arange(len(x))
 
     plt.clf()
-    plt.plot(t, x, 'k.')
+    plt.plot(t, x, "k.")
 
     l = 0
     for r, v in zip(sol[0], sol[1]):
-        plt.plot([l, r - 1], [v, v], 'b-o', hold=1)
+        plt.plot([l, r - 1], [v, v], "b-o", hold=1)
         l = r
