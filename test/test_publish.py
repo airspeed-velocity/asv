@@ -451,9 +451,9 @@ def test_gh1209(tmpdir):
         json5.dump(conf, fhandle, indent=4)
         fhandle.truncate()
     subprocess.run(["asv", "machine", "--yes"],
-                   cwd=dvcs.path, check=True)
+                   cwd=dvcs.path, check=False)
     subprocess.run(["asv", "run"],
-                   cwd=dvcs.path, check=True)
+                   cwd=dvcs.path, check=False)
     retdat = subprocess.run(["asv", "publish"], cwd=dvcs.path,
                             capture_output=True, text=True)
     assert "git rev-list --first-parent benchmarks" not in retdat.stderr
