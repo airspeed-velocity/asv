@@ -130,26 +130,23 @@ class Mamba(environment.Environment):
                 self._run_pip(pargs + pip_args)
 
     def _get_requirements(self):
-        if self._requirements:
-            # retrieve and return all mamba / pip dependencies
-            mamba_args = []
-            pip_args = []
+        mamba_args = []
+        pip_args = []
 
-            for key, val in self._requirements.items():
-                if key.startswith("pip+"):
-                    if val:
-                        pip_args.append(f"{key[4:]}=={val}")
-                    else:
-                        pip_args.append(key[4:])
+        for key, val in {**self._requirements,
+                         **self._base_requirements}.items():
+            if key.startswith("pip+"):
+                if val:
+                    pip_args.append(f"{key[4:]}=={val}")
                 else:
-                    if val:
-                        mamba_args.append(f"{key}={val}")
-                    else:
-                        mamba_args.append(key)
+                    pip_args.append(key[4:])
+            else:
+                if val:
+                    mamba_args.append(f"{key}={val}")
+                else:
+                    mamba_args.append(key)
 
-            return mamba_args, pip_args
-        else:
-            return [], []
+        return mamba_args, pip_args
 
     def run_executable(self, executable, args, **kwargs):
         return super(Mamba, self).run_executable(executable, args, **kwargs)
