@@ -4,7 +4,7 @@ import argparse
 import sys
 import abc
 
-from .. import config, util
+from asv import config, util
 from . import common_args
 
 # This list is ordered in order of average workflow
