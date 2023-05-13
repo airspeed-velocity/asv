@@ -508,6 +508,10 @@ class Environment:
         # benchmark name mangling
         self._base_requirements = {}
         self._base_requirements["pip+asvcore"] = ""
+        if not util.ON_PYPY:
+            # XXX: What if pypy installed asv tries to benchmark a cpython
+            # python?
+            self._base_requirements["pip+pympler"] = ""
         if (Path.cwd() / "poetry.lock").exists():
             self._base_requirements["poetry-core"] = ""
 

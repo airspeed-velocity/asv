@@ -1418,3 +1418,9 @@ def search_channels(cli_path, pkg, version):
         return False
     # Worked!
     return True
+
+
+if hasattr(sys, 'pypy_version_info'):
+    ON_PYPY = True
+else:
+    ON_PYPY = False
