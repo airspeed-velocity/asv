@@ -31,6 +31,7 @@ from asvcore.timing import _timing
 from asvcore.setup_cache import _setup_cache
 from asvcore.check import _check
 
+
 def _help(args):
     print(__doc__)
 
