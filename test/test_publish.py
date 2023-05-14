@@ -435,7 +435,8 @@ def test_regression_atom_feed_update(dvcs_type, tmpdir):
         b_content = b.find('{http://www.w3.org/2005/Atom}content')
         assert a_content.text != b_content.text
 
-def test_gh1209(tmpdir):
+def test_branch_name_is_also_filename(tmpdir):
+    # gh-1209
     tmpdir = str(tmpdir)
     dvcs = tools.generate_test_repo(tmpdir, list(range(10)),
                                     dvcs_type="git",
