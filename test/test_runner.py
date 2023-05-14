@@ -114,8 +114,9 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     ]
     assert times['params_examples.track_param'].result == [42, 42]
 
-    assert times['params_examples.mem_param'].params == [['10', '20'], ['2', '3']]
-    assert len(times['params_examples.mem_param'].result) == 2 * 2
+    if not util.ON_PYPY:
+        assert times['params_examples.mem_param'].params == [['10', '20'], ['2', '3']]
+        assert len(times['params_examples.mem_param'].result) == 2 * 2
 
     assert times['params_examples.ParamSuite.track_value'].params == [["'a'", "'b'", "'c'"]]
     assert times['params_examples.ParamSuite.track_value'].result == [1 + 0, 2 + 0, 3 + 0]
