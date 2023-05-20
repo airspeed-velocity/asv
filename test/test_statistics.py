@@ -4,6 +4,7 @@ import random
 import warnings
 import math
 from itertools import product
+import sys
 
 import pytest
 from asv_runner.statistics import (compute_stats, LaplacePosterior, quantile, quantile_ci,
@@ -404,7 +405,7 @@ def test_mann_whitney_u_basic():
     assert u == 0
     assert p == pytest.approx(2 / 3, abs=0, rel=1e-10)
 
-
+@pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
 def test_mann_whitney_u_R():
     robjects = pytest.importorskip("rpy2.robjects")
 
