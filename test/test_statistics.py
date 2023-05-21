@@ -3,8 +3,8 @@
 import random
 import warnings
 import math
-from itertools import product
 import sys
+from itertools import product
 
 import pytest
 from asv_runner.statistics import (compute_stats, LaplacePosterior, quantile, quantile_ci,
