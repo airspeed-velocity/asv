@@ -119,7 +119,7 @@ class Git(Repo):
     def get_hashes_from_range(self, range_spec):
         args = ['rev-list', '--first-parent']
         if range_spec != "":
-            args += shlex.split(range_spec)
+            args += shlex.split(range_spec) + ["--"]
         output = self._run_git(args, valid_return_codes=(0, 1), dots=False)
         return output.strip().split()
 
