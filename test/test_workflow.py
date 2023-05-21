@@ -4,14 +4,14 @@ import glob
 import os
 import sys
 import json
-from os.path import join, isfile
+import shutil
+from os.path import join, isfile, abspath, relpath, dirname
 
 import pytest
 
-from asv import util
+from asv import config, util
 
 from . import tools
-
 
 dummy_values = (
     (6, 1),
@@ -20,7 +20,7 @@ dummy_values = (
 )
 
 def generate_basic_conf(tmpdir, repo_subdir='', values=dummy_values, dummy_packages=True):
-    tmpdir = six.text_type(tmpdir)
+    tmpdir = str(tmpdir)
     local = abspath(dirname(__file__))
     os.chdir(tmpdir)
 
