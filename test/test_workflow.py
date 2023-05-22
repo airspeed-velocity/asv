@@ -4,17 +4,75 @@ import glob
 import os
 import sys
 import json
-from os.path import join, isfile
+import shutil
+from os.path import join, isfile, abspath, relpath, dirname
 
 import pytest
 
-from asv import util
+from asv import config, util
 
 from . import tools
 
+dummy_values = (
+    (6, 1),
+    (6, 6),
+    (6, 6),
+)
 
-def test_run_publish(capfd, basic_conf_2):
-    tmpdir, local, conf, machine_file = basic_conf_2
+def generate_basic_conf(tmpdir, repo_subdir='', values=dummy_values, dummy_packages=True):
+    tmpdir = str(tmpdir)
+    local = abspath(dirname(__file__))
+    os.chdir(tmpdir)
+
+    # Use relative paths on purpose since this is what will be in
+    # actual config files
+
+    shutil.copytree(os.path.join(local, 'benchmark'), 'benchmark')
+
+    machine_file = join(tmpdir, 'asv-machine.json')
+
+    shutil.copyfile(join(local, 'asv-machine.json'),
+                    machine_file)
+
+    repo_path = tools.generate_test_repo(tmpdir, values,
+                                         subdir=repo_subdir).path
+
+    if dummy_packages:
+        matrix = {
+            "asv_dummy_test_package_1": [""],
+            "asv_dummy_test_package_2": tools.DUMMY2_VERSIONS,
+        }
+    else:
+        matrix = {}
+
+    conf_dict = {
+        'env_dir': 'env',
+        'benchmark_dir': 'benchmark',
+        'results_dir': 'results_workflow',
+        'html_dir': 'html',
+        'repo': relpath(repo_path),
+        'dvcs': 'git',
+        'project': 'asv',
+        'matrix': matrix,
+    }
+    if repo_subdir:
+        conf_dict['repo_subdir'] = repo_subdir
+
+    conf = config.Config.from_json(conf_dict)
+
+    if hasattr(sys, 'pypy_version_info'):
+        conf.pythons = ["pypy{0[0]}.{0[1]}".format(sys.version_info)]
+
+    return tmpdir, local, conf, machine_file
+
+
+@pytest.fixture
+def basic_conf(tmpdir, dummy_packages):
+    return generate_basic_conf(tmpdir)
+
+
+def test_run_publish(capfd, basic_conf):
+    tmpdir, local, conf, machine_file = basic_conf
     tmpdir = util.long_path(tmpdir)
 
     conf.matrix = {

@@ -6,6 +6,7 @@ from . import Command, common_args
 from ..benchmarks import Benchmarks
 from ..console import log
 from ..machine import Machine
+from ..results import Results
 from ..repo import get_repo
 from ..runner import run_benchmarks
 from .. import util
@@ -44,6 +45,9 @@ class Find(Command):
             "--invert", "-i", action="store_true",
             help="""Search for a decrease in the benchmark value,
             rather than an increase.""")
+        parser.add_argument(
+            "--skip-save", action="store_true",
+            help="""Do not save intermediate results from the search""")
         common_args.add_parallel(parser)
         common_args.add_show_stderr(parser)
         common_args.add_machine(parser)
@@ -61,12 +65,14 @@ class Find(Command):
             invert=args.invert, show_stderr=args.show_stderr,
             parallel=args.parallel,
             machine=args.machine, env_spec=args.env_spec,
-            launch_method=args.launch_method, **kwargs
+            launch_method=args.launch_method, skip_save=args.skip_save,
+            **kwargs
         )
 
     @classmethod
     def run(cls, conf, range_spec, bench, invert=False, show_stderr=False, parallel=1,
-            machine=None, env_spec=None, _machine_file=None, launch_method=None):
+            machine=None, env_spec=None, _machine_file=None, launch_method=None,
+            skip_save=False):
         params = {}
         machine_params = Machine.load(
             machine_name=machine,
@@ -128,10 +134,28 @@ class Find(Command):
                 f"For {conf.project} commit {commit_name}:")
 
             env.install_project(conf, repo, commit_hash)
+            params['python'] = env.python
+            params.update(env.requirements)
 
-            res = run_benchmarks(benchmarks, env,
+            result = Results(
+                params,
+                env.requirements,
+                commit_hash,
+                repo.get_date(commit_hash),
+                env.python,
+                env.name,
+                env.env_vars
+            )
+
+            if not skip_save:
+                result.load_data(conf.results_dir)
+
+            res = run_benchmarks(benchmarks, env, results=result,
                                  show_stderr=show_stderr,
                                  launch_method=launch_method)
+
+            if not skip_save:
+                res.save(conf.results_dir)
 
             result = res.get_result_value(benchmark_name,
                                           benchmarks[benchmark_name]['params'])
