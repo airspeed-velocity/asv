@@ -24,12 +24,12 @@ internal commands:
 
 import sys
 
-from asvcore.discovery import _discover
-from asvcore.run import _run
-from asvcore.server import _run_server
-from asvcore.timing import _timing
-from asvcore.setup_cache import _setup_cache
-from asvcore.check import _check
+from asv_runner.discovery import _discover
+from asv_runner.run import _run
+from asv_runner.server import _run_server
+from asv_runner.timing import _timing
+from asv_runner.setup_cache import _setup_cache
+from asv_runner.check import _check
 
 
 def _help(args):
