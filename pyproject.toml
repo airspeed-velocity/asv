@@ -53,7 +53,7 @@ test = [
     "feedparser",
     "selenium",
     "pytest-rerunfailures",
-    "rpy2; platform_python_implementation != \"PyPy\"",
+    "python-hglib",
 ]
 doc = [
     "sphinx",
@@ -65,6 +65,9 @@ dev = [
 ]
 hg = [
     "python-hglib",
+]
+with_r =[
+    "rpy2; platform_python_implementation != \"PyPy\"",
 ]
 
 [build-system]

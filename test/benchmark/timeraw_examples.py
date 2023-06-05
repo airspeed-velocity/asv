@@ -1,5 +1,11 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import os
+
+import pytest
+
+WIN = (os.name == 'nt')
+
 class TimerawSuite:
     def timeraw_fresh(self):
         # The test interpreter should not be polluted with anything.
@@ -13,6 +19,7 @@ class TimerawSuite:
         # Setup code
         return "a+1", "a=3"
 
+    @pytest.mark.skipif(WIN, reason="Flaky on windows GHA")
     def timeraw_timeout(self):
         return """
         # Inside the grandchild.
