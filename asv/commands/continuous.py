@@ -3,11 +3,13 @@
 import os
 import argparse
 
+from asv_runner.console import color_print
+
 from . import Command, common_args
 from .run import Run
 from .compare import Compare
 from ..repo import get_repo, NoSuchNameError
-from ..console import color_print, log
+from ..console import log
 from .. import results, util
 
 

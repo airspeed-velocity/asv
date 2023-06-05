@@ -6,6 +6,8 @@ import math
 from itertools import product
 
 import pytest
+from asv_runner.statistics import (compute_stats, LaplacePosterior, quantile, quantile_ci,
+                                   binom_pmf, get_err)
 
 from asv import statistics
 
@@ -14,14 +16,14 @@ def test_compute_stats():
     np = pytest.importorskip("numpy")
     np.random.seed(1)
 
-    assert statistics.compute_stats([], 1) == (None, None)
-    assert statistics.compute_stats([15.0], 1) == (
+    assert compute_stats([], 1) == (None, None)
+    assert compute_stats([15.0], 1) == (
         15.0, {'ci_99_a': -math.inf, 'ci_99_b': math.inf,
                'number': 1, 'q_25': 15.0, 'q_75': 15.0, 'repeat': 1})
 
     for nsamples, true_mean in product([10, 50, 250], [0, 0.3, 0.6]):
         samples = np.random.randn(nsamples) + true_mean
-        result, stats = statistics.compute_stats(samples, 42)
+        result, stats = compute_stats(samples, 42)
 
         assert stats['repeat'] == len(samples)
         assert stats['number'] == 42
@@ -34,7 +36,7 @@ def test_compute_stats():
         w = 12.0 * np.std(samples) / np.sqrt(len(samples))
         assert ci[1] - ci[0] < w
 
-        err = statistics.get_err(result, stats)
+        err = get_err(result, stats)
         iqr = np.percentile(samples, 75) - np.percentile(samples, 25)
         assert np.allclose(err, iqr / 2)
 
@@ -47,8 +49,8 @@ def test_is_different():
     for true_mean, n, significant in [(0.01, 10, False), (0.05, 100, True), (0.1, 10, True)]:
         samples_a = 0 + 0.1 * np.random.rand(n)
         samples_b = true_mean + 0.1 * np.random.rand(n)
-        _, stats_a = statistics.compute_stats(samples_a, 1)
-        _, stats_b = statistics.compute_stats(samples_b, 1)
+        _, stats_a = compute_stats(samples_a, 1)
+        _, stats_b = compute_stats(samples_b, 1)
         assert statistics.is_different(None, None, stats_a, stats_b) == significant
         assert statistics.is_different(samples_a, samples_b, stats_a, stats_b) == significant
 
@@ -109,7 +111,7 @@ def test_quantile_ci():
     np.random.seed(1)
 
     for sampler in [sample_exp, sample_normal]:
-        cis = _check_ci(lambda z, alpha: statistics.quantile_ci(z, 0.5, alpha),
+        cis = _check_ci(lambda z, alpha: quantile_ci(z, 0.5, alpha),
                         sampler, nsamples=300)
         atol = 5 / 300
         for size, alpha, alpha_got in cis:
@@ -123,7 +125,7 @@ def test_quantile_ci_small():
     # Small samples should give infinite ci
     for n in range(1, 7):
         sample = list(range(n))
-        _, ci = statistics.quantile_ci(sample, 0.5, 0.99)
+        _, ci = quantile_ci(sample, 0.5, 0.99)
         assert ci[0] == -math.inf
         assert ci[1] == math.inf
 
@@ -143,9 +145,9 @@ def test_quantile_ci_r():
     ci_50_80_e = [-0.7659232, 0.5782982]
     ci_80_80_e = [0.5017378, 1.2015979]
 
-    q_20, ci_20_80 = statistics.quantile_ci(x, 0.2, 0.8)
-    q_50, ci_50_80 = statistics.quantile_ci(x, 0.5, 0.8)
-    q_80, ci_80_80 = statistics.quantile_ci(x, 0.8, 0.8)
+    q_20, ci_20_80 = quantile_ci(x, 0.2, 0.8)
+    q_50, ci_50_80 = quantile_ci(x, 0.5, 0.8)
+    q_80, ci_80_80 = quantile_ci(x, 0.8, 0.8)
 
     assert q_20 == pytest.approx(q_20_e)
     assert q_50 == pytest.approx(q_50_e)
@@ -163,7 +165,7 @@ def test_quantile():
     x = np.random.randn(50)
     for q in np.linspace(0, 1, 300):
         expected = np.percentile(x, 100 * q)
-        got = statistics.quantile(x.tolist(), q)
+        got = quantile(x.tolist(), q)
         assert np.allclose(got, expected), q
 
 
@@ -175,7 +177,7 @@ def test_binom_pmf():
     k = np.arange(0, 40, 5)[:, None]
     n = np.arange(0, 40, 5)[:, None, None]
     expected = stats.binom.pmf(k, n, p)
-    got = np.vectorize(statistics.binom_pmf)(n, k, p)
+    got = np.vectorize(binom_pmf)(n, k, p)
     assert np.allclose(got, expected, rtol=1e-12, atol=0)
 
 
@@ -198,7 +200,7 @@ def test_laplace_posterior_ci():
     np.random.seed(41)
 
     def estimator(z, alpha):
-        c = statistics.LaplacePosterior(z.tolist())
+        c = LaplacePosterior(z.tolist())
         a, b = c.ppf(alpha / 2), c.ppf(1 - alpha / 2)
         a = min(c.mle, a)  # force MLE inside CI
         b = max(c.mle, b)
@@ -223,12 +225,12 @@ def test_laplace_posterior_basic():
 
     # even
     y = [1, 2, 3, 4, 5, 6][::-1]
-    c = statistics.LaplacePosterior(y)
+    c = LaplacePosterior(y)
     assert abs(c.mle - 3.5) < 1e-8
 
     # odd
     y = [1, 2, 3, 4, 5][::-1]
-    c = statistics.LaplacePosterior(y)
+    c = LaplacePosterior(y)
     assert abs(c.mle - 3) < 1e-8
 
     # check pdf vs cdf
@@ -243,7 +245,7 @@ def test_laplace_posterior_basic():
 
     # large input (must not cause overflows)
     y = list(range(500))
-    c = statistics.LaplacePosterior(y)
+    c = LaplacePosterior(y)
     assert abs(c.mle - 249.5) < 1e-8
     assert abs(c.cdf(249.5) - 0.5) < 1e-8
 
@@ -262,7 +264,7 @@ def test_laplace_posterior_basic():
 
     # check zero variance
     y = [1, 1, 1, 1, 1]
-    c = statistics.LaplacePosterior(y)
+    c = LaplacePosterior(y)
     assert c.mle == 1
     assert c.pdf(1 - 1e-5) == 0
     assert c.pdf(1 + 1e-5) == 0
@@ -272,13 +274,13 @@ def test_laplace_posterior_basic():
 
     # one item
     y = [1]
-    c = statistics.LaplacePosterior(y)
+    c = LaplacePosterior(y)
     assert c.cdf(1 - 1e-5) == 0
     assert c.cdf(1 + 1e-5) == 1.0
 
     # zero items
     with pytest.raises(ValueError):
-        statistics.LaplacePosterior([])
+        LaplacePosterior([])
 
 
 def test_laplace_posterior_cdf():
@@ -289,7 +291,7 @@ def test_laplace_posterior_cdf():
     np.random.seed(1)
     y = np.random.randn(15).tolist()
 
-    c = statistics.LaplacePosterior(y)
+    c = LaplacePosterior(y)
 
     def num_cdf(t):
         return integrate.quad(c.pdf, -np.inf, t, limit=1000)[0]

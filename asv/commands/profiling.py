@@ -7,9 +7,11 @@ import pstats
 import sys
 import tempfile
 
+from asv_runner.console import color_print
+
 from . import Command, common_args
 from ..benchmarks import Benchmarks
-from ..console import log, color_print
+from ..console import log
 from ..environment import get_environments, is_existing_only
 from ..machine import Machine
 from ..profiling import ProfilerGui

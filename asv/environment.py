@@ -507,7 +507,7 @@ class Environment:
         # These are needed for asv to build and run the project, not part of
         # benchmark name mangling
         self._base_requirements = {}
-        self._base_requirements["pip+asvcore"] = ""
+        self._base_requirements["pip+asv_runner"] = ""
         if not util.ON_PYPY:
             # XXX: What if pypy installed asv tries to benchmark a cpython
             # python?

@@ -7,8 +7,9 @@ import locale
 import itertools
 
 import pytest
+from asv_runner.console import _write_with_fallback, color_print
 
-from asv.console import _write_with_fallback, color_print, log
+from asv.console import log
 
 
 def test_write_with_fallback(tmpdir, capfd):
