@@ -385,7 +385,7 @@ defaults to ``"benchmarks"``.
 ``environment_type``
 --------------------
 Specifies the tool to use to create environments.  May be "conda",
-"virtualenv" or another value depending on the plugins in use.  If
+"virtualenv", "mamba" or another value depending on the plugins in use.  If
 missing or the empty string, the tool will be automatically determined
 by looking for tools on the ``PATH`` environment variable.
 
