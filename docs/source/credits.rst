@@ -52,3 +52,5 @@ Credits
 - Wojtek Ruszczewski
 - @jbrockmendel
 - @serge-sans-paille
+- Matti Picus (@mattip)
+- Rohit Goswami (@HaoZeke)
