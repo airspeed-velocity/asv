@@ -107,11 +107,10 @@ class Mamba(environment.Environment):
             env_file_name = self._mamba_environment_file
             env_data = load(Path(env_file_name).open(), Loader=Loader)
             mamba_pkgs = [x for x in env_data.get("dependencies") if isinstance(x, str)]
-            with _mamba_lock():
-                self._run_mamba(
-                    ["env", "create", "-f", env_file_name, "-p", self._path, "--force"],
-                    env=env,
-                )
+            self._run_mamba(
+                ["env", "create", "-f", env_file_name, "-p", self._path, "--force"],
+                env=env,
+            )
             solver = MambaSolver(
                 self._mamba_channels, None, self.context  # or target_platform
             )
