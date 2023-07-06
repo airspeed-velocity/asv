@@ -10,7 +10,9 @@ import datetime
 import tempfile
 import pstats
 
-from . import environment, statistics, util
+from asv_runner.statistics import get_err, compute_stats
+
+from . import environment, util
 from .console import log
 from .machine import Machine
 
@@ -500,7 +502,7 @@ class Results:
                 continue
 
             if n is not None:
-                new_result[j], new_stats[j] = statistics.compute_stats(s, n)
+                new_result[j], new_stats[j] = compute_stats(s, n)
 
         # Compress None lists to just None
         if all(x is None for x in new_result):
@@ -930,7 +932,7 @@ def format_benchmark_result(results, benchmark):
         if failure_count == 0:
             info = "ok"
 
-        display_result = [(v, statistics.get_err(v, s) if s is not None else None)
+        display_result = [(v, get_err(v, s) if s is not None else None)
                           for v, s in zip(result, stats)]
         display = _format_benchmark_result(display_result, benchmark)
         display = "\n".join(display).strip()
@@ -946,7 +948,7 @@ def format_benchmark_result(results, benchmark):
                 display = "[]"
             else:
                 if stats[0]:
-                    err = statistics.get_err(result[0], stats[0])
+                    err = get_err(result[0], stats[0])
                 else:
                     err = None
                 display = util.human_value(result[0], benchmark['unit'], err=err)

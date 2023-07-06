@@ -4,6 +4,8 @@ import itertools
 import math
 
 import tabulate
+from asv_runner.console import color_print
+from asv_runner.statistics import get_err
 
 from . import Command, common_args
 from ..benchmarks import Benchmarks
@@ -11,7 +13,7 @@ from ..machine import iter_machine_files
 from ..results import iter_results_for_machine_and_hash
 from ..repo import get_repo, NoSuchNameError
 from ..util import human_value, load_json
-from ..console import log, color_print
+from ..console import log
 from ..environment import get_environments
 from .. import util, statistics
 
@@ -265,12 +267,12 @@ class Compare(Command):
                 time_2 = math.nan
 
             if benchmark in ss_1 and ss_1[benchmark][0]:
-                err_1 = statistics.get_err(time_1, ss_1[benchmark][0])
+                err_1 = get_err(time_1, ss_1[benchmark][0])
             else:
                 err_1 = None
 
             if benchmark in ss_2 and ss_2[benchmark][0]:
-                err_2 = statistics.get_err(time_2, ss_2[benchmark][0])
+                err_2 = get_err(time_2, ss_2[benchmark][0])
             else:
                 err_2 = None
 

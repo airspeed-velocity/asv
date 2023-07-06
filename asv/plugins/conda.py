@@ -166,26 +166,23 @@ class Conda(environment.Environment):
             os.unlink(env_file.name)
 
     def _get_requirements(self):
-        if self._requirements:
-            # retrieve and return all conda / pip dependencies
-            conda_args = []
-            pip_args = []
+        conda_args = []
+        pip_args = []
 
-            for key, val in self._requirements.items():
-                if key.startswith('pip+'):
-                    if val:
-                        pip_args.append(f"{key[4:]}=={val}")
-                    else:
-                        pip_args.append(key[4:])
+        for key, val in {**self._requirements,
+                         **self._base_requirements}.items():
+            if key.startswith('pip+'):
+                if val:
+                    pip_args.append(f"{key[4:]}=={val}")
                 else:
-                    if val:
-                        conda_args.append(f"{key}={val}")
-                    else:
-                        conda_args.append(key)
+                    pip_args.append(key[4:])
+            else:
+                if val:
+                    conda_args.append(f"{key}={val}")
+                else:
+                    conda_args.append(key)
 
-            return conda_args, pip_args
-        else:
-            return [], []
+        return conda_args, pip_args
 
     def _run_conda(self, args, env=None):
         """

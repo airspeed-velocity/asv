@@ -504,11 +504,19 @@ class Environment:
         self._build_root = os.path.abspath(os.path.join(self._path, 'project'))
 
         self._requirements = requirements
+        # These are needed for asv to build and run the project, not part of
+        # benchmark name mangling
+        self._base_requirements = {}
+        self._base_requirements["pip+asv_runner"] = ""
+        if not util.ON_PYPY:
+            # XXX: What if pypy installed asv tries to benchmark a cpython
+            # python?
+            self._base_requirements["pip+pympler"] = ""
         if (Path.cwd() / "poetry.lock").exists():
-            self._requirements["poetry-core"] = ""
+            self._base_requirements["poetry-core"] = ""
 
         if (Path.cwd() / "pdm.lock").exists():
-            self._requirements["pdm"] = ""
+            self._base_requirements["pdm"] = ""
 
         self._build_command = conf.build_command
         self._install_command = conf.install_command

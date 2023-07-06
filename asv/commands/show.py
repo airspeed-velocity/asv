@@ -3,6 +3,8 @@
 import math
 from collections import defaultdict
 
+from asv_runner.console import color_print
+
 from . import Command, common_args
 from ..benchmarks import Benchmarks
 from ..machine import iter_machine_files
@@ -10,7 +12,7 @@ from ..results import iter_results_for_machine, iter_results_for_machine_and_has
 from ..runner import format_benchmark_result
 from ..repo import get_repo, NoSuchNameError
 from ..util import load_json
-from ..console import log, color_print
+from ..console import log
 from ..environment import get_environments
 from .. import util
 

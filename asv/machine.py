@@ -6,8 +6,10 @@ import platform
 import sys
 import textwrap
 
+from asv_runner.console import color_print, get_answer_default
+
 from . import console, util
-from .console import log, color_print
+from .console import log
 
 
 def iter_machine_files(results_dir):
@@ -172,7 +174,7 @@ class Machine:
                 textwrap.fill(
                     f'{i + 1}. {name}: {textwrap.dedent(description)}',
                     subsequent_indent='   '))
-            values[name] = console.get_answer_default(name, defaults[name],
+            values[name] = get_answer_default(name, defaults[name],
                                                       use_defaults=use_defaults)
 
         return values

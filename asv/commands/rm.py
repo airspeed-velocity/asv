@@ -2,8 +2,9 @@
 import sys
 from fnmatch import fnmatchcase
 
+from asv_runner.console import get_answer_default
+
 from . import Command, util
-from .. import console
 from ..console import log
 from ..results import iter_results
 
@@ -92,7 +93,7 @@ class Rm(Command):
             log.info(f"Removing {len(files_to_remove)} files")
 
         if not y:
-            do = console.get_answer_default("Perform operations", "n")
+            do = get_answer_default("Perform operations", "n")
             if len(do) and do.lower()[0] != 'y':
                 sys.exit(0)
 
