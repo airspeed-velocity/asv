@@ -87,13 +87,13 @@ class Mamba(environment.Environment):
         env = dict(os.environ)
         env.update(self.build_env_vars)
         Path(f"{self._path}/conda-meta").mkdir(parents=True, exist_ok=True)
+        solver = MambaSolver(
+            self._mamba_channels, None, self.context  # or target_platform
+        )
 
         if not self._mamba_environment_file:
             # Construct payload, env file sets python version
             mamba_pkgs = [f"python={self._python}", "wheel", "pip"] + mamba_args
-            solver = MambaSolver(
-                self._mamba_channels, None, self.context  # or target_platform
-            )
 
             with _mamba_lock():
                 transaction = solver.solve(mamba_pkgs)
@@ -110,9 +110,6 @@ class Mamba(environment.Environment):
             self._run_mamba(
                 ["env", "create", "-f", env_file_name, "-p", self._path, "--force"],
                 env=env,
-            )
-            solver = MambaSolver(
-                self._mamba_channels, None, self.context  # or target_platform
             )
             with _mamba_lock():
                 transaction = solver.solve(mamba_pkgs + mamba_args)
