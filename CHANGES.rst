@@ -11,6 +11,7 @@ API Changes
 
 Bug Fixes
 ^^^^^^^^^
+- Fixed the deadlock when mamba is used with an environment file. (#1300)
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
