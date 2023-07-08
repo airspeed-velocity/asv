@@ -5,52 +5,82 @@ Credits
 
 - Michael Droettboom (founder)
 - Pauli Virtanen
-- Philippe Pepiot
-- Thomas Robitaille
-- Antoine Pitrou
-- Matthew Turk
-- Richard Hattersley
-- Christopher Whelan
-- Erik Tollerud
-- Elliott Sales de Andrade
+
+The rest of the contributors are listed in alphabetical order.
+
+- Aaron Meurer
 - @afragner
-- Raphaël Gomès
+- Akihiro Nitta
 - Andrew Nelson
-- Juan Nunez-Iglesias
-- Pierre Glaser
+- Andrew Thomas
+- Antoine Pitrou
+- Antony Lee
+- Ariel Silvio Norberto RAMOS
+- Arne Neumann
+- Boris Feld
+- Chiara Marmo
 - Chris Beaumont
 - Christoph Deil
-- @Rok
-- Robert T. McGibbon
-- Andreas Fragner
-- Jeremie du Boisberranger
-- @wrwrwr
-- Aaron Meurer
-- Boris Feld
-- Erik M. Bray
-- Isuru Fernando
-- Kacper Kowalik
-- Tyler Reddy
-- Yaroslav Halchenko
-- Antony Lee
-- Arne Neumann
+- Christopher Whelan
 - Colin Carroll
+- Daniel Andres Pinto
+- David Stansby
 - Dieter Werthmüller
+- Dorothy Kabarozi
+- @DWesl
 - Edison Gustavo Muenz
+- Elliott Sales de Andrade
 - Eric Dill
+- Erik M. Bray
+- Erik Tollerud
+- Erwan Pannier
+- Fangchen Li
 - Hans Moritz Günther
+- Isuru Fernando
+- Jarrod Millman
+- @jbrockmendel
+- jeremie du boisberranger
 - John Kirkham
 - Josh Soref
+- Juan Nunez-Iglesias
+- Julian Rüth
+- Kacper Kowalik
+- Kacper Kowalik (Xarthisius)
+- Kevin Anderson
+- @Leenkiz
+- Lucy Jiménez
+- Marc Garcia
+- @mariamadronah
+- Mark Harfouche
 - Markus Mohrhard
+- Matthew Treinish
+- Matthew Turk
+- Matti Picus
 - Mike Sarahan
-- @MinRK
+- Min RK
 - Nathan Goldbaum
-- P\. L. Lim
+- Nick Crews
+- Nicole Franco León
+- @pawel
+- Paweł Redzyński
+- Philippe Pepiot
+- Pierre Glaser
+- P. L. Lim
+- Raphaël Gomès
+- Richard Hattersley
+- Rohit Goswami
+- Rok Mihevc
+- Sayed Adel
+- serge-sans-paille
+- Sourcery AI
 - Thomas Pfaff
+- Thomas Robitaille
+- Tim Felgentreff
 - Tom Augspurger
+- Tushabe Catherine
+- Tyler Reddy
+- Valentin Haenel
 - @Warbo
 - Wojtek Ruszczewski
-- @jbrockmendel
-- @serge-sans-paille
-- Matti Picus (@mattip)
-- Rohit Goswami (@HaoZeke)
+- Yaroslav Halchenko
+- Zach Burnett
