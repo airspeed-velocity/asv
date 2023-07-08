@@ -57,7 +57,14 @@ class Mamba(environment.Environment):
         self._mamba_channels = conf.conda_channels
         if "conda-forge" not in conf.conda_channels:
             self._mamba_channels += ["conda-forge"]
-        self._mamba_environment_file = conf.conda_environment_file
+
+        if conf.conda_environment_file == "IGNORE":
+            log.debug("Skipping environment file due to conda_environment_file set to IGNORE")
+            self._mamba_environment_file = None
+        elif not conf.conda_environment_file:
+            log.debug("Trying to use default environment.yml")
+            self._mamba_environment_file = "environment.yml"
+
         super(Mamba, self).__init__(conf, python, requirements, tagged_env_vars)
         self.context = libmambapy.Context()
         self.context.target_prefix = self._path
