@@ -36,4 +36,3 @@ while IFS= read -r name; do
     # echo "- $name"
     echo "$name"
 done <<< "$all_names"
-
