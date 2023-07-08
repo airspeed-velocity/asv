@@ -13,9 +13,12 @@ API Changes
 Bug Fixes
 ^^^^^^^^^
 - Fixed the deadlock when mamba is used with an environment file. (#1300)
+- Fixed environment file usage with mamba and recognizes default
+  ``environment.yml``. (#1303)
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- ``mamba`` and ``conda`` use ``environment.yml`` if it exists
 
 0.5.1 (2021-02-06)
 ------------------

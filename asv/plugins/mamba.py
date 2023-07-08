@@ -57,7 +57,15 @@ class Mamba(environment.Environment):
         self._mamba_channels = conf.conda_channels
         if "conda-forge" not in conf.conda_channels:
             self._mamba_channels += ["conda-forge"]
-        self._mamba_environment_file = conf.conda_environment_file
+
+        if conf.conda_environment_file == "IGNORE":
+            log.debug("Skipping environment file due to conda_environment_file set to IGNORE")
+            self._mamba_environment_file = None
+        elif not conf.conda_environment_file:
+            if (Path("environment.yml")).exists():
+                log.debug("Using environment.yml")
+                self._mamba_environment_file = "environment.yml"
+
         super(Mamba, self).__init__(conf, python, requirements, tagged_env_vars)
         self.context = libmambapy.Context()
         self.context.target_prefix = self._path
@@ -84,36 +92,21 @@ class Mamba(environment.Environment):
         log.info(f"Creating mamba environment for {self.name}")
 
         mamba_args, pip_args = self._get_requirements()
+        if len(pip_args) > 0:
+            self.context.add_pip_as_python_dependency = True
         env = dict(os.environ)
         env.update(self.build_env_vars)
         Path(f"{self._path}/conda-meta").mkdir(parents=True, exist_ok=True)
-        solver = MambaSolver(
-            self._mamba_channels, None, self.context  # or target_platform
-        )
-
         if not self._mamba_environment_file:
             # Construct payload, env file sets python version
             mamba_pkgs = [f"python={self._python}", "wheel", "pip"] + mamba_args
-
-            with _mamba_lock():
-                transaction = solver.solve(mamba_pkgs)
-                transaction.execute(libmambapy.PrefixData(self._path))
-            if not len(pip_args) == 0:
-                pargs = ["install", "-v", "--upgrade-strategy", "only-if-needed"]
-                self._run_pip(pargs + pip_args)
-
         else:
             # For named environments
             env_file_name = self._mamba_environment_file
             env_data = load(Path(env_file_name).open(), Loader=Loader)
             mamba_pkgs = [x for x in env_data.get("dependencies") if isinstance(x, str)]
-            self._run_mamba(
-                ["env", "create", "-f", env_file_name, "-p", self._path, "--force"],
-                env=env,
-            )
-            with _mamba_lock():
-                transaction = solver.solve(mamba_pkgs + mamba_args)
-                transaction.execute(libmambapy.PrefixData(self._path))
+            self._mamba_channels += [x for x in env_data.get("channels") if isinstance(x, str)]
+            self._mamba_channels = list(dict.fromkeys(self._mamba_channels).keys())
             # Handle possible pip keys
             pip_maybe = [x for x in env_data.get("dependencies") if isinstance(x, dict)]
             if len(pip_maybe) == 1:
@@ -121,9 +114,15 @@ class Mamba(environment.Environment):
                     pip_args += pip_maybe[0]["pip"]
                 except KeyError:
                     raise KeyError("Only pip is supported as a secondary key")
-            if not len(pip_args) == 0:
-                pargs = ["install", "-v", "--upgrade-strategy", "only-if-needed"]
-                self._run_pip(pargs + pip_args)
+        solver = MambaSolver(
+            self._mamba_channels, None, self.context  # or target_platform
+        )
+        with _mamba_lock():
+            transaction = solver.solve(mamba_pkgs)
+            transaction.execute(libmambapy.PrefixData(self._path))
+        if not len(pip_args) == 0:
+            pargs = ["install", "-v", "--upgrade-strategy", "only-if-needed"]
+            self._run_pip(pargs + pip_args)
 
     def _get_requirements(self):
         mamba_args = []
@@ -146,11 +145,6 @@ class Mamba(environment.Environment):
 
     def run_executable(self, executable, args, **kwargs):
         return super(Mamba, self).run_executable(executable, args, **kwargs)
-
-    def _run_mamba(self, args, **kwargs):
-        mamba_path = str(Path(os.getenv("CONDA_EXE")).parent / "mamba")
-        with _mamba_lock():
-            return util.check_output([mamba_path] + args, **kwargs)
 
     def run(self, args, **kwargs):
         log.debug(f"Running '{' '.join(args)}' in {self.name}")
