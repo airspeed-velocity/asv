@@ -62,8 +62,9 @@ class Mamba(environment.Environment):
             log.debug("Skipping environment file due to conda_environment_file set to IGNORE")
             self._mamba_environment_file = None
         elif not conf.conda_environment_file:
-            log.debug("Trying to use default environment.yml")
-            self._mamba_environment_file = "environment.yml"
+            if (Path("environment.yml")).exists():
+                log.debug("Using environment.yml")
+                self._mamba_environment_file = "environment.yml"
 
         super(Mamba, self).__init__(conf, python, requirements, tagged_env_vars)
         self.context = libmambapy.Context()

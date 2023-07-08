@@ -3,6 +3,7 @@ import re
 import os
 import tempfile
 import contextlib
+from pathlib import Path
 
 from .. import environment, util
 from ..console import log
@@ -92,8 +93,9 @@ class Conda(environment.Environment):
             log.debug("Skipping environment file due to conda_environment_file set to IGNORE")
             self._conda_environment_file = None
         elif not conf.conda_environment_file:
-            log.debug("Trying to use default environment.yml")
-            self._conda_environment_file = "environment.yml"
+            if Path("environment.yml").exists():
+                log.debug("Using environment.yml")
+                self._mamba_environment_file = "environment.yml"
 
         super(Conda, self).__init__(conf,
                                     python,
