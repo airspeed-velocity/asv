@@ -3,7 +3,7 @@
 
 New Features
 ^^^^^^^^^^^^
-- ``asv_runner`` is now used internally, making the addition of custom benchmark types viable
+- ``asv_runner`` is now used internally, making the addition of custom benchmark types viable (#1287)
 
 API Changes
 ^^^^^^^^^^^
