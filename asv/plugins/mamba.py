@@ -91,6 +91,8 @@ class Mamba(environment.Environment):
         log.info(f"Creating mamba environment for {self.name}")
 
         mamba_args, pip_args = self._get_requirements()
+        if len(pip_args) > 0:
+            self.context.add_pip_as_python_dependency = True
         env = dict(os.environ)
         env.update(self.build_env_vars)
         Path(f"{self._path}/conda-meta").mkdir(parents=True, exist_ok=True)
@@ -114,13 +116,12 @@ class Mamba(environment.Environment):
             env_file_name = self._mamba_environment_file
             env_data = load(Path(env_file_name).open(), Loader=Loader)
             mamba_pkgs = [x for x in env_data.get("dependencies") if isinstance(x, str)]
-            self._run_mamba(
-                ["env", "create", "-f", env_file_name, "-p", self._path, "--force"],
-                env=env,
-            )
+            self._mamba_channels += [x for x in env_data.get("channels") if isinstance(x, str)]
+            self._mamba_channels = list(dict.fromkeys(self._mamba_channels).keys())
+            named_solver = MambaSolver(self._mamba_channels, None, self.context)
             with _mamba_lock():
-                transaction = solver.solve(mamba_pkgs + mamba_args)
-                transaction.execute(libmambapy.PrefixData(self._path))
+                named_transaction = named_solver.solve(mamba_pkgs + mamba_args)
+                named_transaction.execute(libmambapy.PrefixData(self._path))
             # Handle possible pip keys
             pip_maybe = [x for x in env_data.get("dependencies") if isinstance(x, dict)]
             if len(pip_maybe) == 1:
@@ -153,11 +154,6 @@ class Mamba(environment.Environment):
 
     def run_executable(self, executable, args, **kwargs):
         return super(Mamba, self).run_executable(executable, args, **kwargs)
-
-    def _run_mamba(self, args, **kwargs):
-        mamba_path = str(Path(os.getenv("CONDA_EXE")).parent / "mamba")
-        with _mamba_lock():
-            return util.check_output([mamba_path] + args, **kwargs)
 
     def run(self, args, **kwargs):
         log.debug(f"Running '{' '.join(args)}' in {self.name}")
