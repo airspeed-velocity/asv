@@ -88,6 +88,8 @@ license-files = [
 
 [tool.setuptools.packages.find]
 namespaces = false
+[tool.setuptools.exclude-package-data]
+"*" = ["*.sh"]
 
 [tool.pytest.ini_options]
 addopts = "-p no:logging"

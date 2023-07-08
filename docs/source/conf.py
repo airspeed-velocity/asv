@@ -31,7 +31,8 @@ except ImportError:
 # needs_sphinx = '1.0'
 
 intersphinx_mapping = {
-    'python': ('http://docs.python.org/', None)
+    'python': (' https://docs.python.org/3/', None),
+    'asv_runner': ('https://airspeed-velocity.github.io/asv_runner/', None)
 }
 
 # Add any Sphinx extension module names here, as strings. They can be

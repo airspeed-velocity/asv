@@ -4,6 +4,13 @@ Developer Docs
 This section describes some things that may be of interest to
 developers and other people interested in internals of ``asv``.
 
+.. note::
+   From version 0.6 on-wards, functionality in ``asv`` has been split into the
+   section needed by the code being benchmarked (``asv_runner``) and the rest of
+   ``asv``. This means that the ``asv`` documentation covers setting up
+   environments, loading plugins, and collecting the results of the benchmarks
+   run with ``asv_runner``.
+
 .. contents::
 
 
@@ -14,6 +21,27 @@ The required packages to the full ``asv`` test suite, are listed in
 ``requirements-dev.txt``. The minimal set of packages required for
 testing are: ``pytest virtualenv filelock six pip setuptools wheel``.
 
+
+Separation of concerns
+----------------------
+
+``asv`` consists of the following steps:
+
+- Setting up an environment for the project
+- Building the project within the environment
+- Running the benchmarks
+- Collecting results and visualizing them after analysis for regressions
+
+Conceptually there are two separate parts to this process. There is the ``main``
+process which orchestrates the environment creation. This is followed by a
+subprocess which essentially runs the project benchmarks. This subprocess must
+have only minimal dependencies, ideally nothing beyond the minimum Python
+version needed to run ``asv`` along with the dependencies of the project itself.
+
+To clarify this, starting from ``v0.0.6``, ``asv`` has been split into
+``asv_runner``, which is responsible for loading benchmark types, discovering
+them and running them within an environment, while the ``asv`` repository
+handles the remaining tasks.
 
 Benchmark suite layout and file formats
 ---------------------------------------

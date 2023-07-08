@@ -8,6 +8,7 @@ from asv import util
 from . import tools
 
 
+@pytest.mark.skipif(tools.HAS_PYPY, reason="Flaky on pypy")
 @pytest.mark.parametrize("rewrite", [False, True], ids=["no-rewrite", "rewrite"])
 def test_gh_pages(rewrite, tmpdir, generate_result_dir, monkeypatch):
     tmpdir = os.path.abspath(str(tmpdir))

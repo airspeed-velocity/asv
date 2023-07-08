@@ -5,6 +5,11 @@ Benchmark types and attributes
 
    .. contents::
 
+.. warning::
+
+   From version 0.6 onwards, the code for these have now been moved to be in
+   ``asv_runner``, and the rest of the documentation may be outdated.
+
 Benchmark types
 ---------------
 
@@ -18,6 +23,10 @@ The following benchmark types are recognized:
 - ``def track_*()``: use the returned numerical value as the benchmark result
   See :ref:`tracking`.
 
+.. note::
+
+   From version 0.6 onwards, users may define their own benchmark types, see
+   ``asv_runner`` for examples.
 
 Benchmark attributes
 --------------------
