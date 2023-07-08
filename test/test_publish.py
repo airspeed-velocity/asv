@@ -23,6 +23,7 @@ from . import tools
 BENCHMARK_DIR = abspath(join(dirname(__file__), 'benchmark'))
 
 
+@pytest.mark.skipif(tools.HAS_PYPY, reason="Flaky on pypy")
 def test_publish(tmpdir, example_results):
     tmpdir = str(tmpdir)
     os.chdir(tmpdir)
