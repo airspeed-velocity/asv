@@ -176,9 +176,15 @@ dependencies. For example::
     "conda_environment_file": "environment.yml"
 
 The environment file should generally install ``wheel`` and ``pip``,
-since those are required by the default Asv build commands.  If there
+since those are required by the default ``asv`` build commands.  If there
 are packages present in ``matrix``, an additional ``conda env update``
 call is used to install them after the environment is created.
+
+.. note::
+
+   From version 0.6 onwards, if an ``environment.yml`` file is present where
+   ``asv`` is run, it will be used. To turn off this behavior,
+   ``conda_environment_file`` can be set to ``NONE``.
 
 This option will cause ``asv`` to ignore the Python version in the
 environment creation, which is then assumed to be fixed by the
