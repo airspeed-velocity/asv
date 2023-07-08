@@ -87,6 +87,14 @@ class Conda(environment.Environment):
         self._requirements = requirements
         self._conda_channels = conf.conda_channels
         self._conda_environment_file = conf.conda_environment_file
+
+        if conf.conda_environment_file == "IGNORE":
+            log.debug("Skipping environment file due to conda_environment_file set to IGNORE")
+            self._conda_environment_file = None
+        elif not conf.conda_environment_file:
+            log.debug("Trying to use default environment.yml")
+            self._conda_environment_file = "environment.yml"
+
         super(Conda, self).__init__(conf,
                                     python,
                                     requirements,
