@@ -96,21 +96,9 @@ class Mamba(environment.Environment):
         env = dict(os.environ)
         env.update(self.build_env_vars)
         Path(f"{self._path}/conda-meta").mkdir(parents=True, exist_ok=True)
-        solver = MambaSolver(
-            self._mamba_channels, None, self.context  # or target_platform
-        )
-
         if not self._mamba_environment_file:
             # Construct payload, env file sets python version
             mamba_pkgs = [f"python={self._python}", "wheel", "pip"] + mamba_args
-
-            with _mamba_lock():
-                transaction = solver.solve(mamba_pkgs)
-                transaction.execute(libmambapy.PrefixData(self._path))
-            if not len(pip_args) == 0:
-                pargs = ["install", "-v", "--upgrade-strategy", "only-if-needed"]
-                self._run_pip(pargs + pip_args)
-
         else:
             # For named environments
             env_file_name = self._mamba_environment_file
@@ -118,10 +106,6 @@ class Mamba(environment.Environment):
             mamba_pkgs = [x for x in env_data.get("dependencies") if isinstance(x, str)]
             self._mamba_channels += [x for x in env_data.get("channels") if isinstance(x, str)]
             self._mamba_channels = list(dict.fromkeys(self._mamba_channels).keys())
-            named_solver = MambaSolver(self._mamba_channels, None, self.context)
-            with _mamba_lock():
-                named_transaction = named_solver.solve(mamba_pkgs + mamba_args)
-                named_transaction.execute(libmambapy.PrefixData(self._path))
             # Handle possible pip keys
             pip_maybe = [x for x in env_data.get("dependencies") if isinstance(x, dict)]
             if len(pip_maybe) == 1:
@@ -129,9 +113,15 @@ class Mamba(environment.Environment):
                     pip_args += pip_maybe[0]["pip"]
                 except KeyError:
                     raise KeyError("Only pip is supported as a secondary key")
-            if not len(pip_args) == 0:
-                pargs = ["install", "-v", "--upgrade-strategy", "only-if-needed"]
-                self._run_pip(pargs + pip_args)
+        solver = MambaSolver(
+            self._mamba_channels, None, self.context  # or target_platform
+        )
+        with _mamba_lock():
+            transaction = solver.solve(mamba_pkgs)
+            transaction.execute(libmambapy.PrefixData(self._path))
+        if not len(pip_args) == 0:
+            pargs = ["install", "-v", "--upgrade-strategy", "only-if-needed"]
+            self._run_pip(pargs + pip_args)
 
     def _get_requirements(self):
         mamba_args = []
