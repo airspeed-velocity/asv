@@ -255,6 +255,29 @@ names such as "param1", "param2".
 
 Note that ``setup_cache`` is not parameterized.
 
+.. _skipping-benchmarks:
+
+Skipping benchmarks
+------------------------
+
+.. note::
+
+  This section is only applicable from version 0.0.6 on-wards
+
+Conversely, it is possible (typically due to high setup times) that one might
+want to skip some benchmarks all-together, or just for some sets of parameters.
+This is accomplished by an attribute ``skip_params``, which can be used with the
+decorator ``@skip_for_params`` as::
+
+
+     @skip_for_params([(10, 'arange'), (1000, 'range')])
+     def time_ranges(n, func_name):
+         f = {'range': range, 'arange': np.arange}[func_name]
+         for i in f(n):
+             pass
+
+This skips running benchmarks for these and also the setup functions. However,
+``setup_cache`` is not affected.
 
 Benchmark types
 ---------------
