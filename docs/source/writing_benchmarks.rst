@@ -262,7 +262,7 @@ Skipping benchmarks
 
 .. note::
 
-  This section is only applicable from version 0.0.6 on-wards
+  This section is only applicable from version 0.6.0 on-wards
 
 Conversely, it is possible (typically due to high setup times) that one might
 want to skip some benchmarks all-together, or just for some sets of parameters.
