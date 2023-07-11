@@ -55,6 +55,7 @@ class Mamba(environment.Environment):
         self._python = python
         self._requirements = requirements
         self._mamba_channels = conf.conda_channels
+        self._mamba_environment_file = None
         if "conda-forge" not in conf.conda_channels:
             self._mamba_channels += ["conda-forge"]
 
