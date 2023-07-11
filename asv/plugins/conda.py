@@ -95,7 +95,7 @@ class Conda(environment.Environment):
         elif not conf.conda_environment_file:
             if Path("environment.yml").exists():
                 log.debug("Using environment.yml")
-                self._mamba_environment_file = "environment.yml"
+                self._conda_environment_file = "environment.yml"
 
         super(Conda, self).__init__(conf,
                                     python,
