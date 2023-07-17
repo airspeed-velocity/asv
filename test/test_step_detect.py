@@ -282,16 +282,6 @@ def test_regression_threshold():
     assert best is None
     assert pos is None
 
-    # Gradual change should result to a regression detected somewhere,
-    # even if the individual steps are smaller than the threshold
-    steps = [(0, 1, 1.0, 1.0, 0.0),
-             (1, 2, 1.04, 1.04, 0.0),
-             (2, 3, 1.08, 1.08, 0.0)]
-
-    latest, best, pos = detect_regressions(steps, threshold=0.05)
-    assert pos == [(0, 1, 1.0, 1.04)]
-
-
 def test_zero_weight():
     t = list(range(50))
     y = [1.0 * (tt > 25) for tt in t]

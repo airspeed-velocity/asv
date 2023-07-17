@@ -486,36 +486,31 @@ def detect_regressions(steps, threshold=0, min_size=2):
 
     last_v = steps[-1][2]
     best_v = last_v
-    thresholded_best_v = last_v
-    thresholded_best_err = steps[-1][4]
+    best_err = steps[-1][4]
     prev_l = None
     short_prev = None
 
     # Find upward steps that resulted to worsened value afterward
     for l, r, cur_v, cur_min, cur_err in reversed(steps):
-        threshold_step = max(cur_err, thresholded_best_err, threshold * cur_v)
+        threshold_step = max(cur_err, best_err, threshold * cur_v)
 
-        if thresholded_best_v > cur_v + threshold_step:
+        if best_v > cur_v + threshold_step:
             if r - l < min_size:
                 # Accept short intervals conditionally
-                short_prev = (thresholded_best_v, thresholded_best_err)
-
+                short_prev = (best_v, best_err)
             regression_pos.append((r - 1, prev_l, cur_v, best_v))
-
-            thresholded_best_v = cur_v
-            thresholded_best_err = cur_err
         elif short_prev is not None:
             # Ignore the previous short interval, if the level
             # is now back to where it was
             if short_prev[0] <= cur_v + threshold_step:
                 regression_pos.pop()
-                thresholded_best_v, thresholded_best_err = short_prev
+                best_v, best_err = short_prev
             short_prev = None
 
         prev_l = l
-
         if cur_v < best_v:
             best_v = cur_v
+            best_err = cur_err
 
     regression_pos.reverse()
 
