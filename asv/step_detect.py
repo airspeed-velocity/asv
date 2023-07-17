@@ -482,7 +482,7 @@ def detect_regressions(steps, threshold=0, min_size=2):
         # No data: no regressions
         return None, None, None
 
-    regression_pos = []
+    regression_pos = collections.deque()
 
     last_v = steps[-1][2]
     best_v = last_v
@@ -500,7 +500,7 @@ def detect_regressions(steps, threshold=0, min_size=2):
                 # Accept short intervals conditionally
                 short_prev = (thresholded_best_v, thresholded_best_err)
 
-            regression_pos.append((r - 1, prev_l, cur_v, best_v))
+            regression_pos.appendleft((r - 1, prev_l, cur_v, best_v))
 
             thresholded_best_v = cur_v
             thresholded_best_err = cur_err
@@ -508,7 +508,7 @@ def detect_regressions(steps, threshold=0, min_size=2):
             # Ignore the previous short interval, if the level
             # is now back to where it was
             if short_prev[0] <= cur_v + threshold_step:
-                regression_pos.pop()
+                regression_pos.popleft()
                 thresholded_best_v, thresholded_best_err = short_prev
             short_prev = None
 
@@ -517,11 +517,9 @@ def detect_regressions(steps, threshold=0, min_size=2):
         if cur_v < best_v:
             best_v = cur_v
 
-    regression_pos.reverse()
-
     # Return results
     if regression_pos:
-        return (last_v, best_v, regression_pos)
+        return (last_v, best_v, list(regression_pos))
     else:
         return (None, None, None)
 
