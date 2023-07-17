@@ -1001,16 +1001,12 @@ def golden_search(f, a, b, xatol=1e-6, ftol=1e-8, expand_bounds=False):
             break
 
         if f2 < f1:
-            x0 = x1
-            x1 = x2
+            x0, x1, f1 = x1, x2, f2
             x2 = ratio * x1 + (1 - ratio) * x3
-            f1 = f2
             f2 = f(x2)
         else:
-            x3 = x2
-            x2 = x1
+            x3, x2, f2 = x2, x1, f1
             x1 = ratio * x2 + (1 - ratio) * x0
-            f2 = f1
             f1 = f(x1)
 
     if f2 < f1:
