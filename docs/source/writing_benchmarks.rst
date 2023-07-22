@@ -270,7 +270,20 @@ This is accomplished by an attribute ``skip_params``, which can be used with the
 decorator ``@skip_for_params`` as::
 
 
+     from asv_runner.benchmarks.mark import skip_for_params
+
      @skip_for_params([(10, 'arange'), (1000, 'range')])
+     def time_ranges(n, func_name):
+         f = {'range': range, 'arange': np.arange}[func_name]
+         for i in f(n):
+             pass
+
+Benchmarks may aslo be condtionally skipped based on a boolean with ``@skip_if``::
+
+     from asv_runner.benchmarks.mark import skip_if
+
+     # Skip if before midday
+     @skip_if(datetime.datetime.now().hour >= 12)
      def time_ranges(n, func_name):
          f = {'range': range, 'arange': np.arange}[func_name]
          for i in f(n):
