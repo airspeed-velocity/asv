@@ -278,19 +278,46 @@ decorator ``@skip_for_params`` as::
          for i in f(n):
              pass
 
-Benchmarks may aslo be condtionally skipped based on a boolean with ``@skip_if``::
+Benchmarks may aslo be condtionally skipped based on a boolean with ``@skip_benchmark_if``::
 
-     from asv_runner.benchmarks.mark import skip_if
+     from asv_runner.benchmarks.mark import skip_benchmark_if
+     import datetime
 
-     # Skip if before midday
-     @skip_if(datetime.datetime.now().hour >= 12)
+     # Skip if not before midday
+     @skip_benchmark_if(datetime.datetime.now().hour >= 12)
      def time_ranges(n, func_name):
          f = {'range': range, 'arange': np.arange}[func_name]
          for i in f(n):
              pass
 
-This skips running benchmarks for these and also the setup functions. However,
-``setup_cache`` is not affected.
+Similarly, for parameters we have ``@skip_params_if``::
+
+
+     from asv_runner.benchmarks.mark import skip_params_if
+     import datetime
+
+     class TimeSuite:
+         params = [100, 200, 300, 400, 500]
+         param_names = ["size"]
+
+         def setup(self, size):
+             self.d = {}
+             for x in range(size):
+                 self.d[x] = None
+
+         # Skip benchmarking when size is either 100 or 200
+         # and the current hour is 12 or later.
+        @skip_params_if([(100,), (200,)],
+                        datetime.datetime.now().hour >= 12)
+         def time_dict_update(self, size):
+             d = self.d
+             for i in range(size):
+                 d[i] = i
+
+.. warning::
+
+   The skips discussed here will both ignore the benchmark, and the ``setup``
+   function, however, ``setup_cache`` will not be affected.
 
 Benchmark types
 ---------------
