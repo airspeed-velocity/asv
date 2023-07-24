@@ -6,6 +6,8 @@ New Features
 - ``asv_runner`` is now used internally, making the addition of custom benchmark types viable (#1287)
 - Benchmarks can be skipped, both wholly and in part using new decorators ``skip_benchmark_if`` and ``skip_params_if`` (#1309)
 - Benchmarks can be skipped during their execution (after setup) by raising ``SkipNotImplemented`` (#1307)
+- Added ``default_benchmark_timeout`` to the configuration object, can also be
+  passed via ``-a timeout=NUMBER`` (#1308)
 
 API Changes
 ^^^^^^^^^^^
