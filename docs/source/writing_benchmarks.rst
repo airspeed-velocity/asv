@@ -327,8 +327,9 @@ Similarly, for parameters we have ``@skip_params_if``::
 
 .. warning::
 
-   The skips discussed here will both ignore the benchmark, and the ``setup``
-   function, however, ``setup_cache`` will not be affected.
+   The skips discussed so far, using the decorators will ignore both the
+   benchmark, and the ``setup`` function, however, ``setup_cache`` will not be
+   affected.
 
 If the onus of preparing the exact parameter sets for ``skip_for_params`` is too
 complicated and the ``setup`` function is not too expensive, or if a benchmark
