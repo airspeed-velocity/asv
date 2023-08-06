@@ -23,6 +23,8 @@ import shlex
 import operator
 import collections
 import multiprocessing
+import functools
+from pathlib import Path
 
 import json5
 from asv_runner.util import human_time, human_float, _human_time_units
@@ -1295,6 +1297,26 @@ def search_channels(cli_path, pkg, version):
         return False
     # Worked!
     return True
+
+
+def construct_pip_calls(pip_caller, pip_reqs, args, **kwargs):
+    fcalls = []
+    for key, val in pip_reqs.items():
+        pargs = ['install', '-v']
+        pkg = key
+        if key.startswith('pip+'):
+            pkg = key[4:]
+        if val:
+            if Path(val).is_dir():
+                pargs.append(val)
+                fcalls.append(functools.partial(pip_caller, pargs, **kwargs))
+            else:
+                pargs.extend(['--upgrade', f"{pkg}=={val}"])
+                fcalls.append(functools.partial(pip_caller, pargs, **kwargs))
+        else:
+            pargs.append(pkg)
+            fcalls.append(functools.partial(pip_caller, pargs, **kwargs))
+    return fcalls
 
 
 if hasattr(sys, 'pypy_version_info'):

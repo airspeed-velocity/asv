@@ -2,7 +2,6 @@
 import sys
 import re
 import os
-from pathlib import Path
 
 from packaging.version import Version
 
@@ -148,22 +147,12 @@ class Virtualenv(environment.Environment):
         env.update(self.build_env_vars)
 
         self._run_pip(pip_args, env=env)
-
-        args = ['install', '-v', '--upgrade']
-        for key, val in {**self._requirements,
-                         **self._base_requirements}.items():
-            pkg = key
-            if key.startswith('pip+'):
-                pkg = key[4:]
-
-            if val:
-                if Path(val).is_dir():
-                    args.append(val)
-                else:
-                    args.append(f"{pkg}=={val}")
-            else:
-                args.append(pkg)
-        self._run_pip(args, timeout=self._install_timeout, env=env)
+        pip_args = ['install', '-v', '--upgrade']
+        pcalls = util.construct_pip_calls(self._run_pip, {**self._requirements,
+                                                         **self._base_requirements}, pip_args)
+        for pcall in pcalls:
+            pcall()
+        # self._run_pip(args, timeout=self._install_timeout, env=env)
 
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when
