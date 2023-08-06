@@ -78,13 +78,16 @@ benchmark code.
 The uninstall commands should uninstall the project from the
 environment.
 
-If a build command is not specified in the ``asv.conf.json``, the default assumes
-the build system requirements are defined in a ``setup.py`` file. However, the 
-``asv.conf.json`` template also includes as a comment the commands to build 
-the project using a ``pyproject.toml`` file. ``pyproject.toml`` is the preferred 
-file format to define the build 
-system requirements of Python projects (`PEP518 <https://peps.python.org/pep-0518/>`_),
-and this approach will be the default from ``asv v0.6`` onwards.
+.. versionchanged:: 0.6
+
+    If a build command is not specified in the ``asv.conf.json``, the default
+    assumes the build system requirements are defined in a ``setup.py`` file.
+    However, the  ``asv.conf.json`` template also includes as a comment the
+    commands to build  the project using a ``pyproject.toml`` file.
+    ``pyproject.toml`` is the preferred  file format to define the build  system
+    requirements of Python projects (`PEP518
+    <https://peps.python.org/pep-0518/>`_), and this approach will be the
+    default from ``asv v0.6`` onwards.
 
 The build commands can optionally be used to cache build results in the
 cache directory ``{build_cache_dir}``, which is commit and
