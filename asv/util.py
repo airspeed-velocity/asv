@@ -1299,24 +1299,18 @@ def search_channels(cli_path, pkg, version):
     return True
 
 
-def construct_pip_calls(pip_caller, pip_reqs, args, **kwargs):
-    fcalls = []
-    for key, val in pip_reqs.items():
-        pargs = ['install', '-v']
-        pkg = key
-        if key.startswith('pip+'):
-            pkg = key[4:]
-        if val:
-            if Path(val).is_dir():
-                pargs.append(val)
-                fcalls.append(functools.partial(pip_caller, pargs, **kwargs))
-            else:
-                pargs.extend(['--upgrade', f"{pkg}=={val}"])
-                fcalls.append(functools.partial(pip_caller, pargs, **kwargs))
+def construct_pip_call(pip_caller, pkgname, pipval):
+    pargs = ['install', '-v', '--upgrade']
+    if pipval:
+        if Path(pipval).is_dir():
+            pargs += [pipval]
+            return functools.partial(pip_caller, pargs)
         else:
-            pargs.append(pkg)
-            fcalls.append(functools.partial(pip_caller, pargs, **kwargs))
-    return fcalls
+            pargs += [f"{pkgname}=={pipval}"]
+            return functools.partial(pip_caller, pargs)
+    else:
+        pargs += [pkgname]
+        return functools.partial(pip_caller, pargs)
 
 
 if hasattr(sys, 'pypy_version_info'):

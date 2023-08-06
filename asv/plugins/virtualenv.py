@@ -147,11 +147,17 @@ class Virtualenv(environment.Environment):
         env.update(self.build_env_vars)
 
         self._run_pip(pip_args, env=env)
-        _args = ['install', '-v', '--upgrade']
-        pcalls = util.construct_pip_calls(self._run_pip, {**self._requirements,
-                                                         **self._base_requirements}, _args)
-        for pcall in pcalls:
-            pcall(timeout=self._install_timeout, env=env)
+        pip_calls = []
+
+        for key, val in {**self._requirements,
+                         **self._base_requirements}.items():
+            pkg = key
+            if key.startswith('pip+'):
+                pkg = key[4:]
+            pip_calls.append(util.construct_pip_call(self._run_pip, pkg, val))
+
+        for pipcall in pip_calls:
+            pipcall()
 
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when
