@@ -2,6 +2,7 @@
 import sys
 import re
 import os
+from pathlib import Path
 
 from packaging.version import Version
 
@@ -156,7 +157,10 @@ class Virtualenv(environment.Environment):
                 pkg = key[4:]
 
             if val:
-                args.append(f"{pkg}=={val}")
+                if Path(val).is_dir():
+                    args.append(val)
+                else:
+                    args.append(f"{pkg}=={val}")
             else:
                 args.append(pkg)
         self._run_pip(args, timeout=self._install_timeout, env=env)
