@@ -18,7 +18,7 @@
     // of the repository.
     // "repo_subdir": "",
 
-    // Customizable commands for building the project. 
+    // Customizable commands for building the project.
     // See asv.conf.json documentation.
     // To build the package using pyproject.toml (PEP518), uncomment the following lines
     // "build_command": [
@@ -31,8 +31,8 @@
     //     "python setup.py build",
     //     "PIP_NO_BUILD_ISOLATION=false python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}"
     // ],
-    
-    // Customizable commands for installing and uninstalling the project. 
+
+    // Customizable commands for installing and uninstalling the project.
     // See asv.conf.json documentation.
     // "install_command": ["in-dir={env_dir} python -mpip install {wheel_file}"],
     // "uninstall_command": ["return-code=any python -mpip uninstall -y {project}"],

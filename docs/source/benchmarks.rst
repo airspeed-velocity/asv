@@ -7,8 +7,10 @@ Benchmark types and attributes
 
 .. warning::
 
-   From version 0.6 onwards, the code for these have now been moved to be in
-   ``asv_runner``, and the rest of the documentation may be outdated.
+   .. versionchanged:: 0.6
+
+      The code for these have now been moved to be in ``asv_runner``, and the
+      rest of the documentation may be outdated.
 
 Benchmark types
 ---------------
@@ -25,8 +27,10 @@ The following benchmark types are recognized:
 
 .. note::
 
-   From version 0.6 onwards, users may define their own benchmark types, see
-   ``asv_runner`` for examples.
+   .. versionadded:: 0.6
+
+        Users may define their own benchmark types, see ``asv_runner`` for
+        examples.
 
 Benchmark attributes
 --------------------

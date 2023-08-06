@@ -90,6 +90,7 @@ environment.
         requirements of Python projects (`PEP518
         <https://peps.python.org/pep-0518/>`_), and this approach will be the
         default from ``asv v0.6`` onwards.
+
 The build commands can optionally be used to cache build results in the
 cache directory ``{build_cache_dir}``, which is commit and
 environment-specific.  If the cache directory contains any files after
@@ -194,9 +195,11 @@ call is used to install them after the environment is created.
 
 .. note::
 
-   From version 0.6 onwards, if an ``environment.yml`` file is present where
-   ``asv`` is run, it will be used. To turn off this behavior,
-   ``conda_environment_file`` can be set to ``NONE``.
+   .. versionchanged:: 0.6
+
+    If an ``environment.yml`` file is present where
+    ``asv`` is run, it will be used. To turn off this behavior,
+    ``conda_environment_file`` can be set to ``NONE``.
 
 This option will cause ``asv`` to ignore the Python version in the
 environment creation, which is then assumed to be fixed by the
