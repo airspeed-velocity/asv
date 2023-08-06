@@ -195,9 +195,11 @@ call is used to install them after the environment is created.
 
 .. note::
 
-   From version 0.6 onwards, if an ``environment.yml`` file is present where
-   ``asv`` is run, it will be used. To turn off this behavior,
-   ``conda_environment_file`` can be set to ``NONE``.
+   .. versionchanged:: 0.6
+
+    If an ``environment.yml`` file is present where
+    ``asv`` is run, it will be used. To turn off this behavior,
+    ``conda_environment_file`` can be set to ``NONE``.
 
 This option will cause ``asv`` to ignore the Python version in the
 environment creation, which is then assumed to be fixed by the
