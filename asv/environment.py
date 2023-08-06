@@ -519,6 +519,11 @@ class Environment:
         if (Path.cwd() / "pdm.lock").exists():
             self._base_requirements["pdm"] = ""
 
+        # Update the _base_requirements if needed
+        for key in list(self._requirements.keys()):
+            self._base_requirements[key] = self._requirements[key]
+            del self._requirements[key]
+
         self._build_command = conf.build_command
         self._install_command = conf.install_command
         self._uninstall_command = conf.uninstall_command
