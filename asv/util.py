@@ -1299,7 +1299,7 @@ def search_channels(cli_path, pkg, version):
     return True
 
 
-def construct_pip_call(pip_caller, pkgname, pipval):
+def construct_pip_call(pip_caller, pkgname, pipval=None):
     pargs = ['install', '-v', '--upgrade']
     if pipval:
         if Path(pipval).is_dir():

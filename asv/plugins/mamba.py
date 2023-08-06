@@ -122,8 +122,11 @@ class Mamba(environment.Environment):
             transaction = solver.solve(mamba_pkgs)
             transaction.execute(libmambapy.PrefixData(self._path))
         if not len(pip_args) == 0:
-            pargs = ["install", "-v", "--upgrade-strategy", "only-if-needed"]
-            self._run_pip(pargs + pip_args)
+            pip_calls = []
+            for pkgname, pipval in pip_args:
+                pip_calls.append(util.construct_pip_call(self._run_pip, pkgname, pipval))
+            for pipcall in pip_calls:
+                pipcall()
 
     def _get_requirements(self):
         mamba_args = []
@@ -133,9 +136,9 @@ class Mamba(environment.Environment):
                          **self._base_requirements}.items():
             if key.startswith("pip+"):
                 if val:
-                    pip_args.append(f"{key[4:]}=={val}")
+                    pip_args.append((key[4:], val))
                 else:
-                    pip_args.append(key[4:])
+                    pip_args.append((key[4:], None))
             else:
                 if val:
                     mamba_args.append(f"{key}={val}")
