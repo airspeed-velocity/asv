@@ -1304,13 +1304,11 @@ def construct_pip_call(pip_caller, pkgname, pipval=None):
     if pipval:
         if Path(pipval).is_dir():
             pargs += [pipval]
-            return functools.partial(pip_caller, pargs)
         else:
             pargs += [f"{pkgname}=={pipval}"]
-            return functools.partial(pip_caller, pargs)
     else:
         pargs += [pkgname]
-        return functools.partial(pip_caller, pargs)
+    return functools.partial(pip_caller, pargs)
 
 
 if hasattr(sys, 'pypy_version_info'):
