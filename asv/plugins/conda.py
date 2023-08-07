@@ -207,7 +207,9 @@ class Conda(environment.Environment):
             raise util.UserError(str(e))
 
         with _conda_lock():
-            return util.check_output([conda] + args, env=env)
+            return util.check_output([conda] + args,
+                                     timeout=self._install_timeout,
+                                     env=env)
 
     def run(self, args, **kwargs):
         log.debug(f"Running '{' '.join(args)}' in {self.name}")
