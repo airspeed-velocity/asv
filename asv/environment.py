@@ -976,7 +976,8 @@ class Environment:
                              PIP_USER=str("false"),
                              PATH=str(os.pathsep.join(paths)))
         exe = self.find_executable(executable)
-        kwargs["timeout"] = self._install_timeout
+        if kwargs.get("timeout", None) is None:
+            kwargs["timeout"] = self._install_timeout
         return util.check_output([exe] + args, **kwargs)
 
     def load_info_file(self, path):
