@@ -148,14 +148,18 @@ class Virtualenv(environment.Environment):
 
         self._run_pip(pip_args, env=env)
         pip_calls = []
+        pip_args = []
 
         for key, val in {**self._requirements,
                          **self._base_requirements}.items():
-            pkg = key
-            if key.startswith('pip+'):
-                pkg = key[4:]
-            pip_calls.append(util.construct_pip_call(self._run_pip, pkg, val))
+            if key.startswith("pip+"):
+                if val:
+                    pip_args.append((key[4:], val))
+                else:
+                    pip_args.append((key[4:], None))
 
+        for pkgname, pipval in pip_args:
+            pip_calls.append(util.construct_pip_call(self._run_pip, pkgname, pipval))
         for pipcall in pip_calls:
             pipcall()
 
