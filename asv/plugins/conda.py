@@ -87,6 +87,8 @@ class Conda(environment.Environment):
         self._python = python
         self._requirements = requirements
         self._conda_channels = conf.conda_channels
+        if "conda-forge" not in conf.conda_channels:
+            self._conda_channels += ["conda-forge"]
         self._conda_environment_file = conf.conda_environment_file
 
         if conf.conda_environment_file == "IGNORE":
@@ -143,13 +145,8 @@ class Conda(environment.Environment):
             # categorize & write dependencies based on pip vs. conda
             env_file.writelines((f'   - {s}\n' for s in conda_args))
             if pip_args:
-                # and now specify the packages that are to be installed in
-                # the pip subsection
                 env_file.write('   - pip:\n')
-                env_file.writelines((f'     - {s}\n' for s in pip_args))
-
             env_file.close()
-
             try:
                 env_file_name = self._conda_environment_file or env_file.name
                 self._run_conda(['env', 'create', '-f', env_file_name,
@@ -174,6 +171,12 @@ class Conda(environment.Environment):
                 raise
         finally:
             os.unlink(env_file.name)
+        if not len(pip_args) == 0:
+            pip_calls = []
+            for pkgname, pipval in pip_args:
+                pip_calls.append(util.construct_pip_call(self._run_pip, pkgname, pipval))
+            for pipcall in pip_calls:
+                pipcall()
 
     def _get_requirements(self):
         conda_args = []
@@ -181,11 +184,11 @@ class Conda(environment.Environment):
 
         for key, val in {**self._requirements,
                          **self._base_requirements}.items():
-            if key.startswith('pip+'):
+            if key.startswith("pip+"):
                 if val:
-                    pip_args.append(f"{key[4:]}=={val}")
+                    pip_args.append((key[4:], val))
                 else:
-                    pip_args.append(key[4:])
+                    pip_args.append((key[4:], None))
             else:
                 if val:
                     conda_args.append(f"{key}={val}")
@@ -224,3 +227,8 @@ class Conda(environment.Environment):
 
         with lock():
             return super(Conda, self).run_executable(executable, args, **kwargs)
+
+    def _run_pip(self, args, **kwargs):
+        # Run pip via python -m pip, so that it works on Windows when
+        # upgrading pip itself, and avoids shebang length limit on Linux
+        return self.run_executable("python", ["-mpip"] + list(args), **kwargs)
