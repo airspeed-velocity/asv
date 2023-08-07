@@ -83,7 +83,10 @@ class Mamba(environment.Environment):
         if not re.match(r'^[0-9].*$', python):
             return False
         else:
-            mamba_path = str(Path(os.getenv("CONDA_EXE")).parent / "mamba")
+            if os.getenv("CONDA_EXE"):
+                mamba_path = str(Path(os.getenv("CONDA_EXE")).parent / "mamba")
+            else:
+                return False
             try:
                 return util.search_channels(mamba_path, "python", python)
             except util.ProcessError:
