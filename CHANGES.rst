@@ -17,6 +17,8 @@ API Changes
 
 Bug Fixes
 ^^^^^^^^^
+- Fixed ``install_timeout`` for ``conda`` (#1310)
+- Fixed handling of local ``pip`` matrix (#1312)
 - Fixed the deadlock when mamba is used with an environment file. (#1300)
 - Fixed environment file usage with mamba and recognizes default
   ``environment.yml``. (#1303)
