@@ -8,6 +8,7 @@ New Features
 - Benchmarks can be skipped during their execution (after setup) by raising ``SkipNotImplemented`` (#1307)
 - Added ``default_benchmark_timeout`` to the configuration object, can also be
   passed via ``-a timeout=NUMBER`` (#1308)
+- ``ASV_RUNNER_PATH`` can be set from the terminal to test newer versions of ``asv_runner`` (#1312)
 
 API Changes
 ^^^^^^^^^^^

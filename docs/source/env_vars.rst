@@ -25,6 +25,14 @@ behavior are also set:
 - ``PYTHONNOUSERSITE``: ``True`` (for conda environments only)
 - ``PYTHONPATH``: unset (if really needed, can be overridden by setting ``ASV_PYTHONPATH``)
 
+.. note::
+
+    .. versionadded::0.6
+
+      ``ASV_RUNNER_PATH`` may be set to provide a local installation of
+      ``asv_runner``, mostly used for the CI to ensure changes to ``asv_runner``
+      do not break ``asv``
+
 
 Custom environment variables
 ----------------------------
