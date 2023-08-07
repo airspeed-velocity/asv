@@ -12,6 +12,7 @@ import re
 import sys
 import itertools
 import subprocess
+import importlib
 from pathlib import Path
 
 from .console import log
@@ -509,7 +510,26 @@ class Environment:
         # benchmark name mangling
         self._base_requirements = {}
         # gh-1314
-        self._base_requirements["pip+asv_runner"] = os.getenv("ASV_RUNNER_PATH", "")
+        asv_runner_path = os.getenv("ASV_RUNNER_PATH", "")
+        module_path = Path(asv_runner_path) / "asv_runner"
+
+        # Check if the path points to a directory containing the "asv_runner" module
+        if module_path.is_dir() and (module_path / "__init__.py").is_file():
+            spec = importlib.util.spec_from_file_location("asv_runner",
+                                                          module_path / "__init__.py")
+            # Attempt to load the module
+            asv_runner_module = importlib.util.module_from_spec(spec)
+            try:
+                spec.loader.exec_module(asv_runner_module)
+                self._base_requirements["pip+asv_runner"] = asv_runner_path
+            except Exception as e:
+                self._base_requirements["pip+asv_runner"] = ""
+                log.warning(f"Failed to load module from ASV_RUNNER_PATH: {e}")
+        else:
+            self._base_requirements["pip+asv_runner"] = ""
+            if asv_runner_path:
+                log.warning("ASV_RUNNER_PATH does not point"
+                            "to a directory containing the 'asv_runner' module")
         if not util.ON_PYPY:
             # XXX: What if pypy installed asv tries to benchmark a cpython
             # python?
