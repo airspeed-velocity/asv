@@ -521,8 +521,9 @@ class Environment:
 
         # Update the _base_requirements if needed
         for key in list(self._requirements.keys()):
-            self._base_requirements[key] = self._requirements[key]
-            del self._requirements[key]
+            if key in self._base_requirements:
+                self._base_requirements[key] = self._requirements[key]
+                del self._requirements[key]
 
         self._build_command = conf.build_command
         self._install_command = conf.install_command
