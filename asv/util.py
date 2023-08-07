@@ -1302,12 +1302,12 @@ def search_channels(cli_path, pkg, version):
 def construct_pip_call(pip_caller, pkgname, pipval=None):
     pargs = ['install', '-v', '--upgrade']
     if pipval:
-        if ('-' or '--' in pipval):
-            ptokens = pipval.split()
-            pipval = [x for x in ptokens if Path(x).is_dir()][0]
-            pargs += [x for x in ptokens if '-' in x]
-        if Path(pipval).is_dir():
-            pargs += [pipval]
+        ptokens = pipval.split()
+        flags = [x for x in ptokens if x.startswith('-')]
+        paths = [x for x in ptokens if Path(x).is_dir()]
+        pargs += flags
+        if paths:
+            pargs += paths
         else:
             pargs += [f"{pkgname}=={pipval}"]
     else:
