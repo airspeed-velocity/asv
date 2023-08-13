@@ -5,6 +5,7 @@ This section describes some things that may be of interest to
 developers and other people interested in internals of ``asv``.
 
 .. note::
+
    From version 0.6 on-wards, functionality in ``asv`` has been split into the
    section needed by the code being benchmarked (``asv_runner``) and the rest of
    ``asv``. This means that the ``asv`` documentation covers setting up

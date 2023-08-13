@@ -187,9 +187,10 @@ value is the maximum of the timeouts of the benchmarks using it.
 
 .. note::
 
-   From version 0.6 onwards, the configuration option
-   ``default_benchmark_timeout`` can also be set for a project-wide
-   timeout.
+    .. versionchanged:: 0.6
+
+        The configuration option ``default_benchmark_timeout``
+        can also be set for a project-wide timeout.
 
 .. _benchmark-attributes:
 
