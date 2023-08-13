@@ -174,6 +174,13 @@ def run_benchmarks(benchmarks, env, results=None,
             return int(benchmark.get('rounds', 1))
 
     for name, benchmark in sorted(benchmarks.items()):
+        # Set benchmark timeout from config if not set
+        # gh-13 gh-973
+        if benchmark.get('timeout') is None:
+            benchmark['timeout'] = extra_params.get(
+                'timeout',
+                env._default_benchmark_timeout
+                )
         key = benchmark.get('setup_cache_key')
         setup_cache_timeout[key] = max(benchmark.get('setup_cache_timeout',
                                                      benchmark['timeout']),

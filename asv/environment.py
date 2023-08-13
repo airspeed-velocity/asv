@@ -492,7 +492,8 @@ class Environment:
         """
         self._env_dir = conf.env_dir
         self._repo_subdir = conf.repo_subdir
-        self._install_timeout = conf.install_timeout  # GH391
+        self._install_timeout = conf.install_timeout  # gh-391
+        self._default_benchmark_timeout = conf.default_benchmark_timeout # gh-973
         self._tagged_env_vars = tagged_env_vars
         self._path = os.path.abspath(os.path.join(
             self._env_dir, self.dir_name))

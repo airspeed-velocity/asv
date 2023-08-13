@@ -18,11 +18,18 @@ def test_config():
     }
     assert conf.benchmark_dir == 'benchmark'
     assert conf.branches == [None]
-    assert conf.install_timeout == 3142  # GH391
+    assert conf.install_timeout == 3142  # gh-973
+    assert conf.default_benchmark_timeout == 32.5  # gh-973
+
+
+def test_config_default_benchmark_timeout():
+    # gh-973
+    conf = config.Config()
+    assert conf.default_benchmark_timeout == 60.0
 
 
 def test_config_default_install_timeout():
-    # GH391
+    # gh-391
     conf = config.Config()
     assert conf.install_timeout == 600
 

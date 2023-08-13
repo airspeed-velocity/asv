@@ -126,11 +126,13 @@ as skipped.
    the benchmark would be marked as skipped. This behavior was deprecated from
    0.5 onwards.
 
-   From 0.6 onwards, to keep compatibility with earlier versions, it is possible
-   to raise ``asv_runner.benchmark.mark.SkipNotImplemented`` anywhere within a
-   Benchmark, though users are advised to use the skip decorators instead as
-   they are faster and do not execute the ``setup`` function. See
-   :ref:`skipping-benchmarks` for more details.
+   .. versionchanged:: 0.6
+
+      To keep compatibility with earlier versions, it is possible
+      to raise ``asv_runner.benchmark.mark.SkipNotImplemented`` anywhere within a
+      Benchmark, though users are advised to use the skip decorators instead as
+      they are faster and do not execute the ``setup`` function. See
+      :ref:`skipping-benchmarks` for more details.
 
 The ``setup`` method is run multiple times, for each benchmark and for
 each repeat.  If the ``setup`` is especially expensive, the
@@ -182,6 +184,12 @@ As another example, explicitly saving data in a file::
 The ``setup_cache`` timeout can be specified by setting the
 ``.timeout`` attribute of the ``setup_cache`` function. The default
 value is the maximum of the timeouts of the benchmarks using it.
+
+.. note::
+
+   From version 0.6 onwards, the configuration option
+   ``default_benchmark_timeout`` can also be set for a project-wide
+   timeout.
 
 .. _benchmark-attributes:
 
