@@ -23,6 +23,8 @@ import shlex
 import operator
 import collections
 import multiprocessing
+import functools
+from pathlib import Path
 
 import json5
 from asv_runner.util import human_time, human_float, _human_time_units
@@ -1295,6 +1297,22 @@ def search_channels(cli_path, pkg, version):
         return False
     # Worked!
     return True
+
+
+def construct_pip_call(pip_caller, pkgname, pipval=None):
+    pargs = ['install', '-v', '--upgrade']
+    if pipval:
+        ptokens = pipval.split()
+        flags = [x for x in ptokens if x.startswith('-')]
+        paths = [x for x in ptokens if Path(x).is_dir()]
+        pargs += flags
+        if paths:
+            pargs += paths
+        else:
+            pargs += [f"{pkgname}=={pipval}"]
+    else:
+        pargs += [pkgname]
+    return functools.partial(pip_caller, pargs)
 
 
 if hasattr(sys, 'pypy_version_info'):

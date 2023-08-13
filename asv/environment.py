@@ -12,6 +12,7 @@ import re
 import sys
 import itertools
 import subprocess
+import importlib
 from pathlib import Path
 
 from .console import log
@@ -508,7 +509,27 @@ class Environment:
         # These are needed for asv to build and run the project, not part of
         # benchmark name mangling
         self._base_requirements = {}
-        self._base_requirements["pip+asv_runner"] = ""
+        # gh-1314
+        asv_runner_path = os.getenv("ASV_RUNNER_PATH", "")
+        module_path = Path(asv_runner_path) / "asv_runner"
+
+        # Check if the path points to a directory containing the "asv_runner" module
+        if module_path.is_dir() and (module_path / "__init__.py").is_file():
+            spec = importlib.util.spec_from_file_location("asv_runner",
+                                                          module_path / "__init__.py")
+            # Attempt to load the module
+            asv_runner_module = importlib.util.module_from_spec(spec)
+            try:
+                spec.loader.exec_module(asv_runner_module)
+                self._base_requirements["pip+asv_runner"] = asv_runner_path
+            except Exception as e:
+                self._base_requirements["pip+asv_runner"] = ""
+                log.warning(f"Failed to load module from ASV_RUNNER_PATH: {e}")
+        else:
+            self._base_requirements["pip+asv_runner"] = ""
+            if asv_runner_path:
+                log.warning("ASV_RUNNER_PATH does not point"
+                            "to a directory containing the 'asv_runner' module")
         if not util.ON_PYPY:
             # XXX: What if pypy installed asv tries to benchmark a cpython
             # python?
@@ -518,6 +539,12 @@ class Environment:
 
         if (Path.cwd() / "pdm.lock").exists():
             self._base_requirements["pdm"] = ""
+
+        # Update the _base_requirements if needed
+        for key in list(self._requirements.keys()):
+            if key in self._base_requirements:
+                self._base_requirements[key] = self._requirements[key]
+                del self._requirements[key]
 
         self._build_command = conf.build_command
         self._install_command = conf.install_command
@@ -970,6 +997,8 @@ class Environment:
                              PIP_USER=str("false"),
                              PATH=str(os.pathsep.join(paths)))
         exe = self.find_executable(executable)
+        if kwargs.get("timeout", None) is None:
+            kwargs["timeout"] = self._install_timeout
         return util.check_output([exe] + args, **kwargs)
 
     def load_info_file(self, path):

@@ -267,6 +267,11 @@ the project being benchmarked may specify in its ``setup.py`` file.
     name with ``pip+``. For example, ``emcee`` is only available from ``pip``,
     so the package name to be used is ``pip+emcee``.
 
+    .. versionadded::0.6
+
+      ``pip`` dependencies can now accept local (fully qualified) directories,
+      and also take flags (e.g. ``-e``)
+
 The ``env`` and ``env_nobuild`` dictionaries can be used to set also
 environment variables::
 
