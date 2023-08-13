@@ -119,6 +119,19 @@ and teardown routines are run multiple times in the same process.
 If ``setup`` raises a ``NotImplementedError``, the benchmark is marked
 as skipped.
 
+.. note::
+
+   For ``asv`` versions before 0.5 it was possible to raise
+   ``NotImplementedError`` from any existing benchmark during its execution and
+   the benchmark would be marked as skipped. This behavior was deprecated from
+   0.5 onwards.
+
+   From 0.6 onwards, to keep compatibility with earlier versions, it is possible
+   to raise ``asv_runner.benchmark.mark.SkipNotImplemented`` anywhere within a
+   Benchmark, though users are advised to use the skip decorators instead as
+   they are faster and do not execute the ``setup`` function. See
+   :ref:`skipping-benchmarks` for more details.
+
 The ``setup`` method is run multiple times, for each benchmark and for
 each repeat.  If the ``setup`` is especially expensive, the
 ``setup_cache`` method may be used instead, which only performs the
@@ -269,15 +282,71 @@ want to skip some benchmarks all-together, or just for some sets of parameters.
 This is accomplished by an attribute ``skip_params``, which can be used with the
 decorator ``@skip_for_params`` as::
 
-
+     from asv_runner.benchmarks.mark import skip_for_params
      @skip_for_params([(10, 'arange'), (1000, 'range')])
      def time_ranges(n, func_name):
          f = {'range': range, 'arange': np.arange}[func_name]
          for i in f(n):
              pass
 
-This skips running benchmarks for these and also the setup functions. However,
-``setup_cache`` is not affected.
+Benchmarks may aslo be condtionally skipped based on a boolean with ``@skip_benchmark_if``::
+
+     from asv_runner.benchmarks.mark import skip_benchmark_if
+     import datetime
+
+     # Skip if not before midday
+     @skip_benchmark_if(datetime.datetime.now().hour >= 12)
+     def time_ranges(n, func_name):
+         f = {'range': range, 'arange': np.arange}[func_name]
+         for i in f(n):
+             pass
+
+Similarly, for parameters we have ``@skip_params_if``::
+
+
+     from asv_runner.benchmarks.mark import skip_params_if
+     import datetime
+
+     class TimeSuite:
+         params = [100, 200, 300, 400, 500]
+         param_names = ["size"]
+
+         def setup(self, size):
+             self.d = {}
+             for x in range(size):
+                 self.d[x] = None
+
+         # Skip benchmarking when size is either 100 or 200
+         # and the current hour is 12 or later.
+        @skip_params_if([(100,), (200,)],
+                        datetime.datetime.now().hour >= 12)
+         def time_dict_update(self, size):
+             d = self.d
+             for i in range(size):
+                 d[i] = i
+
+.. warning::
+
+   The skips discussed so far, using the decorators will ignore both the
+   benchmark, and the ``setup`` function, however, ``setup_cache`` will not be
+   affected.
+
+If the onus of preparing the exact parameter sets for ``skip_for_params`` is too
+complicated and the ``setup`` function is not too expensive, or if a benchmark
+needs to be skipped conditionally but ``skip_*_if`` are not the right choice, there
+is also the ``SkipNotImplemented`` exception which can be raised anywhere during
+a benchmark run for it to be marked as skipped (``n/a`` in the output table).
+This may be used as::
+
+     from asv_runner.benchmarks.mark import SkipNotImplemented
+     class SimpleSlow:
+         params = ([False, True])
+         param_names = ["ok"]
+         def time_failure(self, ok):
+             if ok:
+                 x = 34.2**4.2
+             else:
+                 raise SkipNotImplemented(f"{ok} is skipped")
 
 Benchmark types
 ---------------
