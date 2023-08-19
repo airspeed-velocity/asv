@@ -1,0 +1,75 @@
+# Build on every branch push, tag push, and pull request change:
+# From: https://github.com/pypa/cibuildwheel/blob/main/examples/github-deploy.yml
+name: Build wheels
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_wheels:
+    name: Build wheel for ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+    runs-on: ${{ matrix.buildplat[0] }}
+    environment: pypi
+    strategy:
+      # Ensure that a wheel builder finishes even if another fails
+      fail-fast: false
+      matrix:
+        # From NumPy
+        # Github Actions doesn't support pairing matrix values together, let's improvise
+        # https://github.com/github/feedback/discussions/7835#discussioncomment-1769026
+        buildplat:
+          - [ubuntu-20.04, manylinux_x86_64]
+          - [ubuntu-20.04, musllinux_x86_64]
+          - [macos-12, macosx_x86_64]
+          - [macos-12, macosx_arm64]
+          - [windows-2019, win_amd64]
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip wheel -w ./wheelhouse/ .
+
+      - uses: actions/upload-artifact@v3
+        with:
+          path: ./wheelhouse/*.whl
+
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build sdist
+        shell: bash -l {0}
+        run: pipx run build --sdist
+
+      - uses: actions/upload-artifact@v3
+        with:
+          path: dist/*.tar.gz
+
+  upload_pypi:
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/asv_runner
+    permissions:
+      id-token: write  # for trusted publishing
+    # upload to PyPI on every tag starting with 'v'
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    # alternatively, to publish when a GitHub Release is created, use the following rule:
+    # if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          # unpacks default artifact into dist/
+          # if `name: artifact` is omitted, the action will create extra parent dir
+          name: artifact
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
