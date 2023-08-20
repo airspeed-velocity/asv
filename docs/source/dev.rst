@@ -33,16 +33,21 @@ Separation of concerns
 - Running the benchmarks
 - Collecting results and visualizing them after analysis for regressions
 
-Conceptually there are two separate parts to this process. There is the ``main``
-process which orchestrates the environment creation. This is followed by a
-subprocess which essentially runs the project benchmarks. This subprocess must
-have only minimal dependencies, ideally nothing beyond the minimum Python
-version needed to run ``asv`` along with the dependencies of the project itself.
 
-To clarify this, starting from ``v0.0.6``, ``asv`` has been split into
-``asv_runner``, which is responsible for loading benchmark types, discovering
-them and running them within an environment, while the ``asv`` repository
-handles the remaining tasks.
+.. note::
+
+   Conceptually there are two separate parts to this process. There is the ``main``
+   process which orchestrates the environment creation. This is followed by a
+   subprocess which essentially runs the project benchmarks. This subprocess must
+   have only minimal dependencies, ideally nothing beyond the minimum Python
+   version needed to run ``asv`` along with the dependencies of the project itself.
+
+   .. versionchanged:: 0.6
+
+      To clarify this, starting from ``v0.6``, ``asv`` has been split into
+      ``asv_runner``, which is responsible for loading benchmark types, discovering
+      them and running them within an environment, while the ``asv`` repository
+      handles the remaining tasks.
 
 Benchmark suite layout and file formats
 ---------------------------------------

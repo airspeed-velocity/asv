@@ -24,7 +24,7 @@ class Dev(Run):
         raise RuntimeError(
             "`asv dev` has been removed. It was a shortcut of `asv run`, which "
             "you can use instead. It was removed because it caused confusion, "
-            "in particular after changing what it was running in asv 0.5.\n\n"
+            "in particular after changing what it was running in asv 0.5.x\n\n"
             "You can be interested in the next `asv run` arguments:\n"
             " - `--python=same`: to use the current environment and not create one\n"
             " - `--quick`: to run benchmarks just once\n"
