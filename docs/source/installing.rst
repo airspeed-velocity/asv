@@ -17,19 +17,15 @@ install git+https://github.com/airspeed-velocity/asv``.
 
 The requirements should be automatically installed.  If they aren't
 installed automatically, for example due to networking restrictions,
-the requirements are:
+the ``python`` requirements are as noted in the ``pyproject.toml``.
 
-- `six <http://pythonhosted.org/six/>`__, 1.4 or later
+For managing the environments, one of the following packages is required:
 
-and one of the following:
+- `libmambapy <https://mamba.readthedocs.io/en/latest/python_api.html>`__,
+  which is typically part of ``mamba``
 
-- `virtualenv <http://virtualenv.org/>`__, 1.10 or later (it is required
-  also on Python 3, where virtualenv is included as venv, since
-  venv is not compatible with other versions of Python).
-
-  Note that virtualenv 1.11.0 will not work, as it contains a bug in
-  setuptools that prevents its installation in a clean virtual
-  environment.
+- `virtualenv <http://virtualenv.org/>`__, which is required since
+  venv is not compatible with other versions of Python.
 
 - An `anaconda <https://store.continuum.io/cshop/anaconda/>`__ or
   `miniconda <http://conda.pydata.org/miniconda.html>`__
@@ -37,12 +33,14 @@ and one of the following:
 
 .. note::
 
-   Anaconda or miniconda is preferred if the dependencies of your
-   project involve a lot of compiled C/C++ extensions and are
-   available in the ``conda`` repository, since ``conda`` will be able
-   to fetch precompiled binaries for these dependencies in many cases.
-   Using ``virtualenv``, dependencies without precompiled wheels
-   usually have to be compiled every time the environments are set up.
+   ``libmambapy`` is the fastest for situations where non-pythonic
+   dependencies are required. Anaconda or miniconda is slower but
+   still preferred if the project involves a lot of compiled C/C++
+   extensions and are available in the ``conda`` repository, since
+   ``conda`` will be able to fetch precompiled binaries for these
+   dependencies in many cases. Using ``virtualenv``, dependencies
+   without precompiled wheels usually have to be compiled every
+   time the environments are set up.
 
 Optional optimization
 ---------------------
