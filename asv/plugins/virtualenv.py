@@ -133,6 +133,8 @@ class Virtualenv(environment.Environment):
         util.check_call([
             sys.executable,
             "-mvirtualenv",
+            "--wheel=bundle",
+            "--setuptools=bundle",
             "-p",
             self._executable,
             self._path], env=env)
