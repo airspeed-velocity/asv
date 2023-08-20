@@ -126,7 +126,7 @@ as skipped.
    the benchmark would be marked as skipped. This behavior was deprecated from
    0.5 onwards.
 
-   .. versionchanged:: 0.6
+   .. versionchanged:: 0.6.0
 
       To keep compatibility with earlier versions, it is possible
       to raise ``asv_runner.benchmark.mark.SkipNotImplemented`` anywhere within a
@@ -187,7 +187,7 @@ value is the maximum of the timeouts of the benchmarks using it.
 
 .. note::
 
-    .. versionchanged:: 0.6
+    .. versionchanged:: 0.6.0
 
         The configuration option ``default_benchmark_timeout``
         can also be set for a project-wide timeout.
@@ -284,7 +284,7 @@ Skipping benchmarks
 
 .. note::
 
-  This section is only applicable from version 0.6.0 on-wards
+  This section is only applicable from version ``0.6.0`` on-wards
 
 Conversely, it is possible (typically due to high setup times) that one might
 want to skip some benchmarks all-together, or just for some sets of parameters.

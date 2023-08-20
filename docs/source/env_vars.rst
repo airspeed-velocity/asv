@@ -27,7 +27,7 @@ behavior are also set:
 
 .. note::
 
-    .. versionadded::0.6
+    .. versionadded::0.6.0
 
       ``ASV_RUNNER_PATH`` may be set to provide a local installation of
       ``asv_runner``, mostly used for the CI to ensure changes to ``asv_runner``

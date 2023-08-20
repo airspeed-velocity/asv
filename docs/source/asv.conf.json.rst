@@ -80,7 +80,7 @@ environment.
 
 .. note::
 
-    .. versionchanged:: 0.6
+    .. versionchanged:: 0.6.0
 
         If a build command is not specified in the ``asv.conf.json``, the default
         assumes the build system requirements are defined in a ``setup.py`` file.
@@ -89,7 +89,7 @@ environment.
         ``pyproject.toml`` is the preferred  file format to define the build  system
         requirements of Python projects (`PEP518
         <https://peps.python.org/pep-0518/>`_), and this approach will be the
-        default from ``asv v0.6`` onwards.
+        default from ``asv v0.6.0`` onwards.
 
 The build commands can optionally be used to cache build results in the
 cache directory ``{build_cache_dir}``, which is commit and
@@ -195,7 +195,7 @@ call is used to install them after the environment is created.
 
 .. note::
 
-   .. versionchanged:: 0.6
+   .. versionchanged:: 0.6.0
 
     If an ``environment.yml`` file is present where
     ``asv`` is run, it will be used. To turn off this behavior,
@@ -267,7 +267,7 @@ the project being benchmarked may specify in its ``setup.py`` file.
     name with ``pip+``. For example, ``emcee`` is only available from ``pip``,
     so the package name to be used is ``pip+emcee``.
 
-    .. versionadded::0.6
+    .. versionadded::0.6.0
 
       ``pip`` dependencies can now accept local (fully qualified) directories,
       and also take flags (e.g. ``-e``)
