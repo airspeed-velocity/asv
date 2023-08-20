@@ -7,7 +7,7 @@ Benchmark types and attributes
 
 .. warning::
 
-   .. versionchanged:: 0.6
+   .. versionchanged:: 0.6.0
 
       The code for these have now been moved to be in ``asv_runner``, and the
       rest of the documentation may be outdated.
@@ -27,7 +27,7 @@ The following benchmark types are recognized:
 
 .. note::
 
-   .. versionadded:: 0.6
+   .. versionadded:: 0.6.0
 
         Users may define their own benchmark types, see ``asv_runner`` for
         examples.

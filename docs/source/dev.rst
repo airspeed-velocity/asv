@@ -6,7 +6,7 @@ developers and other people interested in internals of ``asv``.
 
 .. note::
 
-   From version 0.6 on-wards, functionality in ``asv`` has been split into the
+   From version ``0.6.0`` on-wards, functionality in ``asv`` has been split into the
    section needed by the code being benchmarked (``asv_runner``) and the rest of
    ``asv``. This means that the ``asv`` documentation covers setting up
    environments, loading plugins, and collecting the results of the benchmarks
@@ -42,9 +42,9 @@ Separation of concerns
    have only minimal dependencies, ideally nothing beyond the minimum Python
    version needed to run ``asv`` along with the dependencies of the project itself.
 
-   .. versionchanged:: 0.6
+   .. versionchanged:: 0.6.0
 
-      To clarify this, starting from ``v0.6``, ``asv`` has been split into
+      To clarify this, starting from ``v0.6.0``, ``asv`` has been split into
       ``asv_runner``, which is responsible for loading benchmark types, discovering
       them and running them within an environment, while the ``asv`` repository
       handles the remaining tasks.
