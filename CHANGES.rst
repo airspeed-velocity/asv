@@ -46,6 +46,7 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - ``mamba`` and ``conda`` use ``environment.yml`` if it exists
+- ``virtualenv`` now requires ``packaging`` due to ``distutils`` deprecations (#1240)
 - Wheels are now built for CPython ``3.8, 3.9, 3.10, 3.11``
 
 0.5.1 (2021-02-06)
