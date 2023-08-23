@@ -9,6 +9,7 @@ API Changes
 
 Bug Fixes
 ^^^^^^^^^
+- ``pip`` dependencies in ``environment.yml`` files for the ``mamba`` plugin are handled correctly (#1326)
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
