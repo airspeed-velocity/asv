@@ -352,7 +352,7 @@ def test_datetime_to_js_timestamp():
     tss = [0, 0.5, -0.5, 12345.6789, -12345.6789,
            1535910708.7767508]
     for ts in tss:
-        t = datetime.datetime.utcfromtimestamp(ts)
+        t = datetime.datetime.fromtimestamp(ts, tz=datetime.UTC)
         ts2 = util.datetime_to_js_timestamp(t)
         assert abs(ts * 1000 - ts2) <= 0.5
 
@@ -381,7 +381,7 @@ def test_datetime_to_timestamp():
     tss = [0, 0.5, -0.5, 12345.6789, -12345.6789,
            1535910708.7767508]
     for ts in tss:
-        t = datetime.datetime.utcfromtimestamp(ts)
+        t = datetime.datetime.fromtimestamp(ts, tz=datetime.UTC)
         ts2 = util.datetime_to_timestamp(t)
         assert abs(ts - ts2) <= 0.5
 
