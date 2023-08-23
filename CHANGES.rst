@@ -16,6 +16,7 @@ Bug Fixes
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - ``asv`` timestamps via ``datetime`` are now Python 3.12 compatible (#1331)
+- ``asv`` now provides ``asv[virtualenv]`` as an installable target
 
 0.6.0 (2023-08-20)
 ------------------
