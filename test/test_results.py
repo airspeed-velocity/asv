@@ -172,7 +172,10 @@ def test_json_timestamp(tmpdir):
         1970, 1, 1,
         tzinfo = datetime.timezone.utc
     )
-    stamp1 = datetime.datetime(1971, 1, 1)
+    stamp1 = datetime.datetime(
+        1971, 1, 1,
+        tzinfo = datetime.timezone.utc
+    )
     duration = 1.5
 
     r = results.Results({'machine': 'mach'},
