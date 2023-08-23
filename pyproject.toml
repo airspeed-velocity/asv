@@ -28,7 +28,6 @@ dependencies = [
     "asv-runner>=v0.0.9",
     "json5",
     "tabulate",
-    "packaging",
     "colorama; os_name == 'nt'",
     "pyyaml; platform_python_implementation != \"PyPy\"",
     "pympler; platform_python_implementation != \"PyPy\"",
@@ -64,6 +63,10 @@ doc = [
 dev = [
     "ruff",
     "isort >= 5.11.5",
+]
+virtualenv = [
+    "virtualenv",
+    "packaging",
 ]
 hg = [
     "python-hglib",
