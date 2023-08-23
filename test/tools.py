@@ -458,7 +458,10 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None, updated=None):
     })
 
     if updated is None:
-        updated = datetime.datetime(1970, 1, 1)
+        updated = datetime.datetime(
+            1970, 1, 1,
+            tzinfo = datetime.timezone.utc
+        )
 
     benchmark_version = sha256(os.urandom(16)).hexdigest()
 

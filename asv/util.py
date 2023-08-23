@@ -944,7 +944,10 @@ def format_text_table(rows, num_headers=0,
 
 
 def _datetime_to_timestamp(dt, divisor):
-    delta = dt - datetime.datetime(1970, 1, 1)
+    delta = dt - datetime.datetime(
+        1970, 1, 1,
+        tzinfo = datetime.timezone.utc
+    )
     microseconds = (delta.days * 86400 + delta.seconds) * 10**6 + delta.microseconds
     value, remainder = divmod(microseconds, divisor)
     if remainder >= divisor // 2:

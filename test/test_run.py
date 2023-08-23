@@ -134,7 +134,7 @@ def test_run_build_failure(basic_conf):
     dvcs.commit("Fix setup.py")
 
     # Test running it
-    timestamp = util.datetime_to_js_timestamp(datetime.datetime.utcnow())
+    timestamp = util.datetime_to_js_timestamp(datetime.datetime.now(datetime.timezone.utc))
 
     bench_name = 'time_secondary.track_value'
     for commit in [f'{util.git_default_branch()}^!',

@@ -468,7 +468,7 @@ class Results:
         benchmark_version = benchmark['version']
 
         if started_at is None:
-            started_at = datetime.datetime.utcnow()
+            started_at = datetime.datetime.now(datetime.timezone.utc)
 
         new_stats = [None] * len(new_result)
 

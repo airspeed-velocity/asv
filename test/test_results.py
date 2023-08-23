@@ -25,7 +25,7 @@ def _truncate_floats(item, digits=5):
 def test_results(tmpdir):
     tmpdir = str(tmpdir)
 
-    timestamp1 = datetime.datetime.utcnow()
+    timestamp1 = datetime.datetime.now(datetime.timezone.utc)
     duration = 1.5
 
     resultsdir = join(tmpdir, "results")
@@ -168,7 +168,10 @@ def test_json_timestamp(tmpdir):
     # Check that per-benchmark timestamps are saved as JS timestamps in the result file
     tmpdir = str(tmpdir)
 
-    stamp0 = datetime.datetime(1970, 1, 1)
+    stamp0 = datetime.datetime(
+        1970, 1, 1,
+        tzinfo = datetime.timezone.utc
+    )
     stamp1 = datetime.datetime(1971, 1, 1)
     duration = 1.5
 

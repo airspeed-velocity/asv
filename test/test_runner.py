@@ -54,7 +54,7 @@ class ResultsWrapper:
 def test_run_benchmarks(benchmarks_fixture, tmpdir):
     conf, repo, envs, commit_hash = benchmarks_fixture
 
-    start_timestamp = datetime.datetime.utcnow()
+    start_timestamp = datetime.datetime.now(datetime.timezone.utc)
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
 

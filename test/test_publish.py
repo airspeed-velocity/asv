@@ -399,7 +399,10 @@ def test_regression_atom_feed_update(dvcs_type, tmpdir):
     for commit, value in zip(commits, values[:-5]):
         commit_values[commit] = value
     conf = tools.generate_result_dir(tmpdir, dvcs, commit_values,
-                                     updated=datetime.datetime(1970, 1, 1))
+                                     updated=datetime.datetime(
+                                         1970, 1, 1,
+                                         tzinfo = datetime.timezone.utc)
+                                     )
 
     tools.run_asv_with_conf(conf, "publish")
 
