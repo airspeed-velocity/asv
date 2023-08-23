@@ -1,7 +1,15 @@
 # Build on every branch push, tag push, and pull request change:
 # From: https://github.com/pypa/cibuildwheel/blob/main/examples/github-deploy.yml
 name: Build wheels
-on: [push, pull_request]
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - master
+  release:
+    types:
+      - published
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
