@@ -24,7 +24,6 @@ import operator
 import collections
 import multiprocessing
 import functools
-from pathlib import Path
 
 import json5
 from asv_runner.util import human_time, human_float, _human_time_units
@@ -1301,22 +1300,25 @@ def search_channels(cli_path, pkg, version):
     # Worked!
     return True
 
+def parse_pip_declaration(declaration):
+    match = re.match(r'([a-zA-Z0-9-_]+)((==|>=|<=|>|<|!=|~=)([0-9.a-zA-Z_-]+))?', declaration)
+    if match:
+        pkgname = match.group(1)
+        specifier = match.group(3) if match.group(3) else None
+        version = match.group(4) if match.group(4) else None
+        return pkgname, specifier, version
+    return None
 
-def construct_pip_call(pip_caller, pkgname, pipval=None):
+def construct_pip_call(pip_caller, pkgname, specifier=None, pipval=None):
     pargs = ['install', '-v', '--upgrade']
     if pipval:
-        ptokens = pipval.split()
-        flags = [x for x in ptokens if x.startswith('-')]
-        paths = [x for x in ptokens if Path(x).is_dir()]
-        pargs += flags
-        if paths:
-            pargs += paths
+        if specifier:
+            pargs += [f"{pkgname}{specifier}{pipval}"]
         else:
             pargs += [f"{pkgname}=={pipval}"]
     else:
         pargs += [pkgname]
     return functools.partial(pip_caller, pargs)
-
 
 if hasattr(sys, 'pypy_version_info'):
     ON_PYPY = True
