@@ -66,6 +66,12 @@ class Mamba(environment.Environment):
             if (Path("environment.yml")).exists():
                 log.debug("Using environment.yml")
                 self._mamba_environment_file = "environment.yml"
+        else:
+            if (Path(conf.conda_environment_file)).exists():
+                log.debug(f"Using {conf.conda_environment_file}")
+                self._mamba_environment_file = conf.conda_environment_file
+            else:
+                log.debug(f"Environment file {conf.conda_environment_file} not found, ignoring")
 
         super(Mamba, self).__init__(conf, python, requirements, tagged_env_vars)
         self.context = libmambapy.Context()
