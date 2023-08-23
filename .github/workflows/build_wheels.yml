@@ -2,11 +2,6 @@
 # From: https://github.com/pypa/cibuildwheel/blob/main/examples/github-deploy.yml
 name: Build wheels
 on:
-  workflow_dispatch:
-  pull_request:
-  push:
-    branches:
-      - master
   release:
     types:
       - published
