@@ -324,7 +324,7 @@ def test_conda_pip_install(tmpdir, dummy_packages):
     conf.environment_type = "conda"
     conf.pythons = [PYTHON_VER1]
     conf.matrix = {
-        "pip+asv_dummy_test_package_2": [DUMMY2_VERSIONS[0]]
+        "pip+asv_dummy_test_package_2": DUMMY2_VERSIONS[0]
     }
     environments = list(environment.get_environments(conf, None))
 
@@ -335,7 +335,7 @@ def test_conda_pip_install(tmpdir, dummy_packages):
 
         output = env.run(
             ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)'])
-        assert output.startswith(str(env._requirements['pip+asv_dummy_test_package_2']))
+        assert output.startswith(DUMMY2_VERSIONS[0])
 
 
 @pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
