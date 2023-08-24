@@ -24,6 +24,7 @@ import operator
 import collections
 import multiprocessing
 import functools
+from pathlib import Path
 
 import json5
 from asv_runner.util import human_time, human_float, _human_time_units
@@ -1312,6 +1313,12 @@ def parse_pip_declaration(declaration):
 def construct_pip_call(pip_caller, pkgname, specifier=None, pipval=None):
     pargs = ['install', '-v', '--upgrade']
     if pipval:
+        ptokens = pipval.split()
+        flags = [x for x in ptokens if x.startswith('-')]
+        paths = [x for x in ptokens if Path(x).is_dir()]
+        pargs += flags
+        if paths:
+            pargs += paths
         if specifier:
             pargs += [f"{pkgname}{specifier}{pipval}"]
         else:
