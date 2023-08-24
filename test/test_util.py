@@ -410,3 +410,39 @@ def test_geom_mean_na():
     for x in [[1, 2, -3], [1, 2, 3], [3, 1, 3, None, None]]:
         expected = abs(x[0] * x[1] * x[2])**(1 / 3)
         assert abs(util.geom_mean_na(x) - expected) < 1e-10
+
+def mock_pip_caller(args):
+    return args
+
+@pytest.mark.parametrize(
+    "pkgname, specifier, pipval, expected",
+    [
+        ("numpy", None, None, ["install", "-v", "--upgrade", "numpy"]),
+        ("numpy", "==", "1.20.0", ["install", "-v", "--upgrade", "numpy==1.20.0"]),
+        ("mypkg", None, "-e .", ["install", "-v", "--upgrade", "-e", "."]),
+        ("mypkg", ">", "2.0", ["install", "-v", "--upgrade", "mypkg>2.0"]),
+        ("mypkg", None, "-e /tmp", ["install", "-v", "--upgrade", "-e", "/tmp"]),
+    ]
+)
+def test_construct_pip_call(pkgname, specifier, pipval, expected):
+    pip_func = util.construct_pip_call(mock_pip_caller, pkgname,
+                                       specifier, pipval)
+    assert pip_func() == expected
+
+@pytest.mark.parametrize(
+    "declaration, expected",
+    [
+        ("numpy", ("numpy", None, None)),
+        ("numpy==1.20.0", ("numpy", "==", "1.20.0")),
+        ("mypkg>=2.0", ("mypkg", ">=", "2.0")),
+        ("mypkg>2.0", ("mypkg", ">", "2.0")),
+        ("mypkg<2.0", ("mypkg", "<", "2.0")),
+        ("mypkg<=2.0", ("mypkg", "<=", "2.0")),
+        ("mypkg!=2.0", ("mypkg", "!=", "2.0")),
+        ("mypkg~=2.0", ("mypkg", "~=", "2.0")),
+        ("mypkg==2.0a1", ("mypkg", "==", "2.0a1")),
+        ("invalid+name==1.0", None),
+    ]
+)
+def test_parse_pip_declaration(declaration, expected):
+    assert util.parse_pip_declaration(declaration) == expected
