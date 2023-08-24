@@ -1,4 +1,4 @@
-name: CI Windows
+name: Windows CI
 
 on: [push, pull_request]
 
@@ -14,21 +14,12 @@ jobs:
       fail-fast: false
       matrix:
         os: ["windows-latest"]
-        python-version: ["3.7"]
+        python-version: ["3.7", "3.10"]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-      # - name: Setup Micromamba ${{ matrix.python-version }}
-      #   uses: mamba-org/setup-micromamba@v1
-      #   with:
-      #     environment-name: TEST
-      #     init-shell: bash
-      #     create-args: >-
-      #       python=${{ matrix.python-version }}
-      #       --channel conda-forge
 
       - name: Setup a browser for more tests
         uses: browser-actions/setup-chrome@latest
@@ -49,29 +40,3 @@ jobs:
           --durations=100 test \
           --webdriver=ChromeHeadless \
           --environment-type=virtualenv
-
-      # # We need Python 3.7 to always be installed, so tests with
-      # # multiple environments can run.
-      # - name: Set up Python 3.7
-      #   uses: actions/setup-python@v4
-      #   with:
-      #     python-version: 3.7
-
-      # - name: Set up Python version ${{ matrix.python-version }}
-      #   uses: actions/setup-python@v4
-      #   with:
-      #     python-version: ${{ matrix.python-version }}
-      #     cache: pip
-      #     cache-dependency-path: pyproject.toml
-
-      # - name: Setup a browser for more tests
-      #   uses: browser-actions/setup-chrome@latest
-
-      # - name: Install dependencies
-      #   run: python -m pip install ".[test,hg]"
-
-      # - name: Install asv
-      #   run: pip install .
-
-      # - name: Run tests
-      #   run: python -m pytest -v --timeout=300 --webdriver=ChromeHeadless --durations=100 test -x
