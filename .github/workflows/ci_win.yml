@@ -30,8 +30,8 @@ jobs:
       #       python=${{ matrix.python-version }}
       #       --channel conda-forge
 
-      # - name: Setup a browser for more tests
-      #   uses: browser-actions/setup-chrome@latest
+      - name: Setup a browser for more tests
+        uses: browser-actions/setup-chrome@latest
 
       - name: Set up Python version ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -45,7 +45,10 @@ jobs:
         run: |
           python -m pip install .[test]
           python -m pip install packaging virtualenv
-          python -m pytest -v -l --timeout=300 --durations=100 test --environment-type=virtualenv -x
+          python -m pytest -v -l -x --timeout=300 \
+          --durations=100 test \
+          --webdriver=ChromeHeadless \
+          --environment-type=virtualenv
 
       # # We need Python 3.7 to always be installed, so tests with
       # # multiple environments can run.
