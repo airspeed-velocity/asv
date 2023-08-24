@@ -414,35 +414,84 @@ def test_geom_mean_na():
 def mock_pip_caller(args):
     return args
 
-@pytest.mark.parametrize(
-    "pkgname, specifier, pipval, expected",
-    [
-        ("numpy", None, None, ["install", "-v", "--upgrade", "numpy"]),
-        ("numpy", "==", "1.20.0", ["install", "-v", "--upgrade", "numpy==1.20.0"]),
-        ("mypkg", None, "-e .", ["install", "-v", "--upgrade", "-e", "."]),
-        ("mypkg", ">", "2.0", ["install", "-v", "--upgrade", "mypkg>2.0"]),
-        ("mypkg", None, "-e /tmp", ["install", "-v", "--upgrade", "-e", "/tmp"]),
-    ]
-)
-def test_construct_pip_call(pkgname, specifier, pipval, expected):
-    pip_func = util.construct_pip_call(mock_pip_caller, pkgname,
-                                       specifier, pipval)
-    assert pip_func() == expected
+@pytest.mark.parametrize("declaration, expected", [
+    # Basic package name
+    ("numpy", {
+        'pkgname': 'numpy', 'specification': None,
+        'flags': [], 'is_editable': False, 'path': None
+    }),
 
-@pytest.mark.parametrize(
-    "declaration, expected",
-    [
-        ("numpy", ("numpy", None, None)),
-        ("numpy==1.20.0", ("numpy", "==", "1.20.0")),
-        ("mypkg>=2.0", ("mypkg", ">=", "2.0")),
-        ("mypkg>2.0", ("mypkg", ">", "2.0")),
-        ("mypkg<2.0", ("mypkg", "<", "2.0")),
-        ("mypkg<=2.0", ("mypkg", "<=", "2.0")),
-        ("mypkg!=2.0", ("mypkg", "!=", "2.0")),
-        ("mypkg~=2.0", ("mypkg", "~=", "2.0")),
-        ("mypkg==2.0a1", ("mypkg", "==", "2.0a1")),
-        ("invalid+name==1.0", None),
-    ]
-)
-def test_parse_pip_declaration(declaration, expected):
-    assert util.parse_pip_declaration(declaration) == expected
+    # Version with '=='
+    ("numpy==1.20.0", {
+        'pkgname': 'numpy', 'specification': '==1.20.0',
+        'flags': [], 'is_editable': False, 'path': None
+    }),
+
+    # Other specifiers
+    ("numpy>=1.20.0", {
+        'pkgname': 'numpy', 'specification': '>=1.20.0',
+        'flags': [], 'is_editable': False, 'path': None
+    }),
+
+    ("numpy<=1.20.0", {
+        'pkgname': 'numpy', 'specification': '<=1.20.0',
+        'flags': [], 'is_editable': False, 'path': None
+    }),
+
+    # Complex version specifiers
+    ("numpy>=1.15,<2.0", {
+        'pkgname': 'numpy', 'specification': '>=1.15,<2.0',
+        'flags': [], 'is_editable': False, 'path': None
+    }),
+
+    # Flags
+    ("--no-cache-dir numpy", {
+        'pkgname': 'numpy', 'specification': None,
+        'flags': ['--no-cache-dir'], 'is_editable': False, 'path': None
+    }),
+
+    # Editable installations
+    ("-e ./numpy-dir", {
+        'pkgname': None, 'specification': None,
+        'flags': ['-e'], 'is_editable': True, 'path': './numpy-dir'
+    }),
+
+    # Local paths without -e
+    ("./numpy-dir", {
+        'pkgname': None, 'specification': None,
+        'flags': [], 'is_editable': False, 'path': './numpy-dir'
+    }),
+
+    # Package with dash
+    ("my-package", {
+        'pkgname': 'my-package', 'specification': None,
+        'flags': [], 'is_editable': False, 'path': None
+    }),
+
+    # More complex declarations
+    ("--no-cache-dir -e ./numpy-dir", {
+        'pkgname': None, 'specification': None,
+        'flags': ['--no-cache-dir', '-e'], 'is_editable': True, 'path': './numpy-dir'
+    }),
+
+    # Direct git installations
+    ("git+https://github.com/user/repo.git", {
+        'pkgname': None, 'specification': None,
+        'flags': [], 'is_editable': False, 'path': 'git+https://github.com/user/repo.git'
+    }),
+    # Editable git installations with #egg= suffix
+    ("-e git+https://github.com/user/repo.git#egg=repo", {
+        'pkgname': 'repo', 'specification': None,
+        'flags': ['-e'], 'is_editable': True, 'path': 'git+https://github.com/user/repo.git'
+    }),
+    # Flags with values
+    ("--install-option=\"--prefix=/my/path\" numpy", {
+        'pkgname': 'numpy', 'specification': None,
+        'flags': ['--install-option=\"--prefix=/my/path\"'], 'is_editable': False, 'path': None
+    }),
+])
+def test_parsed_pip_declaration(declaration, expected):
+    parsed = util.ParsedPipDeclaration(declaration)
+    for key, value in expected.items():
+        assert getattr(parsed, key) == value, \
+            f"Expected {key} to be {value}, but got {getattr(parsed, key)}"
