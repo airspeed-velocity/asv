@@ -21,9 +21,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # - name: Setup a browser for more tests
-      #   uses: browser-actions/setup-chrome@latest
-
       - name: Set up Python version ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -38,5 +35,4 @@ jobs:
           python -m pip install packaging virtualenv
           python -m pytest -v -l -x --timeout=300 \
           --durations=100 test \
-          # --webdriver=ChromeHeadless \
           --environment-type=virtualenv
