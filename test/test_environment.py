@@ -187,7 +187,8 @@ def test_matrix_expand_include():
     with pytest.raises(util.UserError):
         list(environment.iter_matrix(conf.environment_type, conf.pythons, conf))
 
-@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
+@pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
+                    reason="Requires two usable Python versions")
 def test_matrix_expand_include_detect_env_type():
     conf = config.Config()
     conf.environment_type = None
