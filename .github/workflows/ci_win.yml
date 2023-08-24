@@ -21,24 +21,31 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Micromamba ${{ matrix.python-version }}
-        uses: mamba-org/setup-micromamba@v1
-        with:
-          environment-name: TEST
-          init-shell: bash
-          create-args: >-
-            python=${{ matrix.python-version }}
-            --channel conda-forge
+      # - name: Setup Micromamba ${{ matrix.python-version }}
+      #   uses: mamba-org/setup-micromamba@v1
+      #   with:
+      #     environment-name: TEST
+      #     init-shell: bash
+      #     create-args: >-
+      #       python=${{ matrix.python-version }}
+      #       --channel conda-forge
 
       # - name: Setup a browser for more tests
       #   uses: browser-actions/setup-chrome@latest
 
+      - name: Set up Python version ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
       - name: Install and test
         shell: bash -l {0}
         run: |
-          micromamba install mamba
-          micromamba run -n TEST python -m pip install ".[test]"
-          micromamba run -n python -m pytest -v -l --timeout=300 --durations=100 test --environment-type=mamba -x
+          python -m pip install .[test]
+          python -m pip install packaging virtualenv
+          python -m pytest -v -l --timeout=300 --durations=100 test --environment-type=virtualenv -x
 
       # # We need Python 3.7 to always be installed, so tests with
       # # multiple environments can run.
