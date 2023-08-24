@@ -124,13 +124,11 @@ class Mamba(environment.Environment):
         with _mamba_lock():
             transaction = solver.solve(mamba_pkgs)
             transaction.execute(libmambapy.PrefixData(self._path))
-        if not len(pip_args) == 0:
-            pip_calls = []
-            pip_args = [util.parse_pip_declaration(declaration) for declaration in pip_args]
-            for pkgname, specifier, pipval in pip_args:
-                pip_calls.append(util.construct_pip_call(self._run_pip, pkgname, pipval))
-            for pipcall in pip_calls:
-                pipcall()
+            if pip_args:
+                for declaration in pip_args:
+                    parsed_declaration = util.ParsedPipDeclaration(declaration)
+                    pip_call = util.construct_pip_call(self._run_pip, parsed_declaration)
+                    pip_call()
 
     def _get_requirements(self):
         mamba_args = []
@@ -139,10 +137,7 @@ class Mamba(environment.Environment):
         for key, val in {**self._requirements,
                          **self._base_requirements}.items():
             if key.startswith("pip+"):
-                if val:
-                    pip_args.append(f"{key[4:]}=={val}")
-                else:
-                    pip_args.append(key[4:])
+                pip_args.append(key[4:])
             else:
                 if val:
                     mamba_args.append(f"{key}={val}")
