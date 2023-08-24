@@ -65,8 +65,7 @@ class Conda(environment.Environment):
     Manage an environment using conda.
 
     Dependencies are installed using ``conda``.  The benchmarked
-    project is installed using ``pip`` (since ``conda`` doesn't have a
-    method to install from an arbitrary ``setup.py``).
+    project is installed using ``pip``.
     """
     tool_name = "conda"
     _matches_cache = {}

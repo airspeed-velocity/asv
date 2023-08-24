@@ -32,8 +32,7 @@ class Mamba(environment.Environment):
     Manage an environment using mamba.
 
     Dependencies are installed using ``mamba``.  The benchmarked
-    project is installed using ``pip`` (since ``mamba`` doesn't have a
-    method to install from an arbitrary ``setup.py``).
+    project is installed using ``pip``.
     """
 
     tool_name = "mamba"
