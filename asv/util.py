@@ -1302,7 +1302,9 @@ def search_channels(cli_path, pkg, version):
     return True
 
 def parse_pip_declaration(declaration):
-    match = re.match(r'([a-zA-Z0-9-_]+)((==|>=|<=|>|<|!=|~=)([0-9.a-zA-Z_-]+))?', declaration)
+    match = re.match(
+        r'^([a-zA-Z0-9-_]+)((==|>=|<=|>|<|!=|~=)([0-9.a-zA-Z_-]+))?$',
+        declaration)
     if match:
         pkgname = match.group(1)
         specifier = match.group(3) if match.group(3) else None
