@@ -28,7 +28,7 @@ dependencies = [
     "asv-runner>=v0.0.9",
     "json5",
     "tabulate",
-    "colorama; os_name == 'nt'",
+    "colorama; platform_system == 'Windows'",
     "pyyaml; platform_python_implementation != \"PyPy\"",
     "pympler; platform_python_implementation != \"PyPy\"",
 ]
@@ -53,8 +53,8 @@ test = [
     "feedparser",
     "selenium",
     "pytest-rerunfailures",
-    "python-hglib",
-    "rpy2"; platform_system!='Windows' and platform_python_implementation != 'PyPy'"
+    "python-hglib; platform_system != 'Windows'",
+    "rpy2; platform_system != 'Windows' and platform_python_implementation != 'PyPy'",
 ]
 doc = [
     "sphinx",
