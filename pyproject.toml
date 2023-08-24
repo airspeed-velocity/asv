@@ -54,7 +54,7 @@ test = [
     "selenium",
     "pytest-rerunfailures",
     "python-hglib",
-    "rpy2; platform_python_implementation != \"PyPy\"",
+    "rpy2"; platform_system!='Windows' and platform_python_implementation != 'PyPy'"
 ]
 doc = [
     "sphinx",
@@ -71,7 +71,6 @@ virtualenv = [
 hg = [
     "python-hglib",
 ]
-
 [build-system]
 requires = [
     "wheel",
