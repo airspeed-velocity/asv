@@ -144,8 +144,6 @@ class Conda(environment.Environment):
 
             # categorize & write dependencies based on pip vs. conda
             env_file.writelines((f'   - {s}\n' for s in conda_args))
-            if pip_args:
-                env_file.write('   - pip:\n')
             env_file.close()
             try:
                 env_file_name = self._conda_environment_file or env_file.name
