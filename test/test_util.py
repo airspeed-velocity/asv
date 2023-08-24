@@ -495,3 +495,33 @@ def test_parsed_pip_declaration(declaration, expected):
     for key, value in expected.items():
         assert getattr(parsed, key) == value, \
             f"Expected {key} to be {value}, but got {getattr(parsed, key)}"
+
+# Mock pip_caller
+def pip_caller(args):
+    return args
+
+@pytest.mark.parametrize(
+    "declaration, expected_result",
+    [
+        # Test with a simple package name
+        ("numpy", ["install", "-v", "--upgrade", "numpy"]),
+
+        # Test with a package and version specification
+        ("numpy==1.18.5", ["install", "-v", "--upgrade", "numpy==1.18.5"]),
+
+        # Test with a git URL
+        ("git+https://github.com/numpy/numpy.git#egg=numpy",
+         ["install", "-v", "--upgrade", "git+https://github.com/numpy/numpy.git"]),
+
+        # Test with a local path
+        ("./localpackage/", ["install", "-v", "--upgrade", "./localpackage/"]),
+
+        # Test with flags
+        ("numpy --install-option=\"--prefix=/my/path\"",
+         ["install", "-v", "--upgrade", "--install-option=\"--prefix=/my/path\"", "numpy"]),
+    ]
+)
+def test_construct_pip_call(declaration, expected_result):
+    parsed_declaration = util.ParsedPipDeclaration(declaration)
+    result = util.construct_pip_call(pip_caller, parsed_declaration)
+    assert result() == expected_result
