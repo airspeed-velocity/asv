@@ -30,7 +30,7 @@ class PluginManager:
                 self.init_plugin(mod)
                 self._plugins.append(mod)
             except ModuleNotFoundError as err:
-                log.error(f"Couldn't load {name} because\n{err}")
+                log.debug(f"Couldn't load {name} because\n{err}")
                 continue  # Couldn't find mamba
 
     def _load_plugin_by_name(self, name):
