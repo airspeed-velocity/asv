@@ -1370,16 +1370,29 @@ class ParsedPipDeclaration:
 
         # Match package details
         pkg_pattern = (
-            r'([a-zA-Z0-9-_]+)'    # Name
-            r'(([<>!=~]{1,2}[0-9.a-zA-Z_-]+)' # Version specification
-            r'(,[<>!=~]{1,2}[0-9.a-zA-Z_-]+)*)?' # Multiple version specifications
-            )
+            r'(?P<name>[a-zA-Z0-9-_]+)'               # Name
+            r'('                                      # Start group for version specification(s)
+            r'((?P<specifier>[<>!=~]{1,2})'           # Version specifier
+            r'(?P<version>[0-9.a-zA-Z_-]+))'          # Version
+            r'((?P<multi_spec>,[<>!=~]{1,2}[0-9.a-zA-Z_-]+)*)?' # Multiple version specifications
+            r')?' # End optional group for version specification(s)
+        )
         pkg_match = re.search(pkg_pattern, declaration)
 
         # Populate attributes based on package details matches
         if pkg_match:
-            self.pkgname = pkg_match.group(1)
-            self.specification = pkg_match.group(2)
+            self.pkgname = pkg_match.group("name")
+            specifier = pkg_match.group("specifier")
+            version = pkg_match.group("version")
+            multi_spec = pkg_match.group("multi_spec")
+
+            # If a specifier is present, prioritize it and consume version(s) greedily
+            if specifier:
+                self.specification = f"{specifier}{version}{multi_spec or ''}"
+            else:
+                version_match = re.search(r'(?P<version>\d+(\.\d+)*([a-zA-Z0-9]+)?)', declaration)
+                if version_match:
+                    self.specification = f"=={version_match.group(0)}"
 
 def construct_pip_call(pip_caller, parsed_declaration: ParsedPipDeclaration):
     pargs = ['install', '-v', '--upgrade']
