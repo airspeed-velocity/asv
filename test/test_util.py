@@ -525,6 +525,7 @@ def pip_caller(args):
 
         # Test cases for version without specifier
         ("numpy 1.23", ["install", "-v", "--upgrade", "numpy==1.23"]),
+        ("fakepy_1 0.14", ["install", "-v", "--upgrade", "fakepy_1==0.14"]),
     ]
 )
 def test_construct_pip_call(declaration, expected_result):

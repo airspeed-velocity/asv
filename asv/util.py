@@ -1390,6 +1390,7 @@ class ParsedPipDeclaration:
             if specifier:
                 self.specification = f"{specifier}{version}{multi_spec or ''}"
             else:
+                declaration = declaration.replace(pkg_match.group("name"), '', 1)
                 version_match = re.search(r'(?P<version>\d+(\.\d+)*([a-zA-Z0-9]+)?)', declaration)
                 if version_match:
                     self.specification = f"=={version_match.group(0)}"
