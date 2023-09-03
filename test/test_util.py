@@ -519,6 +519,12 @@ def pip_caller(args):
         # Test with flags
         ("numpy --install-option=\"--prefix=/my/path\"",
          ["install", "-v", "--upgrade", "--install-option=\"--prefix=/my/path\"", "numpy"]),
+
+        # Test case for multiple version specifiers
+        ("numpy>=1.18.5,<=1.20.0", ["install", "-v", "--upgrade", "numpy>=1.18.5,<=1.20.0"]),
+
+        # Test cases for version without specifier
+        ("numpy 1.23", ["install", "-v", "--upgrade", "numpy==1.23"]),
     ]
 )
 def test_construct_pip_call(declaration, expected_result):
