@@ -182,7 +182,7 @@ class Conda(environment.Environment):
         for key, val in {**self._requirements,
                          **self._base_requirements}.items():
             if key.startswith("pip+"):
-                pip_args.append(key[4:])
+                pip_args.append(f"{key[4:]} {val}")
             else:
                 if val:
                     conda_args.append(f"{key}={val}")

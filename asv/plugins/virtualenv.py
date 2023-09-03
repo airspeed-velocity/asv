@@ -154,9 +154,9 @@ class Virtualenv(environment.Environment):
         for key, val in {**self._requirements,
                          **self._base_requirements}.items():
             if key.startswith("pip+"):
-                pip_args.append(key[4:])
+                pip_args.append(f"{key[4:]} {val}")
             else:
-                pip_args.append(key)
+                pip_args.append(f"{key} {val}")
 
         for declaration in pip_args:
             parsed_declaration = util.ParsedPipDeclaration(declaration)
