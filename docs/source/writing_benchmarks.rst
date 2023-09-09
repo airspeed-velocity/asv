@@ -298,13 +298,15 @@ decorator ``@skip_for_params`` as::
          for i in f(n):
              pass
 
-Benchmarks may aslo be condtionally skipped based on a boolean with ``@skip_benchmark_if``::
+Benchmarks may also be conditionally skipped based on a boolean with ``@skip_benchmark_if``::
 
      from asv_runner.benchmarks.mark import skip_benchmark_if
      import datetime
 
      # Skip if not before midday
-     @skip_benchmark_if(datetime.datetime.now().hour >= 12)
+     @skip_benchmark_if(
+         datetime.datetime.now(datetime.timezone.utc).hour >= 12
+     )
      def time_ranges(n, func_name):
          f = {'range': range, 'arange': np.arange}[func_name]
          for i in f(n):
@@ -327,8 +329,10 @@ Similarly, for parameters we have ``@skip_params_if``::
 
          # Skip benchmarking when size is either 100 or 200
          # and the current hour is 12 or later.
-        @skip_params_if([(100,), (200,)],
-                        datetime.datetime.now().hour >= 12)
+         @skip_params_if(
+             [(100,), (200,)],
+             datetime.datetime.now(datetime.timezone.utc).hour >= 12
+         )
          def time_dict_update(self, size):
              d = self.d
              for i in range(size):
