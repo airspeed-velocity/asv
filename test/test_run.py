@@ -334,9 +334,9 @@ def test_filter_date_period(tmpdir, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
     dates = [
-        datetime.datetime(2001, 1, 1),
-        datetime.datetime(2001, 1, 2),
-        datetime.datetime(2001, 1, 8)
+        datetime.datetime(2001, 1, 1, tzinfo=datetime.timezone.utc),
+        datetime.datetime(2001, 1, 2, tzinfo=datetime.timezone.utc),
+        datetime.datetime(2001, 1, 8, tzinfo=datetime.timezone.utc)
     ]
 
     dvcs = tools.generate_repo_from_ops(

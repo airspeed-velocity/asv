@@ -27,10 +27,15 @@ def prettify_xml(text):
 
 
 def dummy_feed_xml():
-    entry_1 = feed.FeedEntry(title='Some title', updated=datetime.datetime(1993, 1, 1))
-    entry_2 = feed.FeedEntry(title='Another title', updated=datetime.datetime(1990, 1, 1),
+    entry_1 = feed.FeedEntry(title='Some title',
+                             updated=datetime.datetime(1993, 1, 1,
+                                                       tzinfo=datetime.timezone.utc))
+    entry_2 = feed.FeedEntry(title='Another title',
+                             updated=datetime.datetime(1990, 1, 1,
+                                                       tzinfo=datetime.timezone.utc),
                              link='http://foo', content='More text', id_context=['something'],
-                             id_date=datetime.datetime(2000, 1, 1))
+                             id_date=datetime.datetime(2000, 1, 1,
+                                                       tzinfo=datetime.timezone.utc))
 
     stream = io.BytesIO()
     feed.write_atom(stream, [entry_1, entry_2], author='Me', title='Feed title',

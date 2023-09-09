@@ -416,7 +416,8 @@ def test_regression_atom_feed_update(dvcs_type, tmpdir):
     shutil.rmtree(conf.results_dir)
     shutil.rmtree(conf.html_dir)
     conf = tools.generate_result_dir(tmpdir, dvcs, commit_values,
-                                     updated=datetime.datetime(1990, 1, 1))
+                                     updated=datetime.datetime(1990, 1, 1,
+                                                               tzinfo=datetime.timezone.utc))
 
     tools.run_asv_with_conf(conf, "publish")
 
