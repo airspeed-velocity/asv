@@ -1,5 +1,8 @@
 # Build on every branch push, tag push, and pull request change:
 # From: https://github.com/pypa/cibuildwheel/blob/main/examples/github-deploy.yml
+# Also:
+# https://github.com/airspeed-velocity/asv/blob/main/.github/workflows/wheels.yml
+# include [wheel build] in the commit to trigger wheel builds
 name: Build wheels
 on: [push, pull_request, workflow_dispatch]
 
@@ -7,9 +10,37 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
 jobs:
+  get_commit_message:
+    name: Get commit message
+    runs-on: ubuntu-latest
+    if: "github.repository == 'airspeed-velocity/asv'"
+    outputs:
+      message: ${{ steps.commit_message.outputs.message }}
+    steps:
+      - name: Checkout asv
+        uses: actions/checkout@v3
+        # Gets the correct commit message for pull request
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get commit message
+        id: commit_message
+        run: |
+          set -xe
+          COMMIT_MSG=$(git log --no-merges -1 --oneline)
+          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo github.ref ${{ github.ref }}
   build_wheels:
     name: Build wheel for ${{ matrix.python-version }}-${{ matrix.buildplat[1] }}
+    needs: get_commit_message
+    if: >-
+      contains(needs.get_commit_message.outputs.message, '[wheel build]') ||
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && ( ! endsWith(github.ref, 'dev0')))
     runs-on: ${{ matrix.buildplat[0] }}
     strategy:
       # Ensure that a wheel builder finishes even if another fails
@@ -40,6 +71,12 @@ jobs:
 
   build_sdist:
     name: Build source distribution
+    needs: get_commit_message
+    if: >-
+      contains(needs.get_commit_message.outputs.message, '[wheel build]') ||
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && ( ! endsWith(github.ref, 'dev0')))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
