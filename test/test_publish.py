@@ -309,7 +309,7 @@ def test_regression_multiple_branches(dvcs_type, tmpdir):
 ])
 def test_regression_non_monotonic(dvcs_type, tmpdir):
     tmpdir = str(tmpdir)
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(datetime.timezone.utc)
 
     dates = [now + datetime.timedelta(days=i)
              for i in range(5)] + [now - datetime.timedelta(days=i) for i in range(5)]

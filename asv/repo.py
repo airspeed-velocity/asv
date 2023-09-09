@@ -253,7 +253,7 @@ class NoRepository(Repo):
 
     def get_date(self, hash):
         if hash is None:
-            return datetime.datetime.now()
+            return datetime.datetime.now(datetime.timezone.utc)
         self._raise_error()
 
     def get_hashes_from_range(self, range):

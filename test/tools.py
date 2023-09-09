@@ -159,7 +159,7 @@ class Git:
     def __init__(self, path):
         self.path = abspath(path)
         self._git = util.which('git')
-        self._fake_date = datetime.datetime.now()
+        self._fake_date = datetime.datetime.now(datetime.timezone.utc)
 
     def run_git(self, args, chdir=True, **kwargs):
         if chdir:
@@ -228,7 +228,7 @@ class Hg:
     encoding = 'utf-8'
 
     def __init__(self, path):
-        self._fake_date = datetime.datetime.now()
+        self._fake_date = datetime.datetime.now(datetime.timezone.utc)
         if isinstance(path, bytes):
             path = path.decode('utf-8')
         self.path = abspath(path)
