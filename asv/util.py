@@ -195,10 +195,10 @@ def which(filename, paths=None):
     """
     Emulates the UNIX `which` command in Python.
 
-    Raises an IOError if no result is found.
+    Raises an OSError if no result is found.
     """
     # Hide traceback from expected exceptions in pytest reports
-    __tracebackhide__ = operator.methodcaller('errisinstance', IOError)
+    __tracebackhide__ = operator.methodcaller('errisinstance', OSError)
 
     if os.path.sep in filename:
         locations = ['']
@@ -228,7 +228,7 @@ def which(filename, paths=None):
             loc_info = 'PATH'
         else:
             loc_info = os.pathsep.join(locations)
-        raise IOError(f"Could not find '{filename}' in {loc_info}")
+        raise OSError(f"Could not find '{filename}' in {loc_info}")
 
     return candidates[0]
 
@@ -239,7 +239,7 @@ def has_command(filename):
     """
     try:
         which(filename)
-    except IOError:
+    except OSError:
         return False
     else:
         return True

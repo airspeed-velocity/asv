@@ -198,7 +198,7 @@ class Benchmarks(dict):
                     try:
                         with open(result_file, 'r') as fp:
                             benchmarks = json.load(fp)
-                    except (IOError, ValueError):
+                    except (OSError, ValueError):
                         log.error("Invalid discovery output")
                         raise util.UserError()
 

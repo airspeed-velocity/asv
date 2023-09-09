@@ -104,7 +104,7 @@ def test_which_path(tmpdir):
         util.which('asv_test_exe_4321.bat', paths=[dirname])
 
         # Check non-existent files
-        with pytest.raises(IOError):
+        with pytest.raises(OSError):
             util.which('nonexistent.exe', paths=[dirname])
     finally:
         os.environ['PATH'] = old_path

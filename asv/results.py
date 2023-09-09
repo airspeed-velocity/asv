@@ -34,7 +34,7 @@ def iter_results_paths(results):
                 raise util.UserError(f"malformed {machine_json}")
         except util.UserError as err:
             machine_json_err = f"Skipping results: {err}"
-        except IOError:
+        except OSError:
             machine_json_err = f"Skipping results: could not load {machine_json}"
         else:
             machine_json_err = None

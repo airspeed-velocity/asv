@@ -47,7 +47,7 @@ WIN = (os.name == "nt")
 try:
     util.which('pypy')
     HAS_PYPY = True
-except (RuntimeError, IOError):
+except (RuntimeError, OSError):
     HAS_PYPY = hasattr(sys, 'pypy_version_info')
 
 
@@ -67,7 +67,7 @@ try:
     # Conda can install required Python versions on demand
     _check_conda()
     HAS_CONDA = True
-except (RuntimeError, IOError):
+except (RuntimeError, OSError):
     HAS_CONDA = False
 
 
@@ -81,7 +81,7 @@ except ImportError:
 try:
     util.which(f'python{PYTHON_VER2}')
     HAS_PYTHON_VER2 = True
-except (RuntimeError, IOError):
+except (RuntimeError, OSError):
     HAS_PYTHON_VER2 = False
 
 
@@ -117,7 +117,7 @@ def locked_cache_dir(config, cache_key, timeout=900, tag=None):
             try:
                 if util.load_json(tag_fn) != tag_content:
                     raise ValueError()
-            except (IOError, ValueError, util.UserError):
+            except (OSError, ValueError, util.UserError):
                 shutil.rmtree(cache_dir)
 
         if not os.path.isdir(cache_dir):

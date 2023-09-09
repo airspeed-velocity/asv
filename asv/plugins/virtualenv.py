@@ -71,7 +71,7 @@ class Virtualenv(environment.Environment):
         # Find Python executable on path
         try:
             return util.which(executable)
-        except IOError:
+        except OSError:
             pass
 
         # Maybe the current one is correct?
