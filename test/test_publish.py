@@ -167,6 +167,7 @@ def test_publish_range_spec(generate_result_dir):
         assert set(data['revision_to_hash'].values()) == expected
 
 
+@pytest.mark.flaky_pypy
 def test_regression_simple(generate_result_dir):
     conf, repo, commits = generate_result_dir(5 * [1] + 5 * [10])
     tools.run_asv_with_conf(conf, "publish")
