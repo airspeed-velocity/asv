@@ -149,21 +149,19 @@ class Virtualenv(environment.Environment):
         env.update(self.build_env_vars)
 
         self._run_pip(pip_args, env=env)
-        pip_calls = []
         pip_args = []
 
         for key, val in {**self._requirements,
                          **self._base_requirements}.items():
             if key.startswith("pip+"):
-                if val:
-                    pip_args.append((key[4:], val))
-                else:
-                    pip_args.append((key[4:], None))
+                pip_args.append(f"{key[4:]} {val}")
+            else:
+                pip_args.append(f"{key} {val}")
 
-        for pkgname, pipval in pip_args:
-            pip_calls.append(util.construct_pip_call(self._run_pip, pkgname, pipval))
-        for pipcall in pip_calls:
-            pipcall()
+        for declaration in pip_args:
+            parsed_declaration = util.ParsedPipDeclaration(declaration)
+            pip_call = util.construct_pip_call(self._run_pip, parsed_declaration)
+            pip_call()
 
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when

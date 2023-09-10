@@ -9,6 +9,9 @@ API Changes
 
 Bug Fixes
 ^^^^^^^^^
+- ``pip`` dependencies in ``environment.yml`` files for the ``mamba`` plugin are handled correctly (#1326)
+- ``asv.config.json`` matrix requirements no longer need ``pip+`` set explicitly
+  for calling the ``pip`` solver for ``virtualenv``
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

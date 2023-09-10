@@ -410,3 +410,125 @@ def test_geom_mean_na():
     for x in [[1, 2, -3], [1, 2, 3], [3, 1, 3, None, None]]:
         expected = abs(x[0] * x[1] * x[2])**(1 / 3)
         assert abs(util.geom_mean_na(x) - expected) < 1e-10
+
+def mock_pip_caller(args):
+    return args
+
+@pytest.mark.parametrize("declaration, expected", [
+    # Basic package name
+    ("numpy", {
+        'pkgname': 'numpy', 'specification': None,
+        'flags': [], 'is_editable': False, 'path': None
+    }),
+
+    # Version with '=='
+    ("numpy==1.20.0", {
+        'pkgname': 'numpy', 'specification': '==1.20.0',
+        'flags': [], 'is_editable': False, 'path': None
+    }),
+
+    # Other specifiers
+    ("numpy>=1.20.0", {
+        'pkgname': 'numpy', 'specification': '>=1.20.0',
+        'flags': [], 'is_editable': False, 'path': None
+    }),
+
+    ("numpy<=1.20.0", {
+        'pkgname': 'numpy', 'specification': '<=1.20.0',
+        'flags': [], 'is_editable': False, 'path': None
+    }),
+
+    # Complex version specifiers
+    ("numpy>=1.15,<2.0", {
+        'pkgname': 'numpy', 'specification': '>=1.15,<2.0',
+        'flags': [], 'is_editable': False, 'path': None
+    }),
+
+    # Flags
+    ("--no-cache-dir numpy", {
+        'pkgname': 'numpy', 'specification': None,
+        'flags': ['--no-cache-dir'], 'is_editable': False, 'path': None
+    }),
+
+    # Editable installations
+    ("-e ./numpy-dir", {
+        'pkgname': None, 'specification': None,
+        'flags': ['-e'], 'is_editable': True, 'path': './numpy-dir'
+    }),
+
+    # Local paths without -e
+    ("./numpy-dir", {
+        'pkgname': None, 'specification': None,
+        'flags': [], 'is_editable': False, 'path': './numpy-dir'
+    }),
+
+    # Package with dash
+    ("my-package", {
+        'pkgname': 'my-package', 'specification': None,
+        'flags': [], 'is_editable': False, 'path': None
+    }),
+
+    # More complex declarations
+    ("--no-cache-dir -e ./numpy-dir", {
+        'pkgname': None, 'specification': None,
+        'flags': ['--no-cache-dir', '-e'], 'is_editable': True, 'path': './numpy-dir'
+    }),
+
+    # Direct git installations
+    ("git+https://github.com/user/repo.git", {
+        'pkgname': None, 'specification': None,
+        'flags': [], 'is_editable': False, 'path': 'git+https://github.com/user/repo.git'
+    }),
+    # Editable git installations with #egg= suffix
+    ("-e git+https://github.com/user/repo.git#egg=repo", {
+        'pkgname': 'repo', 'specification': None,
+        'flags': ['-e'], 'is_editable': True, 'path': 'git+https://github.com/user/repo.git'
+    }),
+    # Flags with values
+    ("--install-option=\"--prefix=/my/path\" numpy", {
+        'pkgname': 'numpy', 'specification': None,
+        'flags': ['--install-option=\"--prefix=/my/path\"'], 'is_editable': False, 'path': None
+    }),
+])
+def test_parsed_pip_declaration(declaration, expected):
+    parsed = util.ParsedPipDeclaration(declaration)
+    for key, value in expected.items():
+        assert getattr(parsed, key) == value, \
+            f"Expected {key} to be {value}, but got {getattr(parsed, key)}"
+
+# Mock pip_caller
+def pip_caller(args):
+    return args
+
+@pytest.mark.parametrize(
+    "declaration, expected_result",
+    [
+        # Test with a simple package name
+        ("numpy", ["install", "-v", "--upgrade", "numpy"]),
+
+        # Test with a package and version specification
+        ("numpy==1.18.5", ["install", "-v", "--upgrade", "numpy==1.18.5"]),
+
+        # Test with a git URL
+        ("git+https://github.com/numpy/numpy.git#egg=numpy",
+         ["install", "-v", "--upgrade", "git+https://github.com/numpy/numpy.git"]),
+
+        # Test with a local path
+        ("./localpackage/", ["install", "-v", "--upgrade", "./localpackage/"]),
+
+        # Test with flags
+        ("numpy --install-option=\"--prefix=/my/path\"",
+         ["install", "-v", "--upgrade", "--install-option=\"--prefix=/my/path\"", "numpy"]),
+
+        # Test case for multiple version specifiers
+        ("numpy>=1.18.5,<=1.20.0", ["install", "-v", "--upgrade", "numpy>=1.18.5,<=1.20.0"]),
+
+        # Test cases for version without specifier
+        ("numpy 1.23", ["install", "-v", "--upgrade", "numpy==1.23"]),
+        ("fakepy_1 0.14", ["install", "-v", "--upgrade", "fakepy_1==0.14"]),
+    ]
+)
+def test_construct_pip_call(declaration, expected_result):
+    parsed_declaration = util.ParsedPipDeclaration(declaration)
+    result = util.construct_pip_call(pip_caller, parsed_declaration)
+    assert result() == expected_result

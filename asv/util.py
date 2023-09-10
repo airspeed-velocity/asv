@@ -24,7 +24,6 @@ import operator
 import collections
 import multiprocessing
 import functools
-from pathlib import Path
 
 import json5
 from asv_runner.util import human_time, human_float, _human_time_units
@@ -1301,22 +1300,115 @@ def search_channels(cli_path, pkg, version):
     # Worked!
     return True
 
+class ParsedPipDeclaration:
+    def __init__(self, declaration):
+        self.pkgname = None
+        self.specification = None
+        self.flags = []
+        self.is_editable = False
+        self.path = None
 
-def construct_pip_call(pip_caller, pkgname, pipval=None):
+        self._parse_declaration(declaration)
+
+        if not self.pkgname and not self.path:
+            raise ValueError("Either a valid package name"
+                             " or a path must be present in the declaration.")
+
+    def _parse_declaration(self, declaration):
+        # Match flags with values
+        flag_with_value_pattern = (
+            r'(--[\w-]+='      # Match the flag name
+            r'\"[^\"]+\")'    # Match the value in double quotes
+        )
+        flag_values = re.findall(flag_with_value_pattern, declaration)
+        for flag_value in flag_values:
+            self.flags.append(flag_value)
+            declaration = declaration.replace(flag_value, '', 1)
+
+        # Match git URLs
+        git_url_pattern = (
+            r'(git\+https:\/\/[a-zA-Z0-9-_\/.]+)' # match the git URL
+            r'(?:#egg=([a-zA-Z0-9-_]+))?' # optional egg fragment
+        )
+        git_url_match = re.search(git_url_pattern, declaration)
+
+        # If there's a git URL match, remove it from the declaration
+        if git_url_match:
+            self.path = git_url_match.group(1)
+            if git_url_match.group(2):
+                self.pkgname = git_url_match.group(2)
+            declaration = declaration.replace(git_url_match.group(0), '', 1)
+
+        # Match local paths
+        local_pattern = (
+            r'(\.\/[a-zA-Z0-9-_]+\/?'          # Relative path starting with ./
+            r'|\.\.\/[a-zA-Z0-9-_]+\/?'        # Relative path starting with ../
+            r'|\/\w+\/?)'                      # Absolute path
+        )
+        local_match = re.search(local_pattern, declaration)
+
+        # If there's a local path match, remove it from the declaration
+        if local_match:
+            self.path = local_match.group(1)
+            declaration = declaration.replace(local_match.group(0), '', 1)
+
+        # Match flags
+        flags_pattern = (
+            r'(?:^|\s)'                        # Match start or whitespace
+            r'(-[a-zA-Z]|'                     # Single-letter flags
+            r'--\w+(?:-\w+)*)'                 # Double-dash flags
+        )
+        flags = re.findall(flags_pattern, declaration)
+        if flags:
+            self.flags.extend(flags)
+            if "-e" in self.flags:
+                self.is_editable = True
+
+        # Remove matched flags from declaration
+        for flag in self.flags:
+            declaration = declaration.replace(flag, '', 1)
+
+        # Match package details
+        pkg_pattern = (
+            r'(?P<name>[a-zA-Z0-9-_]+)'               # Name
+            r'('                                      # Start group for version specification(s)
+            r'((?P<specifier>[<>!=~]{1,2})'           # Version specifier
+            r'(?P<version>[0-9.a-zA-Z_-]+))'          # Version
+            r'((?P<multi_spec>,[<>!=~]{1,2}[0-9.a-zA-Z_-]+)*)?' # Multiple version specifications
+            r')?' # End optional group for version specification(s)
+        )
+        pkg_match = re.search(pkg_pattern, declaration)
+
+        # Populate attributes based on package details matches
+        if pkg_match:
+            self.pkgname = pkg_match.group("name")
+            specifier = pkg_match.group("specifier")
+            version = pkg_match.group("version")
+            multi_spec = pkg_match.group("multi_spec")
+
+            # If a specifier is present, prioritize it and consume version(s) greedily
+            if specifier:
+                self.specification = f"{specifier}{version}{multi_spec or ''}"
+            else:
+                declaration = declaration.replace(pkg_match.group("name"), '', 1)
+                version_match = re.search(r'(?P<version>\d+(\.\d+)*([a-zA-Z0-9]+)?)', declaration)
+                if version_match:
+                    self.specification = f"=={version_match.group(0)}"
+
+def construct_pip_call(pip_caller, parsed_declaration: ParsedPipDeclaration):
     pargs = ['install', '-v', '--upgrade']
-    if pipval:
-        ptokens = pipval.split()
-        flags = [x for x in ptokens if x.startswith('-')]
-        paths = [x for x in ptokens if Path(x).is_dir()]
-        pargs += flags
-        if paths:
-            pargs += paths
-        else:
-            pargs += [f"{pkgname}=={pipval}"]
-    else:
-        pargs += [pkgname]
-    return functools.partial(pip_caller, pargs)
 
+    if parsed_declaration.flags:
+        pargs += parsed_declaration.flags
+    if parsed_declaration.path:
+        pargs.append(parsed_declaration.path)
+    elif parsed_declaration.pkgname:
+        if parsed_declaration.specification:
+            pargs.append(f"{parsed_declaration.pkgname}{parsed_declaration.specification}")
+        else:
+            pargs.append(parsed_declaration.pkgname)
+
+    return functools.partial(pip_caller, pargs)
 
 if hasattr(sys, 'pypy_version_info'):
     ON_PYPY = True
