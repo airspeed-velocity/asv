@@ -64,6 +64,10 @@ dev = [
     "ruff",
     "isort >= 5.11.5",
 ]
+virtualenv = [
+    "virtualenv",
+    "packaging",
+]
 hg = [
     "python-hglib",
 ]
