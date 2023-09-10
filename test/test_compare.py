@@ -16,6 +16,7 @@ try:
 except ImportError:
     hglib = None
 
+from .tools import WIN
 
 MACHINE_FILE = abspath(join(dirname(__file__), 'asv-machine.json'))
 
@@ -200,7 +201,8 @@ def test_compare(capsys, tmpdir, example_results):
 
 @pytest.mark.parametrize("dvcs_type", [
     "git",
-    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))
+    pytest.param("hg", marks=pytest.mark.skipif(hglib is None or WIN,
+                                                reason="needs hglib"))
 ])
 def test_compare_name_lookup(dvcs_type, capsys, tmpdir, example_results):
     tmpdir = str(tmpdir)
