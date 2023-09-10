@@ -30,8 +30,10 @@ class PluginManager:
                 self.init_plugin(mod)
                 self._plugins.append(mod)
             except ModuleNotFoundError as err:
-                log.error(f"Couldn't load {name} because\n{err}")
-                continue  # Couldn't find mamba
+                if any(keyword in name for keyword in [".mamba", ".virtualenv", ".conda"]):
+                    continue  # Fine to not have these
+                else:
+                    log.error(f"Couldn't load {name} because\n{err}")
 
     def _load_plugin_by_name(self, name):
         prefix = plugins.__name__ + "."
