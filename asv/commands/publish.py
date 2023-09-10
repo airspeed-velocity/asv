@@ -282,5 +282,7 @@ class Publish(Command):
 
         util.write_json(os.path.join(conf.html_dir, "info.json"), {
             'asv-version': __version__,
-            'timestamp': util.datetime_to_js_timestamp(datetime.datetime.utcnow())
+            'timestamp': util.datetime_to_js_timestamp(
+                datetime.datetime.now(datetime.timezone.utc)
+            )
         })

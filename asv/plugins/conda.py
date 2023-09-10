@@ -39,7 +39,7 @@ def _find_conda():
 
     Raises
     ------
-    IOError
+    OSError
         If the executable cannot be found in either the CONDA_EXE environment
         variable or in the PATH.
 
@@ -203,7 +203,7 @@ class Conda(environment.Environment):
         """
         try:
             conda = _find_conda()
-        except IOError as e:
+        except OSError as e:
             raise util.UserError(str(e))
 
         with _conda_lock():

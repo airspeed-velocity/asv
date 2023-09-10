@@ -343,7 +343,7 @@ class Run(Command):
                                 skipped_benchmarks[(commit_hash, result.env_name)].add(key)
                             if skip_successful and not failed:
                                 skipped_benchmarks[(commit_hash, result.env_name)].add(key)
-                except IOError:
+                except OSError:
                     pass
 
         if interleave_rounds:

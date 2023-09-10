@@ -34,7 +34,7 @@ def iter_results_paths(results):
                 raise util.UserError(f"malformed {machine_json}")
         except util.UserError as err:
             machine_json_err = f"Skipping results: {err}"
-        except IOError:
+        except OSError:
             machine_json_err = f"Skipping results: could not load {machine_json}"
         else:
             machine_json_err = None
@@ -468,7 +468,7 @@ class Results:
         benchmark_version = benchmark['version']
 
         if started_at is None:
-            started_at = datetime.datetime.utcnow()
+            started_at = datetime.datetime.now(datetime.timezone.utc)
 
         new_stats = [None] * len(new_result)
 

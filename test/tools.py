@@ -47,7 +47,7 @@ WIN = (os.name == "nt")
 try:
     util.which('pypy')
     HAS_PYPY = True
-except (RuntimeError, IOError):
+except (RuntimeError, OSError):
     HAS_PYPY = hasattr(sys, 'pypy_version_info')
 
 
@@ -67,7 +67,7 @@ try:
     # Conda can install required Python versions on demand
     _check_conda()
     HAS_CONDA = True
-except (RuntimeError, IOError):
+except (RuntimeError, OSError):
     HAS_CONDA = False
 
 
@@ -81,7 +81,7 @@ except ImportError:
 try:
     util.which(f'python{PYTHON_VER2}')
     HAS_PYTHON_VER2 = True
-except (RuntimeError, IOError):
+except (RuntimeError, OSError):
     HAS_PYTHON_VER2 = False
 
 
@@ -117,7 +117,7 @@ def locked_cache_dir(config, cache_key, timeout=900, tag=None):
             try:
                 if util.load_json(tag_fn) != tag_content:
                     raise ValueError()
-            except (IOError, ValueError, util.UserError):
+            except (OSError, ValueError, util.UserError):
                 shutil.rmtree(cache_dir)
 
         if not os.path.isdir(cache_dir):
@@ -159,7 +159,7 @@ class Git:
     def __init__(self, path):
         self.path = abspath(path)
         self._git = util.which('git')
-        self._fake_date = datetime.datetime.now()
+        self._fake_date = datetime.datetime.now(datetime.timezone.utc)
 
     def run_git(self, args, chdir=True, **kwargs):
         if chdir:
@@ -228,7 +228,7 @@ class Hg:
     encoding = 'utf-8'
 
     def __init__(self, path):
-        self._fake_date = datetime.datetime.now()
+        self._fake_date = datetime.datetime.now(datetime.timezone.utc)
         if isinstance(path, bytes):
             path = path.decode('utf-8')
         self.path = abspath(path)
@@ -458,7 +458,10 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None, updated=None):
     })
 
     if updated is None:
-        updated = datetime.datetime(1970, 1, 1)
+        updated = datetime.datetime(
+            1970, 1, 1,
+            tzinfo = datetime.timezone.utc
+        )
 
     benchmark_version = sha256(os.urandom(16)).hexdigest()
 

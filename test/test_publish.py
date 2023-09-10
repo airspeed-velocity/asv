@@ -167,6 +167,7 @@ def test_publish_range_spec(generate_result_dir):
         assert set(data['revision_to_hash'].values()) == expected
 
 
+@pytest.mark.flaky_pypy
 def test_regression_simple(generate_result_dir):
     conf, repo, commits = generate_result_dir(5 * [1] + 5 * [10])
     tools.run_asv_with_conf(conf, "publish")
@@ -309,7 +310,7 @@ def test_regression_multiple_branches(dvcs_type, tmpdir):
 ])
 def test_regression_non_monotonic(dvcs_type, tmpdir):
     tmpdir = str(tmpdir)
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(datetime.timezone.utc)
 
     dates = [now + datetime.timedelta(days=i)
              for i in range(5)] + [now - datetime.timedelta(days=i) for i in range(5)]
@@ -399,7 +400,10 @@ def test_regression_atom_feed_update(dvcs_type, tmpdir):
     for commit, value in zip(commits, values[:-5]):
         commit_values[commit] = value
     conf = tools.generate_result_dir(tmpdir, dvcs, commit_values,
-                                     updated=datetime.datetime(1970, 1, 1))
+                                     updated=datetime.datetime(
+                                         1970, 1, 1,
+                                         tzinfo = datetime.timezone.utc)
+                                     )
 
     tools.run_asv_with_conf(conf, "publish")
 
@@ -412,7 +416,8 @@ def test_regression_atom_feed_update(dvcs_type, tmpdir):
     shutil.rmtree(conf.results_dir)
     shutil.rmtree(conf.html_dir)
     conf = tools.generate_result_dir(tmpdir, dvcs, commit_values,
-                                     updated=datetime.datetime(1990, 1, 1))
+                                     updated=datetime.datetime(1990, 1, 1,
+                                                               tzinfo=datetime.timezone.utc))
 
     tools.run_asv_with_conf(conf, "publish")
 

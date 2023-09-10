@@ -45,6 +45,7 @@ def test_matrix_environments(tmpdir, dummy_packages):
         assert output.startswith(str(env._requirements['asv_dummy_test_package_2']))
 
 
+@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
 def test_large_environment_matrix(tmpdir):
     # As seen in issue #169, conda can't handle using really long
     # directory names in its environment.  This creates an environment
@@ -71,6 +72,7 @@ def test_large_environment_matrix(tmpdir):
         env.create()
 
 
+@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
 def test_presence_checks(tmpdir, monkeypatch):
     conf = config.Config()
 
@@ -185,7 +187,7 @@ def test_matrix_expand_include():
     with pytest.raises(util.UserError):
         list(environment.iter_matrix(conf.environment_type, conf.pythons, conf))
 
-
+@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
 def test_matrix_expand_include_detect_env_type():
     conf = config.Config()
     conf.environment_type = None
@@ -387,6 +389,8 @@ def test_conda_run_executable(tmpdir):
         env.run_executable('conda', ['info'])
 
 
+@pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
+                    reason="Requires two usable Python versions")
 def test_environment_select():
     conf = config.Config()
     conf.environment_type = "conda"
@@ -457,6 +461,8 @@ def test_environment_select():
     assert len(environments) == 1
 
 
+@pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
+                    reason="Requires two usable Python versions")
 def test_environment_select_autodetect():
     conf = config.Config()
     conf.environment_type = "conda"
@@ -484,7 +490,7 @@ def test_environment_select_autodetect():
     environments = list(environment.get_environments(conf, ["conda:" + PYTHON_VER1]))
     assert len(environments) == 1
 
-
+@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
 def test_matrix_empty():
     conf = config.Config()
     conf.environment_type = ""
@@ -497,6 +503,7 @@ def test_matrix_empty():
     assert items == [PYTHON_VER1]
 
 
+@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
 def test_matrix_existing():
     conf = config.Config()
     conf.environment_type = "existing"
@@ -587,6 +594,7 @@ def test_pypy_virtualenv(tmpdir):
         assert "(major=" in output
 
 
+@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
 def test_environment_name_sanitization():
     conf = config.Config()
     conf.environment_type = "conda"
@@ -605,7 +613,8 @@ def test_environment_name_sanitization():
     pytest.param("conda",
                  marks=pytest.mark.skipif(not HAS_CONDA, reason="needs conda and conda-build")),
     pytest.param("virtualenv",
-                 marks=pytest.mark.skipif(not HAS_VIRTUALENV, reason="needs virtualenv"))
+                 marks=pytest.mark.skipif(not (HAS_PYTHON_VER2 and HAS_VIRTUALENV),
+                                          reason="needs virtualenv and python 3.7"))
 ])
 def test_environment_environ_path(environment_type, tmpdir, monkeypatch):
     # Check that virtualenv binary dirs are in the PATH
@@ -636,6 +645,9 @@ def test_environment_environ_path(environment_type, tmpdir, monkeypatch):
     assert output.strip() == "Hello python path"
 
 
+
+@pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
+                    reason="Requires two usable Python versions")
 def test_build_isolation(tmpdir):
     # build should not fail with build_cache on projects that have pyproject.toml
     tmpdir = str(tmpdir)

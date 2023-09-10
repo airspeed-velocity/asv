@@ -685,7 +685,7 @@ class Environment:
 
         try:
             info = self.load_info_file(self._path)
-        except (util.UserError, IOError):
+        except (util.UserError, OSError):
             return False
 
         expected_info = {
@@ -701,7 +701,7 @@ class Environment:
         for executable in ['pip', 'python']:
             try:
                 self.find_executable(executable)
-            except IOError:
+            except OSError:
                 return False
 
         try:
@@ -945,7 +945,7 @@ class Environment:
         """
         Find an executable (eg. python, pip) in the environment.
 
-        If not found, raises IOError
+        If not found, raises OSError
         """
 
         # Assume standard virtualenv/Conda layout
@@ -1036,7 +1036,7 @@ class ExistingEnvironment(Environment):
                  'import sys; '
                  'print(str(sys.version_info[0]) + "." + str(sys.version_info[1]))'
                  ]).strip()
-        except (util.ProcessError, OSError, IOError):
+        except (util.ProcessError, OSError):
             raise EnvironmentUnavailable()
 
         self._executable = executable
@@ -1059,7 +1059,7 @@ class ExistingEnvironment(Environment):
 
         try:
             util.which(python)
-        except IOError:
+        except OSError:
             return False
         else:
             return True

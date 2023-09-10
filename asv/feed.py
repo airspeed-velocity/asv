@@ -121,7 +121,7 @@ def write_atom(dest, entries, author, title, address, updated=None, link=None,
         if entries:
             updated = max(entry.updated for entry in entries)
         else:
-            updated = datetime.datetime.utcnow()
+            updated = datetime.datetime.now(datetime.timezone.utc)
 
     root = etree.Element(ATOM_NS + 'feed')
 
@@ -185,5 +185,8 @@ def _get_id(owner, date, content):
         h.update(",".encode('utf-8'))
 
     if date is None:
-        date = datetime.datetime(1970, 1, 1)
+        date = datetime.datetime(
+            1970, 1, 1,
+            tzinfo = datetime.timezone.utc
+        )
     return f"tag:{owner},{date.strftime('%Y-%m-%d')}:/{h.hexdigest()}"
