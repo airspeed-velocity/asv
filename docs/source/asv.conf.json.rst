@@ -199,7 +199,7 @@ call is used to install them after the environment is created.
 
     If an ``environment.yml`` file is present where
     ``asv`` is run, it will be used. To turn off this behavior,
-    ``conda_environment_file`` can be set to ``NONE``.
+    ``conda_environment_file`` can be set to ``IGNORE``.
 
 This option will cause ``asv`` to ignore the Python version in the
 environment creation, which is then assumed to be fixed by the
@@ -261,16 +261,25 @@ the project being benchmarked may specify in its ``setup.py`` file.
 .. note::
 
     At present, this functionality only supports dependencies that are
-    installable via ``pip`` or ``conda`` (depending on which
-    environment is used). If ``conda`` is specified as ``environment_type``
-    and you wish to install the package via ``pip``, then preface the package
-    name with ``pip+``. For example, ``emcee`` is only available from ``pip``,
-    so the package name to be used is ``pip+emcee``.
+    installable via ``pip`` or ``conda`` or ``mamba`` (depending on which
+    environment is used). If ``conda/mamba`` is specified as
+    ``environment_type`` and you wish to install the package via ``pip``, then
+    preface the package name with ``pip+``. For example, ``emcee`` is only
+    available from ``pip``, so the package name to be used is ``pip+emcee``.
 
     .. versionadded::0.6.0
 
       ``pip`` dependencies can now accept local (fully qualified) directories,
       and also take flags (e.g. ``-e``)
+
+    .. versionadded::0.6.1
+
+       ``asv`` can now optionally load dependencies from ``environment.yml`` if
+       ``conda`` or ``mamba`` is set as the ``environment_type``. As ``asv``
+       dependencies are explicitly mentioned only in the ``asv.conf.json``.
+       These specifications in ``environment.yml`` or another (user-defined)
+       file will be overridden by the environment matrix.
+
 
 The ``env`` and ``env_nobuild`` dictionaries can be used to set also
 environment variables::

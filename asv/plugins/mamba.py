@@ -32,8 +32,7 @@ class Mamba(environment.Environment):
     Manage an environment using mamba.
 
     Dependencies are installed using ``mamba``.  The benchmarked
-    project is installed using ``pip`` (since ``mamba`` doesn't have a
-    method to install from an arbitrary ``setup.py``).
+    project is installed using ``pip``.
     """
 
     tool_name = "mamba"
@@ -66,6 +65,12 @@ class Mamba(environment.Environment):
             if (Path("environment.yml")).exists():
                 log.debug("Using environment.yml")
                 self._mamba_environment_file = "environment.yml"
+        else:
+            if (Path(conf.conda_environment_file)).exists():
+                log.debug(f"Using {conf.conda_environment_file}")
+                self._mamba_environment_file = conf.conda_environment_file
+            else:
+                log.debug(f"Environment file {conf.conda_environment_file} not found, ignoring")
 
         super(Mamba, self).__init__(conf, python, requirements, tagged_env_vars)
         self.context = libmambapy.Context()
