@@ -680,7 +680,6 @@ def test_build_isolation(tmpdir):
     env.install_project(conf, repo, commit_hash)
 
 
-@pytest.mark.slow
 def test_custom_commands(tmpdir):
     # check custom install/uninstall/build commands work
     tmpdir = str(tmpdir)
@@ -770,7 +769,6 @@ def test_custom_commands(tmpdir):
         env.install_project(conf, repo, commit_hash)
 
 
-@pytest.mark.slow
 def test_installed_commit_hash(tmpdir):
     tmpdir = str(tmpdir)
 

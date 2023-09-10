@@ -44,9 +44,6 @@ def pytest_addoption(parser):
                            "with a return statement with selenium.webdriver object, for "
                            "example 'return Chrome()'"))
     parser.addoption(
-        "--runslow", action="store_true", default=False, help="run slow tests"
-    )
-    parser.addoption(
         "--runflaky", action="store_true", default=False, help="run flaky tests"
     )
     parser.addoption("--environment-type", action="store", default=None,
@@ -427,19 +424,10 @@ def use_rangemedian(request):
 
 def pytest_configure(config):
     config.addinivalue_line("markers",
-        "slow: Tests that are very slow.")
-    config.addinivalue_line("markers",
         "flaky_pypy: Tests that are flaky on pypy.")
 
 
 def pytest_collection_modifyitems(config, items):
-    if config.getoption("--runslow"):
-        # --runslow given in cli: do not skip slow tests
-        return
-    skip_slow = pytest.mark.skip(reason="need --runslow option to run")
-    for item in items:
-        if "slow" in item.keywords:
-            item.add_marker(skip_slow)
     if config.getoption("--runflaky"):
         # --runflaky given in cli: do not skip flaky tests
         return
