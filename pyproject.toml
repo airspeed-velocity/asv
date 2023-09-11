@@ -25,7 +25,7 @@ dynamic = [
     "version",
 ]
 dependencies = [
-    "asv-runner>=v0.0.9",
+    "asv-runner>=v0.1.0",
     "json5",
     "tabulate",
     "colorama; platform_system == 'Windows'",

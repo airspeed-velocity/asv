@@ -1,5 +1,5 @@
-0.6.1 (TBD)
------------
+0.6.1 (2023-09-11)
+----------------------------
 
 New Features
 ^^^^^^^^^^^^
@@ -21,7 +21,7 @@ Other Changes and Additions
 - ``asv`` now uses Github Actions exclusively for Windows and Linux
 
 0.6.0 (2023-08-20)
-------------------
+----------------------------
 
 New Features
 ^^^^^^^^^^^^
