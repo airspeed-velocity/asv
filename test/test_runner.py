@@ -450,3 +450,33 @@ def test_timeraw_benchmark(benchmarks_fixture):
     assert times['timeraw_examples.TimerawSuite.timeraw_setup'].result is not None
     assert 'timed out' in times['timeraw_examples.TimerawSuite.timeraw_timeout'].stderr
     assert '0' * 7 * 3 in times['timeraw_examples.TimerawSuite.timeraw_count'].stderr
+
+
+def test_asv_package_not_on_sys_path(capsys, benchmarks_fixture):
+    # Check benchmark script directory is not prepended to sys.path
+
+    conf, repo, envs, commit_hash = benchmarks_fixture
+
+    with open(os.path.join('benchmark', 'sys_path.py'), 'w') as f:
+        f.write('import sys; print(repr(sys.path[0]), flush=True)')
+
+    try:
+        benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash], check=True)
+    except util.UserError:
+        pass
+
+    out, err = capsys.readouterr()
+
+    assert repr(os.path.dirname(runner.BENCHMARK_RUN_SCRIPT)) not in out
+
+
+def test_builtin_statistics_module_not_shadowed(benchmarks_fixture):
+    # Crashes with the following exception on stderr if builtin statistics module is shadowed:
+    #   ImportError: cannot import name 'pstdev' from 'statistics' (.../asv/statistics.py)
+
+    conf, repo, envs, commit_hash = benchmarks_fixture
+
+    with open(os.path.join('benchmark', 'no_shadow.py'), 'w') as f:
+        f.write('from statistics import pstdev')
+
+    benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
