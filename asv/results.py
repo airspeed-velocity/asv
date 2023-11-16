@@ -932,7 +932,7 @@ def format_benchmark_result(results, benchmark):
         if failure_count == 0:
             info = "ok"
 
-        display_result = [(v, get_err(v, s) if s is not None else None)
+        display_result = [(v, get_err(v, s) if s else None)
                           for v, s in zip(result, stats)]
         display = _format_benchmark_result(display_result, benchmark)
         display = "\n".join(display).strip()
