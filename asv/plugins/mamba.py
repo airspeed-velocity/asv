@@ -113,11 +113,11 @@ class Mamba(environment.Environment):
             # For named environments
             env_file_name = self._mamba_environment_file
             env_data = load(Path(env_file_name).open(), Loader=Loader)
-            mamba_pkgs = [x for x in env_data.get("dependencies") if isinstance(x, str)]
-            self._mamba_channels += [x for x in env_data.get("channels") if isinstance(x, str)]
+            mamba_pkgs = [x for x in env_data.get("dependencies", []) if isinstance(x, str)]
+            self._mamba_channels += [x for x in env_data.get("channels", []) if isinstance(x, str)]
             self._mamba_channels = list(dict.fromkeys(self._mamba_channels).keys())
             # Handle possible pip keys
-            pip_maybe = [x for x in env_data.get("dependencies") if isinstance(x, dict)]
+            pip_maybe = [x for x in env_data.get("dependencies", []) if isinstance(x, dict)]
             if len(pip_maybe) == 1:
                 try:
                     pip_args += pip_maybe[0]["pip"]
