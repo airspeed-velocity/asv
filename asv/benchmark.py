@@ -22,6 +22,7 @@ internal commands:
       Run a Unix socket forkserver.
 """
 
+import os
 import sys
 
 from asv_runner.discovery import _discover
@@ -49,6 +50,17 @@ commands = {
 
 
 def main():
+    # Remove asv package directory from `sys.path`. This script file resides
+    # there although it's not part of the package, so Python prepends it to
+    # `sys.path` on start which can shadow other modules. On Python 3.11+ it is
+    # possible to use `PYTHONSAFEPATH` to prevent this, but the script needs to
+    # work for older versions of Python.
+    if (
+        not getattr(sys.flags, 'safe_path', False)  # Python 3.11+ only.
+        and sys.path[0] == os.path.dirname(os.path.abspath(__file__))
+    ):
+        sys.path.pop(0)
+
     if len(sys.argv) < 2:
         _help([])
         sys.exit(1)
