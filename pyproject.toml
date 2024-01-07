@@ -89,8 +89,6 @@ license-files = [
     "LICENSE.rst",
 ]
 
-[tool.setuptools.packages.find]
-namespaces = false
 [tool.setuptools.exclude-package-data]
 "*" = ["*.sh"]
 
