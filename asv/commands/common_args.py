@@ -213,7 +213,7 @@ class PythonArgAction(argparse.Action):
 def add_environment(parser, default_same=False):
     help = """Specify the environment and Python versions for running the
         benchmarks. String of the format 'environment_type:python_version',
-        for example 'conda:2.7'. If the Python version is not specified,
+        for example 'conda:3.12'. If the Python version is not specified,
         all those listed in the configuration file are run. The special
         environment type 'existing:/path/to/python' runs the benchmarks
         using the given Python interpreter; if the path is omitted,

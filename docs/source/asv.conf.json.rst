@@ -226,7 +226,7 @@ If provided, it must be a dictionary, containing some of the keys
 
     "matrix": {
         "req": {
-            "numpy": ["1.7", "1.8"],
+            "numpy": ["1.25", "1.26"],
             "Cython": []
             "six": ["", null]
         },
@@ -249,7 +249,7 @@ version and not installed at all::
 
     "matrix": {
         "req": {
-            "numpy": ["1.7", "1.8"],
+            "numpy": ["1.25", "1.26"],
             "Cython": []
             "six": ["", null],
         }
@@ -351,14 +351,14 @@ For example::
     "pythons": ["3.8", "3.9"],
     "matrix": {
         "req": {
-            "numpy": ["1.7", "1.8"],
+            "numpy": ["1.25", "1.26"],
             "Cython": ["", null],
             "colorama": ["", null]
         },
         "env": {"FOO": ["1", "2"]},
     },
     "exclude": [
-        {"python": "3.8", "req": {"numpy": "1.7"}},
+        {"python": "3.8", "req": {"numpy": "1.25"}},
         {"sys_platform": "(?!win32).*", "req": {"colorama": ""}},
         {"sys_platform": "win32", "req": {"colorama": null}},
         {"env": {"FOO": "1"}},
@@ -368,12 +368,12 @@ This will generate all combinations of Python version and items in the
 matrix, except those with Python 3.8 and Numpy 3.9. In other words,
 the combinations::
 
-    python==3.8 numpy==1.8 Cython==latest (colorama==latest) FOO=2
-    python==3.8 numpy==1.8 (colorama==latest) FOO=2
-    python==3.9 numpy==1.7 Cython==latest (colorama==latest) FOO=2
-    python==3.9 numpy==1.7 (colorama==latest) FOO=2
-    python==3.9 numpy==1.8 Cython==latest (colorama==latest) FOO=2
-    python==3.9 numpy==1.8 (colorama==latest) FOO=2
+    python==3.8 numpy==1.26 Cython==latest (colorama==latest) FOO=2
+    python==3.8 numpy==1.26 (colorama==latest) FOO=2
+    python==3.9 numpy==1.25 Cython==latest (colorama==latest) FOO=2
+    python==3.9 numpy==1.25 (colorama==latest) FOO=2
+    python==3.9 numpy==1.26 Cython==latest (colorama==latest) FOO=2
+    python==3.9 numpy==1.26 (colorama==latest) FOO=2
 
 The ``colorama`` package will be installed only if the current
 platform is Windows.
@@ -402,9 +402,9 @@ The exclude rules are not applied to includes.
 For example::
 
     "include": [
-        {"python": "3.9", "req": {"numpy": "1.8.2"}, "env": {"FOO": "true"}},
+        {"python": "3.9", "req": {"numpy": "1.26"}, "env": {"FOO": "true"}},
         {"platform": "win32", "environment_type": "conda",
-         "req": {"python": "2.7", "libpython": ""}}
+         "req": {"python": "3.12", "libpython": ""}}
     ]
 
 This corresponds to two additional environments. One runs on Python 3.9
