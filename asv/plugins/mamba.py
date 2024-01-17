@@ -11,7 +11,13 @@ try:
 except ImportError:
     from yaml import Loader
 
-from mamba.api import libmambapy, MambaSolver
+try:
+    from mamba.api import MambaSolver
+    import libmambapy
+    _HAS_LIBMAMBAPY = True
+except ImportError:
+    _HAS_LIBMAMBAPY = False
+
 
 from .. import environment, util
 from ..console import log
@@ -51,6 +57,8 @@ class Mamba(environment.Environment):
             Dictionary mapping a PyPI package name to a version
             identifier string.
         """
+        if not _HAS_LIBMAMBAPY:
+            raise ImportError("Failed to import 'libmambapy' Python module.")
         self._python = python
         self._requirements = requirements
         self._mamba_channels = conf.conda_channels
