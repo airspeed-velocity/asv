@@ -59,8 +59,8 @@ that your benchmarks may produce, pass the ``--show-stderr`` flag::
 
        asv run --show-stderr
 
-Finally, there is a special command, ``asv dev``, that uses all of
-these features and is equivalent to::
+Finally, a quick way to test out the benchmark suite before doing a full run is to use all of
+these features together with::
 
        asv run --python=same --quick --show-stderr --dry-run
 
