@@ -303,10 +303,6 @@ for this machine::
 
 .. note::
 
-   There is a special version of ``asv run`` that is useful when
-   developing benchmarks, called ``asv dev``.  See
-   :ref:`writing-benchmarks` for more information.
-
    You can also do a validity check for the benchmark suite without
    running benchmarks, using ``asv check``.
 
