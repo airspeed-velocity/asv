@@ -440,8 +440,11 @@ def get_environment_class_by_name(environment_type):
     for cls in util.iter_subclasses(Environment):
         if cls.tool_name == environment_type:
             return cls
+    tool_names = [cls.tool_name for cls in util.iter_subclasses(Environment)]
     raise EnvironmentUnavailable(
-        f"Unknown environment type '{environment_type}'")
+        f"Unknown environment type '{environment_type}'. "
+        f"Allowed values based on existing plugins are {tool_names}."
+    )
 
 
 def is_existing_only(environments):
