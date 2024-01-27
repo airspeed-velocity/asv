@@ -64,6 +64,9 @@ these features together with::
 
        asv run --python=same --quick --show-stderr --dry-run
 
+.. versionchanged:: 0.6.0
+   This replaces the now removed ``asv dev`` command.
+
 You may also want to only do a basic check whether the benchmark suite
 is well-formatted, without actually running any benchmarks::
 
