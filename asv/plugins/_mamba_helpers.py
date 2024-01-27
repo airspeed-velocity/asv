@@ -1,9 +1,10 @@
-# Licensed under a 3-clause BSD style license FOR Mamba!! - see LICENSE in mamba-org/mamba
+# Licensed under a 3-clause BSD style license FOR Mamba - see LICENSE in mamba-org/mamba
+# Also covered by the 3-clause BSD style license FOR boa - see LICENSE in mamba-org/boa
 # Copyright 2019 QuantStack and the Mamba contributors.
 # Very lightly edited / simplified for use within asv
 import os
 import urllib.parse
-from collections import OrderedDict
+import collections
 
 import libmambapy
 from conda.base.constants import ChannelPriority
@@ -34,7 +35,7 @@ def get_index(
     check_allowlist(all_channels)
 
     # Remove duplicates but retain order
-    all_channels = list(OrderedDict.fromkeys(all_channels))
+    all_channels = list(collections.OrderedDict.fromkeys(all_channels))
 
     dlist = libmambapy.DownloadTargetList()
 
@@ -65,10 +66,23 @@ def get_index(
                 channel, channel_platform, full_url, pkgs_dirs, repodata_fn
             )
 
+            needs_finalising = sd.download_and_check_targets(dlist)
             index.append(
-                (sd, {"platform": channel_platform, "url": url, "channel": channel})
+                (
+                    sd,
+                    {
+                        "platform": channel_platform,
+                        "url": url,
+                        "channel": channel,
+                        "needs_finalising": needs_finalising,
+                    },
+                )
             )
-            dlist.add(sd)
+
+    for sd, info in index:
+        if info["needs_finalising"]:
+            sd.finalize_checks()
+        dlist.add(sd)
 
     is_downloaded = dlist.download(libmambapy.MAMBA_DOWNLOAD_FAILFAST)
 
