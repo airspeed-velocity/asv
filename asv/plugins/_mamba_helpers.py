@@ -1,11 +1,11 @@
 # Licensed under a 3-clause BSD style license FOR Mamba!! - see LICENSE in mamba-org/mamba
 # Copyright 2019 QuantStack and the Mamba contributors.
+# Very lightly edited / simplified for use within asv
 import os
 import urllib.parse
 from collections import OrderedDict
 
 import libmambapy
-import libmambapy as api
 from conda.base.constants import ChannelPriority
 from conda.base.context import context
 from conda.core.index import check_allowlist
@@ -36,7 +36,7 @@ def get_index(
     # Remove duplicates but retain order
     all_channels = list(OrderedDict.fromkeys(all_channels))
 
-    dlist = api.DownloadTargetList()
+    dlist = libmambapy.DownloadTargetList()
 
     index = []
 
@@ -54,14 +54,14 @@ def get_index(
         return spec
 
     all_channels = list(map(fixup_channel_spec, all_channels))
-    pkgs_dirs = api.MultiPackageCache(context.pkgs_dirs)
-    api.create_cache_dir(str(pkgs_dirs.first_writable_path))
+    pkgs_dirs = libmambapy.MultiPackageCache(context.pkgs_dirs)
+    libmambapy.create_cache_dir(str(pkgs_dirs.first_writable_path))
 
-    for channel in api.get_channels(all_channels):
+    for channel in libmambapy.get_channels(all_channels):
         for channel_platform, url in channel.platform_urls(with_credentials=True):
             full_url = CondaHttpAuth.add_binstar_token(url)
 
-            sd = api.SubdirData(
+            sd = libmambapy.SubdirData(
                 channel, channel_platform, full_url, pkgs_dirs, repodata_fn
             )
 
@@ -70,7 +70,7 @@ def get_index(
             )
             dlist.add(sd)
 
-    is_downloaded = dlist.download(api.MAMBA_DOWNLOAD_FAILFAST)
+    is_downloaded = dlist.download(libmambapy.MAMBA_DOWNLOAD_FAILFAST)
 
     if not is_downloaded:
         raise RuntimeError("Error downloading repodata.")
