@@ -443,7 +443,7 @@ def get_environment_class_by_name(environment_type):
     tool_names = [cls.tool_name for cls in util.iter_subclasses(Environment)]
     raise EnvironmentUnavailable(
         f"Unknown environment type '{environment_type}'. "
-        f"Allowed values are {tool_names}."
+        f"Allowed values based on existing plugins are {tool_names}."
     )
 
 
