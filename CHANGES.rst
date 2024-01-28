@@ -10,6 +10,7 @@ API Changes
 Bug Fixes
 ^^^^^^^^^
 - The ``mamba`` plugin works correctly for newer versions (>=1.5) of ``libmambapy`` (#1372)
+- Fixed a bug where ``matrix`` requirements were dropped if an environment file was specified. (#1373)
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
