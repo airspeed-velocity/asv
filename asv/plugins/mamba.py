@@ -55,8 +55,6 @@ class Mamba(environment.Environment):
         self._requirements = requirements
         self._mamba_channels = conf.conda_channels
         self._mamba_environment_file = None
-        if "conda-forge" not in conf.conda_channels and not os.getenv("MAMBARC"):
-            self._mamba_channels += ["conda-forge"]
 
         if conf.conda_environment_file == "IGNORE":
             log.debug("Skipping environment file due to conda_environment_file set to IGNORE")

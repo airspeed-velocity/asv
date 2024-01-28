@@ -285,9 +285,7 @@ the project being benchmarked may specify in its ``setup.py`` file.
        The ``mamba`` plugin will now take channels and channel priority from the
        ``MAMBARC`` environment variable if it is provided. e.g.
        ``MAMBARC=$HOME/.condarc asv run``. By default user ``.rc`` files are not
-       read to enforce isolation. The ``conda-forge`` channel is used as a
-       default only if neither an environment file nor the ``MAMBARC`` variable
-       is set.
+       read to enforce isolation.
 
 The ``env`` and ``env_nobuild`` dictionaries can be used to set also
 environment variables::
