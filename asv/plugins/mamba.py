@@ -4,6 +4,7 @@ import os
 import re
 from pathlib import Path
 
+import yaml
 from yaml import load
 
 try:
@@ -54,7 +55,7 @@ class Mamba(environment.Environment):
         self._requirements = requirements
         self._mamba_channels = conf.conda_channels
         self._mamba_environment_file = None
-        if "conda-forge" not in conf.conda_channels:
+        if "conda-forge" not in conf.conda_channels and not os.getenv("MAMBARC"):
             self._mamba_channels += ["conda-forge"]
 
         if conf.conda_environment_file == "IGNORE":
@@ -74,6 +75,30 @@ class Mamba(environment.Environment):
         super(Mamba, self).__init__(conf, python, requirements, tagged_env_vars)
         self.context = libmambapy.Context()
         self.context.target_prefix = self._path
+        # Handle MAMBARC environment variable
+        mambarc_path = Path(os.getenv("MAMBARC", ""))
+        if mambarc_path.is_file():
+            with mambarc_path.open() as f:
+                condarc_data = yaml.safe_load(f)
+                self._apply_condarc_settings(condarc_data)
+
+    def _apply_condarc_settings(self, condarc_data):
+        # Apply channel settings
+        if 'channels' in condarc_data:
+            self.context.channels = condarc_data['channels']
+
+        # Apply channel priority settings
+        channel_priority_map = {
+            'strict': libmambapy.ChannelPriority.kStrict,
+            'flexible': libmambapy.ChannelPriority.kFlexible,
+            'disabled': libmambapy.ChannelPriority.kDisabled
+        }
+        if 'channel_priority' in condarc_data:
+            priority_str = condarc_data['channel_priority']
+            if priority_str in channel_priority_map:
+                self.context.channel_priority = channel_priority_map[priority_str]
+            else:
+                log.debug(f"Unknown channel priority: {priority_str}")
 
     @classmethod
     def matches(cls, python):
