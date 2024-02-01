@@ -106,7 +106,7 @@ def test_run_publish(capfd, basic_conf):
     filename = glob.glob(join(tmpdir, 'html', 'graphs', 'arch-x86_64',
                               'asv_dummy_test_package_1',
                               'asv_dummy_test_package_2-' + tools.DUMMY2_VERSIONS[1],
-                              'branch-main',
+                              'branch-master',
                               'cpu-Blazingly fast',
                               'env-SOME_TEST_VAR-1',
                               'machine-orangutan',

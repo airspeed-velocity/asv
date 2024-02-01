@@ -215,7 +215,7 @@ def test_get_branch_commits(two_branch_repo_case):
         ],
         "stable": [
             "Revision 5",
-            "Merge main",
+            "Merge master",
             "Revision 2",
             "Revision 1",
         ],
@@ -230,18 +230,18 @@ def test_get_branch_commits(two_branch_repo_case):
 
 @pytest.mark.parametrize("existing, expected", [
     # No existing commit, we expect all commits in commit order,
-    # main branch first
+    # master branch first
     ([], ["Revision 6", "Revision 4", "Merge stable", "Revision 3",
-          "Revision 1", "Revision 5", "Merge main", "Revision 2"]),
+          "Revision 1", "Revision 5", "Merge master", "Revision 2"]),
 
     # New commits on each branch
-    (["Revision 4", "Merge main"], ["Revision 6", "Revision 5"]),
+    (["Revision 4", "Merge master"], ["Revision 6", "Revision 5"]),
 
     # No new commits
     (["Revision 6", "Revision 5"], []),
 
     # Missing all commits on one branch (case of new branch added in config)
-    (["Revision 6"], ["Revision 5", "Merge main", "Revision 2", "Revision 1"]),
+    (["Revision 6"], ["Revision 5", "Merge master", "Revision 2", "Revision 1"]),
 ], ids=["all", "new", "no-new", "new-branch-added-in-config"])
 def test_get_new_branch_commits(two_branch_repo_case, existing, expected):
     dvcs, main, r, conf = two_branch_repo_case

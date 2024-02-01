@@ -230,7 +230,7 @@ class NoRepository(Repo):
     """
 
     dvcs = "none"
-    _default_branch = "main"
+    _default_branch = "master"
 
     def __init__(self, url=None, path=None):
         self.url = None

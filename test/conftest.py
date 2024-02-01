@@ -150,7 +150,7 @@ def two_branch_repo_case(request, tmpdir):
         |
         | o  Revision 5 (stable)
         | |
-        | o  Merge main
+        | o  Merge master
         |/|
         o |  Revision 4
         | |
@@ -166,30 +166,30 @@ def two_branch_repo_case(request, tmpdir):
     dvcs_type = request.param
     tmpdir = str(tmpdir)
     if dvcs_type == "git":
-        main = f"{util.git_default_branch()}"
+        master = f"{util.git_default_branch()}"
     elif dvcs_type == "hg":
-        main = "default"
+        master = "default"
     dvcs = tools.generate_repo_from_ops(tmpdir, dvcs_type, [
         ("commit", 1),
-        ("checkout", "stable", main),
+        ("checkout", "stable", master),
         ("commit", 2),
-        ("checkout", main),
+        ("checkout", master),
         ("commit", 3),
         ("merge", "stable"),
         ("commit", 4),
         ("checkout", "stable"),
-        ("merge", main, "Merge main"),
+        ("merge", master, "Merge master"),
         ("commit", 5),
-        ("checkout", main),
+        ("checkout", master),
         ("commit", 6),
     ])
 
     conf = config.Config()
-    conf.branches = [main, "stable"]
+    conf.branches = [master, "stable"]
     conf.repo = dvcs.path
     conf.project = join(tmpdir, "repo")
     r = repo.get_repo(conf)
-    return dvcs, main, r, conf
+    return dvcs, master, r, conf
 
 
 @pytest.fixture
@@ -354,7 +354,7 @@ def benchmarks_fixture(tmpdir):
     d['env_dir'] = "env"
     d['benchmark_dir'] = 'benchmark'
     d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
-    d['branches'] = ["main"]
+    d['branches'] = ["master"]
     conf = config.Config.from_json(d)
 
     repo = get_repo(conf)
