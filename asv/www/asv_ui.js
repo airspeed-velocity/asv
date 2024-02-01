@@ -106,7 +106,7 @@ $(document).ready(function() {
             $.asv.load_graph_data(
                 graph_url
             ).done(function (data) {
-                var params = $.asv.master_json.benchmarks[benchmark_basename].params;
+                var params = $.asv.main_json.benchmarks[benchmark_basename].params;
                 data = $.asv.filter_graph_data_idx(data, 0, parameter_idx, params);
                 var options = {
                     colors: ['#000'],

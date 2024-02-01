@@ -59,9 +59,9 @@ class Run(Command):
                 Run a benchmark suite.
 
                 examples:
-                  asv run master             run for one branch
-                  asv run master^!           run for one commit (git)
-                  asv run "--merges master"  run for only merge commits (git)
+                  asv run main             run for one branch
+                  asv run main^!           run for one commit (git)
+                  asv run "--merges main"  run for only merge commits (git)
                 """))
 
         cls._setup_arguments(parser)

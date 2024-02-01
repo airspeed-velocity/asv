@@ -19,9 +19,9 @@ $(document).ready(function() {
     }
 
     function get_benchmarks_by_groups() {
-        var master_json = $.asv.master_json;
+        var main_json = $.asv.main_json;
         var groups = {};
-        $.each(master_json.benchmarks, function(bm_name, bm) {
+        $.each(main_json.benchmarks, function(bm_name, bm) {
             var i = bm_name.indexOf('.');
             var group = bm_name.slice(0, i);
             var name = bm_name.slice(i + 1);
@@ -103,7 +103,7 @@ $(document).ready(function() {
 
     function make_summary() {
         var summary_display = $('#summarygrid-display');
-        var master_json = $.asv.master_json;
+        var main_json = $.asv.main_json;
         var summary_container = $('<div/>');
 
         if (summary_loaded) {
@@ -116,7 +116,7 @@ $(document).ready(function() {
             group_container.append($('<h1>' + group + '</h1>'));
             summary_display.append(group_container);
             $.each(benchmarks, function(i, bm_name) {
-                var bm = $.asv.master_json.benchmarks[bm_name];
+                var bm = $.asv.main_json.benchmarks[bm_name];
                 group_container.append(benchmark_container(bm));
             });
         });

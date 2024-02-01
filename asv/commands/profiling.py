@@ -169,7 +169,7 @@ class Profile(Command):
             if env.python != "{0}.{1}".format(*sys.version_info[:2]):
                 raise util.UserError(
                     "Profiles must be run in the same version of Python as the "
-                    "asv master process")
+                    "asv main process")
 
             benchmarks = Benchmarks.discover(conf, repo, environments,
                                              [commit_hash],

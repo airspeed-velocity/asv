@@ -3,8 +3,8 @@
 $(document).ready(function() {
     /* GLOBAL STATE */
     /* The index.json content as returned from the server */
-    var master_timestamp = '';
-    var master_json = {};
+    var main_timestamp = '';
+    var main_json = {};
     /* Extra pages: {name: show_function} */
     var loaded_pages = {};
     /* Previous window scroll positions */
@@ -284,7 +284,7 @@ $(document).ready(function() {
         }
         else {
             $.ajax({
-                url: url + '?timestamp=' + $.asv.master_timestamp,
+                url: url + '?timestamp=' + $.asv.main_timestamp,
                 dataType: "json",
                 cache: true
             }).done(function(data) {
@@ -417,17 +417,17 @@ $(document).ready(function() {
     }
 
     function get_commit_hash(revision) {
-        var commit_hash = master_json.revision_to_hash[revision];
+        var commit_hash = main_json.revision_to_hash[revision];
         if (commit_hash) {
             // Return printable commit hash
-            commit_hash = commit_hash.slice(0, master_json.hash_length);
+            commit_hash = commit_hash.slice(0, main_json.hash_length);
         }
         return commit_hash;
     }
 
     function get_revision(commit_hash) {
         var rev = null;
-        $.each(master_json.revision_to_hash, function(revision, full_commit_hash) {
+        $.each(main_json.revision_to_hash, function(revision, full_commit_hash) {
             if (full_commit_hash.startsWith(commit_hash)) {
                 rev = revision;
                 // break the $.each loop
@@ -438,15 +438,15 @@ $(document).ready(function() {
     }
 
     function init_index() {
-        /* Fetch the master index.json and then set up the page elements
+        /* Fetch the main index.json and then set up the page elements
            based on it. */
         $.ajax({
-            url: "index.json" + '?timestamp=' + $.asv.master_timestamp,
+            url: "index.json" + '?timestamp=' + $.asv.main_timestamp,
             dataType: "json",
             cache: true
         }).done(function (index) {
-            master_json = index;
-            $.asv.master_json = index;
+            main_json = index;
+            $.asv.main_json = index;
 
             /* Page title */
             var project_name = $("#project-name")[0];
@@ -475,8 +475,8 @@ $(document).ready(function() {
             dataType: "json",
             cache: false
         }).done(function (info) {
-            master_timestamp = info['timestamp'];
-            $.asv.master_timestamp = master_timestamp;
+            main_timestamp = info['timestamp'];
+            $.asv.main_timestamp = main_timestamp;
             init_index();
         }).fail(function () {
             $.asv.ui.network_error();
@@ -503,8 +503,8 @@ $(document).ready(function() {
     this.get_commit_hash = get_commit_hash;
     this.get_revision = get_revision;
 
-    this.master_timestamp = master_timestamp; /* Updated after info.json loads */
-    this.master_json = master_json; /* Updated after index.json loads */
+    this.main_timestamp = main_timestamp; /* Updated after info.json loads */
+    this.main_json = main_json; /* Updated after index.json loads */
 
     this.format_date_yyyymmdd = format_date_yyyymmdd;
     this.format_date_yyyymmdd_hhmm = format_date_yyyymmdd_hhmm;

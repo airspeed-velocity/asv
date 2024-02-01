@@ -40,7 +40,7 @@ $(document).ready(function() {
             skip_reload = false;
             $('#regressions-body').append(message);
             $.ajax({
-                url: 'regressions.json' + '?timestamp=' + $.asv.master_timestamp,
+                url: 'regressions.json' + '?timestamp=' + $.asv.main_timestamp,
                 dataType: "json",
                 cache: true
             }).done(function (data) {
@@ -75,10 +75,10 @@ $(document).ready(function() {
 
     function display_data(data, params) {
         var main_div = $('<div/>');
-        var branches = $.asv.master_json.params['branch'];
+        var branches = $.asv.main_json.params['branch'];
         var all_ignored_keys = {};
 
-        ignore_key_prefix = 'asv-r-' + $.asv.master_json.project;
+        ignore_key_prefix = 'asv-r-' + $.asv.main_json.project;
 
         if (branches && branches.length > 1) {
             /* Add a branch selector */
@@ -234,7 +234,7 @@ $(document).ready(function() {
             }
 
             var benchmark_basename = benchmark_name.replace(/\([\s\S]*/, '');
-            var benchmark = $.asv.master_json.benchmarks[benchmark_basename];
+            var benchmark = $.asv.main_json.benchmarks[benchmark_basename];
             var url_params = {};
 
             $.each(param_dict, function (key, value) {
@@ -276,14 +276,14 @@ $(document).ready(function() {
                 var benchmark_link = $('<a/>').attr('href', benchmark_url).text(benchmark_name);
                 row.append($('<td/>').append(benchmark_link));
 
-                var date_fmt = new Date($.asv.master_json.revision_to_date[revs[1]]);
+                var date_fmt = new Date($.asv.main_json.revision_to_date[revs[1]]);
                 row.append($('<td class="date"/>').text($.asv.format_date_yyyymmdd_hhmm(date_fmt)));
 
                 var commit_td = $('<td/>');
 
                 if (commit_a) {
-                    if ($.asv.master_json.show_commit_url.match(/.*\/\/github.com\//)) {
-                        var commit_url = ($.asv.master_json.show_commit_url + '../compare/'
+                    if ($.asv.main_json.show_commit_url.match(/.*\/\/github.com\//)) {
+                        var commit_url = ($.asv.main_json.show_commit_url + '../compare/'
                                           + commit_a + '...' + commit_b);
                         commit_td.append(
                             $('<a/>').attr('href', commit_url).text(commit_a + '..' + commit_b));
@@ -293,7 +293,7 @@ $(document).ready(function() {
                     }
                 }
                 else {
-                    var commit_url = $.asv.master_json.show_commit_url + commit_b;
+                    var commit_url = $.asv.main_json.show_commit_url + commit_b;
                     commit_td.append(
                         $('<a/>').attr('href', commit_url).text(commit_b));
                 }
@@ -389,7 +389,7 @@ $(document).ready(function() {
             }
 
             var benchmark_basename = benchmark_name.replace(/\(.*/, '');
-            var benchmark = $.asv.master_json.benchmarks[benchmark_basename];
+            var benchmark = $.asv.main_json.benchmarks[benchmark_basename];
             var url_params = {};
 
             $.each(param_dict, function (key, value) {
@@ -422,8 +422,8 @@ $(document).ready(function() {
                 }
 
                 if (commit_a) {
-                    if ($.asv.master_json.show_commit_url.match(/.*\/\/github.com\//)) {
-                        var commit_url = ($.asv.master_json.show_commit_url + '../compare/'
+                    if ($.asv.main_json.show_commit_url.match(/.*\/\/github.com\//)) {
+                        var commit_url = ($.asv.main_json.show_commit_url + '../compare/'
                                           + commit_a + '...' + commit_b);
                         commit_td.append(
                             $('<a/>').attr('href', commit_url).text(commit_a + '..' + commit_b));
@@ -433,7 +433,7 @@ $(document).ready(function() {
                     }
                 }
                 else {
-                    var commit_url = $.asv.master_json.show_commit_url + commit_b;
+                    var commit_url = $.asv.main_json.show_commit_url + commit_b;
                     commit_td.append(
                         $('<a/>').attr('href', commit_url).text(commit_b));
                 }
@@ -451,7 +451,7 @@ $(document).ready(function() {
             row.append($('<td/>').append(benchmark_link));
 
             var date_td = $('<td class="date"/>');
-            var date_fmt = new Date($.asv.master_json.revision_to_date[jumps[jumps.length-1][1]]);
+            var date_fmt = new Date($.asv.main_json.revision_to_date[jumps[jumps.length-1][1]]);
             date_td.text($.asv.format_date_yyyymmdd_hhmm(date_fmt));
             row.append(date_td);
 
@@ -487,10 +487,10 @@ $(document).ready(function() {
         }
         else {
             ignore_payload = (ignore_payload + ','
-                              + $.asv.master_json.revision_to_hash[revs[0]]);
+                              + $.asv.main_json.revision_to_hash[revs[0]]);
         }
         ignore_payload = (ignore_payload + ','
-                          + $.asv.master_json.revision_to_hash[revs[1]]);
+                          + $.asv.main_json.revision_to_hash[revs[1]]);
 
         return ignore_key_prefix + md5(ignore_payload);
     }

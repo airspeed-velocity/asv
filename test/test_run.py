@@ -48,7 +48,7 @@ def test_run_spec(basic_conf_2):
     conf.repo = dvcs.path
 
     initial_commit = dvcs.get_hash(f"{util.git_default_branch()}~1")
-    master_commit = dvcs.get_hash(f"{util.git_default_branch()}")
+    main_commit = dvcs.get_hash(f"{util.git_default_branch()}")
     branch_commit = dvcs.get_hash("some-branch")
     template_dir = os.path.join(tmpdir, "results_workflow_template")
     results_dir = os.path.join(tmpdir, 'results_workflow')
@@ -90,15 +90,15 @@ def test_run_spec(basic_conf_2):
         assert set(result_files) == expected
 
     for branches, expected_commits in (
-        # Without branches in config, shoud just use master
-        ([None], [initial_commit, master_commit]),
+        # Without branches in config, shoud just use main
+        ([None], [initial_commit, main_commit]),
 
         # With one branch in config, should just use that branch
         (["some-branch"], [initial_commit, branch_commit]),
 
         # With two branch in config, should apply to specified branches
         ([f"{util.git_default_branch()}", "some-branch"],
-         [initial_commit, master_commit, branch_commit]),
+         [initial_commit, main_commit, branch_commit]),
     ):
         for range_spec in (None, "NEW", "ALL"):
             _test_run(range_spec, branches, expected_commits)

@@ -57,7 +57,7 @@ $(document).ready(function() {
         var info = $.asv.parse_hash_string(window.location.hash);
         var new_state = get_valid_state(state, key, value);
 
-        $.each($.asv.master_json.params, function(param, values) {
+        $.each($.asv.main_json.params, function(param, values) {
             if (values.length > 1) {
                 info.params[param] = [new_state[param]];
             }
@@ -101,7 +101,7 @@ $(document).ready(function() {
             tmp_state[wanted_key] = wanted_value;
         }
 
-        $.each($.asv.master_json.graph_param_list, function(idx, params) {
+        $.each($.asv.main_json.graph_param_list, function(idx, params) {
             var diff = obj_diff(tmp_state, params);
             var hit = (wanted_key === undefined || params[wanted_key] == wanted_value);
 
@@ -113,14 +113,14 @@ $(document).ready(function() {
         });
 
         if (best_params === null) {
-            best_params = $.asv.master_json.graph_param_list[0];
+            best_params = $.asv.main_json.graph_param_list[0];
         }
 
         return obj_copy(best_params);
     }
 
     function setup_state(state_selection) {
-        var index = $.asv.master_json;
+        var index = $.asv.main_json;
         var state = {};
 
         state.machine = index.params.machine;
@@ -142,7 +142,7 @@ $(document).ready(function() {
     }
 
     function replace_params_ui() {
-        var index = $.asv.master_json;
+        var index = $.asv.main_json;
 
         var nav = $('#summarylist-navigation');
         nav.empty();
@@ -207,7 +207,7 @@ $(document).ready(function() {
     }
 
     function construct_benchmark_table(data) {
-        var index = $.asv.master_json;
+        var index = $.asv.main_json;
 
         /* Form a new table */
 
@@ -234,14 +234,14 @@ $(document).ready(function() {
             /* Format benchmark url */
             benchmark_url_args.location = [row.name];
             benchmark_url_args.params = {};
-            $.each($.asv.master_json.params, function (key, values) {
+            $.each($.asv.main_json.params, function (key, values) {
                 if (values.length > 1) {
                     benchmark_url_args.params[key] = [state[key]];
                 }
             });
             benchmark_base_url = $.asv.format_hash_string(benchmark_url_args);
             if (row.idx !== null) {
-                var benchmark = $.asv.master_json.benchmarks[row.name];
+                var benchmark = $.asv.main_json.benchmarks[row.name];
                 $.each($.asv.param_selection_from_flat_idx(benchmark.params, row.idx).slice(1),
                        function(i, param_values) {
                            benchmark_url_args.params['p-'+benchmark.param_names[i]]
@@ -281,7 +281,7 @@ $(document).ready(function() {
             var value_td = $('<td class="value"/>');
             if (row.last_value !== null) {
                 var value, err, err_str, sort_value;
-                var unit = $.asv.master_json.benchmarks[row.name].unit;
+                var unit = $.asv.main_json.benchmarks[row.name].unit;
                 value = $.asv.pretty_unit(row.last_value, unit);
                 if (unit == "seconds") {
                     sort_value = row.last_value * 1e100;
@@ -311,7 +311,7 @@ $(document).ready(function() {
             var change_td = $('<td class="change"/>');
             if (row.prev_value !== null) {
                 var text, change_str, change = 0, sort_value = 0;
-                var unit = $.asv.master_json.benchmarks[row.name].unit;
+                var unit = $.asv.main_json.benchmarks[row.name].unit;
                 change_str = $.asv.pretty_unit(row.last_value - row.prev_value, unit);
                 if (!change_str.match(/^-/)) {
                     change_str = '+' + change_str;
@@ -329,8 +329,8 @@ $(document).ready(function() {
                 }
                 text = text.replace('-', '\u2212');
 
-                var change_commit_a = $.asv.master_json.revision_to_hash[row.change_rev[0]];
-                var change_commit_b = $.asv.master_json.revision_to_hash[row.change_rev[1]];
+                var change_commit_a = $.asv.main_json.revision_to_hash[row.change_rev[0]];
+                var change_commit_b = $.asv.main_json.revision_to_hash[row.change_rev[1]];
                 var change_q;
                 if (change_commit_a === undefined) {
                     change_q = '&commits=' + change_commit_b;
@@ -360,25 +360,25 @@ $(document).ready(function() {
             /* Change date column */
             var changed_at_td = $('<td class="change-date"/>');
             if (row.change_rev !== null) {
-                var date = new Date($.asv.master_json.revision_to_date[row.change_rev[1]]);
+                var date = new Date($.asv.main_json.revision_to_date[row.change_rev[1]]);
                 var commit_1 = $.asv.get_commit_hash(row.change_rev[0]);
                 var commit_2 = $.asv.get_commit_hash(row.change_rev[1]);
                 var commit_a = $('<a/>');
                 var span = $('<span/>');
                 if (commit_1) {
                     var commit_url;
-                    if ($.asv.master_json.show_commit_url.match(/.*\/\/github.com\//)) {
-                        commit_url = ($.asv.master_json.show_commit_url + '../compare/'
+                    if ($.asv.main_json.show_commit_url.match(/.*\/\/github.com\//)) {
+                        commit_url = ($.asv.main_json.show_commit_url + '../compare/'
                                       + commit_1 + '...' + commit_2);
                     }
                     else {
-                        commit_url = $.asv.master_json.show_commit_url + commit_2;
+                        commit_url = $.asv.main_json.show_commit_url + commit_2;
                     }
                     commit_a.attr('href', commit_url);
                     commit_a.text(commit_1 + '...' + commit_2);
                 }
                 else {
-                    commit_a.attr('href', $.asv.master_json.show_commit_url + commit_2);
+                    commit_a.attr('href', $.asv.main_json.show_commit_url + commit_2);
                     commit_a.text(commit_2);
                 }
                 span.text($.asv.format_date_yyyymmdd(date) + ' ');

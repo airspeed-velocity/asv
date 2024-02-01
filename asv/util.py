@@ -1279,8 +1279,8 @@ def git_default_branch():
                     [which('git'), 'config', '--system', 'init.defaultBranch'],
                     display_error=False).strip()
             except ProcessError:
-                # Default to master when global and system are not set
-                default_branch = 'master'
+                # Default to main when global and system are not set
+                default_branch = 'main'
     return default_branch
 
 
