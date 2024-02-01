@@ -16,6 +16,8 @@ except ImportError:
 
 from . import tools
 
+pytestmark = pytest.mark.skipif(tools.HAS_PYPY, reason="Randomly times out on pypy")
+
 
 def _test_generic_repo(conf, tmpdir, hash_range, main, branch, is_remote=False):
     workcopy_dir = tempfile.mkdtemp(dir=tmpdir, prefix="workcopy")

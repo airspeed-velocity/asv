@@ -20,6 +20,8 @@ from asv.repo import get_repo
 
 from . import tools
 
+pytestmark = pytest.mark.skipif(tools.HAS_PYPY, reason="Flaky on pypy")
+
 BENCHMARK_DIR = abspath(join(dirname(__file__), 'benchmark'))
 
 
