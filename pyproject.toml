@@ -76,8 +76,8 @@ hg = [
 [build-system]
 requires = [
     "wheel",
-    "setuptools>=61.2",
-    "setuptools_scm[toml]>=6.2",
+    "setuptools>=64",
+    "setuptools_scm>=7",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -111,7 +111,7 @@ line_length = 99
 only_sections = true
 
 [tool.setuptools_scm]
-write_to = "asv/_version.py"
+version_file = "asv/_version.py"
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux2014"
