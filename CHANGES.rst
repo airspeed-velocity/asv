@@ -10,6 +10,10 @@ API Changes
 Bug Fixes
 ^^^^^^^^^
 - The ``mamba`` plugin works correctly for newer versions (>=1.5) of ``libmambapy`` (#1372)
+- The ``mamba`` plugin respects the ``MAMBARC`` environment if set, taking
+  channels and channel priority from the file in the environment variable. (#1373)
+- ``conda-forge`` is no longer a default channel for ``mamba``. (#1373)
+- Fixed a bug where ``matrix`` requirements were dropped if an environment file was specified. (#1373)
 
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

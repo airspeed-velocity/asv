@@ -9,6 +9,7 @@ from asv import config, environment, util
 from asv.repo import get_repo
 from asv.util import shlex_quote as quote
 
+from . import tools
 from .tools import (PYTHON_VER1, PYTHON_VER2, DUMMY1_VERSION, DUMMY2_VERSIONS, WIN, HAS_PYPY,
                     HAS_CONDA, HAS_VIRTUALENV, HAS_PYTHON_VER2, generate_test_repo)
 
@@ -682,6 +683,7 @@ def test_build_isolation(tmpdir):
     env.install_project(conf, repo, commit_hash)
 
 
+@pytest.mark.skipif(tools.HAS_PYPY, reason="Flaky on pypy")
 def test_custom_commands(tmpdir):
     # check custom install/uninstall/build commands work
     tmpdir = str(tmpdir)

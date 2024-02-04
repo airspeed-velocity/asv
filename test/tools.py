@@ -94,14 +94,16 @@ except ImportError:
 
 
 def _check_mamba():
-    conda = _find_conda()
     try:
-        importlib.import_module('libmambapy')
-        subprocess.check_call([conda, 'build', '--version'],
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
+        conda = _find_conda()
+        importlib.import_module("libmambapy")
+        subprocess.check_call(
+            [conda, "build", "--version"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
         return True
-    except (ImportError, subprocess.CalledProcessError, FileNotFoundError):
+    except (ImportError, OSError, subprocess.CalledProcessError, FileNotFoundError):
         return False
 
 

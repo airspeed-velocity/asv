@@ -1,4 +1,4 @@
-name: Linux CI
+name: Linux and MacOS CI
 
 on: [push, pull_request]
 
@@ -18,7 +18,7 @@ jobs:
         r-version: ['release']
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -60,12 +60,14 @@ jobs:
 
   test_env:
     name: test_environments
-    runs-on: "ubuntu-latest"
+    runs-on: ${{ matrix.os }}
     strategy:
+      matrix:
+        os: ["ubuntu-latest", "macos-latest"]
       fail-fast: false
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -96,7 +98,7 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v4
         with:
