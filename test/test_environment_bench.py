@@ -23,6 +23,7 @@ ASV_CONFIG = {
     "repo": ".",
     "branches": ["main"],
     "environment_type": "virtualenv",
+    "conda_channels": ["conda-forge", "nodefaults"],
     "env_dir": ".asv/env",
     "results_dir": ".asv/results",
     "html_dir": ".asv/html",
