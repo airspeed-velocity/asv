@@ -77,8 +77,8 @@ hg = [
 [build-system]
 requires = [
     "wheel",
-    "setuptools>=61.2",
-    "setuptools_scm[toml]>=6.2",
+    "setuptools>=64",
+    "setuptools_scm>=6",
 ]
 build-backend = "setuptools.build_meta"
 

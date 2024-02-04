@@ -95,7 +95,7 @@ class Repo:
         """
         Returns a formatted string giving the results between the
         latest result and the newest hash in a given branch.
-        If no branch given, use the 'master' branch.
+        If no branch given, use the 'main' branch.
         """
         raise NotImplementedError()
 

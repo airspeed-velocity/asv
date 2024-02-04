@@ -20,6 +20,8 @@ from asv.repo import get_repo
 
 from . import tools
 
+pytestmark = pytest.mark.skipif(tools.HAS_PYPY, reason="Flaky on pypy")
+
 BENCHMARK_DIR = abspath(join(dirname(__file__), 'benchmark'))
 
 
@@ -36,18 +38,18 @@ def test_publish(tmpdir, example_results):
     result_files = [fn for fn in os.listdir(join(example_results, 'cheetah'))
                     if fn.endswith('.json') and fn != 'machine.json']
     result_files.sort()
-    master_values = list(range(len(result_files) * 2 // 3))
-    branch_values = list(range(len(master_values), len(result_files)))
-    dvcs = tools.generate_test_repo(tmpdir, master_values, 'git',
+    main_values = list(range(len(result_files) * 2 // 3))
+    branch_values = list(range(len(main_values), len(result_files)))
+    dvcs = tools.generate_test_repo(tmpdir, main_values, 'git',
                                     [(f'{util.git_default_branch()}~6',
                                       'some-branch', branch_values)])
 
     # Copy and modify result files, fixing commit hashes and setting result
     # dates to distinguish the two branches
-    master_commits = dvcs.get_branch_hashes(f'{util.git_default_branch()}')
+    main_commits = dvcs.get_branch_hashes(f'{util.git_default_branch()}')
     only_branch = [x for x in dvcs.get_branch_hashes('some-branch')
-                   if x not in master_commits]
-    commits = master_commits + only_branch
+                   if x not in main_commits]
+    commits = main_commits + only_branch
     for k, item in enumerate(zip(result_files, commits)):
         fn, commit = item
         src = join(example_results, 'cheetah', fn)
@@ -99,12 +101,12 @@ def test_publish(tmpdir, example_results):
         data = util.load_json(fn)
         data_commits = [revision_to_hash[x[0]] for x in data]
         if branch == f'{util.git_default_branch()}':
-            assert all(c in master_commits for c in data_commits)
+            assert all(c in main_commits for c in data_commits)
         else:
             # Must contains commits from some-branch
             assert any(c in only_branch for c in data_commits)
-            # And commits from master
-            assert any(c in master_commits for c in data_commits)
+            # And commits from main
+            assert any(c in main_commits for c in data_commits)
 
         # Check that revisions are strictly increasing
         assert all(x[0] < y[0] for x, y in zip(data, data[1:]))
@@ -149,10 +151,10 @@ def test_publish(tmpdir, example_results):
 
 def _graph_path(dvcs_type):
     if dvcs_type == "git":
-        master = f"{util.git_default_branch()}"
+        main = f"{util.git_default_branch()}"
     elif dvcs_type == "hg":
-        master = "default"
-    return join("graphs", f"branch-{master}", "machine-tarzan", "time_func.json")
+        main = "default"
+    return join("graphs", f"branch-{main}", "machine-tarzan", "time_func.json")
 
 
 def test_publish_range_spec(generate_result_dir):
@@ -260,40 +262,40 @@ def test_regression_parameterized(generate_result_dir):
 def test_regression_multiple_branches(dvcs_type, tmpdir):
     tmpdir = str(tmpdir)
     if dvcs_type == "git":
-        master = f"{util.git_default_branch()}"
+        main = f"{util.git_default_branch()}"
     elif dvcs_type == "hg":
-        master = "default"
+        main = "default"
     dvcs = tools.generate_repo_from_ops(
         tmpdir, dvcs_type, [
             ("commit", 1),
-            ("checkout", "stable", master),
+            ("checkout", "stable", main),
             ("commit", 1),
-            ("checkout", master),
+            ("checkout", main),
         ] + 4 * [
             ("commit", 1),
             ("checkout", "stable"),
             ("commit", 1),
-            ("checkout", master),
+            ("checkout", main),
         ] + 5 * [
             ("commit", 1),
             ("checkout", "stable"),
             ("commit", 2),
-            ("checkout", master),
+            ("checkout", main),
         ],
     )
     commit_values = {}
     branches = dict(
         (branch, list(reversed(dvcs.get_branch_hashes(branch))))
-        for branch in (master, "stable")
+        for branch in (main, "stable")
     )
     for branch, values in (
-        (master, 10 * [1]),
+        (main, 10 * [1]),
         ("stable", 5 * [1] + 5 * [2]),
     ):
         for commit, value in zip(branches[branch], values):
             commit_values[commit] = value
     conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
-    conf.branches = [master, "stable"]
+    conf.branches = [main, "stable"]
     tools.run_asv_with_conf(conf, "publish")
     repo = get_repo(conf)
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))

@@ -139,7 +139,7 @@ Branches to generate benchmark results for.
 This controls how the benchmark results are displayed, and what
 benchmarks ``asv run ALL`` and ``asv run NEW`` run.
 
-If not provided, "master" (Git) or "default" (Mercurial) is chosen.
+If not provided, "main" (Git) or "default" (Mercurial) is chosen.
 
 ``show_commit_url``
 -------------------
@@ -156,7 +156,7 @@ For example, if using Github to host your repository, the
 -----------
 The versions of Python to run the benchmarks in.  If not provided, it
 will to default to the version of Python that the ``asv`` command
-(master) is being run under.
+(main) is being run under.
 
 If provided, it should be a list of strings.  It may be one of the
 following:

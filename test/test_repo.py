@@ -16,8 +16,10 @@ except ImportError:
 
 from . import tools
 
+pytestmark = pytest.mark.skipif(tools.HAS_PYPY, reason="Randomly times out on pypy")
 
-def _test_generic_repo(conf, tmpdir, hash_range, master, branch, is_remote=False):
+
+def _test_generic_repo(conf, tmpdir, hash_range, main, branch, is_remote=False):
     workcopy_dir = tempfile.mkdtemp(dir=tmpdir, prefix="workcopy")
     os.rmdir(workcopy_dir)
 
@@ -35,7 +37,7 @@ def _test_generic_repo(conf, tmpdir, hash_range, master, branch, is_remote=False
     r = repo.get_repo(conf)
 
     # Subrepo creation
-    r.checkout(workcopy_dir, master)
+    r.checkout(workcopy_dir, main)
     assert os.path.exists(join(workcopy_dir, "setup.py"))
 
     for filename in ("README", "untracked"):
@@ -49,14 +51,14 @@ def _test_generic_repo(conf, tmpdir, hash_range, master, branch, is_remote=False
         data = fd.read(33)
         assert data == b"This is the asv_test_repo project"
 
-    r.checkout(workcopy_dir, master)
+    r.checkout(workcopy_dir, main)
 
     # check recovering from corruption
     for pth in ['.hg', '.git']:
         pth = os.path.join(workcopy_dir, pth)
         if os.path.isdir(pth):
             shutil.rmtree(pth)
-    r.checkout(workcopy_dir, master)
+    r.checkout(workcopy_dir, main)
 
     hashes = r.get_hashes_from_range(hash_range)
     assert len(hashes) == 4
@@ -170,7 +172,7 @@ def test_repo_hg(tmpdir):
         conf.project = mirror_dir
         conf.repo = dvcs.path
         _test_generic_repo(conf, tmpdir, hash_range="reverse(default~3::default)",
-                           master="default", branch="tag5",
+                           main="default", branch="tag5",
                            is_remote=is_remote)
 
         conf.branches = ['default', 'somebranch']
@@ -204,9 +206,9 @@ def test_repo_hg(tmpdir):
 def test_get_branch_commits(two_branch_repo_case):
     # Test that get_branch_commits() return an ordered list of commits (last
     # first) and follow first parent in case of merge
-    dvcs, master, r, conf = two_branch_repo_case
+    dvcs, main, r, conf = two_branch_repo_case
     expected = {
-        master: [
+        main: [
             "Revision 6",
             "Revision 4",
             "Merge stable",
@@ -244,7 +246,7 @@ def test_get_branch_commits(two_branch_repo_case):
     (["Revision 6"], ["Revision 5", "Merge master", "Revision 2", "Revision 1"]),
 ], ids=["all", "new", "no-new", "new-branch-added-in-config"])
 def test_get_new_branch_commits(two_branch_repo_case, existing, expected):
-    dvcs, master, r, conf = two_branch_repo_case
+    dvcs, main, r, conf = two_branch_repo_case
 
     existing_commits = set()
     for branch in conf.branches:

@@ -83,7 +83,7 @@ $(document).ready(function() {
 
     function get_x_from_revision(rev) {
         if (date_scale) {
-            return $.asv.master_json.revision_to_date[rev];
+            return $.asv.main_json.revision_to_date[rev];
         } else {
             return rev;
         }
@@ -150,12 +150,12 @@ $(document).ready(function() {
         var stack = [tree];
 
         /* Sort keys for tree construction */
-        var benchmark_keys = Object.keys($.asv.master_json.benchmarks);
+        var benchmark_keys = Object.keys($.asv.main_json.benchmarks);
         benchmark_keys.sort();
 
         /* Build tree */
         $.each(benchmark_keys, function(i, bm_name) {
-            var bm = $.asv.master_json.benchmarks[bm_name];
+            var bm = $.asv.main_json.benchmarks[bm_name];
             var parts = bm_name.split('.');
             var i = 0;
             var j;
@@ -299,7 +299,7 @@ $(document).ready(function() {
                     var y = item.datapoint[1];
                     var commit_hash = get_commit_hash(item.datapoint[0]);
                     if (commit_hash) {
-                        var unit = $.asv.master_json.benchmarks[current_benchmark].unit;
+                        var unit = $.asv.main_json.benchmarks[current_benchmark].unit;
                         showTooltip(
                             item.pageX, item.pageY,
                             $.asv.pretty_unit(y, unit) + " @ " + commit_hash);
@@ -328,7 +328,7 @@ $(document).ready(function() {
                         if (previous_hash !== commit_hash) {
                             previous_hash = commit_hash;
                             window.open(
-                                $.asv.master_json.show_commit_url + previous_hash,
+                                $.asv.main_json.show_commit_url + previous_hash,
                                 '_blank');
                         }
                     }
@@ -348,7 +348,7 @@ $(document).ready(function() {
         /*
           Generic parameter selections
         */
-        var index = $.asv.master_json;
+        var index = $.asv.main_json;
         if (!state || state_selection !== null) {
             /*
                Setup the default configuration on first load,
@@ -428,7 +428,7 @@ $(document).ready(function() {
 
     function update_state_url(params) {
         var info = $.asv.parse_hash_string(window.location.hash);
-        $.each($.asv.master_json.params, function(param, values) {
+        $.each($.asv.main_json.params, function(param, values) {
             if (values.length > 1) {
                 if (state[param].length != values.length || param == 'branch') {
                     info.params[param] = state[param];
@@ -445,7 +445,7 @@ $(document).ready(function() {
     }
 
     function replace_params_ui() {
-        var index = $.asv.master_json;
+        var index = $.asv.main_json;
 
         var nav = $('#graphdisplay-state-params');
         nav.empty();
@@ -521,8 +521,8 @@ $(document).ready(function() {
     }
 
     function replace_benchmark_params_ui() {
-        var params = $.asv.master_json.benchmarks[current_benchmark].params;
-        var param_names = $.asv.master_json.benchmarks[current_benchmark].param_names;
+        var params = $.asv.main_json.benchmarks[current_benchmark].params;
+        var param_names = $.asv.main_json.benchmarks[current_benchmark].param_names;
 
         /* Parameter selection UI */
         var nav = $('#graphdisplay-navigation-params');
@@ -574,7 +574,7 @@ $(document).ready(function() {
                 if (rev === null) {
                     button.text("last");
                 } else {
-                    var date_fmt = new Date($.asv.master_json.revision_to_date[rev]);
+                    var date_fmt = new Date($.asv.main_json.revision_to_date[rev]);
                     button.text($.asv.get_commit_hash(rev)
                                 + " "
                                 + date_fmt.toUTCString());
@@ -659,7 +659,7 @@ $(document).ready(function() {
             return;
         }
 
-        var params = $.asv.master_json.benchmarks[current_benchmark].params;
+        var params = $.asv.main_json.benchmarks[current_benchmark].params;
         x_coordinate_is_category = false;
         if (x_coordinate_axis != 0) {
             for (var j = 0; j < params[x_coordinate_axis-1].length; ++j) {
@@ -754,7 +754,7 @@ $(document).ready(function() {
             if (current_benchmark) {
                 /* For the current set of enabled parameters, generate a
                    list of all the permutations we need to load. */
-                var state_permutations = $.grep($.asv.master_json.graph_param_list, function (params) {
+                var state_permutations = $.grep($.asv.main_json.graph_param_list, function (params) {
                     var ok = true;
                     $.each(state, function (key, values) {
                         if ($.inArray(params[key], values) == -1) {
@@ -767,14 +767,14 @@ $(document).ready(function() {
                 /* Find where the parameters are different. */
                 var different = find_different_properties(state_permutations);
                 /* For parameterized tests: names of benchmark parameters */
-                var params = $.asv.master_json.benchmarks[current_benchmark].params;
-                var param_names = $.asv.master_json.benchmarks[current_benchmark].param_names;
+                var params = $.asv.main_json.benchmarks[current_benchmark].params;
+                var param_names = $.asv.main_json.benchmarks[current_benchmark].param_names;
                 /* Selected permutations of benchmark parameters, omitting x-axis */
                 var selection = obj_copy(param_selection);
                 selection[x_coordinate_axis] = [null]; /* value not referenced, set to null */
                 var param_permutations = permutations(selection);
 
-                /* Generate a master list of URLs and legend labels for
+                /* Generate a main list of URLs and legend labels for
                    the graphs. */
                 var all = [];
                 $.each(state_permutations, function (i, perm) {
@@ -852,7 +852,7 @@ $(document).ready(function() {
                     series = $.asv.filter_graph_data(data,
                                                      x_coordinate_axis,
                                                      graph_content[0],
-                                                     $.asv.master_json.benchmarks[current_benchmark].params);
+                                                     $.asv.main_json.benchmarks[current_benchmark].params);
                     orig_graphs.push({
                         data: series,
                         label: graph_content[1],
@@ -980,11 +980,11 @@ $(document).ready(function() {
             options.yaxis.max = Math.pow(10, max) * reference;
 
             if (!reference_scale) {
-                options.yaxis.axisLabel = $.asv.master_json.benchmarks[current_benchmark].unit;
+                options.yaxis.axisLabel = $.asv.main_json.benchmarks[current_benchmark].unit;
             }
         }
         else {
-            var unit = $.asv.master_json.benchmarks[current_benchmark].unit;
+            var unit = $.asv.main_json.benchmarks[current_benchmark].unit;
             var unit_list = null;
 
             if (unit == "seconds") {
@@ -1080,7 +1080,7 @@ $(document).ready(function() {
                 date_to_revision = {};
                 $.each(graphs, function(i, graph) {
                     $.each(graph.data, function(j, point) {
-                        var date = $.asv.master_json.revision_to_date[point[0]];
+                        var date = $.asv.main_json.revision_to_date[point[0]];
                         date_to_revision[date] = point[0];
                         point[0] = date;
                     });
@@ -1110,7 +1110,7 @@ $(document).ready(function() {
             else {
                 graphs = orig_graphs;
             }
-            var param_names = $.asv.master_json.benchmarks[current_benchmark].param_names;
+            var param_names = $.asv.main_json.benchmarks[current_benchmark].param_names;
             options.xaxis.axisLabel = param_names[x_coordinate_axis-1];
         }
     }
@@ -1125,7 +1125,7 @@ $(document).ready(function() {
         var markings = [];
 
         if (x_coordinate_axis == 0) {
-            $.each($.asv.master_json.tags, function(tag, revision) {
+            $.each($.asv.main_json.tags, function(tag, revision) {
                 var x = get_x_from_revision(revision);
                 markings.push(
                     { color: "#ddd", lineWidth: 1, xaxis: { from: x, to: x } }
@@ -1157,7 +1157,7 @@ $(document).ready(function() {
         if (reference_scale) {
             unit = 'relative';
         } else {
-            unit = $.asv.master_json.benchmarks[current_benchmark].unit;
+            unit = $.asv.main_json.benchmarks[current_benchmark].unit;
         }
 
         var options = {
@@ -1342,7 +1342,7 @@ $(document).ready(function() {
             var canvas = plot.getCanvas();
             var xmin = plot.getAxes().xaxis.min;
             var xmax = plot.getAxes().xaxis.max;
-            $.each($.asv.master_json.tags, function(tag, revision) {
+            $.each($.asv.main_json.tags, function(tag, revision) {
                 var x = get_x_from_revision(revision);
                 if (x >= xmin && x <= xmax) {
                     var p = plot.pointOffset({x: x, y: 0});

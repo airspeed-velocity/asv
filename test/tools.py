@@ -361,7 +361,7 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
     extra_branches : list of (start_commit, branch_name, values)
         Additional branches to generate in the repository.
         For branch start commits, use relative references, e.g.,
-        the format 'master~10' or 'default~10' works both for Hg
+        the format 'main~10' or 'default~10' works both for Hg
         and Git.
     subdir
         A relative subdirectory inside the repository to copy the
