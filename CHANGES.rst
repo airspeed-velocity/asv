@@ -1,3 +1,19 @@
+0.6.2 (TBD)
+----------------------------
+
+New Features
+^^^^^^^^^^^^
+
+API Changes
+^^^^^^^^^^^
+
+Bug Fixes
+^^^^^^^^^
+- The ``mamba`` plugin works correctly for newer versions (>=1.5) of ``libmambapy`` (#1372)
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 0.6.1 (2023-09-11)
 ----------------------------
 

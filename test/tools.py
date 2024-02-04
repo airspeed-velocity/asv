@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import platform
 import http.server
+import importlib
 from os.path import abspath, join, dirname, relpath, isdir
 from contextlib import contextmanager
 from hashlib import sha256
@@ -90,6 +91,21 @@ try:
     HAVE_WEBDRIVER = True
 except ImportError:
     HAVE_WEBDRIVER = False
+
+
+def _check_mamba():
+    conda = _find_conda()
+    try:
+        importlib.import_module('libmambapy')
+        subprocess.check_call([conda, 'build', '--version'],
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE)
+        return True
+    except (ImportError, subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
+HAS_MAMBA = _check_mamba()
 
 
 WAIT_TIME = 20.0

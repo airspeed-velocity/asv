@@ -58,6 +58,41 @@ jobs:
       - name: Run tests
         run: python -m pytest -v --timeout=300 --webdriver=ChromeHeadless --durations=100 test
 
+  test_env:
+    name: test_environments
+    runs-on: "ubuntu-latest"
+    strategy:
+      fail-fast: false
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: mamba-org/setup-micromamba@v1
+        with:
+          init-shell: >-
+            bash
+          environment-name: test-env
+          cache-environment: true
+          create-args: >-
+            python
+            pip
+            libmambapy
+            conda-build
+
+      - name: Install dependencies
+        run: python -m pip install ".[test,hg]" --pre
+        shell: micromamba-shell {0}
+
+      - name: Install asv
+        run: pip install .
+        shell: micromamba-shell {0}
+
+      - name: Run tests
+        run: pytest -k environment_bench -vvvvv
+        shell: micromamba-shell {0}
+
   docs:
     runs-on: ubuntu-latest
     steps:

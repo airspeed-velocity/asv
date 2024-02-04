@@ -54,6 +54,7 @@ test = [
     "scipy; platform_python_implementation != \"PyPy\"",
     "feedparser",
     "selenium",
+    "flaky",
     "pytest-rerunfailures",
     "python-hglib; platform_system != 'Windows'",
     "rpy2; platform_system != 'Windows' and platform_python_implementation != 'PyPy'",
