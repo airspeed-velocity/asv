@@ -23,7 +23,7 @@ jobs:
         r-version: ['release']
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -53,7 +53,7 @@ jobs:
         run: python -m pip install ".[test,hg]"
 
       - name: Get asv_runner to be tested
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: airspeed-velocity/asv_runner
           ref: refs/pull/${{ github.event.inputs.pr_number }}/head
