@@ -60,8 +60,10 @@ jobs:
 
   test_env:
     name: test_environments
-    runs-on: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     strategy:
+      matrix:
+        os: ["ubuntu-latest", "macos-latest"]
       fail-fast: false
     timeout-minutes: 10
     steps:
