@@ -34,7 +34,7 @@ jobs:
           echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
           echo github.ref ${{ github.ref }}
   build_wheels:
-    name: Build wheel for ${{ matrix.python-version }}-${{ matrix.buildplat[1] }}
+    name: Build wheels
     needs: get_commit_message
     if: >-
       contains(needs.get_commit_message.outputs.message, '[wheel build]') ||
@@ -59,7 +59,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
+      - name: Echo Python version and build platform
+        run: echo Building wheel for ${{ matrix.python-version }}-${{ matrix.buildplat[1] }}
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
