@@ -1,4 +1,4 @@
-name: Linux CI
+name: Linux and MacOS CI
 
 on: [push, pull_request]
 
@@ -60,7 +60,7 @@ jobs:
 
   test_env:
     name: test_environments
-    runs-on: [ "ubuntu-latest", "macos-latest" ]
+    runs-on: [ ubuntu-latest, macos-latest ]
     strategy:
       fail-fast: false
     timeout-minutes: 10
