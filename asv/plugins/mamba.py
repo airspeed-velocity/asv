@@ -84,6 +84,7 @@ class Mamba(environment.Environment):
         # Apply channel settings
         if 'channels' in condarc_data:
             self.context.channels = condarc_data['channels']
+            self._mamba_channels.extend(condarc_data['channels'])
 
         # Apply channel priority settings
         channel_priority_map = {
