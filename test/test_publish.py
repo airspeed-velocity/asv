@@ -206,6 +206,7 @@ def test_regression_double(generate_result_dir):
     assert regressions == expected
 
 
+@pytest.mark.skipif(tools.HAS_PYPY, reason="Flaky on pypy")
 def test_regression_first_commits(generate_result_dir):
     conf, repo, commits = generate_result_dir(5 * [1] + 10 * [10])
     # Ignore before 5th commit
