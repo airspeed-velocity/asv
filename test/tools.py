@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import platform
 import http.server
+import importlib
 from os.path import abspath, join, dirname, relpath, isdir
 from contextlib import contextmanager
 from hashlib import sha256
@@ -95,10 +96,10 @@ except ImportError:
 def _check_mamba():
     conda = _find_conda()
     try:
-        # Attempt to import libmambapy to check if libmambapy is available
-        import libmambapy
-        subprocess.check_call([conda, 'build', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        # If both checks pass, return True indicating Mamba is available and conda-build is installed
+        importlib.import_module('libmambapy')
+        subprocess.check_call([conda, 'build', '--version'],
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE)
         return True
     except (ImportError, subprocess.CalledProcessError, FileNotFoundError):
         return False

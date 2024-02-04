@@ -1,7 +1,9 @@
 import subprocess
 import os
-import pytest
 import json
+
+import pytest
+
 from . import tools
 
 ENVIRONMENTS = []
