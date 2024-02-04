@@ -442,6 +442,7 @@ def test_regression_atom_feed_update(dvcs_type, tmpdir):
         b_content = b.find('{http://www.w3.org/2005/Atom}content')
         assert a_content.text != b_content.text
 
+@pytest.mark.skipif(tools.HAS_PYPY, reason="Flaky on pypy")
 def test_branch_name_is_also_filename(tmpdir):
     # gh-1209
     tmpdir = str(tmpdir)
