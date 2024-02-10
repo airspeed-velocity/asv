@@ -86,6 +86,11 @@ suite are:
 - ``matrix``: Dependencies you want to preinstall into the environment
   where benchmarks are run.
 
+- ``default_benchmark_timeout``: The maximum time in seconds that a
+  benchmark is allowed to run before it is terminated.  This is
+  useful to prevent benchmarks from running indefinitely if they get
+  stuck. The default is 60 seconds.
+
 The rest of the values can usually be left to their defaults, unless
 you want to benchmark against multiple versions of Python or multiple
 versions of third-party dependencies, or if your package needs
