@@ -920,15 +920,13 @@ class Environment:
         if cmd is None:
             if has_file('pyproject.toml'):
                 cmd = [
-                    ("PIP_NO_BUILD_ISOLATION=false "
-                     "python -mpip wheel --no-deps --no-index "
-                     "-w {build_cache_dir} {build_dir}")
+                    "python -m build",
+                    "python -mpip wheel -w {build_cache_dir} {build_dir}"
                 ]
             else:
                 cmd = [
                     "python setup.py build",
-                    ("PIP_NO_BUILD_ISOLATION=false "
-                     "python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}")
+                    "python -mpip wheel -w {build_cache_dir} {build_dir}"
                 ]
 
         if cmd:
