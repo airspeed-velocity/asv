@@ -543,6 +543,9 @@ class Environment:
         if (Path.cwd() / "pdm.lock").exists():
             self._base_requirements["pdm"] = ""
 
+        if (Path.cwd() / "pyproject.toml").exists():
+            self._base_requirements["build"] = ""
+
         # Update the _base_requirements if needed
         for key in list(self._requirements.keys()):
             if key in self._base_requirements:
