@@ -1,0 +1,25 @@
+[tool.towncrier]
+directory = "changelog.d"
+filename = "CHANGES.rst"
+underlines = ["-", "^", "~"]
+wrap = true
+
+[[tool.towncrier.type]]
+directory = "feat"
+name = "New Features"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "api"
+name = "API Changes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "bugfix"
+name = "Bug Fixes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "misc"
+name = "Other Changes and Additions"
+showcontent = true
