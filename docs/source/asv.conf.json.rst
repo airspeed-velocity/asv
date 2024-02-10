@@ -71,6 +71,17 @@ The defaults are::
   ["python setup.py build",
    "PIP_NO_BUILD_ISOLATION=false python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}"],
 
+.. note::
+
+    .. versionchanged:: 0.6.2
+
+        The default build command now assume network connectivity is not
+        prohibited. The ``build_command`` is now::
+
+          "build_command":
+          ["python setup.py build",
+           "python -mpip wheel -w {build_cache_dir} {build_dir}"],
+
 The install commands should install the project in the active Python
 environment (virtualenv/conda), so that it can be used by the
 benchmark code.
