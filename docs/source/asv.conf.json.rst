@@ -7,6 +7,19 @@ The ``asv.conf.json`` file contains information about a particular
 benchmarking project.  The following describes each of the keys in
 this file and their expected values.
 
+.. note::
+
+    The GitHub repository at `asv_samples
+    <https://github.com/HaoZeke/asv_samples>`_ serves as a comprehensive
+    showcase for integrating Air Speed Velocity (ASV) with a wide array of
+    Python project configurations. This includes various build systems and
+    advanced benchmarking features like custom parameterizations and ASV
+    plugins, aiming to benchmark Python code performance across diverse setups.
+
+    The repository is structured with dedicated branches for each build system
+    and feature demonstration, providing insights into the impacts of different
+    build systems and ASV's extensible features on performance metrics.
+
 .. only:: not man
 
    .. contents::
@@ -95,8 +108,6 @@ environment.
 
         If a build command is not specified in the ``asv.conf.json``, the default
         assumes the build system requirements are defined in a ``setup.py`` file.
-        However, the  ``asv.conf.json`` template also includes as a comment the
-        commands to build  the project using a ``pyproject.toml`` file.
         ``pyproject.toml`` is the preferred  file format to define the build  system
         requirements of Python projects (`PEP518
         <https://peps.python.org/pep-0518/>`_), and this approach will be the
