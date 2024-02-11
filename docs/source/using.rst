@@ -195,9 +195,9 @@ for you, but it expects to find the Python versions specified
 in the ``asv.conf.json`` file available on the ``PATH``.  For example,
 if the ``asv.conf.json`` file has::
 
-  "pythons": ["3.7", "3.12"]
+  "pythons": ["3.8", "3.12"]
 
-then it will use the executables named ``python3.7`` and
+then it will use the executables named ``python3.8`` and
 ``python3.12`` on the path.  There are many ways to get multiple
 versions of Python installed -- your package manager, ``apt-get``,
 ``yum``, ``MacPorts`` or ``homebrew`` probably has them, or you
@@ -220,13 +220,13 @@ Finally, the benchmarks are run::
     · Fetching recent changes
     · Creating environments......
     · Discovering benchmarks
-    ·· Uninstalling from virtualenv-py3.7
-    ·· Building 4238c44d <main> for virtualenv-py3.7
-    ·· Installing into virtualenv-py3.7.
+    ·· Uninstalling from virtualenv-py3.8
+    ·· Building 4238c44d <main> for virtualenv-py3.8
+    ·· Installing into virtualenv-py3.8.
     · Running 10 total benchmarks (1 commits * 2 environments * 5 benchmarks)
     [  0.00%] · For project commit 4238c44d <main>:
-    [  0.00%] ·· Building for virtualenv-py3.7.
-    [  0.00%] ·· Benchmarking virtualenv-py3.7
+    [  0.00%] ·· Building for virtualenv-py3.8.
+    [  0.00%] ·· Benchmarking virtualenv-py3.8
     [ 10.00%] ··· Running (benchmarks.TimeSuite.time_iterkeys--)....
     [ 30.00%] ··· benchmarks.MemSuite.mem_list                                 2.42k
     [ 35.00%] ··· benchmarks.TimeSuite.time_iterkeys                     11.1±0.01μs
@@ -338,11 +338,11 @@ results from previous runs on the command line::
     $ asv show main
     Commit: 4238c44d <main>
 
-    benchmarks.MemSuite.mem_list [mymachine/virtualenv-py3.7]
+    benchmarks.MemSuite.mem_list [mymachine/virtualenv-py3.8]
       2.42k
       started: 2018-08-19 18:46:47, duration: 1.00s
 
-    benchmarks.TimeSuite.time_iterkeys [mymachine/virtualenv-py3.7]
+    benchmarks.TimeSuite.time_iterkeys [mymachine/virtualenv-py3.8]
       11.1±0.06μs
       started: 2018-08-19 18:46:47, duration: 1.00s
 
@@ -411,9 +411,9 @@ The ``asv rm`` command will prompt before performing any operations.
 Passing the ``-y`` option will skip the prompt.
 
 Here is a more complex example, to remove all of the benchmarks on
-Python 3.7 and the machine named ``giraffe``::
+Python 3.8 and the machine named ``giraffe``::
 
-    asv rm python=3.7 machine=giraffe
+    asv rm python=3.8 machine=giraffe
 
 
 Finding a commit that produces a large regression
@@ -505,9 +505,9 @@ simple table summary of profiling results is displayed::
      ncalls  tottime  percall  cumtime  percall filename:lineno(function)
           1    0.000    0.000    6.844    6.844 asv/benchmark.py:171(method_caller)
           1    0.000    0.000    6.844    6.844 asv/benchmark.py:197(run)
-          1    0.000    0.000    6.844    6.844 /usr/lib64/python3.7/timeit.py:201(repeat)
-          3    0.000    0.000    6.844    2.281 /usr/lib64/python3.7/timeit.py:178(timeit)
-          3    0.104    0.035    6.844    2.281 /usr/lib64/python3.7/timeit.py:96(inner)
+          1    0.000    0.000    6.844    6.844 /usr/lib64/python3.8/timeit.py:201(repeat)
+          3    0.000    0.000    6.844    2.281 /usr/lib64/python3.8/timeit.py:178(timeit)
+          3    0.104    0.035    6.844    2.281 /usr/lib64/python3.8/timeit.py:96(inner)
      300000    0.398    0.000    6.740    0.000 benchmarks/time_units.py:20(time_very_simple_unit_parse)
      300000    1.550    0.000    6.342    0.000 astropy/units/core.py:1673(__call__)
      300000    0.495    0.000    2.416    0.000 astropy/units/format/generic.py:361(parse)
@@ -517,7 +517,7 @@ simple table summary of profiling results is displayed::
     3000002    0.735    0.000    0.735    0.000 {isinstance}
      300000    0.403    0.000    0.403    0.000 {method 'decode' of 'str' objects}
      300000    0.216    0.000    0.216    0.000 astropy/units/format/generic.py:32(__init__)
-     300000    0.152    0.000    0.188    0.000 /usr/lib64/python3.7/inspect.py:59(isclass)
+     300000    0.152    0.000    0.188    0.000 /usr/lib64/python3.8/inspect.py:59(isclass)
      900000    0.170    0.000    0.170    0.000 {method 'lower' of 'unicode' objects}
      300000    0.133    0.000    0.133    0.000 {method 'count' of 'unicode' objects}
      300000    0.078    0.000    0.078    0.000 astropy/units/core.py:272(get_current_unit_registry)
@@ -526,13 +526,13 @@ simple table summary of profiling results is displayed::
      300000    0.038    0.000    0.038    0.000 {method 'strip' of 'str' objects}
      300003    0.037    0.000    0.037    0.000 {globals}
      300000    0.033    0.000    0.033    0.000 {len}
-          3    0.000    0.000    0.000    0.000 /usr/lib64/python3.7/timeit.py:143(setup)
-          1    0.000    0.000    0.000    0.000 /usr/lib64/python3.7/timeit.py:121(__init__)
+          3    0.000    0.000    0.000    0.000 /usr/lib64/python3.8/timeit.py:143(setup)
+          1    0.000    0.000    0.000    0.000 /usr/lib64/python3.8/timeit.py:121(__init__)
           6    0.000    0.000    0.000    0.000 {time.time}
           1    0.000    0.000    0.000    0.000 {min}
           1    0.000    0.000    0.000    0.000 {range}
           1    0.000    0.000    0.000    0.000 {hasattr}
-          1    0.000    0.000    0.000    0.000 /usr/lib64/python3.7/timeit.py:94(_template_func)
+          1    0.000    0.000    0.000    0.000 /usr/lib64/python3.8/timeit.py:94(_template_func)
           3    0.000    0.000    0.000    0.000 {gc.enable}
           3    0.000    0.000    0.000    0.000 {method 'append' of 'list' objects}
           3    0.000    0.000    0.000    0.000 {gc.disable}
@@ -591,15 +591,15 @@ revisions of the project. You can do so with the ``compare`` command::
            before           after         ratio
          [3bfda9c6]       [bf719488]
          <v0.1>           <v0.2>
-                40.4m            40.4m     1.00  benchmarks.MemSuite.mem_list [amulet.localdomain/virtualenv-py3.7-numpy]
+                40.4m            40.4m     1.00  benchmarks.MemSuite.mem_list [amulet.localdomain/virtualenv-py3.8-numpy]
                failed            35.2m      n/a  benchmarks.MemSuite.mem_list [amulet.localdomain/virtualenv-py3.12-numpy]
-          11.5±0.08μs         11.0±0μs     0.96  benchmarks.TimeSuite.time_iterkeys [amulet.localdomain/virtualenv-py3.7-numpy]
+          11.5±0.08μs         11.0±0μs     0.96  benchmarks.TimeSuite.time_iterkeys [amulet.localdomain/virtualenv-py3.8-numpy]
                failed           failed      n/a  benchmarks.TimeSuite.time_iterkeys [amulet.localdomain/virtualenv-py3.12-numpy]
-             11.5±1μs      11.2±0.02μs     0.97  benchmarks.TimeSuite.time_keys [amulet.localdomain/virtualenv-py3.7-numpy]
+             11.5±1μs      11.2±0.02μs     0.97  benchmarks.TimeSuite.time_keys [amulet.localdomain/virtualenv-py3.8-numpy]
                failed      8.40±0.02μs      n/a  benchmarks.TimeSuite.time_keys [amulet.localdomain/virtualenv-py3.12-numpy]
-          34.6±0.09μs      32.9±0.01μs     0.95  benchmarks.TimeSuite.time_range [amulet.localdomain/virtualenv-py3.7-numpy]
+          34.6±0.09μs      32.9±0.01μs     0.95  benchmarks.TimeSuite.time_range [amulet.localdomain/virtualenv-py3.8-numpy]
                failed      35.6±0.05μs      n/a  benchmarks.TimeSuite.time_range [amulet.localdomain/virtualenv-py3.12-numpy]
-           31.6±0.1μs      30.2±0.02μs     0.95  benchmarks.TimeSuite.time_xrange [amulet.localdomain/virtualenv-py3.7-numpy]
+           31.6±0.1μs      30.2±0.02μs     0.95  benchmarks.TimeSuite.time_xrange [amulet.localdomain/virtualenv-py3.8-numpy]
                failed           failed      n/a  benchmarks.TimeSuite.time_xrange [amulet.localdomain/virtualenv-py3.12-numpy]
 
 This will show the times for each benchmark for the first and second
