@@ -30,6 +30,7 @@ dependencies = [
     "asv-runner>=v0.1.0",
     "json5",
     "tabulate",
+    "virtualenv",
     "colorama; platform_system == 'Windows'",
     "pyyaml; platform_python_implementation != \"PyPy\"",
     "pympler; platform_python_implementation != \"PyPy\"",
