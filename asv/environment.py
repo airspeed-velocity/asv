@@ -13,6 +13,7 @@ import sys
 import itertools
 import subprocess
 import importlib
+import tomli
 from pathlib import Path
 
 from .console import log
@@ -537,14 +538,15 @@ class Environment:
             # XXX: What if pypy installed asv tries to benchmark a cpython
             # python?
             self._base_requirements["pip+pympler"] = ""
-        if (Path.cwd() / "poetry.lock").exists():
-            self._base_requirements["poetry-core"] = ""
 
-        if (Path.cwd() / "pdm.lock").exists():
-            self._base_requirements["pdm"] = ""
-
-        if (Path.cwd() / "pyproject.toml").exists():
+        pyproject_path = Path.cwd() / "pyproject.toml"
+        if pyproject_path.exists():
             self._base_requirements["build"] = ""
+            with open(pyproject_path, "rb") as pyproject_file:
+                pyproject_data = tomli.load(pyproject_file)
+                requires = pyproject_data.get("build-system", {}).get("requires", [])
+                for requirement in requires:
+                    self._base_requirements[f"pip+{requirement}"] = ""
 
         # Update the _base_requirements if needed
         for key in list(self._requirements.keys()):
