@@ -13,8 +13,9 @@ import sys
 import itertools
 import subprocess
 import importlib
-import tomli
 from pathlib import Path
+
+import tomli
 
 from .console import log
 from . import util, build_cache
