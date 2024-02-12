@@ -31,7 +31,8 @@ The following benchmark types are recognized:
 
         External benchmarks may be defined through ``asv_runner`` and a list of
         benchmark plugins (like ``asv_bench_memray``) may be found here, with
-        samples at `asv_samples <https://github.com/HaoZeke/asv_samples>`_.
+        samples at `asv_samples
+        <https://github.com/airspeed-velocity/asv_samples>`_.
 
 Benchmark attributes
 --------------------

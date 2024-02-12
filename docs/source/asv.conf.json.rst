@@ -10,10 +10,10 @@ this file and their expected values.
 .. note::
 
     The GitHub repository at `asv_samples
-    <https://github.com/HaoZeke/asv_samples>`_ serves as a comprehensive
-    showcase for integrating Air Speed Velocity (ASV) with a wide array of
-    Python project configurations. This includes various build systems and
-    advanced benchmarking features like custom parameterizations and ASV
+    <https://github.com/airspeed-velocity/asv_samples>`_ serves as a
+    comprehensive showcase for integrating Air Speed Velocity (ASV) with a wide
+    array of Python project configurations. This includes various build systems
+    and advanced benchmarking features like custom parameterizations and ASV
     plugins, aiming to benchmark Python code performance across diverse setups.
 
     The repository is structured with dedicated branches for each build system

@@ -3,6 +3,14 @@
 Writing benchmarks
 ==================
 
+
+.. note::
+
+    The `asv_samples repository
+    <https://github.com/airspeed-velocity/asv_samples>`_ has complete examples
+    of benchmarks along with continuous integration and can serve as a reference
+    for writing and working with benchmarks.
+
 Benchmarks are stored in a Python package, i.e. collection of ``.py``
 files in the benchmark suite's ``benchmark`` directory (as defined by
 ``benchmark_dir`` in the ``asv.conf.json`` file).  The package may
