@@ -1,0 +1,3 @@
+The ``asv`` package no longer prepends the script execution directory
+unconditionally. Now we check for and remove the path only if it matches the
+directory that the runner script resides in.

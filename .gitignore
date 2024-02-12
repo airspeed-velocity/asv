@@ -46,3 +46,4 @@ htmlcov
 
 # Mac OSX
 .DS_Store
+/docs/html/
