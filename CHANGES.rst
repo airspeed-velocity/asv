@@ -1,3 +1,38 @@
+0.6.2 (2024-02-12)
+------------------
+
+New Features
+^^^^^^^^^^^^
+
+- Partially skipped benchmarks will still have their results displayed. (#1351)
+- ``asv`` will now correctly prepare all the build backend dependencies into
+  ``base_requirements`` and the default ``build_command`` has been modified to
+  allow fetching from PyPI. (#1377)
+
+
+Bug Fixes
+^^^^^^^^^
+
+- The ``asv`` package no longer prepends the script execution directory
+  unconditionally. Now we check for and remove the path only if it matches the
+  directory that the runner script resides in. (#1346)
+- The ``bdist`` wheels no longer include ``benchmarks`` and ``test``. (#1349)
+- The ``mamba`` plugin works correctly for newer versions (>=1.5) of
+  ``libmambapy`` (#1372)
+- The ``mamba`` plugin respects the ``MAMBARC`` environment if set, taking
+  channels and channel priority from the file in the environment variable.
+  (#1373)
+- Fixed a bug where ``matrix`` requirements were dropped if an environment file
+  was specified. (#1373)
+- ``conda-forge`` is no longer a default channel for ``mamba``. (#1373)
+
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- ``asv`` now depends on ``virtualenv`` (#1379)
+
+
 0.6.1 (2023-09-11)
 ------------------
 

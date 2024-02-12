@@ -1,2 +1,0 @@
-The ``mamba`` plugin works correctly for newer versions (>=1.5) of
-``libmambapy``

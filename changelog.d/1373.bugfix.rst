@@ -1,2 +1,0 @@
-The ``mamba`` plugin respects the ``MAMBARC`` environment if set, taking
-channels and channel priority from the file in the environment variable.

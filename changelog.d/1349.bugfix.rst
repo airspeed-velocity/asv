@@ -1,1 +1,0 @@
-The ``bdist`` wheels no longer include ``benchmarks`` and ``test``.

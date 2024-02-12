@@ -1,1 +1,0 @@
-``asv`` now depends on ``virtualenv``

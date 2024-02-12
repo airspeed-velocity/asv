@@ -59,7 +59,7 @@ root_doc = 'index'
 
 # General information about the project.
 project = u'airspeed velocity'
-copyright = u'2013-2023, Michael Droettboom, Pauli Virtanen'
+copyright = u'2013--present, Michael Droettboom, Pauli Virtanen, asv Developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -264,7 +264,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     ('index', 'airspeedvelocity', 'airspeed velocity Documentation',
-     'Michael Droettboom', 'airspeedvelocity', 'One line description of project.',
+     'Michael Droettboom', 'airspeedvelocity', 'Benchmarking suite for python code.',
      'Miscellaneous'),
 ]
 
