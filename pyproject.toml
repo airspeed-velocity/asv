@@ -129,3 +129,8 @@ archs = "x86_64 arm64"
 
 [tool.cibuildwheel.windows]
 archs = ['AMD64']
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["wheelhouse"]
+namespaces = true
