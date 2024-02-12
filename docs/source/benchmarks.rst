@@ -27,10 +27,11 @@ The following benchmark types are recognized:
 
 .. note::
 
-   .. versionadded:: 0.6.0
+   .. versionadded:: 0.6.2
 
-        Users may define their own benchmark types, see ``asv_runner`` for
-        examples.
+        External benchmarks may be defined through ``asv_runner`` and a list of
+        benchmark plugins (like ``asv_bench_memray``) may be found here, with
+        samples at `asv_samples <https://github.com/HaoZeke/asv_samples>`_.
 
 Benchmark attributes
 --------------------

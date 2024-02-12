@@ -27,10 +27,11 @@ dynamic = [
     "version",
 ]
 dependencies = [
-    "asv-runner>=v0.1.0",
+    "asv-runner>=v0.2.1",
     "json5",
     "tabulate",
     "virtualenv",
+    "tomli",
     "colorama; platform_system == 'Windows'",
     "pyyaml; platform_python_implementation != \"PyPy\"",
     "pympler; platform_python_implementation != \"PyPy\"",
@@ -74,6 +75,9 @@ virtualenv = [
 ]
 hg = [
     "python-hglib",
+]
+plugs = [
+    "asv-bench-memray",
 ]
 [build-system]
 requires = [

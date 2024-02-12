@@ -15,6 +15,8 @@ import subprocess
 import importlib
 from pathlib import Path
 
+import tomli
+
 from .console import log
 from . import util, build_cache
 
@@ -537,11 +539,15 @@ class Environment:
             # XXX: What if pypy installed asv tries to benchmark a cpython
             # python?
             self._base_requirements["pip+pympler"] = ""
-        if (Path.cwd() / "poetry.lock").exists():
-            self._base_requirements["poetry-core"] = ""
 
-        if (Path.cwd() / "pdm.lock").exists():
-            self._base_requirements["pdm"] = ""
+        pyproject_path = Path.cwd() / "pyproject.toml"
+        if pyproject_path.exists():
+            self._base_requirements["build"] = ""
+            with open(pyproject_path, "rb") as pyproject_file:
+                pyproject_data = tomli.load(pyproject_file)
+                requires = pyproject_data.get("build-system", {}).get("requires", [])
+                for requirement in requires:
+                    self._base_requirements[f"pip+{requirement}"] = ""
 
         # Update the _base_requirements if needed
         for key in list(self._requirements.keys()):
@@ -920,15 +926,13 @@ class Environment:
         if cmd is None:
             if has_file('pyproject.toml'):
                 cmd = [
-                    ("PIP_NO_BUILD_ISOLATION=false "
-                     "python -mpip wheel --no-deps --no-index "
-                     "-w {build_cache_dir} {build_dir}")
+                    "python -m build",
+                    "python -mpip wheel -w {build_cache_dir} {build_dir}"
                 ]
             else:
                 cmd = [
                     "python setup.py build",
-                    ("PIP_NO_BUILD_ISOLATION=false "
-                     "python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}")
+                    "python -mpip wheel -w {build_cache_dir} {build_dir}"
                 ]
 
         if cmd:
