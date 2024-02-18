@@ -916,24 +916,19 @@ class Environment:
         """
         Run build commands
         """
-        build_dir_path = Path(build_dir)
-
-        def has_file(file_name):
-            return (build_dir_path / file_name).exists()
+        Path(build_dir)
 
         cmd = self._build_command
 
         if cmd is None:
-            if has_file('pyproject.toml'):
-                cmd = [
-                    "python -m build",
-                    "python -mpip wheel -w {build_cache_dir} {build_dir}"
-                ]
-            else:
-                cmd = [
-                    "python setup.py build",
-                    "python -mpip wheel -w {build_cache_dir} {build_dir}"
-                ]
+            try:
+                build_command = "python -m build"
+            except ImportError:
+                build_command = "python setup.py build"
+            cmd = [
+                build_command,
+                "python -mpip wheel -w {build_cache_dir} {build_dir}"
+            ]
 
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)
