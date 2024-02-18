@@ -542,7 +542,7 @@ class Environment:
 
         pyproject_path = Path.cwd() / "pyproject.toml"
         if pyproject_path.exists():
-            self._base_requirements["build"] = ""
+            self._base_requirements["pip+build"] = ""
             with open(pyproject_path, "rb") as pyproject_file:
                 pyproject_data = tomli.load(pyproject_file)
                 requires = pyproject_data.get("build-system", {}).get("requires", [])
