@@ -922,7 +922,7 @@ class Environment:
 
         if cmd is None:
             cmd = [
-                "python -m build",
+                "PIP_NO_BUILD_ISOLATION=0 python -m build",
                 "python -mpip wheel -w {build_cache_dir} {build_dir}"
             ]
 
