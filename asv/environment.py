@@ -514,6 +514,8 @@ class Environment:
         # These are needed for asv to build and run the project, not part of
         # benchmark name mangling
         self._base_requirements = {}
+        # gh-1385
+        self._base_requirements["pip+build"] = ""
         # gh-1314
         asv_runner_path = os.getenv("ASV_RUNNER_PATH", "")
         module_path = Path(asv_runner_path) / "asv_runner"
@@ -542,7 +544,6 @@ class Environment:
 
         pyproject_path = Path.cwd() / "pyproject.toml"
         if pyproject_path.exists():
-            self._base_requirements["build"] = ""
             with open(pyproject_path, "rb") as pyproject_file:
                 pyproject_data = tomli.load(pyproject_file)
                 requires = pyproject_data.get("build-system", {}).get("requires", [])
@@ -916,24 +917,14 @@ class Environment:
         """
         Run build commands
         """
-        build_dir_path = Path(build_dir)
-
-        def has_file(file_name):
-            return (build_dir_path / file_name).exists()
 
         cmd = self._build_command
 
         if cmd is None:
-            if has_file('pyproject.toml'):
-                cmd = [
-                    "python -m build",
-                    "python -mpip wheel -w {build_cache_dir} {build_dir}"
-                ]
-            else:
-                cmd = [
-                    "python setup.py build",
-                    "python -mpip wheel -w {build_cache_dir} {build_dir}"
-                ]
+            cmd = [
+                "PIP_NO_BUILD_ISOLATION=0 python -m build",
+                "python -mpip wheel -w {build_cache_dir} {build_dir}"
+            ]
 
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)

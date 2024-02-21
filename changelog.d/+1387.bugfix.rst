@@ -1,0 +1,1 @@
+``build`` is now the default backend for ``asv`` to install projects.
