@@ -12,6 +12,7 @@ from .conftest import generate_basic_conf
 WIN = (os.name == 'nt')
 
 
+@pytest.mark.skipif(tools.HAS_PYPY, reason="Times out randomly on pypy")
 def test_find(capfd, tmpdir):
     values = [
         (None, None),
@@ -67,6 +68,7 @@ def test_find(capfd, tmpdir):
     assert get_result_files() == prev_result_files
 
 
+@pytest.mark.skipif(tools.HAS_PYPY, reason="Times out randomly on pypy")
 @pytest.mark.flaky(reruns=1, reruns_delay=5)  # depends on a timeout
 def test_find_timeout(capfd, tmpdir):
     values = [
@@ -95,6 +97,7 @@ def test_find_timeout(capfd, tmpdir):
     assert "asv: benchmark timed out (timeout 1.0s)" in output
 
 
+@pytest.mark.skipif(tools.HAS_PYPY, reason="Times out randomly on pypy")
 def test_find_inverted(capfd, tmpdir):
     values = [
         (5, 6),
