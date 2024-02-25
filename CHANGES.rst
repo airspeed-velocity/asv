@@ -1,3 +1,12 @@
+0.6.3 (2024-02-25)
+------------------
+
+Bug Fixes
+^^^^^^^^^
+
+- ``build`` is now the default backend for ``asv`` to install projects. (#1387)
+
+
 0.6.2 (2024-02-12)
 ------------------
 
