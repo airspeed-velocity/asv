@@ -15,10 +15,13 @@ import subprocess
 import importlib
 from pathlib import Path
 
-import tomli
-
 from .console import log
 from . import util, build_cache
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 WIN = (os.name == "nt")
 
@@ -545,7 +548,7 @@ class Environment:
         pyproject_path = Path.cwd() / "pyproject.toml"
         if pyproject_path.exists():
             with open(pyproject_path, "rb") as pyproject_file:
-                pyproject_data = tomli.load(pyproject_file)
+                pyproject_data = tomllib.load(pyproject_file)
                 requires = pyproject_data.get("build-system", {}).get("requires", [])
                 for requirement in requires:
                     self._base_requirements[f"pip+{requirement}"] = ""
