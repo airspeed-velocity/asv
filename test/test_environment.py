@@ -745,7 +745,7 @@ def test_custom_commands(tmpdir):
     assert not os.listdir(cache_dir)
     env._set_installed_commit_hash(None)
 
-    # It should succed with nonzero cache size
+    # It should succeed with nonzero cache size
     conf.build_cache_size = 1
     env = get_env()
     env.install_project(conf, repo, commit_hash)
