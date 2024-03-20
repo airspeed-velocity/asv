@@ -116,7 +116,7 @@ benchmark types:
 
   For the purposes of identifying benchmarks in the UI, ``repr()`` is called
   on the elements of ``params``. In the event these strings contain memory
-  addresses, those adresses are stripped to allow comparison across runs.
+  addresses, those addresses are stripped to allow comparison across runs.
   Additionally, if this results in a non-unique mapping, each duplicated
   element will be suffixed with a distinct integer identifier corresponding
   to order of appearance.
@@ -154,7 +154,7 @@ Timing benchmarks
   ``number`` times, and after that ``teardown`` runs.
 
 - ``sample_time``: ``asv`` will automatically select ``number`` so that
-  each sample takes approximatively ``sample_time`` seconds.  If not
+  each sample takes approximately ``sample_time`` seconds.  If not
   specified, ``sample_time`` defaults to 10 milliseconds.
 
 - ``min_run_count``: the function is run at least this many times during

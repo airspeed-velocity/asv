@@ -689,7 +689,7 @@ def load_json(path, api_version=None, js_comments=False):
     path : str
         File name
     api_version : str or None
-        API version indentifier
+        API version identifier
     js_comments : bool, optional
         Whether to allow nonstandard javascript-style comments
         in the file. Note that this slows down the loading
