@@ -49,7 +49,7 @@ def test_parallelfailure():
     assert str(exc) == "Exception: test\n    something"
 
     # Check multiprocessing does not hang (it would hang on Python
-    # 2.7.8 if the 'raise utill.ParallelFailure ...' above is changed
+    # 2.7.8 if the 'raise util.ParallelFailure ...' above is changed
     # to just 'raise')
     pool = multiprocessing.Pool(4)
     try:
