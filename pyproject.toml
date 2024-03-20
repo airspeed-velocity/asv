@@ -135,3 +135,10 @@ archs = ['AMD64']
 where = ["."]
 exclude = ["wheelhouse"]
 namespaces = true
+
+[tool.codespell]
+# Ref: https://github.com/codespell-project/codespell#using-a-config-file
+skip = '.git,*.css'
+check-hidden = true
+ignore-regex = '- Boris Feld\b'
+# ignore-words-list = ''
