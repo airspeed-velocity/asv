@@ -233,7 +233,8 @@ class MambaSolver:
         RuntimeError :
             If the solver did not find a solution.
         """
-        solver_options = [(libmambapy.SOLVER_FLAG_ALLOW_DOWNGRADE, 1)]
+        # solver_options = [(libmambapy.SOLVER_FLAG_ALLOW_DOWNGRADE, 1)]
+        solver_options = []
         api_solver = libmambapy.Solver(self.pool, solver_options)
         _specs = specs
 
