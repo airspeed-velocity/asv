@@ -147,7 +147,7 @@ class Conda(environment.Environment):
             try:
                 env_file_name = self._conda_environment_file or env_file.name
                 self._run_conda(['env', 'create', '-f', env_file_name,
-                                 '-p', self._path, '--force'],
+                                 '-p', self._path, '--yes'],
                                 env=env)
 
                 if self._conda_environment_file and (conda_args or pip_args):
