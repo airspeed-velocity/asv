@@ -32,7 +32,7 @@ dependencies = [
     "build",
     "tabulate",
     "virtualenv",
-    "tomli",
+    "tomli; python_version < '3.11'",
     "colorama; platform_system == 'Windows'",
     "pyyaml; platform_python_implementation != \"PyPy\"",
     "pympler; platform_python_implementation != \"PyPy\"",
