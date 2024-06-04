@@ -140,15 +140,22 @@ class Profile(Command):
                     conf.results_dir, machine_name):
                 if hash_equal(commit_hash, result.commit_hash):
                     if result.has_profile(benchmark):
-                        env_matched = any(result.env.name == env.name
-                                          for env in environments)
+                        # Only take the first one
+                        env_matched = next(
+                            (
+                                env
+                                for env in environments
+                                if result.env_name == env.name
+                            ),
+                            None,
+                        )
                         if env_matched:
-                            if result.env.name not in checked_out:
+                            if result.env_name not in checked_out:
                                 # We need to checkout the correct commit so that
                                 # the line numbers in the profile data match up with
                                 # what's in the source tree.
-                                result.env.checkout_project(repo, commit_hash)
-                                checked_out.add(result.env.name)
+                                env_matched.checkout_project(repo, commit_hash)
+                                checked_out.add(result.env_name)
                             profile_data = result.get_profile(benchmark)
                             break
 
