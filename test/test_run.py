@@ -90,7 +90,7 @@ def test_run_spec(basic_conf_2):
         assert set(result_files) == expected
 
     for branches, expected_commits in (
-        # Without branches in config, shoud just use main
+        # Without branches in config, should just use main
         ([None], [initial_commit, main_commit]),
 
         # With one branch in config, should just use that branch

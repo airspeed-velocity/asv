@@ -754,7 +754,7 @@ def solve_potts_autogamma(y, w, beta=None, **kw):
 def solve_potts_approx(y, w, gamma=None, min_size=1, **kw):
     """
     Fit penalized stepwise constant function (Potts model) to data
-    approximatively, in linear time.
+    approximately, in linear time.
 
     Do this by running the exact solver using a small maximum interval
     size, and then combining consecutive intervals together if it

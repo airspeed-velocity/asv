@@ -57,7 +57,7 @@ def test_is_different():
 
 def _check_ci(estimator, sampler, nsamples=300):
     """
-    Check whether confidence behaves as advertized.
+    Check whether confidence behaves as advertised.
 
     Draw random samples from a distribution and check how often the
     true value (assumed 0) falls in the estimated CI.
