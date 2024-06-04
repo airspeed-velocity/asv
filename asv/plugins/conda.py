@@ -146,9 +146,18 @@ class Conda(environment.Environment):
             env_file.close()
             try:
                 env_file_name = self._conda_environment_file or env_file.name
-                self._run_conda(['env', 'create', '-f', env_file_name,
-                                 '-p', self._path, '--force'],
+
+                conda_version = self._run_conda(['--version'], env=env)
+                log.info(f"conda version: {conda_version}")
+                # https://conda.io/projects/conda/en/latest/release-notes.html#id8
+                if conda_version >= "24.3.0":
+                    self._run_conda(['env', 'create', '-f', env_file_name,
+                                 '-p', self._path, "--yes"],
                                 env=env)
+                else:  # Backward compatbility
+                    self._run_conda(['env', 'create', '-f', env_file_name,
+                                    '-p', self._path, '--force'],
+                                    env=env)
 
                 if self._conda_environment_file and (conda_args or pip_args):
                     # Add extra packages
