@@ -133,8 +133,9 @@ archs = ['AMD64']
 
 [tool.setuptools.packages.find]
 where = ["."]
-exclude = ["wheelhouse"]
+exclude = ["wheelhouse", "test", "benchmarks", "docs"]
 namespaces = true
+include = ["asv", "asv.*"]
 
 [tool.codespell]
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file
