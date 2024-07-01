@@ -1328,6 +1328,7 @@ class ParsedPipDeclaration:
         # Match git URLs
         git_url_pattern = (
             r'(git\+https:\/\/[a-zA-Z0-9-_\/.]+)' # match the git URL
+            r'(?:@([a-zA-Z0-9-_\/.]+))?' # optional branch or tag
             r'(?:#egg=([a-zA-Z0-9-_]+))?' # optional egg fragment
         )
         git_url_match = re.search(git_url_pattern, declaration)
@@ -1335,8 +1336,11 @@ class ParsedPipDeclaration:
         # If there's a git URL match, remove it from the declaration
         if git_url_match:
             self.path = git_url_match.group(1)
-            if git_url_match.group(2):
-                self.pkgname = git_url_match.group(2)
+            branch_or_tag = git_url_match.group(2)
+            if branch_or_tag:
+                self.path += f"@{branch_or_tag}"
+            if git_url_match.group(3):
+                self.pkgname = git_url_match.group(3)
             declaration = declaration.replace(git_url_match.group(0), '', 1)
 
         # Match local paths
