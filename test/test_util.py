@@ -495,7 +495,8 @@ def mock_pip_caller(args):
     # Git installations with a branch and egg specified
     ("git+https://github.com/user/pythonrepo.git@branch#egg=repo", {
         'pkgname': 'repo', 'specification': None,
-        'flags': [], 'is_editable': False, 'path': 'git+https://github.com/user/pythonrepo.git@branch'
+        'flags': [], 'is_editable': False,
+        'path': 'git+https://github.com/user/pythonrepo.git@branch'
     }),
 
     # Flags with values
