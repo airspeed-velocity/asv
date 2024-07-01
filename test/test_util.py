@@ -479,11 +479,25 @@ def mock_pip_caller(args):
         'pkgname': None, 'specification': None,
         'flags': [], 'is_editable': False, 'path': 'git+https://github.com/user/repo.git'
     }),
+
+    # Git installations with a branch specified
+    ("git+https://github.com/user/repo.git@branch", {
+        'pkgname': None, 'specification': None,
+        'flags': [], 'is_editable': False, 'path': 'git+https://github.com/user/repo.git@branch'
+    }),
+
     # Editable git installations with #egg= suffix
-    ("-e git+https://github.com/user/repo.git#egg=repo", {
-        'pkgname': 'repo', 'specification': None,
+    ("-e git+https://github.com/user/repo.git#egg=pkgname", {
+        'pkgname': 'pkgname', 'specification': None,
         'flags': ['-e'], 'is_editable': True, 'path': 'git+https://github.com/user/repo.git'
     }),
+
+    # Git installations with a branch and egg specified
+    ("git+https://github.com/user/pythonrepo.git@branch#egg=repo", {
+        'pkgname': 'repo', 'specification': None,
+        'flags': [], 'is_editable': False, 'path': 'git+https://github.com/user/pythonrepo.git@branch'
+    }),
+
     # Flags with values
     ("--install-option=\"--prefix=/my/path\" numpy", {
         'pkgname': 'numpy', 'specification': None,
@@ -512,6 +526,10 @@ def pip_caller(args):
         # Test with a git URL
         ("git+https://github.com/numpy/numpy.git#egg=numpy",
          ["install", "-v", "--upgrade", "git+https://github.com/numpy/numpy.git"]),
+
+        # Test with a git URL and branch
+        ("git+https://github.com/numpy/numpy.git@branch",
+         ["install", "-v", "--upgrade", "git+https://github.com/numpy/numpy.git@branch"]),
 
         # Test with a local path
         ("./localpackage/", ["install", "-v", "--upgrade", "./localpackage/"]),
