@@ -352,7 +352,8 @@ def copy_template(src, dst, dvcs, values):
 
 
 def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
-                       extra_branches=(), subdir=''):
+                       extra_branches=(), tags=(),
+                       subdir=''):
     """
     Generate a test repository
 
@@ -369,6 +370,8 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
         For branch start commits, use relative references, e.g.,
         the format 'main~10' or 'default~10' works both for Hg
         and Git.
+     tags: list
+        List of of values from `values` to tag in the repository.
     subdir
         A relative subdirectory inside the repository to copy the
         test project into.
@@ -406,7 +409,11 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
         copy_template(template_path, project_path, dvcs, mapping)
 
         dvcs.commit(f"Revision {i}")
-        dvcs.tag(i)
+        if tags:
+            if value in tags:
+                dvcs.tag(value)
+        else:
+            dvcs.tag(i)
 
     if extra_branches:
         for start_commit, branch_name, values in extra_branches:
@@ -418,7 +425,9 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
                 }
                 copy_template(template_path, project_path, dvcs, mapping)
                 dvcs.commit(f"Revision {branch_name}.{i}")
-
+                if tags:
+                    if value in tags:
+                        dvcs.tag(value)
     return dvcs
 
 
