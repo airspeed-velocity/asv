@@ -573,7 +573,7 @@ class Results:
         """
         Does the given benchmark data have profiling information?
         """
-        return benchmark_name in self._profiles
+        return self._profiles.get(benchmark_name)
 
     def save(self, result_dir):
         """
