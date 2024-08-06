@@ -48,13 +48,16 @@ class Config:
     def load(cls, path=None):
         """
         Load a configuration from a file.  If no file is provided,
-        defaults to `asv.conf.json`.
+        defaults to `asv.conf.json` (also checks for `asv.conf.jsonc`).
         """
         if not path:
             path = "asv.conf.json"
 
         if not os.path.isfile(path):
-            raise util.UserError(f"Config file {path} not found.")
+            # also check for `asv.conf.jsonc` (JSON with comments)
+            path += 'c'
+            if not os.path.isfile(path):
+                raise util.UserError(f"Config file {path} not found.")
 
         d = util.load_json(path, cls.api_version, js_comments=True)
         try:
