@@ -2,11 +2,42 @@
 
 import os
 import sys
+from pathlib import Path
 
 from .console import log
 from . import util
 
 # TODO: Some verification of the config values
+
+
+def _get_config_path():
+    """
+    Check the default config file path for all valid extensions.
+    Raise if no file is found, or if multiple are found for the valid extensions.
+    Return the path of the config file if exactly one is found.
+    """
+    extensions = ['.json', '.jsonc']
+    path = Path('asv.conf')
+
+    num_matches = 0
+    for e in extensions:
+        p = path.with_suffix(e)
+        if p.exists:
+            num_matches += 1
+            path = p
+
+    if num_matches == 0:
+        raise util.UserError(
+            f"No `asv.conf` file found for valid extensions: {extensions}."
+        )
+    elif num_matches > 1:
+        raise util.UserError(
+            f"Multiple `asv.conf` files found for valid extensions: {extensions}. "
+            f"Please specifiy which file to use with `--config=FILEPATH`."
+        )
+    else:
+        # exactly one valid config file found
+        return path
 
 
 class Config:
@@ -48,13 +79,13 @@ class Config:
     def load(cls, path=None):
         """
         Load a configuration from a file.  If no file is provided,
-        defaults to `asv.conf.json`.
+        defaults to `asv.conf` with valid extensions `['.json', '.jsonc']`.
         """
-        if not path:
-            path = "asv.conf.json"
-
-        if not os.path.isfile(path):
-            raise util.UserError(f"Config file {path} not found.")
+        if path:
+            if not Path(path).exists():
+                raise util.UserError(f"Config file {path} not found.")
+        else:
+            path = _get_config_path()
 
         d = util.load_json(path, cls.api_version, js_comments=True)
         try:
