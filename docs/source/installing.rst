@@ -22,7 +22,8 @@ the ``python`` requirements are as noted in the ``pyproject.toml``.
 For managing the environments, one of the following packages is required:
 
 - `libmambapy <https://mamba.readthedocs.io/en/latest/python_api.html>`__,
-  which is typically part of ``mamba``. In this case ``conda`` must be present too.
+  which is typically part of ``mamba``. In this case ``conda`` and ``conda-build``
+  must be present too.
 
 - `virtualenv <http://virtualenv.org/>`__, which is required since
   venv is not compatible with other versions of Python.
