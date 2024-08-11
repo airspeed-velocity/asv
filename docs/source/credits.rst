@@ -48,6 +48,7 @@ The rest of the contributors are listed in alphabetical order.
 - Kacper Kowalik (Xarthisius)
 - Kevin Anderson
 - @Leenkiz
+- Lucas Colley
 - Lucy Jiménez
 - Marc Garcia
 - @mariamadronah
