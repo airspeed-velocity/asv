@@ -1,6 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import os
 import sys
 from pathlib import Path
 
@@ -22,7 +21,7 @@ def _get_config_path():
     num_matches = 0
     for e in extensions:
         p = path.with_suffix(e)
-        if p.exists:
+        if p.exists():
             num_matches += 1
             path = p
 
@@ -37,7 +36,7 @@ def _get_config_path():
         )
     else:
         # exactly one valid config file found
-        return path
+        return str(path)
 
 
 class Config:
