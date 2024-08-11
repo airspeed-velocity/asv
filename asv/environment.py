@@ -890,7 +890,9 @@ class Environment:
             # Run pip via python -m pip, avoids shebang length limit on Linux.
             # Don't run it in build directory, because it may contain Python packages
             # that pip believes to be already installed.
-            cmd = ["in-dir={env_dir} python -mpip install {wheel_file}"]
+            # --force-reinstall is needed since versions may not change between
+            # asv runs (esp. for compare), e.g. gh-1421
+            cmd = ["in-dir={env_dir} python -mpip install {wheel_file} --force-reinstall"]
 
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)
