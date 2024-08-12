@@ -612,3 +612,49 @@ are color coded). The threshold can be set with the
 into ones that have improved, stayed the same, and worsened, using the
 same threshold using the ``--split`` option.
 See :ref:`cmd-asv-compare` for more.
+
+ASV also has a compare column which can be used to get a quick (and colorless)
+visual summary of benchmark results. This consists of a single ``mark`` where
+each of its symbolic states can be understood as:
+
+.. list-table:: ASV Change column states, ``before`` is the first commit ID, ``after`` is the second commit ID
+   :widths: 15 25 15 15 15
+   :header-rows: 1
+
+   * - Change
+     - Color
+     - Description
+     - After
+     - Before
+   * - ``x``
+     - Light Gray
+     - Not comparable
+     -
+     -
+   * - ``!``
+     - Red
+     - Introduced a failure
+     - Failed
+     - Succeeded
+   * -
+     - Green
+     - Fixed failure
+     - Succeeded
+     - Failed
+   * -
+     -
+     - Both failed or either was skipped or no significant change
+     -
+     -
+   * - ``-``
+     - Green
+     - Relative improvement
+     - Better
+     - Worse
+   * - ``+``
+     - Red
+     - Relatively worse
+     - Worse
+     - Better
+
+Additionally, statistically insignificant results have ``~`` in the ratio column as well.
