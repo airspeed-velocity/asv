@@ -1418,3 +1418,14 @@ if hasattr(sys, 'pypy_version_info'):
     ON_PYPY = True
 else:
     ON_PYPY = False
+
+def get_matching_environment(environments, result=None):
+    return next(
+        (
+            env
+            for env in environments
+            if (result is None or result.env_name == env.name)
+            and env.python == "{0}.{1}".format(*sys.version_info[:2])
+        ),
+        None,
+    )
