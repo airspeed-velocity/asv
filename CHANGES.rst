@@ -1,12 +1,3 @@
-0.6.4 (TBD)
-------------------
-
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-- ``asv`` defaults to ``--force-reinstall`` now to facilitate ``compare`` and ``continuous`` for manually versioned projects (#1421)
-
-
 0.6.3 (2024-02-25)
 ------------------
 

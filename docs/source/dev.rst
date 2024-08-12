@@ -314,3 +314,14 @@ Step detection
 --------------
 
 .. automodule:: asv.step_detect
+
+
+Release management
+------------------
+
+- Tag a release (this increments the version number)
+- Update the ``CHANGES.rst`` via ``pipx run towncrier build --version $NEW_VERSION --date "$(date -u +%Y-%m-%d)"``
+- For the final ``REL`` commit, use ``[wheel build]`` to generate wheels, and use ``git push --atomic``
+  *  Then add the wheels to the release on Github
+- Once manually verified, upload to PyPI with ``twine``
+- Update the ``conda-forge`` `feedstock <https://github.com/conda-forge/asv-feedstock/>`_
