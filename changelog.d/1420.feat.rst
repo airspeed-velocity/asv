@@ -1,1 +1,0 @@
-ASV supports using JSONC as a configuration file

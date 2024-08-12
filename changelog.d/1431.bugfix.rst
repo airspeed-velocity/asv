@@ -1,1 +1,0 @@
-Internal pip parser now works for git URLs with branches and tags

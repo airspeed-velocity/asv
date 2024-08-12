@@ -1,3 +1,27 @@
+0.6.4 (2024-08-12)
+------------------
+
+New Features
+^^^^^^^^^^^^
+
+- ASV supports using JSONC as a configuration file (#1420)
+
+
+Bug Fixes
+^^^^^^^^^
+
+- Update deprecation for latest conda versions (#1403)
+- Fix runs for profiles commit results (#1404)
+- Internal pip parser now works for git URLs with branches and tags (#1431)
+
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- ``asv`` defaults to ``--force-reinstall`` now to facilitate ``compare`` and
+  ``continuous`` for manually versioned projects (#1421)
+
+
 0.6.3 (2024-02-25)
 ------------------
 
