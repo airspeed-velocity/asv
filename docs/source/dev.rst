@@ -326,6 +326,7 @@ Release management
   *  Then add the wheels to the release on Github
 - Once manually verified, upload to PyPI with ``twine``
 - Update the ``conda-forge`` `feedstock <https://github.com/conda-forge/asv-feedstock/>`_
+- Trigger a build of documentation for the new tag on ReadTheDocs by building ``latest`` from the admin interface
 
 The first few steps can look like:
 
