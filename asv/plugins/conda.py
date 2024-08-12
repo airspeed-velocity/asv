@@ -154,7 +154,7 @@ class Conda(environment.Environment):
                     self._run_conda(['env', 'create', '-f', env_file_name,
                                  '-p', self._path, "--yes"],
                                 env=env)
-                else:  # Backward compatbility
+                else:  # Backward compatibility
                     self._run_conda(['env', 'create', '-f', env_file_name,
                                     '-p', self._path, '--force'],
                                     env=env)
