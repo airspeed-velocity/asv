@@ -32,7 +32,7 @@ def _get_config_path():
     elif num_matches > 1:
         raise util.UserError(
             f"Multiple `asv.conf` files found for valid extensions: {extensions}. "
-            f"Please specifiy which file to use with `--config=FILEPATH`."
+            f"Please specify which file to use with `--config=FILEPATH`."
         )
     else:
         # exactly one valid config file found
