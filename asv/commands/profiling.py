@@ -143,7 +143,6 @@ class Profile(Command):
                     if result.has_profile(benchmark):
                         # Only take the first one
                         env_matched = util.get_matching_environment(environments, result)
-                        raise(ValueError(f"Matching environment found: {env_matched.name}"))
 
                         if env_matched:
                             if result.env_name not in checked_out:
