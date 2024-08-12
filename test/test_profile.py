@@ -1,5 +1,7 @@
 import re
 
+import pytest
+
 from asv import util
 
 from . import tools
@@ -33,19 +35,31 @@ def test_profile_python_commit(capsys, basic_conf):
     assert "Installing" in text
 
     # Query the previous empty results results; there should be no issues here
-    tools.run_asv_with_conf(conf, 'profile', "time_secondary.track_value",
-                            f'{util.git_default_branch()}', _machine_file=machine_file)
-    text, err = capsys.readouterr()
+    if not util.ON_PYPY:
+        tools.run_asv_with_conf(conf, 'profile', "time_secondary.track_value",
+                                f'{util.git_default_branch()}', _machine_file=machine_file)
+        text, err = capsys.readouterr()
 
-    assert "Profile data does not already exist" in text
+        assert "Profile data does not already exist" in text
 
-    tools.run_asv_with_conf(conf, 'run', "--quick", "--profile",
-                            "--bench=time_secondary.track_value",
-                            f'{util.git_default_branch()}^!', _machine_file=machine_file)
+        tools.run_asv_with_conf(conf, 'run', "--quick", "--profile",
+                                "--bench=time_secondary.track_value",
+                                f'{util.git_default_branch()}^!', _machine_file=machine_file)
+    else:
+        # The ASV main process doesn't use PyPy
+        with pytest.raises(util.UserError):
+            tools.run_asv_with_conf(conf, 'profile', "time_secondary.track_value",
+                                    f'{util.git_default_branch()}', _machine_file=machine_file)
 
     # Profile results should be present now
-    tools.run_asv_with_conf(conf, 'profile', "time_secondary.track_value",
-                            f'{util.git_default_branch()}', _machine_file=machine_file)
-    text, err = capsys.readouterr()
+    if not util.ON_PYPY:
+        tools.run_asv_with_conf(conf, 'profile', "time_secondary.track_value",
+                                f'{util.git_default_branch()}', _machine_file=machine_file)
+        text, err = capsys.readouterr()
 
-    assert "Profile data does not already exist" not in text
+        assert "Profile data does not already exist" not in text
+    else:
+        # The ASV main process doesn't use PyPy
+        with pytest.raises(util.UserError):
+            tools.run_asv_with_conf(conf, 'profile', "time_secondary.track_value",
+                                    f'{util.git_default_branch()}', _machine_file=machine_file)
