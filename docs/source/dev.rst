@@ -319,9 +319,19 @@ Step detection
 Release management
 ------------------
 
-- Tag a release (this increments the version number)
 - Update the ``CHANGES.rst`` via ``pipx run towncrier build --version $NEW_VERSION --date "$(date -u +%Y-%m-%d)"``
-- For the final ``REL`` commit, use ``[wheel build]`` to generate wheels, and use ``git push --atomic``
+- For the final ``REL`` commit, use ``[wheel build]`` to generate wheels
+- Tag a release (this increments the version number)
+- Use ``git push --atomic``
   *  Then add the wheels to the release on Github
 - Once manually verified, upload to PyPI with ``twine``
 - Update the ``conda-forge`` `feedstock <https://github.com/conda-forge/asv-feedstock/>`_
+
+The first few steps can look like:
+
+.. code-block::
+
+       pipx run towncrier build --version 0.6.4 --date "$(date -u +%Y-%m-%d)"
+       git commit -m "REL: Finalize v0.6.4 log [wheel build]"
+       git tag -a v0.6.4 -m "Version 0.6.4 release"
+       git push --atomic
