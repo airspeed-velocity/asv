@@ -1,0 +1,1 @@
+``asv`` defaults to ``--force-reinstall`` now to facilitate ``compare`` and ``continuous`` for manually versioned projects
