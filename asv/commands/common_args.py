@@ -26,7 +26,7 @@ def add_global_arguments(parser, suppress_defaults=True):
     parser.add_argument(
         "--config",
         help="Benchmark configuration file",
-        default=(argparse.SUPPRESS if suppress_defaults else 'asv.conf.json'))
+        default=(argparse.SUPPRESS if suppress_defaults else None))
 
     parser.add_argument(
         "--version", action="version", version="%(prog)s " + __version__,
