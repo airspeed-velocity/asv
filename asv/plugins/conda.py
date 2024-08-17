@@ -5,6 +5,8 @@ import tempfile
 import contextlib
 from pathlib import Path
 
+from packaging.version import Version
+
 from .. import environment, util
 from ..console import log
 
@@ -153,7 +155,7 @@ class Conda(environment.Environment):
                 )[0]
                 log.info(f"conda version: {conda_version}")
                 # https://conda.io/projects/conda/en/latest/release-notes.html#id8
-                if conda_version >= "24.3.0":
+                if Version(conda_version) >= Version("24.3.0"):
                     self._run_conda(['env', 'create', '-f', env_file_name,
                                  '-p', self._path, "--yes"],
                                 env=env)
