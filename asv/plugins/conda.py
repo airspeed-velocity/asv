@@ -147,7 +147,10 @@ class Conda(environment.Environment):
             try:
                 env_file_name = self._conda_environment_file or env_file.name
 
-                conda_version = self._run_conda(['--version'], env=env)
+                conda_version = re.search(
+                    r'\d+(\.\d+)+',
+                    self._run_conda(['--version'], env=env)
+                )[0]
                 log.info(f"conda version: {conda_version}")
                 # https://conda.io/projects/conda/en/latest/release-notes.html#id8
                 if conda_version >= "24.3.0":
