@@ -16,7 +16,7 @@ def _get_config_path():
     Return the path of the config file if exactly one is found.
     """
     extensions = ['.json', '.jsonc']
-    path = Path('asv.conf')
+    path = Path('asv.conf.json')
 
     num_matches = 0
     for e in extensions:

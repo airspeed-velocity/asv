@@ -18,12 +18,11 @@ def main():
 
     log.enable(args.verbose)
 
-    args.config = os.path.abspath(args.config)
-
     # Use the path to the config file as the cwd for the remainder of
-    # the run
-    dirname = os.path.dirname(args.config)
-    os.chdir(dirname)
+    # the run.
+    # If using the default path, stay in the same dir.
+    if args.config:
+        os.chdir(os.path.dirname(os.path.abspath(args.config)))
 
     try:
         result = args.func(args)
