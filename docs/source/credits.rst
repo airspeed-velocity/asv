@@ -73,6 +73,7 @@ The rest of the contributors are listed in alphabetical order.
 - Rok Mihevc
 - Sayed Adel
 - serge-sans-paille
+- Sofía Miñano
 - Sourcery AI
 - Thomas Pfaff
 - Thomas Robitaille
