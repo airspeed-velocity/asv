@@ -497,18 +497,20 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
 
 class L1Dist:
     """
-    Fast computations for:
+    Fast computations for the L1 distance measures.
 
-    .. code-block:
+    This computes:
+
+    .. code-block::
 
         mu(l, r) = median(y[l:r+1], weights=w[l:r+1])
         dist(l, r) = sum(w*abs(x - mu(l, r)) for x, w in zip(y[l:r+1], weights[l:r+1]))
 
-    We do not use here an approach that has asymptotically optimal
-    performance; at least O(n**2 * log(n)) would be achievable, whereas
-    we have here O(n**3).  The asymptotic performance does not matter
-    for solve_potts_approx, which only looks at small windows of the
-    data. It is more important to try to optimize the constant
+    We do not use here an approach that has asymptotically optimal performance;
+    at least :math:`O(n^2 * \log(n))` would be achievable, whereas we have here
+    :math:`O(n^3)`.  The asymptotic performance does not matter for
+    :py:func:`asv.step_detect.solve_potts_approx`, which only looks at small
+    windows of the data. It is more important to try to optimize the constant
     prefactors, which for Python means minimal code.
 
     """
