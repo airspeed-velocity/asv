@@ -80,6 +80,7 @@ hg = [
 plugs = [
     "asv-bench-memray",
 ]
+all = ["asv[test,doc,dev,virtualenv,hg,plugs]"]
 [build-system]
 requires = [
     "wheel",
