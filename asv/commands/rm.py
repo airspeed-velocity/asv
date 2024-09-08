@@ -4,7 +4,8 @@ from fnmatch import fnmatchcase
 
 from asv_runner.console import get_answer_default
 
-from . import Command, util
+from asv import util
+from . import Command
 from ..console import log
 from ..results import iter_results
 
