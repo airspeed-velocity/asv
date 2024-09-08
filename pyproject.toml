@@ -65,6 +65,7 @@ test = [
 doc = [
     "sphinx",
     "sphinx-autoapi",
+    "sphinx-collapse",
     "sphinxcontrib.bibtex",
     "sphinxcontrib.katex",
     "furo",

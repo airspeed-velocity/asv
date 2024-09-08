@@ -1,10 +1,8 @@
-.. airspeed velocity documentation root file, created by
-   sphinx-quickstart on Mon Nov 18 09:12:08 2013.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 airspeed velocity
 =================
+
+Overview
+--------
 
 **airspeed velocity** (``asv``) is a tool for benchmarking Python
 packages over their lifetime.  Runtime, memory consumption and even
@@ -38,5 +36,95 @@ Development: https://github.com/airspeed-velocity/asv
    dev.rst
    step_detection.rst
    changelog.rst
-   credits.rst
    autoapi/index.rst
+
+Credits
+-------
+
+..  collapse:: Original creators
+
+    - Michael Droettboom (founder)
+    - Pauli Virtanen
+
+Other contributors are listed in alphabetical order.
+
+..  collapse:: Additional contributors
+
+   - Aaron Meurer
+   - @afragner
+   - Akihiro Nitta
+   - Andrew Nelson
+   - Andrew Thomas
+   - Antoine Pitrou
+   - Antony Lee
+   - Ariel Silvio Norberto RAMOS
+   - Arne Neumann
+   - Boris Feld
+   - Chiara Marmo
+   - Chris Beaumont
+   - Christoph Deil
+   - Christopher Whelan
+   - Colin Carroll
+   - Daniel Andres Pinto
+   - David Stansby
+   - Dieter Werthmüller
+   - Dorothy Kabarozi
+   - @DWesl
+   - Edison Gustavo Muenz
+   - Elliott Sales de Andrade
+   - Eric Dill
+   - Erik M. Bray
+   - Erik Tollerud
+   - Erwan Pannier
+   - Fangchen Li
+   - Hans Moritz Günther
+   - Isuru Fernando
+   - Jarrod Millman
+   - @jbrockmendel
+   - jeremie du boisberranger
+   - John Kirkham
+   - Josh Soref
+   - Juan Nunez-Iglesias
+   - Julian Rüth
+   - Kacper Kowalik
+   - Kacper Kowalik (Xarthisius)
+   - Kevin Anderson
+   - @Leenkiz
+   - Lucas Colley
+   - Lucy Jiménez
+   - Marc Garcia
+   - @mariamadronah
+   - Mark Harfouche
+   - Markus Mohrhard
+   - Matthew Treinish
+   - Matthew Turk
+   - Matti Picus
+   - Mike Sarahan
+   - Min RK
+   - Nathan Goldbaum
+   - Nick Crews
+   - Nicole Franco León
+   - @pawel
+   - Paweł Redzyński
+   - Philippe Pepiot
+   - Pierre Glaser
+   - P. L. Lim
+   - Raphaël Gomès
+   - Richard Hattersley
+   - Rohit Goswami
+   - Rok Mihevc
+   - Sayed Adel
+   - serge-sans-paille
+   - Sofía Miñano
+   - Sourcery AI
+   - Thomas Pfaff
+   - Thomas Robitaille
+   - Tim Felgentreff
+   - Tom Augspurger
+   - Tushabe Catherine
+   - Tyler Reddy
+   - Valentin Haenel
+   - @Warbo
+   - Wojtek Ruszczewski
+   - Yaroslav Halchenko
+   - Zach Burnett

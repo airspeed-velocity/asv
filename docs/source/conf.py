@@ -16,6 +16,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinxcontrib.katex',
     'sphinxcontrib.bibtex',
+    'sphinx_collapse',
     'autoapi.extension',
 ]
 
