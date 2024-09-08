@@ -4,9 +4,9 @@
 import math
 import multiprocessing
 import argparse
+from importlib.metadata import version as get_version
 
 from asv import util
-from importlib.metadata import version as get_version
 
 
 def add_global_arguments(parser, suppress_defaults=True):

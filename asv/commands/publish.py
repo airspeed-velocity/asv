@@ -4,6 +4,7 @@ import shutil
 import multiprocessing
 import datetime
 from collections import defaultdict
+from importlib.metadata import version as get_version
 
 from asv.commands import Command
 from asv.benchmarks import Benchmarks
@@ -14,7 +15,6 @@ from asv.repo import get_repo
 from asv.results import iter_results
 from asv.publishing import OutputPublisher
 from asv import statistics, util
-from importlib.metadata import version as get_version
 
 
 def check_benchmark_params(name, benchmark):

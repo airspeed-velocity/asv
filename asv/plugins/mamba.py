@@ -12,8 +12,8 @@ try:
 except ImportError:
     from yaml import Loader
 
-
 import libmambapy
+
 from ._mamba_helpers import MambaSolver
 from .. import environment, util
 from ..console import log
