@@ -32,6 +32,7 @@ dependencies = [
     "build",
     "tabulate",
     "virtualenv",
+    "packaging",
     "tomli; python_version < '3.11'",
     "colorama; platform_system == 'Windows'",
     "pyyaml; platform_python_implementation != \"PyPy\"",
@@ -52,7 +53,6 @@ test = [
     "pytest-timeout",
     "pytest-rerunfailures>=10.0",
     "filelock",
-    "virtualenv",
     "numpy",
     "scipy; platform_python_implementation != \"PyPy\"",
     "feedparser",
@@ -70,17 +70,13 @@ dev = [
     "ruff",
     "isort >= 5.11.5",
 ]
-virtualenv = [
-    "virtualenv",
-    "packaging",
-]
 hg = [
     "python-hglib",
 ]
 plugs = [
     "asv-bench-memray",
 ]
-all = ["asv[test,doc,dev,virtualenv,hg,plugs]"]
+all = ["asv[test,doc,dev,hg,plugs]"]
 [build-system]
 requires = [
     "wheel",
