@@ -87,7 +87,7 @@ requires = [
     # pin setuptools:
     # https://github.com/airspeed-velocity/asv/pull/1426#issuecomment-2290658198
     "setuptools>=64,<72.2.0",
-    "setuptools_scm>=8",
+    "setuptools_scm>=6", # Can't update to 8, it needs 3.8
 ]
 build-backend = "setuptools.build_meta"
 
@@ -121,7 +121,7 @@ line_length = 99
 only_sections = true
 
 [tool.setuptools_scm]
-version_file = "asv/_version.py"
+write_to = "asv/_version.py"
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux2014"
