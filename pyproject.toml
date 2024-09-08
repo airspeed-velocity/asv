@@ -64,6 +64,7 @@ test = [
 ]
 doc = [
     "sphinx",
+    "sphinx-autoapi",
     "sphinx_bootstrap_theme",
 ]
 dev = [

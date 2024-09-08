@@ -47,3 +47,4 @@ htmlcov
 # Mac OSX
 .DS_Store
 /docs/html/
+docs/source/apidocs/

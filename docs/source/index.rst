@@ -35,3 +35,4 @@ Development: https://github.com/airspeed-velocity/asv
    dev.rst
    changelog.rst
    credits.rst
+   autoapi/index.rst
