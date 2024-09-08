@@ -22,8 +22,6 @@ this file and their expected values.
 
 .. only:: not man
 
-   .. contents::
-
 ``project``
 -----------
 The name of the project being benchmarked.
