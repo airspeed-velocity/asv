@@ -67,7 +67,7 @@ doc = [
     "sphinx-autoapi",
     "sphinxcontrib.bibtex",
     "sphinxcontrib.katex",
-    "sphinx_bootstrap_theme",
+    "furo",
 ]
 dev = [
     "ruff",
