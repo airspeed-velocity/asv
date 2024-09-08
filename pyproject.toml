@@ -33,6 +33,7 @@ dependencies = [
     "tabulate",
     "virtualenv",
     "packaging",
+    "importlib-metadata",
     "tomli; python_version < '3.11'",
     "colorama; platform_system == 'Windows'",
     "pyyaml; platform_python_implementation != \"PyPy\"",
