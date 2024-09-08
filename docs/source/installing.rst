@@ -1,23 +1,30 @@
 Installing airspeed velocity
 ============================
 
-**airspeed velocity** is known to work on Linux, Mac OS-X, and Windows.
-It is known to work with Python 3.7 and higher.
-It works also with PyPy.
+**airspeed velocity** is known to work on Linux, MacOS, and Windows, for Python
+3.7 and higher. PyPy 3.8 is also supported.
 
-**airspeed velocity** is a standard Python package, and the latest
-released version may be `installed in the standard
-way from PyPI <https://packaging.python.org/tutorials/installing-packages/>`__::
+**airspeed velocity** is a standard Python package, and the latest released
+version may be `installed from PyPI
+<https://packaging.python.org/tutorials/installing-packages/>`__:
+
+.. code-block:: sh
 
     pip install asv
 
-The development version can be installed by cloning the source
-repository and running ``pip install .`` inside it, or by ``pip
-install git+https://github.com/airspeed-velocity/asv``.
+The development version can be installed from GitHub:
 
-The requirements should be automatically installed.  If they aren't
-installed automatically, for example due to networking restrictions,
-the ``python`` requirements are as noted in the ``pyproject.toml``.
+.. code-block:: sh
+
+   git clone git@github.com:airspeed-velocity/asv
+   cd asv
+   pip install .
+   # Or in one shot
+   pip install git+https://github.com/airspeed-velocity/asv
+
+The basic requirements should be automatically installed.  If they aren't
+installed automatically, for example due to networking restrictions, the
+``python`` requirements are as noted in the ``pyproject.toml``.
 
 For managing the environments, one of the following packages is required:
 
@@ -43,25 +50,23 @@ For managing the environments, one of the following packages is required:
    without precompiled wheels usually have to be compiled every
    time the environments are set up.
 
-Optional optimization
----------------------
+Optional optimizations
+----------------------
 
-If your project being benchmarked contains C, C++, Objective-C or
-Cython, consider installing ``ccache``.  `ccache
-<https://ccache.samba.org/>`__ is a compiler cache that speeds up
-compilation time when the same objects are repeatedly compiled.  In
-**airspeed velocity**, the project being benchmarked is recompiled at
-many different points in its history, often with only minor changes to
-the source code, so ``ccache`` can help speed up the total benchmarking
-time considerably.
+If your project being benchmarked contains C, C++, Objective-C or Cython,
+consider installing ``ccache``.  `ccache <https://ccache.samba.org/>`__ is a
+compiler cache that speeds up compilation time when the same objects are
+repeatedly compiled.
+
+In **airspeed velocity**, the project being benchmarked is recompiled at many
+different points in its history, often with only minor changes to the source
+code, so ``ccache`` can help speed up the total benchmarking time considerably.
 
 Running the self-tests
 ----------------------
 
-The self tests are based on `pytest <https://docs.pytest.org/>`__.  If you
-don't have it installed, and you have a connection to the Internet, it
-will be installed automatically.
+The testsuite is based on `pytest <https://docs.pytest.org/>`__.
 
-To run **airspeed velocity**'s self tests::
+To run **airspeed velocity**'s testsuite::
 
     pytest

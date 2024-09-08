@@ -12,10 +12,13 @@ custom-computed values may be tracked.  The results are displayed in
 an interactive web frontend that requires only a basic static
 webserver to host.
 
-See examples of Airspeed Velocity websites:
+Deployed examples of Airspeed Velocity websites:
 `astropy <https://www.astropy.org/astropy-benchmarks/>`__,
 `numpy <https://pv.github.io/numpy-bench/>`__,
 `scipy <https://pv.github.io/scipy-bench/>`__.
+
+User examples may be found at the `asv_sample
+<https://github.com/airspeed-velocity/asv_samples>`__ repository.
 
 License: `BSD three-clause license
 <http://opensource.org/licenses/BSD-3-Clause>`__.
