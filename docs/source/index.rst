@@ -31,7 +31,7 @@ Development: https://github.com/airspeed-velocity/asv
    using.rst
    writing_benchmarks.rst
    tuning.rst
-   reference.rst
+   user_reference.rst
    dev.rst
    step_detection.rst
    changelog.rst

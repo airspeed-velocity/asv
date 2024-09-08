@@ -1,5 +1,5 @@
-Reference
-=========
+User Reference
+==============
 
 .. toctree::
 
