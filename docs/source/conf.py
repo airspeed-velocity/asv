@@ -21,6 +21,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.mathjax',
+    'sphinxcontrib.bibtex',
     'autoapi.extension',
 ]
 
@@ -28,6 +29,8 @@ autoapi_dirs = ['../../asv']
 autoapi_add_toc_entry = True
 autoapi_keep_files = True
 autoapi_ignore = ["*_version*"]
+
+bibtex_bibfiles = ["asv.bib"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
