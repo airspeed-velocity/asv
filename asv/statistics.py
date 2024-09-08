@@ -76,8 +76,9 @@ def mann_whitney_u(x, y, method='auto'):
     """
     Mann-Whitney U test
 
-    Ties are handled conservatively, returning the least significant
-    tie breaking.
+    Ties are handled conservatively, returning the least significant tie
+    breaking.
+    :cite:empty:`mwu-mannTestWhetherOne1947,mwu-gibbonsNonparametricStatisticalInference2010`.
 
     Parameters
     ----------
@@ -96,8 +97,10 @@ def mann_whitney_u(x, y, method='auto'):
 
     References
     ----------
-    .. [1] Mann & Whitney, Ann. Math. Statist. 18, 50 (1947).
-    .. [2] Gibbons & Chakraborti, "Nonparametric statistical inference". (2003)
+    .. bibliography::
+       :filter: docname in docnames
+       :labelprefix: MWU_
+       :keyprefix: mwu-
 
     """
     memo = _mann_whitney_u_memo
@@ -177,11 +180,19 @@ def mann_whitney_u_r(m, n, u, memo=None):
     Number of orderings in Mann-Whitney U test.
 
     The PMF of U for samples of sizes (m, n) is given by
-    p(u) = r(m, n, u) / binom(m + n, m).
+    :cite:empty:`mwur-mannTestWhetherOne1947`
+
+    .. code-block::
+
+       p(u) = r(m, n, u) / binom(m + n, m).
 
     References
     ----------
-    .. [1] Mann & Whitney, Ann. Math. Statist. 18, 50 (1947).
+    .. bibliography::
+       :filter: docname in docnames
+       :labelprefix: MWUR_
+       :keyprefix: mwur-
+
     """
     if u < 0:
         value = 0

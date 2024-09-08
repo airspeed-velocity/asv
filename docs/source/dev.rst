@@ -310,12 +310,6 @@ To use them, at least one of the following needs to be installed:
 For other options regarding the webdriver to use, see ``py.test --help``.
 
 
-Step detection
---------------
-
-.. automodule:: asv.step_detect
-
-
 Release management
 ------------------
 

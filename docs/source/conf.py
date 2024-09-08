@@ -31,6 +31,7 @@ autoapi_keep_files = True
 autoapi_ignore = ["*_version*"]
 
 bibtex_bibfiles = ["asv.bib"]
+bibtex_default_style = "alpha"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

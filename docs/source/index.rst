@@ -33,6 +33,7 @@ Development: https://github.com/airspeed-velocity/asv
    tuning.rst
    reference.rst
    dev.rst
+   step_detection.rst
    changelog.rst
    credits.rst
    autoapi/index.rst
