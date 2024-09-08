@@ -68,6 +68,7 @@ doc = [
     "sphinx-autoapi",
     "sphinx-collapse",
     "sphinxcontrib.bibtex",
+    "setuptools", # dependency from bibtex
     "sphinxcontrib.katex",
     "furo",
 ]
