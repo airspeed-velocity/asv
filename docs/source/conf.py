@@ -21,7 +21,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
-    'sphinx.ext.mathjax',
+    'sphinxcontrib.katex',
     'sphinxcontrib.bibtex',
     'autoapi.extension',
 ]
