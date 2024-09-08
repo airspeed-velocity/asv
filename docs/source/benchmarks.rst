@@ -3,8 +3,6 @@ Benchmark types and attributes
 
 .. only:: not man
 
-   .. contents::
-
 .. warning::
 
    .. versionchanged:: 0.6.0

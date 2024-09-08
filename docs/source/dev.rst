@@ -12,8 +12,6 @@ developers and other people interested in internals of ``asv``.
    environments, loading plugins, and collecting the results of the benchmarks
    run with ``asv_runner``.
 
-.. contents::
-
 
 Development setup
 -----------------
