@@ -18,6 +18,7 @@ intersphinx_mapping = {
 }
 
 extensions = [
+    'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.mathjax',
@@ -28,7 +29,16 @@ extensions = [
 autoapi_dirs = ['../../asv']
 autoapi_add_toc_entry = True
 autoapi_keep_files = True
-autoapi_ignore = ["*_version*"]
+autoapi_ignore = ["*_version*", "*migrations*"]
+autoapi_options = [
+    "members",
+    "undoc-members",
+    "private-members",
+    # "show-inheritance",
+    "show-module-summary",
+    "special-members",
+    "imported-members",
+]
 
 bibtex_bibfiles = ["asv.bib"]
 bibtex_default_style = "alpha"

@@ -497,7 +497,9 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
 
 class L1Dist:
     """
-    Fast computations for::
+    Fast computations for:
+
+    .. code-block:
 
         mu(l, r) = median(y[l:r+1], weights=w[l:r+1])
         dist(l, r) = sum(w*abs(x - mu(l, r)) for x, w in zip(y[l:r+1], weights[l:r+1]))

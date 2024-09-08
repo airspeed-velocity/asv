@@ -886,16 +886,18 @@ def format_text_table(rows, num_headers=0,
                       top_header_span_start=0,
                       top_header_text=None):
     """
-    Format rows in as a reStructuredText table, in the vein of::
+    Format rows in as a reStructuredText table, in the vein of:
 
-       ========== ========== ==========
-       --         top header text, span start 1
-       ---------- ---------------------
-        row0col0     r0c1      r0c2
-       ========== ========== ==========
-        row1col0     r1c1      r1c2
-        row2col0     r2c1      r2c2
-       ========== ========== ==========
+    .. code-block::
+
+           ========== ========== ==========
+           --         top header text, span start 1
+           ---------- ---------------------
+            row0col0     r0c1      r0c2
+           ========== ========== ==========
+            row1col0     r1c1      r1c2
+            row2col0     r2c1      r2c2
+           ========== ========== ==========
 
     """
 
