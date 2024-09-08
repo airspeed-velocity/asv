@@ -69,7 +69,7 @@ exclude_patterns = []
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
-default_role = 'obj'
+# default_role = 'obj'
 
 # Warn about all references where the target cannot be found.
 nitpicky = True

@@ -392,7 +392,7 @@ def detect_steps(y, w=None):
         constant function. Each element contains the left (inclusive) and
         right (exclusive) bounds of a segment, the average value on
         the segment, the minimum value in the segment, and the l1 error
-        estimate, <|Y - avg|>. Missing data points are not necessarily
+        estimate, :math:`|Y - avg|`. Missing data points are not necessarily
         contained in any segment; right_pos-1 is the last non-missing data
         point.
 
@@ -541,7 +541,7 @@ def solve_potts(y, w, gamma, min_size=1, max_size=None,
 
     where J(x) is the number of jumps (x_{j+1} != x_j) in x.
 
-    The algorithm used is described in Ref. [1]_, it uses dynamic
+    The algorithm used is described in Ref. [1], it uses dynamic
     programming to find an exact solution to the problem (within the
     constraints specified).
 
