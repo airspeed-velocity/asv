@@ -1,4 +1,4 @@
-from importlib.metadata import version as get_version
+from importlib_metadata import version as get_version
 
 # -- General configuration ------------------------------------------------
 

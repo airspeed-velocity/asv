@@ -4,7 +4,7 @@ import shutil
 import multiprocessing
 import datetime
 from collections import defaultdict
-from importlib.metadata import version as get_version
+from importlib_metadata import version as get_version
 
 from asv.commands import Command
 from asv.benchmarks import Benchmarks

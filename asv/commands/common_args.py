@@ -4,7 +4,7 @@
 import math
 import multiprocessing
 import argparse
-from importlib.metadata import version as get_version
+from importlib_metadata import version as get_version
 
 from asv import util
 
