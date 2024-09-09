@@ -12,8 +12,6 @@ developers and other people interested in internals of ``asv``.
    environments, loading plugins, and collecting the results of the benchmarks
    run with ``asv_runner``.
 
-.. contents::
-
 
 Development setup
 -----------------
@@ -308,12 +306,6 @@ To use them, at least one of the following needs to be installed:
   Headless web browser (discontinued, prefer using Firefox or Chrome).
 
 For other options regarding the webdriver to use, see ``py.test --help``.
-
-
-Step detection
---------------
-
-.. automodule:: asv.step_detect
 
 
 Release management

@@ -32,6 +32,8 @@ dependencies = [
     "build",
     "tabulate",
     "virtualenv",
+    "packaging",
+    "importlib-metadata",
     "tomli; python_version < '3.11'",
     "colorama; platform_system == 'Windows'",
     "pyyaml; platform_python_implementation != \"PyPy\"",
@@ -52,7 +54,6 @@ test = [
     "pytest-timeout",
     "pytest-rerunfailures>=10.0",
     "filelock",
-    "virtualenv",
     "numpy",
     "scipy; platform_python_implementation != \"PyPy\"",
     "feedparser",
@@ -64,15 +65,16 @@ test = [
 ]
 doc = [
     "sphinx",
-    "sphinx_bootstrap_theme",
+    "sphinx-autoapi",
+    "sphinx-collapse",
+    "sphinxcontrib.bibtex",
+    "setuptools", # dependency from bibtex
+    "sphinxcontrib.katex",
+    "furo",
 ]
 dev = [
     "ruff",
     "isort >= 5.11.5",
-]
-virtualenv = [
-    "virtualenv",
-    "packaging",
 ]
 hg = [
     "python-hglib",
@@ -80,13 +82,14 @@ hg = [
 plugs = [
     "asv-bench-memray",
 ]
+all = ["asv[doc,dev,hg,plugs]"]
 [build-system]
 requires = [
     "wheel",
     # pin setuptools:
     # https://github.com/airspeed-velocity/asv/pull/1426#issuecomment-2290658198
     "setuptools>=64,<72.2.0",
-    "setuptools_scm>=6",
+    "setuptools_scm>=6", # Can't update to 8, it needs 3.8
 ]
 build-backend = "setuptools.build_meta"
 

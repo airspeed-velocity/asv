@@ -22,8 +22,6 @@ this file and their expected values.
 
 .. only:: not man
 
-   .. contents::
-
 ``project``
 -----------
 The name of the project being benchmarked.
@@ -289,12 +287,12 @@ the project being benchmarked may specify in its ``setup.py`` file.
     preface the package name with ``pip+``. For example, ``emcee`` is only
     available from ``pip``, so the package name to be used is ``pip+emcee``.
 
-    .. versionadded::0.6.0
+    .. versionadded:: 0.6.0
 
       ``pip`` dependencies can now accept local (fully qualified) directories,
       and also take flags (e.g. ``-e``)
 
-    .. versionadded::0.6.1
+    .. versionadded:: 0.6.1
 
        ``asv`` can now optionally load dependencies from ``environment.yml`` if
        ``conda`` or ``mamba`` is set as the ``environment_type``. As ``asv``
@@ -302,7 +300,7 @@ the project being benchmarked may specify in its ``setup.py`` file.
        These specifications in ``environment.yml`` or another (user-defined)
        file will be overridden by the environment matrix.
 
-    .. versionadded::0.6.2
+    .. versionadded:: 0.6.2
 
        The ``mamba`` plugin will now take channels and channel priority from the
        ``MAMBARC`` environment variable if it is provided. e.g.

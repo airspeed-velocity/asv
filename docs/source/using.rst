@@ -127,7 +127,9 @@ information about the machine, such as its platform, cpu and memory.
 **airspeed velocity** will try to make reasonable guesses, so it's
 usually ok to just press ``Enter`` to accept each default value.  This
 information is stored in the ``~/.asv-machine.json`` file in your home
-directory::
+directory:
+
+.. code-block:: sh
 
     I will now ask you some questions about this machine to identify
     it in the benchmarks.
