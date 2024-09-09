@@ -9,7 +9,7 @@ import pytest
 from asv_runner.statistics import (compute_stats, LaplacePosterior, quantile, quantile_ci,
                                    binom_pmf, get_err)
 
-from asv import statistics
+from asv import _stats
 
 
 def test_compute_stats():
@@ -51,8 +51,8 @@ def test_is_different():
         samples_b = true_mean + 0.1 * np.random.rand(n)
         _, stats_a = compute_stats(samples_a, 1)
         _, stats_b = compute_stats(samples_b, 1)
-        assert statistics.is_different(None, None, stats_a, stats_b) == significant
-        assert statistics.is_different(samples_a, samples_b, stats_a, stats_b) == significant
+        assert _stats.is_different(None, None, stats_a, stats_b) == significant
+        assert _stats.is_different(samples_a, samples_b, stats_a, stats_b) == significant
 
 
 def _check_ci(estimator, sampler, nsamples=300):
@@ -315,7 +315,7 @@ def test_mann_whitney_u_cdf():
                 if p is None:
                     continue
 
-                p2 = statistics.mann_whitney_u_cdf(m, n, u, memo=memo)
+                p2 = _stats.mann_whitney_u_cdf(m, n, u, memo=memo)
                 assert p2 == pytest.approx(p, abs=1e-3, rel=0), (m, n, u, p2, p)
 
     # Tables from Mann & Whitney, Ann. Math. Statist. 18, 50 (1947).
@@ -363,15 +363,15 @@ def test_mann_whitney_u_scipy():
     def check(x, y):
         u0, p0 = stats.mannwhitneyu(x, y, alternative='two-sided', use_continuity=False)
 
-        u, p = statistics.mann_whitney_u(x.tolist(), y.tolist(), method='normal')
+        u, p = _stats.mann_whitney_u(x.tolist(), y.tolist(), method='normal')
         assert u == u0
         assert p == pytest.approx(p0, rel=1e-9, abs=0)
 
-        u, p = statistics.mann_whitney_u(x.tolist(), y.tolist(), method='exact')
+        u, p = _stats.mann_whitney_u(x.tolist(), y.tolist(), method='exact')
         assert u == u0
         assert p == pytest.approx(p0, rel=5e-2, abs=5e-3)
 
-        u, p = statistics.mann_whitney_u(x.tolist(), y.tolist())
+        u, p = _stats.mann_whitney_u(x.tolist(), y.tolist())
         assert u == u0
         assert p == pytest.approx(p0, rel=5e-2, abs=5e-3)
 
@@ -388,19 +388,19 @@ def test_mann_whitney_u_basic():
     # wilcox.test(a, b, exact=TRUE)
     a = [1, 2, 3, 4]
     b = [0.9, 1.1, 0.7]
-    u, p = statistics.mann_whitney_u(a, b, method='exact')
+    u, p = _stats.mann_whitney_u(a, b, method='exact')
     assert u == 11
     assert p == pytest.approx(0.11428571428571428, abs=0, rel=1e-10)
 
     a = [1, 2]
     b = [1.5]
-    u, p = statistics.mann_whitney_u(a, b, method='exact')
+    u, p = _stats.mann_whitney_u(a, b, method='exact')
     assert u == 1
     assert p == 1.0
 
     a = [1, 2]
     b = [2.5]
-    u, p = statistics.mann_whitney_u(a, b, method='exact')
+    u, p = _stats.mann_whitney_u(a, b, method='exact')
     assert u == 0
     assert p == pytest.approx(2 / 3, abs=0, rel=1e-10)
 
@@ -419,7 +419,7 @@ def test_mann_whitney_u_R():
 
     for m in range(1, len(a) + 1):
         for n in range(1, len(b) + 1):
-            u, p = statistics.mann_whitney_u(a[:m], b[:n])
+            u, p = _stats.mann_whitney_u(a[:m], b[:n])
 
             r = wilcox_test(robjects.FloatVector(a[:m]),
                             robjects.FloatVector(b[:n]))
@@ -442,7 +442,7 @@ def test_mann_whitney_u_R():
 def test_binom():
     for n in range(10):
         for k in range(10):
-            p = statistics.binom(n, k)
+            p = _stats.binom(n, k)
             if 0 <= k <= n:
                 p2 = math.factorial(n) / math.factorial(k) / math.factorial(n - k)
             else:

@@ -15,7 +15,7 @@ from asv.machine import iter_machine_files
 from asv.repo import get_repo
 from asv.results import iter_results
 from asv.publishing import OutputPublisher
-from asv import statistics, util
+from asv import _stats, util
 
 
 def check_benchmark_params(name, benchmark):
@@ -191,7 +191,7 @@ class Publish(Command):
                     b_params = b['params']
 
                     result = results.get_result_value(key, b_params)
-                    weight = [statistics.get_weight(s)
+                    weight = [_stats.get_weight(s)
                               for s in results.get_result_stats(key, b_params)]
                     if not b_params:
                         result = result[0]
