@@ -1,4 +1,5 @@
 Copyright (c) 2011-2018, Michael Droettboom, Space Telescope Science Institute, Pauli Virtanen
+Copyright (c) 2022, Oracle and/or its affiliates.
 
 All rights reserved.
 
