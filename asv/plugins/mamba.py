@@ -4,6 +4,9 @@ import os
 import re
 from pathlib import Path
 
+import libmambapy.solver
+import libmambapy.solver.libsolv
+import libmambapy.specs
 import yaml
 from yaml import load
 
@@ -12,7 +15,7 @@ try:
 except ImportError:
     from yaml import Loader
 
-from ._mamba_helpers import libmambapy, MambaSolver
+import libmambapy
 from .. import environment, util
 from ..console import log
 
@@ -138,7 +141,10 @@ class Mamba(environment.Environment):
             env_data = load(Path(env_file_name).open(), Loader=Loader)
             mamba_pkgs = [x for x in env_data.get("dependencies", []) if isinstance(x, str)]
             self._mamba_channels += [x for x in env_data.get("channels", []) if isinstance(x, str)]
-            self._mamba_channels = list(dict.fromkeys(self._mamba_channels).keys())
+            # self._mamba_channels = list(dict.fromkeys(self._mamba_channels).keys())
+            self._mamba_channels = libmambapy.specs.ChannelResolveParams.name_map(
+                (x, libmambapy.specs.Channel(x)) for x in self._mamba_channels
+            )
             # Handle possible pip keys
             pip_maybe = [x for x in env_data.get("dependencies", []) if isinstance(x, dict)]
             if len(pip_maybe) == 1:
@@ -146,13 +152,23 @@ class Mamba(environment.Environment):
                     pip_args += pip_maybe[0]["pip"]
                 except KeyError:
                     raise KeyError("Only pip is supported as a secondary key")
-        mamba_pkgs += mamba_args
-        solver = MambaSolver(
-            self._mamba_channels, None, self.context  # or target_platform
+        Request = libmambapy.solver.Request
+        MatchSpec = libmambapy.specs.MatchSpec
+        request = Request(
+            jobs=[
+                Request.Install(MatchSpec.parse(pkg)) for pkg in mamba_pkgs
+            ],
+            # flags=Request.Flags(
+            #     arg for arg in mamba_args
+            # ),
+        )
+        solver = libmambapy.solver.libsolv.Solver()
+        db = libmambapy.solver.libsolv.Database(
+            libmambapy.specs.ChannelResolveParams(channel_alias="https://conda.anaconda.org")
         )
         with _mamba_lock():
-            transaction = solver.solve(mamba_pkgs)
-            transaction.execute(libmambapy.PrefixData(self._path))
+            transaction = solver.solve(db, request)
+            # transaction.execute(libmambapy.PrefixData(self._path))
             if pip_args:
                 for declaration in pip_args:
                     parsed_declaration = util.ParsedPipDeclaration(declaration)
