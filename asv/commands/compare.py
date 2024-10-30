@@ -15,7 +15,7 @@ from ..repo import get_repo, NoSuchNameError
 from ..util import human_value, load_json
 from ..console import log
 from ..environment import get_environments
-from .. import util, statistics
+from .. import util, _stats
 
 
 def mean(values):
@@ -76,7 +76,7 @@ def _is_result_better(a, b, a_ss, b_ss, factor, use_stats=True):
         # Special-case the situation with only one sample, in which
         # case we do the comparison only based on `factor` as there's
         # not enough data to do statistics.
-        if not statistics.is_different(a_ss[1], b_ss[1],
+        if not _stats.is_different(a_ss[1], b_ss[1],
                                        a_ss[0], b_ss[0]):
             return False
 

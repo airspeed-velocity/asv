@@ -16,7 +16,7 @@ RESAMPLED_POINTS = (3840 / 5 / 2)
 
 
 class GraphSet:
-    """Manage multiple `Graph`"""
+    """Manage multiple :py:class:`Graph` objects"""
 
     def __init__(self):
         self._graphs = {}
@@ -326,15 +326,19 @@ def make_summary_graph(graphs):
 
 def _compute_summary_data_series(*ys):
     """
-    Given multiple input series::
+    Given a multiple input series:
 
-        y0, y1, ...
+    .. code-block::
 
-    calculate summary data series::
+           y0, y1, ...
 
-        val = [geom_mean([y0[0], y1[0], ...]),
-               geom_mean([y0[1], y1[1], ...]),
-               ...]
+    calculate summary data series:
+
+    .. code-block::
+
+           val = [geom_mean([y0[0], y1[0], ...]),
+                  geom_mean([y0[1], y1[1], ...]),
+                 ...]
 
     Missing data in each y-series is filled for each series
     separately, before averaging. Data points that are missing from

@@ -1,3 +1,6 @@
+# Added
+/docs/html/
+docs/source/autoapi/
 # Compiled files
 *.py[cod]
 *.a
@@ -46,4 +49,3 @@ htmlcov
 
 # Mac OSX
 .DS_Store
-/docs/html/

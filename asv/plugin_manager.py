@@ -12,8 +12,8 @@ class PluginManager:
     """
     A class to load and manage plugins.
 
-    By default in asv, plugins are searched for in the `asv.plugins`
-    namespace package and in the `asv.commands` package.
+    By default in asv, plugins are searched for in the :py:mod:`asv.plugins`
+    namespace package and in the :py:mod:`asv.commands` package.
 
     Then, any modules specified in the ``plugins`` entry in the
     ``asv.conf.json`` file are loaded.

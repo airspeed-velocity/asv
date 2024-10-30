@@ -5,15 +5,17 @@ import multiprocessing
 import datetime
 from collections import defaultdict
 
-from . import Command
-from ..benchmarks import Benchmarks
-from ..console import log
-from ..graph import GraphSet
-from ..machine import iter_machine_files
-from ..repo import get_repo
-from ..results import iter_results
-from ..publishing import OutputPublisher
-from .. import statistics, util, __version__
+from importlib_metadata import version as get_version
+
+from asv.commands import Command
+from asv.benchmarks import Benchmarks
+from asv.console import log
+from asv.graph import GraphSet
+from asv.machine import iter_machine_files
+from asv.repo import get_repo
+from asv.results import iter_results
+from asv.publishing import OutputPublisher
+from asv import _stats, util
 
 
 def check_benchmark_params(name, benchmark):
@@ -189,7 +191,7 @@ class Publish(Command):
                     b_params = b['params']
 
                     result = results.get_result_value(key, b_params)
-                    weight = [statistics.get_weight(s)
+                    weight = [_stats.get_weight(s)
                               for s in results.get_result_stats(key, b_params)]
                     if not b_params:
                         result = result[0]
@@ -281,7 +283,7 @@ class Publish(Command):
         }, compact=True)
 
         util.write_json(os.path.join(conf.html_dir, "info.json"), {
-            'asv-version': __version__,
+            'asv-version': get_version("asv"),
             'timestamp': util.datetime_to_js_timestamp(
                 datetime.datetime.now(datetime.timezone.utc)
             )

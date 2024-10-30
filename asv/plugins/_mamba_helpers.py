@@ -218,18 +218,24 @@ class MambaSolver:
 
     def solve(self, specs, pkg_cache_path=None):
         """Solve given a set of specs.
+
         Parameters
         ----------
+
         specs : list of str
-            A list of package specs. You can use `conda.models.match_spec.MatchSpec`
-            to get them to the right form by calling
-            `MatchSpec(mypec).conda_build_form()`
+            A list of package specs. You can use
+            ``conda.models.match_spec.MatchSpec`` to get them to the right form
+            by calling ``MatchSpec(mypec).conda_build_form()``
+
         Returns
         -------
+
         transaction : libmambapy.Transaction
             The mamba transaction.
+
         Raises
         ------
+
         RuntimeError :
             If the solver did not find a solution.
         """
