@@ -82,6 +82,7 @@ class Mamba(environment.Environment):
             with mambarc_path.open() as f:
                 condarc_data = yaml.safe_load(f)
                 self._apply_condarc_settings(condarc_data)
+        self.channel_context = libmambapy.ChannelContext.make_conda_compatible(self.context)
 
     def _apply_condarc_settings(self, condarc_data):
         # Apply channel settings
@@ -141,10 +142,7 @@ class Mamba(environment.Environment):
             env_data = load(Path(env_file_name).open(), Loader=Loader)
             mamba_pkgs = [x for x in env_data.get("dependencies", []) if isinstance(x, str)]
             self._mamba_channels += [x for x in env_data.get("channels", []) if isinstance(x, str)]
-            # self._mamba_channels = list(dict.fromkeys(self._mamba_channels).keys())
-            self._mamba_channels = libmambapy.specs.ChannelResolveParams.name_map(
-                (x, libmambapy.specs.Channel(x)) for x in self._mamba_channels
-            )
+            self._mamba_channels = list(dict.fromkeys(self._mamba_channels).keys())
             # Handle possible pip keys
             pip_maybe = [x for x in env_data.get("dependencies", []) if isinstance(x, dict)]
             if len(pip_maybe) == 1:
@@ -152,23 +150,34 @@ class Mamba(environment.Environment):
                     pip_args += pip_maybe[0]["pip"]
                 except KeyError:
                     raise KeyError("Only pip is supported as a secondary key")
+        mamba_pkgs += mamba_args
         Request = libmambapy.solver.Request
         MatchSpec = libmambapy.specs.MatchSpec
         request = Request(
             jobs=[
                 Request.Install(MatchSpec.parse(pkg)) for pkg in mamba_pkgs
             ],
-            # flags=Request.Flags(
-            #     arg for arg in mamba_args
-            # ),
         )
         solver = libmambapy.solver.libsolv.Solver()
+        ChannelResolveParams = libmambapy.specs.ChannelResolveParams
+        channels = [self.channel_context.make_channel(chan) for chan in self._mamba_channels]
+        channel_map = ChannelResolveParams.ChannelMap(dict((text_chan, chan[0]) for (text_chan, chan) in zip(self._mamba_channels, channels)))
         db = libmambapy.solver.libsolv.Database(
-            libmambapy.specs.ChannelResolveParams(channel_alias="https://conda.anaconda.org")
+            ChannelResolveParams(custom_channels=channel_map)
         )
+        ### seemingly working up to here. But how to perform actions?
         with _mamba_lock():
-            transaction = solver.solve(db, request)
-            # transaction.execute(libmambapy.PrefixData(self._path))
+            outcome = solver.solve(db, request)
+            Solution = libmambapy.solver.Solution
+            # libmambapy.PrefixData(self._path)
+            if isinstance(outcome, Solution):
+                for action in outcome.actions:
+                    if isinstance(action, Solution.Upgrade):
+                        ...
+                    if isinstance(action, Solution.Reinstall):
+                        ...
+                    ...
+
             if pip_args:
                 for declaration in pip_args:
                     parsed_declaration = util.ParsedPipDeclaration(declaration)

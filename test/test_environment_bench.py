@@ -153,28 +153,24 @@ def test_asv_mamba_f(
     Test running ASV benchmarks with various configurations,
     checking for specific errors when failures are expected.
     """
-    import libmambapy
-    db = libmambapy.solver.libsolv.Database(
-        libmambapy.specs.ChannelResolveParams(channel_alias="https://conda.anaconda.org")
-    )
-    # project_dir = asv_project_factory(custom_config=config_modifier)
-    # try:
-    #     subprocess.run(
-    #         ["asv", "run", "--quick", "--dry-run", "--environment", "mamba"],
-    #         cwd=project_dir,
-    #         check=True,
-    #         capture_output=True,
-    #         text=True,
-    #     )
-    #     if not expected_success:
-    #         pytest.fail("Expected failure, but succeeded")
-    # except subprocess.CalledProcessError as exc:
-    #     if expected_success:
-    #         pytest.fail(f"ASV benchmark unexpectedly failed: {exc.stderr}")
-    #     elif expected_error and expected_error not in exc.stderr:
-    #         pytest.fail(
-    #             f"Expected error '{expected_error}' not found in stderr: {exc.stderr}"
-    #         )
+    project_dir = asv_project_factory(custom_config=config_modifier)
+    try:
+        subprocess.run(
+            ["asv", "run", "--quick", "--dry-run", "--environment", "mamba"],
+            cwd=project_dir,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        if not expected_success:
+            pytest.fail("Expected failure, but succeeded")
+    except subprocess.CalledProcessError as exc:
+        if expected_success:
+            pytest.fail(f"ASV benchmark unexpectedly failed: {exc.stderr}")
+        elif expected_error and expected_error not in exc.stderr:
+            pytest.fail(
+                f"Expected error '{expected_error}' not found in stderr: {exc.stderr}"
+            )
 
 
 @pytest.mark.parametrize(
