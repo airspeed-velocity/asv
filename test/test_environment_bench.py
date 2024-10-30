@@ -146,7 +146,7 @@ def test_asv_benchmark(asv_project_factory, env):
 )
 @pytest.mark.skipif(not tools.HAS_MAMBA,
                     reason="needs mamba")
-def test_asv_mamba(
+def test_asv_mamba_f(
     asv_project_factory, config_modifier, expected_success, expected_error
 ):
     """

@@ -13,8 +13,6 @@ except ImportError:
     from yaml import Loader
 
 import libmambapy
-
-from ._mamba_helpers import MambaSolver
 from .. import environment, util
 from ..console import log
 
@@ -81,6 +79,7 @@ class Mamba(environment.Environment):
             with mambarc_path.open() as f:
                 condarc_data = yaml.safe_load(f)
                 self._apply_condarc_settings(condarc_data)
+        self.channel_context = libmambapy.ChannelContext.make_conda_compatible(self.context)
 
     def _apply_condarc_settings(self, condarc_data):
         # Apply channel settings
@@ -149,12 +148,33 @@ class Mamba(environment.Environment):
                 except KeyError:
                     raise KeyError("Only pip is supported as a secondary key")
         mamba_pkgs += mamba_args
-        solver = MambaSolver(
-            self._mamba_channels, None, self.context  # or target_platform
+        Request = libmambapy.solver.Request
+        MatchSpec = libmambapy.specs.MatchSpec
+        request = Request(
+            jobs=[
+                Request.Install(MatchSpec.parse(pkg)) for pkg in mamba_pkgs
+            ],
         )
+        solver = libmambapy.solver.libsolv.Solver()
+        ChannelResolveParams = libmambapy.specs.ChannelResolveParams
+        channels = [self.channel_context.make_channel(chan) for chan in self._mamba_channels]
+        channel_map = ChannelResolveParams.ChannelMap(dict((text_chan, chan[0]) for (text_chan, chan) in zip(self._mamba_channels, channels)))
+        db = libmambapy.solver.libsolv.Database(
+            ChannelResolveParams(custom_channels=channel_map)
+        )
+        ### seemingly working up to here. But how to perform actions?
         with _mamba_lock():
-            transaction = solver.solve(mamba_pkgs)
-            transaction.execute(libmambapy.PrefixData(self._path))
+            outcome = solver.solve(db, request)
+            Solution = libmambapy.solver.Solution
+            # libmambapy.PrefixData(self._path)
+            if isinstance(outcome, Solution):
+                for action in outcome.actions:
+                    if isinstance(action, Solution.Upgrade):
+                        ...
+                    if isinstance(action, Solution.Reinstall):
+                        ...
+                    ...
+
             if pip_args:
                 for declaration in pip_args:
                     parsed_declaration = util.ParsedPipDeclaration(declaration)
