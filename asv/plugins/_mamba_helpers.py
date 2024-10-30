@@ -152,7 +152,7 @@ def load_channels(
             )
             print("Cache path: ", subdir.cache_path())
 
-        repo = subdir.create_repo()
+        repo = subdir.create_repo(pool)
         repo.set_priority(priority, subpriority)
         repos.append(repo)
 
@@ -165,7 +165,7 @@ class MambaSolver:
         self.platform = platform
         self.context = context
         self.output_folder = output_folder or "local"
-        self.pool = libmambapy.solver.libsolv.Database()
+        self.pool = libmambapy.Pool()
         self.repos = []
         self.index = load_channels(
             self.pool, self.channels, self.repos, platform=platform
