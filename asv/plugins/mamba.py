@@ -4,9 +4,6 @@ import os
 import re
 from pathlib import Path
 
-import libmambapy.solver
-import libmambapy.solver.libsolv
-import libmambapy.specs
 import yaml
 from yaml import load
 
