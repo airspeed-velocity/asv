@@ -87,7 +87,7 @@ jobs:
           create-args: >-
             python
             pip
-            libmambapy
+            libmambapy<2.0
             conda-build
 
       - name: Install dependencies
