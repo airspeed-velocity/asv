@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python version ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -47,7 +47,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: mamba-org/setup-micromamba@v1
+      - uses: mamba-org/setup-micromamba@v2.0.1
         with:
           init-shell: >-
             powershell

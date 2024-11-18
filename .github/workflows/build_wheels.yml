@@ -65,8 +65,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.5
-      - uses: actions/upload-artifact@v3
+        uses: pypa/cibuildwheel@v2.21.3
+      - uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
 
@@ -86,6 +86,6 @@ jobs:
         shell: bash -l {0}
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: dist/*.tar.gz
