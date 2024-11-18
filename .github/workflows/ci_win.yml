@@ -61,12 +61,12 @@ jobs:
 
       - name: Install dependencies
         run: python -m pip install ".[test,hg]" --pre
-        shell: micromamba-shell {0}
+        shell: pwsh
 
       - name: Install asv
         run: pip install .
-        shell: micromamba-shell {0}
+        shell: pwsh
 
       - name: Run tests
-        run: pytest -k environment_bench -vvvvv
-        shell: micromamba-shell {0}
+        run: python -m pytest -k environment_bench -vvvvv
+        shell: pwsh
