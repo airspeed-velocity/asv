@@ -38,7 +38,7 @@ jobs:
 
   test_env:
     name: test_environments
-    runs-on: "ubuntu-latest"
+    runs-on: "windows-latest"
     strategy:
       fail-fast: false
     timeout-minutes: 10
