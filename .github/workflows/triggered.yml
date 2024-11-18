@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.7", "3.12", "pypy-3.8", "pypy-3.9"]
+        python-version: ["3.8", "3.12", "pypy-3.8", "pypy-3.9"]
         r-version: ['release']
     timeout-minutes: 30
     steps:
@@ -27,12 +27,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      # We need Python 3.7 to always be installed, so tests with
+      # We need Python 3.8 to always be installed, so tests with
       # multiple environments can run.
-      - name: Set up Python 3.7
+      - name: Set up Python 3.8
         uses: actions/setup-python@v5
         with:
-          python-version: 3.7
+          python-version: 3.8
 
       - name: Set up Python version ${{ matrix.python-version }}
         uses: actions/setup-python@v5
