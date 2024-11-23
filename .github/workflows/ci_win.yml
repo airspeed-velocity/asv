@@ -49,8 +49,7 @@ jobs:
 
       - uses: mamba-org/setup-micromamba@v2.0.1
         with:
-          init-shell: >-
-            powershell
+          init-shell: powershell
           environment-name: test-env
           cache-environment: true
           create-args: >-
