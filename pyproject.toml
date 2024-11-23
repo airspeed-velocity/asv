@@ -61,7 +61,6 @@ test = [
     "flaky",
     "pytest-rerunfailures",
     "python-hglib; platform_system != 'Windows'",
-    "rpy2; platform_system != 'Windows' and platform_python_implementation != 'PyPy'",
 ]
 doc = [
     "sphinx",
@@ -81,6 +80,9 @@ hg = [
 ]
 plugs = [
     "asv-bench-memray",
+]
+testR = [
+    "rpy2; platform_system != 'Windows' and platform_python_implementation != 'PyPy'",
 ]
 all = ["asv[doc,dev,hg,plugs]"]
 [build-system]
