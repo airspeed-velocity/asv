@@ -36,11 +36,11 @@ from asv.results import Results
 from asv.plugins.conda import _find_conda
 
 # Two Python versions for testing
-PYTHON_VER1, PYTHON_VER2 = '3.7', platform.python_version()
+PYTHON_VER1, PYTHON_VER2 = '3.8', platform.python_version()
 
 # Installable library versions to use in tests
 DUMMY1_VERSION = "0.14"
-DUMMY2_VERSIONS = ["0.3.7", "0.3.9"]
+DUMMY2_VERSIONS = ["0.3.8", "0.3.9"]
 
 
 WIN = (os.name == "nt")
