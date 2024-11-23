@@ -13,9 +13,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # macos-latest doesn't have 3.8 anymore or pypy-3.9 ..
+        # macos-latest doesn't have 3.8 anymore
         os: ["ubuntu-latest", "macos-13"]
-        python-version: ["3.8", "3.12", "pypy-3.9"]
+        python-version: ["3.8", "3.12", "pypy-3.10"]
         r-version: ['release']
     timeout-minutes: 60
     steps:
