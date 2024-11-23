@@ -68,6 +68,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.21.3
       - uses: actions/upload-artifact@v4
         with:
+          name: cibw-wheels-cp${{ matrix.python-version }}-${{ matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
 
   build_sdist:
