@@ -30,6 +30,13 @@ jobs:
         with:
           python-version: 3.8
 
+      - name: Install mercurial and conda
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install mercurial
+          brew install --cask anaconda
+
       - name: Set up Python version ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
