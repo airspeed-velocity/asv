@@ -12,14 +12,13 @@ try:
 except ImportError:
     from yaml import Loader
 
+import libmambapy
+from importlib_metadata import version as get_version
+
 from .. import environment, util
 from ..console import log
 
-
-from importlib_metadata import version as get_version
-import libmambapy
-
-if int(get_version(libmambapy).split(".")[0]) <= 2:
+if int(get_version('libmambapy').split(".")[0]) >= 2:
     raise environment.EnvironmentUnavailable(
         f"libmambapy must be less than 2.0, but got {get_version('libmambapy')}"
     )

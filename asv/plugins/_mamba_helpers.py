@@ -14,6 +14,7 @@ from conda.gateways.connection.session import CondaHttpAuth
 
 from ..console import log
 
+
 def get_index(
     channel_urls=(),
     prepend=True,
