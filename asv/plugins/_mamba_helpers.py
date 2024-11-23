@@ -12,6 +12,7 @@ from conda.base.context import context
 from conda.core.index import check_allowlist
 from conda.gateways.connection.session import CondaHttpAuth
 
+from ..console import log
 
 def get_index(
     channel_urls=(),
@@ -145,12 +146,12 @@ def load_channels(
             continue
 
         if context.verbosity != 0 and not context.json:
-            print(
+            log.info(
                 "Channel: {}, platform: {}, prio: {} : {}".format(
                     entry["channel"], entry["platform"], priority, subpriority
                 )
             )
-            print("Cache path: ", subdir.cache_path())
+            log.info("Cache path: ", subdir.cache_path())
 
         repo = subdir.create_repo(pool)
         repo.set_priority(priority, subpriority)
@@ -254,8 +255,7 @@ class MambaSolver:
             for c in self.channels:
                 error_string += f" - {c}\n"
             error_string += api_solver.explain_problems()
-            print(error_string)
-            raise RuntimeError("Solver could not find solution." + error_string)
+            raise RuntimeError(f"Solver could not find solution, got:\n{error_string}")
 
         if pkg_cache_path is None:
             # use values from conda
