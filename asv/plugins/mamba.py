@@ -138,8 +138,8 @@ class Mamba(environment.Environment):
         env.update(self.build_env_vars)
         Path(f"{self._path}/conda-meta").mkdir(parents=True, exist_ok=True)
         if not self._mamba_environment_file:
-            # Construct payload, env file sets python version
-            mamba_pkgs = [f"python={self._python}", "wheel", "pip"]
+            # Construct payload
+            mamba_pkgs = ["wheel", "pip"]
         else:
             # For named environments
             env_file_name = self._mamba_environment_file
@@ -155,6 +155,11 @@ class Mamba(environment.Environment):
                 except KeyError:
                     raise KeyError("Only pip is supported as a secondary key")
         mamba_pkgs += mamba_args
+        # Changed in v0.6.5, gh-1294
+        # previously, the user provided environment was assumed to handle the python version
+        mamba_pkgs = [
+            f"python={self._python}" if a.startswith("python") else a for a in mamba_pkgs
+        ]
         self.context.prefix_params.target_prefix = self._path
         solver = MambaSolver(
             self._mamba_channels, None, self.context  # or target_platform
