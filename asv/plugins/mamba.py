@@ -80,7 +80,7 @@ class Mamba(environment.Environment):
 
         super(Mamba, self).__init__(conf, python, requirements, tagged_env_vars)
         self.context = libmambapy.Context()
-        self.context.target_prefix = self._path
+        self.context.pkgs_dirs = [f"{self._env_dir}/pkgs"]
         # Handle MAMBARC environment variable
         mambarc_path = Path(os.getenv("MAMBARC", ""))
         if mambarc_path.is_file():
