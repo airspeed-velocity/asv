@@ -133,7 +133,7 @@ class Conda(environment.Environment):
 
         # Changed in v0.6.5, gh-1294
         # previously, the user provided environment was assumed to handle the python version
-        conda_args = [util.replace_python_version(arg, self._python) for pkg in conda_args]
+        conda_args = [util.replace_python_version(arg, self._python) for arg in conda_args]
 
         if not self._conda_environment_file:
             conda_args = ['wheel', 'pip'] + conda_args
