@@ -13,8 +13,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest"]
-        python-version: ["3.7", "3.12", "pypy-3.9"]
+        # macos-latest doesn't have 3.8 anymore
+        os: ["ubuntu-latest", "macos-13"]
+        python-version: ["3.8", "3.12", "pypy-3.10"]
         r-version: ['release']
     timeout-minutes: 60
     steps:
@@ -22,15 +23,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      # We need Python 3.7 to always be installed, so tests with
+      # We need Python 3.8 to always be installed, so tests with
       # multiple environments can run.
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v4
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.7
+          python-version: 3.8
+
+      - name: Install mercurial and conda
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install mercurial
+          brew install --cask anaconda
 
       - name: Set up Python version ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -40,17 +48,17 @@ jobs:
         uses: browser-actions/setup-chrome@latest
 
       - name: Set up R version ${{ matrix.r-version }}
-        uses: r-lib/actions/setup-r@v2
+        uses: r-lib/actions/setup-r@v2.11.0
         with:
           r-version: ${{ matrix.r-version }}
 
       - name: Install dependencies (standard)
         if: matrix.python-version != '3.12.0-rc.2'
-        run: python -m pip install ".[test,hg]"
+        run: python -m pip install ".[test,hg,testR]"
 
       - name: Install dependencies (with --pre)
         if: matrix.python-version == '3.12.0-rc.2'
-        run: python -m pip install ".[test,hg]" --pre
+        run: python -m pip install ".[test,hg,testR]" --pre
 
       - name: Install asv
         run: pip install .
@@ -72,12 +80,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up R version ${{ matrix.r-version }}
-        uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: ${{ matrix.r-version }}
-
-      - uses: mamba-org/setup-micromamba@v1
+      - uses: mamba-org/setup-micromamba@v2.0.1
         with:
           init-shell: >-
             bash
@@ -86,7 +89,7 @@ jobs:
           create-args: >-
             python
             pip
-            libmambapy
+            libmambapy<2.0
             conda-build
 
       - name: Install dependencies
@@ -106,7 +109,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
           cache: pip

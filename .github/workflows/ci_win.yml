@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["windows-latest"]
-        python-version: ["3.7"]
+        python-version: ["3.8"]
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python version ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -38,7 +38,7 @@ jobs:
 
   test_env:
     name: test_environments
-    runs-on: "ubuntu-latest"
+    runs-on: "windows-latest"
     strategy:
       fail-fast: false
     timeout-minutes: 10
@@ -47,26 +47,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: mamba-org/setup-micromamba@v1
+      - uses: mamba-org/setup-micromamba@v2.0.1
         with:
-          init-shell: >-
-            powershell
+          init-shell: powershell
           environment-name: test-env
           cache-environment: true
           create-args: >-
             python
             pip
-            libmambapy
+            libmambapy<2.0
             conda-build
 
       - name: Install dependencies
         run: python -m pip install ".[test,hg]" --pre
-        shell: micromamba-shell {0}
+        shell: pwsh
 
       - name: Install asv
         run: pip install .
-        shell: micromamba-shell {0}
+        shell: pwsh
 
       - name: Run tests
-        run: pytest -k environment_bench -vvvvv
-        shell: micromamba-shell {0}
+        run: python -m pytest -k environment_bench -vvvvv
+        shell: pwsh

@@ -13,12 +13,18 @@ except ImportError:
     from yaml import Loader
 
 import libmambapy
+from importlib_metadata import version as get_version
 
-from ._mamba_helpers import MambaSolver
 from .. import environment, util
 from ..console import log
 
-WIN = os.name == "nt"
+if int(get_version('libmambapy').split(".")[0]) >= 2:
+    raise environment.EnvironmentUnavailable(
+        f"libmambapy must be less than 2.0, but got {get_version('libmambapy')}"
+    )
+
+
+from ._mamba_helpers import MambaSolver
 
 # Like Conda, Mamba also needs to be serialized
 util.new_multiprocessing_lock("mamba_lock")
