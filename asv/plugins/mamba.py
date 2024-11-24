@@ -155,6 +155,7 @@ class Mamba(environment.Environment):
                 except KeyError:
                     raise KeyError("Only pip is supported as a secondary key")
         mamba_pkgs += mamba_args
+        self.context.prefix_params.target_prefix = self._path
         solver = MambaSolver(
             self._mamba_channels, None, self.context  # or target_platform
         )
