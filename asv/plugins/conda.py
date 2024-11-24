@@ -131,9 +131,12 @@ class Conda(environment.Environment):
         env = dict(os.environ)
         env.update(self.build_env_vars)
 
+        # Changed in v0.6.5, gh-1294
+        # previously, the user provided environment was assumed to handle the python version
+        conda_args = [util.replace_python_version(arg, self._python) for arg in conda_args]
+
         if not self._conda_environment_file:
-            # The user-provided env file is assumed to set the python version
-            conda_args = [f'python={self._python}', 'wheel', 'pip'] + conda_args
+            conda_args = ['wheel', 'pip'] + conda_args
 
         # Create a temporary environment.yml file
         # and use that to generate the env for benchmarking.

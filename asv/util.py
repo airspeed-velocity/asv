@@ -1431,3 +1431,10 @@ def get_matching_environment(environments, result=None):
         ),
         None,
     )
+
+def replace_python_version(arg, new_version):
+    match = re.match(r'^python(\W|$)', arg)
+    if match and not match.group(1).isalnum():
+        return f"python={new_version}"
+    else:
+        return arg
