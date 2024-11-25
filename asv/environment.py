@@ -501,6 +501,7 @@ class Environment:
 
         """
         self._env_dir = conf.env_dir
+        self._python = python
         self._repo_subdir = conf.repo_subdir
         self._install_timeout = conf.install_timeout  # gh-391
         self._default_benchmark_timeout = conf.default_benchmark_timeout # gh-973
