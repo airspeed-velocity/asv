@@ -1,13 +1,19 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import os
-import re
-from pathlib import Path
 import asyncio
+from pathlib import Path
+
+from yaml import load
+
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
+
+from rattler import solve, install, VirtualPackage
 
 from .. import environment, util
 from ..console import log
-
-from rattler import solve, install, VirtualPackage
 
 
 class Rattler(environment.Environment):
@@ -60,7 +66,7 @@ class Rattler(environment.Environment):
         # Rattler configuration things
         self._pkg_cache = f"{self._env_dir}/pkgs"
 
-        # TODO(haozeke): Do we need to handle mambarc or something? Have a way to provide channel priority, see mamba
+        # TODO(haozeke): Provide channel priority, see mamba
 
     def _setup(self):
         asyncio.run(self._async_setup())
