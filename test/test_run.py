@@ -82,8 +82,8 @@ def test_run_spec(basic_conf_2):
         expected = set(['machine.json'])
         for commit in expected_commits:
             for psver in tools.DUMMY2_VERSIONS:
-                expected.add(f'{commit[:8]}-{tool_name}-py{pyver}-asv_dummy_'
-                             f'test_package_1-asv_dummy_test_package_2{psver}.json')
+                expected.add(f'{commit[:8]}-{tool_name}-py{pyver}-pip+asv_dummy_'
+                             f'test_package_1-pip+asv_dummy_test_package_2{psver}.json')
 
         result_files = os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))
 
@@ -231,7 +231,7 @@ def test_run_append_samples(basic_conf_2):
     tmpdir, local, conf, machine_file = basic_conf_2
 
     # Only one environment
-    conf.matrix['asv_dummy_test_package_2'] = conf.matrix['asv_dummy_test_package_2'][:1]
+    conf.matrix['pip+asv_dummy_test_package_2'] = conf.matrix['pip+asv_dummy_test_package_2'][:1]
 
     # Tests multiple calls to "asv run --append-samples"
     def run_it():
