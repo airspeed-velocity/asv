@@ -83,6 +83,7 @@ def generate_basic_conf(tmpdir,
         'html_dir': 'html',
         'repo': relpath(repo_path),
         'project': 'asv',
+        'conda_channels': ["conda-forge"],
         'dvcs': 'git',
         'matrix': {
             "asv-dummy-test-package-1": [None],
@@ -343,7 +344,7 @@ def basic_html(request):
 
 
 @pytest.fixture
-def benchmarks_fixture(tmpdir):
+def benchmarks_fixture(tmpdir, request: pytest.FixtureRequest):
     tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
@@ -353,6 +354,8 @@ def benchmarks_fixture(tmpdir):
     d.update(ASV_CONF_JSON)
     d['env_dir'] = "env"
     d['benchmark_dir'] = 'benchmark'
+    d['environment_type'] = request.config.getoption('environment_type')
+    d['conda_channels'] = ["conda-forge"]
     d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
     d['branches'] = ["master"]
     conf = config.Config.from_json(d)
