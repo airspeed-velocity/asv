@@ -80,12 +80,14 @@ hg = [
 ]
 plugs = [
     "asv-bench-memray",
+]
+envs = [
     "py-rattler",
 ]
 testR = [
     "rpy2; platform_system != 'Windows' and platform_python_implementation != 'PyPy'",
 ]
-all = ["asv[doc,dev,hg,plugs]"]
+all = ["asv[doc,dev,hg,envs]"]
 [build-system]
 requires = [
     "wheel",
