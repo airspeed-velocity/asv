@@ -47,7 +47,7 @@ def pytest_addoption(parser):
         "--runflaky", action="store_true", default=False, help="run flaky tests"
     )
     parser.addoption("--environment-type", action="store", default=None,
-                     choices=("conda", "virtualenv", "mamba"),
+                     choices=("conda", "virtualenv", "mamba", "rattler"),
                      help="environment_type to use in tests by default")
 
 
