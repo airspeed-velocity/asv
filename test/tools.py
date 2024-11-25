@@ -36,7 +36,7 @@ from asv.results import Results
 from asv.plugins.conda import _find_conda
 
 # Two Python versions for testing
-PYTHON_VER1, PYTHON_VER2 = '3.8', platform.python_version()
+PYTHON_VER1, PYTHON_VER2 = '3.8', f"{sys.version_info[0]}.{sys.version_info[1]}"
 
 # Installable library versions to use in tests
 DUMMY1_VERSION = "0.14"
