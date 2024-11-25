@@ -30,7 +30,7 @@ class PluginManager:
                 self.init_plugin(mod)
                 self._plugins.append(mod)
             except ModuleNotFoundError as err:
-                if any(keyword in name for keyword in [".mamba", ".virtualenv", ".conda"]):
+                if any(keyword in name for keyword in [".mamba", ".virtualenv", ".conda", ".rattler"]):
                     continue  # Fine to not have these
                 else:
                     log.error(f"Couldn't load {name} because\n{err}")
