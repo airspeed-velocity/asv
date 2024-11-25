@@ -14,7 +14,6 @@ import textwrap
 import sys
 import shutil
 import subprocess
-import platform
 import http.server
 import importlib
 from os.path import abspath, join, dirname, relpath, isdir

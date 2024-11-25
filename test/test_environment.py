@@ -10,9 +10,9 @@ from asv.repo import get_repo
 from asv.util import shlex_quote as quote
 
 from . import tools
-from .tools import (PYTHON_VER1, PYTHON_VER2, DUMMY1_VERSION, DUMMY2_VERSIONS,
-                    WIN, HAS_PYPY, HAS_CONDA, HAS_VIRTUALENV, HAS_RATTLER,
-                    HAS_MAMBA, HAS_PYTHON_VER2, generate_test_repo)
+from .tools import (PYTHON_VER1, PYTHON_VER2, DUMMY1_VERSION, DUMMY2_VERSIONS, WIN, HAS_PYPY,
+                    HAS_CONDA, HAS_VIRTUALENV, HAS_RATTLER, HAS_MAMBA, HAS_PYTHON_VER2,
+                    generate_test_repo)
 
 CAN_BUILD_PYTHON = (HAS_CONDA or HAS_MAMBA or HAS_RATTLER)
 
@@ -456,7 +456,9 @@ def test_environment_select(request: pytest.FixtureRequest):
                                                             ":" + executable]))
     # TODO(rg): Fix this later
     # assert len(environments) == 3
-    # for env in [e for e in environments if e.tool_name != request.config.getoption('environment_type')]:
+    # for env in [
+    # e for e in environments if e.tool_name != request.config.getoption('environment_type')
+    # ]:
     #     assert env.tool_name == "existing"
     #     assert env.python == "{0[0]}.{0[1]}".format(sys.version_info)
     #     assert os.path.normcase(
