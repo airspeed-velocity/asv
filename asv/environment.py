@@ -432,7 +432,7 @@ def get_environment_class(conf, python):
         classes.insert(0, cls)
 
     for cls in classes:
-        if cls.matches_python_fallback and cls.matches(python):
+        if cls.matches_python_fallback or cls.matches(python):
             return cls
     raise EnvironmentUnavailable(
         f"No way to create environment for python='{python}'")
