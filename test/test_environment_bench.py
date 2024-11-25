@@ -13,6 +13,8 @@ if tools.HAS_CONDA:
     ENVIRONMENTS.append("conda")
 if tools.HAS_MAMBA:
     ENVIRONMENTS.append("mamba")
+if tools.HAS_RATTLER:
+    ENVIRONMENTS.append("rattler")
 if len(ENVIRONMENTS) == 0:
     pytest.skip("No environments can be constructed", allow_module_level=True)
 
@@ -128,26 +130,46 @@ def test_asv_benchmark(asv_project_factory, env):
 
 
 @pytest.mark.parametrize(
-    "config_modifier, expected_success, expected_error",
+    ("environment", "config_modifier", "expected_success", "expected_error"),
     [
         pytest.param(
+            env,
             {"conda_channels": ["conda-forge", "nodefaults"]},
             True,
             None,
-            id="with_conda_forge",
-        ),
+            id=f"with_conda_forge_{env}",
+            marks=[
+                pytest.mark.skipif(
+                    env == "mamba" and not tools.HAS_MAMBA, reason="needs mamba"
+                ),
+                pytest.mark.skipif(
+                    env == "rattler" and not tools.HAS_RATTLER, reason="needs rattler"
+                ),
+            ],
+        )
+        for env in ["mamba", "rattler"]
+    ]
+    + [
         pytest.param(
+            env,
             {"conda_channels": []},
             False,
-            "Solver could not find solution",
-            id="empty_conda_channels",
-        ),
+            ["Solver could not find solution", "Cannot solve the request"],
+            id=f"empty_conda_channels_{env}",
+            marks=[
+                pytest.mark.skipif(
+                    env == "mamba" and not tools.HAS_MAMBA, reason="needs mamba"
+                ),
+                pytest.mark.skipif(
+                    env == "rattler" and not tools.HAS_RATTLER, reason="needs rattler"
+                ),
+            ],
+        )
+        for env in ["mamba", "rattler"]
     ],
 )
-@pytest.mark.skipif(not tools.HAS_MAMBA,
-                    reason="needs mamba")
 def test_asv_mamba(
-    asv_project_factory, config_modifier, expected_success, expected_error
+    environment, asv_project_factory, config_modifier, expected_success, expected_error
 ):
     """
     Test running ASV benchmarks with various configurations,
@@ -156,7 +178,7 @@ def test_asv_mamba(
     project_dir = asv_project_factory(custom_config=config_modifier)
     try:
         subprocess.run(
-            ["asv", "run", "--quick", "--dry-run", "--environment", "mamba"],
+            ["asv", "run", "--quick", "--dry-run", "--environment", environment],
             cwd=project_dir,
             check=True,
             capture_output=True,
@@ -167,12 +189,13 @@ def test_asv_mamba(
     except subprocess.CalledProcessError as exc:
         if expected_success:
             pytest.fail(f"ASV benchmark unexpectedly failed: {exc.stderr}")
-        elif expected_error and expected_error not in exc.stderr:
+        elif expected_error and all([err not in exc.stderr for err in expected_error]):
             pytest.fail(
                 f"Expected error '{expected_error}' not found in stderr: {exc.stderr}"
             )
 
 
+# TODO(haozeke): Add similar tests for rattler
 @pytest.mark.parametrize(
     "create_condarc, set_mambarc, expected_success, expected_error",
     [
@@ -199,8 +222,7 @@ def test_asv_mamba(
         ),
     ],
 )
-@pytest.mark.skipif(not tools.HAS_MAMBA,
-                    reason="needs mamba")
+@pytest.mark.skipif(not tools.HAS_MAMBA, reason="needs mamba")
 def test_asv_mamba_condarc(
     asv_project_factory,
     create_condarc,
