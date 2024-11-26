@@ -73,6 +73,8 @@ class Config:
         self.build_command = None
         self.install_command = None
         self.uninstall_command = None
+        self.baseline_machine = None
+        self.generate_markdown = False
 
     @classmethod
     def load(cls, path=None):
