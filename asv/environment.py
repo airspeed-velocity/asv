@@ -423,13 +423,14 @@ def get_environment_class(conf, python):
     if python == 'same':
         return ExistingEnvironment
 
-    # Try the subclasses in reverse order so custom plugins come first
-    classes = list(util.iter_subclasses(Environment))[::-1]
+    classes = util.iter_subclasses(Environment)
 
     if conf.environment_type:
         cls = get_environment_class_by_name(conf.environment_type)
         classes.remove(cls)
         classes.insert(0, cls)
+    else:
+        raise RuntimeError("Environment type must be specified")
 
     for cls in classes:
         if cls.matches_python_fallback or cls.matches(python):
