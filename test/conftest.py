@@ -442,3 +442,15 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if "flaky" in item.keywords:
             item.add_marker(skip_flaky)
+
+
+@pytest.fixture
+def skip_virtualenv(request: pytest.FixtureRequest):
+    if request.config.getoption('environment_type') == 'virtualenv':
+        pytest.skip('Cannot run this test with virtualenv')
+
+
+@pytest.fixture
+def skip_no_conda(request: pytest.FixtureRequest):
+    if request.config.getoption('environment_type') != 'conda':
+        pytest.skip('Needs to be run with conda')

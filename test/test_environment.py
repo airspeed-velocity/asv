@@ -21,6 +21,7 @@ CAN_BUILD_PYTHON = (HAS_CONDA or HAS_MAMBA or HAS_RATTLER)
     reason="Requires two usable Python versions",
 )
 def test_matrix_environments(tmpdir, dummy_packages,
+                             skip_virtualenv: pytest.FixtureRequest,
                              request: pytest.FixtureRequest):
     conf = config.Config()
 
@@ -55,7 +56,9 @@ def test_matrix_environments(tmpdir, dummy_packages,
 
 @pytest.mark.skipif((not CAN_BUILD_PYTHON),
                     reason="Requires a plugin to build python")
-def test_large_environment_matrix(tmpdir, request: pytest.FixtureRequest):
+def test_large_environment_matrix(tmpdir,
+                             skip_virtualenv: pytest.FixtureRequest,
+                             request: pytest.FixtureRequest):
     # As seen in issue #169, conda can't handle using really long
     # directory names in its environment.  This creates an environment
     # with many dependencies in order to ensure it still works.
@@ -86,7 +89,8 @@ def test_large_environment_matrix(tmpdir, request: pytest.FixtureRequest):
 @pytest.mark.skipif((not CAN_BUILD_PYTHON),
                     reason="Requires a plugin to build python")
 def test_presence_checks(tmpdir, monkeypatch,
-                         request: pytest.FixtureRequest):
+                             skip_virtualenv: pytest.FixtureRequest,
+                             request: pytest.FixtureRequest):
     conf = config.Config()
     conf.environment_type = request.config.getoption('environment_type')
     conf.conda_channels = ["conda-forge"]
@@ -204,7 +208,9 @@ def test_matrix_expand_include():
 
 @pytest.mark.skipif(not (HAS_PYTHON_VER2 or CAN_BUILD_PYTHON),
                     reason="Requires two usable Python versions")
-def test_matrix_expand_include_detect_env_type(request: pytest.FixtureRequest):
+def test_matrix_expand_include_detect_env_type(
+        skip_virtualenv: pytest.FixtureRequest,
+        request: pytest.FixtureRequest):
     conf = config.Config()
     conf.environment_type = request.config.getoption('environment_type')
     conf.conda_channels = ["conda-forge"]
@@ -332,7 +338,7 @@ def test_iter_env_matrix_combinations():
 
 
 @pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
-def test_conda_pip_install(tmpdir, dummy_packages):
+def test_conda_pip_install(tmpdir, dummy_packages, skip_no_conda: pytest.FixtureRequest):
     # test that we can install with pip into a conda environment.
     conf = config.Config()
 
@@ -356,7 +362,7 @@ def test_conda_pip_install(tmpdir, dummy_packages):
 
 
 @pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
-def test_conda_environment_file(tmpdir, dummy_packages):
+def test_conda_environment_file(tmpdir, dummy_packages, skip_no_conda: pytest.FixtureRequest):
     env_file_name = str(tmpdir.join("environment.yml"))
     with open(env_file_name, "w") as temp_environment_file:
         temp_environment_file.write(
@@ -410,7 +416,7 @@ def test_conda_run_executable(tmpdir):
 
 @pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
                     reason="Requires two usable Python versions")
-def test_environment_select(request: pytest.FixtureRequest):
+def test_environment_select(request: pytest.FixtureRequest, skip_no_conda: pytest.FixtureRequest):
     conf = config.Config()
     conf.environment_type = "conda"
     conf.pythons = ["2.7", "3.5"]
@@ -485,7 +491,8 @@ def test_environment_select(request: pytest.FixtureRequest):
 
 @pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
                     reason="Requires two usable Python versions")
-def test_environment_select_autodetect():
+def test_environment_select_autodetect(skip_no_conda: pytest.FixtureRequest):
+    skip_no_conda
     conf = config.Config()
     conf.environment_type = "conda"
     conf.pythons = [PYTHON_VER1]
@@ -513,7 +520,7 @@ def test_environment_select_autodetect():
     assert len(environments) == 1
 
 @pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
-def test_matrix_empty():
+def test_matrix_empty(skip_no_conda: pytest.FixtureRequest):
     conf = config.Config()
     conf.environment_type = ""
     conf.pythons = [PYTHON_VER1]
@@ -526,7 +533,7 @@ def test_matrix_empty():
 
 
 @pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
-def test_matrix_existing():
+def test_matrix_existing(skip_no_conda: pytest.FixtureRequest):
     conf = config.Config()
     conf.environment_type = "existing"
     conf.pythons = ["same"]
@@ -553,7 +560,8 @@ def test_matrix_existing():
 ])
 def test_conda_channel_addition(tmpdir,
                                 channel_list,
-                                expected_channel):
+                                expected_channel,
+                                skip_no_conda: pytest.FixtureRequest):
     # test that we can add conda channels to environments
     # and that we respect the specified priority order
     # of channels
@@ -619,7 +627,7 @@ def test_pypy_virtualenv(tmpdir, request: pytest.FixtureRequest):
 
 
 @pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
-def test_environment_name_sanitization():
+def test_environment_name_sanitization(skip_no_conda: pytest.FixtureRequest):
     conf = config.Config()
     conf.environment_type = "conda"
     conf.pythons = ["3.5"]
@@ -641,7 +649,9 @@ def test_environment_name_sanitization():
     #              marks=pytest.mark.skipif(not (HAS_PYTHON_VER2 and HAS_VIRTUALENV),
     #                                       reason="needs virtualenv and python 3.8"))
 ])
-def test_environment_environ_path(environment_type, tmpdir, monkeypatch):
+def test_environment_environ_path(
+    environment_type, tmpdir, monkeypatch, skip_no_conda: pytest.FixtureRequest
+):
     # Check that virtualenv binary dirs are in the PATH
     conf = config.Config()
     conf.env_dir = str(tmpdir.join("env"))
@@ -673,7 +683,9 @@ def test_environment_environ_path(environment_type, tmpdir, monkeypatch):
 
 @pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
                     reason="Requires two usable Python versions")
-def test_build_isolation(tmpdir, request: pytest.FixtureRequest):
+def test_build_isolation(
+        tmpdir, request: pytest.FixtureRequest, skip_virtualenv: pytest.FixtureRequest
+):
     # build should not fail with build_cache on projects that have pyproject.toml
     tmpdir = str(tmpdir)
 
@@ -708,7 +720,9 @@ def test_build_isolation(tmpdir, request: pytest.FixtureRequest):
 
 
 @pytest.mark.skipif(tools.HAS_PYPY, reason="Flaky on pypy")
-def test_custom_commands(tmpdir, request: pytest.FixtureRequest):
+def test_custom_commands(
+        tmpdir, request: pytest.FixtureRequest, skip_virtualenv: pytest.FixtureRequest
+):
     # check custom install/uninstall/build commands work
     tmpdir = str(tmpdir)
 
@@ -799,7 +813,9 @@ def test_custom_commands(tmpdir, request: pytest.FixtureRequest):
         env.install_project(conf, repo, commit_hash)
 
 
-def test_installed_commit_hash(tmpdir, request: pytest.FixtureRequest):
+def test_installed_commit_hash(
+        tmpdir, request: pytest.FixtureRequest, skip_virtualenv: pytest.FixtureRequest
+):
     tmpdir = str(tmpdir)
 
     dvcs = generate_test_repo(tmpdir, [0], dvcs_type='git')
@@ -848,7 +864,9 @@ def test_installed_commit_hash(tmpdir, request: pytest.FixtureRequest):
     assert env._global_env_vars.get('ASV_COMMIT') is None
 
 
-def test_install_success(tmpdir, request: pytest.FixtureRequest):
+def test_install_success(
+        tmpdir, request: pytest.FixtureRequest, skip_virtualenv: pytest.FixtureRequest
+):
     # Check that install_project really installs the package. (gh-805)
     # This may fail if pip in install_command e.g. gets confused by an .egg-info
     # directory in its cwd to think the package is already installed.
@@ -875,7 +893,9 @@ def test_install_success(tmpdir, request: pytest.FixtureRequest):
     env.run(['-c', 'import asv_test_repo as t, sys; sys.exit(0 if t.dummy_value == 0 else 1)'])
 
 
-def test_install_env_matrix_values(tmpdir, request: pytest.FixtureRequest):
+def test_install_env_matrix_values(
+        tmpdir, request: pytest.FixtureRequest, skip_virtualenv: pytest.FixtureRequest
+):
     tmpdir = str(tmpdir)
 
     dvcs = generate_test_repo(tmpdir, [0], dvcs_type='git')
@@ -905,7 +925,7 @@ def test_install_env_matrix_values(tmpdir, request: pytest.FixtureRequest):
              'sys.exit(0 if "SOME_ASV_TEST_NON_BUILD_VALUE" not in t.env else 1)'])
 
 
-def test_environment_env_matrix():
+def test_environment_env_matrix(request: pytest.FixtureRequest):
     # (build_vars, non_build_vars, environ_count, build_count)
     configs = [
         ({}, {}, 1, 1),
@@ -920,6 +940,8 @@ def test_environment_env_matrix():
 
     for build_vars, non_build_vars, environ_count, build_count in configs:
         conf = config.Config()
+        conf.environment_type = request.config.getoption('environment_type')
+        conf.conda_channels = ["conda-forge"]
 
         conf.matrix = {
             "env": build_vars,
