@@ -423,7 +423,7 @@ def get_environment_class(conf, python):
     if python == 'same':
         return ExistingEnvironment
 
-    classes = util.iter_subclasses(Environment)
+    classes = list(util.iter_subclasses(Environment))
 
     if conf.environment_type:
         cls = get_environment_class_by_name(conf.environment_type)
