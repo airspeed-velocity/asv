@@ -96,7 +96,7 @@ def test_discover_benchmarks(benchmarks_fixture):
     assert b['timeraw_examples.TimerawSuite.timeraw_setup']['number'] == 1
 
 
-def test_invalid_benchmark_tree(tmpdir):
+def test_invalid_benchmark_tree(tmpdir, request: pytest.FixtureRequest):
     tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
@@ -104,6 +104,8 @@ def test_invalid_benchmark_tree(tmpdir):
     d.update(ASV_CONF_JSON)
     d['benchmark_dir'] = INVALID_BENCHMARK_DIR
     d['env_dir'] = "env"
+    d['environment_type'] = request.config.getoption('environment_type')
+    d['conda_channels'] = ["conda-forge"]
     d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
     conf = config.Config.from_json(d)
 
