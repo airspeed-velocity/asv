@@ -4,7 +4,6 @@ import contextlib
 import io
 import os
 import pstats
-import sys
 import tempfile
 
 from asv_runner.console import color_print
@@ -172,8 +171,7 @@ class Profile(Command):
                 env = [
                     env
                     for env in environments
-                    if util.extract_cpython_version(env.python)
-                    == "{0}.{1}".format(*sys.version_info[:2])
+                    if util.env_py_is_sys_version(env.python)
                 ][0]
 
             benchmarks = Benchmarks.discover(conf, repo, environments,
