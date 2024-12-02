@@ -1,6 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import sys
 import os
 import re
 import shutil
@@ -16,7 +15,6 @@ from asv.commands.run import Run
 from asv.commands import make_argparser
 
 from . import tools
-from .tools import WIN
 
 
 def test_set_commit_hash(capsys, existing_env_conf):
@@ -313,12 +311,6 @@ def test_env_matrix_value(basic_conf):
 @pytest.mark.skipif(tools.HAS_PYPY, reason="Times out randomly on pypy")
 def test_parallel(basic_conf_2, dummy_packages):
     tmpdir, local, conf, machine_file = basic_conf_2
-
-    if WIN and os.path.basename(sys.argv[0]).lower().startswith('py.test'):
-        # Multiprocessing in spawn mode can result to problems with py.test
-        # Find.run calls Setup.run in parallel mode by default
-        pytest.skip("Multiprocessing spawn mode on Windows not safe to run "
-                    "from py.test runner.")
 
     conf.matrix = {
         "req": dict(conf.matrix),
