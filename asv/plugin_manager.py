@@ -7,7 +7,7 @@ import importlib
 from . import commands, plugins
 from .console import log
 
-ENV_PLUGINS = [".mamba", ".virtualenv", ".conda", ".rattler"]
+ENV_PLUGINS = [".mamba", "._mamba_helpers", ".virtualenv", ".conda", ".rattler"]
 
 class PluginManager:
     """
