@@ -1427,8 +1427,7 @@ def get_matching_environment(environments, result=None):
             env
             for env in environments
             if (result is None or result.env_name == env.name)
-            and extract_python_version(env.python)
-            == "{0}.{1}".format(*sys.version_info[:2])
+            and env_py_is_sys_version(env.python)
         ),
         None,
     )
@@ -1449,3 +1448,9 @@ def extract_cpython_version(env_python):
         return match.group(1)
     else:
         return None
+
+
+def env_py_is_sys_version(env_python):
+    return extract_cpython_version(env_python) == "{0}.{1}".format(
+        *sys.version_info[:2]
+    )
