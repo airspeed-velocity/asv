@@ -4,6 +4,8 @@ import json
 
 import pytest
 
+from asv import util
+
 from . import tools
 
 ENVIRONMENTS = []
@@ -116,6 +118,8 @@ def test_asv_benchmark(asv_project_factory, env):
     """
     Test running ASV benchmarks in the specified environment.
     """
+    if util.ON_PYPY and env in ["rattler", "mamba"]:
+        pytest.skip("mamba and py-rattler only work for CPython")
     project_dir = asv_project_factory(custom_config={})
     subprocess.run(["asv", "machine", "--yes"], cwd=project_dir, check=True)
     result = subprocess.run(
@@ -175,6 +179,8 @@ def test_asv_mamba(
     Test running ASV benchmarks with various configurations,
     checking for specific errors when failures are expected.
     """
+    if util.ON_PYPY:
+        pytest.skip("mamba and py-rattler only work for CPython")
     project_dir = asv_project_factory(custom_config=config_modifier)
     try:
         subprocess.run(
