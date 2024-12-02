@@ -168,13 +168,13 @@ class Profile(Command):
                             "using an existing environment.")
 
             if env is None:
-                # Fallback
-                env = environments[0]
-
-            if env.python != "{0}.{1}".format(*sys.version_info[:2]):
-                raise util.UserError(
-                    "Profiles must be run in the same version of Python as the "
-                    "asv main process")
+                # Fallback, first valid python environment
+                env = [
+                    env
+                    for env in environments
+                    if util.extract_cpython_version(env.python)
+                    == "{0}.{1}".format(*sys.version_info[:2])
+                ][0]
 
             benchmarks = Benchmarks.discover(conf, repo, environments,
                                              [commit_hash],
