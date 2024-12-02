@@ -42,7 +42,7 @@ def test_profile_python_commit(capsys, basic_conf):
 
         assert "Profile data does not already exist" in text
 
-        tools.run_asv_with_conf(conf, 'run', "--quick", "--profile",
+        tools.run_asv_with_conf(conf, 'run', "--profile",
                                 "--bench=time_secondary.track_value",
                                 f'{util.git_default_branch()}^!', _machine_file=machine_file)
     else:
