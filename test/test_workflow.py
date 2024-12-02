@@ -72,7 +72,7 @@ def basic_conf(tmpdir, dummy_packages):
 
 
 @pytest.mark.skipif(tools.HAS_PYPY or (os.name == 'nt'), reason="Flaky on pypy and windows")
-def test_run_publish(capfd, basic_conf):
+def test_run_publish(capfd, basic_conf, request: pytest.FixtureRequest):
     tmpdir, local, conf, machine_file = basic_conf
     tmpdir = util.long_path(tmpdir)
 
