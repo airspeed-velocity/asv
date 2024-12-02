@@ -560,5 +560,5 @@ def test_construct_pip_call(declaration, expected_result):
     ("python==3.7", "3.10", "python=3.10"),
     ("python_package", "3.10", "python_package"),
 ])
-def test_replace_python_version(arg, new_version, expected):
-    assert util.replace_python_version(arg, new_version) == expected
+def test_replace_cpython_version(arg, new_version, expected):
+    assert util.replace_cpython_version(arg, new_version) == expected

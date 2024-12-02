@@ -1434,7 +1434,7 @@ def get_matching_environment(environments, result=None):
     )
 
 
-def replace_python_version(arg, new_version):
+def replace_cpython_version(arg, new_version):
     match = re.match(r"^python(\W|$)", arg)
     if match and not match.group(1).isalnum():
         return f"python={new_version}"
