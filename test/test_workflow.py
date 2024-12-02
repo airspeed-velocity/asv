@@ -76,7 +76,7 @@ def basic_conf(tmpdir, dummy_packages):
     HAS_PYPY or WIN or sys.version_info >= (3, 12),
     reason="Flaky on pypy and windows, doesn't work on Python >= 3.12",
 )
-def test_run_publish(capfd, basic_conf):
+def test_run_publish(capfd, basic_conf, request: pytest.FixtureRequest):
     tmpdir, local, conf, machine_file = basic_conf
     tmpdir = util.long_path(tmpdir)
 
