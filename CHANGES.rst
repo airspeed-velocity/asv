@@ -1,18 +1,3 @@
-0.6.5 (2024-08-12)
-------------------
-
-Bug Fixes
-^^^^^^^^^
-
-- Multiple Python versions are handled correctly (#1444)
-- JSONC fixes (#1426)
-
-Other Changes and Additions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-- New documentation design
-
-
 0.6.4 (2024-08-12)
 ------------------
 
