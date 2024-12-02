@@ -1442,7 +1442,7 @@ def replace_cpython_version(arg, new_version):
 
 
 def extract_cpython_version(env_python):
-    version_regex = r"python(\d+\.\d+)"
+    version_regex = r"(\d+\.\d+)$"
     match = re.search(version_regex, env_python)
     if match:
         return match.group(1)
