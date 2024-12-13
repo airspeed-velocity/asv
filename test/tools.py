@@ -80,6 +80,13 @@ except ImportError:
 
 
 try:
+    import rattler  # noqa F401 checking if installed
+    HAS_RATTLER = True
+except ImportError:
+    HAS_RATTLER = False
+
+
+try:
     util.which(f'python{PYTHON_VER2}')
     HAS_PYTHON_VER2 = True
 except (RuntimeError, OSError):
