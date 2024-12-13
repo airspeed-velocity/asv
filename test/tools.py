@@ -14,7 +14,6 @@ import textwrap
 import sys
 import shutil
 import subprocess
-import platform
 import http.server
 import importlib
 from os.path import abspath, join, dirname, relpath, isdir
@@ -36,7 +35,7 @@ from asv.results import Results
 from asv.plugins.conda import _find_conda
 
 # Two Python versions for testing
-PYTHON_VER1, PYTHON_VER2 = '3.8', platform.python_version()
+PYTHON_VER1, PYTHON_VER2 = '3.8', f"{sys.version_info[0]}.{sys.version_info[1]}"
 
 # Installable library versions to use in tests
 DUMMY1_VERSION = "0.14"
@@ -77,6 +76,13 @@ try:
     HAS_VIRTUALENV = True
 except ImportError:
     HAS_VIRTUALENV = False
+
+
+try:
+    import rattler  # noqa F401 checking if installed
+    HAS_RATTLER = True
+except ImportError:
+    HAS_RATTLER = False
 
 
 try:

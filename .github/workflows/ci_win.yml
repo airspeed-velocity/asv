@@ -31,9 +31,9 @@ jobs:
       - name: Install and test
         shell: pwsh
         run: |
-          python.exe -m pip install .[test]
-          python.exe -m pip install packaging virtualenv
-          python.exe -m pytest -v -l -x --timeout=300 --durations=100 test --environment-type=virtualenv
+          python.exe -m pip install .[test,envs]
+          python.exe -m pip install packaging
+          python.exe -m pytest -v -l -x --timeout=300 --durations=100 test --environment-type=rattler
 
 
   test_env:
@@ -59,7 +59,7 @@ jobs:
             conda-build
 
       - name: Install dependencies
-        run: python -m pip install ".[test,hg]" --pre
+        run: python -m pip install ".[test,hg,envs]" --pre
         shell: pwsh
 
       - name: Install asv
