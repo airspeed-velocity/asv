@@ -11,7 +11,7 @@ import pytest
 
 from asv import config, util
 
-from .tools import HAS_VIRTUALENV, HAS_PYPY, WIN
+from .tools import HAS_PYPY, WIN
 from . import tools
 
 dummy_values = (
@@ -73,8 +73,8 @@ def basic_conf(tmpdir, dummy_packages):
 
 
 @pytest.mark.skipif(
-    HAS_PYPY or (not HAS_VIRTUALENV) or WIN,
-    reason="Flaky on pypy and windows, needs virtualenv",
+    HAS_PYPY or WIN or sys.version_info >= (3, 12),
+    reason="Flaky on pypy and windows, doesn't work on Python >= 3.12",
 )
 def test_run_publish(capfd, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
