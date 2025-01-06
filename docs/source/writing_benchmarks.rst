@@ -567,6 +567,7 @@ garbage collector at a given state::
 
 For details, see :doc:`benchmarks`.
 
+.. _benchmark-versioning:
 
 Benchmark versioning
 --------------------

@@ -590,19 +590,18 @@ revisions of the project. You can do so with the ``compare`` command::
     $ asv compare v0.1 v0.2
     All benchmarks:
 
-           before           after         ratio
-         [3bfda9c6]       [bf719488]
-         <v0.1>           <v0.2>
-                40.4m            40.4m     1.00  benchmarks.MemSuite.mem_list [amulet.localdomain/virtualenv-py3.7-numpy]
-               failed            35.2m      n/a  benchmarks.MemSuite.mem_list [amulet.localdomain/virtualenv-py3.12-numpy]
-          11.5±0.08μs         11.0±0μs     0.96  benchmarks.TimeSuite.time_iterkeys [amulet.localdomain/virtualenv-py3.7-numpy]
-               failed           failed      n/a  benchmarks.TimeSuite.time_iterkeys [amulet.localdomain/virtualenv-py3.12-numpy]
-             11.5±1μs      11.2±0.02μs     0.97  benchmarks.TimeSuite.time_keys [amulet.localdomain/virtualenv-py3.7-numpy]
-               failed      8.40±0.02μs      n/a  benchmarks.TimeSuite.time_keys [amulet.localdomain/virtualenv-py3.12-numpy]
-          34.6±0.09μs      32.9±0.01μs     0.95  benchmarks.TimeSuite.time_range [amulet.localdomain/virtualenv-py3.7-numpy]
-               failed      35.6±0.05μs      n/a  benchmarks.TimeSuite.time_range [amulet.localdomain/virtualenv-py3.12-numpy]
-           31.6±0.1μs      30.2±0.02μs     0.95  benchmarks.TimeSuite.time_xrange [amulet.localdomain/virtualenv-py3.7-numpy]
-               failed           failed      n/a  benchmarks.TimeSuite.time_xrange [amulet.localdomain/virtualenv-py3.12-numpy]
+    | Change | Before [3bfda9c6] | After [bf719488] | Ratio | Benchmark (Parameter) |
+    |--------|-------------------|------------------|-------|-----------------------|
+    |        | 40.4m             | 40.4m            | 1.00  | benchmarks.MemSuite.mem_list [amulet.localdomain/virtualenv-py3.7-numpy] |
+    |        | failed            | 35.2m            | n/a   | benchmarks.MemSuite.mem_list [amulet.localdomain/virtualenv-py3.12-numpy] |
+    |        | 11.5±0.08μs       | 11.0±0μs         | 0.96  | benchmarks.TimeSuite.time_iterkeys [amulet.localdomain/virtualenv-py3.7-numpy] |
+    |        | failed            | failed           | n/a   | benchmarks.TimeSuite.time_iterkeys [amulet.localdomain/virtualenv-py3.12-numpy] |
+    |        | 11.5±1μs          | 11.2±0.02μs      | ~     | benchmarks.TimeSuite.time_keys [amulet.localdomain/virtualenv-py3.7-numpy] |
+    | -      | failed            | 8.40±0.02μs      | n/a   | benchmarks.TimeSuite.time_keys [amulet.localdomain/virtualenv-py3.12-numpy] |
+    | -      | 34.6±0.09μs       | 32.9±0.01μs      | 0.95  | benchmarks.TimeSuite.time_range [amulet.localdomain/virtualenv-py3.7-numpy] |
+    | -      | failed            | 35.6±0.05μs      | n/a   | benchmarks.TimeSuite.time_range [amulet.localdomain/virtualenv-py3.12-numpy] |
+    | -      | 31.6±0.1μs        | 30.2±0.02μs      | 0.95  | benchmarks.TimeSuite.time_xrange [amulet.localdomain/virtualenv-py3.7-numpy] |
+    |        | failed            | failed           | n/a   | benchmarks.TimeSuite.time_xrange [amulet.localdomain/virtualenv-py3.12-numpy] |
 
 This will show the times for each benchmark for the first and second
 revision, and the ratio of the second to the first. In addition, the
@@ -630,7 +629,7 @@ each of its symbolic states can be understood as:
      - Before
    * - ``x``
      - Light Gray
-     - Not comparable
+     - Not comparable since :ref:`benchmark versions <benchmark-versioning>` differ
      -
      -
    * - ``!``
