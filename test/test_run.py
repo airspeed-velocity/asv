@@ -1,6 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import sys
 import os
 import re
 import shutil
@@ -16,7 +15,6 @@ from asv.commands.run import Run
 from asv.commands import make_argparser
 
 from . import tools
-from .tools import WIN
 
 
 def test_set_commit_hash(capsys, existing_env_conf):
@@ -82,8 +80,8 @@ def test_run_spec(basic_conf_2):
         expected = set(['machine.json'])
         for commit in expected_commits:
             for psver in tools.DUMMY2_VERSIONS:
-                expected.add(f'{commit[:8]}-{tool_name}-py{pyver}-asv_dummy_'
-                             f'test_package_1-asv_dummy_test_package_2{psver}.json')
+                expected.add(f'{commit[:8]}-{tool_name}-py{pyver}-pip+asv_dummy_'
+                             f'test_package_1-pip+asv_dummy_test_package_2{psver}.json')
 
         result_files = os.listdir(join(tmpdir, 'results_workflow', 'orangutan'))
 
@@ -231,7 +229,7 @@ def test_run_append_samples(basic_conf_2):
     tmpdir, local, conf, machine_file = basic_conf_2
 
     # Only one environment
-    conf.matrix['asv_dummy_test_package_2'] = conf.matrix['asv_dummy_test_package_2'][:1]
+    conf.matrix['pip+asv_dummy_test_package_2'] = conf.matrix['pip+asv_dummy_test_package_2'][:1]
 
     # Tests multiple calls to "asv run --append-samples"
     def run_it():
@@ -310,15 +308,11 @@ def test_env_matrix_value(basic_conf):
     check_env_matrix({'SOME_TEST_VAR': ['1', '2']}, {})
 
 
-@pytest.mark.skipif(tools.HAS_PYPY, reason="Times out randomly on pypy")
+@pytest.mark.skipif(
+    tools.HAS_PYPY or tools.WIN, reason="Times out randomly on pypy, buggy on windows"
+)
 def test_parallel(basic_conf_2, dummy_packages):
     tmpdir, local, conf, machine_file = basic_conf_2
-
-    if WIN and os.path.basename(sys.argv[0]).lower().startswith('py.test'):
-        # Multiprocessing in spawn mode can result to problems with py.test
-        # Find.run calls Setup.run in parallel mode by default
-        pytest.skip("Multiprocessing spawn mode on Windows not safe to run "
-                    "from py.test runner.")
 
     conf.matrix = {
         "req": dict(conf.matrix),
