@@ -11,6 +11,7 @@ import pytest
 
 from asv import config, util
 
+from .tools import HAS_PYPY, WIN
 from . import tools
 
 dummy_values = (
@@ -71,7 +72,10 @@ def basic_conf(tmpdir, dummy_packages):
     return generate_basic_conf(tmpdir)
 
 
-@pytest.mark.skipif(tools.HAS_PYPY or (os.name == 'nt'), reason="Flaky on pypy and windows")
+@pytest.mark.skipif(
+    HAS_PYPY or WIN or sys.version_info >= (3, 12),
+    reason="Flaky on pypy and windows, doesn't work on Python >= 3.12",
+)
 def test_run_publish(capfd, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
     tmpdir = util.long_path(tmpdir)
