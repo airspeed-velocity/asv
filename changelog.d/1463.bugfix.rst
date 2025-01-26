@@ -1,1 +1,1 @@
-Environment types can be specified for pytest
+ASV_PYTHONPATH is now applied for the discovery phase.
