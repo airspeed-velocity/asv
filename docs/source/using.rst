@@ -55,7 +55,7 @@ do, and there is also a :ref:`conf-reference` with more details.  The
 values that will most likely need to be changed for any benchmarking
 suite are:
 
-- ``version``: Version of the `asv.conf.json` spec. Currently only `1`.
+- ``version``: Version of the `asv.conf.json` spec. As of `v0.6.4`, there is only version `1`.
 
 - ``project``: The Python package name of the project being benchmarked.
 
