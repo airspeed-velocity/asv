@@ -59,14 +59,14 @@ benchmark types:
 
 - ``benchmark_name``: If given, used as benchmark function name instead of generated one
   ``<module>.<class>.<function>``.
-   
+
         Not just any string can be ``benchmark_name`` - ``asv`` still expects the name
         to be dotted with at least two parts - ``<module>`` and ``<function>`` (e.g.
         ``"my_file.time_something"``).
-   
+
         - First dotted part, the ``<module>``, is used as a group name. It can be any string,
           so even string like ``"My Group.time_something"`` is valid.
-   
+
         - The last dotted part, the ``<function>``, is used for determining whether a function
           is ``time_``, ``time_raw_``, ``mem_``, etc. As such, the function name MUST start with
           one of the prefixes (e.g. ``"my_file.time_something"``). Otherwise, the function will be ignored!
