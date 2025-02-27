@@ -22,6 +22,10 @@ this file and their expected values.
 
 .. only:: not man
 
+``version``
+-----------
+Version of the `asv.conf.json` spec. Currently only `1`.
+
 ``project``
 -----------
 The name of the project being benchmarked.
