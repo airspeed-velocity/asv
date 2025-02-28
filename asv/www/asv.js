@@ -382,6 +382,7 @@ $(document).ready(function() {
             $("#graph-display").hide();
             $("#summarygrid-display").hide();
             $("#summarylist-display").hide();
+            $("#comparisonlist-display").hide();
             $('#regressions-display').hide();
             $('.tooltip').remove();
             loaded_pages[name](params);
@@ -461,6 +462,7 @@ $(document).ready(function() {
             $('#regressions-display').hide();
             $('#summarygrid-display').hide();
             $('#summarylist-display').hide();
+            $('#comparisonlist-display').hide();
 
             hashchange();
         }).fail(function () {
