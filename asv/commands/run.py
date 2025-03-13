@@ -79,14 +79,18 @@ class Run(Command):
             rev-list``; or Mercurial log command. See 'specifying ranges'
             section of the `gitrevisions` manpage, or 'hg help revisions',
             for more info. Also accepts the
-            special values 'NEW', 'ALL', 'EXISTING', and 'HASHFILE:xxx'.
+            special values 'NEW', 'ALL', 'EXISTING', 'TAGS', and
+            'HASHFILE:xxx'.
             'NEW' will benchmark all commits since the latest
-            benchmarked on this machine.  'ALL' will benchmark all
-            commits in the project. 'EXISTING' will benchmark against
-            all commits for which there are existing benchmarks on any
-            machine. 'HASHFILE:xxx' will benchmark only a specific set
-            of hashes given in the file named 'xxx' ('-' means stdin),
-            which must have one hash per line. By default, will benchmark
+            benchmarked on this machine.
+            'ALL' will benchmark all commits in the project.
+            'EXISTING' will benchmark against all commits for which there
+            are existing benchmarks on any machine.
+            'TAGS' will benchmark against all tags in the project.
+            'HASHFILE:xxx' will benchmark only a specific set of hashes
+            given in the file named 'xxx' ('-' means stdin), which must
+            have one hash per line.
+            By default, will benchmark
             the head of each configured of the branches.""")
         parser.add_argument(
             "--date-period", type=common_args.time_period, default=None,
@@ -232,12 +236,15 @@ class Run(Command):
                                          branch in conf.branches]))
             except NoSuchNameError as exc:
                 raise util.UserError(f'Unknown branch {exc} in configuration')
-        elif range_spec == 'EXISTING':
+        elif range_spec == "EXISTING":
             commit_hashes = get_existing_hashes(conf.results_dir)
         elif range_spec == "NEW":
             # New commits on each configured branches
             old_commit_hashes = get_existing_hashes(conf.results_dir)
             commit_hashes = repo.get_new_branch_commits(conf.branches, old_commit_hashes)
+        elif range_spec == "TAGS":
+            # All tags on each configured branches
+            commit_hashes = list(reversed(list(repo.get_tags().keys())))
         elif range_spec == "ALL":
             # All commits on each configured branches
             commit_hashes = repo.get_new_branch_commits(conf.branches, [])
