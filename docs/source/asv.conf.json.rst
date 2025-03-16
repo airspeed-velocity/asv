@@ -469,6 +469,12 @@ are stored in.  If not provided, defaults to ``"results"``.
 The directory, relative to the current directory, to save the website
 content in.  If not provided, defaults to ``"html"``.
 
+``install_timeout``, ``default_benchmark_timeout``
+------------------------------------------------------------
+The maximum time in seconds that an install or benchmark is allowed to run
+before it is terminated. Benchmark timeout can also be set individually, see
+`benchmark attributes <writing_benchmarks.html#benchmark-attributes>`_.
+
 ``hash_length``
 ---------------
 The number of characters to retain in the commit hashes when displayed
