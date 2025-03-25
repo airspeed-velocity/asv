@@ -40,7 +40,7 @@ def test_write_with_fallback(tmpdir, capfd):
 
             # Check writing to a file
             fn = os.path.join(tmpdir, 'tmp.txt')
-            with io.open(fn, 'w', encoding=stream_encoding) as stream:
+            with open(fn, 'w', encoding=stream_encoding) as stream:
                 _write_with_fallback(value, stream)
             with open(fn, 'rb') as stream:
                 got = stream.read()

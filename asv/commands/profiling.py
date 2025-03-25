@@ -1,7 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import contextlib
-import io
 import os
 import pstats
 import sys
@@ -26,7 +25,7 @@ from . import Command, common_args
 def temp_profile(profile_data):
     profile_fd, profile_path = tempfile.mkstemp()
     try:
-        with io.open(profile_fd, 'wb', closefd=True) as fd:
+        with open(profile_fd, 'wb', closefd=True) as fd:
             fd.write(profile_data)
 
         yield profile_path
@@ -215,7 +214,7 @@ class Profile(Command):
             with temp_profile(profile_data) as profile_path:
                 return cls.guis[gui].open_profiler_gui(profile_path)
         elif output is not None:
-            with io.open(output, 'wb') as fd:
+            with open(output, 'wb') as fd:
                 fd.write(profile_data)
         else:
             color_print('')
