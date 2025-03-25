@@ -21,7 +21,7 @@ if len(ENVIRONMENTS) == 0:
 ASV_CONFIG = {
     "version": 1,
     "project": "project",
-    "project_url": "http://project-homepage.org/",
+    "project_url": "https://project-homepage.org/",
     "repo": ".",
     "branches": ["main"],
     "environment_type": "virtualenv",

@@ -174,7 +174,7 @@ new tab when a data point is clicked on in the web interface.
 For example, if using Github to host your repository, the
 ``show_commit_url`` should be:
 
-    http://github.com/owner/project/commit/
+    https://github.com/owner/project/commit/
 
 ``pythons``
 -----------

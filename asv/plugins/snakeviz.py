@@ -5,7 +5,7 @@ from .. import profiling, util
 
 class SnakevizGui(profiling.ProfilerGui):
     name = 'snakeviz'
-    description = "snakeviz http://jiffyclub.github.io/snakeviz/"
+    description = "snakeviz https://jiffyclub.github.io/snakeviz/"
 
     @classmethod
     def is_available(cls):

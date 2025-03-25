@@ -19,7 +19,7 @@ User examples may be found at the `asv_sample
 <https://github.com/airspeed-velocity/asv_samples>`__ repository.
 
 License: `BSD three-clause license
-<http://opensource.org/licenses/BSD-3-Clause>`__.
+<https://opensource.org/licenses/BSD-3-Clause>`__.
 
 Releases: https://pypi.python.org/pypi/asv
 

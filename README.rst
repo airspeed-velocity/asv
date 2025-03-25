@@ -21,13 +21,13 @@ The latest release can be installed from PyPI using::
 Are you using ``asv``?  Consider adding a badge to your project's
 README like this:
 
-.. image:: http://img.shields.io/badge/benchmarked%20by-asv-blue.svg?style=flat
+.. image:: https://img.shields.io/badge/benchmarked%20by-asv-blue.svg?style=flat
 
 By using the following markdown::
 
-  [![asv](http://img.shields.io/badge/benchmarked%20by-asv-blue.svg?style=flat)](http://your-url-here/)
+  [![asv](https://img.shields.io/badge/benchmarked%20by-asv-blue.svg?style=flat)](https://your-url-here/)
 
 License: `BSD three-clause license
-<http://opensource.org/licenses/BSD-3-Clause>`__.
+<https://opensource.org/license/BSD-3-Clause>`__.
 
 Authors: Michael Droettboom, Pauli Virtanen, asv Developers
