@@ -13,9 +13,9 @@ from . import tools
 def test_gh_pages(rewrite, tmpdir, generate_result_dir, monkeypatch):
     tmpdir = os.path.abspath(str(tmpdir))
 
-    monkeypatch.setenv(str('EMAIL'), str('test@asv'))
-    monkeypatch.setenv(str('GIT_COMMITTER_NAME'), str('asv test'))
-    monkeypatch.setenv(str('GIT_AUTHOR_NAME'), str('asv test'))
+    monkeypatch.setenv('EMAIL', 'test@asv')
+    monkeypatch.setenv('GIT_COMMITTER_NAME', 'asv test')
+    monkeypatch.setenv('GIT_AUTHOR_NAME', 'asv test')
 
     conf, repo, commits = generate_result_dir([1, 2, 3, 4])
 
