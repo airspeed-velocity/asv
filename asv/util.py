@@ -534,7 +534,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                     else:
                         rlist, wlist, xlist = select.select(
                             list(fds.keys()), [], [], timeout)
-                except select.error as err:
+                except OSError as err:
                     if err.args[0] == errno.EINTR:
                         # interrupted by signal handler; try again
                         continue

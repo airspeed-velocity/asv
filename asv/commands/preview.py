@@ -4,7 +4,6 @@ import errno
 import http.server
 import os
 import random
-import socket
 import socketserver
 
 from .. import util
@@ -39,7 +38,7 @@ def create_httpd(handler_cls, port=0):
             httpd = MyTCPServer(("", port), handler_cls)
             base_url = f"http://127.0.0.1:{port}/"
             break
-        except socket.error as e:
+        except OSError as e:
             if e.errno == errno.EADDRINUSE:
                 continue
             else:
