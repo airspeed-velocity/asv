@@ -10,7 +10,7 @@ from .. import environment, util
 
 
 def _create(env):
-    with log.set_level(logging.WARN):
+    with log.set_level(logging.WARNING):
         env.create()
 
 
