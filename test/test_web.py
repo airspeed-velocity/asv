@@ -116,10 +116,10 @@ def test_web_summarygrid(browser, basic_html):
 
         # Verify benchmark names are displayed as expected
         for href, expected in (
-            ('#subdir.time_subdir.time_foo', u'time_subdir.time_foo'),
-            ('#params_examples.ParamSuite.track_value', u'ParamSuite.track_value'),
-            ('#custom.time_function', u'My Custom Function'),
-            ('#named.track_custom_pretty_name', u'this.is/the.answer'),
+            ('#subdir.time_subdir.time_foo', 'time_subdir.time_foo'),
+            ('#params_examples.ParamSuite.track_value', 'ParamSuite.track_value'),
+            ('#custom.time_function', 'My Custom Function'),
+            ('#named.track_custom_pretty_name', 'this.is/the.answer'),
         ):
             item = browser.find_element(By.XPATH,
                                         f"//a[@href='{href}']/div[@class='benchmark-text']")
