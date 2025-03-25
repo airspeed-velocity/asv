@@ -235,7 +235,7 @@ class Conda(environment.Environment):
 
         # Conda doesn't guarantee that user site directories are excluded
         kwargs["env"] = dict(kwargs.pop("env", os.environ),
-                             PYTHONNOUSERSITE=str("True"))
+                             PYTHONNOUSERSITE="True")
 
         with lock():
             return super(Conda, self).run_executable(executable, args, **kwargs)

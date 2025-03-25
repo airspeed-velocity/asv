@@ -998,7 +998,7 @@ class Environment:
         # may have been set from a pip config file) is incompatible with
         # virtualenvs.
         kwargs["env"] = dict(env,
-                             PIP_USER=str("false"),
+                             PIP_USER="false",
                              PATH=str(os.pathsep.join(paths)))
         exe = self.find_executable(executable)
         if kwargs.get("timeout", None) is None:
