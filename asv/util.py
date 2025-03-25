@@ -1048,7 +1048,7 @@ else:
                 pass
 
         # Reraise original error
-        raise
+        raise exc_info[1]
 
     def long_path_open(filename, *a, **kw):
         return open(long_path(filename), *a, **kw)
