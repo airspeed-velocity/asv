@@ -25,7 +25,7 @@ def _do_build(args):
     started_at = time.time()
     success = False
     try:
-        with log.set_level(logging.WARN):
+        with log.set_level(logging.WARNING):
             env.install_project(conf, repo, commit_hash)
         success = True
     except util.ProcessError:
