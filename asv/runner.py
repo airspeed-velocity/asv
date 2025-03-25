@@ -809,7 +809,7 @@ class ForkServer(Spawner):
             try:
                 s.connect(self.socket_name)
                 break
-            except socket.error:
+            except OSError:
                 if retry > 1:
                     time.sleep(0.2)
                 else:
