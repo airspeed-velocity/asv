@@ -133,9 +133,9 @@ class Virtualenv(environment.Environment):
         util.check_call([
             sys.executable,
             "-mvirtualenv",
-            # Omit `--wheel=bundle` from py3.12+
+            # Omit `--wheel=bundle` from py3.9+
             # See https://github.com/airspeed-velocity/asv/issues/1484
-            *(["--wheel=bundle"] if sys.version_info < (3, 12) else []),
+            *(["--wheel=bundle"] if sys.version_info < (3, 9) else []),
             "--setuptools=bundle",
             "-p",
             self._executable,
