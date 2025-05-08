@@ -411,8 +411,8 @@ class Run(Command):
 
                 for subenv in util.iter_chunks(active_environments, parallel):
 
-                    successes = dict([(env.name, (env.installed_commit_hash == commit_hash, 0))
-                                      for env in subenv])
+                    successes = {env.name: (env.installed_commit_hash == commit_hash, 0)
+                                 for env in subenv}
 
                     env_to_install = [env for env in subenv
                                       if env.installed_commit_hash != commit_hash]
