@@ -1,8 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import abc
 import argparse
 import sys
-import abc
 
 from asv import config, util
 

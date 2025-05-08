@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import os
 import multiprocessing as mp
+import os
 import platform
 import sys
 import textwrap

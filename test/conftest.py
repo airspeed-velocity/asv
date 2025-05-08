@@ -1,7 +1,7 @@
 import contextlib
-import sys
 import os
 import shutil
+import sys
 import textwrap
 from os.path import abspath, dirname, join, relpath
 
@@ -15,8 +15,18 @@ from asv.step_detect import L1Dist
 from . import tools
 from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
 from .test_web import _rebuild_basic_html
-from .tools import (DUMMY1_VERSION, DUMMY2_VERSIONS, HAS_CONDA, PYTHON_VER1, PYTHON_VER2,
-                    WAIT_TIME, WIN, _build_dummy_wheels, locked_cache_dir, run_asv_with_conf)
+from .tools import (
+    DUMMY1_VERSION,
+    DUMMY2_VERSIONS,
+    HAS_CONDA,
+    PYTHON_VER1,
+    PYTHON_VER2,
+    WAIT_TIME,
+    WIN,
+    _build_dummy_wheels,
+    locked_cache_dir,
+    run_asv_with_conf,
+)
 
 try:
     import hglib

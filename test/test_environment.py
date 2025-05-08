@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
+import json
 import os
 import sys
-import json
 
 import pytest
 
@@ -10,8 +10,18 @@ from asv.repo import get_repo
 from asv.util import shlex_quote as quote
 
 from . import tools
-from .tools import (PYTHON_VER1, PYTHON_VER2, DUMMY1_VERSION, DUMMY2_VERSIONS, WIN, HAS_PYPY,
-                    HAS_CONDA, HAS_VIRTUALENV, HAS_PYTHON_VER2, generate_test_repo)
+from .tools import (
+    DUMMY1_VERSION,
+    DUMMY2_VERSIONS,
+    HAS_CONDA,
+    HAS_PYPY,
+    HAS_PYTHON_VER2,
+    HAS_VIRTUALENV,
+    PYTHON_VER1,
+    PYTHON_VER2,
+    WIN,
+    generate_test_repo,
+)
 
 
 @pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),

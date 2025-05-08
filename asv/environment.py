@@ -7,16 +7,16 @@ of dependencies.
 
 
 import hashlib
+import importlib
+import itertools
 import os
 import re
-import sys
-import itertools
 import subprocess
-import importlib
+import sys
 from pathlib import Path
 
+from . import build_cache, util
 from .console import log
-from . import util, build_cache
 
 if sys.version_info >= (3, 11):
     import tomllib

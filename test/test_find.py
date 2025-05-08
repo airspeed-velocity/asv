@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from asv.util import check_output, which, git_default_branch
+from asv.util import check_output, git_default_branch, which
 
 from . import tools
 from .conftest import generate_basic_conf

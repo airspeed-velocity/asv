@@ -4,7 +4,7 @@ import os
 import shutil
 import subprocess
 import xml.etree.ElementTree as etree
-from os.path import abspath, dirname, join, isfile, isdir
+from os.path import abspath, dirname, isdir, isfile, join
 
 import json5
 import pytest

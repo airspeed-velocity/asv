@@ -4,9 +4,16 @@ import random
 import pytest
 
 from asv import step_detect
-from asv.step_detect import (detect_regressions, detect_steps, golden_search, median,
-                             rolling_median_dev, solve_potts, solve_potts_approx,
-                             solve_potts_autogamma)
+from asv.step_detect import (
+    detect_regressions,
+    detect_steps,
+    golden_search,
+    median,
+    rolling_median_dev,
+    solve_potts,
+    solve_potts_approx,
+    solve_potts_autogamma,
+)
 
 try:
     import numpy as np

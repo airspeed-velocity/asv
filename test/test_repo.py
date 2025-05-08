@@ -1,8 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import os
-import tempfile
-import shutil
 import datetime
+import os
+import shutil
+import tempfile
 from os.path import join
 
 import pytest

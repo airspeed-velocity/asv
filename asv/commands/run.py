@@ -1,21 +1,21 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
+import argparse
+import logging
 import os
 import sys
-import logging
-import traceback
-import time
-import argparse
 import textwrap
+import time
+import traceback
 from collections import defaultdict
 
-from . import Command, common_args
+from .. import environment, util
 from ..benchmarks import Benchmarks
 from ..console import log
 from ..machine import Machine
-from ..repo import get_repo, NoSuchNameError
+from ..repo import NoSuchNameError, get_repo
 from ..results import Results, get_existing_hashes, iter_results_for_machine_and_hash
 from ..runner import run_benchmarks, skip_benchmarks
-from .. import environment, util
+from . import Command, common_args
 from .setup import Setup
 from .show import Show
 

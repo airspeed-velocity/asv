@@ -9,17 +9,17 @@ import tempfile
 
 from asv_runner.console import color_print
 
-from . import Command, common_args
+from .. import util
 from ..benchmarks import Benchmarks
 from ..console import log
 from ..environment import get_environments, is_existing_only
 from ..machine import Machine
 from ..profiling import ProfilerGui
-from ..repo import get_repo, NoSuchNameError
+from ..repo import NoSuchNameError, get_repo
 from ..results import iter_results_for_machine
 from ..runner import run_benchmarks
 from ..util import hash_equal, iter_subclasses
-from .. import util
+from . import Command, common_args
 
 
 @contextlib.contextmanager

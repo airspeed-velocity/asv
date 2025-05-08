@@ -1,13 +1,19 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import math
 import random
 import warnings
-import math
 from itertools import product
 
 import pytest
-from asv_runner.statistics import (compute_stats, LaplacePosterior, quantile, quantile_ci,
-                                   binom_pmf, get_err)
+from asv_runner.statistics import (
+    LaplacePosterior,
+    binom_pmf,
+    compute_stats,
+    get_err,
+    quantile,
+    quantile_ci,
+)
 
 from asv import _stats
 
