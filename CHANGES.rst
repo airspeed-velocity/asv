@@ -4,7 +4,8 @@
 Bug Fixes
 ^^^^^^^^^
 
-- Fix virtualenv setup for py3.12+ (#1485)
+- Fix virtualenv setup for virtualenv 20.31 (#1485)
+- ```
 
 0.6.4 (2024-08-12)
 ------------------
