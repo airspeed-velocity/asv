@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import os
 import datetime
+import os
 import shutil
 from os.path import join
 

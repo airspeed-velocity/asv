@@ -2,9 +2,9 @@
 # Also covered by the 3-clause BSD style license FOR boa - see LICENSE in mamba-org/boa
 # Copyright 2019 QuantStack and the Mamba contributors.
 # Very lightly edited / simplified for use within asv
+import collections
 import os
 import urllib.parse
-import collections
 
 import libmambapy
 from conda.base.constants import ChannelPriority

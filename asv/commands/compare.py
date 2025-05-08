@@ -7,15 +7,15 @@ import tabulate
 from asv_runner.console import color_print
 from asv_runner.statistics import get_err
 
-from . import Command, common_args
+from .. import _stats, util
 from ..benchmarks import Benchmarks
-from ..machine import iter_machine_files
-from ..results import iter_results_for_machine_and_hash
-from ..repo import get_repo, NoSuchNameError
-from ..util import human_value, load_json
 from ..console import log
 from ..environment import get_environments
-from .. import util, _stats
+from ..machine import iter_machine_files
+from ..repo import NoSuchNameError, get_repo
+from ..results import iter_results_for_machine_and_hash
+from ..util import human_value, load_json
+from . import Command, common_args
 
 
 def mean(values):

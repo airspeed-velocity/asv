@@ -1,12 +1,12 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import os
-import sys
-import shutil
-import pickle
+import datetime
 import multiprocessing
+import os
+import pickle
+import shutil
+import sys
 import threading
 import traceback
-import datetime
 
 import pytest
 

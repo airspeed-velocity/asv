@@ -1,15 +1,15 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import socketserver
-import http.server
 import errno
+import http.server
 import os
 import random
 import socket
+import socketserver
 
-from . import Command
-from ..console import log
 from .. import util
+from ..console import log
+from . import Command
 
 
 def random_ports(port, n):

@@ -1,13 +1,13 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import sys
-import os
-import shutil
-import datetime
-import pstats
 import collections
-import socket
+import datetime
 import json
+import os
+import pstats
+import shutil
+import socket
+import sys
 from os.path import join
 
 import pytest
