@@ -713,7 +713,7 @@ def load_json(path, api_version=None, js_comments=False):
             data = json.loads(content)
         except ValueError as err:
             raise UserError(
-                f"Error parsing JSON in file '{path}': {str(err)}")
+                f"Error parsing JSON in file '{path}': {err}")
 
     if api_version is not None:
         if 'version' in data:
