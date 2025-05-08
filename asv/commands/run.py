@@ -232,8 +232,8 @@ class Run(Command):
 
         if range_spec is None:
             try:
-                commit_hashes = list(set([repo.get_hash_from_name(branch) for
-                                         branch in conf.branches]))
+                commit_hashes = list({repo.get_hash_from_name(branch) for
+                                      branch in conf.branches})
             except NoSuchNameError as exc:
                 raise util.UserError(f'Unknown branch {exc} in configuration')
         elif range_spec == "EXISTING":
