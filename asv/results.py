@@ -21,9 +21,7 @@ def iter_results_paths(results):
     """
     Iterate over all of the result file paths.
     """
-    skip_files = set([
-        'machine.json', 'benchmarks.json'
-    ])
+    skip_files = {'machine.json', 'benchmarks.json'}
     for root, dirs, files in os.walk(results):
         # Iterate over files only if machine.json is valid json
         machine_json = os.path.join(root, "machine.json")
@@ -114,7 +112,7 @@ def get_result_hash_from_prefix(results, machine_name, commit_prefix):
     Returns None if there are no matches. Raises a UserError
     if the prefix is non-unique.
     """
-    commits = set([])
+    commits = set()
 
     path = os.path.join(results, machine_name)
 
