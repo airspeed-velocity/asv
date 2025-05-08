@@ -19,7 +19,7 @@ from . import Command, common_args
 
 
 def mean(values):
-    if all([value is None for value in values]):
+    if all(value is None for value in values):
         return None
     else:
         values = [value for value in values if value is not None]
