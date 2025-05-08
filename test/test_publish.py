@@ -160,7 +160,7 @@ def _graph_path(dvcs_type):
 def test_publish_range_spec(generate_result_dir):
     conf, repo, commits = generate_result_dir(5 * [1])
     for range_spec, expected in (
-        ([commits[0], commits[-1]], set([commits[0], commits[-1]])),
+        ([commits[0], commits[-1]], {commits[0], commits[-1]}),
         ('HEAD~2..HEAD' if repo.dvcs == 'git' else '.~1:',
             set(commits[-2:])),
     ):
