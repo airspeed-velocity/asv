@@ -449,7 +449,7 @@ benchmark, write a function that returns the object you want to track::
     def mem_list():
         return [0] * 256
 
-The `asizeof <http://pythonhosted.org/Pympler/asizeof.html>`__ module
+The `asizeof <https://pythonhosted.org/Pympler/asizeof.html>`__ module
 is used to determine the size of Python objects.  Since ``asizeof``
 includes the memory of all of an object's dependencies (including the
 modules in which their classes are defined), a memory benchmark
