@@ -1,21 +1,21 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
+import datetime
+import multiprocessing
 import os
 import shutil
-import multiprocessing
-import datetime
 from collections import defaultdict
 
 from importlib_metadata import version as get_version
 
-from asv.commands import Command
+from asv import _stats, util
 from asv.benchmarks import Benchmarks
+from asv.commands import Command
 from asv.console import log
 from asv.graph import GraphSet
 from asv.machine import iter_machine_files
+from asv.publishing import OutputPublisher
 from asv.repo import get_repo
 from asv.results import iter_results
-from asv.publishing import OutputPublisher
-from asv import _stats, util
 
 
 def check_benchmark_params(name, benchmark):

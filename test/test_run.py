@@ -1,19 +1,19 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import sys
+import datetime
+import glob
 import os
 import re
 import shutil
-import glob
-import datetime
+import sys
 import textwrap
 from os.path import join
 
 import pytest
 
-from asv import results, environment, repo, util
-from asv.commands.run import Run
+from asv import environment, repo, results, util
 from asv.commands import make_argparser
+from asv.commands.run import Run
 
 from . import tools
 from .tools import WIN

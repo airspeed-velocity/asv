@@ -1,14 +1,14 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 
+import itertools
 import json
 import os
 import re
 import tempfile
-import itertools
 
+from . import runner, util
 from .console import log
-from . import util, runner
 from .repo import NoSuchNameError
 
 

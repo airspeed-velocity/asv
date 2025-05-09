@@ -1,16 +1,16 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import os
 import argparse
+import os
 
 from asv_runner.console import color_print
 
-from . import Command, common_args
-from .run import Run
-from .compare import Compare
-from ..repo import get_repo, NoSuchNameError
-from ..console import log
 from .. import results, util
+from ..console import log
+from ..repo import NoSuchNameError, get_repo
+from . import Command, common_args
+from .compare import Compare
+from .run import Run
 
 
 class Continuous(Command):

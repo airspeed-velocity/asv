@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from . import Command
 from .. import machine
+from . import Command
 
 
 class Machine(Command):

@@ -3,7 +3,7 @@
 import os
 from os.path import dirname, join
 
-from asv import config, commands, environment, util
+from asv import commands, config, environment, util
 from asv.commands import Command
 
 

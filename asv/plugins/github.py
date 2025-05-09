@@ -2,10 +2,10 @@
 
 import os
 
+from .. import util
 from ..commands import Command
 from ..commands.publish import Publish
 from ..console import log
-from .. import util
 
 
 class GithubPages(Command):
