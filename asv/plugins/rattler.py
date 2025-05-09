@@ -96,7 +96,7 @@ class Rattler(environment.Environment):
                 except KeyError:
                     raise KeyError("Only pip is supported as a secondary key")
         _pkgs += _args
-        _pkgs = [util.replace_python_version(pkg, self._python) for pkg in _pkgs]
+        _pkgs = [util.replace_cpython_version(pkg, self._python) for pkg in _pkgs]
         solved_records = await solve(
             # Channels to use for solving
             channels=self._channels,
