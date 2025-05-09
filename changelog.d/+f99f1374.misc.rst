@@ -1,0 +1,1 @@
+Indicate when benchmarks start passing with *
