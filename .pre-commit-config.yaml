@@ -13,10 +13,10 @@ repos:
     hooks:
     -   id: isort
         name: isort (python)
--   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 'v0.0.257'
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.8
     hooks:
-    -   id: ruff
+    -   id: ruff check
         args: ["--fix"]
 -   repo: https://github.com/codespell-project/codespell
     # Configuration for codespell is in pyproject.toml
