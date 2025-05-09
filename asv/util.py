@@ -116,7 +116,7 @@ def human_file_size(size, err=None):
     if size == 0:
         num_scale = 0
     else:
-        num_scale = int(math.floor(math.log(size) / math.log(1000)))
+        num_scale = math.floor(math.log(size) / math.log(1000))
     if num_scale > 7:
         suffix = '?'
     else:
@@ -713,7 +713,7 @@ def load_json(path, api_version=None, js_comments=False):
             data = json.loads(content)
         except ValueError as err:
             raise UserError(
-                f"Error parsing JSON in file '{path}': {str(err)}")
+                f"Error parsing JSON in file '{path}': {err}")
 
     if api_version is not None:
         if 'version' in data:
