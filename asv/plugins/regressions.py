@@ -1,15 +1,15 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
+import datetime
+import itertools
 import os
 import re
-import itertools
-import datetime
 import urllib.parse
 
-from ..results import iter_results
+from .. import feed, util
 from ..console import log
 from ..publishing import OutputPublisher
+from ..results import iter_results
 from ..step_detect import detect_regressions
-from .. import util, feed
 
 
 class Regressions(OutputPublisher):

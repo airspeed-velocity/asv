@@ -2,14 +2,14 @@
 
 import math
 
-from . import Command, common_args
+from .. import util
 from ..benchmarks import Benchmarks
 from ..console import log
 from ..machine import Machine
-from ..results import Results
 from ..repo import get_repo
+from ..results import Results
 from ..runner import run_benchmarks
-from .. import util
+from . import Command, common_args
 from .setup import Setup
 
 

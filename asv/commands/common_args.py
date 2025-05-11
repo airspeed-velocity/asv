@@ -1,9 +1,9 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 
+import argparse
 import math
 import multiprocessing
-import argparse
 
 from importlib_metadata import version as get_version
 

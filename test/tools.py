@@ -5,21 +5,21 @@ This file contains utilities to generate test repositories.
 """
 
 import datetime
-import io
-import os
-import threading
-import time
-import tempfile
-import textwrap
-import sys
-import shutil
-import subprocess
-import platform
 import http.server
 import importlib
-from os.path import abspath, join, dirname, relpath, isdir
+import io
+import os
+import platform
+import shutil
+import subprocess
+import sys
+import tempfile
+import textwrap
+import threading
+import time
 from contextlib import contextmanager
 from hashlib import sha256
+from os.path import abspath, dirname, isdir, join, relpath
 
 from filelock import FileLock
 
@@ -29,11 +29,11 @@ except ImportError:
     hglib = None
 
 import asv
-from asv import util, commands, config, environment, runner
+from asv import commands, config, environment, runner, util
 from asv.commands.preview import create_httpd
+from asv.plugins.conda import _find_conda
 from asv.repo import get_repo
 from asv.results import Results
-from asv.plugins.conda import _find_conda
 
 # Two Python versions for testing
 PYTHON_VER1, PYTHON_VER2 = '3.8', platform.python_version()

@@ -1,8 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import hashlib
 import os
 import shutil
-import hashlib
 
 from asv import util
 

@@ -5,28 +5,28 @@ Various low-level utilities.
 """
 
 
+import collections
 import datetime
+import errno
+import functools
 import json
 import math
+import multiprocessing
+import operator
 import os
 import re
 import select
+import shlex
+import shutil
 import signal
+import stat
 import subprocess
 import sys
-import time
-import errno
 import threading
-import shutil
-import stat
-import shlex
-import operator
-import collections
-import multiprocessing
-import functools
+import time
 
 import json5
-from asv_runner.util import human_time, human_float, _human_time_units
+from asv_runner.util import _human_time_units, human_float, human_time
 
 WIN = (os.name == 'nt')
 

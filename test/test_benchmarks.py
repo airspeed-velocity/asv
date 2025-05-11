@@ -1,11 +1,11 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import os
-import sys
 import shutil
+import sys
 import textwrap
-from os.path import join, dirname
 from hashlib import sha256
+from os.path import dirname, join
 
 import pytest
 

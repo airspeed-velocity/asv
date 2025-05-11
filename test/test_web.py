@@ -4,23 +4,23 @@ import re
 import shutil
 import time
 import urllib.parse
-from os.path import join, abspath, dirname
+from os.path import abspath, dirname, join
 
 import pytest
 
 from asv import config, util
 
 try:
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    from selenium.webdriver import ActionChains
     from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+    from selenium.webdriver import ActionChains
     from selenium.webdriver.common.by import By
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver.support.ui import WebDriverWait
 except ImportError:
     pass
 
 from . import tools
-from .tools import get_with_retry, WAIT_TIME, WIN
+from .tools import WAIT_TIME, WIN, get_with_retry
 
 
 def _rebuild_basic_html(basedir):
