@@ -1,6 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import io
 import json
 import os
 import sys
@@ -647,7 +646,7 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
             out = f"For parameters: {', '.join(params)}\n{out}"
 
         if profile:
-            with io.open(profile_path, 'rb') as profile_fd:
+            with open(profile_path, 'rb') as profile_fd:
                 profile_data = profile_fd.read()
             profile_data = profile_data if profile_data else None
         else:
@@ -810,7 +809,7 @@ class ForkServer(Spawner):
             try:
                 s.connect(self.socket_name)
                 break
-            except socket.error:
+            except OSError:
                 if retry > 1:
                     time.sleep(0.2)
                 else:
