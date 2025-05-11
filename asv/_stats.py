@@ -143,7 +143,7 @@ def mann_whitney_u(x, y, method='auto'):
         cdf = 0.5 * math.erfc(-z / math.sqrt(2))
         p = 2 * cdf
     else:
-        raise ValueError(f"Unknown method {repr(method)}")
+        raise ValueError(f"Unknown method {method!r}")
 
     return u, p
 
