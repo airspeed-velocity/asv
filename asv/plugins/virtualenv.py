@@ -139,7 +139,7 @@ class Virtualenv(environment.Environment):
         log.info(f"Creating virtualenv for {self.name}")
         util.check_call([
             sys.executable,
-            "-mvirtualenv",
+            "-m", "virtualenv",
             *(["--wheel=bundle"] if use_wheel else []),
             "--setuptools=bundle",
             "-p",
@@ -173,7 +173,7 @@ class Virtualenv(environment.Environment):
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when
         # upgrading pip itself, and avoids shebang length limit on Linux
-        return self.run_executable('python', ['-mpip'] + list(args), **kwargs)
+        return self.run_executable('python', ['-m', 'pip'] + list(args), **kwargs)
 
     def run(self, args, **kwargs):
         joined_args = ' '.join(args)

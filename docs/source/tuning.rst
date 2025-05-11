@@ -62,7 +62,7 @@ on how to tune machines for benchmarking
 <https://pyperf.readthedocs.io/en/latest/system.html>`__.  The simplest
 way to apply basic tuning on Linux using ``pyperf`` is to run::
 
-    sudo python -mpyperf system tune
+    sudo python -m pyperf system tune
 
 This will modify system settings that can be only changed as root, and
 you should read the ``pyperf`` documentation on what it precisely does.
