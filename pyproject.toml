@@ -116,11 +116,13 @@ addopts = "-p no:logging"
 
 [tool.ruff]
 line-length = 99
-extend-ignore = [
-    "E741", # Do not use variables named 'I', 'O', or 'l'
-]
 extend-exclude = [
     "test/example_results/cheetah",
+]
+
+[tool.ruff.lint]
+ignore = [
+    "E741", # Do not use variables named 'I', 'O', or 'l'
 ]
 
 [tool.isort]
