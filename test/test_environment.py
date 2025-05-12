@@ -10,7 +10,7 @@ from asv.repo import get_repo
 from asv.util import shlex_quote as quote
 
 from . import tools
-from .tools import (PYTHON_VER1, PYTHON_VER2, DUMMY1_VERSION, DUMMY2_VERSIONS, WIN, HAS_PYPY,
+from .tools import (HAS_MAMBA, PYTHON_VER1, PYTHON_VER2, DUMMY1_VERSION, DUMMY2_VERSIONS, WIN, HAS_PYPY,
                     HAS_CONDA, HAS_VIRTUALENV, HAS_PYTHON_VER2, generate_test_repo)
 
 
@@ -958,3 +958,34 @@ def test__parse_matrix_entries():
     assert python == "2.6"
     assert requirements == {"foo": "9"}
     assert tagged_env_vars == {("build", "A"): "B", ("nobuild", "C"): "D"}
+
+
+@pytest.mark.parametrize("env_type", [
+    pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="Requires conda")),
+    pytest.param("mamba", marks=pytest.mark.skipif(not HAS_MAMBA, reason="Requires mamba"))
+])
+@pytest.mark.skipif(not HAS_PYTHON_VER2,
+                    reason="Requires two usable Python versions")
+def test_no_env_file_python_version(tmpdir, env_type):
+    """Test the Python version is correct when no env file is present"""
+    conf = config.Config()
+    conf.env_dir = str(tmpdir.join("env"))
+    conf.environment_type = env_type
+    conf.pythons = [PYTHON_VER1, PYTHON_VER2]
+    conf.matrix = {}
+
+    environments = list(environment.get_environments(conf, None))
+    assert len(environments) == 2
+
+    for env in environments:
+        env.create()
+
+        # Get the Python version from the environment
+        output = env.run(['--version'])
+        # Python version output format is typically "Python X.Y.Z"
+        installed_version = output.split()[1]
+        # Extract just the major.minor version
+        installed_version = '.'.join(installed_version.split('.')[:2])
+
+        assert installed_version == env.python, \
+            f"Expected Python version {env.python}, but got {installed_version}"
