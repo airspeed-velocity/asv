@@ -89,43 +89,24 @@ class Cache
 private:
     struct Item
     {
-        size_t left, right;
         double mu, dist;
     };
 
-    std::vector<Item> items_;
-
-    size_t idx(size_t left, size_t right) const {
-        // Enumeration of pairs
-        size_t n = right - left;
-        n = (n + left) * (n + left + 1) / 2 + n;
-        return n % items_.size();
-    }
+    std::map<std::pair<size_t, size_t>, Item> items_;
 
 public:
-    Cache(size_t size) : items_(size) {
-        std::vector<Item>::iterator it;
-        for (it = items_.begin(); it < items_.end(); ++it) {
-            it->left = -1;
-        }
-    }
-
     bool get(size_t left, size_t right, double *mu, double *dist) const {
-        size_t i = idx(left, right);
-        if (items_[i].left == left && items_[i].right == right) {
-            *mu = items_[i].mu;
-            *dist = items_[i].dist;
+        auto it = items_.find(std::make_pair(left, right));
+        if (it != items_.end()) {
+            *mu = it->second.mu;
+            *dist = it->second.dist;
             return true;
         }
         return false;
     }
 
     void set(size_t left, size_t right, double mu, double dist) {
-        size_t i = idx(left, right);
-        items_[i].left = left;
-        items_[i].right = right;
-        items_[i].mu = mu;
-        items_[i].dist = dist;
+        items_[std::make_pair(left, right)] = { mu, dist };
     }
 };
 
@@ -348,63 +329,27 @@ static PyMethodDef RangeMedian_methods[] = {
 
 static PyTypeObject RangeMedianType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "RangeMedian",
-    sizeof(RangeMedianObject),
-    0,
-    (destructor)RangeMedian_dealloc, // tp_dealloc
-    0,                          // tp_print
-    0,                          // tp_getattr
-    0,                          // tp_setattr
-    0,                          // tp_compare / tp_reserved
-    0,                          // tp_repr
-    0,                          // tp_as_number
-    0,                          // tp_as_sequence
-    0,                          // tp_as_mapping
-    0,                          // tp_hash
-    0,                          // tp_call
-    0,                          // tp_str
-    0,                          // tp_getattro
-    0,                          // tp_setattro
-    0,                          // tp_as_buffer
-    Py_TPFLAGS_DEFAULT,         // tp_flags
-    NULL,                       // tp_doc
-    0,                          // tp_traverse
-    0,                          // tp_clear
-    0,                          // tp_richcompare
-    0,                          // tp_weaklistoffset
-    0,                          // tp_iter
-    0,                          // tp_iternext
-    RangeMedian_methods,        // tp_methods
-    0,                          // tp_members
-    0,                          // tp_getset
-    0,                          // tp_base
-    0,                          // tp_dict
-    0,                          // tp_descr_get
-    0,                          // tp_descr_set
-    0,                          // tp_dictoffset
-    (initproc)RangeMedian_init, // tp_init
-    0,                          // tp_alloc
-    RangeMedian_new,            // tp_new
-    0,                          // tp_free
-    0,                          // tp_is_gc
-    0,                          // tp_bases
-    0,                          // tp_mro
-    0,                          // tp_cache
-    0,                          // tp_subclasses
-    0,                          // tp_weaklist
-    0,                          // tp_del
-    0,                          // tp_version_tag
+    .tp_name = "RangeMedian",
+    .tp_basicsize = sizeof(RangeMedianObject),
+    .tp_dealloc = (destructor)RangeMedian_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_doc = NULL,
+    .tp_methods = RangeMedian_methods,
+    .tp_init = (initproc)RangeMedian_init,
+    .tp_new = RangeMedian_new,
 };
 
 
 static PyTypeObject *RangeMedian_init_type(PyObject *m)
 {
     if (PyType_Ready(&RangeMedianType) < 0) {
-        return NULL;
+        return -1;
     }
 
+    Py_INCREF(&RangeMedianType);
     if (PyModule_AddObject(m, "RangeMedian", (PyObject *)&RangeMedianType) == -1) {
-        return NULL;
+        Py_DECREF(&RangeMedianType);
+        return -1;
     }
 
     return &RangeMedianType;
@@ -435,11 +380,12 @@ PyObject *PyInit__rangemedian(void)
 
     m = PyModule_Create(&moduledef);
     if (m == NULL) {
-        return NULL;
+        return -1;
     }
 
     if (RangeMedian_init_type(m) == NULL) {
-        return NULL;
+        Py_DECREF(m);
+        return -1;
     }
 
     return m;
