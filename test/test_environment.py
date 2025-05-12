@@ -14,9 +14,9 @@ from .tools import (
     DUMMY1_VERSION,
     DUMMY2_VERSIONS,
     HAS_CONDA,
+    HAS_MAMBA,
     HAS_PYPY,
     HAS_PYTHON_VER2,
-    HAS_MAMBA,
     HAS_VIRTUALENV,
     PYTHON_VER1,
     PYTHON_VER2,
@@ -403,8 +403,8 @@ def test_conda_run_executable(tmpdir):
         env.run_executable('conda', ['info'])
 
 
-@pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
-                    reason="Requires two usable Python versions")
+@pytest.mark.skipif(not HAS_PYTHON_VER2 or not HAS_CONDA,
+                    reason="Requires two usable Python versions and conda")
 def test_environment_select():
     conf = config.Config()
     conf.environment_type = "conda"
@@ -475,8 +475,8 @@ def test_environment_select():
     assert len(environments) == 1
 
 
-@pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
-                    reason="Requires two usable Python versions")
+@pytest.mark.skipif(not HAS_PYTHON_VER2 or not HAS_CONDA,
+                    reason="Requires two usable Python versions and conda")
 def test_environment_select_autodetect():
     conf = config.Config()
     conf.environment_type = "conda"
