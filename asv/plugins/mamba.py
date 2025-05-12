@@ -138,8 +138,8 @@ class Mamba(environment.Environment):
         env.update(self.build_env_vars)
         Path(f"{self._path}/conda-meta").mkdir(parents=True, exist_ok=True)
         if not self._mamba_environment_file:
-            # Construct payload
-            mamba_pkgs = ["wheel", "pip"]
+            # Construct payload; since there is no environment.yml file, we need to add the python version ourselves
+            mamba_pkgs = [f"python={self._python}", "wheel", "pip"]
         else:
             # For named environments
             env_file_name = self._mamba_environment_file
