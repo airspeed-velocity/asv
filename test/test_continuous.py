@@ -1,10 +1,10 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import sys
 import re
+import sys
 
-from asv.results import iter_results_for_machine
 from asv import util
+from asv.results import iter_results_for_machine
 
 from . import tools
 from .tools import get_default_environment_type

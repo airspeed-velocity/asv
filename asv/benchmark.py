@@ -25,12 +25,12 @@ internal commands:
 import os
 import sys
 
+from asv_runner.check import _check
 from asv_runner.discovery import _discover
 from asv_runner.run import _run
 from asv_runner.server import _run_server
-from asv_runner.timing import _timing
 from asv_runner.setup_cache import _setup_cache
-from asv_runner.check import _check
+from asv_runner.timing import _timing
 
 
 def _help(args):

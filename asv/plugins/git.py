@@ -8,9 +8,9 @@ import os
 import re
 import shlex
 
-from ..console import log
-from ..repo import Repo, NoSuchNameError
 from .. import util
+from ..console import log
+from ..repo import NoSuchNameError, Repo
 
 
 class Git(Repo):

@@ -1,10 +1,10 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import io
+import itertools
+import locale
 import os
 import sys
-import locale
-import itertools
 
 import pytest
 from asv_runner.console import _write_with_fallback, color_print

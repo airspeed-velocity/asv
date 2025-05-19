@@ -2,9 +2,14 @@
 
 import os
 
-from asv.graph import (Graph, RESAMPLED_POINTS, make_summary_graph, _fill_missing_data,
-                       _combine_graph_data)
 from asv import util
+from asv.graph import (
+    RESAMPLED_POINTS,
+    Graph,
+    _combine_graph_data,
+    _fill_missing_data,
+    make_summary_graph,
+)
 
 
 def test_graph_single():

@@ -5,17 +5,17 @@ Supports mercurial repositories for the benchmarked project.
 """
 
 import os
-import sys
 import re
+import sys
 
 try:
     import hglib
 except ImportError:
     hglib = None
 
-from ..console import log
-from ..repo import Repo, NoSuchNameError
 from .. import util
+from ..console import log
+from ..repo import NoSuchNameError, Repo
 
 
 class Hg(Repo):

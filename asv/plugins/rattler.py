@@ -1,5 +1,5 @@
-import os
 import asyncio
+import os
 from pathlib import Path
 
 from yaml import load
@@ -9,7 +9,7 @@ try:
 except ImportError:
     from yaml import Loader
 
-from rattler import solve, install, VirtualPackage
+from rattler import VirtualPackage, install, solve
 
 from .. import environment, util
 from ..console import log

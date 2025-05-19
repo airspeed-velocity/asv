@@ -1,16 +1,16 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import base64
-import os
-import re
-import zlib
-import itertools
-import hashlib
 import datetime
-import tempfile
+import hashlib
+import itertools
+import os
 import pstats
+import re
+import tempfile
+import zlib
 
-from asv_runner.statistics import get_err, compute_stats
+from asv_runner.statistics import compute_stats, get_err
 
 from . import environment, util
 from .console import log

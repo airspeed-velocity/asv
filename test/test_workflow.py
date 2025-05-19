@@ -1,18 +1,18 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import glob
-import os
-import sys
 import json
+import os
 import shutil
-from os.path import join, isfile, abspath, relpath, dirname
+import sys
+from os.path import abspath, dirname, isfile, join, relpath
 
 import pytest
 
 from asv import config, util
 
-from .tools import HAS_PYPY, WIN
 from . import tools
+from .tools import HAS_PYPY, WIN
 
 dummy_values = (
     (6, 1),

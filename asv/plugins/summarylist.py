@@ -1,11 +1,11 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import os
 import itertools
+import os
 
-from ..console import log
-from ..publishing import OutputPublisher
-from ..graph import Graph
 from .. import util
+from ..console import log
+from ..graph import Graph
+from ..publishing import OutputPublisher
 
 
 def benchmark_param_iter(benchmark):

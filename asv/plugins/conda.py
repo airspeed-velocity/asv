@@ -1,8 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import re
-import os
-import tempfile
 import contextlib
+import os
+import re
+import tempfile
 from pathlib import Path
 
 from packaging.version import Version

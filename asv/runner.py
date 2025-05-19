@@ -1,23 +1,23 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import io
-import json
-import os
-import sys
-import time
-import tempfile
-import itertools
 import datetime
+import io
+import itertools
+import json
+import math
+import os
 import pstats
 import socket
 import struct
+import sys
+import tempfile
 import threading
+import time
 import traceback
-import math
 
+from . import util
 from .console import log
 from .results import Results, format_benchmark_result
-from . import util
 
 WIN = (os.name == "nt")
 

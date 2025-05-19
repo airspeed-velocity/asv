@@ -8,15 +8,10 @@ repos:
         exclude: ^(test/example_results/cheetah)
     -   id: check-yaml
     -   id: check-added-large-files
--   repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
-    -   id: isort
-        name: isort (python)
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.11.8
     hooks:
-    -   id: ruff check
+    -   id: ruff
         args: ["--fix"]
 -   repo: https://github.com/codespell-project/codespell
     # Configuration for codespell is in pyproject.toml
