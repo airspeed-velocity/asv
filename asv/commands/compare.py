@@ -19,11 +19,11 @@ from . import Command, common_args
 
 
 def mean(values):
-    if all(value is None for value in values):
-        return None
-    else:
-        values = [value for value in values if value is not None]
+    values = [value for value in values if value is not None]
+    if values:
         return sum(values) / float(len(values))
+    else:
+        return None
 
 
 def unroll_result(benchmark_name, params, *values):
