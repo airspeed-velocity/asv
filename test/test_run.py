@@ -42,9 +42,11 @@ def test_run_spec(basic_conf_2):
     conf.build_cache_size = 5
 
     extra_branches = [(f'{util.git_default_branch()}~1', 'some-branch', [12])]
+    tags = (2, 12)
     dvcs_path = os.path.join(tmpdir, 'test_repo2')
     dvcs = tools.generate_test_repo(dvcs_path, [1, 2],
-                                    extra_branches=extra_branches)
+                                    extra_branches=extra_branches,
+                                    tags=tags)
     conf.repo = dvcs.path
 
     initial_commit = dvcs.get_hash(f"{util.git_default_branch()}~1")
@@ -102,6 +104,9 @@ def test_run_spec(basic_conf_2):
     ):
         for range_spec in (None, "NEW", "ALL"):
             _test_run(range_spec, branches, expected_commits)
+
+    expected_tag_runs = (initial_commit, "tag2", "tag12")
+    _test_run("TAGS", [None], expected_tag_runs)
 
     # test the HASHFILE version of range_spec'ing
     expected_commits = (initial_commit, branch_commit)
