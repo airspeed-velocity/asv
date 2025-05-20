@@ -314,10 +314,10 @@ def dummy_packages(request, monkeypatch):
     with locked_cache_dir(request.config, "asv-wheels", timeout=900, tag=tag) as cache_dir:
         wheel_dir = os.path.abspath(join(str(cache_dir), 'wheels'))
 
-        monkeypatch.setenv(str('PIP_FIND_LINKS'), str('file://' + wheel_dir))
+        monkeypatch.setenv('PIP_FIND_LINKS', str('file://' + wheel_dir))
 
         condarc = join(wheel_dir, 'condarc')
-        monkeypatch.setenv(str('CONDARC'), str(condarc))
+        monkeypatch.setenv('CONDARC', str(condarc))
 
         if os.path.isdir(wheel_dir):
             return

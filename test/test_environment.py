@@ -92,7 +92,7 @@ def test_presence_checks(tmpdir, monkeypatch):
         # Tell conda to not use hardlinks: on Windows it's not possible
         # to delete hard links to files in use, which causes problem when
         # trying to cleanup environments during this test
-        monkeypatch.setenv(str('CONDA_ALWAYS_COPY'), str('True'))
+        monkeypatch.setenv('CONDA_ALWAYS_COPY', 'True')
 
     conf.env_dir = str(tmpdir.join("env"))
 
@@ -649,11 +649,11 @@ def test_environment_environ_path(environment_type, tmpdir, monkeypatch):
     assert usersite_in_syspath == "False"
 
     # Check PYTHONPATH is ignored
-    monkeypatch.setenv(str('PYTHONPATH'), str(tmpdir))
+    monkeypatch.setenv('PYTHONPATH', str(tmpdir))
     output = env.run(['-c', 'import os; print(os.environ.get("PYTHONPATH", ""))'])
     assert output.strip() == ""
 
-    monkeypatch.setenv(str('ASV_PYTHONPATH'), str("Hello python path"))
+    monkeypatch.setenv('ASV_PYTHONPATH', "Hello python path")
     output = env.run(['-c', 'import os; print(os.environ["PYTHONPATH"])'])
     assert output.strip() == "Hello python path"
 

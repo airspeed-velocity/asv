@@ -143,11 +143,11 @@ class Conda(environment.Environment):
         env_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=".yml")
         try:
             env_file.write(f'name: {self.name}\nchannels:\n')
-            env_file.writelines((f'   - {ch}\n' for ch in self._conda_channels))
+            env_file.writelines(f'   - {ch}\n' for ch in self._conda_channels)
             if conda_args:
                 env_file.write('dependencies:\n')
                 # categorize & write dependencies based on pip vs. conda
-                env_file.writelines((f'   - {s}\n' for s in conda_args))
+                env_file.writelines(f'   - {s}\n' for s in conda_args)
             env_file.close()
             try:
                 env_file_name = self._conda_environment_file or env_file.name
@@ -235,7 +235,7 @@ class Conda(environment.Environment):
 
         # Conda doesn't guarantee that user site directories are excluded
         kwargs["env"] = dict(kwargs.pop("env", os.environ),
-                             PYTHONNOUSERSITE=str("True"))
+                             PYTHONNOUSERSITE="True")
 
         with lock():
             return super(Conda, self).run_executable(executable, args, **kwargs)
