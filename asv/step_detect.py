@@ -496,7 +496,7 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
 
 
 class L1Dist:
-    """
+    r"""
     Fast computations for the L1 distance measures.
 
     This computes:
