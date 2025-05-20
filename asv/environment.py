@@ -893,7 +893,7 @@ class Environment:
             # that pip believes to be already installed.
             # --force-reinstall is needed since versions may not change between
             # asv runs (esp. for compare), e.g. gh-1421
-            cmd = ["in-dir={env_dir} python -mpip install {wheel_file} --force-reinstall"]
+            cmd = ["in-dir={env_dir} python -m pip install {wheel_file} --force-reinstall"]
 
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)
@@ -912,7 +912,7 @@ class Environment:
         if cmd is None:
             # Run pip via python -m pip, avoids shebang length limit on Linux
             # pip uninstall may fail if not installed, so allow any exit code
-            cmd = ['return-code=any python -mpip uninstall -y {project}']
+            cmd = ['return-code=any python -m pip uninstall -y {project}']
 
         if cmd:
             log.info(f"Uninstalling from {self.name}")
@@ -929,7 +929,7 @@ class Environment:
         if cmd is None:
             cmd = [
                 "PIP_NO_BUILD_ISOLATION=0 python -m build",
-                "python -mpip wheel -w {build_cache_dir} {build_dir}"
+                "python -m pip wheel -w {build_cache_dir} {build_dir}"
             ]
 
         if cmd:
