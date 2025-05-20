@@ -10,7 +10,7 @@ from . import Command, common_args
 
 
 def _create(env):
-    with log.set_level(logging.WARN):
+    with log.set_level(logging.WARNING):
         env.create()
 
 
