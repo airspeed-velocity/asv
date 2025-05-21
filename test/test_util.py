@@ -300,28 +300,28 @@ def test_json_non_ascii(tmpdir):
 
 def test_interpolate_command():
     good_items = [
-        ('python {inputs}', dict(inputs='9'),
+        ('python {inputs}', {'inputs': '9'},
          ['python', '9'], {}, {0}, None),
 
-        ('python "{inputs}"', dict(inputs='9'),
+        ('python "{inputs}"', {'inputs': '9'},
          ['python', '9'], {}, {0}, None),
 
-        ('python {inputs}', dict(inputs=''),
+        ('python {inputs}', {'inputs': ''},
          ['python', ''], {}, {0}, None),
 
-        ('HELLO="asd" python "{inputs}"', dict(inputs='9'),
+        ('HELLO="asd" python "{inputs}"', {'inputs': '9'},
          ['python', '9'], {'HELLO': 'asd'}, {0}, None),
 
-        ('HELLO="asd" return-code=any python "{inputs}"', dict(inputs='9'),
+        ('HELLO="asd" return-code=any python "{inputs}"', {'inputs': '9'},
          ['python', '9'], {'HELLO': 'asd'}, None, None),
 
-        ('HELLO="asd" return-code=255 python "{inputs}"', dict(inputs='9'),
+        ('HELLO="asd" return-code=255 python "{inputs}"', {'inputs': '9'},
          ['python', '9'], {'HELLO': 'asd'}, {255}, None),
 
-        ('HELLO="asd" return-code=255 python "{inputs}"', dict(inputs='9'),
+        ('HELLO="asd" return-code=255 python "{inputs}"', {'inputs': '9'},
          ['python', '9'], {'HELLO': 'asd'}, {255}, None),
 
-        ('HELLO="asd" in-dir="{somedir}" python', dict(somedir='dir'),
+        ('HELLO="asd" in-dir="{somedir}" python', {'somedir': 'dir'},
          ['python'], {'HELLO': 'asd'}, {0}, 'dir'),
     ]
 

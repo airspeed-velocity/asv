@@ -396,8 +396,8 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     log.debug(f"Running '{' '.join(args)}'")
 
-    kwargs = dict(shell=shell, env=env, cwd=cwd,
-                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    kwargs = {'shell': shell, 'env': env, 'cwd': cwd,
+                  'stdout': subprocess.PIPE, 'stderr': subprocess.PIPE}
     if redirect_stderr:
         kwargs['stderr'] = subprocess.STDOUT
     if WIN:
