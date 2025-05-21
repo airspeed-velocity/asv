@@ -120,13 +120,19 @@ extend-exclude = [
 
 [tool.ruff.lint]
 extend-select = [
+    "B",
     "C4",
     "I",
     "PGH",
 ]
 ignore = [
+    "B020", # Loop control variable overrides iterable it iterates
+    "B904", # Within an `except` clause, raise exceptions with `raise ... from err`
     "E741", # Do not use variables named 'I', 'O', or 'l'
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"test/**" = ["B011", "B017", "B018", "B028"]
 
 [tool.setuptools_scm]
 write_to = "asv/_version.py"
