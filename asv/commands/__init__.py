@@ -82,7 +82,7 @@ def make_argparser():
         "help", help="Display usage information")
     help_parser.set_defaults(func=help)
 
-    commands = dict((x.__name__, x) for x in util.iter_subclasses(Command))
+    commands = {x.__name__: x for x in util.iter_subclasses(Command)}
 
     for command in command_order:
         subparser = commands[str(command)].setup_arguments(subparsers)
