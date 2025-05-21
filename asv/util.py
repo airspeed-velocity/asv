@@ -1179,7 +1179,7 @@ def interpolate_command(command, variables):
             m = re.match('^return-code=([0-9,]+)$', result[0])
             if m:
                 try:
-                    return_codes = set(int(x) for x in m.group(1).split(","))
+                    return_codes = {int(x) for x in m.group(1).split(",")}
                     return_codes_set = True
                     del result[0]
                     continue
