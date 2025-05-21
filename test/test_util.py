@@ -271,10 +271,8 @@ def test_parse_human_time():
 
 
 def test_is_main_thread():
-    if sys.version_info[0] >= 3:
-        # NB: the test itself doesn't necessarily run in main thread...
-        is_main = (threading.current_thread() == threading.main_thread())
-        assert util.is_main_thread() == is_main
+    is_main = (threading.current_thread() == threading.main_thread())
+    assert util.is_main_thread() == is_main
 
     results = []
 

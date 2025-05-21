@@ -166,10 +166,7 @@ def run_asv_with_conf(conf, *argv, **kwargs):
     parser, subparsers = commands.make_argparser()
     args = parser.parse_args(argv)
 
-    if sys.version_info[0] >= 3:
-        cls = args.func.__self__
-    else:
-        cls = args.func.im_self
+    cls = args.func.__self__
 
     return cls.run_from_conf_args(conf, args, **kwargs)
 
