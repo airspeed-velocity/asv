@@ -123,7 +123,7 @@ def load_channels(
     subprio_index = len(index)
     if has_priority:
         # first, count unique channels
-        n_channels = len(set([entry["channel"].canonical_name for _, entry in index]))
+        n_channels = len({entry["channel"].canonical_name for _, entry in index})
         current_channel = index[0][1]["channel"].canonical_name
         channel_prio = n_channels
 

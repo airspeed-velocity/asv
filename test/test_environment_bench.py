@@ -189,7 +189,7 @@ def test_asv_mamba(
     except subprocess.CalledProcessError as exc:
         if expected_success:
             pytest.fail(f"ASV benchmark unexpectedly failed: {exc.stderr}")
-        elif expected_error and all([err not in exc.stderr for err in expected_error]):
+        elif expected_error and all(err not in exc.stderr for err in expected_error):
             pytest.fail(
                 f"Expected error '{expected_error}' not found in stderr: {exc.stderr}"
             )

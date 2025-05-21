@@ -19,11 +19,11 @@ from . import Command, common_args
 
 
 def mean(values):
-    if all([value is None for value in values]):
-        return None
-    else:
-        values = [value for value in values if value is not None]
+    values = [value for value in values if value is not None]
+    if values:
         return sum(values) / float(len(values))
+    else:
+        return None
 
 
 def unroll_result(benchmark_name, params, *values):
@@ -240,7 +240,7 @@ class Compare(Command):
         benchmarks_1 = set(results_1.keys())
         benchmarks_2 = set(results_2.keys())
 
-        joint_benchmarks = sorted(list(benchmarks_1 | benchmarks_2))
+        joint_benchmarks = sorted(benchmarks_1 | benchmarks_2)
 
         bench = {}
 

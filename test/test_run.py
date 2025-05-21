@@ -81,7 +81,7 @@ def test_run_spec(basic_conf_2):
         if pyver.startswith('pypy'):
             pyver = pyver[2:]
 
-        expected = set(['machine.json'])
+        expected = {'machine.json'}
         for commit in expected_commits:
             for psver in tools.DUMMY2_VERSIONS:
                 expected.add(f'{commit[:8]}-{tool_name}-py{pyver}-asv_dummy_'

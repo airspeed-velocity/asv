@@ -140,7 +140,7 @@ def test_presence_checks(tmpdir, monkeypatch):
 
 
 def _sorted_dict_list(lst):
-    return list(sorted(lst, key=lambda x: list(sorted(x.items()))))
+    return sorted(lst, key=lambda x: sorted(x.items()))
 
 
 def test_matrix_expand_basic():
