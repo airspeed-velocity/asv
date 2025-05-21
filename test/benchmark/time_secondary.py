@@ -14,7 +14,7 @@ from .shared import shared_function
 if sys.version_info[0] < 3:
     import commands
 try:
-    import commands.quickstart  # noqa F401 unused import
+    import commands.quickstart  # noqa: F401 unused import
     assert False
 except ImportError:
     # OK

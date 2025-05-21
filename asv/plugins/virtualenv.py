@@ -47,7 +47,7 @@ class Virtualenv(environment.Environment):
                                          tagged_env_vars)
 
         try:
-            import virtualenv  # noqa F401 unused, but required to test whether virtualenv is installed or not
+            import virtualenv  # noqa: F401 unused, but required to test whether virtualenv is installed or not
         except ImportError:
             raise environment.EnvironmentUnavailable(
                 "virtualenv package not installed")
