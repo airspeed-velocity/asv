@@ -100,7 +100,7 @@ class Conda(environment.Environment):
                 log.debug("Using environment.yml")
                 self._conda_environment_file = "environment.yml"
 
-        super(Conda, self).__init__(conf,
+        super().__init__(conf,
                                     python,
                                     requirements,
                                     tagged_env_vars)
@@ -238,7 +238,7 @@ class Conda(environment.Environment):
                              PYTHONNOUSERSITE="True")
 
         with lock():
-            return super(Conda, self).run_executable(executable, args, **kwargs)
+            return super().run_executable(executable, args, **kwargs)
 
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when

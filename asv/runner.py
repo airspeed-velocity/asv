@@ -730,7 +730,7 @@ class Spawner:
 
 class ForkServer(Spawner):
     def __init__(self, env, root):
-        super(ForkServer, self).__init__(env, root)
+        super().__init__(env, root)
 
         if not (hasattr(os, 'fork') and hasattr(os, 'setpgid')):
             raise RuntimeError("ForkServer only available on POSIX")

@@ -61,7 +61,7 @@ class Rattler(environment.Environment):
                     f"Environment file {conf.conda_environment_file} not found, ignoring"
                 )
 
-        super(Rattler, self).__init__(conf, python, requirements, tagged_env_vars)
+        super().__init__(conf, python, requirements, tagged_env_vars)
         # Rattler configuration things
         self._pkg_cache = f"{self._env_dir}/pkgs"
 
@@ -128,7 +128,7 @@ class Rattler(environment.Environment):
         return _args, pip_args
 
     def run_executable(self, executable, args, **kwargs):
-        return super(Rattler, self).run_executable(executable, args, **kwargs)
+        return super().run_executable(executable, args, **kwargs)
 
     def run(self, args, **kwargs):
         log.debug(f"Running '{' '.join(args)}' in {self.name}")

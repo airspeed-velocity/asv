@@ -82,7 +82,7 @@ class Benchmarks(dict):
         """
         Return a new Benchmarks object, with some benchmarks filtered out.
         """
-        benchmarks = super(Benchmarks, self).__new__(self.__class__)
+        benchmarks = super().__new__(self.__class__)
         benchmarks._conf = self._conf
         benchmarks._benchmark_dir = self._benchmark_dir
         benchmarks._all_benchmarks = self._all_benchmarks

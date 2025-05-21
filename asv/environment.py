@@ -1046,7 +1046,7 @@ class ExistingEnvironment(Environment):
         self._executable = executable
         self._requirements = {}
 
-        super(ExistingEnvironment, self).__init__(conf,
+        super().__init__(conf,
                                                   executable,
                                                   requirements,
                                                   tagged_env_vars)
