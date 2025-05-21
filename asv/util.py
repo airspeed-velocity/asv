@@ -819,8 +819,7 @@ def iter_subclasses(cls):
     """
     for x in cls.__subclasses__():
         yield x
-        for y in iter_subclasses(x):
-            yield y
+        yield from iter_subclasses(x)
 
 
 def hash_equal(a, b):
