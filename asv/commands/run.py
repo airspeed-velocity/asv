@@ -372,12 +372,12 @@ class Run(Command):
 
         for run_rounds, commit_hash in iter_rounds_commits():
             if commit_hash in skipped_benchmarks:
-                for env in environments:
-                    for bench in benchmarks:
+                for _env in environments:
+                    for _bench in benchmarks:
                         if interleave_rounds:
                             log.step()
                         else:
-                            for j in range(max_rounds):
+                            for _ in range(max_rounds):
                                 log.step()
                 continue
 
@@ -388,7 +388,7 @@ class Run(Command):
                         if interleave_rounds:
                             log.step()
                         else:
-                            for j in range(max_rounds):
+                            for _ in range(max_rounds):
                                 log.step()
 
             active_environments = [env for env in environments

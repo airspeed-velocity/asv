@@ -164,7 +164,7 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     assert 2 <= len(times['time_examples.time_auto_repeat'].samples[0]) <= 4
 
     # Check run time timestamps
-    for name, result in times.items():
+    for result in times.values():
         assert result.started_at >= util.datetime_to_js_timestamp(start_timestamp)
         if any(x is not None for x in result.result):
             assert result.duration >= 0

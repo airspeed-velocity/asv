@@ -25,7 +25,7 @@ class PluginManager:
 
     def load_plugins(self, package):
         prefix = package.__name__ + "."
-        for module_finder, name, ispkg in pkgutil.iter_modules(package.__path__, prefix):
+        for _module_finder, name, _ispkg in pkgutil.iter_modules(package.__path__, prefix):
             try:
                 mod = importlib.import_module(name)
                 self.init_plugin(mod)
@@ -38,7 +38,7 @@ class PluginManager:
 
     def _load_plugin_by_name(self, name):
         prefix = plugins.__name__ + "."
-        for module_finder, module_name, ispkg in pkgutil.iter_modules(plugins.__path__, prefix):
+        for _module_finder, module_name, _ispkg in pkgutil.iter_modules(plugins.__path__, prefix):
             if name in module_name:
                 mod = importlib.import_module(module_name)
                 return mod

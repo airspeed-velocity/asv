@@ -223,7 +223,7 @@ class Publish(Command):
 
             # Get the parameter sets for all graphs
             graph_param_list = []
-            for path, graph in graphs:
+            for _path, graph in graphs:
                 if 'summary' not in graph.params:
                     if graph.params not in graph_param_list:
                         graph_param_list.append(graph.params)

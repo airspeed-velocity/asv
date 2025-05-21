@@ -30,7 +30,7 @@ class Regressions(OutputPublisher):
 
         all_params = graphs.get_params()
 
-        for j, (file_name, graph) in enumerate(graphs):
+        for file_name, graph in graphs:
             if 'summary' in graph.params:
                 continue
 
@@ -119,7 +119,7 @@ class Regressions(OutputPublisher):
         # Generate feed entries
         entries = []
 
-        for name, graph_path, graph_params, idx, last_value, best_value, jumps in data:
+        for name, _graph_path, graph_params, idx, last_value, best_value, jumps in data:
             if '(' in name:
                 benchmark_name = name[:name.index('(')]
             else:

@@ -89,7 +89,7 @@ def make_argparser():
         common_args.add_global_arguments(subparser)
         del commands[command]
 
-    for name, command in sorted(commands.items()):
+    for _name, command in sorted(commands.items()):
         subparser = command.setup_arguments(subparsers)
         common_args.add_global_arguments(subparser)
 

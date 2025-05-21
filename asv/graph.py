@@ -429,7 +429,7 @@ def _combine_graph_data(graphs):
     ys = [[None] * len(x_idx) for j in range(n_series)]
     pos = 0
     for dataset, graph in zip(datasets, graphs):
-        for k, v, dv in dataset:
+        for k, v, _dv in dataset:
             i = x_idx[k]
             if graph.scalar_series:
                 v = [v]

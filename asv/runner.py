@@ -254,7 +254,7 @@ def run_benchmarks(benchmarks, env, results=None,
                     log.error(out)
 
             stderr = 'asv: benchmark suite import failed'
-            for name, benchmark, setup_cache_key, is_final in iter_run_items():
+            for name, benchmark, _setup_cache_key, _is_final in iter_run_items():
                 if name in failed_benchmarks:
                     continue
 
@@ -516,7 +516,7 @@ def run_benchmark(benchmark, spawner, profile,
     else:
         param_iter = [(0, None)]
 
-    for param_idx, params in param_iter:
+    for param_idx, _params in param_iter:
         if selected_idx is not None and param_idx not in selected_idx:
             result.append(math.nan)
             samples.append(None)
