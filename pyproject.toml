@@ -121,6 +121,7 @@ extend-exclude = [
 [tool.ruff.lint]
 extend-select = [
     "I",
+    "PGH",
 ]
 ignore = [
     "E741", # Do not use variables named 'I', 'O', or 'l'
