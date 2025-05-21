@@ -587,7 +587,7 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
     """
     name = benchmark['name']
     if benchmark['params']:
-        name += '-%d' % (param_idx,)
+        name += f'-{param_idx}'
 
     if profile:
         profile_fd, profile_path = tempfile.mkstemp()
