@@ -186,8 +186,7 @@ def parse_human_time(string, base_period='d'):
             raise ValueError()
         return float(m.group(1)) * units[m.group(2)]
     except ValueError:
-        raise ValueError("%r is not a valid time period (valid units: %s)"
-                         % (string, suffixes))
+        raise ValueError("{!r} is not a valid time period (valid units: {})".format(string, suffixes))
 
 
 def which(filename, paths=None):
