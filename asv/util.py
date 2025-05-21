@@ -181,12 +181,12 @@ def parse_human_time(string, base_period='d'):
     suffixes = '|'.join(units.keys())
 
     try:
-        m = re.match(r'^\s*([0-9.]+)\s*({})\s*$'.format(suffixes), string)
+        m = re.match(rf'^\s*([0-9.]+)\s*({suffixes})\s*$', string)
         if m is None:
             raise ValueError()
         return float(m.group(1)) * units[m.group(2)]
     except ValueError:
-        raise ValueError("{!r} is not a valid time period (valid units: {})".format(string, suffixes))
+        raise ValueError(f"{string!r} is not a valid time period (valid units: {suffixes})")
 
 
 def which(filename, paths=None):
@@ -718,13 +718,13 @@ def load_json(path, api_version=None, js_comments=False):
         if 'version' in data:
             if data['version'] < api_version:
                 raise UserError(
-                    "{} is stored in an old file format.  Run "
-                    "`asv update` to update it.".format(path))
+                    f"{path} is stored in an old file format.  Run "
+                    "`asv update` to update it.")
             elif data['version'] > api_version:
                 raise UserError(
-                    "{} is stored in a format that is newer than "
+                    f"{path} is stored in a format that is newer than "
                     "what this version of asv understands.  Update "
-                    "asv to use this file.".format(path))
+                    "asv to use this file.")
 
             del data['version']
         else:
@@ -764,10 +764,10 @@ def update_json(cls, path, api_version, compact=False):
         write_json(path, d, api_version, compact=compact)
     elif d['version'] > api_version:
         raise UserError(
-            "{} is stored in a format that is newer than "
+            f"{path} is stored in a format that is newer than "
             "what this version of asv understands. "
             "Upgrade asv in order to use or add to "
-            "these results.".format(path))
+            "these results.")
 
 
 def iter_chunks(s, n):
@@ -1102,7 +1102,7 @@ def recvall(sock, size):
         data += s
         if not s:
             raise RuntimeError("did not receive data from socket "
-                               "(size {}, got only {!r})".format(size, data))
+                               f"(size {size}, got only {data!r})")
     return data
 
 
@@ -1143,10 +1143,9 @@ def interpolate_command(command, variables):
     try:
         result = [c.format(**variables) for c in parts]
     except KeyError as exc:
-        raise UserError("Configuration error: {{{}}} not available "
-                        "when substituting into command {!r} "
-                        "Available: {!r}"
-                        "".format(exc.args[0], command, variables))
+        raise UserError(f"Configuration error: {{{exc.args[0]}}} not available "
+                        f"when substituting into command {command!r} "
+                        f"Available: {variables!r}")
 
     env = {}
 
@@ -1164,8 +1163,7 @@ def interpolate_command(command, variables):
         if result[0].startswith('return-code='):
             if return_codes_set:
                 raise UserError("Configuration error: multiple return-code specifications "
-                                "in command {!r} "
-                                "".format(command))
+                                f"in command {command!r} ")
                 break
 
             if result[0] == 'return-code=any':
@@ -1185,14 +1183,12 @@ def interpolate_command(command, variables):
                     pass
 
             raise UserError("Configuration error: invalid return-code specification "
-                            "{!r} when substituting into command {!r} "
-                            "".format(result[0], command))
+                            f"{result[0]!r} when substituting into command {command!r} ")
 
         if result[0].startswith('in-dir='):
             if cwd is not None:
                 raise UserError("Configuration error: multiple in-dir specifications "
-                                "in command {!r} "
-                                "".format(command))
+                                f"in command {command!r} ")
                 break
 
             cwd = result[0][7:]

@@ -176,12 +176,12 @@ class Conda(environment.Environment):
             except Exception:
                 if env_file_name != env_file.name:
                     log.info("conda env create/update failed: "
-                             "in {} with file {}".format(self._path, env_file_name))
+                             f"in {self._path} with file {env_file_name}")
                 elif os.path.isfile(env_file_name):
                     with open(env_file_name, 'r') as f:
                         text = f.read()
                     log.info("conda env create/update failed: "
-                             "in {} with:\n{}".format(self._path, text))
+                             f"in {self._path} with:\n{text}")
                 raise
         finally:
             os.unlink(env_file.name)

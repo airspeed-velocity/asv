@@ -184,8 +184,8 @@ class Profile(Command):
             elif len(benchmarks) > 1:
                 exact_matches = benchmarks.filter_out([x for x in benchmarks if x != benchmark])
                 if len(exact_matches) == 1:
-                    log.warning("'{}' matches more than one benchmark, "
-                                "using exact match".format(benchmark))
+                    log.warning(f"'{benchmark}' matches more than one benchmark, "
+                                "using exact match")
                     benchmarks = exact_matches
                 else:
                     raise util.UserError(f"'{benchmark}' matches more than one benchmark")

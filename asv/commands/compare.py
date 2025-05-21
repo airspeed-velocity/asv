@@ -339,11 +339,7 @@ class Compare(Command):
 
             unit = units[benchmark]
 
-            details = "{:1s} {:>15s}  {:>15s} {:>8s}  ".format(
-                mark,
-                human_value(time_1, unit, err=err_1),
-                human_value(time_2, unit, err=err_2),
-                ratio)
+            details = f"{mark:1s} {human_value(time_1, unit, err=err_1):>15s}  {human_value(time_2, unit, err=err_2):>15s} {ratio:>8s}  "
             split_line = details.split()
             if len(machine_env_names) > 1:
                 benchmark_name = "{} [{}]".format(*benchmark)

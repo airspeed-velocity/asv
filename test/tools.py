@@ -598,8 +598,7 @@ def _build_dummy_wheels(tmpdir, wheel_dir, to_build, build_conda=False):
 
         with open(join(build_dir, 'setup.py'), 'w') as f:
             f.write("from setuptools import setup; "
-                    "setup(name='{name}', version='{version}', packages=['{name}'])"
-                    "".format(name=name, version=version))
+                    f"setup(name='{name}', version='{version}', packages=['{name}'])")
         os.makedirs(join(build_dir, name))
         with open(join(build_dir, name, '__init__.py'), 'w') as f:
             f.write(f"__version__ = '{version}'")
@@ -621,12 +620,12 @@ def _build_dummy_conda_pkg(name, version, build_dir, dst):
     build_dir = os.path.abspath(build_dir)
 
     with open(join(build_dir, 'meta.yaml'), 'w') as f:
-        f.write(textwrap.dedent("""\
+        f.write(textwrap.dedent(f"""\
         package:
           name: "{name}"
           version: "{version}"
         source:
-          path: {build_dir}
+          path: {util.shlex_quote(build_dir)}
         build:
           number: 0
           script: "python -m pip install . --no-deps --ignore-installed "
@@ -639,9 +638,7 @@ def _build_dummy_conda_pkg(name, version, build_dir, dst):
         about:
           license: BSD
           summary: Dummy test package
-        """.format(name=name,
-                   version=version,
-                   build_dir=util.shlex_quote(build_dir))))
+        """))
 
     conda = _find_conda()
 
