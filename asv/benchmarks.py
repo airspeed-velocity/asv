@@ -284,7 +284,7 @@ class Benchmarks(dict):
                 if dirname in found:
                     raise util.UserError(
                         "Found a directory and python file with same name in "
-                        "benchmark tree: '{0}'".format(path))
+                        "benchmark tree: '{}'".format(path))
                 cls.check_tree(path, require_init_py=False)
 
     @classmethod

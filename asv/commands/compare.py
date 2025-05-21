@@ -155,7 +155,7 @@ class Compare(Command):
         elif machine is None:
             if len(machines) > 1:
                 raise util.UserError(
-                    "Results available for several machines: {0} - "
+                    "Results available for several machines: {} - "
                     "specify which one to use with the --machine option".format(
                         '/'.join(machines)))
             else:
@@ -339,7 +339,7 @@ class Compare(Command):
 
             unit = units[benchmark]
 
-            details = "{0:1s} {1:>15s}  {2:>15s} {3:>8s}  ".format(
+            details = "{:1s} {:>15s}  {:>15s} {:>8s}  ".format(
                 mark,
                 human_value(time_1, unit, err=err_1),
                 human_value(time_2, unit, err=err_2),

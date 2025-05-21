@@ -148,13 +148,13 @@ class Regressions(OutputPublisher):
                 if rev1 is None:
                     params['commits'] = f'{revision_to_hash[rev2]}'
                 else:
-                    params['commits'] = '{0}-{1}'.format(revision_to_hash[rev1],
+                    params['commits'] = '{}-{}'.format(revision_to_hash[rev1],
                                                          revision_to_hash[rev2])
 
                 link = f'index.html#{benchmark_name}?{urllib.parse.urlencode(params)}'
 
                 try:
-                    best_percentage = "{0:.2f}%".format(100 *
+                    best_percentage = "{:.2f}%".format(100 *
                                                         (last_value - best_value) / best_value)
                 except ZeroDivisionError:
                     best_percentage = f"{last_value - best_value:.2g} units"
@@ -175,7 +175,7 @@ class Regressions(OutputPublisher):
                                       commit_a + "..." + commit_b)
                     else:
                         commit_url = conf.show_commit_url + commit_a
-                    commit_ref = 'in commits <a href="{0}">{1}...{2}</a>'.format(commit_url,
+                    commit_ref = 'in commits <a href="{}">{}...{}</a>'.format(commit_url,
                                                                                  commit_a[:8],
                                                                                  commit_b[:8])
                 else:
@@ -304,7 +304,7 @@ class _GraphDataFilter:
                             break
                     else:
                         # Commit not found in the branch --- warn and ignore.
-                        log.warning(("Commit {0} specified in `regressions_first_commits` "
+                        log.warning(("Commit {} specified in `regressions_first_commits` "
                                      "not found in branch").format(start_commit))
                         self._start_revisions[key] = -1
 

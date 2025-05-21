@@ -103,7 +103,7 @@ class Find(Command):
         elif len(benchmarks) > 1:
             exact_matches = benchmarks.filter_out([x for x in benchmarks if x != bench])
             if len(exact_matches) == 1:
-                log.warning("'{0}' matches more than one benchmark, "
+                log.warning("'{}' matches more than one benchmark, "
                             "using exact match".format(bench))
                 benchmarks = exact_matches
             else:
@@ -116,7 +116,7 @@ class Find(Command):
         steps = int(math.log(len(commit_hashes)) / math.log(2))
 
         log.info(
-            "Running approximately {0} benchmarks within {1} commits".format(
+            "Running approximately {} benchmarks within {} commits".format(
                 steps, len(commit_hashes)))
 
         env = environments[0]
