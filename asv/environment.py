@@ -798,7 +798,7 @@ class Environment:
 
         # All environment variables are available as interpolation variables,
         # lowercased without the prefix.
-        kwargs = dict()
+        kwargs = {}
         for key, value in self._global_env_vars.items():
             if key == 'ASV':
                 continue

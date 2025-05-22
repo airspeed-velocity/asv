@@ -17,7 +17,7 @@ def _truncate_floats(item, digits=5):
     elif isinstance(item, list):
         return [_truncate_floats(x, digits) for x in item]
     elif isinstance(item, dict):
-        return dict((k, _truncate_floats(v)) for k, v in item.items())
+        return {k: _truncate_floats(v) for k, v in item.items()}
     else:
         return item
 

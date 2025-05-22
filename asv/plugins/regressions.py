@@ -24,7 +24,7 @@ class Regressions(OutputPublisher):
         # it's easier to work with than the results directly
 
         regressions = []
-        revision_to_hash = dict((r, h) for h, r in revisions.items())
+        revision_to_hash = {r: h for h, r in revisions.items()}
 
         data_filter = _GraphDataFilter(conf, repo, revisions)
 

@@ -89,14 +89,14 @@ class SummaryList(OutputPublisher):
                                 # Revision range (left-exclusive)
                                 change_rev = [prev_piece[1] - 1, last_piece[0]]
 
-                    row = dict(name=benchmark_name,
-                               idx=idx,
-                               pretty_name=pretty_name,
-                               last_rev=last_rev,
-                               last_value=last_value,
-                               last_err=last_err,
-                               prev_value=prev_value,
-                               change_rev=change_rev)
+                    row = {'name': benchmark_name,
+                               'idx': idx,
+                               'pretty_name': pretty_name,
+                               'last_rev': last_rev,
+                               'last_value': last_value,
+                               'last_err': last_err,
+                               'prev_value': prev_value,
+                               'change_rev': change_rev}
 
                     # Generate summary data filename.
                     # Note that 'summary' is not a valid benchmark name, so that we can

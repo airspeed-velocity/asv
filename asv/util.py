@@ -396,8 +396,8 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     log.debug(f"Running '{' '.join(args)}'")
 
-    kwargs = dict(shell=shell, env=env, cwd=cwd,
-                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    kwargs = {'shell': shell, 'env': env, 'cwd': cwd,
+                  'stdout': subprocess.PIPE, 'stderr': subprocess.PIPE}
     if redirect_stderr:
         kwargs['stderr'] = subprocess.STDOUT
     if WIN:
@@ -1179,7 +1179,7 @@ def interpolate_command(command, variables):
             m = re.match('^return-code=([0-9,]+)$', result[0])
             if m:
                 try:
-                    return_codes = set(int(x) for x in m.group(1).split(","))
+                    return_codes = {int(x) for x in m.group(1).split(",")}
                     return_codes_set = True
                     del result[0]
                     continue

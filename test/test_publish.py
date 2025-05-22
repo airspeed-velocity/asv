@@ -91,7 +91,7 @@ def test_publish(tmpdir, example_results):
     assert index['params']['branch'] == [f'{util.git_default_branch()}']
 
     repo = get_repo(conf)
-    revision_to_hash = dict((r, h) for h, r in repo.get_revisions(commits).items())
+    revision_to_hash = {r: h for h, r in repo.get_revisions(commits).items()}
 
     def check_file(branch, cython):
         fn = join(tmpdir, 'html', 'graphs', cython, 'arch-x86_64', 'branch-' + branch,
@@ -284,10 +284,10 @@ def test_regression_multiple_branches(dvcs_type, tmpdir):
         ],
     )
     commit_values = {}
-    branches = dict(
-        (branch, list(reversed(dvcs.get_branch_hashes(branch))))
+    branches = {
+        branch: list(reversed(dvcs.get_branch_hashes(branch)))
         for branch in (main, "stable")
-    )
+    }
     for branch, values in (
         (main, 10 * [1]),
         ("stable", 5 * [1] + 5 * [2]),

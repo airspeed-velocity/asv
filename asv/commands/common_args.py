@@ -16,9 +16,9 @@ def add_global_arguments(parser, suppress_defaults=True):
     # parser should have suppress_defaults=False
 
     if suppress_defaults:
-        suppressor = dict(default=argparse.SUPPRESS)
+        suppressor = {"default": argparse.SUPPRESS}
     else:
-        suppressor = dict()
+        suppressor = {}
 
     parser.add_argument(
         "--verbose", "-v", action="store_true",

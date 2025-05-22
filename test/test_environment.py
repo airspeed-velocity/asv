@@ -906,7 +906,7 @@ def test_environment_env_matrix():
         environments = list(environment.get_environments(conf, None))
 
         assert len(environments) == environ_count
-        assert len(set(e.dir_name for e in environments)) == build_count
+        assert len({e.dir_name for e in environments}) == build_count
 
 
 def test__parse_matrix():
