@@ -128,6 +128,8 @@ extend-select = [
 ignore = [
     "B006", # TESTING
     "B007", # TESTING
+    "B009", # TESTING
+    "B010", # TESTING
     "B020", # Loop control variable overrides iterable it iterates
     "B904", # Within an `except` clause, raise exceptions with `raise ... from err`
     "E741", # Do not use variables named 'I', 'O', or 'l'
