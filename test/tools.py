@@ -72,14 +72,14 @@ except (RuntimeError, OSError):
 
 
 try:
-    import virtualenv  # noqa F401 checking if installed
+    import virtualenv  # noqa: F401 checking if installed
     HAS_VIRTUALENV = True
 except ImportError:
     HAS_VIRTUALENV = False
 
 
 try:
-    import rattler  # noqa F401 checking if installed
+    import rattler  # noqa: F401 checking if installed
     HAS_RATTLER = True
 except ImportError:
     HAS_RATTLER = False

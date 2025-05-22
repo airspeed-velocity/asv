@@ -122,6 +122,7 @@ extend-exclude = [
 extend-select = [
     "C4",
     "I",
+    "PGH",
 ]
 ignore = [
     "E741", # Do not use variables named 'I', 'O', or 'l'
