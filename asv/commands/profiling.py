@@ -170,7 +170,7 @@ class Profile(Command):
                 # Fallback
                 env = environments[0]
 
-            if env.python != "{0}.{1}".format(*sys.version_info[:2]):
+            if env.python != "{}.{}".format(*sys.version_info[:2]):
                 raise util.UserError(
                     "Profiles must be run in the same version of Python as the "
                     "asv main process")
@@ -184,8 +184,8 @@ class Profile(Command):
             elif len(benchmarks) > 1:
                 exact_matches = benchmarks.filter_out([x for x in benchmarks if x != benchmark])
                 if len(exact_matches) == 1:
-                    log.warning("'{0}' matches more than one benchmark, "
-                                "using exact match".format(benchmark))
+                    log.warning(f"'{benchmark}' matches more than one benchmark, "
+                                "using exact match")
                     benchmarks = exact_matches
                 else:
                     raise util.UserError(f"'{benchmark}' matches more than one benchmark")

@@ -93,7 +93,7 @@ class Hg(Repo):
         return False
 
     def get_range_spec(self, commit_a, commit_b):
-        return '{0}::{1} and not {0}'.format(commit_a, commit_b)
+        return f'{commit_a}::{commit_b} and not {commit_a}'
 
     def get_new_range_spec(self, latest_result, branch=None):
         return f'{latest_result}::{self.get_branch_name(branch)}'

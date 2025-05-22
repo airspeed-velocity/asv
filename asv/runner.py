@@ -587,7 +587,7 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
     """
     name = benchmark['name']
     if benchmark['params']:
-        name += '-%d' % (param_idx,)
+        name += f'-{param_idx}'
 
     if profile:
         profile_fd, profile_path = tempfile.mkstemp()
@@ -730,7 +730,7 @@ class Spawner:
 
 class ForkServer(Spawner):
     def __init__(self, env, root):
-        super(ForkServer, self).__init__(env, root)
+        super().__init__(env, root)
 
         if not (hasattr(os, 'fork') and hasattr(os, 'setpgid')):
             raise RuntimeError("ForkServer only available on POSIX")

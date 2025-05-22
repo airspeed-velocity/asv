@@ -153,7 +153,7 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
 
     # Check for running setup on each repeat (one extra run from profile)
     # The output would contain error messages if the asserts in the benchmark fail.
-    expected = ["<%d>" % j for j in range(1, 12)]
+    expected = [f"<{j}>" for j in range(1, 12)]
     assert times['time_examples.TimeWithRepeat.time_it'].stderr.split() == expected
 
     # Calibration of iterations should not rerun setup

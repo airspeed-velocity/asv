@@ -123,9 +123,12 @@ extend-select = [
     "C4",
     "I",
     "PGH",
+    "UP",
 ]
 ignore = [
-    "E741", # Do not use variables named 'I', 'O', or 'l'
+    "E741",  # Do not use variables named 'I', 'O', or 'l'
+    "UP015", # Unnecessary mode argument
+
 ]
 
 [tool.setuptools_scm]

@@ -21,7 +21,7 @@ class GraphSet:
     def __init__(self):
         self._graphs = {}
         self._groups = {}
-        super(GraphSet, self).__init__()
+        super().__init__()
 
     def get_graph(self, benchmark_name, params):
         graph = Graph(benchmark_name, params)

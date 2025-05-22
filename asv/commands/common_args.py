@@ -83,7 +83,7 @@ class DictionaryArgAction(argparse.Action):
         self.converters = converters
         self.__choices = choices
         self.dict_dest = dict_dest
-        super(DictionaryArgAction, self).__init__(option_strings, dest, **kwargs)
+        super().__init__(option_strings, dest, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         # Parse and check value
@@ -202,7 +202,7 @@ class PythonArgAction(argparse.Action):
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
         if nargs is not None:
             raise ValueError("nargs not allowed")
-        super(PythonArgAction, self).__init__(option_strings, dest, nargs=1, **kwargs)
+        super().__init__(option_strings, dest, nargs=1, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         items = list(getattr(namespace, "env_spec", []))

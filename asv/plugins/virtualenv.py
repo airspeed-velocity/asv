@@ -41,7 +41,7 @@ class Virtualenv(environment.Environment):
         self._executable = executable
         self._python = python
         self._requirements = requirements
-        super(Virtualenv, self).__init__(conf,
+        super().__init__(conf,
                                          python,
                                          requirements,
                                          tagged_env_vars)

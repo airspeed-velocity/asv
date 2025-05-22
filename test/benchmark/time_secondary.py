@@ -3,16 +3,10 @@
 import os
 import sys
 
-if sys.version_info[0] == 3:
-    xrange = range
-
-
 # Test that local imports work
 from .shared import shared_function
 
 # Test that asv's internal modules aren't visible on top level
-if sys.version_info[0] < 3:
-    import commands
 try:
     import commands.quickstart  # noqa: F401 unused import
     assert False
@@ -27,7 +21,7 @@ class TimeSecondary:
 
     def time_factorial(self):
         x = 1
-        for i in xrange(100):
+        for i in range(100):
             x *= i
         # This is to print things to stdout, but not spam too much
         if not self._printed:
