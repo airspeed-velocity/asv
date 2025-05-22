@@ -580,7 +580,7 @@ def preview(base_path):
 
 
 def get_with_retry(browser, url):
-    for _ in range(2):
+    for j in range(2):
         try:
             return browser.get(url)
         except TimeoutException:

@@ -35,7 +35,7 @@ class Update(Command):
 
         log.info("Updating results data...")
 
-        for root, _dirs, files in os.walk(conf.results_dir):
+        for root, dirs, files in os.walk(conf.results_dir):
             for filename in files:
                 path = os.path.join(root, filename)
                 if filename == 'machine.json':

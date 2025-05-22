@@ -16,7 +16,7 @@ def iter_machine_files(results_dir):
     """
     Iterate over all of the machine.json files in the results_dir
     """
-    for root, _dirs, files in os.walk(results_dir):
+    for root, dirs, files in os.walk(results_dir):
         for filename in files:
             if filename == 'machine.json':
                 path = os.path.join(root, filename)

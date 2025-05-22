@@ -22,7 +22,7 @@ def iter_results_paths(results):
     Iterate over all of the result file paths.
     """
     skip_files = {'machine.json', 'benchmarks.json'}
-    for root, _dirs, files in os.walk(results):
+    for root, dirs, files in os.walk(results):
         # Iterate over files only if machine.json is valid json
         machine_json = os.path.join(root, "machine.json")
         try:

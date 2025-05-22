@@ -23,7 +23,7 @@ def random_ports(port, n):
         port = 8080
         for i in range(min(5, n)):
             yield port + i
-        for _ in range(n - 5):
+        for i in range(n - 5):
             yield max(1, port + random.randint(-2 * n, 2 * n))
 
 

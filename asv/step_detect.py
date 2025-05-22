@@ -134,7 +134,7 @@ def detect_regressions(steps, threshold=0, min_size=2):
     short_prev = None
 
     # Find upward steps that resulted to worsened value afterward
-    for l, r, cur_v, _cur_min, cur_err in reversed(steps):
+    for l, r, cur_v, cur_min, cur_err in reversed(steps):
         threshold_step = max(cur_err, thresholded_best_err, threshold * cur_v)
 
         if thresholded_best_v > cur_v + threshold_step:
