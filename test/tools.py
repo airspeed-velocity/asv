@@ -351,7 +351,7 @@ def copy_template(src, dst, dvcs, values):
             dvcs.add(dst_path)
 
 
-def generate_test_repo(tmpdir, values=None, dvcs_type='git',
+def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
                        extra_branches=(), tags=(),
                        subdir=''):
     """
@@ -381,8 +381,6 @@ def generate_test_repo(tmpdir, values=None, dvcs_type='git',
     dvcs : Git or Hg
 
     """
-    if values is None:
-        values = [0]
     if dvcs_type == 'git':
         dvcs_cls = Git
     elif dvcs_type == 'hg':

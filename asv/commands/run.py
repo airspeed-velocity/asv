@@ -189,8 +189,7 @@ class Run(Command):
             dry_run=False, machine=None, _machine_file=None, skip_successful=False,
             skip_failed=False, skip_existing_commits=False, record_samples=False,
             append_samples=False, pull=True, interleave_rounds=False,
-            launch_method=None, durations=0, _returns=None):
-        _returns = _returns or {}
+            launch_method=None, durations=0, _returns={}):
         machine_params = Machine.load(
             machine_name=machine,
             _path=_machine_file, interactive=True)
