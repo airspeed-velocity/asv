@@ -211,6 +211,8 @@ class Benchmarks(dict):
                 finally:
                     util.long_path_rmtree(result_dir)
             else:
+                if last_err is not None:
+                    log.error("Last error: " + str(last_err))
                 raise util.UserError("Failed to build the project and import the benchmark suite.")
 
         if check:
