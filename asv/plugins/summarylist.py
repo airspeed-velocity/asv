@@ -23,7 +23,8 @@ def benchmark_param_iter(benchmark):
     if not benchmark['params']:
         yield None, ()
     else:
-        yield from enumerate(itertools.product(*benchmark['params']))
+        for item in enumerate(itertools.product(*benchmark['params'])):
+            yield item
 
 
 class SummaryList(OutputPublisher):
