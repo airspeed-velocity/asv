@@ -97,9 +97,6 @@ testR = [
 ]
 all = ["asv[doc,dev,hg,envs]"]
 
-[tool.setuptools.exclude-package-data]
-"*" = ["*.sh"]
-
 [tool.pytest.ini_options]
 addopts = "-p no:logging"
 
