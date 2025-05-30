@@ -41,8 +41,8 @@ dependencies = [
 ]
 
 [project.urls]
-"Source Code" = "https://github.com/airspeed-velocity/asv"
-Documentation = "https://asv.readthedocs.io/en/stable/"
+source = "https://github.com/airspeed-velocity/asv"
+documentation = "https://asv.readthedocs.io/en/stable/"
 
 [project.scripts]
 asv = "asv.__main__:main"
