@@ -97,11 +97,6 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-platforms = [
-    "any",
-]
-zip-safe = false
-include-package-data = true
 license-files = [
     "LICENSE.rst",
 ]
