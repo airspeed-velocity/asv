@@ -2,7 +2,7 @@
 requires = [
     # pin setuptools:
     # https://github.com/airspeed-velocity/asv/pull/1426#issuecomment-2290658198
-    "setuptools>=64,<72.2.0",
+    "setuptools>=77,<=80.9.0",
     "setuptools_scm",
 ]
 build-backend = "setuptools.build_meta"
