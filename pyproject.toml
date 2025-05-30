@@ -1,8 +1,8 @@
 [project]
 name = "asv"
 description = "Airspeed Velocity: A simple Python history benchmarking tool"
-readme = { file = "README.rst", content-type = "text/x-rst" }
-license = { text = "BSD-3-Clause" }
+readme = "README.rst"
+license = "BSD-3-Clause"
 requires-python = ">=3.7"
 authors = [
     { name = "Michael Droettboom", email = "mdroe@stsci.edu" },
