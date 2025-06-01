@@ -82,7 +82,7 @@ class Benchmarks(dict):
         """
         Return a new Benchmarks object, with some benchmarks filtered out.
         """
-        benchmarks = super(Benchmarks, self).__new__(self.__class__)
+        benchmarks = super().__new__(self.__class__)
         benchmarks._conf = self._conf
         benchmarks._benchmark_dir = self._benchmark_dir
         benchmarks._all_benchmarks = self._all_benchmarks
@@ -286,7 +286,7 @@ class Benchmarks(dict):
                 if dirname in found:
                     raise util.UserError(
                         "Found a directory and python file with same name in "
-                        "benchmark tree: '{0}'".format(path))
+                        f"benchmark tree: '{path}'")
                 cls.check_tree(path, require_init_py=False)
 
     @classmethod
@@ -334,5 +334,5 @@ class Benchmarks(dict):
             if "asv update" in str(err):
                 # Don't give conflicting instructions
                 raise
-            raise util.UserError("{}\nUse `asv run --bench just-discover` to "
-                                 "regenerate benchmarks.json".format(str(err)))
+            raise util.UserError(f"{str(err)}\nUse `asv run --bench just-discover` to "
+                                 "regenerate benchmarks.json")

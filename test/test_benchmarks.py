@@ -24,7 +24,7 @@ ASV_CONF_JSON = {
 }
 
 if util.ON_PYPY:
-    ASV_CONF_JSON['pythons'] = ["pypy{0[0]}.{0[1]}".format(sys.version_info)]
+    ASV_CONF_JSON['pythons'] = [f"pypy{sys.version_info[0]}.{sys.version_info[1]}"]
 
 
 def test_discover_benchmarks(benchmarks_fixture):

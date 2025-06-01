@@ -180,8 +180,7 @@ def _parse_matrix(matrix, bare_keys=()):
         # Check if spurious keys left
         remaining_keys = tuple(matrix.keys())
         if remaining_keys:
-            raise util.UserError('Unknown keys in "matrix" configuration: {}, expected: {}'.format(
-                remaining_keys, matrix_types + tuple(bare_keys)))
+            raise util.UserError(f'Unknown keys in "matrix" configuration: {remaining_keys}, expected: {matrix_types + tuple(bare_keys)}')
     else:
         # Backward-compatibility for old-style config
         matrices = [('req', matrix)]
@@ -1046,7 +1045,7 @@ class ExistingEnvironment(Environment):
         self._executable = executable
         self._requirements = {}
 
-        super(ExistingEnvironment, self).__init__(conf,
+        super().__init__(conf,
                                                   executable,
                                                   requirements,
                                                   tagged_env_vars)

@@ -451,7 +451,7 @@ def test_environment_select():
     assert len(environments) == 3
     for env in environments:
         assert env.tool_name == "existing"
-        assert env.python == "{0[0]}.{0[1]}".format(sys.version_info)
+        assert env.python == f"{sys.version_info[0]}.{sys.version_info[1]}"
         assert os.path.normcase(
             os.path.abspath(env._executable)
         ) == os.path.normcase(os.path.abspath(sys.executable))

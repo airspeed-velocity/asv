@@ -1,9 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import sys
-
-if sys.version_info[0] == 3:
-    xrange = range
 
 import warnings
 
@@ -16,12 +12,12 @@ class TimeSuite:
 
     def time_example_benchmark_1(self):
         s = ''
-        for i in xrange(self.n):
+        for i in range(self.n):
             s = s + 'x'
 
     def time_example_benchmark_2(self):
         s = []
-        for i in xrange(self.n):
+        for i in range(self.n):
             s.append('x')
         ''.join(s)
 
@@ -63,7 +59,7 @@ class TimeWithRepeat:
     def teardown(self):
         assert self.called is True
         self.called = None
-        print("<%d>" % (self.count,))
+        print(f"<{self.count}>")
 
     def time_it(self):
         assert self.called is False
