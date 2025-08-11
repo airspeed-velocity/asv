@@ -112,7 +112,7 @@ def generate_basic_conf(tmpdir,
     conf = config.Config.from_json(conf_dict)
 
     if hasattr(sys, 'pypy_version_info'):
-        conf.pythons = ["pypy{0[0]}.{0[1]}".format(sys.version_info)]
+        conf.pythons = [f"pypy{sys.version_info[0]}.{sys.version_info[1]}"]
 
     return tmpdir, local, conf, machine_file
 

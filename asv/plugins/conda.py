@@ -100,7 +100,7 @@ class Conda(environment.Environment):
                 log.debug("Using environment.yml")
                 self._conda_environment_file = "environment.yml"
 
-        super(Conda, self).__init__(conf,
+        super().__init__(conf,
                                     python,
                                     requirements,
                                     tagged_env_vars)
@@ -178,12 +178,12 @@ class Conda(environment.Environment):
             except Exception:
                 if env_file_name != env_file.name:
                     log.info("conda env create/update failed: "
-                             "in {} with file {}".format(self._path, env_file_name))
+                             f"in {self._path} with file {env_file_name}")
                 elif os.path.isfile(env_file_name):
                     with open(env_file_name, 'r') as f:
                         text = f.read()
                     log.info("conda env create/update failed: "
-                             "in {} with:\n{}".format(self._path, text))
+                             f"in {self._path} with:\n{text}")
                 raise
         finally:
             os.unlink(env_file.name)
@@ -240,7 +240,7 @@ class Conda(environment.Environment):
                              PYTHONNOUSERSITE="True")
 
         with lock():
-            return super(Conda, self).run_executable(executable, args, **kwargs)
+            return super().run_executable(executable, args, **kwargs)
 
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when

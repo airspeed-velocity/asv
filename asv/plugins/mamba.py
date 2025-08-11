@@ -78,7 +78,7 @@ class Mamba(environment.Environment):
             else:
                 log.debug(f"Environment file {conf.conda_environment_file} not found, ignoring")
 
-        super(Mamba, self).__init__(conf, python, requirements, tagged_env_vars)
+        super().__init__(conf, python, requirements, tagged_env_vars)
         self.context = libmambapy.Context()
         self.context.pkgs_dirs = [f"{self._env_dir}/pkgs"]
         # Handle MAMBARC environment variable
@@ -190,7 +190,7 @@ class Mamba(environment.Environment):
         return mamba_args, pip_args
 
     def run_executable(self, executable, args, **kwargs):
-        return super(Mamba, self).run_executable(executable, args, **kwargs)
+        return super().run_executable(executable, args, **kwargs)
 
     def run(self, args, **kwargs):
         log.debug(f"Running '{' '.join(args)}' in {self.name}")
