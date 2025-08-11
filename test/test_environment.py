@@ -14,6 +14,7 @@ from .tools import (
     DUMMY1_VERSION,
     DUMMY2_VERSIONS,
     HAS_CONDA,
+    HAS_MAMBA,
     HAS_PYPY,
     HAS_PYTHON_VER2,
     HAS_VIRTUALENV,
@@ -402,8 +403,8 @@ def test_conda_run_executable(tmpdir):
         env.run_executable('conda', ['info'])
 
 
-@pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
-                    reason="Requires two usable Python versions")
+@pytest.mark.skipif(not HAS_PYTHON_VER2 or not HAS_CONDA,
+                    reason="Requires two usable Python versions and conda")
 def test_environment_select():
     conf = config.Config()
     conf.environment_type = "conda"
@@ -474,8 +475,8 @@ def test_environment_select():
     assert len(environments) == 1
 
 
-@pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
-                    reason="Requires two usable Python versions")
+@pytest.mark.skipif(not HAS_PYTHON_VER2 or not HAS_CONDA,
+                    reason="Requires two usable Python versions and conda")
 def test_environment_select_autodetect():
     conf = config.Config()
     conf.environment_type = "conda"
@@ -968,3 +969,34 @@ def test__parse_matrix_entries():
     assert python == "2.6"
     assert requirements == {"foo": "9"}
     assert tagged_env_vars == {("build", "A"): "B", ("nobuild", "C"): "D"}
+
+
+@pytest.mark.parametrize("env_type", [
+    pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="Requires conda")),
+    pytest.param("mamba", marks=pytest.mark.skipif(not HAS_MAMBA, reason="Requires mamba"))
+])
+@pytest.mark.skipif(not HAS_PYTHON_VER2,
+                    reason="Requires two usable Python versions")
+def test_no_env_file_python_version(tmpdir, env_type):
+    """Test the Python version is correct when no env file is present"""
+    conf = config.Config()
+    conf.env_dir = str(tmpdir.join("env"))
+    conf.environment_type = env_type
+    conf.pythons = [PYTHON_VER1, PYTHON_VER2]
+    conf.matrix = {}
+
+    environments = list(environment.get_environments(conf, None))
+    assert len(environments) == 2
+
+    for env in environments:
+        env.create()
+
+        # Get the Python version from the environment
+        output = env.run(['--version'])
+        # Python version output format is typically "Python X.Y.Z"
+        installed_version = output.split()[1]
+        # Extract just the major.minor version
+        installed_version = '.'.join(installed_version.split('.')[:2])
+
+        assert installed_version == env.python, \
+            f"Expected Python version {env.python}, but got {installed_version}"
