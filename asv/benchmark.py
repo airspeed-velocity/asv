@@ -68,6 +68,25 @@ def main():
     mode = sys.argv[1]
     args = sys.argv[2:]
 
+    env = os.environ.copy()
+    # --- Modify sys.path for the current interpreter ---
+    if 'ASV_PYTHONPATH' in env:
+        new_paths = env['ASV_PYTHONPATH'].split(os.pathsep)
+        for path in reversed(new_paths):  # Add to the front to prioritize
+            if path not in sys.path:
+                sys.path.insert(0, path)
+        # Remove ASV_PYTHONPATH from env, as it's no longer needed after sys.path update
+        env.pop('ASV_PYTHONPATH')
+    else:
+        # Clean up sys.path if PYTHONPATH was set but ASV_PYTHONPATH is not
+        if 'PYTHONPATH' in env:
+            old_paths = env['PYTHONPATH'].split(os.pathsep)
+            for path in old_paths:
+                if path in sys.path:
+                    sys.path.remove(path)
+
+            env.pop('PYTHONPATH')
+
     if mode in commands:
         commands[mode](args)
         sys.exit(0)
