@@ -1,22 +1,24 @@
+ci:
+  autoupdate_schedule: monthly
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
-    -   id: trailing-whitespace
+      - id: trailing-whitespace
         exclude: ^(test/example_results)
-    -   id: end-of-file-fixer
+      - id: end-of-file-fixer
         exclude: ^(test/example_results/cheetah)
-    -   id: check-yaml
-    -   id: check-added-large-files
--   repo: https://github.com/astral-sh/ruff-pre-commit
+      - id: check-yaml
+      - id: check-added-large-files
+  - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.7
     hooks:
-    -   id: ruff-check
+      - id: ruff-check
         args: ["--fix"]
--   repo: https://github.com/codespell-project/codespell
+  - repo: https://github.com/codespell-project/codespell
     # Configuration for codespell is in pyproject.toml
     rev: v2.2.6
     hooks:
-    -   id: codespell
+      - id: codespell
         additional_dependencies:
-        -   tomli
+          - tomli
