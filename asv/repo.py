@@ -298,7 +298,7 @@ def get_repo(conf):
 
     if conf.dvcs is not None:
         for cls in util.iter_subclasses(Repo):
-            if getattr(cls, 'dvcs') == conf.dvcs:
+            if cls.dvcs == conf.dvcs:
                 return cls(conf.repo, conf.project)
     else:
         for cls in util.iter_subclasses(Repo):
