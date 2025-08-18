@@ -38,7 +38,7 @@ def test_graph_single():
     g.add_data_point(4, 5)
     data = g.get_data()
     assert data[3][0] == 4
-    assert abs(data[3][1] - (3 + 4 + 5) / 3.) < 1e-10
+    assert abs(data[3][1] - (3 + 4 + 5) / 3.0) < 1e-10
 
     # Summary graph should be the same as the main graph
     g = Graph('foo', {})
@@ -63,7 +63,7 @@ def test_graph_multi():
         (3, [3, 4, -60], [None] * 3),
         (4, [4, 3, 2], [None] * 3),
         (5, [None, 2, None], [None] * 3),
-        (6, [6, 1, None], [None] * 3)
+        (6, [6, 1, None], [None] * 3),
     ]
 
     filled_vals = [
@@ -72,7 +72,7 @@ def test_graph_multi():
         (3, [3, 4, -60]),
         (4, [4, 3, 2]),
         (5, [5, 2, None]),
-        (6, [6, 1, None])
+        (6, [6, 1, None]),
     ]
 
     # Should give same data back, with missing data at edges removed
@@ -91,9 +91,9 @@ def test_graph_multi():
     g.add_data_point(4, [3, 2, 1])
     data = g.get_data()
     assert data[3][0] == 4
-    assert abs(data[3][1][0] - (1 + 4 + 3) / 3.) < 1e-10
-    assert abs(data[3][1][1] - (2 + 3 + 2) / 3.) < 1e-10
-    assert abs(data[3][1][2] - (3 + 2 + 1) / 3.) < 1e-10
+    assert abs(data[3][1][0] - (1 + 4 + 3) / 3.0) < 1e-10
+    assert abs(data[3][1][1] - (2 + 3 + 2) / 3.0) < 1e-10
+    assert abs(data[3][1][2] - (3 + 2 + 1) / 3.0) < 1e-10
 
     # The summary graph is obtained by geometric mean of filled data
     g = Graph('foo', {})
@@ -225,15 +225,27 @@ def test__combine_graph_data():
 
     x, ys = _combine_graph_data([g1, g2, g3])
     assert x == [0, 1, 2, 3, 4]
-    assert ys == [[None, None, None, None, None],
-                  [0, 1, 2, 3, 4],
-                  [0, -1, -2, None, None],
-                  [0, -2, -4, None, None]]
+    assert ys == [
+        [None, None, None, None, None],
+        [0, 1, 2, 3, 4],
+        [0, -1, -2, None, None],
+        [0, -2, -4, None, None],
+    ]
 
 
 def test_graph_steps():
-    vals = [(1, 1), (5, 1), (6, 1), (7, 1), (8, 1),
-            (11, 2), (15, 2), (16, 2 + 1e-5), (17, 2), (18, 2)]
+    vals = [
+        (1, 1),
+        (5, 1),
+        (6, 1),
+        (7, 1),
+        (8, 1),
+        (11, 2),
+        (15, 2),
+        (16, 2 + 1e-5),
+        (17, 2),
+        (18, 2),
+    ]
 
     g = Graph('foo', {})
     for x, y in vals:

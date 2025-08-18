@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-class Suite:
 
+class Suite:
     def named_method(self):
         return 0
 
@@ -24,7 +24,6 @@ track_custom_pretty_name.pretty_name = 'this.is/the.answer'
 
 
 class BaseSuite:
-
     def some_func(self):
         return 0
 

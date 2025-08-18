@@ -12,20 +12,26 @@ class GithubPages(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "gh-pages", help="Publish the results to Github pages",
+            "gh-pages",
+            help="Publish the results to Github pages",
             description="""
             Publish the results to github pages
 
             Updates the 'gh-pages' branch in the current repository,
             and pushes it to 'origin'.
-            """)
+            """,
+        )
         parser.add_argument(
-            "--no-push", action="store_true",
-            help="Update local gh-pages branch but don't push")
+            "--no-push", action="store_true", help="Update local gh-pages branch but don't push"
+        )
         parser.add_argument(
-            "--rewrite", action="store_true",
-            help=("Rewrite gh-pages branch to contain only a single commit, "
-                  "instead of adding a new commit"))
+            "--rewrite",
+            action="store_true",
+            help=(
+                "Rewrite gh-pages branch to contain only a single commit, "
+                "instead of adding a new commit"
+            ),
+        )
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -52,10 +58,12 @@ class GithubPages(Command):
 
             if not rewrite:
                 # Fetch the old branch
-                _, _, retcode = util.check_output([git, 'fetch', cwd, 'gh-pages'],
-                                                  cwd=conf.html_dir,
-                                                  return_stderr=True,
-                                                  valid_return_codes=None)
+                _, _, retcode = util.check_output(
+                    [git, 'fetch', cwd, 'gh-pages'],
+                    cwd=conf.html_dir,
+                    return_stderr=True,
+                    valid_return_codes=None,
+                )
                 if retcode == 0:
                     util.check_call([git, 'reset', '--soft', 'FETCH_HEAD'], cwd=conf.html_dir)
 
@@ -67,10 +75,12 @@ class GithubPages(Command):
             util.check_call([git, 'add', '--all', '.'], cwd=conf.html_dir)
 
             # Commit (if needed)
-            _, _, retcode = util.check_output([git, "diff-index", "--quiet", "HEAD", "--"],
-                                              cwd=conf.html_dir,
-                                              return_stderr=True,
-                                              valid_return_codes=None)
+            _, _, retcode = util.check_output(
+                [git, "diff-index", "--quiet", "HEAD", "--"],
+                cwd=conf.html_dir,
+                return_stderr=True,
+                valid_return_codes=None,
+            )
             if retcode != 0:
                 util.check_call([git, 'commit', '-m', 'Generated from sources'], cwd=conf.html_dir)
 
@@ -79,8 +89,9 @@ class GithubPages(Command):
                 util.check_call([git, 'fetch', os.path.abspath(conf.html_dir)])
                 util.check_call([git, 'branch', '-f', 'gh-pages', 'FETCH_HEAD'])
             else:
-                util.check_call([git, 'fetch', os.path.abspath(conf.html_dir),
-                                 'gh-pages:gh-pages'])
+                util.check_call(
+                    [git, 'fetch', os.path.abspath(conf.html_dir), 'gh-pages:gh-pages']
+                )
         finally:
             # Cleanup the child repo under html
             util.long_path_rmtree(os.path.join(conf.html_dir, '.git'))

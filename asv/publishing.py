@@ -7,6 +7,7 @@ class OutputPublisher:
     """
     A base class for pages displaying output in the JS application
     """
+
     name = None
     button_label = None
     description = None

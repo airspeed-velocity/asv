@@ -31,45 +31,67 @@ def test_results(tmpdir):
     resultsdir = join(tmpdir, "results")
     for i in range(10):
         r = results.Results(
-            {'machine': 'foo',
-             'arch': 'x86_64'},
+            {'machine': 'foo', 'arch': 'x86_64'},
             {},
             hex(i),
             i * 1000000,
             '2.7',
             'some-environment-name',
-            {})
+            {},
+        )
 
         x1 = float(i * 0.001)
         x2 = float(i * 0.001)
         x3 = float((i + 1) ** -1)
 
         values = {
-            'suite1.benchmark1': {'result': [x1], 'number': [1],
-                                  'samples': [[x1, x1]], 'params': [['a']],
-                                  'version': "1", 'profile': b'\x00\xff'},
-            'suite1.benchmark2': {'result': [x2], 'number': [1],
-                                  'samples': [[x2, x2, x2]], 'params': [],
-                                  'version': "1", 'profile': b'\x00\xff'},
-            'suite2.benchmark1': {'result': [x3], 'number': [None],
-                                  'samples': [None], 'params': [['c']],
-                                  'version': None, 'profile': b'\x00\xff'},
-            'suite3.benchmark1': {'result': [x1, x2], 'number': [1, 1],
-                                  'samples': [[x1, x1], [x2, x2, x3]],
-                                  'params': [['c', 'd']],
-                                  'version': None, 'profile': b'\x00\xff'}
+            'suite1.benchmark1': {
+                'result': [x1],
+                'number': [1],
+                'samples': [[x1, x1]],
+                'params': [['a']],
+                'version': "1",
+                'profile': b'\x00\xff',
+            },
+            'suite1.benchmark2': {
+                'result': [x2],
+                'number': [1],
+                'samples': [[x2, x2, x2]],
+                'params': [],
+                'version': "1",
+                'profile': b'\x00\xff',
+            },
+            'suite2.benchmark1': {
+                'result': [x3],
+                'number': [None],
+                'samples': [None],
+                'params': [['c']],
+                'version': None,
+                'profile': b'\x00\xff',
+            },
+            'suite3.benchmark1': {
+                'result': [x1, x2],
+                'number': [1, 1],
+                'samples': [[x1, x1], [x2, x2, x3]],
+                'params': [['c', 'd']],
+                'version': None,
+                'profile': b'\x00\xff',
+            },
         }
 
         for key, val in values.items():
-            v = runner.BenchmarkResult(result=val['result'],
-                                       samples=val['samples'],
-                                       number=val['number'],
-                                       profile=val['profile'],
-                                       errcode=0,
-                                       stderr='')
+            v = runner.BenchmarkResult(
+                result=val['result'],
+                samples=val['samples'],
+                number=val['number'],
+                profile=val['profile'],
+                errcode=0,
+                stderr='',
+            )
             benchmark = {'name': key, 'version': val['version'], 'params': val['params']}
-            r.add_result(benchmark, v, record_samples=True,
-                         started_at=timestamp1, duration=duration)
+            r.add_result(
+                benchmark, v, record_samples=True, started_at=timestamp1, duration=duration
+            )
 
         # Save / add_existing_results roundtrip
         r.save(resultsdir)
@@ -79,13 +101,9 @@ def test_results(tmpdir):
         assert r2.commit_hash == r.commit_hash
         assert r2._filename == r._filename
 
-        r3 = results.Results(r.params,
-                             r._requirements,
-                             r.commit_hash,
-                             r.date,
-                             r._python,
-                             r.env_name,
-                             {})
+        r3 = results.Results(
+            r.params, r._requirements, r.commit_hash, r.date, r._python, r.env_name, {}
+        )
         r3.load_data(resultsdir)
 
         for rr in [r2, r3]:
@@ -126,8 +144,10 @@ def test_results(tmpdir):
             'suite1.benchmark2': {'version': '2'},
             'suite2.benchmark1': {'version': '2'},
         }
-        assert sorted(r2.get_result_keys(mock_benchmarks)) == ['suite1.benchmark1',
-                                                               'suite2.benchmark1']
+        assert sorted(r2.get_result_keys(mock_benchmarks)) == [
+            'suite1.benchmark1',
+            'suite2.benchmark1',
+        ]
 
 
 def test_get_result_hash_from_prefix(tmpdir):
@@ -155,7 +175,7 @@ def test_get_result_hash_from_prefix(tmpdir):
     assert 'one of multiple commits' in str(excinfo.value)
 
 
-def test_backward_compat_load(example_results): # noqa: F811 redefinition of the imported fixture,it can be removed when the fixture is moved to conftest.py file and the import deleted
+def test_backward_compat_load(example_results):  # noqa: F811 redefinition of the imported fixture,it can be removed when the fixture is moved to conftest.py file and the import deleted
     resultsdir = example_results
     filename = join('cheetah', '624da0aa-py2.7-Cython-numpy1.8.json')
 
@@ -168,30 +188,15 @@ def test_json_timestamp(tmpdir):
     # Check that per-benchmark timestamps are saved as JS timestamps in the result file
     tmpdir = str(tmpdir)
 
-    stamp0 = datetime.datetime(
-        1970, 1, 1,
-        tzinfo = datetime.timezone.utc
-    )
-    stamp1 = datetime.datetime(
-        1971, 1, 1,
-        tzinfo = datetime.timezone.utc
-    )
+    stamp0 = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+    stamp1 = datetime.datetime(1971, 1, 1, tzinfo=datetime.timezone.utc)
     duration = 1.5
 
-    r = results.Results({'machine': 'mach'},
-                        {},
-                        'aaaa',
-                        util.datetime_to_timestamp(stamp0),
-                        'py',
-                        'env',
-                        {})
+    r = results.Results(
+        {'machine': 'mach'}, {}, 'aaaa', util.datetime_to_timestamp(stamp0), 'py', 'env', {}
+    )
     value = runner.BenchmarkResult(
-        result=[42],
-        samples=[None],
-        number=[None],
-        profile=None,
-        errcode=0,
-        stderr=''
+        result=[42], samples=[None], number=[None], profile=None, errcode=0, stderr=''
     )
     benchmark = {'name': 'some_benchmark', 'version': 'some version', 'params': []}
     r.add_result(benchmark, value, started_at=stamp1, duration=duration)
@@ -204,7 +209,7 @@ def test_json_timestamp(tmpdir):
     assert values['duration'] == duration
 
 
-def test_iter_results(capsys, tmpdir, example_results): # noqa: F811 noqa F811 redefinition of the imported fixture,it can be removed when the fixture is moved to conftest.py file and the import deleted
+def test_iter_results(capsys, tmpdir, example_results):  # noqa: F811 noqa F811 redefinition of the imported fixture,it can be removed when the fixture is moved to conftest.py file and the import deleted
     dst = os.path.join(str(tmpdir), 'example_results')
     shutil.copytree(example_results, dst)
 
@@ -248,10 +253,17 @@ def test_remove_samples():
 
     r = results.Results.unnamed()
 
-    v1 = runner.BenchmarkResult(result=[True], samples=[[1]], number=[1],
-                                profile=None, errcode=0, stderr='')
-    v2 = runner.BenchmarkResult(result=[True] * 3, samples=[[1], [2], [3]], number=[1, 1, 1],
-                                profile=None, errcode=0, stderr='')
+    v1 = runner.BenchmarkResult(
+        result=[True], samples=[[1]], number=[1], profile=None, errcode=0, stderr=''
+    )
+    v2 = runner.BenchmarkResult(
+        result=[True] * 3,
+        samples=[[1], [2], [3]],
+        number=[1, 1, 1],
+        profile=None,
+        errcode=0,
+        stderr='',
+    )
 
     r.add_result(benchmark1, v1, record_samples=True)
     r.add_result(benchmark2, v2, record_samples=True)
@@ -277,40 +289,49 @@ def test_table_formatting():
 
     benchmark = {'params': [['a', 'b', 'c']], 'param_names': ['param1'], "unit": "seconds"}
     result = list(zip([1e-6, 2e-6, 3e-6], [3e-6, 2e-6, 1e-6]))
-    expected = ("======== ==========\n"
-                " param1            \n"
-                "-------- ----------\n"
-                "   a      1.00\u00b13\u03bcs \n"
-                "   b      2.00\u00b12\u03bcs \n"
-                "   c      3.00\u00b11\u03bcs \n"
-                "======== ==========")
+    expected = (
+        "======== ==========\n"
+        " param1            \n"
+        "-------- ----------\n"
+        "   a      1.00\u00b13\u03bcs \n"
+        "   b      2.00\u00b12\u03bcs \n"
+        "   c      3.00\u00b11\u03bcs \n"
+        "======== =========="
+    )
     table = "\n".join(results._format_benchmark_result(result, benchmark, max_width=80))
     assert table == expected
 
-    benchmark = {'params': [["'a'", "'b'", "'c'"], ["[1]", "[2]"]],
-                 'param_names': ['param1', 'param2'], "unit": "seconds"}
+    benchmark = {
+        'params': [["'a'", "'b'", "'c'"], ["[1]", "[2]"]],
+        'param_names': ['param1', 'param2'],
+        "unit": "seconds",
+    }
     result = list(zip([1, 2, None, 4, 5, float('nan')], [None] * 6))
-    expected = ("======== ======== =======\n"
-                "--            param2     \n"
-                "-------- ----------------\n"
-                " param1    [1]      [2]  \n"
-                "======== ======== =======\n"
-                "   a      1.00s    2.00s \n"
-                "   b      failed   4.00s \n"
-                "   c      5.00s     n/a  \n"
-                "======== ======== =======")
+    expected = (
+        "======== ======== =======\n"
+        "--            param2     \n"
+        "-------- ----------------\n"
+        " param1    [1]      [2]  \n"
+        "======== ======== =======\n"
+        "   a      1.00s    2.00s \n"
+        "   b      failed   4.00s \n"
+        "   c      5.00s     n/a  \n"
+        "======== ======== ======="
+    )
     table = "\n".join(results._format_benchmark_result(result, benchmark, max_width=80))
     assert table == expected
 
-    expected = ("======== ======== ========\n"
-                " param1   param2          \n"
-                "-------- -------- --------\n"
-                "   a       [1]     1.00s  \n"
-                "   a       [2]     2.00s  \n"
-                "   b       [1]     failed \n"
-                "   b       [2]     4.00s  \n"
-                "   c       [1]     5.00s  \n"
-                "   c       [2]      n/a   \n"
-                "======== ======== ========")
+    expected = (
+        "======== ======== ========\n"
+        " param1   param2          \n"
+        "-------- -------- --------\n"
+        "   a       [1]     1.00s  \n"
+        "   a       [2]     2.00s  \n"
+        "   b       [1]     failed \n"
+        "   b       [2]     4.00s  \n"
+        "   c       [1]     5.00s  \n"
+        "   c       [2]      n/a   \n"
+        "======== ======== ========"
+    )
     table = "\n".join(results._format_benchmark_result(result, benchmark, max_width=0))
     assert table == expected

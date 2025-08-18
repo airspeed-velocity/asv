@@ -9,11 +9,11 @@ content = 'env = {{!r}}\n'.format(dict(os.environ))  # noqa: UP032, F523 see abo
 with open('asv_test_repo/build_time_env.py', 'w') as f:
     f.write(content)
 
-setup(name='asv_test_repo',
-      version="{version}",
-      packages=['asv_test_repo'],
-
-      # The following forces setuptools to generate .egg-info directory,
-      # which causes problems in test_environment.py:test_install_success
-      include_package_data=True,
-      )
+setup(
+    name='asv_test_repo',
+    version="{version}",
+    packages=['asv_test_repo'],
+    # The following forces setuptools to generate .egg-info directory,
+    # which causes problems in test_environment.py:test_install_success
+    include_package_data=True,
+)

@@ -9,6 +9,7 @@ from .console import log
 
 ENV_PLUGINS = [".mamba", ".virtualenv", ".conda", ".rattler"]
 
+
 class PluginManager:
     """
     A class to load and manage plugins.
