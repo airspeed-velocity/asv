@@ -210,7 +210,7 @@ class PythonArgAction(argparse.Action):
             items.extend(["existing:same"])
         else:
             items.extend([":" + value for value in values])
-        setattr(namespace, "env_spec", items)
+        namespace.env_spec = items
 
 
 def add_environment(parser, default_same=False):
