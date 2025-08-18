@@ -6,4 +6,4 @@ from asv import plugin_manager  # noqa: F401 Needed to load the plugins
 
 __version__ = get_version("asv")
 
-__all__ = '__version__',
+__all__ = ('__version__',)

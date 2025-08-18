@@ -21,63 +21,89 @@ def add_global_arguments(parser, suppress_defaults=True):
         suppressor = {}
 
     parser.add_argument(
-        "--verbose", "-v", action="store_true",
-        help="Increase verbosity",
-        **suppressor)
+        "--verbose", "-v", action="store_true", help="Increase verbosity", **suppressor
+    )
 
     parser.add_argument(
         "--config",
         help="Benchmark configuration file",
-        default=(argparse.SUPPRESS if suppress_defaults else None))
+        default=(argparse.SUPPRESS if suppress_defaults else None),
+    )
 
     parser.add_argument(
-        "--version", action="version",
+        "--version",
+        action="version",
         version="%(prog)s " + get_version("asv"),
         help="Print program version",
-        **suppressor)
+        **suppressor,
+    )
 
 
 def add_compare(parser, only_changed_default=False, sort_default='name'):
     parser.add_argument(
-        '--factor', "-f", type=float, default=1.1,
+        '--factor',
+        "-f",
+        type=float,
+        default=1.1,
         help="""The factor above or below which a result is considered
         problematic.  For example, with a factor of 1.1 (the default
         value), if a benchmark gets 10%% slower or faster, it will
-        be displayed in the results list.""")
+        be displayed in the results list.""",
+    )
 
     parser.add_argument(
-        '--no-stats', action="store_false", dest="use_stats", default=True,
+        '--no-stats',
+        action="store_false",
+        dest="use_stats",
+        default=True,
         help="""Do not use result statistics in comparisons, only `factor`
-        and the median result.""")
+        and the median result.""",
+    )
 
     parser.add_argument(
-        '--split', '-s', action='store_true',
+        '--split',
+        '-s',
+        action='store_true',
         help="""Split the output into a table of benchmarks that have
-        improved, stayed the same, and gotten worse.""")
+        improved, stayed the same, and gotten worse.""",
+    )
 
     parser.add_argument(
-        '--only-changed', action='store_true', default=only_changed_default,
-        help="""Whether to show only changed results.""")
+        '--only-changed',
+        action='store_true',
+        default=only_changed_default,
+        help="""Whether to show only changed results.""",
+    )
 
     parser.add_argument('--no-only-changed', dest='only_changed', action='store_false')
 
     parser.add_argument(
-        '--sort', action='store', type=str, choices=('name', 'ratio', 'default'),
-        default=sort_default, help="""Sort order""")
+        '--sort',
+        action='store',
+        type=str,
+        choices=('name', 'ratio', 'default'),
+        default=sort_default,
+        help="""Sort order""",
+    )
 
 
 def add_show_stderr(parser):
     parser.add_argument(
-        "--show-stderr", "-e", action="store_true",
-        help="""Display the stderr output from the benchmarks.""")
+        "--show-stderr",
+        "-e",
+        action="store_true",
+        help="""Display the stderr output from the benchmarks.""",
+    )
 
 
 class DictionaryArgAction(argparse.Action):
     """
     Parses multiple key=value assignments into a dictionary.
     """
-    def __init__(self, option_strings, dest, converters=None, choices=None,
-                 dict_dest=None, **kwargs):
+
+    def __init__(
+        self, option_strings, dest, converters=None, choices=None, dict_dest=None, **kwargs
+    ):
         if converters is None:
             converters = {}
         self.converters = converters
@@ -91,15 +117,13 @@ class DictionaryArgAction(argparse.Action):
             try:
                 key, value = values.split("=", 1)
             except ValueError:
-                raise argparse.ArgumentError(self,
-                                             f"{values!r} is not a key=value assignment")
+                raise argparse.ArgumentError(self, f"{values!r} is not a key=value assignment")
         else:
             key = self.dict_dest
             value = values
 
         if self.__choices is not None and key not in self.__choices:
-            raise argparse.ArgumentError(self,
-                                         f"{key!r} cannot be set")
+            raise argparse.ArgumentError(self, f"{key!r} cannot be set")
 
         dest_key = key
         conv = self.converters.get(key, None)
@@ -110,8 +134,7 @@ class DictionaryArgAction(argparse.Action):
             try:
                 value = conv(value)
             except ValueError as exc:
-                raise argparse.ArgumentError(self,
-                                             f"{key!r}: {exc}")
+                raise argparse.ArgumentError(self, f"{key!r}: {exc}")
 
         # Store value
         result = getattr(namespace, self.dest, None)
@@ -123,9 +146,13 @@ class DictionaryArgAction(argparse.Action):
 
 def add_bench(parser):
     parser.add_argument(
-        "--bench", "-b", type=str, action="append",
+        "--bench",
+        "-b",
+        type=str,
+        action="append",
         help="""Regular expression(s) for benchmark to run.  When not
-        provided, all benchmarks are run.""")
+        provided, all benchmarks are run.""",
+    )
 
     def parse_repeat(value):
         try:
@@ -169,29 +196,43 @@ def add_bench(parser):
         'rounds': int,
         'processes': ('rounds', int),  # backward compatibility
         'sample_time': float,
-        'cpu_affinity': parse_affinity
+        'cpu_affinity': parse_affinity,
     }
 
     parser.add_argument(
-        "--attribute", "-a", action=DictionaryArgAction,
-        choices=tuple(converters.keys()), converters=converters,
-        help="""Override a benchmark attribute, e.g. `-a repeat=10`.""")
+        "--attribute",
+        "-a",
+        action=DictionaryArgAction,
+        choices=tuple(converters.keys()),
+        converters=converters,
+        help="""Override a benchmark attribute, e.g. `-a repeat=10`.""",
+    )
 
     parser.add_argument(
-        "--cpu-affinity", action=DictionaryArgAction, dest="attribute",
+        "--cpu-affinity",
+        action=DictionaryArgAction,
+        dest="attribute",
         dict_dest="cpu_affinity",
-        choices=tuple(converters.keys()), converters=converters,
-        help=("Set CPU affinity for running the benchmark, in format: "
-              "0 or 0,1,2 or 0-3. Default: not set"))
+        choices=tuple(converters.keys()),
+        converters=converters,
+        help=(
+            "Set CPU affinity for running the benchmark, in format: "
+            "0 or 0,1,2 or 0-3. Default: not set"
+        ),
+    )
 
 
 def add_machine(parser):
     parser.add_argument(
-        "--machine", "-m", type=str, default=None,
+        "--machine",
+        "-m",
+        type=str,
+        default=None,
         help="""Use the given name to retrieve machine information.
         If not provided, the hostname is used.  If no entry with that
         name is found, and there is only one entry in
-        ~/.asv-machine.json, that one entry will be used.""")
+        ~/.asv-machine.json, that one entry will be used.""",
+    )
 
 
 class PythonArgAction(argparse.Action):
@@ -199,6 +240,7 @@ class PythonArgAction(argparse.Action):
     Backward compatibility --python XYZ argument,
     will be interpreted as --environment :XYZ
     """
+
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
         if nargs is not None:
             raise ValueError("nargs not allowed")
@@ -231,17 +273,14 @@ def add_environment(parser, default_same=False):
             configuration file."""
 
     parser.add_argument(
-        "-E", "--environment",
-        dest="env_spec",
-        action="append",
-        default=[],
-        help=help)
+        "-E", "--environment", dest="env_spec", action="append", default=[], help=help
+    )
 
     # The --python argument exists for backward compatibility.  It
     # will just set the part after ':' in the environment spec.
     parser.add_argument(
-        "--python", action=PythonArgAction, metavar="PYTHON",
-        help="Same as --environment=:PYTHON")
+        "--python", action=PythonArgAction, metavar="PYTHON", help="Same as --environment=:PYTHON"
+    )
 
 
 def add_launch_method(parser):
@@ -251,34 +290,55 @@ def add_launch_method(parser):
         action="store",
         choices=("auto", "spawn", "forkserver"),
         default="auto",
-        help="How to launch benchmarks. Choices: auto, spawn, forkserver")
+        help="How to launch benchmarks. Choices: auto, spawn, forkserver",
+    )
 
 
 def add_parallel(parser):
     parser.add_argument(
-        "--parallel", "-j", nargs='?', type=int, default=1, const=-1,
+        "--parallel",
+        "-j",
+        nargs='?',
+        type=int,
+        default=1,
+        const=-1,
         help="""Build (but don't benchmark) in parallel.  The value is
         the number of CPUs to use, or if no number provided, use the
-        number of cores on this machine.""")
+        number of cores on this machine.""",
+    )
 
 
 def add_record_samples(parser, record_default=False):
     grp = parser.add_mutually_exclusive_group()
     grp.add_argument(
-        "--record-samples", action="store_true", dest="record_samples",
-        help=(argparse.SUPPRESS if record_default else
-              """Store raw measurement samples, not only statistics"""),
-        default=record_default)
+        "--record-samples",
+        action="store_true",
+        dest="record_samples",
+        help=(
+            argparse.SUPPRESS
+            if record_default
+            else """Store raw measurement samples, not only statistics"""
+        ),
+        default=record_default,
+    )
     grp.add_argument(
-        "--no-record-samples", action="store_false", dest="record_samples",
-        help=(argparse.SUPPRESS if not record_default else
-              """Do not store raw measurement samples, but only statistics"""),
-        default=record_default)
+        "--no-record-samples",
+        action="store_false",
+        dest="record_samples",
+        help=(
+            argparse.SUPPRESS
+            if not record_default
+            else """Do not store raw measurement samples, but only statistics"""
+        ),
+        default=record_default,
+    )
     parser.add_argument(
-        "--append-samples", action="store_true",
+        "--append-samples",
+        action="store_true",
         help="""Combine new measurement samples with previous results,
         instead of discarding old results. Implies --record-samples.
-        The previous run must also have been run with --record/append-samples.""")
+        The previous run must also have been run with --record/append-samples.""",
+    )
 
 
 def positive_int(string):

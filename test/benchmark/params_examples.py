@@ -1,5 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+
 class ClassOne:
     pass
 
@@ -40,8 +41,7 @@ class ParamSuite:
 
 
 class FunctionParamSuite:
-    params = [track_param,
-              lambda x: x]
+    params = [track_param, lambda x: x]
     param_names = ['func']
 
     def time_func(self, func):
@@ -98,6 +98,7 @@ def time_find_test_timeout():
     import time
 
     import asv_test_repo
+
     if asv_test_repo.dummy_value[1] < 0:
         time.sleep(100)
 

@@ -47,11 +47,7 @@ def get_index(
         at_count = spec.count("@")
         if at_count > 1:
             first_at = spec.find("@")
-            spec = (
-                spec[:first_at]
-                + urllib.parse.quote(spec[first_at])
-                + spec[first_at + 1 :]
-            )
+            spec = spec[:first_at] + urllib.parse.quote(spec[first_at]) + spec[first_at + 1 :]
         if platform:
             spec = spec + "[" + ",".join(platform) + "]"
         return spec
@@ -64,9 +60,7 @@ def get_index(
         for channel_platform, url in channel.platform_urls(with_credentials=True):
             full_url = CondaHttpAuth.add_binstar_token(url)
 
-            sd = libmambapy.SubdirData(
-                channel, channel_platform, full_url, pkgs_dirs, repodata_fn
-            )
+            sd = libmambapy.SubdirData(channel, channel_platform, full_url, pkgs_dirs, repodata_fn)
 
             needs_finalising = sd.download_and_check_targets(dlist)
             index.append(
@@ -169,9 +163,7 @@ class MambaSolver:
         self.output_folder = output_folder or "local"
         self.pool = libmambapy.Pool()
         self.repos = []
-        self.index = load_channels(
-            self.pool, self.channels, self.repos, platform=platform
-        )
+        self.index = load_channels(self.pool, self.channels, self.repos, platform=platform)
 
         self.local_index = []
         self.local_repos = {}
@@ -186,9 +178,7 @@ class MambaSolver:
         repo.set_installed()
 
     def replace_channels(self):
-        self.local_index = get_index(
-            (self.output_folder,), platform=self.platform, prepend=False
-        )
+        self.local_index = get_index((self.output_folder,), platform=self.platform, prepend=False)
 
         for _, v in self.local_repos.items():
             v.clear(True)
@@ -211,9 +201,7 @@ class MambaSolver:
                 os.remove(subdir.cache_path())
                 cp = cp.replace(".solv", ".json")
 
-            self.local_repos[channelstr] = libmambapy.Repo(
-                self.pool, channelstr, cp, channelurl
-            )
+            self.local_repos[channelstr] = libmambapy.Repo(self.pool, channelstr, cp, channelurl)
 
             self.local_repos[channelstr].set_priority(start_prio, 0)
             start_prio -= 1
