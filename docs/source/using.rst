@@ -640,7 +640,7 @@ each of its symbolic states can be understood as:
      - Introduced a failure
      - Failed
      - Succeeded
-   * -
+   * - ``*``
      - Green
      - Fixed failure
      - Succeeded
