@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
+import json
 import os
 import sys
-import json
 
 import pytest
 
@@ -10,9 +10,20 @@ from asv.repo import get_repo
 from asv.util import shlex_quote as quote
 
 from . import tools
-from .tools import (PYTHON_VER1, PYTHON_VER2, DUMMY1_VERSION, DUMMY2_VERSIONS, WIN, HAS_PYPY,
-                    HAS_CONDA, HAS_VIRTUALENV, HAS_RATTLER, HAS_MAMBA, HAS_PYTHON_VER2,
-                    generate_test_repo)
+from .tools import (
+    DUMMY1_VERSION,
+    DUMMY2_VERSIONS,
+    HAS_CONDA,
+    HAS_MAMBA,
+    HAS_PYPY,
+    HAS_PYTHON_VER2,
+    HAS_RATTLER,
+    HAS_VIRTUALENV,
+    PYTHON_VER1,
+    PYTHON_VER2,
+    WIN,
+    generate_test_repo,
+)
 
 CAN_BUILD_PYTHON = (HAS_CONDA or HAS_MAMBA or HAS_RATTLER)
 
@@ -99,7 +110,7 @@ def test_presence_checks(tmpdir, monkeypatch,
         # Tell conda to not use hardlinks: on Windows it's not possible
         # to delete hard links to files in use, which causes problem when
         # trying to cleanup environments during this test
-        monkeypatch.setenv(str('CONDA_ALWAYS_COPY'), str('True'))
+        monkeypatch.setenv('CONDA_ALWAYS_COPY', 'True')
 
     conf.env_dir = str(tmpdir.join("env"))
 
@@ -147,7 +158,7 @@ def test_presence_checks(tmpdir, monkeypatch,
 
 
 def _sorted_dict_list(lst):
-    return list(sorted(lst, key=lambda x: list(sorted(x.items()))))
+    return sorted(lst, key=lambda x: sorted(x.items()))
 
 
 def test_matrix_expand_basic():
@@ -414,8 +425,8 @@ def test_conda_run_executable(tmpdir):
         env.run_executable('conda', ['info'])
 
 
-@pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
-                    reason="Requires two usable Python versions")
+@pytest.mark.skipif(not HAS_PYTHON_VER2 or not HAS_CONDA,
+                    reason="Requires two usable Python versions and conda")
 def test_environment_select(request: pytest.FixtureRequest, skip_no_conda: pytest.FixtureRequest):
     conf = config.Config()
     conf.environment_type = "conda"
@@ -466,7 +477,7 @@ def test_environment_select(request: pytest.FixtureRequest, skip_no_conda: pytes
     # e for e in environments if e.tool_name != request.config.getoption('environment_type')
     # ]:
     #     assert env.tool_name == "existing"
-    #     assert env.python == "{0[0]}.{0[1]}".format(sys.version_info)
+    #     assert env.python == f"{sys.version_info[0]}.{sys.version_info[1]}"
     #     assert os.path.normcase(
     #         os.path.abspath(env._executable)
     #     ) == os.path.normcase(os.path.abspath(sys.executable))
@@ -489,10 +500,9 @@ def test_environment_select(request: pytest.FixtureRequest, skip_no_conda: pytes
     assert len(environments) == 1
 
 
-@pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
-                    reason="Requires two usable Python versions")
+@pytest.mark.skipif(not HAS_PYTHON_VER2 or not HAS_CONDA,
+                    reason="Requires two usable Python versions and conda")
 def test_environment_select_autodetect(skip_no_conda: pytest.FixtureRequest):
-    skip_no_conda
     conf = config.Config()
     conf.environment_type = "conda"
     conf.pythons = [PYTHON_VER1]
@@ -671,11 +681,11 @@ def test_environment_environ_path(
     assert usersite_in_syspath == "False"
 
     # Check PYTHONPATH is ignored
-    monkeypatch.setenv(str('PYTHONPATH'), str(tmpdir))
+    monkeypatch.setenv('PYTHONPATH', str(tmpdir))
     output = env.run(['-c', 'import os; print(os.environ.get("PYTHONPATH", ""))'])
     assert output.strip() == ""
 
-    monkeypatch.setenv(str('ASV_PYTHONPATH'), str("Hello python path"))
+    monkeypatch.setenv('ASV_PYTHONPATH', "Hello python path")
     output = env.run(['-c', 'import os; print(os.environ["PYTHONPATH"])'])
     assert output.strip() == "Hello python path"
 
@@ -950,7 +960,7 @@ def test_environment_env_matrix(request: pytest.FixtureRequest):
         environments = list(environment.get_environments(conf, None))
 
         assert len(environments) == environ_count
-        assert len(set(e.dir_name for e in environments)) == build_count
+        assert len({e.dir_name for e in environments}) == build_count
 
 
 def test__parse_matrix():
@@ -1012,3 +1022,34 @@ def test__parse_matrix_entries():
     assert python == "2.6"
     assert requirements == {"foo": "9"}
     assert tagged_env_vars == {("build", "A"): "B", ("nobuild", "C"): "D"}
+
+
+@pytest.mark.parametrize("env_type", [
+    pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="Requires conda")),
+    pytest.param("mamba", marks=pytest.mark.skipif(not HAS_MAMBA, reason="Requires mamba"))
+])
+@pytest.mark.skipif(not HAS_PYTHON_VER2,
+                    reason="Requires two usable Python versions")
+def test_no_env_file_python_version(tmpdir, env_type):
+    """Test the Python version is correct when no env file is present"""
+    conf = config.Config()
+    conf.env_dir = str(tmpdir.join("env"))
+    conf.environment_type = env_type
+    conf.pythons = [PYTHON_VER1, PYTHON_VER2]
+    conf.matrix = {}
+
+    environments = list(environment.get_environments(conf, None))
+    assert len(environments) == 2
+
+    for env in environments:
+        env.create()
+
+        # Get the Python version from the environment
+        output = env.run(['--version'])
+        # Python version output format is typically "Python X.Y.Z"
+        installed_version = output.split()[1]
+        # Extract just the major.minor version
+        installed_version = '.'.join(installed_version.split('.')[:2])
+
+        assert installed_version == env.python, \
+            f"Expected Python version {env.python}, but got {installed_version}"

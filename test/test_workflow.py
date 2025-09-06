@@ -1,18 +1,18 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import glob
-import os
-import sys
 import json
+import os
 import shutil
-from os.path import join, isfile, abspath, relpath, dirname
+import sys
+from os.path import abspath, dirname, isfile, join, relpath
 
 import pytest
 
 from asv import config, util
 
-from .tools import HAS_PYPY, WIN
 from . import tools
+from .tools import HAS_PYPY, WIN
 
 dummy_values = (
     (6, 1),
@@ -62,7 +62,7 @@ def generate_basic_conf(tmpdir, repo_subdir='', values=dummy_values, dummy_packa
     conf = config.Config.from_json(conf_dict)
 
     if hasattr(sys, 'pypy_version_info'):
-        conf.pythons = ["pypy{0[0]}.{0[1]}".format(sys.version_info)]
+        conf.pythons = [f"pypy{sys.version_info[0]}.{sys.version_info[1]}"]
 
     return tmpdir, local, conf, machine_file
 
@@ -144,7 +144,7 @@ def test_run_publish(capfd, basic_conf, request: pytest.FixtureRequest):
     assert 'Running benchmarks.' not in text
 
     # Check EXISTING and --environment work
-    python = "{0[0]}.{0[1]}".format(sys.version_info)
+    python = f"{sys.version_info[0]}.{sys.version_info[1]}"
     env_type = tools.get_default_environment_type(conf, python)
     env_spec = ("-E", env_type + ":" + python)
     tools.run_asv_with_conf(conf, 'run', "EXISTING", '--quick',

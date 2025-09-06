@@ -1,3 +1,12 @@
+[build-system]
+requires = [
+    # pin setuptools:
+    # https://github.com/airspeed-velocity/asv/pull/1426#issuecomment-2290658198
+    "setuptools>=64,<72.2.0",
+    "setuptools_scm>=6", # Can't update to 8, it needs 3.8
+]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "asv"
 description = "Airspeed Velocity: A simple Python history benchmarking tool"
@@ -73,7 +82,6 @@ doc = [
 ]
 dev = [
     "ruff",
-    "isort >= 5.11.5",
 ]
 hg = [
     "python-hglib",
@@ -88,44 +96,41 @@ testR = [
     "rpy2; platform_system != 'Windows' and platform_python_implementation != 'PyPy'",
 ]
 all = ["asv[doc,dev,hg,envs]"]
-[build-system]
-requires = [
-    "wheel",
-    # pin setuptools:
-    # https://github.com/airspeed-velocity/asv/pull/1426#issuecomment-2290658198
-    "setuptools>=64,<72.2.0",
-    "setuptools_scm>=6", # Can't update to 8, it needs 3.8
-]
-build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-platforms = [
-    "any",
-]
-zip-safe = false
-include-package-data = true
 license-files = [
     "LICENSE.rst",
 ]
-
-[tool.setuptools.exclude-package-data]
-"*" = ["*.sh"]
 
 [tool.pytest.ini_options]
 addopts = "-p no:logging"
 
 [tool.ruff]
 line-length = 99
-extend-ignore = [
-    "E741", # Do not use variables named 'I', 'O', or 'l'
-]
 extend-exclude = [
     "test/example_results/cheetah",
 ]
 
-[tool.isort]
-line_length = 99
-only_sections = true
+[tool.ruff.lint]
+extend-select = [
+    "B",
+    "C4",
+    "I",
+    "PGH",
+    "UP",
+]
+ignore = [
+    "B006",  # Do not use mutable data structures for argument defaults  # FIXME
+    "B007",  # Loop control variable `j` not used within loop body
+    "B020",  # Loop control variable overrides iterable it iterates
+    "B904",  # Within an `except` clause, raise exceptions with `raise ... from err`
+    "E741",  # Do not use variables named 'I', 'O', or 'l'
+    "UP015", # Unnecessary mode argument
+    "UP028", # Replace `yield` over `for` loop with `yield from`
+]
+
+[tool.ruff.lint.per-file-ignores]
+"test/**" = ["B011", "B017", "B018", "B028"]
 
 [tool.setuptools_scm]
 write_to = "asv/_version.py"

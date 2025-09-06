@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import os
 import datetime
+import os
 import shutil
 from os.path import join
 
@@ -17,7 +17,7 @@ def _truncate_floats(item, digits=5):
     elif isinstance(item, list):
         return [_truncate_floats(x, digits) for x in item]
     elif isinstance(item, dict):
-        return dict((k, _truncate_floats(v)) for k, v in item.items())
+        return {k: _truncate_floats(v) for k, v in item.items()}
     else:
         return item
 
@@ -155,7 +155,7 @@ def test_get_result_hash_from_prefix(tmpdir):
     assert 'one of multiple commits' in str(excinfo.value)
 
 
-def test_backward_compat_load(example_results): # noqa F811 redefinition of the imported fixture,it can be removed when the fixture is moved to conftest.py file and the import deleted
+def test_backward_compat_load(example_results): # noqa: F811 redefinition of the imported fixture,it can be removed when the fixture is moved to conftest.py file and the import deleted
     resultsdir = example_results
     filename = join('cheetah', '624da0aa-py2.7-Cython-numpy1.8.json')
 
@@ -204,7 +204,7 @@ def test_json_timestamp(tmpdir):
     assert values['duration'] == duration
 
 
-def test_iter_results(capsys, tmpdir, example_results): # noqa F811 noqa F811 redefinition of the imported fixture,it can be removed when the fixture is moved to conftest.py file and the import deleted
+def test_iter_results(capsys, tmpdir, example_results): # noqa: F811 noqa F811 redefinition of the imported fixture,it can be removed when the fixture is moved to conftest.py file and the import deleted
     dst = os.path.join(str(tmpdir), 'example_results')
     shutil.copytree(example_results, dst)
 

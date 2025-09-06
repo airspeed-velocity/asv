@@ -1,10 +1,10 @@
 
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from ..benchmarks import Benchmarks
-from . import Command, common_args
-from ..repo import get_repo
 from .. import environment
+from ..benchmarks import Benchmarks
+from ..repo import get_repo
+from . import Command, common_args
 
 
 class Check(Command):

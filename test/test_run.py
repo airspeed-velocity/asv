@@ -1,18 +1,18 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import datetime
+import glob
 import os
 import re
 import shutil
-import glob
-import datetime
 import textwrap
 from os.path import join
 
 import pytest
 
-from asv import results, environment, repo, util
-from asv.commands.run import Run
+from asv import environment, repo, results, util
 from asv.commands import make_argparser
+from asv.commands.run import Run
 
 from . import tools
 
@@ -40,9 +40,11 @@ def test_run_spec(basic_conf_2):
     conf.build_cache_size = 5
 
     extra_branches = [(f'{util.git_default_branch()}~1', 'some-branch', [12])]
+    tags = (2, 12)
     dvcs_path = os.path.join(tmpdir, 'test_repo2')
     dvcs = tools.generate_test_repo(dvcs_path, [1, 2],
-                                    extra_branches=extra_branches)
+                                    extra_branches=extra_branches,
+                                    tags=tags)
     conf.repo = dvcs.path
 
     initial_commit = dvcs.get_hash(f"{util.git_default_branch()}~1")
@@ -77,7 +79,7 @@ def test_run_spec(basic_conf_2):
         if pyver.startswith('pypy'):
             pyver = pyver[2:]
 
-        expected = set(['machine.json'])
+        expected = {'machine.json'}
         for commit in expected_commits:
             for psver in tools.DUMMY2_VERSIONS:
                 expected.add(f'{commit[:8]}-{tool_name}-py{pyver}-pip+asv_dummy_'
@@ -100,6 +102,9 @@ def test_run_spec(basic_conf_2):
     ):
         for range_spec in (None, "NEW", "ALL"):
             _test_run(range_spec, branches, expected_commits)
+
+    expected_tag_runs = (initial_commit, "tag2", "tag12")
+    _test_run("TAGS", [None], expected_tag_runs)
 
     # test the HASHFILE version of range_spec'ing
     expected_commits = (initial_commit, branch_commit)

@@ -1,10 +1,10 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import sys
 import re
+import sys
 
-from asv.results import iter_results_for_machine
 from asv import util
+from asv.results import iter_results_for_machine
 
 from . import tools
 from .tools import get_default_environment_type
@@ -13,7 +13,7 @@ from .tools import get_default_environment_type
 def test_continuous(capfd, basic_conf_2):
     tmpdir, local, conf, machine_file = basic_conf_2
 
-    python = "{0[0]}.{0[1]}".format(sys.version_info)
+    python = f"{sys.version_info[0]}.{sys.version_info[1]}"
     env_type = get_default_environment_type(conf, python)
     env_spec = ("-E", env_type + ":" + python)
 

@@ -5,8 +5,8 @@ import shutil
 
 from asv_runner.console import color_print
 
-from . import Command
 from ..console import log
+from . import Command
 
 
 class Quickstart(Command):

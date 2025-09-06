@@ -1,7 +1,7 @@
 import contextlib
-import sys
 import os
 import shutil
+import sys
 import textwrap
 from os.path import abspath, dirname, join, relpath
 
@@ -15,8 +15,18 @@ from asv.step_detect import L1Dist
 from . import tools
 from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
 from .test_web import _rebuild_basic_html
-from .tools import (DUMMY1_VERSION, DUMMY2_VERSIONS, HAS_CONDA, PYTHON_VER1, PYTHON_VER2,
-                    WAIT_TIME, WIN, _build_dummy_wheels, locked_cache_dir, run_asv_with_conf)
+from .tools import (
+    DUMMY1_VERSION,
+    DUMMY2_VERSIONS,
+    HAS_CONDA,
+    PYTHON_VER1,
+    PYTHON_VER2,
+    WAIT_TIME,
+    WIN,
+    _build_dummy_wheels,
+    locked_cache_dir,
+    run_asv_with_conf,
+)
 
 try:
     import hglib
@@ -105,7 +115,7 @@ def generate_basic_conf(tmpdir,
     conf = config.Config.from_json(conf_dict)
 
     if hasattr(sys, 'pypy_version_info'):
-        conf.pythons = ["pypy{0[0]}.{0[1]}".format(sys.version_info)]
+        conf.pythons = [f"pypy{sys.version_info[0]}.{sys.version_info[1]}"]
 
     return tmpdir, local, conf, machine_file
 
@@ -309,10 +319,10 @@ def dummy_packages(request, monkeypatch):
     with locked_cache_dir(request.config, "asv-wheels", timeout=900, tag=tag) as cache_dir:
         wheel_dir = os.path.abspath(join(str(cache_dir), 'wheels'))
 
-        monkeypatch.setenv(str('PIP_FIND_LINKS'), str('file://' + wheel_dir))
+        monkeypatch.setenv('PIP_FIND_LINKS', str('file://' + wheel_dir))
 
         condarc = join(wheel_dir, 'condarc')
-        monkeypatch.setenv(str('CONDARC'), str(condarc))
+        monkeypatch.setenv('CONDARC', str(condarc))
 
         if os.path.isdir(wheel_dir):
             return

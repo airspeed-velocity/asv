@@ -22,6 +22,10 @@ this file and their expected values.
 
 .. only:: not man
 
+``version``
+-----------
+Version of the `asv.conf.json` spec. Currently only `1`.
+
 ``project``
 -----------
 The name of the project being benchmarked.
@@ -73,14 +77,14 @@ Airspeed Velocity rebuilds the project as needed, using these commands.
 The defaults are::
 
   "install_command":
-  ["in-dir={env_dir} python -mpip install {wheel_file}"],
+  ["in-dir={env_dir} python -m pip install {wheel_file}"],
 
   "uninstall_command":
-  ["return-code=any python -mpip uninstall -y {project}"],
+  ["return-code=any python -m pip uninstall -y {project}"],
 
   "build_command":
   ["python setup.py build",
-   "PIP_NO_BUILD_ISOLATION=false python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}"],
+   "PIP_NO_BUILD_ISOLATION=false python -m pip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}"],
 
 .. note::
 
@@ -91,7 +95,7 @@ The defaults are::
 
           "build_command":
           ["python setup.py build",
-           "python -mpip wheel -w {build_cache_dir} {build_dir}"],
+           "python -m pip wheel -w {build_cache_dir} {build_dir}"],
 
 The install commands should install the project in the active Python
 environment (virtualenv/conda), so that it can be used by the
@@ -170,7 +174,7 @@ new tab when a data point is clicked on in the web interface.
 For example, if using Github to host your repository, the
 ``show_commit_url`` should be:
 
-    http://github.com/owner/project/commit/
+    https://github.com/owner/project/commit/
 
 ``pythons``
 -----------
@@ -464,6 +468,12 @@ are stored in.  If not provided, defaults to ``"results"``.
 ------------
 The directory, relative to the current directory, to save the website
 content in.  If not provided, defaults to ``"html"``.
+
+``install_timeout``, ``default_benchmark_timeout``
+------------------------------------------------------------
+The maximum time in seconds that an install or benchmark is allowed to run
+before it is terminated. Benchmark timeout can also be set individually, see
+`benchmark attributes <writing_benchmarks.html#benchmark-attributes>`_.
 
 ``hash_length``
 ---------------

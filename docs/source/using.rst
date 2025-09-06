@@ -55,6 +55,8 @@ do, and there is also a :ref:`conf-reference` with more details.  The
 values that will most likely need to be changed for any benchmarking
 suite are:
 
+- ``version``: Version of the `asv.conf.json` spec. As of `v0.6.4`, there is only version `1`.
+
 - ``project``: The Python package name of the project being benchmarked.
 
 - ``project_url``: The project's homepage.
@@ -75,7 +77,7 @@ suite are:
   the project.  This allows users to click on a commit in the web
   interface and have it display the contents of that commit.  For a
   github project, the URL is of the form
-  ``http://github.com/$OWNER/$REPO/commit/``.
+  ``https://github.com/$OWNER/$REPO/commit/``.
 
 - ``environment_type``: The tool used to create environments.  May be
   ``conda`` or ``virtualenv`` or ``mamba``.  If Conda supports the
@@ -210,7 +212,7 @@ The ``virtualenv`` environment also supports PyPy_. You can specify
 ``"pythons"`` list.  Note that PyPy must also be installed and
 available on your ``PATH``.
 
-.. _PyPy: http://pypy.org/
+.. _PyPy: https://pypy.org/
 
 Benchmarking
 ````````````
@@ -260,7 +262,7 @@ benchmarked.  The value of this argument is passed directly to either ``git
 log`` or to the Mercurial log command to get the set of commits, so it actually
 has a very powerful syntax defined in the `gitrevisions manpage
 <https://www.kernel.org/pub/software/scm/git/docs/gitrevisions.html>`__, or the
-`revsets help section <http://www.selenic.com/hg/help/revsets>`_ for Mercurial.
+`revsets help section <https://repo.mercurial-scm.org/hg/help/revsets>`_ for Mercurial.
 
 For example, in a Git repository, one can test a range of commits on a
 particular branch since branching off main::
@@ -545,7 +547,7 @@ simple table summary of profiling results is displayed::
 Navigating these sorts of results can be tricky, and generally you
 want to open the results in a GUI tool, such as `RunSnakeRun
 <http://www.vrplumber.com/programming/runsnakerun/>`__ or `snakeviz
-<http://jiffyclub.github.io/snakeviz/>`__.  For example, by passing
+<https://jiffyclub.github.io/snakeviz/>`__.  For example, by passing
 the ``--gui=runsnake`` to ``asv profile``, the profile is collected
 (or extracted) and opened in the RunSnakeRun tool.
 

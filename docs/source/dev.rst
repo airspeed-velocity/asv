@@ -279,7 +279,7 @@ Full-stack testing
 ------------------
 
 For full-stack testing, we use `Selenium WebDriver
-<http://seleniumhq.org/>`__ and its `Python bindings
+<https://www.selenium.dev/>`__ and its `Python bindings
 <https://pypi.python.org/pypi/selenium>`__.
 Additional documentation for Selenium Python bindings is `here
 <https://selenium-python.readthedocs.org/index.html>`__.
@@ -302,7 +302,7 @@ To use them, at least one of the following needs to be installed:
   ``apt-get install chromium-chromedriver``, on Fedora via
   ``dnf install chromedriver``.
 
-* `PhantomJS <http://phantomjs.org/>`__:
+* `PhantomJS <https://phantomjs.org/>`__:
   Headless web browser (discontinued, prefer using Firefox or Chrome).
 
 For other options regarding the webdriver to use, see ``py.test --help``.

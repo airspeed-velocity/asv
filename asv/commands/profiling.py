@@ -1,31 +1,30 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import contextlib
-import io
 import os
 import pstats
 import tempfile
 
 from asv_runner.console import color_print
 
-from . import Command, common_args
+from .. import util
 from ..benchmarks import Benchmarks
 from ..console import log
 from ..environment import get_environments, is_existing_only, ExistingEnvironment
 from ..machine import Machine
 from ..profiling import ProfilerGui
-from ..repo import get_repo, NoSuchNameError
+from ..repo import NoSuchNameError, get_repo
 from ..results import iter_results_for_machine
 from ..runner import run_benchmarks
 from ..util import hash_equal, iter_subclasses
-from .. import util
+from . import Command, common_args
 
 
 @contextlib.contextmanager
 def temp_profile(profile_data):
     profile_fd, profile_path = tempfile.mkstemp()
     try:
-        with io.open(profile_fd, 'wb', closefd=True) as fd:
+        with open(profile_fd, 'wb', closefd=True) as fd:
             fd.write(profile_data)
 
         yield profile_path
@@ -184,8 +183,8 @@ class Profile(Command):
             elif len(benchmarks) > 1:
                 exact_matches = benchmarks.filter_out([x for x in benchmarks if x != benchmark])
                 if len(exact_matches) == 1:
-                    log.warning("'{0}' matches more than one benchmark, "
-                                "using exact match".format(benchmark))
+                    log.warning(f"'{benchmark}' matches more than one benchmark, "
+                                "using exact match")
                     benchmarks = exact_matches
                 else:
                     raise util.UserError(f"'{benchmark}' matches more than one benchmark")
@@ -214,7 +213,7 @@ class Profile(Command):
             with temp_profile(profile_data) as profile_path:
                 return cls.guis[gui].open_profiler_gui(profile_path)
         elif output is not None:
-            with io.open(output, 'wb') as fd:
+            with open(output, 'wb') as fd:
                 fd.write(profile_data)
         else:
             color_print('')

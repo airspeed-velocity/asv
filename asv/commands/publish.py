@@ -1,21 +1,21 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
+import datetime
+import multiprocessing
 import os
 import shutil
-import multiprocessing
-import datetime
 from collections import defaultdict
 
 from importlib_metadata import version as get_version
 
-from asv.commands import Command
+from asv import _stats, util
 from asv.benchmarks import Benchmarks
+from asv.commands import Command
 from asv.console import log
 from asv.graph import GraphSet
 from asv.machine import iter_machine_files
+from asv.publishing import OutputPublisher
 from asv.repo import get_repo
 from asv.results import iter_results
-from asv.publishing import OutputPublisher
-from asv import _stats, util
 
 
 def check_benchmark_params(name, benchmark):
@@ -157,11 +157,11 @@ class Publish(Command):
                 tags[tag] = revisions[tags[tag]]
                 hash_to_date[commit_hash] = repo.get_date_from_name(commit_hash)
 
-            revision_to_date = dict((r, hash_to_date[h]) for h, r in revisions.items())
+            revision_to_date = {r: hash_to_date[h] for h, r in revisions.items()}
 
-            branches = dict(
-                (branch, repo.get_branch_commits(branch))
-                for branch in conf.branches)
+            branches = {
+                branch: repo.get_branch_commits(branch)
+                for branch in conf.branches}
 
         log.step()
         log.info("Loading results")
@@ -266,7 +266,7 @@ class Publish(Command):
             val.sort(key=lambda x: '[none]' if x is None else str(x))
             params[key] = val
         params['branch'] = [repo.get_branch_name(branch) for branch in conf.branches]
-        revision_to_hash = dict((r, h) for h, r in revisions.items())
+        revision_to_hash = {r: h for h, r in revisions.items()}
         util.write_json(os.path.join(conf.html_dir, "index.json"), {
             'project': conf.project,
             'project_url': conf.project_url,

@@ -1,5 +1,5 @@
-import os
 import asyncio
+import os
 from pathlib import Path
 
 from yaml import load
@@ -9,7 +9,7 @@ try:
 except ImportError:
     from yaml import Loader
 
-from rattler import solve, install, VirtualPackage
+from rattler import VirtualPackage, install, solve
 
 from .. import environment, util
 from ..console import log
@@ -61,7 +61,7 @@ class Rattler(environment.Environment):
                     f"Environment file {conf.conda_environment_file} not found, ignoring"
                 )
 
-        super(Rattler, self).__init__(conf, python, requirements, tagged_env_vars)
+        super().__init__(conf, python, requirements, tagged_env_vars)
         # Rattler configuration things
         self._pkg_cache = f"{self._env_dir}/pkgs"
 
@@ -128,7 +128,7 @@ class Rattler(environment.Environment):
         return _args, pip_args
 
     def run_executable(self, executable, args, **kwargs):
-        return super(Rattler, self).run_executable(executable, args, **kwargs)
+        return super().run_executable(executable, args, **kwargs)
 
     def run(self, args, **kwargs):
         log.debug(f"Running '{' '.join(args)}' in {self.name}")
@@ -137,4 +137,4 @@ class Rattler(environment.Environment):
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when
         # upgrading pip itself, and avoids shebang length limit on Linux
-        return self.run_executable("python", ["-mpip"] + list(args), **kwargs)
+        return self.run_executable("python", ["-m", "pip"] + list(args), **kwargs)

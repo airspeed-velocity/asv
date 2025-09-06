@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import io
 import datetime
+import io
 import xml.dom.minidom
 
 import pytest

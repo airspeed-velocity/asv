@@ -1,15 +1,14 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import socketserver
-import http.server
 import errno
+import http.server
 import os
 import random
-import socket
+import socketserver
 
-from . import Command
-from ..console import log
 from .. import util
+from ..console import log
+from . import Command
 
 
 def random_ports(port, n):
@@ -39,7 +38,7 @@ def create_httpd(handler_cls, port=0):
             httpd = MyTCPServer(("", port), handler_cls)
             base_url = f"http://127.0.0.1:{port}/"
             break
-        except socket.error as e:
+        except OSError as e:
             if e.errno == errno.EADDRINUSE:
                 continue
             else:

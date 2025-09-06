@@ -5,7 +5,7 @@ from setuptools import setup
 # This file is a template, and will be rendered before executed.
 # So the double curly brackets will become single after rendering, and
 # when executed, this will work as expected
-content = 'env = {{}}\n'.format(repr(dict(os.environ)))  # noqa W291 see above comment
+content = 'env = {{!r}}\n'.format(dict(os.environ))  # noqa: UP032, F523 see above comment
 with open('asv_test_repo/build_time_env.py', 'w') as f:
     f.write(content)
 

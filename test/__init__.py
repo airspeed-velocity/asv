@@ -1,8 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from asv.console import log
 # Monkey-patch the machine name
 from asv import machine
+from asv.console import log
 
 log.enable()
 

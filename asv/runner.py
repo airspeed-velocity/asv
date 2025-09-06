@@ -1,23 +1,22 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import io
-import json
-import os
-import sys
-import time
-import tempfile
-import itertools
 import datetime
+import itertools
+import json
+import math
+import os
 import pstats
 import socket
 import struct
+import sys
+import tempfile
 import threading
+import time
 import traceback
-import math
 
+from . import util
 from .console import log
 from .results import Results, format_benchmark_result
-from . import util
 
 WIN = (os.name == "nt")
 
@@ -588,7 +587,7 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
     """
     name = benchmark['name']
     if benchmark['params']:
-        name += '-%d' % (param_idx,)
+        name += f'-{param_idx}'
 
     if profile:
         profile_fd, profile_path = tempfile.mkstemp()
@@ -647,7 +646,7 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx,
             out = f"For parameters: {', '.join(params)}\n{out}"
 
         if profile:
-            with io.open(profile_path, 'rb') as profile_fd:
+            with open(profile_path, 'rb') as profile_fd:
                 profile_data = profile_fd.read()
             profile_data = profile_data if profile_data else None
         else:
@@ -731,7 +730,7 @@ class Spawner:
 
 class ForkServer(Spawner):
     def __init__(self, env, root):
-        super(ForkServer, self).__init__(env, root)
+        super().__init__(env, root)
 
         if not (hasattr(os, 'fork') and hasattr(os, 'setpgid')):
             raise RuntimeError("ForkServer only available on POSIX")
@@ -810,7 +809,7 @@ class ForkServer(Spawner):
             try:
                 s.connect(self.socket_name)
                 break
-            except socket.error:
+            except OSError:
                 if retry > 1:
                     time.sleep(0.2)
                 else:

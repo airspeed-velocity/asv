@@ -78,7 +78,7 @@ class Mamba(environment.Environment):
             else:
                 log.debug(f"Environment file {conf.conda_environment_file} not found, ignoring")
 
-        super(Mamba, self).__init__(conf, python, requirements, tagged_env_vars)
+        super().__init__(conf, python, requirements, tagged_env_vars)
         self.context = libmambapy.Context()
         self.context.pkgs_dirs = [f"{self._env_dir}/pkgs"]
         # Handle MAMBARC environment variable
@@ -138,8 +138,8 @@ class Mamba(environment.Environment):
         env.update(self.build_env_vars)
         Path(f"{self._path}/conda-meta").mkdir(parents=True, exist_ok=True)
         if not self._mamba_environment_file:
-            # Construct payload
-            mamba_pkgs = ["wheel", "pip"]
+            # Construct payload; since there is no environment.yml file, we need to add the python version ourselves
+            mamba_pkgs = [f"python={self._python}", "wheel", "pip"]
         else:
             # For named environments
             env_file_name = self._mamba_environment_file
@@ -190,7 +190,7 @@ class Mamba(environment.Environment):
         return mamba_args, pip_args
 
     def run_executable(self, executable, args, **kwargs):
-        return super(Mamba, self).run_executable(executable, args, **kwargs)
+        return super().run_executable(executable, args, **kwargs)
 
     def run(self, args, **kwargs):
         log.debug(f"Running '{' '.join(args)}' in {self.name}")
@@ -199,4 +199,4 @@ class Mamba(environment.Environment):
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when
         # upgrading pip itself, and avoids shebang length limit on Linux
-        return self.run_executable("python", ["-mpip"] + list(args), **kwargs)
+        return self.run_executable("python", ["-m", "pip"] + list(args), **kwargs)

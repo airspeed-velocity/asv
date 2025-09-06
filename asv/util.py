@@ -5,28 +5,28 @@ Various low-level utilities.
 """
 
 
+import collections
 import datetime
+import errno
+import functools
 import json
 import math
+import multiprocessing
+import operator
 import os
 import re
 import select
+import shlex
+import shutil
 import signal
+import stat
 import subprocess
 import sys
-import time
-import errno
 import threading
-import shutil
-import stat
-import shlex
-import operator
-import collections
-import multiprocessing
-import functools
+import time
 
 import json5
-from asv_runner.util import human_time, human_float, _human_time_units
+from asv_runner.util import _human_time_units, human_float, human_time
 
 WIN = (os.name == 'nt')
 
@@ -58,7 +58,7 @@ class ParallelFailure(Exception):
         return (ParallelFailure, (self.message, self.exc_cls, self.traceback_str))
 
     def __str__(self):
-        return "{0}: {1}\n    {2}".format(self.exc_cls.__name__,
+        return "{}: {}\n    {}".format(self.exc_cls.__name__,
                                           self.message,
                                           self.traceback_str.replace("\n", "\n    "))
 
@@ -116,7 +116,7 @@ def human_file_size(size, err=None):
     if size == 0:
         num_scale = 0
     else:
-        num_scale = int(math.floor(math.log(size) / math.log(1000)))
+        num_scale = math.floor(math.log(size) / math.log(1000))
     if num_scale > 7:
         suffix = '?'
     else:
@@ -181,13 +181,12 @@ def parse_human_time(string, base_period='d'):
     suffixes = '|'.join(units.keys())
 
     try:
-        m = re.match(r'^\s*([0-9.]+)\s*({})\s*$'.format(suffixes), string)
+        m = re.match(rf'^\s*([0-9.]+)\s*({suffixes})\s*$', string)
         if m is None:
             raise ValueError()
         return float(m.group(1)) * units[m.group(2)]
     except ValueError:
-        raise ValueError("%r is not a valid time period (valid units: %s)"
-                         % (string, suffixes))
+        raise ValueError(f"{string!r} is not a valid time period (valid units: {suffixes})")
 
 
 def which(filename, paths=None):
@@ -255,7 +254,7 @@ class ProcessError(subprocess.CalledProcessError):
         if self.retcode == TIMEOUT_RETCODE:
             return f"Command '{' '.join(self.args)}' timed out"
         else:
-            return "Command '{0}' returned non-zero exit status {1}".format(
+            return "Command '{}' returned non-zero exit status {}".format(
                 ' '.join(self.args), self.retcode)
 
 
@@ -396,8 +395,8 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     log.debug(f"Running '{' '.join(args)}'")
 
-    kwargs = dict(shell=shell, env=env, cwd=cwd,
-                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    kwargs = {'shell': shell, 'env': env, 'cwd': cwd,
+                  'stdout': subprocess.PIPE, 'stderr': subprocess.PIPE}
     if redirect_stderr:
         kwargs['stderr'] = subprocess.STDOUT
     if WIN:
@@ -534,7 +533,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                     else:
                         rlist, wlist, xlist = select.select(
                             list(fds.keys()), [], [], timeout)
-                except select.error as err:
+                except OSError as err:
                     if err.args[0] == errno.EINTR:
                         # interrupted by signal handler; try again
                         continue
@@ -713,19 +712,19 @@ def load_json(path, api_version=None, js_comments=False):
             data = json.loads(content)
         except ValueError as err:
             raise UserError(
-                f"Error parsing JSON in file '{path}': {str(err)}")
+                f"Error parsing JSON in file '{path}': {err}")
 
     if api_version is not None:
         if 'version' in data:
             if data['version'] < api_version:
                 raise UserError(
-                    "{0} is stored in an old file format.  Run "
-                    "`asv update` to update it.".format(path))
+                    f"{path} is stored in an old file format.  Run "
+                    "`asv update` to update it.")
             elif data['version'] > api_version:
                 raise UserError(
-                    "{0} is stored in a format that is newer than "
+                    f"{path} is stored in a format that is newer than "
                     "what this version of asv understands.  Update "
-                    "asv to use this file.".format(path))
+                    "asv to use this file.")
 
             del data['version']
         else:
@@ -765,10 +764,10 @@ def update_json(cls, path, api_version, compact=False):
         write_json(path, d, api_version, compact=compact)
     elif d['version'] > api_version:
         raise UserError(
-            "{0} is stored in a format that is newer than "
+            f"{path} is stored in a format that is newer than "
             "what this version of asv understands. "
             "Upgrade asv in order to use or add to "
-            "these results.".format(path))
+            "these results.")
 
 
 def iter_chunks(s, n):
@@ -1048,7 +1047,7 @@ else:
                 pass
 
         # Reraise original error
-        raise
+        raise exc_info[1]
 
     def long_path_open(filename, *a, **kw):
         return open(long_path(filename), *a, **kw)
@@ -1104,7 +1103,7 @@ def recvall(sock, size):
         data += s
         if not s:
             raise RuntimeError("did not receive data from socket "
-                               "(size {}, got only {!r})".format(size, data))
+                               f"(size {size}, got only {data!r})")
     return data
 
 
@@ -1145,10 +1144,9 @@ def interpolate_command(command, variables):
     try:
         result = [c.format(**variables) for c in parts]
     except KeyError as exc:
-        raise UserError("Configuration error: {{{0}}} not available "
-                        "when substituting into command {1!r} "
-                        "Available: {2!r}"
-                        "".format(exc.args[0], command, variables))
+        raise UserError(f"Configuration error: {{{exc.args[0]}}} not available "
+                        f"when substituting into command {command!r} "
+                        f"Available: {variables!r}")
 
     env = {}
 
@@ -1166,8 +1164,7 @@ def interpolate_command(command, variables):
         if result[0].startswith('return-code='):
             if return_codes_set:
                 raise UserError("Configuration error: multiple return-code specifications "
-                                "in command {0!r} "
-                                "".format(command))
+                                f"in command {command!r} ")
                 break
 
             if result[0] == 'return-code=any':
@@ -1179,7 +1176,7 @@ def interpolate_command(command, variables):
             m = re.match('^return-code=([0-9,]+)$', result[0])
             if m:
                 try:
-                    return_codes = set(int(x) for x in m.group(1).split(","))
+                    return_codes = {int(x) for x in m.group(1).split(",")}
                     return_codes_set = True
                     del result[0]
                     continue
@@ -1187,14 +1184,12 @@ def interpolate_command(command, variables):
                     pass
 
             raise UserError("Configuration error: invalid return-code specification "
-                            "{0!r} when substituting into command {1!r} "
-                            "".format(result[0], command))
+                            f"{result[0]!r} when substituting into command {command!r} ")
 
         if result[0].startswith('in-dir='):
             if cwd is not None:
                 raise UserError("Configuration error: multiple in-dir specifications "
-                                "in command {0!r} "
-                                "".format(command))
+                                f"in command {command!r} ")
                 break
 
             cwd = result[0][7:]

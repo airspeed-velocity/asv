@@ -21,3 +21,12 @@ prune docs/build
 prune build
 
 global-exclude *.pyc *.o __pycache__
+
+exclude .codecov.yml
+exclude .coveragerc
+exclude .github
+exclude .gitignore
+exclude .pre-commit-config.yaml
+exclude .readthedocs.yaml
+exclude scripts
+exclude towncrier.toml

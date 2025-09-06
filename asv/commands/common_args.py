@@ -1,9 +1,9 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 
+import argparse
 import math
 import multiprocessing
-import argparse
 
 from importlib_metadata import version as get_version
 
@@ -16,9 +16,9 @@ def add_global_arguments(parser, suppress_defaults=True):
     # parser should have suppress_defaults=False
 
     if suppress_defaults:
-        suppressor = dict(default=argparse.SUPPRESS)
+        suppressor = {"default": argparse.SUPPRESS}
     else:
-        suppressor = dict()
+        suppressor = {}
 
     parser.add_argument(
         "--verbose", "-v", action="store_true",
@@ -83,7 +83,7 @@ class DictionaryArgAction(argparse.Action):
         self.converters = converters
         self.__choices = choices
         self.dict_dest = dict_dest
-        super(DictionaryArgAction, self).__init__(option_strings, dest, **kwargs)
+        super().__init__(option_strings, dest, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         # Parse and check value
@@ -202,7 +202,7 @@ class PythonArgAction(argparse.Action):
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
         if nargs is not None:
             raise ValueError("nargs not allowed")
-        super(PythonArgAction, self).__init__(option_strings, dest, nargs=1, **kwargs)
+        super().__init__(option_strings, dest, nargs=1, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         items = list(getattr(namespace, "env_spec", []))
@@ -210,7 +210,7 @@ class PythonArgAction(argparse.Action):
             items.extend(["existing:same"])
         else:
             items.extend([":" + value for value in values])
-        setattr(namespace, "env_spec", items)
+        namespace.env_spec = items
 
 
 def add_environment(parser, default_same=False):

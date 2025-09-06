@@ -1,11 +1,11 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
+import math
 import os
 import traceback
-import math
 
-from . import util, step_detect
-from .util import is_na, mean_na, geom_mean_na
+from . import step_detect, util
+from .util import geom_mean_na, is_na, mean_na
 
 # This is the maximum number of points to include in summary graphs.
 # It is based on the number of pixels in the summary graph display on
@@ -21,7 +21,7 @@ class GraphSet:
     def __init__(self):
         self._graphs = {}
         self._groups = {}
-        super(GraphSet, self).__init__()
+        super().__init__()
 
     def get_graph(self, benchmark_name, params):
         graph = Graph(benchmark_name, params)

@@ -4,23 +4,23 @@ import re
 import shutil
 import time
 import urllib.parse
-from os.path import join, abspath, dirname
+from os.path import abspath, dirname, join
 
 import pytest
 
 from asv import config, util
 
 try:
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    from selenium.webdriver import ActionChains
     from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+    from selenium.webdriver import ActionChains
     from selenium.webdriver.common.by import By
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver.support.ui import WebDriverWait
 except ImportError:
     pass
 
 from . import tools
-from .tools import get_with_retry, WAIT_TIME, WIN
+from .tools import WAIT_TIME, WIN, get_with_retry
 
 
 def _rebuild_basic_html(basedir):
@@ -116,10 +116,10 @@ def test_web_summarygrid(browser, basic_html):
 
         # Verify benchmark names are displayed as expected
         for href, expected in (
-            ('#subdir.time_subdir.time_foo', u'time_subdir.time_foo'),
-            ('#params_examples.ParamSuite.track_value', u'ParamSuite.track_value'),
-            ('#custom.time_function', u'My Custom Function'),
-            ('#named.track_custom_pretty_name', u'this.is/the.answer'),
+            ('#subdir.time_subdir.time_foo', 'time_subdir.time_foo'),
+            ('#params_examples.ParamSuite.track_value', 'ParamSuite.track_value'),
+            ('#custom.time_function', 'My Custom Function'),
+            ('#named.track_custom_pretty_name', 'this.is/the.answer'),
         ):
             item = browser.find_element(By.XPATH,
                                         f"//a[@href='{href}']/div[@class='benchmark-text']")

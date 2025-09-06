@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import sys
-import re
 import os
+import re
+import sys
 
 from packaging.version import Version
 
@@ -41,13 +41,13 @@ class Virtualenv(environment.Environment):
         self._executable = executable
         self._python = python
         self._requirements = requirements
-        super(Virtualenv, self).__init__(conf,
+        super().__init__(conf,
                                          python,
                                          requirements,
                                          tagged_env_vars)
 
         try:
-            import virtualenv  # noqa F401 unused, but required to test whether virtualenv is installed or not
+            import virtualenv  # noqa: F401 unused, but required to test whether virtualenv is installed or not
         except ImportError:
             raise environment.EnvironmentUnavailable(
                 "virtualenv package not installed")
@@ -129,11 +129,18 @@ class Virtualenv(environment.Environment):
         env = dict(os.environ)
         env.update(self.build_env_vars)
 
+        # NOTE: Omit `--wheel=bundle` for virtualenv v20.31 and later.
+        # See https://github.com/airspeed-velocity/asv/issues/1484 and https://github.com/pypa/virtualenv/pull/2868
+        # TODO: Remove this check and the `--wheel=bundle` option altogether
+        # once asv supports at minimum Python >= 3.8 and virtualenv >= 20.31.
+        import virtualenv
+        use_wheel = Version(virtualenv.__version__) < Version('20.31')
+
         log.info(f"Creating virtualenv for {self.name}")
         util.check_call([
             sys.executable,
-            "-mvirtualenv",
-            "--wheel=bundle",
+            "-m", "virtualenv",
+            *(["--wheel=bundle"] if use_wheel else []),
             "--setuptools=bundle",
             "-p",
             self._executable,
@@ -166,7 +173,7 @@ class Virtualenv(environment.Environment):
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when
         # upgrading pip itself, and avoids shebang length limit on Linux
-        return self.run_executable('python', ['-mpip'] + list(args), **kwargs)
+        return self.run_executable('python', ['-m', 'pip'] + list(args), **kwargs)
 
     def run(self, args, **kwargs):
         joined_args = ' '.join(args)

@@ -32,11 +32,11 @@ For managing the environments, one of the following packages is required:
   which is typically part of ``mamba``. In this case ``conda`` and ``conda-build``
   must be present too.
 
-- `virtualenv <http://virtualenv.org/>`__, which is required since
+- `virtualenv <https://virtualenv.pypa.io/>`__, which is required since
   venv is not compatible with other versions of Python.
 
-- An `anaconda <https://store.continuum.io/cshop/anaconda/>`__ or
-  `miniconda <http://conda.pydata.org/miniconda.html>`__
+- An `anaconda <https://www.anaconda.com/download>`__ or
+  `miniconda <https://www.anaconda.com/docs/getting-started/miniconda/>`__
   installation, with the ``conda`` command available on your path.
 
 .. note::

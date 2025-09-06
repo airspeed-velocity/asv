@@ -2,9 +2,9 @@
 # Also covered by the 3-clause BSD style license FOR boa - see LICENSE in mamba-org/boa
 # Copyright 2019 QuantStack and the Mamba contributors.
 # Very lightly edited / simplified for use within asv
+import collections
 import os
 import urllib.parse
-import collections
 
 import libmambapy
 from conda.base.constants import ChannelPriority
@@ -123,7 +123,7 @@ def load_channels(
     subprio_index = len(index)
     if has_priority:
         # first, count unique channels
-        n_channels = len(set([entry["channel"].canonical_name for _, entry in index]))
+        n_channels = len({entry["channel"].canonical_name for _, entry in index})
         current_channel = index[0][1]["channel"].canonical_name
         channel_prio = n_channels
 

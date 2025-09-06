@@ -22,9 +22,9 @@
 
     "project": "astropy",
 
-    "project_url": "http://www.astropy.org/",
+    "project_url": "https://www.astropy.org/",
 
-    "show_commit_url": "http://github.com/astropy/astropy/commit/",
+    "show_commit_url": "https://github.com/astropy/astropy/commit/",
 
     "version": 1,
 

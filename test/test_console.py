@@ -1,10 +1,10 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import io
+import itertools
+import locale
 import os
 import sys
-import locale
-import itertools
 
 import pytest
 from asv_runner.console import _write_with_fallback, color_print
@@ -40,7 +40,7 @@ def test_write_with_fallback(tmpdir, capfd):
 
             # Check writing to a file
             fn = os.path.join(tmpdir, 'tmp.txt')
-            with io.open(fn, 'w', encoding=stream_encoding) as stream:
+            with open(fn, 'w', encoding=stream_encoding) as stream:
                 _write_with_fallback(value, stream)
             with open(fn, 'rb') as stream:
                 got = stream.read()

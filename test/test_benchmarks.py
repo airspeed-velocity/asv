@@ -1,11 +1,11 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import os
-import sys
 import shutil
+import sys
 import textwrap
-from os.path import join, dirname
 from hashlib import sha256
+from os.path import dirname, join
 
 import pytest
 
@@ -24,7 +24,7 @@ ASV_CONF_JSON = {
 }
 
 if util.ON_PYPY:
-    ASV_CONF_JSON['pythons'] = ["pypy{0[0]}.{0[1]}".format(sys.version_info)]
+    ASV_CONF_JSON['pythons'] = [f"pypy{sys.version_info[0]}.{sys.version_info[1]}"]
 
 
 def test_discover_benchmarks(benchmarks_fixture):

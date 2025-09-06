@@ -3,12 +3,12 @@
 import os
 import re
 
-from . import Command
-from ..machine import Machine, MachineCollection
-from ..results import Results, get_filename
+from .. import util
 from ..benchmarks import Benchmarks
 from ..console import log
-from .. import util
+from ..machine import Machine, MachineCollection
+from ..results import Results, get_filename
+from . import Command
 from .run import Run
 
 

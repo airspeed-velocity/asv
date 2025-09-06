@@ -39,7 +39,7 @@
     //"default_benchmark_timeout": 60,
 
     // the base URL to show a commit for the project.
-    "show_commit_url": "http://github.com/airspeed-velocity/asv/commit/",
+    "show_commit_url": "https://github.com/airspeed-velocity/asv/commit/",
 
     // The Pythons you'd like to test against.  If not provided, defaults
     // to the current version of Python used to run `asv`.
@@ -89,7 +89,7 @@
     //     // additional env for python3.12
     //     {"python": "3.12", "numpy": "1.26"},
     //     // additional env if run on windows+conda
-    //     {"platform": "win32", "environment_type": "conda", "python": "3.12", "libpython": ""},
+    //     {"sys_platform": "win32", "environment_type": "conda", "python": "3.12", "libpython": ""},
     // ],
 
     // The directory (relative to the current directory) that benchmarks are
@@ -113,7 +113,7 @@
 
     // `asv` will cache wheels of the recent builds in each
     // environment, making them faster to install next time.  This is
-    // number of builds to keep, per environment.
+    // the number of builds to keep, per environment.
     // "build_cache_size": 0
 
     // The commits after which the regression search in `asv publish`

@@ -7,7 +7,7 @@
     "project": "project",
 
     // The project's homepage
-    "project_url": "http://project-homepage.org/",
+    "project_url": "https://project-homepage.org/",
 
     // The URL or local path of the source code repository for the
     // project being benchmarked
@@ -24,18 +24,18 @@
     // "build_command": [
     //     "python -m pip install build",
     //     "python -m build",
-    //     "python -mpip wheel -w {build_cache_dir} {build_dir}"
+    //     "python -m pip wheel -w {build_cache_dir} {build_dir}"
     // ],
     // To build the package using setuptools and a setup.py file, uncomment the following lines
     // "build_command": [
     //     "python setup.py build",
-    //     "python -mpip wheel -w {build_cache_dir} {build_dir}"
+    //     "python -m pip wheel -w {build_cache_dir} {build_dir}"
     // ],
 
     // Customizable commands for installing and uninstalling the project.
     // See asv.conf.json documentation.
-    // "install_command": ["in-dir={env_dir} python -mpip install {wheel_file}"],
-    // "uninstall_command": ["return-code=any python -mpip uninstall -y {project}"],
+    // "install_command": ["in-dir={env_dir} python -m pip install {wheel_file}"],
+    // "uninstall_command": ["return-code=any python -m pip uninstall -y {project}"],
 
     // List of branches to benchmark. If not provided, defaults to "main"
     // (for git) or "default" (for mercurial).
@@ -61,7 +61,7 @@
     //"install_timeout": 600,
 
     // the base URL to show a commit for the project.
-    // "show_commit_url": "http://github.com/owner/project/commit/",
+    // "show_commit_url": "https://github.com/owner/project/commit/",
 
     // The Pythons you'd like to test against.  If not provided, defaults
     // to the current version of Python used to run `asv`.

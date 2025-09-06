@@ -1,13 +1,13 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import sys
-import os
-import shutil
-import datetime
-import pstats
 import collections
-import socket
+import datetime
 import json
+import os
+import pstats
+import shutil
+import socket
+import sys
 from os.path import join
 
 import pytest
@@ -97,7 +97,7 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
     assert times[
         'time_secondary.track_value'].result == [42.0]
     assert times['time_secondary.track_value'].profile is not None
-    assert isinstance(times['time_examples.time_with_warnings'].stderr, type(''))
+    assert isinstance(times['time_examples.time_with_warnings'].stderr, str)
     assert times['time_examples.time_with_warnings'].errcode != 0
     assert times['time_secondary.track_fail_errcode_123'].errcode == 123
     if hasattr(os, 'kill') and hasattr(os, 'getpid'):
@@ -153,7 +153,7 @@ def test_run_benchmarks(benchmarks_fixture, tmpdir):
 
     # Check for running setup on each repeat (one extra run from profile)
     # The output would contain error messages if the asserts in the benchmark fail.
-    expected = ["<%d>" % j for j in range(1, 12)]
+    expected = [f"<{j}>" for j in range(1, 12)]
     assert times['time_examples.TimeWithRepeat.time_it'].stderr.split() == expected
 
     # Calibration of iterations should not rerun setup

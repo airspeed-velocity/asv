@@ -7,23 +7,23 @@ import tabulate
 from asv_runner.console import color_print
 from asv_runner.statistics import get_err
 
-from . import Command, common_args
+from .. import _stats, util
 from ..benchmarks import Benchmarks
-from ..machine import iter_machine_files
-from ..results import iter_results_for_machine_and_hash
-from ..repo import get_repo, NoSuchNameError
-from ..util import human_value, load_json
 from ..console import log
 from ..environment import get_environments
-from .. import util, _stats
+from ..machine import iter_machine_files
+from ..repo import NoSuchNameError, get_repo
+from ..results import iter_results_for_machine_and_hash
+from ..util import human_value, load_json
+from . import Command, common_args
 
 
 def mean(values):
-    if all([value is None for value in values]):
-        return None
-    else:
-        values = [value for value in values if value is not None]
+    values = [value for value in values if value is not None]
+    if values:
         return sum(values) / float(len(values))
+    else:
+        return None
 
 
 def unroll_result(benchmark_name, params, *values):
@@ -155,7 +155,7 @@ class Compare(Command):
         elif machine is None:
             if len(machines) > 1:
                 raise util.UserError(
-                    "Results available for several machines: {0} - "
+                    "Results available for several machines: {} - "
                     "specify which one to use with the --machine option".format(
                         '/'.join(machines)))
             else:
@@ -240,7 +240,7 @@ class Compare(Command):
         benchmarks_1 = set(results_1.keys())
         benchmarks_2 = set(results_2.keys())
 
-        joint_benchmarks = sorted(list(benchmarks_1 | benchmarks_2))
+        joint_benchmarks = sorted(benchmarks_1 | benchmarks_2)
 
         bench = {}
 
@@ -339,11 +339,7 @@ class Compare(Command):
 
             unit = units[benchmark]
 
-            details = "{0:1s} {1:>15s}  {2:>15s} {3:>8s}  ".format(
-                mark,
-                human_value(time_1, unit, err=err_1),
-                human_value(time_2, unit, err=err_2),
-                ratio)
+            details = f"{mark:1s} {human_value(time_1, unit, err=err_1):>15s}  {human_value(time_2, unit, err=err_2):>15s} {ratio:>8s}  "
             split_line = details.split()
             if len(machine_env_names) > 1:
                 benchmark_name = "{} [{}]".format(*benchmark)

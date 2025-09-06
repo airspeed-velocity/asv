@@ -1,15 +1,15 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
+import datetime
+import itertools
 import os
 import re
-import itertools
-import datetime
 import urllib.parse
 
-from ..results import iter_results
+from .. import feed, util
 from ..console import log
 from ..publishing import OutputPublisher
+from ..results import iter_results
 from ..step_detect import detect_regressions
-from .. import util, feed
 
 
 class Regressions(OutputPublisher):
@@ -24,7 +24,7 @@ class Regressions(OutputPublisher):
         # it's easier to work with than the results directly
 
         regressions = []
-        revision_to_hash = dict((r, h) for h, r in revisions.items())
+        revision_to_hash = {r: h for h, r in revisions.items()}
 
         data_filter = _GraphDataFilter(conf, repo, revisions)
 
@@ -148,13 +148,12 @@ class Regressions(OutputPublisher):
                 if rev1 is None:
                     params['commits'] = f'{revision_to_hash[rev2]}'
                 else:
-                    params['commits'] = '{0}-{1}'.format(revision_to_hash[rev1],
-                                                         revision_to_hash[rev2])
+                    params['commits'] = f'{revision_to_hash[rev1]}-{revision_to_hash[rev2]}'
 
                 link = f'index.html#{benchmark_name}?{urllib.parse.urlencode(params)}'
 
                 try:
-                    best_percentage = "{0:.2f}%".format(100 *
+                    best_percentage = "{:.2f}%".format(100 *
                                                         (last_value - best_value) / best_value)
                 except ZeroDivisionError:
                     best_percentage = f"{last_value - best_value:.2g} units"
@@ -175,9 +174,7 @@ class Regressions(OutputPublisher):
                                       commit_a + "..." + commit_b)
                     else:
                         commit_url = conf.show_commit_url + commit_a
-                    commit_ref = 'in commits <a href="{0}">{1}...{2}</a>'.format(commit_url,
-                                                                                 commit_a[:8],
-                                                                                 commit_b[:8])
+                    commit_ref = f'in commits <a href="{commit_url}">{commit_a[:8]}...{commit_b[:8]}</a>'
                 else:
                     commit_a = revision_to_hash[rev2]
                     commit_url = conf.show_commit_url + commit_a
@@ -304,8 +301,8 @@ class _GraphDataFilter:
                             break
                     else:
                         # Commit not found in the branch --- warn and ignore.
-                        log.warning(("Commit {0} specified in `regressions_first_commits` "
-                                     "not found in branch").format(start_commit))
+                        log.warning(f"Commit {start_commit} specified in `regressions_first_commits` "
+                                     "not found in branch")
                         self._start_revisions[key] = -1
 
                 start_revision = max(start_revision, self._start_revisions[key] + 1)
@@ -328,8 +325,8 @@ class _GraphDataFilter:
                 try:
                     threshold = float(threshold)
                 except ValueError:
-                    raise util.UserError("Non-float threshold in asv.conf.json: {!r}"
-                                         .format(threshold))
+                    raise util.UserError(f"Non-float threshold in asv.conf.json: {threshold!r}"
+                                         )
 
                 if max_threshold is None:
                     max_threshold = threshold

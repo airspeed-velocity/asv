@@ -4,13 +4,13 @@ import logging
 import traceback
 from collections import defaultdict
 
-from . import Command, common_args
-from ..console import log
 from .. import environment, util
+from ..console import log
+from . import Command, common_args
 
 
 def _create(env):
-    with log.set_level(logging.WARN):
+    with log.set_level(logging.WARNING):
         env.create()
 
 

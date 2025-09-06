@@ -1,8 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import math
 import collections
 import heapq
+import math
 from statistics import median
 
 try:
@@ -496,7 +496,7 @@ def merge_pieces(gamma, right, values, dists, mu_dist, max_size):
 
 
 class L1Dist:
-    """
+    r"""
     Fast computations for the L1 distance measures.
 
     This computes:
@@ -671,8 +671,8 @@ def golden_search(f, a, b, xatol=1e-6, ftol=1e-8, expand_bounds=False):
 
 
 def _plot_potts(x, sol):
-    import numpy as np
     import matplotlib.pyplot as plt
+    import numpy as np
 
     t = np.arange(len(x))
 

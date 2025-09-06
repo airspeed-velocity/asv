@@ -176,13 +176,13 @@ def _get_id(owner, date, content):
     """
     h = hashlib.sha256()
     # Hash still contains the original project url, keep as is
-    h.update("github.com/spacetelescope/asv".encode('utf-8'))
+    h.update(b"github.com/spacetelescope/asv")
     for x in content:
         if x is None:
-            h.update(",".encode('utf-8'))
+            h.update(b",")
         else:
             h.update(x.encode('utf-8'))
-        h.update(",".encode('utf-8'))
+        h.update(b",")
 
     if date is None:
         date = datetime.datetime(

@@ -1,9 +1,9 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import sys
+import importlib
 import re
 import pkgutil
-import importlib
+import sys
 
 from . import commands, plugins
 from .console import log

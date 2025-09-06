@@ -3,8 +3,8 @@
 import sys
 from pathlib import Path
 
-from .console import log
 from . import util
+from .console import log
 
 # TODO: Some verification of the config values
 

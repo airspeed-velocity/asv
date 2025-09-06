@@ -1,6 +1,6 @@
-import subprocess
-import os
 import json
+import os
+import subprocess
 
 import pytest
 
@@ -23,7 +23,7 @@ if len(ENVIRONMENTS) == 0:
 ASV_CONFIG = {
     "version": 1,
     "project": "project",
-    "project_url": "http://project-homepage.org/",
+    "project_url": "https://project-homepage.org/",
     "repo": ".",
     "branches": ["main"],
     "environment_type": "virtualenv",
@@ -195,7 +195,7 @@ def test_asv_mamba(
     except subprocess.CalledProcessError as exc:
         if expected_success:
             pytest.fail(f"ASV benchmark unexpectedly failed: {exc.stderr}")
-        elif expected_error and all([err not in exc.stderr for err in expected_error]):
+        elif expected_error and all(err not in exc.stderr for err in expected_error):
             pytest.fail(
                 f"Expected error '{expected_error}' not found in stderr: {exc.stderr}"
             )

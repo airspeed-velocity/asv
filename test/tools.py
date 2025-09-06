@@ -5,6 +5,7 @@ This file contains utilities to generate test repositories.
 """
 
 import datetime
+<<<<<<< HEAD
 import io
 import os
 import threading
@@ -14,11 +15,22 @@ import textwrap
 import sys
 import shutil
 import subprocess
+=======
+>>>>>>> main
 import http.server
 import importlib
-from os.path import abspath, join, dirname, relpath, isdir
+import os
+import platform
+import shutil
+import subprocess
+import sys
+import tempfile
+import textwrap
+import threading
+import time
 from contextlib import contextmanager
 from hashlib import sha256
+from os.path import abspath, dirname, isdir, join, relpath
 
 from filelock import FileLock
 
@@ -28,14 +40,14 @@ except ImportError:
     hglib = None
 
 import asv
-from asv import util, commands, config, environment, runner
+from asv import commands, config, environment, runner, util
 from asv.commands.preview import create_httpd
+from asv.plugins.conda import _find_conda
 from asv.repo import get_repo
 from asv.results import Results
-from asv.plugins.conda import _find_conda
 
 # Two Python versions for testing
-PYTHON_VER1, PYTHON_VER2 = '3.8', f"{sys.version_info[0]}.{sys.version_info[1]}"
+PYTHON_VER1, PYTHON_VER2 = '3.8', ".".join(platform.python_version_tuple()[:2])
 
 # Installable library versions to use in tests
 DUMMY1_VERSION = "0.14"
@@ -72,14 +84,14 @@ except (RuntimeError, OSError):
 
 
 try:
-    import virtualenv  # noqa F401 checking if installed
+    import virtualenv  # noqa: F401 checking if installed
     HAS_VIRTUALENV = True
 except ImportError:
     HAS_VIRTUALENV = False
 
 
 try:
-    import rattler  # noqa F401 checking if installed
+    import rattler  # noqa: F401 checking if installed
     HAS_RATTLER = True
 except ImportError:
     HAS_RATTLER = False
@@ -166,10 +178,7 @@ def run_asv_with_conf(conf, *argv, **kwargs):
     parser, subparsers = commands.make_argparser()
     args = parser.parse_args(argv)
 
-    if sys.version_info[0] >= 3:
-        cls = args.func.__self__
-    else:
-        cls = args.func.im_self
+    cls = args.func.__self__
 
     return cls.run_from_conf_args(conf, args, **kwargs)
 
@@ -265,7 +274,7 @@ class Hg:
 
     def init(self):
         hglib.init(self.path)
-        with io.open(join(self.path, '.hg', 'hgrc'), 'w', encoding="utf-8") as fd:
+        with open(join(self.path, '.hg', 'hgrc'), 'w', encoding="utf-8") as fd:
             fd.write(_hg_config)
         self._repo = hglib.open(self.path.encode(sys.getfilesystemencoding()),
                                 encoding=self.encoding)
@@ -334,25 +343,26 @@ def copy_template(src, dst, dvcs, values):
             dst_path = join(dst, relpath(src_path, src))
 
             try:
-                with io.open(src_path, 'r', encoding='utf-8') as fd:
+                with open(src_path, 'r', encoding='utf-8') as fd:
                     content = fd.read()
             except UnicodeDecodeError:
                 # File is some sort of binary file...  just copy it
                 # directly with no template substitution
-                with io.open(src_path, 'rb') as fd:
+                with open(src_path, 'rb') as fd:
                     content = fd.read()
-                with io.open(dst_path, 'wb') as fd:
+                with open(dst_path, 'wb') as fd:
                     fd.write(content)
             else:
                 content = content.format(**values)
-                with io.open(dst_path, 'w', encoding='utf-8') as fd:
+                with open(dst_path, 'w', encoding='utf-8') as fd:
                     fd.write(content)
 
             dvcs.add(dst_path)
 
 
 def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
-                       extra_branches=(), subdir=''):
+                       extra_branches=(), tags=(),
+                       subdir=''):
     """
     Generate a test repository
 
@@ -369,6 +379,8 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
         For branch start commits, use relative references, e.g.,
         the format 'main~10' or 'default~10' works both for Hg
         and Git.
+     tags: list
+        List of of values from `values` to tag in the repository.
     subdir
         A relative subdirectory inside the repository to copy the
         test project into.
@@ -406,7 +418,11 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
         copy_template(template_path, project_path, dvcs, mapping)
 
         dvcs.commit(f"Revision {i}")
-        dvcs.tag(i)
+        if tags:
+            if value in tags:
+                dvcs.tag(value)
+        else:
+            dvcs.tag(i)
 
     if extra_branches:
         for start_commit, branch_name, values in extra_branches:
@@ -418,7 +434,9 @@ def generate_test_repo(tmpdir, values=[0], dvcs_type='git',
                 }
                 copy_template(template_path, project_path, dvcs, mapping)
                 dvcs.commit(f"Revision {branch_name}.{i}")
-
+                if tags:
+                    if value in tags:
+                        dvcs.tag(value)
     return dvcs
 
 
@@ -589,8 +607,7 @@ def _build_dummy_wheels(tmpdir, wheel_dir, to_build, build_conda=False):
 
         with open(join(build_dir, 'setup.py'), 'w') as f:
             f.write("from setuptools import setup; "
-                    "setup(name='{name}', version='{version}', packages=['{name}'])"
-                    "".format(name=name, version=version))
+                    f"setup(name='{name}', version='{version}', packages=['{name}'])")
         os.makedirs(join(build_dir, name))
         with open(join(build_dir, name, '__init__.py'), 'w') as f:
             f.write(f"__version__ = '{version}'")
@@ -612,12 +629,12 @@ def _build_dummy_conda_pkg(name, version, build_dir, dst):
     build_dir = os.path.abspath(build_dir)
 
     with open(join(build_dir, 'meta.yaml'), 'w') as f:
-        f.write(textwrap.dedent("""\
+        f.write(textwrap.dedent(f"""\
         package:
           name: "{name}"
           version: "{version}"
         source:
-          path: {build_dir}
+          path: {util.shlex_quote(build_dir)}
         build:
           number: 0
           script: "python -m pip install . --no-deps --ignore-installed "
@@ -630,9 +647,7 @@ def _build_dummy_conda_pkg(name, version, build_dir, dst):
         about:
           license: BSD
           summary: Dummy test package
-        """.format(name=name,
-                   version=version,
-                   build_dir=util.shlex_quote(build_dir))))
+        """))
 
     conda = _find_conda()
 

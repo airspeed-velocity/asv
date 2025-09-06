@@ -4,7 +4,7 @@ import os
 import shutil
 import subprocess
 import xml.etree.ElementTree as etree
-from os.path import abspath, dirname, join, isfile, isdir
+from os.path import abspath, dirname, isdir, isfile, join
 
 import json5
 import pytest
@@ -91,7 +91,7 @@ def test_publish(tmpdir, example_results):
     assert index['params']['branch'] == [f'{util.git_default_branch()}']
 
     repo = get_repo(conf)
-    revision_to_hash = dict((r, h) for h, r in repo.get_revisions(commits).items())
+    revision_to_hash = {r: h for h, r in repo.get_revisions(commits).items()}
 
     def check_file(branch, cython):
         fn = join(tmpdir, 'html', 'graphs', cython, 'arch-x86_64', 'branch-' + branch,
@@ -160,7 +160,7 @@ def _graph_path(dvcs_type):
 def test_publish_range_spec(generate_result_dir):
     conf, repo, commits = generate_result_dir(5 * [1])
     for range_spec, expected in (
-        ([commits[0], commits[-1]], set([commits[0], commits[-1]])),
+        ([commits[0], commits[-1]], {commits[0], commits[-1]}),
         ('HEAD~2..HEAD' if repo.dvcs == 'git' else '.~1:',
             set(commits[-2:])),
     ):
@@ -284,10 +284,10 @@ def test_regression_multiple_branches(dvcs_type, tmpdir):
         ],
     )
     commit_values = {}
-    branches = dict(
-        (branch, list(reversed(dvcs.get_branch_hashes(branch))))
+    branches = {
+        branch: list(reversed(dvcs.get_branch_hashes(branch)))
         for branch in (main, "stable")
-    )
+    }
     for branch, values in (
         (main, 10 * [1]),
         ("stable", 5 * [1] + 5 * [2]),

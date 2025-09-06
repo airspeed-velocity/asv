@@ -1,8 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import re
-import os
-import tempfile
 import contextlib
+import os
+import re
+import tempfile
 from pathlib import Path
 
 from packaging.version import Version
@@ -100,7 +100,7 @@ class Conda(environment.Environment):
                 log.debug("Using environment.yml")
                 self._conda_environment_file = "environment.yml"
 
-        super(Conda, self).__init__(conf,
+        super().__init__(conf,
                                     python,
                                     requirements,
                                     tagged_env_vars)
@@ -136,18 +136,20 @@ class Conda(environment.Environment):
         conda_args = [util.replace_cpython_version(arg, self._python) for arg in conda_args]
 
         if not self._conda_environment_file:
-            conda_args = ['wheel', 'pip'] + conda_args
+            # With a user-provided envronment, we assume it specifies a python version;
+            # without an environment.yml file, we need to add the python version ourselves
+            conda_args = [f'python={self._python}', 'wheel', 'pip'] + conda_args
 
         # Create a temporary environment.yml file
         # and use that to generate the env for benchmarking.
         env_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=".yml")
         try:
             env_file.write(f'name: {self.name}\nchannels:\n')
-            env_file.writelines((f'   - {ch}\n' for ch in self._conda_channels))
+            env_file.writelines(f'   - {ch}\n' for ch in self._conda_channels)
             if conda_args:
                 env_file.write('dependencies:\n')
                 # categorize & write dependencies based on pip vs. conda
-                env_file.writelines((f'   - {s}\n' for s in conda_args))
+                env_file.writelines(f'   - {s}\n' for s in conda_args)
             env_file.close()
             try:
                 env_file_name = self._conda_environment_file or env_file.name
@@ -176,12 +178,12 @@ class Conda(environment.Environment):
             except Exception:
                 if env_file_name != env_file.name:
                     log.info("conda env create/update failed: "
-                             "in {} with file {}".format(self._path, env_file_name))
+                             f"in {self._path} with file {env_file_name}")
                 elif os.path.isfile(env_file_name):
                     with open(env_file_name, 'r') as f:
                         text = f.read()
                     log.info("conda env create/update failed: "
-                             "in {} with:\n{}".format(self._path, text))
+                             f"in {self._path} with:\n{text}")
                 raise
         finally:
             os.unlink(env_file.name)
@@ -235,12 +237,12 @@ class Conda(environment.Environment):
 
         # Conda doesn't guarantee that user site directories are excluded
         kwargs["env"] = dict(kwargs.pop("env", os.environ),
-                             PYTHONNOUSERSITE=str("True"))
+                             PYTHONNOUSERSITE="True")
 
         with lock():
-            return super(Conda, self).run_executable(executable, args, **kwargs)
+            return super().run_executable(executable, args, **kwargs)
 
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when
         # upgrading pip itself, and avoids shebang length limit on Linux
-        return self.run_executable("python", ["-mpip"] + list(args), **kwargs)
+        return self.run_executable("python", ["-m", "pip"] + list(args), **kwargs)
