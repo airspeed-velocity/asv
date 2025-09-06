@@ -5,18 +5,6 @@ This file contains utilities to generate test repositories.
 """
 
 import datetime
-<<<<<<< HEAD
-import io
-import os
-import threading
-import time
-import tempfile
-import textwrap
-import sys
-import shutil
-import subprocess
-=======
->>>>>>> main
 import http.server
 import importlib
 import os
