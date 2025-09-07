@@ -3,7 +3,6 @@
 import contextlib
 import os
 import pstats
-import sys
 import tempfile
 
 from asv_runner.console import color_print
@@ -11,7 +10,7 @@ from asv_runner.console import color_print
 from .. import util
 from ..benchmarks import Benchmarks
 from ..console import log
-from ..environment import get_environments, is_existing_only
+from ..environment import get_environments, is_existing_only, ExistingEnvironment
 from ..machine import Machine
 from ..profiling import ProfilerGui
 from ..repo import NoSuchNameError, get_repo
@@ -167,13 +166,13 @@ class Profile(Command):
                             "using an existing environment.")
 
             if env is None:
-                # Fallback
-                env = environments[0]
-
-            if env.python != "{}.{}".format(*sys.version_info[:2]):
-                raise util.UserError(
-                    "Profiles must be run in the same version of Python as the "
-                    "asv main process")
+                # Fallback, first valid python environment
+                env = [
+                    env
+                    for env in environments
+                    if util.env_py_is_sys_version(env.python)
+                    or isinstance(env, ExistingEnvironment)
+                ][0]
 
             benchmarks = Benchmarks.discover(conf, repo, environments,
                                              [commit_hash],

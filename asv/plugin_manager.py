@@ -1,13 +1,21 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import importlib
+import re
 import pkgutil
 import sys
 
 from . import commands, plugins
 from .console import log
 
-ENV_PLUGINS = [".mamba", ".virtualenv", ".conda", ".rattler"]
+ENV_PLUGIN_REGEXES = [
+    r"\.mamba$",
+    r"\._mamba_helpers$",
+    r"\.virtualenv$",
+    r"\.conda$",
+    r"\.rattler$",
+]
+
 
 class PluginManager:
     """
@@ -25,20 +33,24 @@ class PluginManager:
 
     def load_plugins(self, package):
         prefix = package.__name__ + "."
-        for module_finder, name, ispkg in pkgutil.iter_modules(package.__path__, prefix):
+        for module_finder, name, ispkg in pkgutil.iter_modules(
+            package.__path__, prefix
+        ):
             try:
                 mod = importlib.import_module(name)
                 self.init_plugin(mod)
                 self._plugins.append(mod)
             except ModuleNotFoundError as err:
-                if any(keyword in name for keyword in ENV_PLUGINS):
+                if any(re.search(regex, name) for regex in ENV_PLUGIN_REGEXES):
                     continue  # Fine to not have these
                 else:
                     log.error(f"Couldn't load {name} because\n{err}")
 
     def _load_plugin_by_name(self, name):
         prefix = plugins.__name__ + "."
-        for module_finder, module_name, ispkg in pkgutil.iter_modules(plugins.__path__, prefix):
+        for module_finder, module_name, ispkg in pkgutil.iter_modules(
+            plugins.__path__, prefix
+        ):
             if name in module_name:
                 mod = importlib.import_module(module_name)
                 return mod

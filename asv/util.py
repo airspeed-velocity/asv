@@ -1422,14 +1422,30 @@ def get_matching_environment(environments, result=None):
             env
             for env in environments
             if (result is None or result.env_name == env.name)
-            and env.python == "{}.{}".format(*sys.version_info[:2])
+            and env_py_is_sys_version(env.python)
         ),
         None,
     )
 
-def replace_python_version(arg, new_version):
-    match = re.match(r'^python(\W|$)', arg)
+
+def replace_cpython_version(arg, new_version):
+    match = re.match(r"^python(\W|$)", arg)
     if match and not match.group(1).isalnum():
         return f"python={new_version}"
     else:
         return arg
+
+
+def extract_cpython_version(env_python):
+    version_regex = r"(\d+\.\d+)$"
+    match = re.search(version_regex, env_python)
+    if match:
+        return match.group(1)
+    else:
+        return None
+
+
+def env_py_is_sys_version(env_python):
+    return extract_cpython_version(env_python) == "{0}.{1}".format(
+        *sys.version_info[:2]
+    )

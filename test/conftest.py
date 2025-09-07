@@ -56,8 +56,8 @@ def pytest_addoption(parser):
     parser.addoption(
         "--runflaky", action="store_true", default=False, help="run flaky tests"
     )
-    parser.addoption("--environment-type", action="store", default=None,
-                     choices=("conda", "virtualenv", "mamba"),
+    parser.addoption("--environment-type", action="store", default="virtualenv",
+                     choices=("conda", "virtualenv", "mamba", "rattler"),
                      help="environment_type to use in tests by default")
 
 
@@ -85,6 +85,7 @@ def generate_basic_conf(tmpdir,
     # values not in test_dev.py copy
     repo_path = tools.generate_test_repo(tmpdir, values,
                                          subdir=repo_subdir).path
+    global env_type
 
     conf_dict = {
         'env_dir': 'env',
@@ -92,19 +93,21 @@ def generate_basic_conf(tmpdir,
         'results_dir': 'results_workflow',
         'html_dir': 'html',
         'repo': relpath(repo_path),
+        'environment_type': env_type,
         'project': 'asv',
+        'conda_channels': ["conda-forge"],
         'dvcs': 'git',
         'matrix': {
-            "asv-dummy-test-package-1": [None],
-            "asv-dummy-test-package-2": tools.DUMMY2_VERSIONS,
+            "pip+asv-dummy-test-package-1": [None],
+            "pip+asv-dummy-test-package-2": tools.DUMMY2_VERSIONS,
         },
     }
     if not dummy_packages:
         conf_dict['matrix'] = {}
     elif conf_version == 2:
         conf_dict['matrix'] = {
-            "asv_dummy_test_package_1": [""],
-            "asv_dummy_test_package_2": tools.DUMMY2_VERSIONS,
+            "pip+asv_dummy_test_package_1": [""],
+            "pip+asv_dummy_test_package_2": tools.DUMMY2_VERSIONS,
         }
     if repo_subdir:
         conf_dict['repo_subdir'] = repo_subdir
@@ -121,6 +124,8 @@ def pytest_sessionstart(session):
     _monkeypatch_conda_lock(session.config)
 
     # Unregister unwanted environment types
+    # XXX: Ugly hack to get the variable into generate_basic_conf
+    global env_type
     env_type = session.config.getoption('environment_type')
     if env_type is not None:
         import asv.environment
@@ -353,7 +358,7 @@ def basic_html(request):
 
 
 @pytest.fixture
-def benchmarks_fixture(tmpdir):
+def benchmarks_fixture(tmpdir, request: pytest.FixtureRequest):
     tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
@@ -363,6 +368,8 @@ def benchmarks_fixture(tmpdir):
     d.update(ASV_CONF_JSON)
     d['env_dir'] = "env"
     d['benchmark_dir'] = 'benchmark'
+    d['environment_type'] = request.config.getoption('environment_type')
+    d['conda_channels'] = ["conda-forge"]
     d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
     d['branches'] = ["master"]
     conf = config.Config.from_json(d)
@@ -445,3 +452,15 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if "flaky" in item.keywords:
             item.add_marker(skip_flaky)
+
+
+@pytest.fixture
+def skip_virtualenv(request: pytest.FixtureRequest):
+    if request.config.getoption('environment_type') == 'virtualenv':
+        pytest.skip('Cannot run this test with virtualenv')
+
+
+@pytest.fixture
+def skip_no_conda(request: pytest.FixtureRequest):
+    if request.config.getoption('environment_type') != 'conda':
+        pytest.skip('Needs to be run with conda')

@@ -158,7 +158,7 @@ class Mamba(environment.Environment):
         # Changed in v0.6.5, gh-1294
         # previously, the user provided environment was assumed to handle the python version
         mamba_pkgs = [
-            util.replace_python_version(pkg, self._python) for pkg in mamba_pkgs
+            util.replace_cpython_version(pkg, self._python) for pkg in mamba_pkgs
         ]
         self.context.prefix_params.target_prefix = self._path
         solver = MambaSolver(

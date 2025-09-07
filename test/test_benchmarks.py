@@ -96,7 +96,7 @@ def test_discover_benchmarks(benchmarks_fixture):
     assert b['timeraw_examples.TimerawSuite.timeraw_setup']['number'] == 1
 
 
-def test_invalid_benchmark_tree(tmpdir):
+def test_invalid_benchmark_tree(tmpdir, request: pytest.FixtureRequest):
     tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
@@ -104,6 +104,8 @@ def test_invalid_benchmark_tree(tmpdir):
     d.update(ASV_CONF_JSON)
     d['benchmark_dir'] = INVALID_BENCHMARK_DIR
     d['env_dir'] = "env"
+    d['environment_type'] = request.config.getoption('environment_type')
+    d['conda_channels'] = ["conda-forge"]
     d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
     conf = config.Config.from_json(d)
 
@@ -115,7 +117,7 @@ def test_invalid_benchmark_tree(tmpdir):
         benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
 
 
-def test_find_benchmarks_cwd_imports(tmpdir):
+def test_find_benchmarks_cwd_imports(tmpdir, request: pytest.FixtureRequest):
     # Test that files in the directory above the benchmark suite are
     # not importable
 
@@ -144,6 +146,8 @@ def track_this():
     d = {}
     d.update(ASV_CONF_JSON)
     d['env_dir'] = "env"
+    d['environment_type'] = request.config.getoption('environment_type')
+    d['conda_channels'] = ["conda-forge"]
     d['benchmark_dir'] = 'benchmark'
     d['repo'] = tools.generate_test_repo(tmpdir, [[0, 1]]).path
     conf = config.Config.from_json(d)
@@ -157,7 +161,7 @@ def track_this():
     assert len(b) == 1
 
 
-def test_import_failure_retry(tmpdir):
+def test_import_failure_retry(tmpdir, request: pytest.FixtureRequest):
     # Test that a different commit is tried on import failure
 
     tmpdir = str(tmpdir)
@@ -183,6 +187,8 @@ def test_import_failure_retry(tmpdir):
     d.update(ASV_CONF_JSON)
     d['env_dir'] = "env"
     d['benchmark_dir'] = 'benchmark'
+    d['environment_type'] = request.config.getoption('environment_type')
+    d['conda_channels'] = ["conda-forge"]
     d['repo'] = dvcs.path
     conf = config.Config.from_json(d)
 
@@ -195,7 +201,7 @@ def test_import_failure_retry(tmpdir):
     assert b['time_foo']['number'] == 1
 
 
-def test_conf_inside_benchmarks_dir(tmpdir):
+def test_conf_inside_benchmarks_dir(tmpdir, request: pytest.FixtureRequest):
     # Test that the configuration file can be inside the benchmark suite
 
     tmpdir = str(tmpdir)
@@ -212,6 +218,8 @@ def test_conf_inside_benchmarks_dir(tmpdir):
     d = {}
     d.update(ASV_CONF_JSON)
     d['env_dir'] = "env"
+    d['environment_type'] = request.config.getoption('environment_type')
+    d['conda_channels'] = ["conda-forge"]
     d['benchmark_dir'] = '.'
     d['repo'] = tools.generate_test_repo(tmpdir, [[0, 1]]).path
     conf = config.Config.from_json(d)
@@ -228,7 +236,7 @@ def test_conf_inside_benchmarks_dir(tmpdir):
     assert set(b.keys()) == {'track_this', 'bench.track_this'}
 
 
-def test_code_extraction(tmpdir):
+def test_code_extraction(tmpdir, request: pytest.FixtureRequest):
     tmpdir = str(tmpdir)
     os.chdir(tmpdir)
 
@@ -238,6 +246,8 @@ def test_code_extraction(tmpdir):
     d.update(ASV_CONF_JSON)
     d['env_dir'] = "env"
     d['benchmark_dir'] = 'benchmark'
+    d['environment_type'] = request.config.getoption('environment_type')
+    d['conda_channels'] = ["conda-forge"]
     d['repo'] = tools.generate_test_repo(tmpdir, [0]).path
     conf = config.Config.from_json(d)
 
