@@ -5,6 +5,7 @@ print("Imported custom environment")
 
 class MyEnvironment(Environment):
     tool_name = "myenv"
+
     def __init__(self, conf, python, requirements, tagged_env_vars):
         """
         Parameters

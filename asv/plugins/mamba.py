@@ -98,7 +98,7 @@ class Mamba(environment.Environment):
         channel_priority_map = {
             'strict': libmambapy.ChannelPriority.kStrict,
             'flexible': libmambapy.ChannelPriority.kFlexible,
-            'disabled': libmambapy.ChannelPriority.kDisabled
+            'disabled': libmambapy.ChannelPriority.kDisabled,
         }
         if 'channel_priority' in condarc_data:
             priority_str = condarc_data['channel_priority']
@@ -157,12 +157,12 @@ class Mamba(environment.Environment):
         mamba_pkgs += mamba_args
         # Changed in v0.6.5, gh-1294
         # previously, the user provided environment was assumed to handle the python version
-        mamba_pkgs = [
-            util.replace_cpython_version(pkg, self._python) for pkg in mamba_pkgs
-        ]
+        mamba_pkgs = [util.replace_cpython_version(pkg, self._python) for pkg in mamba_pkgs]
         self.context.prefix_params.target_prefix = self._path
         solver = MambaSolver(
-            self._mamba_channels, None, self.context  # or target_platform
+            self._mamba_channels,
+            None,
+            self.context,  # or target_platform
         )
         with _mamba_lock():
             transaction = solver.solve(mamba_pkgs)
@@ -177,8 +177,7 @@ class Mamba(environment.Environment):
         mamba_args = []
         pip_args = []
 
-        for key, val in {**self._requirements,
-                         **self._base_requirements}.items():
+        for key, val in {**self._requirements, **self._base_requirements}.items():
             if key.startswith("pip+"):
                 pip_args.append(f"{key[4:]} {val}")
             else:

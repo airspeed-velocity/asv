@@ -79,14 +79,12 @@ class BuildCache:
 
         # Then remove old items
         names = self._get_cache_contents()
-        for name in names[self._cache_size:]:
+        for name in names[self._cache_size :]:
             self._remove_cache_dir(name)
 
     def get_cache_dir(self, commit_hash):
         path, stamp = self._get_cache_dir(commit_hash)
-        if (os.path.isdir(path) and
-                os.path.isfile(stamp) and
-                os.listdir(path)):
+        if os.path.isdir(path) and os.path.isfile(stamp) and os.listdir(path):
             return path
 
         return None

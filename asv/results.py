@@ -52,7 +52,7 @@ def iter_results(results):
     """
     Iterate over all of the result files.
     """
-    for (root, filename, machine_name) in iter_results_paths(results):
+    for root, filename, machine_name in iter_results_paths(results):
         try:
             yield Results.load(os.path.join(root, filename), machine_name=machine_name)
         except util.UserError as exc:
@@ -73,8 +73,7 @@ def iter_results_for_machine_and_hash(results, machine_name, commit):
     """
     full_commit = get_result_hash_from_prefix(results, machine_name, commit)
 
-    for (root, filename, machine_name) in iter_results_paths(
-            os.path.join(results, machine_name)):
+    for root, filename, machine_name in iter_results_paths(os.path.join(results, machine_name)):
         results_commit = filename.split('-')[0]
         if results_commit == full_commit:
             try:
@@ -116,10 +115,12 @@ def get_result_hash_from_prefix(results, machine_name, commit_prefix):
 
     path = os.path.join(results, machine_name)
 
-    for (root, filename, r_machine_name) in iter_results_paths(path):
+    for root, filename, r_machine_name in iter_results_paths(path):
         if r_machine_name != machine_name:
-            log.warning(f"Skipping results '{os.path.join(root, filename)}':"
-                        f" machine name is not '{machine_name}'")
+            log.warning(
+                f"Skipping results '{os.path.join(root, filename)}':"
+                f" machine name is not '{machine_name}'"
+            )
             continue
 
         results_commit = filename.split('-')[0]
@@ -129,8 +130,9 @@ def get_result_hash_from_prefix(results, machine_name, commit_prefix):
 
     if len(commits) > 1:
         commit_list_str = ', '.join(sorted(commits))
-        raise util.UserError('Git hash prefix could represent one of '
-                             f'multiple commits: {commit_list_str}')
+        raise util.UserError(
+            f'Git hash prefix could represent one of multiple commits: {commit_list_str}'
+        )
     elif len(commits) == 1:
         return list(commits)[0]
     else:
@@ -147,9 +149,7 @@ def get_filename(machine, commit_hash, env_name):
     if env_name and len(env_name) >= 128:
         env_name = "env-" + hashlib.md5(env_name.encode('utf-8')).hexdigest()
 
-    return os.path.join(
-        machine,
-        f"{commit_hash[:8]}-{env_name}.json")
+    return os.path.join(machine, f"{commit_hash[:8]}-{env_name}.json")
 
 
 def _compatible_results(result, result_params, params):
@@ -179,16 +179,10 @@ class Results:
     Manage a set of benchmark results for a single machine and commit
     hash.
     """
+
     api_version = 2
 
-    def __init__(self,
-                 params,
-                 requirements,
-                 commit_hash,
-                 date,
-                 python,
-                 env_name,
-                 env_vars):
+    def __init__(self, params, requirements, commit_hash, date, python, env_name, env_vars):
         """
         Parameters
         ----------
@@ -236,8 +230,7 @@ class Results:
         self._errcode = {}
 
         if commit_hash is not None:
-            self._filename = get_filename(
-                params['machine'], self._commit_hash, env_name)
+            self._filename = get_filename(params['machine'], self._commit_hash, env_name)
         else:
             self._filename = None
 
@@ -341,9 +334,7 @@ class Results:
             Benchmark result value. If the benchmark is parameterized, return
             a list of values.
         """
-        return _compatible_results(self._results[key],
-                                   self._benchmark_params[key],
-                                   params)
+        return _compatible_results(self._results[key], self._benchmark_params[key], params)
 
     def get_result_stats(self, key, params):
         """
@@ -362,9 +353,7 @@ class Results:
             Result statistics. If the benchmark is parameterized,
             return a list of values.
         """
-        return _compatible_results(self._stats[key],
-                                   self._benchmark_params[key],
-                                   params)
+        return _compatible_results(self._stats[key], self._benchmark_params[key], params)
 
     def get_result_samples(self, key, params):
         """
@@ -384,9 +373,7 @@ class Results:
             return a list of values.
 
         """
-        return _compatible_results(self._samples[key],
-                                   self._benchmark_params[key],
-                                   params)
+        return _compatible_results(self._samples[key], self._benchmark_params[key], params)
 
     def get_result_params(self, key):
         """
@@ -426,11 +413,16 @@ class Results:
             for j in selected_idx:
                 self._samples[key][j] = None
 
-    def add_result(self, benchmark, result,
-                   started_at=None, duration=None,
-                   record_samples=False,
-                   append_samples=False,
-                   selected_idx=None):
+    def add_result(
+        self,
+        benchmark,
+        result,
+        started_at=None,
+        duration=None,
+        record_samples=False,
+        append_samples=False,
+        selected_idx=None,
+    ):
         """
         Add benchmark result.
 
@@ -470,9 +462,9 @@ class Results:
 
         new_stats = [None] * len(new_result)
 
-        if (benchmark_name in self._results and
-                benchmark_version == self._benchmark_version.get(benchmark_name)):
-
+        if benchmark_name in self._results and benchmark_version == self._benchmark_version.get(
+            benchmark_name
+        ):
             # Append to old samples, if requested
             if append_samples:
                 old_samples = self.get_result_samples(benchmark_name, benchmark['params'])
@@ -481,8 +473,11 @@ class Results:
                         new_samples[j] = old_samples[j] + new_samples[j]
 
             # Retain old result where requested
-            merge_idx = [j for j in range(len(new_result))
-                         if selected_idx is not None and j not in selected_idx]
+            merge_idx = [
+                j
+                for j in range(len(new_result))
+                if selected_idx is not None and j not in selected_idx
+            ]
             if merge_idx:
                 old_result = self.get_result_value(benchmark_name, benchmark['params'])
                 old_samples = self.get_result_samples(benchmark_name, benchmark['params'])
@@ -598,9 +593,21 @@ class Results:
             'samples': self._samples,
             'profile': self._profiles,
         }
-        all_keys = ['result', 'params', 'version', 'started_at', 'duration',
-                    'stats_ci_99_a', 'stats_ci_99_b', 'stats_q_25', 'stats_q_75',
-                    'stats_number', 'stats_repeat', 'samples', 'profile']
+        all_keys = [
+            'result',
+            'params',
+            'version',
+            'started_at',
+            'duration',
+            'stats_ci_99_a',
+            'stats_ci_99_b',
+            'stats_q_25',
+            'stats_q_75',
+            'stats_number',
+            'stats_repeat',
+            'samples',
+            'profile',
+        ]
 
         for name in self._results.keys():
             row = []
@@ -614,8 +621,7 @@ class Results:
                     if z is None:
                         value = None
                     else:
-                        value = [x.get(key[6:]) if x is not None else None
-                                 for x in z]
+                        value = [x.get(key[6:]) if x is not None else None for x in z]
 
                 if key != 'params':
                     if isinstance(value, list) and all(x is None for x in value):
@@ -662,9 +668,17 @@ class Results:
 
         if os.path.isfile(path):
             old = self.load(path)
-            for dict_name in ('_results', '_samples', '_stats', '_env_vars',
-                              '_benchmark_params', '_profiles', '_started_at',
-                              '_duration', '_benchmark_version'):
+            for dict_name in (
+                '_results',
+                '_samples',
+                '_stats',
+                '_env_vars',
+                '_benchmark_params',
+                '_profiles',
+                '_started_at',
+                '_duration',
+                '_benchmark_version',
+            ):
                 setattr(self, dict_name, getattr(old, dict_name))
 
     @classmethod
@@ -737,12 +751,12 @@ class Results:
 
             obj._filename = os.path.join(*path.split(os.path.sep)[-2:])
         except KeyError as exc:
-            raise util.UserError(
-                f"Error loading results file '{path}': missing key {exc}")
+            raise util.UserError(f"Error loading results file '{path}': missing key {exc}")
 
         if machine_name is not None and obj.params.get('machine') != machine_name:
             raise util.UserError(
-                f"Error loading results file '{path}': machine name is not '{machine_name}'")
+                f"Error loading results file '{path}': machine name is not '{machine_name}'"
+            )
 
         return obj
 
@@ -775,11 +789,9 @@ class Results:
 
             d2['commit_hash'] = d['commit_hash']
             d2['date'] = d['date']
-            d2['env_name'] = d.get('env_name',
-                                   environment.get_env_name('',
-                                                            d['python'],
-                                                            d['requirements'],
-                                                            {}))
+            d2['env_name'] = d.get(
+                'env_name', environment.get_env_name('', d['python'], d['requirements'], {})
+            )
             d2['params'] = d['params']
             d2['python'] = d['python']
             d2['requirements'] = d['requirements']
@@ -795,8 +807,7 @@ class Results:
             for key, value in d['results'].items():
                 # Backward compatibility
                 if not isinstance(value, dict):
-                    value = {'result': [value], 'samples': None,
-                             'stats': None, 'params': []}
+                    value = {'result': [value], 'samples': None, 'stats': None, 'params': []}
 
                 if not isinstance(value['result'], list):
                     value['result'] = [value['result']]
@@ -854,8 +865,7 @@ class Results:
                     value = key_dict.get(name)
                     if key_getter is not None and value is not None:
                         if isinstance(value, list):
-                            value = [key_getter(z) if z is not None else None
-                                     for z in value]
+                            value = [key_getter(z) if z is not None else None for z in value]
                         else:
                             value = key_getter(value)
 
@@ -883,8 +893,7 @@ class Results:
 
             return d2
         except KeyError as exc:
-            raise util.UserError(
-                f"Error loading results data: missing key {exc}")
+            raise util.UserError(f"Error loading results data: missing key {exc}")
 
 
 def format_benchmark_result(results, benchmark):
@@ -930,8 +939,7 @@ def format_benchmark_result(results, benchmark):
         if failure_count == 0:
             info = "ok"
 
-        display_result = [(v, get_err(v, s) if s else None)
-                          for v, s in zip(result, stats)]
+        display_result = [(v, get_err(v, s) if s else None) for v, s in zip(result, stats)]
         display = _format_benchmark_result(display_result, benchmark)
         display = "\n".join(display).strip()
         details = display
@@ -973,14 +981,16 @@ def _format_benchmark_result(result, benchmark, max_width=None):
 
         rows = []
         if column_params:
-            row_params = benchmark['params'][:-len(column_params)]
-            header = benchmark['param_names'][:len(row_params)]
+            row_params = benchmark['params'][: -len(column_params)]
+            header = benchmark['param_names'][: len(row_params)]
             column_param_permutations = list(itertools.product(*column_params))
-            header += [" / ".join(_format_param_value(value) for value in values)
-                       for values in column_param_permutations]
+            header += [
+                " / ".join(_format_param_value(value) for value in values)
+                for values in column_param_permutations
+            ]
             rows.append(header)
             column_items = len(column_param_permutations)
-            name_header = " / ".join(benchmark['param_names'][len(row_params):])
+            name_header = " / ".join(benchmark['param_names'][len(row_params) :])
         else:
             column_items = 1
             row_params = benchmark['params']
@@ -989,15 +999,17 @@ def _format_benchmark_result(result, benchmark, max_width=None):
             rows.append(header)
 
         for j, values in enumerate(itertools.product(*row_params)):
-            row_results = [util.human_value(x[0], benchmark['unit'], err=x[1])
-                           for x in result[j * column_items:(j + 1) * column_items]]
+            row_results = [
+                util.human_value(x[0], benchmark['unit'], err=x[1])
+                for x in result[j * column_items : (j + 1) * column_items]
+            ]
             row = [_format_param_value(value) for value in values] + row_results
             rows.append(row)
 
         if name_header:
-            display = util.format_text_table(rows, 1,
-                                             top_header_text=name_header,
-                                             top_header_span_start=len(row_params))
+            display = util.format_text_table(
+                rows, 1, top_header_text=name_header, top_header_span_start=len(row_params)
+            )
         else:
             display = util.format_text_table(rows, 1)
 
@@ -1025,9 +1037,7 @@ def _format_param_value(value_repr):
     values are string obtained via Python repr.
 
     """
-    regexs = ["^'(.+)'$",
-              "^u'(.+)'$",
-              "^<class '(.+)'>$"]
+    regexs = ["^'(.+)'$", "^u'(.+)'$", "^<class '(.+)'>$"]
 
     for regex in regexs:
         m = re.match(regex, value_repr)

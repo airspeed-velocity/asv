@@ -10,7 +10,7 @@ from packaging.version import Version
 from .. import environment, util
 from ..console import log
 
-WIN = (os.name == "nt")
+WIN = os.name == "nt"
 
 
 # Conda (as of version 4.7.5) is not safe to run in parallel.
@@ -69,6 +69,7 @@ class Conda(environment.Environment):
     Dependencies are installed using ``conda``.  The benchmarked
     project is installed using ``pip``.
     """
+
     tool_name = "conda"
     _matches_cache = {}
 
@@ -100,10 +101,7 @@ class Conda(environment.Environment):
                 log.debug("Using environment.yml")
                 self._conda_environment_file = "environment.yml"
 
-        super().__init__(conf,
-                                    python,
-                                    requirements,
-                                    tagged_env_vars)
+        super().__init__(conf, python, requirements, tagged_env_vars)
 
     @classmethod
     def matches(cls, python):
@@ -154,36 +152,37 @@ class Conda(environment.Environment):
             try:
                 env_file_name = self._conda_environment_file or env_file.name
 
-                conda_version = re.search(
-                    r'\d+(\.\d+)+',
-                    self._run_conda(['--version'], env=env)
-                )[0]
+                conda_version = re.search(r'\d+(\.\d+)+', self._run_conda(['--version'], env=env))[
+                    0
+                ]
                 log.info(f"conda version: {conda_version}")
                 # https://conda.io/projects/conda/en/latest/release-notes.html#id8
                 if Version(conda_version) >= Version("24.3.0"):
-                    self._run_conda(['env', 'create', '-f', env_file_name,
-                                 '-p', self._path, "--yes"],
-                                env=env)
+                    self._run_conda(
+                        ['env', 'create', '-f', env_file_name, '-p', self._path, "--yes"], env=env
+                    )
                 else:  # Backward compatibility
-                    self._run_conda(['env', 'create', '-f', env_file_name,
-                                    '-p', self._path, '--force'],
-                                    env=env)
+                    self._run_conda(
+                        ['env', 'create', '-f', env_file_name, '-p', self._path, '--force'],
+                        env=env,
+                    )
 
                 if self._conda_environment_file and (conda_args or pip_args):
                     # Add extra packages
                     env_file_name = env_file.name
-                    self._run_conda(['env', 'update', '-f', env_file_name,
-                                     '-p', self._path],
-                                    env=env)
+                    self._run_conda(
+                        ['env', 'update', '-f', env_file_name, '-p', self._path], env=env
+                    )
             except Exception:
                 if env_file_name != env_file.name:
-                    log.info("conda env create/update failed: "
-                             f"in {self._path} with file {env_file_name}")
+                    log.info(
+                        "conda env create/update failed: "
+                        f"in {self._path} with file {env_file_name}"
+                    )
                 elif os.path.isfile(env_file_name):
                     with open(env_file_name, 'r') as f:
                         text = f.read()
-                    log.info("conda env create/update failed: "
-                             f"in {self._path} with:\n{text}")
+                    log.info(f"conda env create/update failed: in {self._path} with:\n{text}")
                 raise
         finally:
             os.unlink(env_file.name)
@@ -197,8 +196,7 @@ class Conda(environment.Environment):
         conda_args = []
         pip_args = []
 
-        for key, val in {**self._requirements,
-                         **self._base_requirements}.items():
+        for key, val in {**self._requirements, **self._base_requirements}.items():
             if key.startswith("pip+"):
                 pip_args.append(f"{key[4:]} {val}")
             else:
@@ -219,9 +217,7 @@ class Conda(environment.Environment):
             raise util.UserError(str(e))
 
         with _conda_lock():
-            return util.check_output([conda] + args,
-                                     timeout=self._install_timeout,
-                                     env=env)
+            return util.check_output([conda] + args, timeout=self._install_timeout, env=env)
 
     def run(self, args, **kwargs):
         log.debug(f"Running '{' '.join(args)}' in {self.name}")
@@ -236,8 +232,7 @@ class Conda(environment.Environment):
             lock = _dummy_lock
 
         # Conda doesn't guarantee that user site directories are excluded
-        kwargs["env"] = dict(kwargs.pop("env", os.environ),
-                             PYTHONNOUSERSITE="True")
+        kwargs["env"] = dict(kwargs.pop("env", os.environ), PYTHONNOUSERSITE="True")
 
         with lock():
             return super().run_executable(executable, args, **kwargs)

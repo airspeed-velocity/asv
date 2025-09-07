@@ -25,15 +25,16 @@ from .tools import (
     generate_test_repo,
 )
 
-CAN_BUILD_PYTHON = (HAS_CONDA or HAS_MAMBA or HAS_RATTLER)
+CAN_BUILD_PYTHON = HAS_CONDA or HAS_MAMBA or HAS_RATTLER
+
 
 @pytest.mark.skipif(
     not (HAS_PYTHON_VER2 or CAN_BUILD_PYTHON),
     reason="Requires two usable Python versions",
 )
-def test_matrix_environments(tmpdir, dummy_packages,
-                             skip_virtualenv: pytest.FixtureRequest,
-                             request: pytest.FixtureRequest):
+def test_matrix_environments(
+    tmpdir, dummy_packages, skip_virtualenv: pytest.FixtureRequest, request: pytest.FixtureRequest
+):
     conf = config.Config()
 
     conf.env_dir = str(tmpdir.join("env"))
@@ -43,7 +44,7 @@ def test_matrix_environments(tmpdir, dummy_packages,
     conf.pythons = [PYTHON_VER1, PYTHON_VER2]
     conf.matrix = {
         "pip+asv_dummy_test_package_1": [DUMMY1_VERSION, None],
-        "pip+asv_dummy_test_package_2": DUMMY2_VERSIONS
+        "pip+asv_dummy_test_package_2": DUMMY2_VERSIONS,
     }
     environments = list(environment.get_environments(conf, None))
 
@@ -56,20 +57,21 @@ def test_matrix_environments(tmpdir, dummy_packages,
 
         output = env.run(
             ['-c', 'import asv_dummy_test_package_1 as p, sys; sys.stdout.write(p.__version__)'],
-            valid_return_codes=None)
+            valid_return_codes=None,
+        )
         if 'asv_dummy_test_package_1' in env._requirements:
             assert output.startswith(str(env._requirements['asv_dummy_test_package_1']))
 
         output = env.run(
-            ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)'])
+            ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)']
+        )
         assert output.startswith(str(env._requirements['pip+asv_dummy_test_package_2']))
 
 
-@pytest.mark.skipif((not CAN_BUILD_PYTHON),
-                    reason="Requires a plugin to build python")
-def test_large_environment_matrix(tmpdir,
-                             skip_virtualenv: pytest.FixtureRequest,
-                             request: pytest.FixtureRequest):
+@pytest.mark.skipif((not CAN_BUILD_PYTHON), reason="Requires a plugin to build python")
+def test_large_environment_matrix(
+    tmpdir, skip_virtualenv: pytest.FixtureRequest, request: pytest.FixtureRequest
+):
     # As seen in issue #169, conda can't handle using really long
     # directory names in its environment.  This creates an environment
     # with many dependencies in order to ensure it still works.
@@ -97,11 +99,10 @@ def test_large_environment_matrix(tmpdir,
         env.create()
 
 
-@pytest.mark.skipif((not CAN_BUILD_PYTHON),
-                    reason="Requires a plugin to build python")
-def test_presence_checks(tmpdir, monkeypatch,
-                             skip_virtualenv: pytest.FixtureRequest,
-                             request: pytest.FixtureRequest):
+@pytest.mark.skipif((not CAN_BUILD_PYTHON), reason="Requires a plugin to build python")
+def test_presence_checks(
+    tmpdir, monkeypatch, skip_virtualenv: pytest.FixtureRequest, request: pytest.FixtureRequest
+):
     conf = config.Config()
     conf.environment_type = request.config.getoption('environment_type')
     conf.conda_channels = ["conda-forge"]
@@ -134,14 +135,12 @@ def test_presence_checks(tmpdir, monkeypatch,
         env.run(['-c', 'import os'])
 
         # Check env is recreated if crucial things are missing
-        pip_fns = [
-            os.path.join(env._path, 'bin', 'pip')
-        ]
+        pip_fns = [os.path.join(env._path, 'bin', 'pip')]
         if WIN:
             pip_fns += [
                 os.path.join(env._path, 'bin', 'pip.exe'),
                 os.path.join(env._path, 'Scripts', 'pip'),
-                os.path.join(env._path, 'Scripts', 'pip.exe')
+                os.path.join(env._path, 'Scripts', 'pip.exe'),
             ]
 
         some_removed = False
@@ -165,26 +164,43 @@ def test_matrix_expand_basic():
     conf = config.Config()
     conf.environment_type = 'something'
     conf.pythons = ["2.6", "2.7"]
-    conf.matrix = {
-        'pkg1': None,
-        'pkg2': '',
-        'pkg3': [''],
-        'pkg4': ['1.2', '3.4'],
-        'pkg5': []
-    }
+    conf.matrix = {'pkg1': None, 'pkg2': '', 'pkg3': [''], 'pkg4': ['1.2', '3.4'], 'pkg5': []}
 
-    combinations = _sorted_dict_list(environment.iter_matrix(
-        conf.environment_type, conf.pythons, conf))
-    expected = _sorted_dict_list([
-        {('python', None): '2.6', ('req', 'pkg2'): '', ('req', 'pkg3'): '',
-         ('req', 'pkg4'): '1.2', ('req', 'pkg5'): ''},
-        {('python', None): '2.6', ('req', 'pkg2'): '', ('req', 'pkg3'): '',
-         ('req', 'pkg4'): '3.4', ('req', 'pkg5'): ''},
-        {('python', None): '2.7', ('req', 'pkg2'): '', ('req', 'pkg3'): '',
-         ('req', 'pkg4'): '1.2', ('req', 'pkg5'): ''},
-        {('python', None): '2.7', ('req', 'pkg2'): '', ('req', 'pkg3'): '',
-         ('req', 'pkg4'): '3.4', ('req', 'pkg5'): ''},
-    ])
+    combinations = _sorted_dict_list(
+        environment.iter_matrix(conf.environment_type, conf.pythons, conf)
+    )
+    expected = _sorted_dict_list(
+        [
+            {
+                ('python', None): '2.6',
+                ('req', 'pkg2'): '',
+                ('req', 'pkg3'): '',
+                ('req', 'pkg4'): '1.2',
+                ('req', 'pkg5'): '',
+            },
+            {
+                ('python', None): '2.6',
+                ('req', 'pkg2'): '',
+                ('req', 'pkg3'): '',
+                ('req', 'pkg4'): '3.4',
+                ('req', 'pkg5'): '',
+            },
+            {
+                ('python', None): '2.7',
+                ('req', 'pkg2'): '',
+                ('req', 'pkg3'): '',
+                ('req', 'pkg4'): '1.2',
+                ('req', 'pkg5'): '',
+            },
+            {
+                ('python', None): '2.7',
+                ('req', 'pkg2'): '',
+                ('req', 'pkg3'): '',
+                ('req', 'pkg4'): '3.4',
+                ('req', 'pkg5'): '',
+            },
+        ]
+    )
     assert combinations == expected
 
 
@@ -201,27 +217,30 @@ def test_matrix_expand_include():
         {'environment_type': 'something', 'python': '2.7', 'b': '5'},
     ]
 
-    combinations = _sorted_dict_list(environment.iter_matrix(
-        conf.environment_type, conf.pythons, conf))
-    expected = _sorted_dict_list([
-        {('python', None): '2.6', ('req', 'a'): '1'},
-        {('python', None): '3.5', ('req', 'b'): '2'},
-        {('python', None): '2.7', ('req', 'b'): '3'},
-        {('python', None): '2.7', ('req', 'b'): '5'}
-    ])
+    combinations = _sorted_dict_list(
+        environment.iter_matrix(conf.environment_type, conf.pythons, conf)
+    )
+    expected = _sorted_dict_list(
+        [
+            {('python', None): '2.6', ('req', 'a'): '1'},
+            {('python', None): '3.5', ('req', 'b'): '2'},
+            {('python', None): '2.7', ('req', 'b'): '3'},
+            {('python', None): '2.7', ('req', 'b'): '5'},
+        ]
+    )
     assert combinations == expected
 
-    conf.include = [
-        {'b': '2'}
-    ]
+    conf.include = [{'b': '2'}]
     with pytest.raises(util.UserError):
         list(environment.iter_matrix(conf.environment_type, conf.pythons, conf))
 
-@pytest.mark.skipif(not (HAS_PYTHON_VER2 or CAN_BUILD_PYTHON),
-                    reason="Requires two usable Python versions")
+
+@pytest.mark.skipif(
+    not (HAS_PYTHON_VER2 or CAN_BUILD_PYTHON), reason="Requires two usable Python versions"
+)
 def test_matrix_expand_include_detect_env_type(
-        skip_virtualenv: pytest.FixtureRequest,
-        request: pytest.FixtureRequest):
+    skip_virtualenv: pytest.FixtureRequest, request: pytest.FixtureRequest
+):
     conf = config.Config()
     conf.environment_type = request.config.getoption('environment_type')
     conf.conda_channels = ["conda-forge"]
@@ -232,11 +251,14 @@ def test_matrix_expand_include_detect_env_type(
         {'sys_platform': sys.platform, 'python': PYTHON_VER1},
     ]
 
-    combinations = _sorted_dict_list(environment.iter_matrix(
-        conf.environment_type, conf.pythons, conf))
-    expected = _sorted_dict_list([
-        {('python', None): PYTHON_VER1},
-    ])
+    combinations = _sorted_dict_list(
+        environment.iter_matrix(conf.environment_type, conf.pythons, conf)
+    )
+    expected = _sorted_dict_list(
+        [
+            {('python', None): PYTHON_VER1},
+        ]
+    )
     assert combinations == expected
 
 
@@ -244,13 +266,8 @@ def test_matrix_expand_exclude():
     conf = config.Config()
     conf.environment_type = 'something'
     conf.pythons = ["2.6", "2.7"]
-    conf.matrix = {
-        'a': '1',
-        'b': ['1', None]
-    }
-    conf.include = [
-        {'python': '2.7', 'b': '2', 'c': None}
-    ]
+    conf.matrix = {'a': '1', 'b': ['1', None]}
+    conf.include = [{'python': '2.7', 'b': '2', 'c': None}]
 
     # check basics
     conf.exclude = [
@@ -258,60 +275,65 @@ def test_matrix_expand_exclude():
         {'python': '2.7', 'b': None},
         {'python': '2.6', 'a': '1'},
     ]
-    combinations = _sorted_dict_list(environment.iter_matrix(
-        conf.environment_type, conf.pythons, conf))
-    expected = _sorted_dict_list([
-        {('python', None): '2.7', ('req', 'a'): '1', ('req', 'b'): '1'},
-        {('python', None): '2.7', ('req', 'b'): '2'}
-    ])
+    combinations = _sorted_dict_list(
+        environment.iter_matrix(conf.environment_type, conf.pythons, conf)
+    )
+    expected = _sorted_dict_list(
+        [
+            {('python', None): '2.7', ('req', 'a'): '1', ('req', 'b'): '1'},
+            {('python', None): '2.7', ('req', 'b'): '2'},
+        ]
+    )
     assert combinations == expected
 
     # check regexp
     conf.exclude = [
         {'python': '.*', 'b': None},
     ]
-    combinations = _sorted_dict_list(environment.iter_matrix(
-        conf.environment_type, conf.pythons, conf))
-    expected = _sorted_dict_list([
-        {('python', None): '2.6', ('req', 'a'): '1', ('req', 'b'): '1'},
-        {('python', None): '2.7', ('req', 'a'): '1', ('req', 'b'): '1'},
-        {('python', None): '2.7', ('req', 'b'): '2'}
-    ])
+    combinations = _sorted_dict_list(
+        environment.iter_matrix(conf.environment_type, conf.pythons, conf)
+    )
+    expected = _sorted_dict_list(
+        [
+            {('python', None): '2.6', ('req', 'a'): '1', ('req', 'b'): '1'},
+            {('python', None): '2.7', ('req', 'a'): '1', ('req', 'b'): '1'},
+            {('python', None): '2.7', ('req', 'b'): '2'},
+        ]
+    )
     assert combinations == expected
 
     # check environment_type as key
     conf.exclude = [
         {'environment_type': 'some.*'},
     ]
-    combinations = _sorted_dict_list(environment.iter_matrix(
-        conf.environment_type, conf.pythons, conf))
-    expected = [
-        {('python', None): '2.7', ('req', 'b'): '2'}
-    ]
+    combinations = _sorted_dict_list(
+        environment.iter_matrix(conf.environment_type, conf.pythons, conf)
+    )
+    expected = [{('python', None): '2.7', ('req', 'b'): '2'}]
     assert combinations == expected
 
     # check sys_platform as key
     conf.exclude = [
         {'sys_platform': sys.platform},
     ]
-    combinations = _sorted_dict_list(environment.iter_matrix(
-        conf.environment_type, conf.pythons, conf))
-    expected = [
-        {('python', None): '2.7', ('req', 'b'): '2'}
-    ]
+    combinations = _sorted_dict_list(
+        environment.iter_matrix(conf.environment_type, conf.pythons, conf)
+    )
+    expected = [{('python', None): '2.7', ('req', 'b'): '2'}]
     assert combinations == expected
 
     # check inverted regex
-    conf.exclude = [
-        {'python': '(?!2.6).*'}
-    ]
-    combinations = _sorted_dict_list(environment.iter_matrix(
-        conf.environment_type, conf.pythons, conf))
-    expected = _sorted_dict_list([
-        {('python', None): '2.6', ('req', 'a'): '1', ('req', 'b'): '1'},
-        {('python', None): '2.6', ('req', 'a'): '1'},
-        {('python', None): '2.7', ('req', 'b'): '2'}
-    ])
+    conf.exclude = [{'python': '(?!2.6).*'}]
+    combinations = _sorted_dict_list(
+        environment.iter_matrix(conf.environment_type, conf.pythons, conf)
+    )
+    expected = _sorted_dict_list(
+        [
+            {('python', None): '2.6', ('req', 'a'): '1', ('req', 'b'): '1'},
+            {('python', None): '2.6', ('req', 'a'): '1'},
+            {('python', None): '2.7', ('req', 'b'): '2'},
+        ]
+    )
     assert combinations == expected
 
 
@@ -324,27 +346,36 @@ def test_iter_env_matrix_combinations():
 
     # (matrix, expected)
     env_matrices = [
-        ({'var0': ['val0', 'val1'], 'var1': ['val2', 'val3']},
-         [{'var0': 'val0', 'var1': 'val2'},
-          {'var0': 'val0', 'var1': 'val3'},
-          {'var0': 'val1', 'var1': 'val2'},
-          {'var0': 'val1', 'var1': 'val3'}]),
-        ({'var0': ['val0', 'val1'], 'var1': ['val2', None]},
-         [{'var0': 'val0', 'var1': 'val2'}, {'var0': 'val0'},
-          {'var0': 'val1', 'var1': 'val2'}, {'var0': 'val1'}]),
-        ({'var0': ['val0', 'val1']},
-         [{'var0': 'val0'}, {'var0': 'val1'}]),
+        (
+            {'var0': ['val0', 'val1'], 'var1': ['val2', 'val3']},
+            [
+                {'var0': 'val0', 'var1': 'val2'},
+                {'var0': 'val0', 'var1': 'val3'},
+                {'var0': 'val1', 'var1': 'val2'},
+                {'var0': 'val1', 'var1': 'val3'},
+            ],
+        ),
+        (
+            {'var0': ['val0', 'val1'], 'var1': ['val2', None]},
+            [
+                {'var0': 'val0', 'var1': 'val2'},
+                {'var0': 'val0'},
+                {'var0': 'val1', 'var1': 'val2'},
+                {'var0': 'val1'},
+            ],
+        ),
+        ({'var0': ['val0', 'val1']}, [{'var0': 'val0'}, {'var0': 'val1'}]),
         ({}, [{}]),
     ]
 
     for matrix, expected in env_matrices:
         conf.matrix = {'env': matrix}
-        expected = [{('env', key): value for key, value in item.items()}
-                    for item in expected]
+        expected = [{('env', key): value for key, value in item.items()} for item in expected]
         for m in expected:
             m['python', None] = "2.6"
-        result = _sorted_dict_list(environment.iter_matrix(conf.environment_type,
-                                                           conf.pythons, conf))
+        result = _sorted_dict_list(
+            environment.iter_matrix(conf.environment_type, conf.pythons, conf)
+        )
         assert result == _sorted_dict_list(expected)
 
 
@@ -357,9 +388,7 @@ def test_conda_pip_install(tmpdir, dummy_packages, skip_no_conda: pytest.Fixture
 
     conf.environment_type = "conda"
     conf.pythons = [PYTHON_VER1]
-    conf.matrix = {
-        "pip+asv_dummy_test_package_2": DUMMY2_VERSIONS[0]
-    }
+    conf.matrix = {"pip+asv_dummy_test_package_2": DUMMY2_VERSIONS[0]}
     environments = list(environment.get_environments(conf, None))
 
     assert len(environments) == 1 * 1 * 1
@@ -368,7 +397,8 @@ def test_conda_pip_install(tmpdir, dummy_packages, skip_no_conda: pytest.Fixture
         env.create()
 
         output = env.run(
-            ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)'])
+            ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)']
+        )
         assert output.startswith(DUMMY2_VERSIONS[0])
 
 
@@ -377,8 +407,7 @@ def test_conda_environment_file(tmpdir, dummy_packages, skip_no_conda: pytest.Fi
     env_file_name = str(tmpdir.join("environment.yml"))
     with open(env_file_name, "w") as temp_environment_file:
         temp_environment_file.write(
-            "name: test_conda_envs\ndependencies:\n"
-            "    - pip:\n        - asv_dummy_test_package_2"
+            "name: test_conda_envs\ndependencies:\n    - pip:\n        - asv_dummy_test_package_2"
         )
 
     conf = config.Config()
@@ -386,9 +415,7 @@ def test_conda_environment_file(tmpdir, dummy_packages, skip_no_conda: pytest.Fi
     conf.environment_type = "conda"
     conf.pythons = [PYTHON_VER1]
     conf.conda_environment_file = env_file_name
-    conf.matrix = {
-        "pip+asv_dummy_test_package_1": [DUMMY1_VERSION]
-    }
+    conf.matrix = {"pip+asv_dummy_test_package_1": [DUMMY1_VERSION]}
 
     environments = list(environment.get_environments(conf, None))
 
@@ -398,11 +425,13 @@ def test_conda_environment_file(tmpdir, dummy_packages, skip_no_conda: pytest.Fi
         env.create()
 
         output = env.run(
-            ['-c', 'import asv_dummy_test_package_1 as p, sys; sys.stdout.write(p.__version__)'])
+            ['-c', 'import asv_dummy_test_package_1 as p, sys; sys.stdout.write(p.__version__)']
+        )
         assert output.startswith(str(DUMMY1_VERSION))
 
         output = env.run(
-            ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)'])
+            ['-c', 'import asv_dummy_test_package_2 as p, sys; sys.stdout.write(p.__version__)']
+        )
         assert output.startswith(str(DUMMY2_VERSIONS[1]))
 
 
@@ -425,8 +454,9 @@ def test_conda_run_executable(tmpdir):
         env.run_executable('conda', ['info'])
 
 
-@pytest.mark.skipif(not HAS_PYTHON_VER2 or not HAS_CONDA,
-                    reason="Requires two usable Python versions and conda")
+@pytest.mark.skipif(
+    not HAS_PYTHON_VER2 or not HAS_CONDA, reason="Requires two usable Python versions and conda"
+)
 def test_environment_select(request: pytest.FixtureRequest, skip_no_conda: pytest.FixtureRequest):
     conf = config.Config()
     conf.environment_type = "conda"
@@ -434,9 +464,7 @@ def test_environment_select(request: pytest.FixtureRequest, skip_no_conda: pytes
     conf.matrix = {
         "six": ["1.10"],
     }
-    conf.include = [
-        {'environment_type': 'conda', 'python': '1.9'}
-    ]
+    conf.include = [{'environment_type': 'conda', 'python': '1.9'}]
 
     # Check default environment config
     environments = list(environment.get_environments(conf, None))
@@ -455,9 +483,9 @@ def test_environment_select(request: pytest.FixtureRequest, skip_no_conda: pytes
         assert items == [('conda', '1.9'), ('conda', PYTHON_VER2), ('virtualenv', PYTHON_VER2)]
 
         # Check specific python specifiers
-        environments = list(environment.get_environments(conf,
-                                                         ["conda:3.5",
-                                                          "virtualenv:" + PYTHON_VER2]))
+        environments = list(
+            environment.get_environments(conf, ["conda:3.5", "virtualenv:" + PYTHON_VER2])
+        )
         items = sorted((env.tool_name, env.python) for env in environments)
         assert items == [('conda', '3.5'), ('virtualenv', PYTHON_VER2)]
 
@@ -468,9 +496,9 @@ def test_environment_select(request: pytest.FixtureRequest, skip_no_conda: pytes
 
     # Check autodetect existing
     executable = os.path.relpath(os.path.abspath(sys.executable))
-    environments = list(environment.get_environments(conf, ["existing",
-                                                            ":same",
-                                                            ":" + executable]))
+    environments = list(
+        environment.get_environments(conf, ["existing", ":same", ":" + executable])
+    )
     # TODO(rg): Fix this later
     # assert len(environments) == 3
     # for env in [
@@ -500,8 +528,9 @@ def test_environment_select(request: pytest.FixtureRequest, skip_no_conda: pytes
     assert len(environments) == 1
 
 
-@pytest.mark.skipif(not HAS_PYTHON_VER2 or not HAS_CONDA,
-                    reason="Requires two usable Python versions and conda")
+@pytest.mark.skipif(
+    not HAS_PYTHON_VER2 or not HAS_CONDA, reason="Requires two usable Python versions and conda"
+)
 def test_environment_select_autodetect(skip_no_conda: pytest.FixtureRequest):
     conf = config.Config()
     conf.environment_type = "conda"
@@ -528,6 +557,7 @@ def test_environment_select_autodetect(skip_no_conda: pytest.FixtureRequest):
     conf.exclude = [{'environment_type': 'conda'}]
     environments = list(environment.get_environments(conf, ["conda:" + PYTHON_VER1]))
     assert len(environments) == 1
+
 
 @pytest.mark.skipif((not HAS_CONDA), reason="Requires conda")
 def test_matrix_empty(skip_no_conda: pytest.FixtureRequest):
@@ -562,16 +592,17 @@ def test_matrix_existing(skip_no_conda: pytest.FixtureRequest):
 
 # environment.yml should respect the specified order
 # of channels when adding packages
-@pytest.mark.skipif((not HAS_CONDA),
-                    reason="Requires conda and conda-build")
-@pytest.mark.parametrize("channel_list,expected_channel", [
-    (["defaults", "conda-forge"], "pkgs/main"),
-    (["conda-forge", "defaults"], "conda-forge"),
-])
-def test_conda_channel_addition(tmpdir,
-                                channel_list,
-                                expected_channel,
-                                skip_no_conda: pytest.FixtureRequest):
+@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
+@pytest.mark.parametrize(
+    "channel_list,expected_channel",
+    [
+        (["defaults", "conda-forge"], "pkgs/main"),
+        (["conda-forge", "defaults"], "conda-forge"),
+    ],
+)
+def test_conda_channel_addition(
+    tmpdir, channel_list, expected_channel, skip_no_conda: pytest.FixtureRequest
+):
     # test that we can add conda channels to environments
     # and that we respect the specified priority order
     # of channels
@@ -599,11 +630,9 @@ def test_conda_channel_addition(tmpdir,
         # which we are intentionally trying not to modify)
         conda = util.which('conda')
         print("\n**conda being used:", conda)
-        out_str = str(util.check_output([conda,
-                                        'list',
-                                         '-p',
-                                         os.path.normpath(env._path),
-                                         '--json']))
+        out_str = str(
+            util.check_output([conda, 'list', '-p', os.path.normpath(env._path), '--json'])
+        )
         json_package_list = json.loads(out_str)
         print(json_package_list)
         for installed_package in json_package_list:
@@ -651,14 +680,18 @@ def test_environment_name_sanitization(skip_no_conda: pytest.FixtureRequest):
     assert environments[0].name == "conda-py3.5-pip+git+http___github.com_space-telescope_asv.git"
 
 
-@pytest.mark.parametrize("environment_type", [
-    pytest.param("conda",
-                 marks=pytest.mark.skipif(not HAS_CONDA, reason="needs conda and conda-build")),
-    # TODO(rg): Add back later, needs to skip if no executable is found
-    # pytest.param("virtualenv",
-    #              marks=pytest.mark.skipif(not (HAS_PYTHON_VER2 and HAS_VIRTUALENV),
-    #                                       reason="needs virtualenv and python 3.8"))
-])
+@pytest.mark.parametrize(
+    "environment_type",
+    [
+        pytest.param(
+            "conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="needs conda and conda-build")
+        ),
+        # TODO(rg): Add back later, needs to skip if no executable is found
+        # pytest.param("virtualenv",
+        #              marks=pytest.mark.skipif(not (HAS_PYTHON_VER2 and HAS_VIRTUALENV),
+        #                                       reason="needs virtualenv and python 3.8"))
+    ],
+)
 def test_environment_environ_path(
     environment_type, tmpdir, monkeypatch, skip_no_conda: pytest.FixtureRequest
 ):
@@ -669,7 +702,7 @@ def test_environment_environ_path(
     conf.pythons = [PYTHON_VER1]
     conf.matrix = {}
 
-    env, = environment.get_environments(conf, [])
+    (env,) = environment.get_environments(conf, [])
     env.create()
     output = env.run(['-c', 'import os; print(os.environ["PATH"])'])
     paths = output.strip().split(os.pathsep)
@@ -690,11 +723,11 @@ def test_environment_environ_path(
     assert output.strip() == "Hello python path"
 
 
-
-@pytest.mark.skipif(not (HAS_PYTHON_VER2 or HAS_CONDA),
-                    reason="Requires two usable Python versions")
+@pytest.mark.skipif(
+    not (HAS_PYTHON_VER2 or HAS_CONDA), reason="Requires two usable Python versions"
+)
 def test_build_isolation(
-        tmpdir, request: pytest.FixtureRequest, skip_virtualenv: pytest.FixtureRequest
+    tmpdir, request: pytest.FixtureRequest, skip_virtualenv: pytest.FixtureRequest
 ):
     # build should not fail with build_cache on projects that have pyproject.toml
     tmpdir = str(tmpdir)
@@ -703,8 +736,7 @@ def test_build_isolation(
     dvcs = generate_test_repo(tmpdir, [0], dvcs_type='git')
     fn = os.path.join(dvcs.path, 'pyproject.toml')
     with open(fn, 'w') as f:
-        f.write('[build-system]\n'
-                'requires = ["wheel", "setuptools"]')
+        f.write('[build-system]\nrequires = ["wheel", "setuptools"]')
     dvcs.add(fn)
     dvcs.commit("Add pyproject.toml")
 
@@ -731,7 +763,7 @@ def test_build_isolation(
 
 @pytest.mark.skipif(tools.HAS_PYPY, reason="Flaky on pypy")
 def test_custom_commands(
-        tmpdir, request: pytest.FixtureRequest, skip_virtualenv: pytest.FixtureRequest
+    tmpdir, request: pytest.FixtureRequest, skip_virtualenv: pytest.FixtureRequest
 ):
     # check custom install/uninstall/build commands work
     tmpdir = str(tmpdir)
@@ -756,24 +788,30 @@ def test_custom_commands(
     conf.uninstall_command = [f"python {quote(uninstall_py)} {{env_dir}}"]
 
     with open(build_py, 'wb') as f:
-        f.write(b"import os, sys\n"
-                b"assert sys.argv[1] == os.environ['ASV_BUILD_CACHE_DIR']\n"
-                b"f = open(os.path.join(os.environ['ASV_BUILD_CACHE_DIR'], 'cached'), 'wb')\n"
-                b"f.write(b'data')\n"
-                b"f.close()\n")
+        f.write(
+            b"import os, sys\n"
+            b"assert sys.argv[1] == os.environ['ASV_BUILD_CACHE_DIR']\n"
+            b"f = open(os.path.join(os.environ['ASV_BUILD_CACHE_DIR'], 'cached'), 'wb')\n"
+            b"f.write(b'data')\n"
+            b"f.close()\n"
+        )
 
     with open(install_py, 'wb') as f:
-        f.write(b"import os, sys, shutil\n"
-                b"assert sys.argv[1] == os.environ['ASV_ENV_DIR']\n"
-                b"assert sys.argv[2] == os.environ['ASV_BUILD_CACHE_DIR']\n"
-                b"shutil.copyfile(os.path.join(os.environ['ASV_BUILD_CACHE_DIR'], 'cached'),\n"
-                b"                os.path.join(os.environ['ASV_ENV_DIR'], 'installed'))\n")
+        f.write(
+            b"import os, sys, shutil\n"
+            b"assert sys.argv[1] == os.environ['ASV_ENV_DIR']\n"
+            b"assert sys.argv[2] == os.environ['ASV_BUILD_CACHE_DIR']\n"
+            b"shutil.copyfile(os.path.join(os.environ['ASV_BUILD_CACHE_DIR'], 'cached'),\n"
+            b"                os.path.join(os.environ['ASV_ENV_DIR'], 'installed'))\n"
+        )
 
     with open(uninstall_py, 'wb') as f:
-        f.write(b"import os, sys\n"
-                b"assert sys.argv[1] == os.environ['ASV_ENV_DIR']\n"
-                b"fn = os.path.join(os.environ['ASV_ENV_DIR'], 'installed')\n"
-                b"if os.path.isfile(fn): os.unlink(fn)\n")
+        f.write(
+            b"import os, sys\n"
+            b"assert sys.argv[1] == os.environ['ASV_ENV_DIR']\n"
+            b"fn = os.path.join(os.environ['ASV_ENV_DIR'], 'installed')\n"
+            b"if os.path.isfile(fn): os.unlink(fn)\n"
+        )
 
     def get_env():
         env = list(environment.get_environments(conf, None))[0]
@@ -824,7 +862,7 @@ def test_custom_commands(
 
 
 def test_installed_commit_hash(
-        tmpdir, request: pytest.FixtureRequest, skip_virtualenv: pytest.FixtureRequest
+    tmpdir, request: pytest.FixtureRequest, skip_virtualenv: pytest.FixtureRequest
 ):
     tmpdir = str(tmpdir)
 
@@ -875,7 +913,7 @@ def test_installed_commit_hash(
 
 
 def test_install_success(
-        tmpdir, request: pytest.FixtureRequest, skip_virtualenv: pytest.FixtureRequest
+    tmpdir, request: pytest.FixtureRequest, skip_virtualenv: pytest.FixtureRequest
 ):
     # Check that install_project really installs the package. (gh-805)
     # This may fail if pip in install_command e.g. gets confused by an .egg-info
@@ -904,7 +942,7 @@ def test_install_success(
 
 
 def test_install_env_matrix_values(
-        tmpdir, request: pytest.FixtureRequest, skip_virtualenv: pytest.FixtureRequest
+    tmpdir, request: pytest.FixtureRequest, skip_virtualenv: pytest.FixtureRequest
 ):
     tmpdir = str(tmpdir)
 
@@ -917,8 +955,10 @@ def test_install_env_matrix_values(
     conf.conda_channels = ["conda-forge"]
     conf.pythons = [PYTHON_VER1]
     conf.repo = os.path.abspath(dvcs.path)
-    conf.matrix = {'env': {'SOME_ASV_TEST_BUILD_VALUE': '1'},
-                   'env_nobuild': {'SOME_ASV_TEST_NON_BUILD_VALUE': '1'}}
+    conf.matrix = {
+        'env': {'SOME_ASV_TEST_BUILD_VALUE': '1'},
+        'env_nobuild': {'SOME_ASV_TEST_NON_BUILD_VALUE': '1'},
+    }
 
     repo = get_repo(conf)
 
@@ -926,13 +966,21 @@ def test_install_env_matrix_values(
     env.create()
     env.install_project(conf, repo, commit_hash)
 
-    env.run(['-c',
-             'import asv_test_repo.build_time_env as t, sys; '
-             'sys.exit(0 if t.env["SOME_ASV_TEST_BUILD_VALUE"] == "1" else 1)'])
+    env.run(
+        [
+            '-c',
+            'import asv_test_repo.build_time_env as t, sys; '
+            'sys.exit(0 if t.env["SOME_ASV_TEST_BUILD_VALUE"] == "1" else 1)',
+        ]
+    )
 
-    env.run(['-c',
-             'import asv_test_repo.build_time_env as t, sys; '
-             'sys.exit(0 if "SOME_ASV_TEST_NON_BUILD_VALUE" not in t.env else 1)'])
+    env.run(
+        [
+            '-c',
+            'import asv_test_repo.build_time_env as t, sys; '
+            'sys.exit(0 if "SOME_ASV_TEST_NON_BUILD_VALUE" not in t.env else 1)',
+        ]
+    )
 
 
 def test_environment_env_matrix(request: pytest.FixtureRequest):
@@ -944,8 +992,7 @@ def test_environment_env_matrix(request: pytest.FixtureRequest):
         ({"var1": ["val1", "val2"], "var2": ['val3', 'val4']}, {}, 4, 4),
         ({"var1": ["val1", "val2"], "var2": ['val3', None]}, {}, 4, 4),
         ({"var1": ["val1", "val2"]}, {"var2": ['val3', None]}, 4, 2),
-        ({"var1": ["val1", "val2"], "var2": ['val3', 'val4']},
-         {"var3": ['val5', None]}, 8, 4),
+        ({"var1": ["val1", "val2"], "var2": ['val3', 'val4']}, {"var3": ['val5', None]}, 8, 4),
     ]
 
     for build_vars, non_build_vars, environ_count, build_count in configs:
@@ -965,8 +1012,10 @@ def test_environment_env_matrix(request: pytest.FixtureRequest):
 
 def test__parse_matrix():
     cases = [
-        ({"env": {"A": "B"}, "env_nobuild": {"C": None}, "req": {"foo": ["9"]}},
-         {("env", "A"): "B", ("env_nobuild", "C"): None, ("req", "foo"): ["9"]})
+        (
+            {"env": {"A": "B"}, "env_nobuild": {"C": None}, "req": {"foo": ["9"]}},
+            {("env", "A"): "B", ("env_nobuild", "C"): None, ("req", "foo"): ["9"]},
+        )
     ]
     for rule, expected in cases:
         parsed = environment._parse_matrix(rule)
@@ -983,10 +1032,7 @@ def test__parse_matrix_invalid():
 
 
 def test__parse_matrix_legacy():
-    cases = [
-        ({"foo": "1", "bar": ["2", "3"]},
-         {("req", "foo"): "1", ("req", "bar"): ["2", "3"]})
-    ]
+    cases = [({"foo": "1", "bar": ["2", "3"]}, {("req", "foo"): "1", ("req", "bar"): ["2", "3"]})]
     for m, expected in cases:
         parsed = environment._parse_matrix(m)
         assert parsed == expected
@@ -994,11 +1040,24 @@ def test__parse_matrix_legacy():
 
 def test__parse_exclude_include_rule():
     cases = [
-        ({"python": "2.6", "environment_type": "conda", "sys_platform": "123",
-          "env": {"A": "B"}, "env_nobuild": {"C": "D"}, "req": {"foo": "9"}},
-         {("python", None): "2.6", ("environment_type", None): "conda",
-          ("sys_platform", None): "123", ("env", "A"): "B",
-          ("env_nobuild", "C"): "D", ("req", "foo"): "9"})
+        (
+            {
+                "python": "2.6",
+                "environment_type": "conda",
+                "sys_platform": "123",
+                "env": {"A": "B"},
+                "env_nobuild": {"C": "D"},
+                "req": {"foo": "9"},
+            },
+            {
+                ("python", None): "2.6",
+                ("environment_type", None): "conda",
+                ("sys_platform", None): "123",
+                ("env", "A"): "B",
+                ("env_nobuild", "C"): "D",
+                ("req", "foo"): "9",
+            },
+        )
     ]
     for rule, expected in cases:
         parsed = environment._parse_exclude_include_rule(rule)
@@ -1007,8 +1066,15 @@ def test__parse_exclude_include_rule():
 
 def test__parse_exclude_include_rule_invalid():
     cases = [
-        {"python": "2.6", "environment_type": "conda", "sys_platform": "123",
-         "env": {"A": "B"}, "env_nobuild": {"C": "D"}, "req": {"foo": "9"}, "foo": "9"},
+        {
+            "python": "2.6",
+            "environment_type": "conda",
+            "sys_platform": "123",
+            "env": {"A": "B"},
+            "env_nobuild": {"C": "D"},
+            "req": {"foo": "9"},
+            "foo": "9",
+        },
     ]
     for rule in cases:
         with pytest.raises(util.UserError):
@@ -1016,20 +1082,26 @@ def test__parse_exclude_include_rule_invalid():
 
 
 def test__parse_matrix_entries():
-    entries = {("python", None): "2.6", ("env", "A"): "B",
-               ("env_nobuild", "C"): "D", ("req", "foo"): "9"}
+    entries = {
+        ("python", None): "2.6",
+        ("env", "A"): "B",
+        ("env_nobuild", "C"): "D",
+        ("req", "foo"): "9",
+    }
     python, requirements, tagged_env_vars = environment._parse_matrix_entries(entries)
     assert python == "2.6"
     assert requirements == {"foo": "9"}
     assert tagged_env_vars == {("build", "A"): "B", ("nobuild", "C"): "D"}
 
 
-@pytest.mark.parametrize("env_type", [
-    pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="Requires conda")),
-    pytest.param("mamba", marks=pytest.mark.skipif(not HAS_MAMBA, reason="Requires mamba"))
-])
-@pytest.mark.skipif(not HAS_PYTHON_VER2,
-                    reason="Requires two usable Python versions")
+@pytest.mark.parametrize(
+    "env_type",
+    [
+        pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="Requires conda")),
+        pytest.param("mamba", marks=pytest.mark.skipif(not HAS_MAMBA, reason="Requires mamba")),
+    ],
+)
+@pytest.mark.skipif(not HAS_PYTHON_VER2, reason="Requires two usable Python versions")
 def test_no_env_file_python_version(tmpdir, env_type):
     """Test the Python version is correct when no env file is present"""
     conf = config.Config()
@@ -1051,5 +1123,6 @@ def test_no_env_file_python_version(tmpdir, env_type):
         # Extract just the major.minor version
         installed_version = '.'.join(installed_version.split('.')[:2])
 
-        assert installed_version == env.python, \
+        assert installed_version == env.python, (
             f"Expected Python version {env.python}, but got {installed_version}"
+        )

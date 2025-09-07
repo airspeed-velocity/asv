@@ -38,14 +38,13 @@ class Git(Repo):
     @classmethod
     def is_local_repo(cls, path):
         return os.path.isdir(path) and (
-            os.path.exists(os.path.join(path, '.git')) or
-            os.path.isdir(os.path.join(path, 'objects')))
+            os.path.exists(os.path.join(path, '.git'))
+            or os.path.isdir(os.path.join(path, 'objects'))
+        )
 
     @classmethod
     def url_match(cls, url):
-        regexes = [
-            r'^https?://.*?\.git$',
-            r'^git@.*?\.git$']
+        regexes = [r'^https?://.*?\.git$', r'^git@.*?\.git$']
 
         for regex in regexes:
             if re.match(regex, url):
@@ -65,8 +64,9 @@ class Git(Repo):
         if cwd is not None:
             prev = env.get('GIT_CEILING_DIRECTORIES')
             env['GIT_CEILING_DIRECTORIES'] = os.pathsep.join(
-                [os.path.join(os.path.abspath(cwd), os.pardir)] +
-                ([prev] if prev is not None else []))
+                [os.path.join(os.path.abspath(cwd), os.pardir)]
+                + ([prev] if prev is not None else [])
+            )
         return util.check_output([self._git] + args, env=env, **kwargs)
 
     def get_new_range_spec(self, latest_result, branch=None):
@@ -88,16 +88,26 @@ class Git(Repo):
     def checkout(self, path, commit_hash):
         def checkout_existing(display_error):
             # Deinit fails if no submodules, so ignore its failure
-            self._run_git(['-c', 'protocol.file.allow=always',
-                           'submodule', 'deinit', '-f', '.'],
-                          cwd=path, display_error=False, valid_return_codes=None)
-            self._run_git(['checkout', '-f', commit_hash],
-                          cwd=path, display_error=display_error)
-            self._run_git(['clean', '-fdx'],
-                          cwd=path, display_error=display_error)
-            self._run_git(['-c', 'protocol.file.allow=always',
-                           'submodule', 'update', '--init', '--recursive'],
-                          cwd=path, display_error=display_error)
+            self._run_git(
+                ['-c', 'protocol.file.allow=always', 'submodule', 'deinit', '-f', '.'],
+                cwd=path,
+                display_error=False,
+                valid_return_codes=None,
+            )
+            self._run_git(['checkout', '-f', commit_hash], cwd=path, display_error=display_error)
+            self._run_git(['clean', '-fdx'], cwd=path, display_error=display_error)
+            self._run_git(
+                [
+                    '-c',
+                    'protocol.file.allow=always',
+                    'submodule',
+                    'update',
+                    '--init',
+                    '--recursive',
+                ],
+                cwd=path,
+                display_error=display_error,
+            )
 
         if os.path.isdir(path):
             try:
@@ -107,14 +117,22 @@ class Git(Repo):
                 util.long_path_rmtree(path)
 
         if not os.path.isdir(path):
-            self._run_git(['clone', '--shared', '--recursive', self._path, path],
-                          cwd=None)
+            self._run_git(['clone', '--shared', '--recursive', self._path, path], cwd=None)
             checkout_existing(display_error=True)
 
     def get_date(self, hash):
-        return int(self._run_git(
-            ['rev-list', '-n', '1', '--format=%at', hash],
-            valid_return_codes=(0, 1), dots=False).strip().split()[-1]) * 1000
+        return (
+            int(
+                self._run_git(
+                    ['rev-list', '-n', '1', '--format=%at', hash],
+                    valid_return_codes=(0, 1),
+                    dots=False,
+                )
+                .strip()
+                .split()[-1]
+            )
+            * 1000
+        )
 
     def get_hashes_from_range(self, range_spec):
         args = ['rev-list', '--first-parent']
@@ -131,9 +149,11 @@ class Git(Repo):
         lookup_name = name + '^{commit}'
 
         try:
-            return self._run_git(['rev-parse', lookup_name],
-                                 display_error=False,
-                                 dots=False).strip().split()[0]
+            return (
+                self._run_git(['rev-parse', lookup_name], display_error=False, dots=False)
+                .strip()
+                .split()[0]
+            )
         except util.ProcessError as err:
             if err.stdout.strip() == lookup_name:
                 # Name does not exist
@@ -145,10 +165,10 @@ class Git(Repo):
 
     def get_name_from_hash(self, commit):
         try:
-            name = self._run_git(["name-rev", "--name-only",
-                                  "--exclude=remotes/*",
-                                  "--no-undefined", commit],
-                                 display_error=False).strip()
+            name = self._run_git(
+                ["name-rev", "--name-only", "--exclude=remotes/*", "--no-undefined", commit],
+                display_error=False,
+            ).strip()
             if not name:
                 return None
         except util.ProcessError:
@@ -158,7 +178,7 @@ class Git(Repo):
         # Return tags without prefix
         for prefix in ['tags/']:
             if name.startswith(prefix):
-                return name[len(prefix):]
+                return name[len(prefix) :]
 
         return name
 
@@ -176,9 +196,16 @@ class Git(Repo):
 
     def get_revisions(self, commits):
         revisions = {}
-        for i, commit in enumerate(self._run_git([
-            "rev-list", "--all", "--date-order", "--reverse",
-        ]).splitlines()):
+        for i, commit in enumerate(
+            self._run_git(
+                [
+                    "rev-list",
+                    "--all",
+                    "--date-order",
+                    "--reverse",
+                ]
+            ).splitlines()
+        ):
             if commit in commits:
                 revisions[commit] = i
         return revisions

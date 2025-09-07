@@ -20,6 +20,7 @@ dummy_values = (
     (6, 6),
 )
 
+
 def generate_basic_conf(tmpdir, repo_subdir='', values=dummy_values, dummy_packages=True):
     tmpdir = str(tmpdir)
     local = abspath(dirname(__file__))
@@ -32,11 +33,9 @@ def generate_basic_conf(tmpdir, repo_subdir='', values=dummy_values, dummy_packa
 
     machine_file = join(tmpdir, 'asv-machine.json')
 
-    shutil.copyfile(join(local, 'asv-machine.json'),
-                    machine_file)
+    shutil.copyfile(join(local, 'asv-machine.json'), machine_file)
 
-    repo_path = tools.generate_test_repo(tmpdir, values,
-                                         subdir=repo_subdir).path
+    repo_path = tools.generate_test_repo(tmpdir, values, subdir=repo_subdir).path
 
     if dummy_packages:
         matrix = {
@@ -89,11 +88,19 @@ def test_run_publish(capfd, basic_conf, request: pytest.FixtureRequest):
     }
 
     # Tests a typical complete run/publish workflow
-    ret = tools.run_asv_with_conf(conf, 'run', f"{util.git_default_branch()}", '--steps=2',
-                                  '--quick', '--show-stderr', '--profile',
-                                  '-a', 'warmup_time=0',
-                                  '--durations=5',
-                                  _machine_file=machine_file)
+    ret = tools.run_asv_with_conf(
+        conf,
+        'run',
+        f"{util.git_default_branch()}",
+        '--steps=2',
+        '--quick',
+        '--show-stderr',
+        '--profile',
+        '-a',
+        'warmup_time=0',
+        '--durations=5',
+        _machine_file=machine_file,
+    )
     assert ret == 2
     text, err = capfd.readouterr()
 
@@ -110,15 +117,24 @@ def test_run_publish(capfd, basic_conf, request: pytest.FixtureRequest):
     assert isfile(join(tmpdir, 'html', 'asv.css'))
 
     # Check parameterized test json data format
-    filename = glob.glob(join(tmpdir, 'html', 'graphs', 'arch-x86_64',
-                              'asv_dummy_test_package_1',
-                              'asv_dummy_test_package_2-' + tools.DUMMY2_VERSIONS[1],
-                              'branch-master',
-                              'cpu-Blazingly fast',
-                              'env-SOME_TEST_VAR-1',
-                              'machine-orangutan',
-                              'os-GNU_Linux', 'python-*', 'ram-128GB',
-                              'params_examples.time_skip.json'))[0]
+    filename = glob.glob(
+        join(
+            tmpdir,
+            'html',
+            'graphs',
+            'arch-x86_64',
+            'asv_dummy_test_package_1',
+            'asv_dummy_test_package_2-' + tools.DUMMY2_VERSIONS[1],
+            'branch-master',
+            'cpu-Blazingly fast',
+            'env-SOME_TEST_VAR-1',
+            'machine-orangutan',
+            'os-GNU_Linux',
+            'python-*',
+            'ram-128GB',
+            'params_examples.time_skip.json',
+        )
+    )[0]
     with open(filename, 'r') as fp:
         data = json.load(fp)
         assert len(data) == 2
@@ -131,15 +147,27 @@ def test_run_publish(capfd, basic_conf, request: pytest.FixtureRequest):
 
     # Check that the skip options work
     capfd.readouterr()
-    tools.run_asv_with_conf(conf, 'run', f"{util.git_default_branch()}", '--steps=2',
-                            '--quick', '--skip-existing-successful',
-                            '--bench=time_secondary.track_value',
-                            '--skip-existing-failed',
-                            _machine_file=join(tmpdir, 'asv-machine.json'))
-    tools.run_asv_with_conf(conf, 'run', f"{util.git_default_branch()}", '--steps=2',
-                            '--bench=time_secondary.track_value',
-                            '--quick', '--skip-existing-commits',
-                            _machine_file=join(tmpdir, 'asv-machine.json'))
+    tools.run_asv_with_conf(
+        conf,
+        'run',
+        f"{util.git_default_branch()}",
+        '--steps=2',
+        '--quick',
+        '--skip-existing-successful',
+        '--bench=time_secondary.track_value',
+        '--skip-existing-failed',
+        _machine_file=join(tmpdir, 'asv-machine.json'),
+    )
+    tools.run_asv_with_conf(
+        conf,
+        'run',
+        f"{util.git_default_branch()}",
+        '--steps=2',
+        '--bench=time_secondary.track_value',
+        '--quick',
+        '--skip-existing-commits',
+        _machine_file=join(tmpdir, 'asv-machine.json'),
+    )
     text, err = capfd.readouterr()
     assert 'Running benchmarks.' not in text
 
@@ -147,10 +175,15 @@ def test_run_publish(capfd, basic_conf, request: pytest.FixtureRequest):
     python = f"{sys.version_info[0]}.{sys.version_info[1]}"
     env_type = tools.get_default_environment_type(conf, python)
     env_spec = ("-E", env_type + ":" + python)
-    tools.run_asv_with_conf(conf, 'run', "EXISTING", '--quick',
-                            '--bench=time_secondary.track_value',
-                            *env_spec,
-                            _machine_file=machine_file)
+    tools.run_asv_with_conf(
+        conf,
+        'run',
+        "EXISTING",
+        '--quick',
+        '--bench=time_secondary.track_value',
+        *env_spec,
+        _machine_file=machine_file,
+    )
 
     # Remove the benchmarks.json file and check publish fails
 

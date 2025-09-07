@@ -93,10 +93,12 @@ def _test_branches(conf, branch_commits, require_describe=False):
 def test_repo_git(tmpdir):
     tmpdir = str(tmpdir)
 
-    dvcs = tools.generate_test_repo(tmpdir, list(range(10)),
-                                    dvcs_type='git',
-                                    extra_branches=[(f'{util.git_default_branch()}~4',
-                                                     'some-branch', [11, 12, 13])])
+    dvcs = tools.generate_test_repo(
+        tmpdir,
+        list(range(10)),
+        dvcs_type='git',
+        extra_branches=[(f'{util.git_default_branch()}~4', 'some-branch', [11, 12, 13])],
+    )
 
     mirror_dir = join(tmpdir, "repo")
 
@@ -105,18 +107,22 @@ def test_repo_git(tmpdir):
 
         conf.project = mirror_dir
         conf.repo = dvcs.path
-        _test_generic_repo(conf, tmpdir,
-                           f'{util.git_default_branch()}~4..{util.git_default_branch()}',
-                           f'{util.git_default_branch()}', 'tag5',
-                           is_remote=is_remote)
+        _test_generic_repo(
+            conf,
+            tmpdir,
+            f'{util.git_default_branch()}~4..{util.git_default_branch()}',
+            f'{util.git_default_branch()}',
+            'tag5',
+            is_remote=is_remote,
+        )
 
         conf.branches = [f'{util.git_default_branch()}', 'some-branch']
         branch_commits = {
-            f'{util.git_default_branch()}':
-            [dvcs.get_hash(f'{util.git_default_branch()}'),
-             dvcs.get_hash(f'{util.git_default_branch()}~6')],
-            'some-branch': [dvcs.get_hash('some-branch'),
-                            dvcs.get_hash('some-branch~6')]
+            f'{util.git_default_branch()}': [
+                dvcs.get_hash(f'{util.git_default_branch()}'),
+                dvcs.get_hash(f'{util.git_default_branch()}~6'),
+            ],
+            'some-branch': [dvcs.get_hash('some-branch'), dvcs.get_hash('some-branch~6')],
         }
         _test_branches(conf, branch_commits, require_describe=True)
 
@@ -127,12 +133,13 @@ def test_repo_git(tmpdir):
 
     # try again, pretending the repo is not local
     from asv.plugins.git import Git
+
     old_local_method = Git.is_local_repo
     old_url_match = Git.url_match
     try:
-        Git.is_local_repo = classmethod(lambda cls, path:
-                                        path != dvcs.path and
-                                        old_local_method(path))
+        Git.is_local_repo = classmethod(
+            lambda cls, path: path != dvcs.path and old_local_method(path)
+        )
         Git.url_match = classmethod(lambda cls, url: os.path.isdir(url))
         test_it(is_remote=True)
         assert os.path.isdir(mirror_dir)
@@ -156,29 +163,37 @@ def test_repo_git_annotated_tag_date(tmpdir):
     assert d1 == d2
 
 
-@pytest.mark.skipif(hglib is None,
-                    reason="needs hglib")
+@pytest.mark.skipif(hglib is None, reason="needs hglib")
 def test_repo_hg(tmpdir):
     tmpdir = str(tmpdir)
 
     conf = config.Config()
 
-    dvcs = tools.generate_test_repo(tmpdir, list(range(10)), dvcs_type='hg',
-                                    extra_branches=[('default~4', 'somebranch', [11, 12, 13])])
+    dvcs = tools.generate_test_repo(
+        tmpdir,
+        list(range(10)),
+        dvcs_type='hg',
+        extra_branches=[('default~4', 'somebranch', [11, 12, 13])],
+    )
 
     mirror_dir = join(tmpdir, "repo")
 
     def test_it(is_remote=False):
         conf.project = mirror_dir
         conf.repo = dvcs.path
-        _test_generic_repo(conf, tmpdir, hash_range="reverse(default~3::default)",
-                           main="default", branch="tag5",
-                           is_remote=is_remote)
+        _test_generic_repo(
+            conf,
+            tmpdir,
+            hash_range="reverse(default~3::default)",
+            main="default",
+            branch="tag5",
+            is_remote=is_remote,
+        )
 
         conf.branches = ['default', 'somebranch']
         branch_commits = {
             'default': [dvcs.get_hash('default'), dvcs.get_hash('default~6')],
-            'somebranch': [dvcs.get_hash('somebranch'), dvcs.get_hash('somebranch~6')]
+            'somebranch': [dvcs.get_hash('somebranch'), dvcs.get_hash('somebranch~6')],
         }
         _test_branches(conf, branch_commits)
 
@@ -189,12 +204,13 @@ def test_repo_hg(tmpdir):
 
     # try again, pretending the repo is not local
     from asv.plugins.mercurial import Hg
+
     old_local_method = Hg.is_local_repo
     old_url_match = Hg.url_match
     try:
-        Hg.is_local_repo = classmethod(lambda cls, path:
-                                       path != dvcs.path and
-                                       old_local_method(path))
+        Hg.is_local_repo = classmethod(
+            lambda cls, path: path != dvcs.path and old_local_method(path)
+        )
         Hg.url_match = classmethod(lambda cls, url: os.path.isdir(url))
         test_it(is_remote=True)
         assert os.path.isdir(mirror_dir)
@@ -224,27 +240,38 @@ def test_get_branch_commits(two_branch_repo_case):
     }
     for branch in conf.branches:
         commits = [
-            dvcs.get_commit_message(commit_hash)
-            for commit_hash in r.get_branch_commits(branch)
+            dvcs.get_commit_message(commit_hash) for commit_hash in r.get_branch_commits(branch)
         ]
         assert commits == expected[branch]
 
 
-@pytest.mark.parametrize("existing, expected", [
-    # No existing commit, we expect all commits in commit order,
-    # master branch first
-    ([], ["Revision 6", "Revision 4", "Merge stable", "Revision 3",
-          "Revision 1", "Revision 5", "Merge master", "Revision 2"]),
-
-    # New commits on each branch
-    (["Revision 4", "Merge master"], ["Revision 6", "Revision 5"]),
-
-    # No new commits
-    (["Revision 6", "Revision 5"], []),
-
-    # Missing all commits on one branch (case of new branch added in config)
-    (["Revision 6"], ["Revision 5", "Merge master", "Revision 2", "Revision 1"]),
-], ids=["all", "new", "no-new", "new-branch-added-in-config"])
+@pytest.mark.parametrize(
+    "existing, expected",
+    [
+        # No existing commit, we expect all commits in commit order,
+        # master branch first
+        (
+            [],
+            [
+                "Revision 6",
+                "Revision 4",
+                "Merge stable",
+                "Revision 3",
+                "Revision 1",
+                "Revision 5",
+                "Merge master",
+                "Revision 2",
+            ],
+        ),
+        # New commits on each branch
+        (["Revision 4", "Merge master"], ["Revision 6", "Revision 5"]),
+        # No new commits
+        (["Revision 6", "Revision 5"], []),
+        # Missing all commits on one branch (case of new branch added in config)
+        (["Revision 6"], ["Revision 5", "Merge master", "Revision 2", "Revision 1"]),
+    ],
+    ids=["all", "new", "no-new", "new-branch-added-in-config"],
+)
 def test_get_new_branch_commits(two_branch_repo_case, existing, expected):
     dvcs, main, r, conf = two_branch_repo_case
 
@@ -272,17 +299,16 @@ def test_git_submodule(tmpdir):
     commit_hash_0 = dvcs.get_hash(f"{util.git_default_branch()}")
 
     # State 1 (one submodule)
-    dvcs.run_git(['-c', 'protocol.file.allow=always',
-                  'submodule', 'add', sub_dvcs.path, 'sub1'])
+    dvcs.run_git(['-c', 'protocol.file.allow=always', 'submodule', 'add', sub_dvcs.path, 'sub1'])
     dvcs.commit('Add sub1')
     commit_hash_1 = dvcs.get_hash(f"{util.git_default_branch()}")
 
     # State 2 (one submodule with sub-submodule)
-    dvcs.run_git(['-c', 'protocol.file.allow=always',
-                  'submodule', 'update', '--init'])
+    dvcs.run_git(['-c', 'protocol.file.allow=always', 'submodule', 'update', '--init'])
     sub1_dvcs = tools.Git(join(dvcs.path, 'sub1'))
-    sub_dvcs.run_git(['-c', 'protocol.file.allow=always',
-                      'submodule', 'add', ssub_dvcs.path, 'ssub1'])
+    sub_dvcs.run_git(
+        ['-c', 'protocol.file.allow=always', 'submodule', 'add', ssub_dvcs.path, 'ssub1']
+    )
     sub_dvcs.commit('Add sub1')
     sub1_dvcs.run_git(['pull'])
     dvcs.run_git(['add', 'sub1'])
@@ -353,10 +379,10 @@ def test_git_submodule(tmpdir):
     assert not os.path.isdir(join(checkout_dir, 'sub1'))
 
 
-@pytest.mark.parametrize('dvcs_type', [
-    "git",
-    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))
-])
+@pytest.mark.parametrize(
+    'dvcs_type',
+    ["git", pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))],
+)
 def test_root_ceiling(dvcs_type, tmpdir):
     # Check that git/hg does not try to look for repository in parent
     # directories.
@@ -390,10 +416,10 @@ def test_root_ceiling(dvcs_type, tmpdir):
         r.checkout(workcopy_dir, commit2)
 
 
-@pytest.mark.parametrize('dvcs_type', [
-    "git",
-    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))
-])
+@pytest.mark.parametrize(
+    'dvcs_type',
+    ["git", pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))],
+)
 def test_no_such_name_error(dvcs_type, tmpdir):
     tmpdir = str(tmpdir)
     dvcs = tools.generate_test_repo(tmpdir, values=[0], dvcs_type=dvcs_type)
@@ -422,22 +448,22 @@ def test_no_such_name_error(dvcs_type, tmpdir):
         pass
 
 
-@pytest.mark.parametrize('dvcs_type', [
-    "git",
-    pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))
-])
+@pytest.mark.parametrize(
+    'dvcs_type',
+    ["git", pytest.param("hg", marks=pytest.mark.skipif(hglib is None, reason="needs hglib"))],
+)
 def test_filter_date_period(tmpdir, dvcs_type):
     tmpdir = str(tmpdir)
 
     dates = [
         datetime.datetime(2001, 1, 1, tzinfo=datetime.timezone.utc),
         datetime.datetime(2001, 1, 2, tzinfo=datetime.timezone.utc),
-        datetime.datetime(2001, 1, 8, tzinfo=datetime.timezone.utc)
+        datetime.datetime(2001, 1, 8, tzinfo=datetime.timezone.utc),
     ]
 
     dvcs = tools.generate_repo_from_ops(
-        tmpdir, dvcs_type,
-        [("commit", j, dates[j]) for j in range(len(dates))])
+        tmpdir, dvcs_type, [("commit", j, dates[j]) for j in range(len(dates))]
+    )
     commits = dvcs.get_branch_hashes()[::-1]
     assert len(commits) == len(dates)
 

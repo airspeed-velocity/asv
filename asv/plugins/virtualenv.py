@@ -8,13 +8,14 @@ from packaging.version import Version
 from .. import environment, util
 from ..console import log
 
-WIN = (os.name == "nt")
+WIN = os.name == "nt"
 
 
 class Virtualenv(environment.Environment):
     """
     Manage an environment using virtualenv.
     """
+
     tool_name = "virtualenv"
 
     def __init__(self, conf, python, requirements, tagged_env_vars):
@@ -35,22 +36,17 @@ class Virtualenv(environment.Environment):
         """
         executable = Virtualenv._find_python(python)
         if executable is None:
-            raise environment.EnvironmentUnavailable(
-                f"No executable found for python {python}")
+            raise environment.EnvironmentUnavailable(f"No executable found for python {python}")
 
         self._executable = executable
         self._python = python
         self._requirements = requirements
-        super().__init__(conf,
-                                         python,
-                                         requirements,
-                                         tagged_env_vars)
+        super().__init__(conf, python, requirements, tagged_env_vars)
 
         try:
             import virtualenv  # noqa: F401 unused, but required to test whether virtualenv is installed or not
         except ImportError:
-            raise environment.EnvironmentUnavailable(
-                "virtualenv package not installed")
+            raise environment.EnvironmentUnavailable("virtualenv package not installed")
 
     @staticmethod
     def _find_python(python):
@@ -76,8 +72,10 @@ class Virtualenv(environment.Environment):
 
         # Maybe the current one is correct?
         current_is_pypy = hasattr(sys, 'pypy_version_info')
-        current_versions = [f'{sys.version_info[0]}',
-                            f'{sys.version_info[0]}.{sys.version_info[1]}']
+        current_versions = [
+            f'{sys.version_info[0]}',
+            f'{sys.version_info[0]}.{sys.version_info[1]}',
+        ]
 
         if is_pypy == current_is_pypy and python_version in current_versions:
             return sys.executable
@@ -93,10 +91,9 @@ class Virtualenv(environment.Environment):
         if self._python.startswith('pypy'):
             # get_env_name adds py-prefix
             python = python[2:]
-        return environment.get_env_name(self.tool_name,
-                                        python,
-                                        self._requirements,
-                                        self._tagged_env_vars)
+        return environment.get_env_name(
+            self.tool_name, python, self._requirements, self._tagged_env_vars
+        )
 
     @classmethod
     def matches(self, python):
@@ -111,11 +108,10 @@ class Virtualenv(environment.Environment):
         else:
             if Version(virtualenv.__version__) == Version('1.11.0'):
                 log.warning(
-                    "asv is not compatible with virtualenv 1.11 due to a bug in "
-                    "setuptools.")
+                    "asv is not compatible with virtualenv 1.11 due to a bug in setuptools."
+                )
             if Version(virtualenv.__version__) < Version('1.10'):
-                log.warning(
-                    "If using virtualenv, it much be at least version 1.10")
+                log.warning("If using virtualenv, it much be at least version 1.10")
 
         executable = Virtualenv._find_python(python)
         return executable is not None
@@ -134,17 +130,23 @@ class Virtualenv(environment.Environment):
         # TODO: Remove this check and the `--wheel=bundle` option altogether
         # once asv supports at minimum Python >= 3.8 and virtualenv >= 20.31.
         import virtualenv
+
         use_wheel = Version(virtualenv.__version__) < Version('20.31')
 
         log.info(f"Creating virtualenv for {self.name}")
-        util.check_call([
-            sys.executable,
-            "-m", "virtualenv",
-            *(["--wheel=bundle"] if use_wheel else []),
-            "--setuptools=bundle",
-            "-p",
-            self._executable,
-            self._path], env=env)
+        util.check_call(
+            [
+                sys.executable,
+                "-m",
+                "virtualenv",
+                *(["--wheel=bundle"] if use_wheel else []),
+                "--setuptools=bundle",
+                "-p",
+                self._executable,
+                self._path,
+            ],
+            env=env,
+        )
 
         log.info(f"Installing requirements for {self.name}")
         self._install_requirements()
@@ -158,8 +160,7 @@ class Virtualenv(environment.Environment):
         self._run_pip(pip_args, env=env)
         pip_args = []
 
-        for key, val in {**self._requirements,
-                         **self._base_requirements}.items():
+        for key, val in {**self._requirements, **self._base_requirements}.items():
             if key.startswith("pip+"):
                 pip_args.append(f"{key[4:]} {val}")
             else:

@@ -9,6 +9,7 @@ from .shared import shared_function
 # Test that asv's internal modules aren't visible on top level
 try:
     import commands.quickstart  # noqa: F401 unused import
+
     assert False
 except ImportError:
     # OK

@@ -69,43 +69,48 @@ def _is_result_better(a, b, a_ss, b_ss, factor, use_stats=True):
 
     """
 
-    if use_stats and a_ss and b_ss and a_ss[0] and b_ss[0] and (
-            a_ss[0].get('repeat', 0) != 1 and b_ss[0].get('repeat', 0) != 1):
+    if (
+        use_stats
+        and a_ss
+        and b_ss
+        and a_ss[0]
+        and b_ss[0]
+        and (a_ss[0].get('repeat', 0) != 1 and b_ss[0].get('repeat', 0) != 1)
+    ):
         # Return False if estimates don't differ.
         #
         # Special-case the situation with only one sample, in which
         # case we do the comparison only based on `factor` as there's
         # not enough data to do statistics.
-        if not _stats.is_different(a_ss[1], b_ss[1],
-                                       a_ss[0], b_ss[0]):
+        if not _stats.is_different(a_ss[1], b_ss[1], a_ss[0], b_ss[0]):
             return False
 
     return a < b / factor
 
 
 class Compare(Command):
-
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
             "compare",
             help="""Compare the benchmark results between two revisions
                     (averaged over configurations)""",
-            description="Compare two sets of results")
+            description="Compare two sets of results",
+        )
 
-        parser.add_argument(
-            'revision1',
-            help="""The reference revision.""")
+        parser.add_argument('revision1', help="""The reference revision.""")
 
-        parser.add_argument(
-            'revision2',
-            help="""The revision being compared.""")
+        parser.add_argument('revision2', help="""The revision being compared.""")
 
         common_args.add_compare(parser, sort_default='default', only_changed_default=False)
 
         parser.add_argument(
-            '--machine', '-m', type=str, default=None,
-            help="""The machine to compare the revisions for.""")
+            '--machine',
+            '-m',
+            type=str,
+            default=None,
+            help="""The machine to compare the revisions for.""",
+        )
 
         common_args.add_environment(parser)
 
@@ -115,19 +120,33 @@ class Compare(Command):
 
     @classmethod
     def run_from_conf_args(cls, conf, args):
-        return cls.run(conf=conf,
-                       hash_1=args.revision1,
-                       hash_2=args.revision2,
-                       factor=args.factor, split=args.split,
-                       only_changed=args.only_changed, sort=args.sort,
-                       machine=args.machine,
-                       env_spec=args.env_spec,
-                       use_stats=args.use_stats)
+        return cls.run(
+            conf=conf,
+            hash_1=args.revision1,
+            hash_2=args.revision2,
+            factor=args.factor,
+            split=args.split,
+            only_changed=args.only_changed,
+            sort=args.sort,
+            machine=args.machine,
+            env_spec=args.env_spec,
+            use_stats=args.use_stats,
+        )
 
     @classmethod
-    def run(cls, conf, hash_1, hash_2, factor=None, split=False, only_changed=False,
-            sort='default', machine=None, env_spec=None, use_stats=True):
-
+    def run(
+        cls,
+        conf,
+        hash_1,
+        hash_2,
+        factor=None,
+        split=False,
+        only_changed=False,
+        sort='default',
+        machine=None,
+        env_spec=None,
+        use_stats=True,
+    ):
         repo = get_repo(conf)
         try:
             hash_1 = repo.get_hash_from_name(hash_1)
@@ -140,8 +159,9 @@ class Compare(Command):
             pass
 
         if env_spec:
-            env_names = ([env.name for env in get_environments(conf, env_spec, verbose=False)] +
-                         list(env_spec))
+            env_names = [
+                env.name for env in get_environments(conf, env_spec, verbose=False)
+            ] + list(env_spec)
         else:
             env_names = None
 
@@ -156,26 +176,49 @@ class Compare(Command):
             if len(machines) > 1:
                 raise util.UserError(
                     "Results available for several machines: {} - "
-                    "specify which one to use with the --machine option".format(
-                        '/'.join(machines)))
+                    "specify which one to use with the --machine option".format('/'.join(machines))
+                )
             else:
                 machine = machines[0]
         elif machine not in machines:
-            raise util.UserError(
-                f"Results for machine '{machine} not found")
+            raise util.UserError(f"Results for machine '{machine} not found")
 
-        commit_names = {hash_1: repo.get_name_from_hash(hash_1),
-                        hash_2: repo.get_name_from_hash(hash_2)}
+        commit_names = {
+            hash_1: repo.get_name_from_hash(hash_1),
+            hash_2: repo.get_name_from_hash(hash_2),
+        }
 
-        cls.print_table(conf, hash_1, hash_2, factor=factor, split=split, use_stats=use_stats,
-                        only_changed=only_changed, sort=sort,
-                        machine=machine, env_names=env_names, commit_names=commit_names)
+        cls.print_table(
+            conf,
+            hash_1,
+            hash_2,
+            factor=factor,
+            split=split,
+            use_stats=use_stats,
+            only_changed=only_changed,
+            sort=sort,
+            machine=machine,
+            env_names=env_names,
+            commit_names=commit_names,
+        )
 
     @classmethod
-    def print_table(cls, conf, hash_1, hash_2, factor, split,
-                    resultset_1=None, resultset_2=None, machine=None,
-                    only_changed=False, sort='default',
-                    use_stats=True, env_names=None, commit_names=None):
+    def print_table(
+        cls,
+        conf,
+        hash_1,
+        hash_2,
+        factor,
+        split,
+        resultset_1=None,
+        resultset_2=None,
+        machine=None,
+        only_changed=False,
+        sort='default',
+        use_stats=True,
+        env_names=None,
+        commit_names=None,
+    ):
         results_1 = {}
         results_2 = {}
         ss_1 = {}
@@ -191,7 +234,8 @@ class Compare(Command):
 
         def results_default_iter(commit_hash):
             for result in iter_results_for_machine_and_hash(
-                    conf.results_dir, machine, commit_hash):
+                conf.results_dir, machine, commit_hash
+            ):
                 if env_names is not None and result.env_name not in env_names:
                     continue
                 for key in result.get_all_result_keys():
@@ -200,8 +244,16 @@ class Compare(Command):
                     result_stats = result.get_result_stats(key, params)
                     result_samples = result.get_result_samples(key, params)
                     result_version = result.benchmark_version.get(key)
-                    yield (key, params, result_value, result_stats, result_samples,
-                           result_version, result.params['machine'], result.env_name)
+                    yield (
+                        key,
+                        params,
+                        result_value,
+                        result_stats,
+                        result_samples,
+                        result_version,
+                        result.params['machine'],
+                        result.env_name,
+                    )
 
         if resultset_1 is None:
             resultset_1 = results_default_iter(hash_1)
@@ -230,12 +282,10 @@ class Compare(Command):
                 versions_2[(name, machine_env_name)] = version
 
         if len(results_1) == 0:
-            raise util.UserError(
-                f"Did not find results for commit {hash_1}")
+            raise util.UserError(f"Did not find results for commit {hash_1}")
 
         if len(results_2) == 0:
-            raise util.UserError(
-                f"Did not find results for commit {hash_2}")
+            raise util.UserError(f"Did not find results for commit {hash_2}")
 
         benchmarks_1 = set(results_1.keys())
         benchmarks_2 = set(results_2.keys())
@@ -290,8 +340,7 @@ class Compare(Command):
                     ratio_num = 1e9
                     ratio = "n/a"
 
-            if (version_1 is not None and version_2 is not None and
-                    version_1 != version_2):
+            if version_1 is not None and version_2 is not None and version_1 != version_2:
                 # not comparable
                 color = 'lightgrey'
                 mark = 'x'
@@ -313,15 +362,25 @@ class Compare(Command):
                 # either one was skipped
                 color = 'default'
                 mark = ' '
-            elif _is_result_better(time_2, time_1,
-                                   ss_2.get(benchmark), ss_1.get(benchmark),
-                                   factor, use_stats=use_stats):
+            elif _is_result_better(
+                time_2,
+                time_1,
+                ss_2.get(benchmark),
+                ss_1.get(benchmark),
+                factor,
+                use_stats=use_stats,
+            ):
                 color = 'green'
                 mark = '-'
                 improved = True
-            elif _is_result_better(time_1, time_2,
-                                   ss_1.get(benchmark), ss_2.get(benchmark),
-                                   factor, use_stats=use_stats):
+            elif _is_result_better(
+                time_1,
+                time_2,
+                ss_1.get(benchmark),
+                ss_2.get(benchmark),
+                factor,
+                use_stats=use_stats,
+            ):
                 color = 'red'
                 mark = '+'
                 worsened = True
@@ -330,8 +389,9 @@ class Compare(Command):
                 mark = ' '
 
                 # Mark statistically insignificant results
-                if (_is_result_better(time_1, time_2, None, None, factor) or
-                        _is_result_better(time_2, time_1, None, None, factor)):
+                if _is_result_better(time_1, time_2, None, None, factor) or _is_result_better(
+                    time_2, time_1, None, None, factor
+                ):
                     ratio = "~" + ratio.strip()
 
             if only_changed and mark in (' ', 'x'):
@@ -369,7 +429,6 @@ class Compare(Command):
         log.flush()
 
         for key in keys:
-
             if len(bench[key]) == 0:
                 continue
 
@@ -399,11 +458,18 @@ class Compare(Command):
             else:
                 raise ValueError("Unknown 'sort'")
 
-            print(tabulate.tabulate(bench[key],
-                                    headers=['Change',
-                                             f'Before [{hash_1[:8]}] {name_1}',
-                                             f'After [{hash_2[:8]}] {name_2}',
-                                             'Ratio', 'Benchmark (Parameter)'],
-                                    tablefmt="github"))
+            print(
+                tabulate.tabulate(
+                    bench[key],
+                    headers=[
+                        'Change',
+                        f'Before [{hash_1[:8]}] {name_1}',
+                        f'After [{hash_2[:8]}] {name_2}',
+                        'Ratio',
+                        'Benchmark (Parameter)',
+                    ],
+                    tablefmt="github",
+                )
+            )
 
         return worsened, improved
