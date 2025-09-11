@@ -59,6 +59,14 @@ class Publish(Command):
             '--html-dir', '-o', default=None, help=(
                 "Optional output directory. Default is 'html_dir' "
                 "from asv config"))
+        parser.add_argument(
+            '--baseline-machine', default=None, help=(
+                "Optional baseline comparisons between machines. Provide "
+                "machine name"))
+        parser.add_argument(
+            '--generate-markdown', action='store_true', dest='generate_markdown',
+                help=("Optional output a generated markdown file comparisons "
+                "between machines in the 'html_dir'."))
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -68,6 +76,9 @@ class Publish(Command):
     def run_from_conf_args(cls, conf, args):
         if args.html_dir is not None:
             conf.html_dir = args.html_dir
+        if args.baseline_machine is not None:
+            conf.baseline_machine = args.baseline_machine
+        conf.generate_markdown = args.generate_markdown
         return cls.run(conf=conf, range_spec=args.range, pull=not args.no_pull)
 
     @staticmethod

@@ -1,0 +1,68 @@
+#comparisonlist-body {
+    padding-left: 2em;
+    padding-right: 2em;
+    padding-top: 1em;
+    padding-bottom: 2em;
+}
+
+#comparisonlist-body table thead th {
+    background: white;
+    cursor: pointer;
+    white-space: nowrap;
+    position: sticky;
+    top: 0; /* Don't forget this, required for the stickiness */
+}
+
+#comparisonlist-body table thead th.desc:after {
+    content: ' \2191';
+}
+
+#comparisonlist-body table thead th.asc:after {
+    content: ' \2193';
+}
+
+#comparisonlist-body table.ignored {
+    padding-top: 1em;
+    color: #ccc;
+    background-color: #eee;
+}
+
+#comparisonlist-body table.ignored a {
+    color: #82abda;
+}
+
+#comparisonlist-body table tbody td.positive-change {
+    background-color: #fdd;
+}
+
+#comparisonlist-body table tbody td.negative-change {
+    background-color: #dfd;
+}
+
+#comparisonlist-body table tbody td.stats {
+    white-space: nowrap;
+    font-weight: bold;
+}
+
+#comparisonlist-body table tbody td.value {
+    white-space: nowrap;
+}
+
+#comparisonlist-body table tbody td.value-best {
+    white-space: nowrap;
+    color: green;
+}
+
+#comparisonlist-body table tbody td.value-worst {
+    white-space: nowrap;
+    color: red;
+}
+
+#comparisonlist-body table tbody td.change a {
+    color: black;
+    white-space: nowrap;
+}
+
+#comparisonlist-body table tbody td.change-date {
+    white-space: nowrap;
+}
