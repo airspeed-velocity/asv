@@ -303,7 +303,7 @@ class Compare(Command):
             elif time_1 is None and time_2 is not None:
                 # fixed a failure
                 color = 'green'
-                mark = ' '
+                mark = '*'
                 improved = True
             elif time_1 is None and time_2 is None:
                 # both failed
@@ -334,7 +334,7 @@ class Compare(Command):
                         _is_result_better(time_2, time_1, None, None, factor)):
                     ratio = "~" + ratio.strip()
 
-            if only_changed and mark in (' ', 'x'):
+            if only_changed and mark in (' ', 'x', '*'):
                 continue
 
             unit = units[benchmark]
