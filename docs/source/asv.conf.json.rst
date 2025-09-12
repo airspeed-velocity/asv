@@ -454,10 +454,10 @@ defaults to ``"benchmarks"``.
 
 ``environment_type``
 --------------------
-Specifies the tool to use to create environments.  May be "conda",
-"virtualenv", "rattler" or another value depending on the plugins in use.  If
-missing or the empty string, the tool will be automatically determined
-by looking for tools on the ``PATH`` environment variable.
+Specifies the tool to use to create environments.  May be ``conda``,
+``virtualenv``, ``rattler`` or another value depending on the plugins in use.
+If missing or the empty string, the tool will be automatically determined by
+looking for tools on the ``PATH`` environment variable.
 
 ``env_dir``
 -----------
