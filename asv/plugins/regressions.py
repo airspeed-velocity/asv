@@ -157,9 +157,7 @@ class Regressions(OutputPublisher):
                 link = f'index.html#{benchmark_name}?{urllib.parse.urlencode(params)}'
 
                 try:
-                    best_percentage = "{:.2f}%".format(
-                        100 * (last_value - best_value) / best_value
-                    )
+                    best_percentage = f"{100 * (last_value - best_value) / best_value:.2f}%"
                 except ZeroDivisionError:
                     best_percentage = f"{last_value - best_value:.2g} units"
 
