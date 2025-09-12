@@ -120,13 +120,17 @@ class Rattler(environment.Environment):
                     raise KeyError("Only pip is supported as a secondary key")
         _pkgs += _args
         _pkgs = [util.replace_cpython_version(pkg, self._python) for pkg in _pkgs]
+        if hasattr(VirtualPackage, "current"):
+            virtual_packages = VirtualPackage.current()
+        else:
+            virtual_packages = VirtualPackage.detect()
         solved_records = await solve(
             # Channels to use for solving
             channels=self._channels,
             # The specs to solve for
             specs=_pkgs,
             # Virtual packages define the specifications of the environment
-            virtual_packages=VirtualPackage.detect(),
+            virtual_packages=virtual_packages,
             channel_priority=self._channel_priority,
         )
         await install(records=solved_records, target_prefix=self._path)
