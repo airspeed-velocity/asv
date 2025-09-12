@@ -65,7 +65,7 @@ class Rattler(environment.Environment):
         # Rattler configuration things
         self._pkg_cache = f"{self._env_dir}/pkgs"
 
-        self._channel_priority = ChannelPriority.STRICT
+        self._channel_priority = ChannelPriority.Strict
         condarc_path = Path(os.getenv("CONDARC", ""))
         if condarc_path.is_file():
             log.debug(f"Loading environment configuration from {condarc_path}")
@@ -78,9 +78,9 @@ class Rattler(environment.Environment):
             if "channel_priority" in condarc_data:
                 priority_str = condarc_data["channel_priority"]
                 priority_map = {
-                    "strict": ChannelPriority.STRICT,
-                    "flexible": ChannelPriority.FLEXIBLE,
-                    "disabled": ChannelPriority.DISABLED,
+                    "strict": ChannelPriority.Strict,
+                    "flexible": ChannelPriority.Flexible,
+                    "disabled": ChannelPriority.Disabled,
                 }
                 if priority_str in priority_map:
                     self._channel_priority = priority_map[priority_str]
