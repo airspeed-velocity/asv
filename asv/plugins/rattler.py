@@ -9,7 +9,7 @@ try:
 except ImportError:
     from yaml import Loader
 
-from rattler import VirtualPackage, install, solve
+from rattler import ChannelPriority, VirtualPackage, install, solve
 
 from .. import environment, util
 from ..console import log
@@ -44,7 +44,9 @@ class Rattler(environment.Environment):
         self._environment_file = None
 
         if conf.conda_environment_file == "IGNORE":
-            log.debug("Skipping environment file due to conda_environment_file set to IGNORE")
+            log.debug(
+                "Skipping environment file due to conda_environment_file set to IGNORE"
+            )
             self._environment_file = None
         elif not conf.conda_environment_file:
             if (Path("environment.yml")).exists():
@@ -55,13 +57,38 @@ class Rattler(environment.Environment):
                 log.debug(f"Using {conf.conda_environment_file}")
                 self._environment_file = conf.conda_environment_file
             else:
-                log.debug(f"Environment file {conf.conda_environment_file} not found, ignoring")
+                log.debug(
+                    f"Environment file {conf.conda_environment_file} not found, ignoring"
+                )
 
         super().__init__(conf, python, requirements, tagged_env_vars)
         # Rattler configuration things
         self._pkg_cache = f"{self._env_dir}/pkgs"
 
-        # TODO(haozeke): Provide channel priority, see mamba
+        self._channel_priority = ChannelPriority.STRICT
+        condarc_path = Path(os.getenv("CONDARC", ""))
+        if condarc_path.is_file():
+            log.debug(f"Loading environment configuration from {condarc_path}")
+            with condarc_path.open() as f:
+                condarc_data = load(f, Loader=Loader) or {}
+
+            if "channels" in condarc_data:
+                self._channels = condarc_data["channels"] + self._channels
+
+            if "channel_priority" in condarc_data:
+                priority_str = condarc_data["channel_priority"]
+                priority_map = {
+                    "strict": ChannelPriority.STRICT,
+                    "flexible": ChannelPriority.FLEXIBLE,
+                    "disabled": ChannelPriority.DISABLED,
+                }
+                if priority_str in priority_map:
+                    self._channel_priority = priority_map[priority_str]
+                    log.debug(f"Set channel priority to {priority_str}")
+                else:
+                    log.warning(
+                        f"Unknown channel_priority '{priority_str}' in .condarc"
+                    )
 
     def _setup(self):
         asyncio.run(self._async_setup())
@@ -78,10 +105,14 @@ class Rattler(environment.Environment):
             env_file_name = self._environment_file
             env_data = load(Path(env_file_name).open(), Loader=Loader)
             _pkgs = [x for x in env_data.get("dependencies", []) if isinstance(x, str)]
-            self._channels += [x for x in env_data.get("channels", []) if isinstance(x, str)]
+            self._channels += [
+                x for x in env_data.get("channels", []) if isinstance(x, str)
+            ]
             self._channels = list(dict.fromkeys(self._channels).keys())
             # Handle possible pip keys
-            pip_maybe = [x for x in env_data.get("dependencies", []) if isinstance(x, dict)]
+            pip_maybe = [
+                x for x in env_data.get("dependencies", []) if isinstance(x, dict)
+            ]
             if len(pip_maybe) == 1:
                 try:
                     pip_args += pip_maybe[0]["pip"]
@@ -96,6 +127,7 @@ class Rattler(environment.Environment):
             specs=_pkgs,
             # Virtual packages define the specifications of the environment
             virtual_packages=VirtualPackage.detect(),
+            channel_priority=self._channel_priority,
         )
         await install(records=solved_records, target_prefix=self._path)
         if pip_args:
