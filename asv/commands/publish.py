@@ -30,8 +30,7 @@ def check_benchmark_params(name, benchmark):
         benchmark['param_names'] = []
 
     msg = f"Information in benchmarks.json for benchmark {name} is malformed"
-    if (not isinstance(benchmark['params'], list) or
-            not isinstance(benchmark['param_names'], list)):
+    if not isinstance(benchmark['params'], list) or not isinstance(benchmark['param_names'], list):
         raise ValueError(msg)
     if len(benchmark['params']) != len(benchmark['param_names']):
         raise ValueError(msg)
@@ -44,21 +43,25 @@ class Publish(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "publish", help="Collate results into a website",
+            "publish",
+            help="Collate results into a website",
             description="""
             Collate all results into a website.  This website will be
             written to the ``html_dir`` given in the ``asv.conf.json``
-            file, and may be served using any static web server.""")
+            file, and may be served using any static web server.""",
+        )
         parser.add_argument(
-            '--no-pull', action='store_true', dest='no_pull',
-            help="Do not pull the repository")
+            '--no-pull', action='store_true', dest='no_pull', help="Do not pull the repository"
+        )
         parser.add_argument(
-            'range', nargs='?', default=None,
-            help="""Optional commit range to consider""")
+            'range', nargs='?', default=None, help="""Optional commit range to consider"""
+        )
         parser.add_argument(
-            '--html-dir', '-o', default=None, help=(
-                "Optional output directory. Default is 'html_dir' "
-                "from asv config"))
+            '--html-dir',
+            '-o',
+            default=None,
+            help=("Optional output directory. Default is 'html_dir' from asv config"),
+        )
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -101,19 +104,23 @@ class Publish(Command):
 
         def copy_ignore(src, names):
             # Copy only *.js and *.css in vendor dir
-            ignore = [fn for fn in names
-                      if (os.path.basename(src).lower() == 'vendor' and
-                          not fn.lower().endswith('.js') and
-                          not fn.lower().endswith('.css'))]
+            ignore = [
+                fn
+                for fn in names
+                if (
+                    os.path.basename(src).lower() == 'vendor'
+                    and not fn.lower().endswith('.js')
+                    and not fn.lower().endswith('.css')
+                )
+            ]
             return ignore
 
-        template_dir = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), '..', 'www')
+        template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'www')
         shutil.copytree(template_dir, conf.html_dir, ignore=copy_ignore)
 
         # Ensure html_dir is writable even if template_dir is on a read-only FS
         os.chmod(conf.html_dir, 0o755)
-        for (pre, ds, fs) in os.walk(conf.html_dir):
+        for pre, ds, fs in os.walk(conf.html_dir):
             for x in fs:
                 os.chmod(os.path.join(pre, x), 0o644)
             for x in ds:
@@ -159,9 +166,7 @@ class Publish(Command):
 
             revision_to_date = {r: hash_to_date[h] for h, r in revisions.items()}
 
-            branches = {
-                branch: repo.get_branch_commits(branch)
-                for branch in conf.branches}
+            branches = {branch: repo.get_branch_commits(branch) for branch in conf.branches}
 
         log.step()
         log.info("Loading results")
@@ -170,29 +175,39 @@ class Publish(Command):
             for results in cls.iter_results(conf, repo, range_spec):
                 log.dot()
 
-                branches_for_commit = [branch for branch, commits in branches.items() if
-                                       results.commit_hash in commits]
+                branches_for_commit = [
+                    branch
+                    for branch, commits in branches.items()
+                    if results.commit_hash in commits
+                ]
 
                 # Print a warning message if the commit isn't from a tag
                 if not len(branches_for_commit):
                     # Assume that these must be tags
                     repo_tags = repo.get_tags()
-                    branches_for_commit = [branch for branch, commits in branches.items() if
-                                           results.commit_hash in repo_tags.values()]
+                    branches_for_commit = [
+                        branch
+                        for branch, commits in branches.items()
+                        if results.commit_hash in repo_tags.values()
+                    ]
                     if not len(branches_for_commit):
                         # Not tags, print a warning
                         msg = "Couldn't find {} in branches ({})"
-                        log.warning(msg.format(results.commit_hash[:conf.hash_length],
-                                               ", ".join(str(branch) for
-                                                         branch in branches.keys())))
+                        log.warning(
+                            msg.format(
+                                results.commit_hash[: conf.hash_length],
+                                ", ".join(str(branch) for branch in branches.keys()),
+                            )
+                        )
 
                 for key in results.get_result_keys(benchmarks):
                     b = benchmarks[key]
                     b_params = b['params']
 
                     result = results.get_result_value(key, b_params)
-                    weight = [_stats.get_weight(s)
-                              for s in results.get_result_stats(key, b_params)]
+                    weight = [
+                        _stats.get_weight(s) for s in results.get_result_stats(key, b_params)
+                    ]
                     if not b_params:
                         result = result[0]
                         weight = weight[0]
@@ -201,8 +216,7 @@ class Publish(Command):
 
                     for branch in branches_for_commit:
                         cur_params = dict(results.params)
-                        cur_env = {f'env-{name}': val
-                                   for name, val in results.env_vars.items()}
+                        cur_env = {f'env-{name}': val for name, val in results.env_vars.items()}
                         cur_params.update(cur_env)
                         cur_params['branch'] = repo.get_branch_name(branch)
 
@@ -247,8 +261,7 @@ class Publish(Command):
             graphs.save(conf.html_dir, dots=log.dot)
 
         pages = []
-        classes = sorted(util.iter_subclasses(OutputPublisher),
-                         key=lambda cls: cls.order)
+        classes = sorted(util.iter_subclasses(OutputPublisher), key=lambda cls: cls.order)
         for cls in classes:
             log.step()
             log.info(f"Generating output for {cls.__name__}")
@@ -267,24 +280,31 @@ class Publish(Command):
             params[key] = val
         params['branch'] = [repo.get_branch_name(branch) for branch in conf.branches]
         revision_to_hash = {r: h for h, r in revisions.items()}
-        util.write_json(os.path.join(conf.html_dir, "index.json"), {
-            'project': conf.project,
-            'project_url': conf.project_url,
-            'show_commit_url': conf.show_commit_url,
-            'hash_length': conf.hash_length,
-            'revision_to_hash': revision_to_hash,
-            'revision_to_date': revision_to_date,
-            'params': params,
-            'graph_param_list': graph_param_list,
-            'benchmarks': benchmark_map,
-            'machines': machines,
-            'tags': tags,
-            'pages': pages,
-        }, compact=True)
+        util.write_json(
+            os.path.join(conf.html_dir, "index.json"),
+            {
+                'project': conf.project,
+                'project_url': conf.project_url,
+                'show_commit_url': conf.show_commit_url,
+                'hash_length': conf.hash_length,
+                'revision_to_hash': revision_to_hash,
+                'revision_to_date': revision_to_date,
+                'params': params,
+                'graph_param_list': graph_param_list,
+                'benchmarks': benchmark_map,
+                'machines': machines,
+                'tags': tags,
+                'pages': pages,
+            },
+            compact=True,
+        )
 
-        util.write_json(os.path.join(conf.html_dir, "info.json"), {
-            'asv-version': get_version("asv"),
-            'timestamp': util.datetime_to_js_timestamp(
-                datetime.datetime.now(datetime.timezone.utc)
-            )
-        })
+        util.write_json(
+            os.path.join(conf.html_dir, "info.json"),
+            {
+                'asv-version': get_version("asv"),
+                'timestamp': util.datetime_to_js_timestamp(
+                    datetime.datetime.now(datetime.timezone.utc)
+                ),
+            },
+        )

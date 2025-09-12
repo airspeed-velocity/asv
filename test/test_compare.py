@@ -186,27 +186,53 @@ def test_compare(capsys, tmpdir, example_results):
     os.chdir(tmpdir)
 
     conf = config.Config.from_json(
-        {'results_dir': example_results,
-         'repo': tools.generate_test_repo(tmpdir).path,
-         'project': 'asv',
-         'environment_type': "shouldn't matter what"})
+        {
+            'results_dir': example_results,
+            'repo': tools.generate_test_repo(tmpdir).path,
+            'project': 'asv',
+            'environment_type': "shouldn't matter what",
+        }
+    )
 
-    tools.run_asv_with_conf(conf, 'compare', '22b920c6', 'fcf8c079', '--machine=cheetah',
-                            '--factor=2', '--environment=py2.7-numpy1.8')
+    tools.run_asv_with_conf(
+        conf,
+        'compare',
+        '22b920c6',
+        'fcf8c079',
+        '--machine=cheetah',
+        '--factor=2',
+        '--environment=py2.7-numpy1.8',
+    )
 
     text, err = capsys.readouterr()
     assert text.strip() == REFERENCE.strip()
 
-    tools.run_asv_with_conf(conf, 'compare', '22b920c6', 'fcf8c079', '--machine=cheetah',
-                            '--factor=2', '--split', '--environment=py2.7-numpy1.8')
+    tools.run_asv_with_conf(
+        conf,
+        'compare',
+        '22b920c6',
+        'fcf8c079',
+        '--machine=cheetah',
+        '--factor=2',
+        '--split',
+        '--environment=py2.7-numpy1.8',
+    )
     text, err = capsys.readouterr()
     assert text.strip() == REFERENCE_SPLIT.strip()
 
     # Check print_table output as called from Continuous
-    status = Compare.print_table(conf, '22b920c6', 'fcf8c079', factor=2, machine='cheetah',
-                                 split=False, only_changed=True, sort='ratio',
-                                 env_names=["py2.7-numpy1.8"],
-                                 commit_names={'22b920c6': 'name1', 'fcf8c079': 'name2'})
+    status = Compare.print_table(
+        conf,
+        '22b920c6',
+        'fcf8c079',
+        factor=2,
+        machine='cheetah',
+        split=False,
+        only_changed=True,
+        sort='ratio',
+        env_names=["py2.7-numpy1.8"],
+        commit_names={'22b920c6': 'name1', 'fcf8c079': 'name2'},
+    )
     worsened, improved = status
     assert worsened
     assert improved
@@ -216,25 +242,44 @@ def test_compare(capsys, tmpdir, example_results):
     assert text.strip() == REFERENCE_ONLY_CHANGED.strip()
 
     # Check table with multiple environments
-    status = Compare.print_table(conf, '22b920c6', 'fcf8c079', factor=2, machine='cheetah',
-                                 split=False, only_changed=True, sort='ratio')
+    status = Compare.print_table(
+        conf,
+        '22b920c6',
+        'fcf8c079',
+        factor=2,
+        machine='cheetah',
+        split=False,
+        only_changed=True,
+        sort='ratio',
+    )
     text, err = capsys.readouterr()
     assert text.strip() == REFERENCE_ONLY_CHANGED_MULTIENV.strip()
 
     # Check results with no stats
-    tools.run_asv_with_conf(conf, 'compare', '22b920c6', 'fcf8c079', '--machine=cheetah',
-                            '--factor=2', '--sort=ratio', '--environment=py2.7-numpy1.8',
-                            '--no-stats', '--only-changed')
+    tools.run_asv_with_conf(
+        conf,
+        'compare',
+        '22b920c6',
+        'fcf8c079',
+        '--machine=cheetah',
+        '--factor=2',
+        '--sort=ratio',
+        '--environment=py2.7-numpy1.8',
+        '--no-stats',
+        '--only-changed',
+    )
     text, err = capsys.readouterr()
     assert text.strip() == REFERENCE_ONLY_CHANGED_NOSTATS.strip()
     assert "time_ci_big" in text.strip()
 
 
-@pytest.mark.parametrize("dvcs_type", [
-    "git",
-    pytest.param("hg", marks=pytest.mark.skipif(hglib is None or WIN,
-                                                reason="needs hglib"))
-])
+@pytest.mark.parametrize(
+    "dvcs_type",
+    [
+        "git",
+        pytest.param("hg", marks=pytest.mark.skipif(hglib is None or WIN, reason="needs hglib")),
+    ],
+)
 def test_compare_name_lookup(dvcs_type, capsys, tmpdir, example_results):
     tmpdir = str(tmpdir)
     os.chdir(tmpdir)
@@ -253,8 +298,10 @@ def test_compare_name_lookup(dvcs_type, capsys, tmpdir, example_results):
     for fn in ['feea15ca-py2.7-Cython-numpy1.8.json', 'machine.json']:
         shutil.copyfile(os.path.join(src, fn), os.path.join(dst, fn))
 
-    shutil.copyfile(os.path.join(example_results, 'benchmarks.json'),
-                    os.path.join(result_dir, 'benchmarks.json'))
+    shutil.copyfile(
+        os.path.join(example_results, 'benchmarks.json'),
+        os.path.join(result_dir, 'benchmarks.json'),
+    )
 
     # Copy to different commit
     fn_1 = os.path.join(dst, 'feea15ca-py2.7-Cython-numpy1.8.json')
@@ -264,15 +311,25 @@ def test_compare_name_lookup(dvcs_type, capsys, tmpdir, example_results):
     util.write_json(fn_2, data)
 
     conf = config.Config.from_json(
-        {'results_dir': result_dir,
-         'repo': repo.path,
-         'project': 'asv',
-         'environment_type': "shouldn't matter what"})
+        {
+            'results_dir': result_dir,
+            'repo': repo.path,
+            'project': 'asv',
+            'environment_type': "shouldn't matter what",
+        }
+    )
 
     # Lookup with symbolic name
-    tools.run_asv_with_conf(conf, 'compare', branch_name, 'feea15ca', '--machine=cheetah',
-                            '--factor=2', '--environment=py2.7-Cython-numpy1.8',
-                            '--only-changed')
+    tools.run_asv_with_conf(
+        conf,
+        'compare',
+        branch_name,
+        'feea15ca',
+        '--machine=cheetah',
+        '--factor=2',
+        '--environment=py2.7-Cython-numpy1.8',
+        '--only-changed',
+    )
 
     # Nothing should be printed since no results were changed
     text, err = capsys.readouterr()

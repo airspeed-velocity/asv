@@ -27,27 +27,40 @@ class Find(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "find", help="Find commits that introduced large regressions",
+            "find",
+            help="Find commits that introduced large regressions",
             description="""Adaptively searches a range of commits for
             one that produces a large regression.  This only works well
-            when the regression in the range is mostly monotonic.""")
+            when the regression in the range is mostly monotonic.""",
+        )
 
         parser.add_argument(
-            'range', type=str, metavar=('from..to',),
+            'range',
+            type=str,
+            metavar=('from..to',),
             help="""Range of commits to search.  For a git
             repository, this is passed as the first argument to ``git
             log``.  See 'specifying ranges' section of the
-            `gitrevisions` manpage for more info.""")
+            `gitrevisions` manpage for more info.""",
+        )
         parser.add_argument(
-            "bench", type=str, metavar=('benchmark_name',),
-            help="""Name of benchmark to use in search.""")
+            "bench",
+            type=str,
+            metavar=('benchmark_name',),
+            help="""Name of benchmark to use in search.""",
+        )
         parser.add_argument(
-            "--invert", "-i", action="store_true",
+            "--invert",
+            "-i",
+            action="store_true",
             help="""Search for a decrease in the benchmark value,
-            rather than an increase.""")
+            rather than an increase.""",
+        )
         parser.add_argument(
-            "--skip-save", action="store_true",
-            help="""Do not save intermediate results from the search""")
+            "--skip-save",
+            action="store_true",
+            help="""Do not save intermediate results from the search""",
+        )
         common_args.add_parallel(parser)
         common_args.add_show_stderr(parser)
         common_args.add_machine(parser)
@@ -61,23 +74,36 @@ class Find(Command):
     @classmethod
     def run_from_conf_args(cls, conf, args, **kwargs):
         return cls.run(
-            conf, args.range, args.bench,
-            invert=args.invert, show_stderr=args.show_stderr,
+            conf,
+            args.range,
+            args.bench,
+            invert=args.invert,
+            show_stderr=args.show_stderr,
             parallel=args.parallel,
-            machine=args.machine, env_spec=args.env_spec,
-            launch_method=args.launch_method, skip_save=args.skip_save,
-            **kwargs
+            machine=args.machine,
+            env_spec=args.env_spec,
+            launch_method=args.launch_method,
+            skip_save=args.skip_save,
+            **kwargs,
         )
 
     @classmethod
-    def run(cls, conf, range_spec, bench, invert=False, show_stderr=False, parallel=1,
-            machine=None, env_spec=None, _machine_file=None, launch_method=None,
-            skip_save=False):
+    def run(
+        cls,
+        conf,
+        range_spec,
+        bench,
+        invert=False,
+        show_stderr=False,
+        parallel=1,
+        machine=None,
+        env_spec=None,
+        _machine_file=None,
+        launch_method=None,
+        skip_save=False,
+    ):
         params = {}
-        machine_params = Machine.load(
-            machine_name=machine,
-            _path=_machine_file,
-            interactive=True)
+        machine_params = Machine.load(machine_name=machine, _path=_machine_file, interactive=True)
         params.update(machine_params.__dict__)
         machine_params.save(conf.results_dir)
 
@@ -95,28 +121,25 @@ class Find(Command):
             log.error("No environments selected")
             return 1
 
-        benchmarks = Benchmarks.discover(conf, repo, environments,
-                                         commit_hashes, regex=bench)
+        benchmarks = Benchmarks.discover(conf, repo, environments, commit_hashes, regex=bench)
         if len(benchmarks) == 0:
             log.error(f"'{bench}' benchmark not found")
             return 1
         elif len(benchmarks) > 1:
             exact_matches = benchmarks.filter_out([x for x in benchmarks if x != bench])
             if len(exact_matches) == 1:
-                log.warning(f"'{bench}' matches more than one benchmark, "
-                            "using exact match")
+                log.warning(f"'{bench}' matches more than one benchmark, using exact match")
                 benchmarks = exact_matches
             else:
                 log.error(f"'{bench}' matches more than one benchmark")
                 return 1
 
-        benchmark_name, = benchmarks.keys()
+        (benchmark_name,) = benchmarks.keys()
         benchmark_type = benchmarks[benchmark_name]["type"]
 
         steps = int(math.log(len(commit_hashes)) / math.log(2))
 
-        log.info(
-            f"Running approximately {steps} benchmarks within {len(commit_hashes)} commits")
+        log.info(f"Running approximately {steps} benchmarks within {len(commit_hashes)} commits")
 
         env = environments[0]
 
@@ -129,8 +152,7 @@ class Find(Command):
             commit_hash = commit_hashes[i]
 
             commit_name = repo.get_decorated_hash(commit_hash, 8)
-            log.info(
-                f"For {conf.project} commit {commit_name}:")
+            log.info(f"For {conf.project} commit {commit_name}:")
 
             env.install_project(conf, repo, commit_hash)
             params['python'] = env.python
@@ -143,21 +165,24 @@ class Find(Command):
                 repo.get_date(commit_hash),
                 env.python,
                 env.name,
-                env.env_vars
+                env.env_vars,
             )
 
             if not skip_save:
                 result.load_data(conf.results_dir)
 
-            res = run_benchmarks(benchmarks, env, results=result,
-                                 show_stderr=show_stderr,
-                                 launch_method=launch_method)
+            res = run_benchmarks(
+                benchmarks,
+                env,
+                results=result,
+                show_stderr=show_stderr,
+                launch_method=launch_method,
+            )
 
             if not skip_save:
                 res.save(conf.results_dir)
 
-            result = res.get_result_value(benchmark_name,
-                                          benchmarks[benchmark_name]['params'])
+            result = res.get_result_value(benchmark_name, benchmarks[benchmark_name]['params'])
 
             results[i] = result
 
@@ -167,8 +192,7 @@ class Find(Command):
             errcode = res.errcode[benchmark_name]
             if errcode == util.TIMEOUT_RETCODE and benchmark_type == "time":
                 timeout_limit = benchmarks[benchmark_name]['timeout']
-                results[i] = [r if r is not None else timeout_limit
-                              for r in results[i]]
+                results[i] = [r if r is not None else timeout_limit for r in results[i]]
 
             return results[i]
 
@@ -205,8 +229,7 @@ class Find(Command):
 
             mid = int(math.floor((hi - lo) / 2) + lo)
 
-            log.info(
-                f"Testing {draw_graph(lo, mid, hi, len(commit_hashes))}")
+            log.info(f"Testing {draw_graph(lo, mid, hi, len(commit_hashes))}")
 
             with log.indent():
                 lo_result = None

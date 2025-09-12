@@ -22,8 +22,9 @@ def test_show(capsys, show_fixture):
     text, err = capsys.readouterr()
     assert "time_ci_small [cheetah/py2.7-numpy1.8]\n  3.00±0s\n\n" in text
 
-    tools.run_asv_with_conf(conf, 'show', 'fcf8c079', '--machine=cheetah',
-                            '--bench=time_ci', '--details')
+    tools.run_asv_with_conf(
+        conf, 'show', 'fcf8c079', '--machine=cheetah', '--bench=time_ci', '--details'
+    )
     text, err = capsys.readouterr()
     expected = textwrap.dedent("""
     Commit: fcf8c079
@@ -46,8 +47,7 @@ def test_show_durations(capsys, show_fixture):
     text, err = capsys.readouterr()
     assert '13dd6571547f8dd87b24c4e29536d33cc4f335c9  6.00s' in text.strip()
 
-    tools.run_asv_with_conf(conf, 'show', '13dd6571', '--machine=cheetah',
-                            '--durations')
+    tools.run_asv_with_conf(conf, 'show', '13dd6571', '--machine=cheetah', '--durations')
     text, err = capsys.readouterr()
     expected = textwrap.dedent("""
     Commit: 13dd6571

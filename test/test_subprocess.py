@@ -47,8 +47,7 @@ sys.stderr.write("Stderr after waiting\n")
     for timeout_code in timeout_codes:
         t = time.time()
         try:
-            util.check_output([
-                sys.executable, "-c", timeout_code], timeout=1)
+            util.check_output([sys.executable, "-c", timeout_code], timeout=1)
         except util.ProcessError as e:
             assert len(e.stdout.strip().split('\n')) == 1
             assert len(e.stderr.strip().split('\n')) == 1
@@ -71,12 +70,10 @@ sys.stderr.write("Stderr before error\n")
 sys.exit(1)
 """
     try:
-        util.check_output([
-            sys.executable, "-c", code])
+        util.check_output([sys.executable, "-c", code])
     except util.ProcessError as e:
         assert len(e.stdout.strip().split('\n')) == 1
-        err = [x for x in e.stderr.strip().split('\n')
-               if not x.startswith('Coverage')]
+        err = [x for x in e.stderr.strip().split('\n') if not x.startswith('Coverage')]
         assert len(err) == 1
         assert e.stdout.strip() == "Stdout before error"
         assert err[0] == "Stderr before error"
@@ -126,8 +123,9 @@ print(os.environ['TEST_ASV_BAR'])
 def test_no_timeout():
     # Check that timeout=None is allowed.
     code = "import time; time.sleep(0.05)"
-    out, err, retcode = util.check_output([sys.executable, "-c", code], timeout=None,
-                                          return_stderr=True)
+    out, err, retcode = util.check_output(
+        [sys.executable, "-c", code], timeout=None, return_stderr=True
+    )
     assert out == ''
     assert err == ''
     assert retcode == 0
@@ -135,14 +133,12 @@ def test_no_timeout():
 
 def test_stderr_redirect():
     # Check redirecting stderr to stdout works
-    code = ("import sys;"
-            "sys.stdout.write('OUT\\n');"
-            "sys.stdout.flush();"
-            "sys.stderr.write('ERR\\n')")
+    code = "import sys;sys.stdout.write('OUT\\n');sys.stdout.flush();sys.stderr.write('ERR\\n')"
     out = util.check_output([sys.executable, "-c", code], redirect_stderr=True)
     assert out.splitlines() == ['OUT', 'ERR']
-    out, err, retcode = util.check_output([sys.executable, "-c", code],
-                                          return_stderr=True, redirect_stderr=True)
+    out, err, retcode = util.check_output(
+        [sys.executable, "-c", code], return_stderr=True, redirect_stderr=True
+    )
     assert out.splitlines() == ['OUT', 'ERR']
     assert err == ''
     assert retcode == 0
@@ -161,8 +157,9 @@ def test_popen():
 
 def test_large_output():
     # More data than a pipe buffer can hold
-    data = util.check_output([sys.executable, "-c",
-                              "import sys; [sys.stdout.write('x'*1000) for j in range(5000)]"])
+    data = util.check_output(
+        [sys.executable, "-c", "import sys; [sys.stdout.write('x'*1000) for j in range(5000)]"]
+    )
     assert data == 'x' * 5000000
 
 

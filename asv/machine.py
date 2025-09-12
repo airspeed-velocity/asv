@@ -33,6 +33,7 @@ class MachineCollection:
     Stores information about 1 or more machines in the
     ~/.asv-machine.json file.
     """
+
     api_version = 1
 
     @staticmethod
@@ -56,7 +57,8 @@ class MachineCollection:
 
         raise util.UserError(
             f"No information stored about machine '{machine_name}'. "
-            f"I know about {util.human_list(d.keys())}.")
+            f"I know about {util.human_list(d.keys())}."
+        )
 
     @classmethod
     def save(cls, machine_name, machine_info, _path=None):
@@ -85,11 +87,13 @@ class Machine:
     """
     Stores information about a particular machine.
     """
+
     api_version = 1
 
     fields = [
-        ("machine",
-         """
+        (
+            "machine",
+            """
          A unique name to identify this machine in the results.  May
          be anything, as long as it is unique across all the machines used
          to benchmark this project.
@@ -97,33 +101,39 @@ class Machine:
          NOTE: If changed from the default, it will no longer match
          the hostname of this machine, and you may need to explicitly
          use the --machine argument to asv.
-         """),
-
-        ("os",
-         """
+         """,
+        ),
+        (
+            "os",
+            """
          The OS type and version of this machine.  For example,
-         'Macintosh OS-X 10.8'."""),
-
-        ("arch",
-         """
+         'Macintosh OS-X 10.8'.""",
+        ),
+        (
+            "arch",
+            """
          The generic CPU architecture of this machine.  For
-         example, 'i386' or 'x86_64'."""),
-
-        ("cpu",
-         """
+         example, 'i386' or 'x86_64'.""",
+        ),
+        (
+            "cpu",
+            """
          A specific description of the CPU of this machine,
          including its speed and class.  For example, 'Intel(R)
-         Core(TM) i5-2520M CPU @ 2.50GHz (4 cores)'."""),
-
-        ("num_cpu",
-         """
+         Core(TM) i5-2520M CPU @ 2.50GHz (4 cores)'.""",
+        ),
+        (
+            "num_cpu",
+            """
          The number of CPUs in the system. For example,
-         '4'."""),
-
-        ("ram",
-         """
+         '4'.""",
+        ),
+        (
+            "ram",
+            """
          The amount of physical RAM on this machine.  For example,
-         '4GB'.""")
+         '4GB'.""",
+        ),
     ]
 
     hardcoded_machine_name = None
@@ -150,20 +160,23 @@ class Machine:
             'num_cpu': num_cpu,
             'arch': platform.machine(),
             'cpu': cpu,
-            'ram': ram}
+            'ram': ram,
+        }
 
     @staticmethod
     def generate_machine_file(use_defaults=False):
         if not sys.stdout.isatty() and not use_defaults and not log._colorama:
             raise util.UserError(
                 "Run asv at the console the first time to generate "
-                "one, or run `asv machine --yes`.")
+                "one, or run `asv machine --yes`."
+            )
 
         log.flush()
 
         color_print(
             "I will now ask you some questions about this machine to "
-            "identify it in the benchmarks.")
+            "identify it in the benchmarks."
+        )
         color_print("")
 
         defaults = Machine.get_defaults()
@@ -172,16 +185,23 @@ class Machine:
         for i, (name, description) in enumerate(Machine.fields):
             print(
                 textwrap.fill(
-                    f'{i + 1}. {name}: {textwrap.dedent(description)}',
-                    subsequent_indent='   '))
-            values[name] = get_answer_default(name, defaults[name],
-                                                      use_defaults=use_defaults)
+                    f'{i + 1}. {name}: {textwrap.dedent(description)}', subsequent_indent='   '
+                )
+            )
+            values[name] = get_answer_default(name, defaults[name], use_defaults=use_defaults)
 
         return values
 
     @classmethod
-    def load(cls, interactive=False, force_interactive=False, _path=None,
-             machine_name=None, use_defaults=False, **kwargs):
+    def load(
+        cls,
+        interactive=False,
+        force_interactive=False,
+        _path=None,
+        machine_name=None,
+        use_defaults=False,
+        **kwargs,
+    ):
         self = Machine()
 
         if machine_name is None:

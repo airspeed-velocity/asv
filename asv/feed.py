@@ -2,6 +2,7 @@
 """
 Minimal Atom feed writer.
 """
+
 import datetime
 import hashlib
 import xml.etree.ElementTree as etree
@@ -39,6 +40,7 @@ class FeedEntry:
         Default: same as *updated*
 
     """
+
     def __init__(self, title, updated, link=None, content=None, id_context=None, id_date=None):
         self.title = title
         self.link = link
@@ -91,8 +93,7 @@ class FeedEntry:
         return item
 
 
-def write_atom(dest, entries, author, title, address, updated=None, link=None,
-               language="en"):
+def write_atom(dest, entries, author, title, address, updated=None, link=None, language="en"):
     """
     Write an atom feed to a file.
 
@@ -185,8 +186,5 @@ def _get_id(owner, date, content):
         h.update(b",")
 
     if date is None:
-        date = datetime.datetime(
-            1970, 1, 1,
-            tzinfo = datetime.timezone.utc
-        )
+        date = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
     return f"tag:{owner},{date.strftime('%Y-%m-%d')}:/{h.hexdigest()}"

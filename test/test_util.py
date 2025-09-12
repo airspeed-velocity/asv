@@ -12,7 +12,7 @@ import pytest
 
 from asv import util
 
-WIN = (os.name == 'nt')
+WIN = os.name == 'nt'
 
 
 def _multiprocessing_raise_processerror(arg):
@@ -37,8 +37,7 @@ def test_parallelfailure():
 
     if WIN and os.path.basename(sys.argv[0]).lower().startswith('py.test'):
         # Multiprocessing in spawn mode can result to problems with py.test
-        pytest.skip("Multiprocessing spawn mode on Windows not safe to run "
-                    "from py.test runner.")
+        pytest.skip("Multiprocessing spawn mode on Windows not safe to run from py.test runner.")
 
     # The exception class must be pickleable
     exc = util.ParallelFailure("test", Exception, "something")
@@ -111,11 +110,7 @@ def test_which_path(tmpdir):
 
 
 def test_write_load_json(tmpdir):
-    data = {
-        'a': 1,
-        'b': 2,
-        'c': 3
-    }
+    data = {'a': 1, 'b': 2, 'c': 3}
     orig_data = dict(data)
 
     filename = os.path.join(str(tmpdir), 'test.json')
@@ -143,7 +138,6 @@ def test_write_load_json(tmpdir):
 def test_human_float():
     items = [
         # (expected, value, significant, truncate_small, significant_zeros, reference_value)
-
         # significant
         ("1", 1.2345, 1),
         ("1.2", 1.2345, 2),
@@ -154,7 +148,6 @@ def test_human_float():
         ("123.5", 123.45, 4),
         ("0.001", 0.0012346, 1),
         ("0.001235", 0.0012346, 4),
-
         # significant zeros
         ("0.001", 0.001, 1, None, True),
         ("0.0010", 0.001, 2, None, True),
@@ -162,17 +155,14 @@ def test_human_float():
         ("1", 1, 1, None, True),
         ("1.0", 1, 2, None, True),
         ("1.00", 1, 3, None, True),
-
         # truncate small
         ("0", 0.001, 2, 0),
         ("0", 0.001, 2, 1),
         ("0.001", 0.001, 2, 2),
-
         # non-finite
         ("inf", float('inf'), 1),
         ("-inf", -float('inf'), 1),
         ("nan", float('nan'), 1),
-
         # negative
         ("-1", -1.2345, 1),
         ("-0.00100", -0.001, 3, None, True),
@@ -189,7 +179,6 @@ def test_human_float():
 def test_human_time():
     items = [
         # (expected, value, err)
-
         # scales
         ("1.00ns", 1e-9),
         ("1.10μs", 1.1e-6),
@@ -200,7 +189,6 @@ def test_human_time():
         ("2.00h", 3600 * 2),
         ("0s", 0),
         ("n/a", float("nan")),
-
         # err
         ("1.00±1ns", 1e-9, 1e-9),
         ("1.00±0.1ns", 1e-9, 0.1e-9),
@@ -224,7 +212,6 @@ def test_human_time():
 def test_human_file_size():
     items = [
         # (expected, value, err)
-
         # scales
         ("1", 1),
         ("999", 999),
@@ -232,7 +219,6 @@ def test_human_file_size():
         ("1.1M", 1.1e6),
         ("1.12G", 1.12e9),
         ("1.12T", 1.123e12),
-
         # err
         ("1±2", 1, 2),
         ("1±0.1k", 1e3, 123),
@@ -271,7 +257,7 @@ def test_parse_human_time():
 
 
 def test_is_main_thread():
-    is_main = (threading.current_thread() == threading.main_thread())
+    is_main = threading.current_thread() == threading.main_thread()
     assert util.is_main_thread() == is_main
 
     results = []
@@ -298,29 +284,49 @@ def test_json_non_ascii(tmpdir):
 
 def test_interpolate_command():
     good_items = [
-        ('python {inputs}', {'inputs': '9'},
-         ['python', '9'], {}, {0}, None),
-
-        ('python "{inputs}"', {'inputs': '9'},
-         ['python', '9'], {}, {0}, None),
-
-        ('python {inputs}', {'inputs': ''},
-         ['python', ''], {}, {0}, None),
-
-        ('HELLO="asd" python "{inputs}"', {'inputs': '9'},
-         ['python', '9'], {'HELLO': 'asd'}, {0}, None),
-
-        ('HELLO="asd" return-code=any python "{inputs}"', {'inputs': '9'},
-         ['python', '9'], {'HELLO': 'asd'}, None, None),
-
-        ('HELLO="asd" return-code=255 python "{inputs}"', {'inputs': '9'},
-         ['python', '9'], {'HELLO': 'asd'}, {255}, None),
-
-        ('HELLO="asd" return-code=255 python "{inputs}"', {'inputs': '9'},
-         ['python', '9'], {'HELLO': 'asd'}, {255}, None),
-
-        ('HELLO="asd" in-dir="{somedir}" python', {'somedir': 'dir'},
-         ['python'], {'HELLO': 'asd'}, {0}, 'dir'),
+        ('python {inputs}', {'inputs': '9'}, ['python', '9'], {}, {0}, None),
+        ('python "{inputs}"', {'inputs': '9'}, ['python', '9'], {}, {0}, None),
+        ('python {inputs}', {'inputs': ''}, ['python', ''], {}, {0}, None),
+        (
+            'HELLO="asd" python "{inputs}"',
+            {'inputs': '9'},
+            ['python', '9'],
+            {'HELLO': 'asd'},
+            {0},
+            None,
+        ),
+        (
+            'HELLO="asd" return-code=any python "{inputs}"',
+            {'inputs': '9'},
+            ['python', '9'],
+            {'HELLO': 'asd'},
+            None,
+            None,
+        ),
+        (
+            'HELLO="asd" return-code=255 python "{inputs}"',
+            {'inputs': '9'},
+            ['python', '9'],
+            {'HELLO': 'asd'},
+            {255},
+            None,
+        ),
+        (
+            'HELLO="asd" return-code=255 python "{inputs}"',
+            {'inputs': '9'},
+            ['python', '9'],
+            {'HELLO': 'asd'},
+            {255},
+            None,
+        ),
+        (
+            'HELLO="asd" in-dir="{somedir}" python',
+            {'somedir': 'dir'},
+            ['python'],
+            {'HELLO': 'asd'},
+            {0},
+            'dir',
+        ),
     ]
 
     bad_items = [
@@ -347,8 +353,7 @@ def test_interpolate_command():
 
 
 def test_datetime_to_js_timestamp():
-    tss = [0, 0.5, -0.5, 12345.6789, -12345.6789,
-           1535910708.7767508]
+    tss = [0, 0.5, -0.5, 12345.6789, -12345.6789, 1535910708.7767508]
     for ts in tss:
         t = datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc)
         ts2 = util.datetime_to_js_timestamp(t)
@@ -356,44 +361,27 @@ def test_datetime_to_js_timestamp():
 
     # Check sub-second precision
     ms = 50
-    ts = datetime.datetime(
-        1970, 1, 1, 0, 0, 0, 1000 * ms,
-        tzinfo = datetime.timezone.utc
-    )
+    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 1000 * ms, tzinfo=datetime.timezone.utc)
     assert util.datetime_to_js_timestamp(ts) == ms
 
     # Check rounding
-    ts = datetime.datetime(
-        1970, 1, 1, 0, 0, 0, 500,
-        tzinfo = datetime.timezone.utc
-    )
+    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 500, tzinfo=datetime.timezone.utc)
     assert util.datetime_to_js_timestamp(ts) == 1
-    ts = datetime.datetime(
-        1970, 1, 1, 0, 0, 0, 499,
-        tzinfo = datetime.timezone.utc
-    )
+    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 499, tzinfo=datetime.timezone.utc)
     assert util.datetime_to_js_timestamp(ts) == 0
 
 
 def test_datetime_to_timestamp():
-    tss = [0, 0.5, -0.5, 12345.6789, -12345.6789,
-           1535910708.7767508]
+    tss = [0, 0.5, -0.5, 12345.6789, -12345.6789, 1535910708.7767508]
     for ts in tss:
-        t = datetime.datetime.fromtimestamp(ts,
-                                            tz=datetime.timezone.utc)
+        t = datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc)
         ts2 = util.datetime_to_timestamp(t)
         assert abs(ts - ts2) <= 0.5
 
     # Check rounding
-    ts = datetime.datetime(
-        1970, 1, 1, 0, 0, 0, 500000,
-        tzinfo = datetime.timezone.utc
-    )
+    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 500000, tzinfo=datetime.timezone.utc)
     assert util.datetime_to_timestamp(ts) == 1
-    ts = datetime.datetime(
-        1970, 1, 1, 0, 0, 0, 500000 - 1,
-        tzinfo = datetime.timezone.utc
-    )
+    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 500000 - 1, tzinfo=datetime.timezone.utc)
     assert util.datetime_to_timestamp(ts) == 0
 
 
@@ -406,144 +394,226 @@ def test_check_output_exit_code(capsys):
 
 def test_geom_mean_na():
     for x in [[1, 2, -3], [1, 2, 3], [3, 1, 3, None, None]]:
-        expected = abs(x[0] * x[1] * x[2])**(1 / 3)
+        expected = abs(x[0] * x[1] * x[2]) ** (1 / 3)
         assert abs(util.geom_mean_na(x) - expected) < 1e-10
+
 
 def mock_pip_caller(args):
     return args
 
-@pytest.mark.parametrize("declaration, expected", [
-    # Basic package name
-    ("numpy", {
-        'pkgname': 'numpy', 'specification': None,
-        'flags': [], 'is_editable': False, 'path': None
-    }),
 
-    # Version with '=='
-    ("numpy==1.20.0", {
-        'pkgname': 'numpy', 'specification': '==1.20.0',
-        'flags': [], 'is_editable': False, 'path': None
-    }),
-
-    # Other specifiers
-    ("numpy>=1.20.0", {
-        'pkgname': 'numpy', 'specification': '>=1.20.0',
-        'flags': [], 'is_editable': False, 'path': None
-    }),
-
-    ("numpy<=1.20.0", {
-        'pkgname': 'numpy', 'specification': '<=1.20.0',
-        'flags': [], 'is_editable': False, 'path': None
-    }),
-
-    # Complex version specifiers
-    ("numpy>=1.15,<2.0", {
-        'pkgname': 'numpy', 'specification': '>=1.15,<2.0',
-        'flags': [], 'is_editable': False, 'path': None
-    }),
-
-    # Flags
-    ("--no-cache-dir numpy", {
-        'pkgname': 'numpy', 'specification': None,
-        'flags': ['--no-cache-dir'], 'is_editable': False, 'path': None
-    }),
-
-    # Editable installations
-    ("-e ./numpy-dir", {
-        'pkgname': None, 'specification': None,
-        'flags': ['-e'], 'is_editable': True, 'path': './numpy-dir'
-    }),
-
-    # Local paths without -e
-    ("./numpy-dir", {
-        'pkgname': None, 'specification': None,
-        'flags': [], 'is_editable': False, 'path': './numpy-dir'
-    }),
-
-    # Package with dash
-    ("my-package", {
-        'pkgname': 'my-package', 'specification': None,
-        'flags': [], 'is_editable': False, 'path': None
-    }),
-
-    # More complex declarations
-    ("--no-cache-dir -e ./numpy-dir", {
-        'pkgname': None, 'specification': None,
-        'flags': ['--no-cache-dir', '-e'], 'is_editable': True, 'path': './numpy-dir'
-    }),
-
-    # Direct git installations
-    ("git+https://github.com/user/repo.git", {
-        'pkgname': None, 'specification': None,
-        'flags': [], 'is_editable': False, 'path': 'git+https://github.com/user/repo.git'
-    }),
-
-    # Git installations with a branch specified
-    ("git+https://github.com/user/repo.git@branch", {
-        'pkgname': None, 'specification': None,
-        'flags': [], 'is_editable': False, 'path': 'git+https://github.com/user/repo.git@branch'
-    }),
-
-    # Editable git installations with #egg= suffix
-    ("-e git+https://github.com/user/repo.git#egg=pkgname", {
-        'pkgname': 'pkgname', 'specification': None,
-        'flags': ['-e'], 'is_editable': True, 'path': 'git+https://github.com/user/repo.git'
-    }),
-
-    # Git installations with a branch and egg specified
-    ("git+https://github.com/user/pythonrepo.git@branch#egg=repo", {
-        'pkgname': 'repo', 'specification': None,
-        'flags': [], 'is_editable': False,
-        'path': 'git+https://github.com/user/pythonrepo.git@branch'
-    }),
-
-    # Flags with values
-    ("--install-option=\"--prefix=/my/path\" numpy", {
-        'pkgname': 'numpy', 'specification': None,
-        'flags': ['--install-option=\"--prefix=/my/path\"'], 'is_editable': False, 'path': None
-    }),
-])
+@pytest.mark.parametrize(
+    "declaration, expected",
+    [
+        # Basic package name
+        (
+            "numpy",
+            {
+                'pkgname': 'numpy',
+                'specification': None,
+                'flags': [],
+                'is_editable': False,
+                'path': None,
+            },
+        ),
+        # Version with '=='
+        (
+            "numpy==1.20.0",
+            {
+                'pkgname': 'numpy',
+                'specification': '==1.20.0',
+                'flags': [],
+                'is_editable': False,
+                'path': None,
+            },
+        ),
+        # Other specifiers
+        (
+            "numpy>=1.20.0",
+            {
+                'pkgname': 'numpy',
+                'specification': '>=1.20.0',
+                'flags': [],
+                'is_editable': False,
+                'path': None,
+            },
+        ),
+        (
+            "numpy<=1.20.0",
+            {
+                'pkgname': 'numpy',
+                'specification': '<=1.20.0',
+                'flags': [],
+                'is_editable': False,
+                'path': None,
+            },
+        ),
+        # Complex version specifiers
+        (
+            "numpy>=1.15,<2.0",
+            {
+                'pkgname': 'numpy',
+                'specification': '>=1.15,<2.0',
+                'flags': [],
+                'is_editable': False,
+                'path': None,
+            },
+        ),
+        # Flags
+        (
+            "--no-cache-dir numpy",
+            {
+                'pkgname': 'numpy',
+                'specification': None,
+                'flags': ['--no-cache-dir'],
+                'is_editable': False,
+                'path': None,
+            },
+        ),
+        # Editable installations
+        (
+            "-e ./numpy-dir",
+            {
+                'pkgname': None,
+                'specification': None,
+                'flags': ['-e'],
+                'is_editable': True,
+                'path': './numpy-dir',
+            },
+        ),
+        # Local paths without -e
+        (
+            "./numpy-dir",
+            {
+                'pkgname': None,
+                'specification': None,
+                'flags': [],
+                'is_editable': False,
+                'path': './numpy-dir',
+            },
+        ),
+        # Package with dash
+        (
+            "my-package",
+            {
+                'pkgname': 'my-package',
+                'specification': None,
+                'flags': [],
+                'is_editable': False,
+                'path': None,
+            },
+        ),
+        # More complex declarations
+        (
+            "--no-cache-dir -e ./numpy-dir",
+            {
+                'pkgname': None,
+                'specification': None,
+                'flags': ['--no-cache-dir', '-e'],
+                'is_editable': True,
+                'path': './numpy-dir',
+            },
+        ),
+        # Direct git installations
+        (
+            "git+https://github.com/user/repo.git",
+            {
+                'pkgname': None,
+                'specification': None,
+                'flags': [],
+                'is_editable': False,
+                'path': 'git+https://github.com/user/repo.git',
+            },
+        ),
+        # Git installations with a branch specified
+        (
+            "git+https://github.com/user/repo.git@branch",
+            {
+                'pkgname': None,
+                'specification': None,
+                'flags': [],
+                'is_editable': False,
+                'path': 'git+https://github.com/user/repo.git@branch',
+            },
+        ),
+        # Editable git installations with #egg= suffix
+        (
+            "-e git+https://github.com/user/repo.git#egg=pkgname",
+            {
+                'pkgname': 'pkgname',
+                'specification': None,
+                'flags': ['-e'],
+                'is_editable': True,
+                'path': 'git+https://github.com/user/repo.git',
+            },
+        ),
+        # Git installations with a branch and egg specified
+        (
+            "git+https://github.com/user/pythonrepo.git@branch#egg=repo",
+            {
+                'pkgname': 'repo',
+                'specification': None,
+                'flags': [],
+                'is_editable': False,
+                'path': 'git+https://github.com/user/pythonrepo.git@branch',
+            },
+        ),
+        # Flags with values
+        (
+            "--install-option=\"--prefix=/my/path\" numpy",
+            {
+                'pkgname': 'numpy',
+                'specification': None,
+                'flags': ['--install-option="--prefix=/my/path"'],
+                'is_editable': False,
+                'path': None,
+            },
+        ),
+    ],
+)
 def test_parsed_pip_declaration(declaration, expected):
     parsed = util.ParsedPipDeclaration(declaration)
     for key, value in expected.items():
-        assert getattr(parsed, key) == value, \
+        assert getattr(parsed, key) == value, (
             f"Expected {key} to be {value}, but got {getattr(parsed, key)}"
+        )
+
 
 # Mock pip_caller
 def pip_caller(args):
     return args
+
 
 @pytest.mark.parametrize(
     "declaration, expected_result",
     [
         # Test with a simple package name
         ("numpy", ["install", "-v", "--upgrade", "numpy"]),
-
         # Test with a package and version specification
         ("numpy==1.18.5", ["install", "-v", "--upgrade", "numpy==1.18.5"]),
-
         # Test with a git URL
-        ("git+https://github.com/numpy/numpy.git#egg=numpy",
-         ["install", "-v", "--upgrade", "git+https://github.com/numpy/numpy.git"]),
-
+        (
+            "git+https://github.com/numpy/numpy.git#egg=numpy",
+            ["install", "-v", "--upgrade", "git+https://github.com/numpy/numpy.git"],
+        ),
         # Test with a git URL and branch
-        ("git+https://github.com/numpy/numpy.git@branch",
-         ["install", "-v", "--upgrade", "git+https://github.com/numpy/numpy.git@branch"]),
-
+        (
+            "git+https://github.com/numpy/numpy.git@branch",
+            ["install", "-v", "--upgrade", "git+https://github.com/numpy/numpy.git@branch"],
+        ),
         # Test with a local path
         ("./localpackage/", ["install", "-v", "--upgrade", "./localpackage/"]),
-
         # Test with flags
-        ("numpy --install-option=\"--prefix=/my/path\"",
-         ["install", "-v", "--upgrade", "--install-option=\"--prefix=/my/path\"", "numpy"]),
-
+        (
+            "numpy --install-option=\"--prefix=/my/path\"",
+            ["install", "-v", "--upgrade", "--install-option=\"--prefix=/my/path\"", "numpy"],
+        ),
         # Test case for multiple version specifiers
         ("numpy>=1.18.5,<=1.20.0", ["install", "-v", "--upgrade", "numpy>=1.18.5,<=1.20.0"]),
-
         # Test cases for version without specifier
         ("numpy 1.23", ["install", "-v", "--upgrade", "numpy==1.23"]),
         ("fakepy_1 0.14", ["install", "-v", "--upgrade", "fakepy_1==0.14"]),
-    ]
+    ],
 )
 def test_construct_pip_call(declaration, expected_result):
     parsed_declaration = util.ParsedPipDeclaration(declaration)
@@ -551,23 +621,29 @@ def test_construct_pip_call(declaration, expected_result):
     assert result() == expected_result
 
 
-@pytest.mark.parametrize("arg, new_version, expected", [
-    ("python", "3.10", "python=3.10"),
-    ("python==2.7", "3.10", "python=3.10"),
-    ("python>=3.8", "3.10", "python=3.10"),
-    ("python==3.7", "3.10", "python=3.10"),
-    ("python_package", "3.10", "python_package"),
-])
+@pytest.mark.parametrize(
+    "arg, new_version, expected",
+    [
+        ("python", "3.10", "python=3.10"),
+        ("python==2.7", "3.10", "python=3.10"),
+        ("python>=3.8", "3.10", "python=3.10"),
+        ("python==3.7", "3.10", "python=3.10"),
+        ("python_package", "3.10", "python_package"),
+    ],
+)
 def test_replace_cpython_version(arg, new_version, expected):
     assert util.replace_cpython_version(arg, new_version) == expected
 
 
-@pytest.mark.parametrize("path, expected_version", [
-    ("/home/jdoe/micromamba/envs/asv_exp/bin/python3.11", "3.11"),
-    ("/usr/local/bin/python3.12", "3.12"),
-    ("/opt/anaconda3/bin/python3.9", "3.9"),
-    ("/usr/bin/python", None),
-    ("/home/user/custom_python/python_alpha", None),
-])
+@pytest.mark.parametrize(
+    "path, expected_version",
+    [
+        ("/home/jdoe/micromamba/envs/asv_exp/bin/python3.11", "3.11"),
+        ("/usr/local/bin/python3.12", "3.12"),
+        ("/opt/anaconda3/bin/python3.9", "3.9"),
+        ("/usr/bin/python", None),
+        ("/home/user/custom_python/python_alpha", None),
+    ],
+)
 def test_extract_python_version(path, expected_version):
     assert util.extract_cpython_version(path) == expected_version

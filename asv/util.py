@@ -4,7 +4,6 @@
 Various low-level utilities.
 """
 
-
 import collections
 import datetime
 import errno
@@ -28,7 +27,7 @@ import time
 import json5
 from asv_runner.util import _human_time_units, human_float, human_time
 
-WIN = (os.name == 'nt')
+WIN = os.name == 'nt'
 
 if not WIN:
     from select import PIPE_BUF
@@ -47,6 +46,7 @@ class ParallelFailure(Exception):
     Custom exception to work around a multiprocessing bug
     https://bugs.python.org/issue9400
     """
+
     def __new__(cls, message, exc_cls, traceback_str):
         self = Exception.__new__(cls)
         self.message = message
@@ -58,9 +58,9 @@ class ParallelFailure(Exception):
         return (ParallelFailure, (self.message, self.exc_cls, self.traceback_str))
 
     def __str__(self):
-        return "{}: {}\n    {}".format(self.exc_cls.__name__,
-                                          self.message,
-                                          self.traceback_str.replace("\n", "\n    "))
+        return "{}: {}\n    {}".format(
+            self.exc_cls.__name__, self.message, self.traceback_str.replace("\n", "\n    ")
+        )
 
     def reraise(self):
         if self.exc_cls is UserError:
@@ -206,8 +206,10 @@ def which(filename, paths=None):
         locations = os.environ.get("PATH", "").split(os.pathsep)
         if WIN:
             # On windows, an entry in %PATH% may be quoted
-            locations = [path[1:-1] if len(path) > 2 and path[0] == path[-1] == '"' else path
-                         for path in locations]
+            locations = [
+                path[1:-1] if len(path) > 2 and path[0] == path[-1] == '"' else path
+                for path in locations
+            ]
 
     if WIN:
         filenames = [filename + ext for ext in ('.exe', '.bat', '.com', '')]
@@ -255,11 +257,20 @@ class ProcessError(subprocess.CalledProcessError):
             return f"Command '{' '.join(self.args)}' timed out"
         else:
             return "Command '{}' returned non-zero exit status {}".format(
-                ' '.join(self.args), self.retcode)
+                ' '.join(self.args), self.retcode
+            )
 
 
-def check_call(args, valid_return_codes=(0,), timeout=600, dots=True,
-               display_error=True, shell=False, env=None, cwd=None):
+def check_call(
+    args,
+    valid_return_codes=(0,),
+    timeout=600,
+    dots=True,
+    display_error=True,
+    shell=False,
+    env=None,
+    cwd=None,
+):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.
@@ -270,9 +281,15 @@ def check_call(args, valid_return_codes=(0,), timeout=600, dots=True,
     __tracebackhide__ = operator.methodcaller('errisinstance', ProcessError)
 
     check_output(
-        args, valid_return_codes=valid_return_codes, timeout=timeout,
-        dots=dots, display_error=display_error, shell=shell, env=env,
-        cwd=cwd)
+        args,
+        valid_return_codes=valid_return_codes,
+        timeout=timeout,
+        dots=dots,
+        display_error=display_error,
+        shell=shell,
+        env=env,
+        cwd=cwd,
+    )
 
 
 class DebugLogBuffer:
@@ -312,9 +329,19 @@ class DebugLogBuffer:
             self.log.debug(text, continued=True)
 
 
-def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
-                 display_error=True, shell=False, return_stderr=False,
-                 env=None, cwd=None, redirect_stderr=False, return_popen=False):
+def check_output(
+    args,
+    valid_return_codes=(0,),
+    timeout=600,
+    dots=True,
+    display_error=True,
+    shell=False,
+    return_stderr=False,
+    env=None,
+    cwd=None,
+    redirect_stderr=False,
+    return_popen=False,
+):
     """
     Runs the given command in a subprocess, raising ProcessError if it
     fails.  Returns stdout as a string on success.
@@ -377,17 +404,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         if header is not None:
             content.append(header)
         if redirect_stderr:
-            content.extend([
-                'OUTPUT -------->',
-                stdout[:-1]
-            ])
+            content.extend(['OUTPUT -------->', stdout[:-1]])
         else:
-            content.extend([
-                'STDOUT -------->',
-                stdout[:-1],
-                'STDERR -------->',
-                stderr[:-1]
-            ])
+            content.extend(['STDOUT -------->', stdout[:-1], 'STDERR -------->', stderr[:-1]])
         return '\n'.join(content)
 
     if isinstance(args, str):
@@ -395,8 +414,13 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
 
     log.debug(f"Running '{' '.join(args)}'")
 
-    kwargs = {'shell': shell, 'env': env, 'cwd': cwd,
-                  'stdout': subprocess.PIPE, 'stderr': subprocess.PIPE}
+    kwargs = {
+        'shell': shell,
+        'env': env,
+        'cwd': cwd,
+        'stdout': subprocess.PIPE,
+        'stderr': subprocess.PIPE,
+    }
     if redirect_stderr:
         kwargs['stderr'] = subprocess.STDOUT
     if WIN:
@@ -427,6 +451,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         debug_log = DebugLogBuffer(log)
         dots = False
     else:
+
         def debug_log(c):
             return None
 
@@ -454,8 +479,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
         all_threads = [stdout_reader]
 
         if not redirect_stderr:
-            stderr_reader = threading.Thread(target=stream_reader,
-                                             args=(proc.stderr, stderr_chunks))
+            stderr_reader = threading.Thread(
+                target=stream_reader, args=(proc.stderr, stderr_chunks)
+            )
             stderr_reader.daemon = True
             stderr_reader.start()
             all_threads.append(stderr_reader)
@@ -518,6 +544,7 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
                     _killpg_safe(proc.pid, signum)
                     if signum == signal.SIGTSTP:
                         os.kill(os.getpid(), signal.SIGSTOP)
+
                 signal.signal(signal.SIGTSTP, sig_forward)
                 signal.signal(signal.SIGCONT, sig_forward)
 
@@ -528,11 +555,9 @@ def check_output(args, valid_return_codes=(0,), timeout=600, dots=True,
             while proc.poll() is None:
                 try:
                     if timeout is None:
-                        rlist, wlist, xlist = select.select(
-                            list(fds.keys()), [], [])
+                        rlist, wlist, xlist = select.select(list(fds.keys()), [], [])
                     else:
-                        rlist, wlist, xlist = select.select(
-                            list(fds.keys()), [], [], timeout)
+                        rlist, wlist, xlist = select.select(list(fds.keys()), [], [], timeout)
                 except OSError as err:
                     if err.args[0] == errno.EINTR:
                         # interrupted by signal handler; try again
@@ -711,25 +736,24 @@ def load_json(path, api_version=None, js_comments=False):
         try:
             data = json.loads(content)
         except ValueError as err:
-            raise UserError(
-                f"Error parsing JSON in file '{path}': {err}")
+            raise UserError(f"Error parsing JSON in file '{path}': {err}")
 
     if api_version is not None:
         if 'version' in data:
             if data['version'] < api_version:
                 raise UserError(
-                    f"{path} is stored in an old file format.  Run "
-                    "`asv update` to update it.")
+                    f"{path} is stored in an old file format.  Run `asv update` to update it."
+                )
             elif data['version'] > api_version:
                 raise UserError(
                     f"{path} is stored in a format that is newer than "
                     "what this version of asv understands.  Update "
-                    "asv to use this file.")
+                    "asv to use this file."
+                )
 
             del data['version']
         else:
-            raise UserError(
-                f"No version specified in {path}.")
+            raise UserError(f"No version specified in {path}.")
 
     return data
 
@@ -755,8 +779,7 @@ def update_json(cls, path, api_version, compact=False):
 
     d = load_json(path)
     if 'version' not in d:
-        raise UserError(
-            f"No version specified in {path}.")
+        raise UserError(f"No version specified in {path}.")
 
     if d['version'] < api_version:
         for x in range(d['version'] + 1, api_version + 1):
@@ -767,7 +790,8 @@ def update_json(cls, path, api_version, compact=False):
             f"{path} is stored in a format that is newer than "
             "what this version of asv understands. "
             "Upgrade asv in order to use or add to "
-            "these results.")
+            "these results."
+        )
 
 
 def iter_chunks(s, n):
@@ -785,8 +809,7 @@ def iter_chunks(s, n):
 
 
 def pick_n(items, n):
-    """Pick n items, attempting to get equal index spacing.
-    """
+    """Pick n items, attempting to get equal index spacing."""
     if not (n > 0):
         raise ValueError("Invalid number of items to pick")
     spacing = max(float(len(items)) / n, 1)
@@ -806,6 +829,7 @@ def get_multiprocessing(parallel):
     """
     if parallel != 1:
         import multiprocessing
+
         if parallel <= 0:
             parallel = multiprocessing.cpu_count()
         return parallel, multiprocessing
@@ -852,6 +876,7 @@ def get_cpu_info():
     elif sys.platform.startswith('win'):
         try:
             from win32com.client import GetObject
+
             cimv = GetObject(r"winmgmts:root\cimv2")
             return cimv.ExecQuery("Select Name from Win32_Processor")[0].name
         except Exception:
@@ -881,9 +906,7 @@ def get_memsize():
     return ''
 
 
-def format_text_table(rows, num_headers=0,
-                      top_header_span_start=0,
-                      top_header_text=None):
+def format_text_table(rows, num_headers=0, top_header_span_start=0, top_header_text=None):
     """
     Format rows in as a reStructuredText table, in the vein of:
 
@@ -901,8 +924,7 @@ def format_text_table(rows, num_headers=0,
     """
 
     # Format content
-    text_rows = [[f"{item}".replace("\n", " ") for item in row]
-                 for row in rows]
+    text_rows = [[f"{item}".replace("\n", " ") for item in row] for row in rows]
 
     # Ensure same number of items on all rows
     num_items = max(len(row) for row in text_rows)
@@ -910,12 +932,10 @@ def format_text_table(rows, num_headers=0,
         row.extend([''] * (num_items - len(row)))
 
     # Determine widths
-    col_widths = [max(len(row[j]) for row in text_rows) + 2
-                  for j in range(num_items)]
+    col_widths = [max(len(row[j]) for row in text_rows) + 2 for j in range(num_items)]
 
     # Pad content
-    text_rows = [[item.center(w) for w, item in zip(col_widths, row)]
-                 for row in text_rows]
+    text_rows = [[item.center(w) for w, item in zip(col_widths, row)] for row in text_rows]
 
     # Generate result
     headers = [" ".join(row) for row in text_rows[:num_headers]]
@@ -944,10 +964,7 @@ def format_text_table(rows, num_headers=0,
 
 
 def _datetime_to_timestamp(dt, divisor):
-    delta = dt - datetime.datetime(
-        1970, 1, 1,
-        tzinfo = datetime.timezone.utc
-    )
+    delta = dt - datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
     microseconds = (delta.days * 86400 + delta.seconds) * 10**6 + delta.microseconds
     value, remainder = divmod(microseconds, divisor)
     if remainder >= divisor // 2:
@@ -1015,7 +1032,7 @@ def geom_mean_na(values):
         prod = 1.0
         acc = 0
         for x in values:
-            prod *= abs(x)**exponent
+            prod *= abs(x) ** exponent
             acc += x
         return prod if acc >= 0 else -prod
     else:
@@ -1029,6 +1046,7 @@ if not WIN:
     def long_path(path):
         return path
 else:
+
     def long_path(path):
         if path.startswith("\\\\"):
             return path
@@ -1057,9 +1075,7 @@ else:
             onerror = None
         else:
             onerror = _remove_readonly
-        shutil.rmtree(long_path(path),
-                      ignore_errors=ignore_errors,
-                      onerror=onerror)
+        shutil.rmtree(long_path(path), ignore_errors=ignore_errors, onerror=onerror)
 
 
 def sanitize_filename(filename):
@@ -1077,10 +1093,30 @@ def sanitize_filename(filename):
     filename = re.sub('[<>:"/\\^|?*\x00-\x1f]', '_', filename)
 
     # ntfs
-    forbidden = ["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3",
-                 "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1",
-                 "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8",
-                 "LPT9"]
+    forbidden = [
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        "COM1",
+        "COM2",
+        "COM3",
+        "COM4",
+        "COM5",
+        "COM6",
+        "COM7",
+        "COM8",
+        "COM9",
+        "LPT1",
+        "LPT2",
+        "LPT3",
+        "LPT4",
+        "LPT5",
+        "LPT6",
+        "LPT7",
+        "LPT8",
+        "LPT9",
+    ]
     if filename.upper() in forbidden:
         filename = filename + "_"
 
@@ -1102,8 +1138,9 @@ def recvall(sock, size):
         s = sock.recv(size - len(data))
         data += s
         if not s:
-            raise RuntimeError("did not receive data from socket "
-                               f"(size {size}, got only {data!r})")
+            raise RuntimeError(
+                f"did not receive data from socket (size {size}, got only {data!r})"
+            )
     return data
 
 
@@ -1144,9 +1181,11 @@ def interpolate_command(command, variables):
     try:
         result = [c.format(**variables) for c in parts]
     except KeyError as exc:
-        raise UserError(f"Configuration error: {{{exc.args[0]}}} not available "
-                        f"when substituting into command {command!r} "
-                        f"Available: {variables!r}")
+        raise UserError(
+            f"Configuration error: {{{exc.args[0]}}} not available "
+            f"when substituting into command {command!r} "
+            f"Available: {variables!r}"
+        )
 
     env = {}
 
@@ -1163,8 +1202,10 @@ def interpolate_command(command, variables):
 
         if result[0].startswith('return-code='):
             if return_codes_set:
-                raise UserError("Configuration error: multiple return-code specifications "
-                                f"in command {command!r} ")
+                raise UserError(
+                    "Configuration error: multiple return-code specifications "
+                    f"in command {command!r} "
+                )
                 break
 
             if result[0] == 'return-code=any':
@@ -1183,13 +1224,16 @@ def interpolate_command(command, variables):
                 except ValueError:
                     pass
 
-            raise UserError("Configuration error: invalid return-code specification "
-                            f"{result[0]!r} when substituting into command {command!r} ")
+            raise UserError(
+                "Configuration error: invalid return-code specification "
+                f"{result[0]!r} when substituting into command {command!r} "
+            )
 
         if result[0].startswith('in-dir='):
             if cwd is not None:
-                raise UserError("Configuration error: multiple in-dir specifications "
-                                f"in command {command!r} ")
+                raise UserError(
+                    f"Configuration error: multiple in-dir specifications in command {command!r} "
+                )
                 break
 
             cwd = result[0][7:]
@@ -1236,8 +1280,7 @@ def get_multiprocessing_lock(name):
 
 def get_multiprocessing_pool(parallel=None):
     """Create a multiprocessing.Pool, managing global locks properly"""
-    return multiprocessing.Pool(initializer=_init_global_locks,
-                                initargs=(_global_locks,))
+    return multiprocessing.Pool(initializer=_init_global_locks, initargs=(_global_locks,))
 
 
 try:
@@ -1261,20 +1304,20 @@ def git_default_branch():
     try:
         # Local name gets precedence
         default_branch = check_output(
-            [which('git'), 'config', 'init.defaultBranch'],
-            display_error=False).strip()
+            [which('git'), 'config', 'init.defaultBranch'], display_error=False
+        ).strip()
     except ProcessError:
         # Check global
         try:
             default_branch = check_output(
-                [which('git'), 'config', '--global', 'init.defaultBranch'],
-                display_error=False).strip()
+                [which('git'), 'config', '--global', 'init.defaultBranch'], display_error=False
+            ).strip()
         except ProcessError:
             # Check system
             try:
                 default_branch = check_output(
-                    [which('git'), 'config', '--system', 'init.defaultBranch'],
-                    display_error=False).strip()
+                    [which('git'), 'config', '--system', 'init.defaultBranch'], display_error=False
+                ).strip()
             except ProcessError:
                 # Default to master when global and system are not set
                 default_branch = 'master'
@@ -1283,19 +1326,17 @@ def git_default_branch():
 
 def search_channels(cli_path, pkg, version):
     try:
-        result = subprocess.run([cli_path, "search",
-                                 f"{pkg}=={version}"],
-                                capture_output=True,
-                                text=True,
-                                check=False)
+        result = subprocess.run(
+            [cli_path, "search", f"{pkg}=={version}"], capture_output=True, text=True, check=False
+        )
     except subprocess.CalledProcessError as e:
-        print(f"Error searching for {pkg} {version}, got:\n {e}",
-              file=sys.stderr)
+        print(f"Error searching for {pkg} {version}, got:\n {e}", file=sys.stderr)
         return False
     if f"No match found for: {pkg}=={version}." in result.stdout:
         return False
     # Worked!
     return True
+
 
 class ParsedPipDeclaration:
     def __init__(self, declaration):
@@ -1308,14 +1349,15 @@ class ParsedPipDeclaration:
         self._parse_declaration(declaration)
 
         if not self.pkgname and not self.path:
-            raise ValueError("Either a valid package name"
-                             " or a path must be present in the declaration.")
+            raise ValueError(
+                "Either a valid package name or a path must be present in the declaration."
+            )
 
     def _parse_declaration(self, declaration):
         # Match flags with values
         flag_with_value_pattern = (
-            r'(--[\w-]+='      # Match the flag name
-            r'\"[^\"]+\")'    # Match the value in double quotes
+            r'(--[\w-]+='  # Match the flag name
+            r'\"[^\"]+\")'  # Match the value in double quotes
         )
         flag_values = re.findall(flag_with_value_pattern, declaration)
         for flag_value in flag_values:
@@ -1324,9 +1366,9 @@ class ParsedPipDeclaration:
 
         # Match git URLs
         git_url_pattern = (
-            r'(git\+https:\/\/[a-zA-Z0-9-_\/.]+)' # match the git URL
-            r'(?:@([a-zA-Z0-9-_\/.]+))?' # optional branch or tag
-            r'(?:#egg=([a-zA-Z0-9-_]+))?' # optional egg fragment
+            r'(git\+https:\/\/[a-zA-Z0-9-_\/.]+)'  # match the git URL
+            r'(?:@([a-zA-Z0-9-_\/.]+))?'  # optional branch or tag
+            r'(?:#egg=([a-zA-Z0-9-_]+))?'  # optional egg fragment
         )
         git_url_match = re.search(git_url_pattern, declaration)
 
@@ -1342,9 +1384,9 @@ class ParsedPipDeclaration:
 
         # Match local paths
         local_pattern = (
-            r'(\.\/[a-zA-Z0-9-_]+\/?'          # Relative path starting with ./
-            r'|\.\.\/[a-zA-Z0-9-_]+\/?'        # Relative path starting with ../
-            r'|\/\w+\/?)'                      # Absolute path
+            r'(\.\/[a-zA-Z0-9-_]+\/?'  # Relative path starting with ./
+            r'|\.\.\/[a-zA-Z0-9-_]+\/?'  # Relative path starting with ../
+            r'|\/\w+\/?)'  # Absolute path
         )
         local_match = re.search(local_pattern, declaration)
 
@@ -1355,9 +1397,9 @@ class ParsedPipDeclaration:
 
         # Match flags
         flags_pattern = (
-            r'(?:^|\s)'                        # Match start or whitespace
-            r'(-[a-zA-Z]|'                     # Single-letter flags
-            r'--\w+(?:-\w+)*)'                 # Double-dash flags
+            r'(?:^|\s)'  # Match start or whitespace
+            r'(-[a-zA-Z]|'  # Single-letter flags
+            r'--\w+(?:-\w+)*)'  # Double-dash flags
         )
         flags = re.findall(flags_pattern, declaration)
         if flags:
@@ -1371,12 +1413,12 @@ class ParsedPipDeclaration:
 
         # Match package details
         pkg_pattern = (
-            r'(?P<name>[a-zA-Z0-9-_]+)'               # Name
-            r'('                                      # Start group for version specification(s)
-            r'((?P<specifier>[<>!=~]{1,2})'           # Version specifier
-            r'(?P<version>[0-9.a-zA-Z_-]+))'          # Version
-            r'((?P<multi_spec>,[<>!=~]{1,2}[0-9.a-zA-Z_-]+)*)?' # Multiple version specifications
-            r')?' # End optional group for version specification(s)
+            r'(?P<name>[a-zA-Z0-9-_]+)'  # Name
+            r'('  # Start group for version specification(s)
+            r'((?P<specifier>[<>!=~]{1,2})'  # Version specifier
+            r'(?P<version>[0-9.a-zA-Z_-]+))'  # Version
+            r'((?P<multi_spec>,[<>!=~]{1,2}[0-9.a-zA-Z_-]+)*)?'  # Multiple version specifications
+            r')?'  # End optional group for version specification(s)
         )
         pkg_match = re.search(pkg_pattern, declaration)
 
@@ -1396,6 +1438,7 @@ class ParsedPipDeclaration:
                 if version_match:
                     self.specification = f"=={version_match.group(0)}"
 
+
 def construct_pip_call(pip_caller, parsed_declaration: ParsedPipDeclaration):
     pargs = ['install', '-v', '--upgrade']
 
@@ -1411,10 +1454,12 @@ def construct_pip_call(pip_caller, parsed_declaration: ParsedPipDeclaration):
 
     return functools.partial(pip_caller, pargs)
 
+
 if hasattr(sys, 'pypy_version_info'):
     ON_PYPY = True
 else:
     ON_PYPY = False
+
 
 def get_matching_environment(environments, result=None):
     return next(
@@ -1446,6 +1491,4 @@ def extract_cpython_version(env_python):
 
 
 def env_py_is_sys_version(env_python):
-    return extract_cpython_version(env_python) == "{0}.{1}".format(
-        *sys.version_info[:2]
-    )
+    return extract_cpython_version(env_python) == "{0}.{1}".format(*sys.version_info[:2])

@@ -44,9 +44,7 @@ class Rattler(environment.Environment):
         self._environment_file = None
 
         if conf.conda_environment_file == "IGNORE":
-            log.debug(
-                "Skipping environment file due to conda_environment_file set to IGNORE"
-            )
+            log.debug("Skipping environment file due to conda_environment_file set to IGNORE")
             self._environment_file = None
         elif not conf.conda_environment_file:
             if (Path("environment.yml")).exists():
@@ -57,9 +55,7 @@ class Rattler(environment.Environment):
                 log.debug(f"Using {conf.conda_environment_file}")
                 self._environment_file = conf.conda_environment_file
             else:
-                log.debug(
-                    f"Environment file {conf.conda_environment_file} not found, ignoring"
-                )
+                log.debug(f"Environment file {conf.conda_environment_file} not found, ignoring")
 
         super().__init__(conf, python, requirements, tagged_env_vars)
         # Rattler configuration things
@@ -82,14 +78,10 @@ class Rattler(environment.Environment):
             env_file_name = self._environment_file
             env_data = load(Path(env_file_name).open(), Loader=Loader)
             _pkgs = [x for x in env_data.get("dependencies", []) if isinstance(x, str)]
-            self._channels += [
-                x for x in env_data.get("channels", []) if isinstance(x, str)
-            ]
+            self._channels += [x for x in env_data.get("channels", []) if isinstance(x, str)]
             self._channels = list(dict.fromkeys(self._channels).keys())
             # Handle possible pip keys
-            pip_maybe = [
-                x for x in env_data.get("dependencies", []) if isinstance(x, dict)
-            ]
+            pip_maybe = [x for x in env_data.get("dependencies", []) if isinstance(x, dict)]
             if len(pip_maybe) == 1:
                 try:
                     pip_args += pip_maybe[0]["pip"]

@@ -15,6 +15,4 @@ class SnakevizGui(profiling.ProfilerGui):
     def open_profiler_gui(cls, profiler_file):
         command = util.which('snakeviz')
 
-        return util.check_call(
-            [command, profiler_file],
-            valid_return_codes=(0, -15), timeout=None)
+        return util.check_call([command, profiler_file], valid_return_codes=(0, -15), timeout=None)

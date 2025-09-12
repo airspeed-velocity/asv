@@ -132,6 +132,9 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "test/**" = ["B011", "B017", "B018", "B028"]
 
+[tool.ruff.format]
+quote-style = "preserve"
+
 [tool.setuptools_scm]
 write_to = "asv/_version.py"
 

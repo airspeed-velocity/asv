@@ -208,8 +208,7 @@ def mann_whitney_u_r(m, n, u, memo=None):
         if value is not None:
             return value
 
-        value = (mann_whitney_u_r(m, n - 1, u, memo) +
-                 mann_whitney_u_r(m - 1, n, u - n, memo))
+        value = mann_whitney_u_r(m, n - 1, u, memo) + mann_whitney_u_r(m - 1, n, u - n, memo)
 
         memo[key] = value
     return value
