@@ -67,7 +67,7 @@ class Rattler(environment.Environment):
 
         self._channel_priority = ChannelPriority.Strict
         condarc_path = Path(os.getenv("CONDARC", ""))
-        if condarc_path.is_file():
+        if condarc_path.is_file() and os.getenv("ASV_USE_CONDARC"):
             log.debug(f"Loading environment configuration from {condarc_path}")
             with condarc_path.open() as f:
                 condarc_data = load(f, Loader=Loader) or {}
