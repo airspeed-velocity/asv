@@ -1491,4 +1491,4 @@ def extract_cpython_version(env_python):
 
 
 def env_py_is_sys_version(env_python):
-    return extract_cpython_version(env_python) == "{0}.{1}".format(*sys.version_info[:2])
+    return extract_cpython_version(env_python) == "{}.{}".format(*sys.version_info[:2])
