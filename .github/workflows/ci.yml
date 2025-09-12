@@ -15,7 +15,7 @@ jobs:
       matrix:
         # macos-latest doesn't have 3.8 anymore
         os: ["ubuntu-latest", "macos-13"]
-        python-version: ["3.8", "3.12", "pypy-3.10"]
+        python-version: ["3.8", "3.12", "pypy-3.11"]
         # TODO - Set 'r-version' to "release" to use latest R version once the compatibility between R and rpy2 is fixed.
         # See: https://github.com/airspeed-velocity/asv/actions/runs/14904829763/job/41864696603?pr=1485
         # Also see https://github.com/rpy2/rpy2/issues/1164 and https://github.com/r-lib/actions
