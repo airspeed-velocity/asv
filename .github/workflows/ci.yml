@@ -37,8 +37,8 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew update
-          brew install mercurial
           brew install --cask anaconda
+          pip install mercurial
 
       - name: Set up Python version ${{ matrix.python-version }}
         uses: actions/setup-python@v5
