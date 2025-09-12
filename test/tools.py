@@ -103,23 +103,6 @@ except ImportError:
     HAVE_WEBDRIVER = False
 
 
-def _check_mamba():
-    try:
-        conda = _find_conda()
-        importlib.import_module("libmambapy")
-        subprocess.check_call(
-            [conda, "build", "--version"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        return True
-    except (ImportError, OSError, subprocess.CalledProcessError, FileNotFoundError):
-        return False
-
-
-HAS_MAMBA = _check_mamba()
-
-
 WAIT_TIME = 20.0
 
 
