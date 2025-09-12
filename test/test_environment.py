@@ -595,7 +595,6 @@ def test_matrix_existing(skip_no_conda: pytest.FixtureRequest):
     "env_type",
     [
         pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="Requires conda")),
-        pytest.param("rattler", marks=pytest.mark.skipif(not HAS_RATTLER, reason="Requires rattler")),
     ],
 )
 @pytest.mark.parametrize(
@@ -1103,7 +1102,6 @@ def test__parse_matrix_entries():
     "env_type",
     [
         pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="Requires conda")),
-        pytest.param("rattler", marks=pytest.mark.skipif(not HAS_RATTLER, reason="Requires rattler")),
     ],
 )
 @pytest.mark.skipif(not HAS_PYTHON_VER2, reason="Requires two usable Python versions")

@@ -12,6 +12,7 @@ from os.path import join
 
 import pytest
 
+from . import tools
 from asv import benchmarks, config, environment, runner, util
 from asv.results import Results
 
@@ -378,6 +379,7 @@ def test_forkserver_preimport(tmpdir):
 @pytest.mark.parametrize(
     'launch_method', ['spawn', pytest.param('forkserver', marks=needs_unix_socket_mark)]
 )
+@pytest.mark.skipif(tools.HAS_PYPY, reason="Times out randomly on pypy")
 def test_run_import_failure(capsys, benchmarks_fixture, launch_method):
     conf, repo, envs, commit_hash = benchmarks_fixture
 
