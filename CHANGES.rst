@@ -5,6 +5,8 @@ New Features
 ^^^^^^^^^^^^
 
 - ASV supports the ``py-rattler`` backend through the ``rattler`` option (#1445)
+  - ``ASV_USE_CONDARC`` can be set to load the options in the ``CONDARC``
+    environment variable
 
 
 Bug Fixes
