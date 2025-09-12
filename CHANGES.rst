@@ -1,6 +1,12 @@
 asv 0.6.5 (2025-09-12)
 ----------------------
 
+New Features
+^^^^^^^^^^^^
+
+- ASV supports the ``py-rattler`` backend through the ``rattler`` option (#1445)
+
+
 Bug Fixes
 ^^^^^^^^^
 
@@ -8,6 +14,7 @@ Bug Fixes
 - Multiple python versions are now handled correctly (#1444)
 - Environment types can be specified for pytest (#1446)
 - ASV_PYTHONPATH is now applied for the discovery phase. (#1463)
+- Fix virtualenv setup for virtualenv 20.31 (#1485)
 
 
 Other Changes and Additions
@@ -15,15 +22,9 @@ Other Changes and Additions
 
 - Indicate when benchmarks start passing with *
 - New documentation design
+- The ``mamba`` backend has been removed, with ``rattler`` as the suggested replacement
+  - ``rattler`` is also expected to be the default in the next release
 
-
-0.6.5 (2025-05-06)
-------------------
-
-Bug Fixes
-^^^^^^^^^
-
-- Fix virtualenv setup for virtualenv 20.31 (#1485)
 
 0.6.4 (2024-08-12)
 ------------------
@@ -32,6 +33,7 @@ New Features
 ^^^^^^^^^^^^
 
 - ASV supports using JSONC as a configuration file (#1420)
+- TAGS can now be used as a range parameter (#1418)
 
 
 Bug Fixes
