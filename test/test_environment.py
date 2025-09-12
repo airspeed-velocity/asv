@@ -591,7 +591,13 @@ def test_matrix_existing(skip_no_conda: pytest.FixtureRequest):
 
 # environment.yml should respect the specified order
 # of channels when adding packages
-@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
+@pytest.mark.parametrize(
+    "env_type",
+    [
+        pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="Requires conda")),
+        pytest.param("rattler", marks=pytest.mark.skipif(not HAS_RATTLER, reason="Requires rattler")),
+    ],
+)
 @pytest.mark.parametrize(
     "channel_list,expected_channel",
     [
@@ -600,14 +606,14 @@ def test_matrix_existing(skip_no_conda: pytest.FixtureRequest):
     ],
 )
 def test_conda_channel_addition(
-    tmpdir, channel_list, expected_channel, skip_no_conda: pytest.FixtureRequest
+    tmpdir, channel_list, expected_channel, env_type
 ):
     # test that we can add conda channels to environments
     # and that we respect the specified priority order
     # of channels
     conf = config.Config()
     conf.env_dir = str(tmpdir.join("env"))
-    conf.environment_type = "conda"
+    conf.environment_type = env_type
     conf.pythons = [PYTHON_VER1]
     conf.matrix = {}
     # these have to be valid channels

@@ -1,5 +1,6 @@
 import asyncio
 import os
+import sys
 from pathlib import Path
 
 from yaml import load
@@ -125,9 +126,28 @@ class Rattler(environment.Environment):
             virtual_packages = VirtualPackage.current()
         else:
             virtual_packages = VirtualPackage.detect()
+
+        # Expand the 'defaults' meta-channel as rattler requires concrete
+        # channel URLs.
+        expanded_channels = []
+        for channel in self._channels:
+            if channel == "defaults":
+                log.debug("Expanding 'defaults' meta-channel")
+                expanded_channels.extend(
+                    [
+                        "https://repo.anaconda.com/pkgs/main",
+                        "https://repo.anaconda.com/pkgs/r",
+                    ]
+                )
+                if sys.platform.startswith("win"):
+                    expanded_channels.append("https://repo.anaconda.com/pkgs/msys2")
+            else:
+                expanded_channels.append(channel)
+        final_channels = list(dict.fromkeys(expanded_channels).keys())
+
         solved_records = await solve(
             # Channels to use for solving
-            channels=self._channels,
+            channels=final_channels,
             # The specs to solve for
             specs=specs,
             # Virtual packages define the specifications of the environment
