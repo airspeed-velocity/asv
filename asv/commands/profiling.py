@@ -10,7 +10,7 @@ from asv_runner.console import color_print
 from .. import util
 from ..benchmarks import Benchmarks
 from ..console import log
-from ..environment import get_environments, is_existing_only, ExistingEnvironment
+from ..environment import ExistingEnvironment, get_environments, is_existing_only
 from ..machine import Machine
 from ..profiling import ProfilerGui
 from ..repo import NoSuchNameError, get_repo
