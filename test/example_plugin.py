@@ -23,4 +23,4 @@ class MyEnvironment(Environment):
         self._requirements = requirements
         self._channels = conf.conda_channels
         self._environment_file = None
-        super(MyEnvironment, self).__init__(conf, python, requirements, tagged_env_vars)
+        super().__init__(conf, python, requirements, tagged_env_vars)
