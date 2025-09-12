@@ -335,6 +335,7 @@ def test_compare_name_lookup(dvcs_type, capsys, tmpdir, example_results):
     text, err = capsys.readouterr()
     assert text.strip() == ''
 
+
 def test_compare_fixed_failures(capsys, tmpdir, example_results):
     tmpdir = str(tmpdir)
     os.chdir(tmpdir)
@@ -347,12 +348,15 @@ def test_compare_fixed_failures(capsys, tmpdir, example_results):
     machine_dir = join(results_dir_fixed, 'cheetah')
     os.makedirs(machine_dir)
     # Don't need modification
-    shutil.copyfile(join(example_results, 'benchmarks.json'),
-                    join(results_dir_fixed, 'benchmarks.json'))
-    shutil.copyfile(join(example_results, 'cheetah', 'machine.json'),
-                    join(machine_dir, 'machine.json'))
-    shutil.copyfile(join(example_results, 'cheetah', before_filename),
-                    join(machine_dir, before_filename))
+    shutil.copyfile(
+        join(example_results, 'benchmarks.json'), join(results_dir_fixed, 'benchmarks.json')
+    )
+    shutil.copyfile(
+        join(example_results, 'cheetah', 'machine.json'), join(machine_dir, 'machine.json')
+    )
+    shutil.copyfile(
+        join(example_results, 'cheetah', before_filename), join(machine_dir, before_filename)
+    )
     # Load the 'after' result file, modify it, and save to the new location
     after_path = join(example_results, 'cheetah', after_filename)
     data = util.load_json(after_path)
@@ -361,11 +365,21 @@ def test_compare_fixed_failures(capsys, tmpdir, example_results):
     new_after_path = join(machine_dir, after_filename)
     util.write_json(new_after_path, data)
     conf = config.Config.from_json(
-        {'results_dir': results_dir_fixed,
-         'repo': tools.generate_test_repo(tmpdir).path,
-         'project': 'asv',
-         'environment_type': "shouldn't matter what"})
-    tools.run_asv_with_conf(conf, 'compare', before_short_hash, after_short_hash,
-                            '--machine=cheetah', '--factor=2', '--environment=py2.7-numpy1.8')
+        {
+            'results_dir': results_dir_fixed,
+            'repo': tools.generate_test_repo(tmpdir).path,
+            'project': 'asv',
+            'environment_type': "shouldn't matter what",
+        }
+    )
+    tools.run_asv_with_conf(
+        conf,
+        'compare',
+        before_short_hash,
+        after_short_hash,
+        '--machine=cheetah',
+        '--factor=2',
+        '--environment=py2.7-numpy1.8',
+    )
     text, err = capsys.readouterr()
     assert text.strip() == REFERENCE_FIXED_FAIL.strip()
