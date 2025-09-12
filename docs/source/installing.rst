@@ -31,10 +31,6 @@ For managing the environments, one of the following packages is required:
 - `py-rattler <https://conda.github.io/rattler/py-rattler/>`__, which is used
   for the new ``rattler`` backend.
 
-- `libmambapy <https://mamba.readthedocs.io/en/latest/python_api.html>`__,
-  which is typically part of ``mamba``. In this case ``conda`` and ``conda-build``
-  must be present too.
-
 - `virtualenv <https://virtualenv.pypa.io/>`__, which is required since
   venv is not compatible with other versions of Python.
 
@@ -51,8 +47,7 @@ For managing the environments, one of the following packages is required:
    ``conda`` will be able to fetch precompiled binaries for these
    dependencies in many cases. Using ``virtualenv``, dependencies
    without precompiled wheels usually have to be compiled every
-   time the environments are set up.  ``libmambapy`` is currently
-   in flux and requires careful version management.
+   time the environments are set up.
 
 Optional optimizations
 ----------------------

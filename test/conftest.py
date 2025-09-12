@@ -65,7 +65,7 @@ def pytest_addoption(parser):
         "--environment-type",
         action="store",
         default="virtualenv",
-        choices=("conda", "virtualenv", "mamba", "rattler"),
+        choices=("conda", "virtualenv", "rattler"),
         help="environment_type to use in tests by default",
     )
 

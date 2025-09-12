@@ -448,7 +448,6 @@ def get_environment_class_by_name(environment_type):
     raise EnvironmentUnavailable(
         f"Unknown environment type '{environment_type}'. "
         f"Allowed values based on existing plugins are {tool_names}. "
-        f"If you are trying to use `mamba`, you may need to install `conda-build`."
     )
 
 

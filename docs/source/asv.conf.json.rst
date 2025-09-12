@@ -285,8 +285,8 @@ the project being benchmarked may specify in its ``setup.py`` file.
 .. note::
 
     At present, this functionality only supports dependencies that are
-    installable via ``pip`` or ``conda`` or ``mamba`` (depending on which
-    environment is used). If ``conda/mamba`` is specified as
+    installable via ``pip`` or ``conda`` or ``rattler`` (depending on which
+    environment is used). If ``conda/rattler`` is specified as
     ``environment_type`` and you wish to install the package via ``pip``, then
     preface the package name with ``pip+``. For example, ``emcee`` is only
     available from ``pip``, so the package name to be used is ``pip+emcee``.
@@ -310,6 +310,11 @@ the project being benchmarked may specify in its ``setup.py`` file.
        ``MAMBARC`` environment variable if it is provided. e.g.
        ``MAMBARC=$HOME/.condarc asv run``. By default user ``.rc`` files are not
        read to enforce isolation.
+
+    .. versionadded:: 0.6.5
+
+       The ``rattler`` plugin has been added, and the ``mamba`` plugin has been
+       removed.
 
 The ``env`` and ``env_nobuild`` dictionaries can be used to set also
 environment variables::
@@ -450,7 +455,7 @@ defaults to ``"benchmarks"``.
 ``environment_type``
 --------------------
 Specifies the tool to use to create environments.  May be "conda",
-"virtualenv", "mamba" or another value depending on the plugins in use.  If
+"virtualenv", "rattler" or another value depending on the plugins in use.  If
 missing or the empty string, the tool will be automatically determined
 by looking for tools on the ``PATH`` environment variable.
 

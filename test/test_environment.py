@@ -14,7 +14,6 @@ from .tools import (
     DUMMY1_VERSION,
     DUMMY2_VERSIONS,
     HAS_CONDA,
-    HAS_MAMBA,
     HAS_PYPY,
     HAS_PYTHON_VER2,
     HAS_RATTLER,
@@ -25,7 +24,7 @@ from .tools import (
     generate_test_repo,
 )
 
-CAN_BUILD_PYTHON = HAS_CONDA or HAS_MAMBA or HAS_RATTLER
+CAN_BUILD_PYTHON = HAS_CONDA or HAS_RATTLER
 
 
 @pytest.mark.skipif(
@@ -1098,7 +1097,7 @@ def test__parse_matrix_entries():
     "env_type",
     [
         pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="Requires conda")),
-        pytest.param("mamba", marks=pytest.mark.skipif(not HAS_MAMBA, reason="Requires mamba")),
+        pytest.param("rattler", marks=pytest.mark.skipif(not HAS_RATTLER, reason="Requires rattler")),
     ],
 )
 @pytest.mark.skipif(not HAS_PYTHON_VER2, reason="Requires two usable Python versions")
