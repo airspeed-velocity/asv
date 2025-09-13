@@ -591,7 +591,7 @@ def check_output(
                     # Terminate the whole process group
                     _killpg_safe(proc.pid, signal.SIGTERM)
 
-                    for j in range(10):
+                    for _ in range(10):
                         time.sleep(0.1)
                         if proc.poll() is not None:
                             break

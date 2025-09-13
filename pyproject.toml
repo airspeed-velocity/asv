@@ -121,7 +121,7 @@ extend-select = [
 ]
 ignore = [
     "B006",  # Do not use mutable data structures for argument defaults  # FIXME
-    "B007",  # Loop control variable `j` not used within loop body
+    "B007",  # Loop control variable not used within loop body
     "B020",  # Loop control variable overrides iterable it iterates
     "B904",  # Within an `except` clause, raise exceptions with `raise ... from err`
     "E741",  # Do not use variables named 'I', 'O', or 'l'

@@ -30,7 +30,7 @@ class Regressions(OutputPublisher):
 
         all_params = graphs.get_params()
 
-        for j, (file_name, graph) in enumerate(graphs):
+        for file_name, graph in graphs:
             if 'summary' in graph.params:
                 continue
 

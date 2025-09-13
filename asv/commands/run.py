@@ -454,7 +454,7 @@ class Run(Command):
                         if interleave_rounds:
                             log.step()
                         else:
-                            for j in range(max_rounds):
+                            for _ in range(max_rounds):
                                 log.step()
                 continue
 
@@ -465,7 +465,7 @@ class Run(Command):
                         if interleave_rounds:
                             log.step()
                         else:
-                            for j in range(max_rounds):
+                            for _ in range(max_rounds):
                                 log.step()
 
             active_environments = [

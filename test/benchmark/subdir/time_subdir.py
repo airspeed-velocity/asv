@@ -4,7 +4,7 @@ x = None
 def time_foo():
     if x != 42:
         raise RuntimeError()
-    for y in range(1000):
+    for _ in range(1000):
         pass
 
 
