@@ -91,7 +91,7 @@ jobs:
           create-args: >-
             python
             pip
-            libmambapy<2.0
+            py_rattler
             conda-build
 
       - name: Install dependencies

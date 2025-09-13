@@ -14,7 +14,6 @@ from .tools import (
     DUMMY1_VERSION,
     DUMMY2_VERSIONS,
     HAS_CONDA,
-    HAS_MAMBA,
     HAS_PYPY,
     HAS_PYTHON_VER2,
     HAS_RATTLER,
@@ -25,7 +24,7 @@ from .tools import (
     generate_test_repo,
 )
 
-CAN_BUILD_PYTHON = HAS_CONDA or HAS_MAMBA or HAS_RATTLER
+CAN_BUILD_PYTHON = HAS_CONDA or HAS_RATTLER
 
 
 @pytest.mark.skipif(
@@ -592,7 +591,12 @@ def test_matrix_existing(skip_no_conda: pytest.FixtureRequest):
 
 # environment.yml should respect the specified order
 # of channels when adding packages
-@pytest.mark.skipif((not HAS_CONDA), reason="Requires conda and conda-build")
+@pytest.mark.parametrize(
+    "env_type",
+    [
+        pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="Requires conda")),
+    ],
+)
 @pytest.mark.parametrize(
     "channel_list,expected_channel",
     [
@@ -601,14 +605,14 @@ def test_matrix_existing(skip_no_conda: pytest.FixtureRequest):
     ],
 )
 def test_conda_channel_addition(
-    tmpdir, channel_list, expected_channel, skip_no_conda: pytest.FixtureRequest
+    tmpdir, channel_list, expected_channel, env_type
 ):
     # test that we can add conda channels to environments
     # and that we respect the specified priority order
     # of channels
     conf = config.Config()
     conf.env_dir = str(tmpdir.join("env"))
-    conf.environment_type = "conda"
+    conf.environment_type = env_type
     conf.pythons = [PYTHON_VER1]
     conf.matrix = {}
     # these have to be valid channels
@@ -1098,7 +1102,6 @@ def test__parse_matrix_entries():
     "env_type",
     [
         pytest.param("conda", marks=pytest.mark.skipif(not HAS_CONDA, reason="Requires conda")),
-        pytest.param("mamba", marks=pytest.mark.skipif(not HAS_MAMBA, reason="Requires mamba")),
     ],
 )
 @pytest.mark.skipif(not HAS_PYTHON_VER2, reason="Requires two usable Python versions")

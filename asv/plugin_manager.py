@@ -9,8 +9,6 @@ from . import commands, plugins
 from .console import log
 
 ENV_PLUGIN_REGEXES = [
-    r"\.mamba$",
-    r"\._mamba_helpers$",
     r"\.virtualenv$",
     r"\.conda$",
     r"\.rattler$",
