@@ -49,7 +49,7 @@ All benchmarks:
 | +        | 1.00s                | 3.00s               | 3.00    | time_with_version_match                       |
 | +        | 1.00s                | 3.00s               | 3.00    | time_with_version_mismatch_bench              |
 | x        | 1.00s                | 3.00s               | 3.00    | time_with_version_mismatch_other              |
-"""  # noqa: E501 line too long
+"""
 
 REFERENCE_SPLIT = """
 Benchmarks that have improved:
@@ -95,7 +95,7 @@ Benchmarks that are not comparable:
 | Change   | Before [22b920c6]    | After [fcf8c079]    |   Ratio | Benchmark (Parameter)            |
 |----------|----------------------|---------------------|---------|----------------------------------|
 | x        | 1.00s                | 3.00s               |       3 | time_with_version_mismatch_other |
-"""  # noqa: E501 line too long
+"""
 
 REFERENCE_ONLY_CHANGED = """
 | Change   | Before [22b920c6] <name1>   | After [fcf8c079] <name2>   | Ratio   | Benchmark (Parameter)                        |
@@ -112,7 +112,7 @@ REFERENCE_ONLY_CHANGED = """
 | +        | 1.00s                       | 3.00s                      | 3.00    | time_with_version_mismatch_bench             |
 | +        | 934μs                       | 108ms                      | 115.90  | time_quantity.time_quantity_init_array       |
 | -        | 69.1μs                      | 18.3μs                     | 0.27    | time_units.time_unit_to                      |
-"""  # noqa: E501 line too long
+"""
 
 REFERENCE_ONLY_CHANGED_MULTIENV = """
 | Change   | Before [22b920c6]    | After [fcf8c079]    | Ratio   | Benchmark (Parameter)                                                 |
@@ -129,7 +129,7 @@ REFERENCE_ONLY_CHANGED_MULTIENV = """
 | +        | 1.00s                | 3.00s               | 3.00    | time_with_version_mismatch_bench [cheetah/py2.7-numpy1.8]             |
 | +        | 934μs                | 108ms               | 115.90  | time_quantity.time_quantity_init_array [cheetah/py2.7-numpy1.8]       |
 | -        | 69.1μs               | 18.3μs              | 0.27    | time_units.time_unit_to [cheetah/py2.7-numpy1.8]                      |
-"""  # noqa: E501 line too long
+"""
 
 REFERENCE_ONLY_CHANGED_NOSTATS = """
 | Change   | Before [22b920c6]    | After [fcf8c079]    | Ratio   | Benchmark (Parameter)                        |
@@ -147,7 +147,7 @@ REFERENCE_ONLY_CHANGED_NOSTATS = """
 | +        | 1.00s                | 3.00s               | 3.00    | time_with_version_mismatch_bench             |
 | +        | 934μs                | 108ms               | 115.90  | time_quantity.time_quantity_init_array       |
 | -        | 69.1μs               | 18.3μs              | 0.27    | time_units.time_unit_to                      |
-"""  # noqa: E501 line too long
+"""
 
 REFERENCE_FIXED_FAIL = """
 All benchmarks:
@@ -178,7 +178,7 @@ All benchmarks:
 | +        | 1.00s                | 3.00s               | 3.00    | time_with_version_match                       |
 | +        | 1.00s                | 3.00s               | 3.00    | time_with_version_mismatch_bench              |
 | x        | 1.00s                | 3.00s               | 3.00    | time_with_version_mismatch_other              |
-"""  # noqa: E501 line too long
+"""
 
 
 def test_compare(capsys, tmpdir, example_results):

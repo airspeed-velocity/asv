@@ -758,7 +758,7 @@ def test_build_isolation(
 
     repo = get_repo(conf)
 
-    env = list(environment.get_environments(conf, None))[0]
+    env = next(iter(environment.get_environments(conf, None)))
     env.create()
 
     # Project installation should succeed
@@ -818,7 +818,7 @@ def test_custom_commands(
         )
 
     def get_env():
-        env = list(environment.get_environments(conf, None))[0]
+        env = next(iter(environment.get_environments(conf, None)))
         env.create()
         return env
 
@@ -885,7 +885,7 @@ def test_installed_commit_hash(
     repo = get_repo(conf)
 
     def get_env():
-        return list(environment.get_environments(conf, None))[0]
+        return next(iter(environment.get_environments(conf, None)))
 
     env = get_env()
     env.create()
@@ -938,7 +938,7 @@ def test_install_success(
 
     repo = get_repo(conf)
 
-    env = list(environment.get_environments(conf, None))[0]
+    env = next(iter(environment.get_environments(conf, None)))
     env.create()
     env.install_project(conf, repo, commit_hash)
 
@@ -966,7 +966,7 @@ def test_install_env_matrix_values(
 
     repo = get_repo(conf)
 
-    env = list(environment.get_environments(conf, None))[0]
+    env = next(iter(environment.get_environments(conf, None)))
     env.create()
     env.install_project(conf, repo, commit_hash)
 

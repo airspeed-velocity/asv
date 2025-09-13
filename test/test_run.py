@@ -30,7 +30,7 @@ def test_set_commit_hash(capsys, existing_env_conf):
         _machine_file=join(tmpdir, 'asv-machine.json'),
     )
 
-    env_name = list(environment.get_environments(conf, None))[0].name
+    env_name = next(iter(environment.get_environments(conf, None))).name
     result_filename = commit_hash[: conf.hash_length] + '-' + env_name + '.json'
     assert result_filename in os.listdir(join('results_workflow', 'orangutan'))
 
@@ -122,8 +122,7 @@ def test_run_spec(basic_conf_2):
     # test the HASHFILE version of range_spec'ing
     expected_commits = (initial_commit, branch_commit)
     with open(os.path.join(tmpdir, 'hashes_to_benchmark'), 'w') as f:
-        for commit in expected_commits:
-            f.write(commit + "\n")
+        f.writelines(f"{commit}\n" for commit in expected_commits)
         f.write(f"{util.git_default_branch()}~1\n")
         f.write("some-bad-hash-that-will-be-ignored\n")
         expected_commits += (dvcs.get_hash(f"{util.git_default_branch()}~1"),)
@@ -495,7 +494,7 @@ def test_run_python_same(capsys, basic_conf):
     )
     text, err = capsys.readouterr()
 
-    assert re.search("time_exception.*failed", text, re.S)
+    assert re.search("time_exception.*failed", text, re.DOTALL)
     assert re.search(r"time_secondary.track_value\s+42.0", text)
 
     # Check that it did not clone or install

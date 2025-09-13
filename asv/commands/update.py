@@ -51,7 +51,9 @@ class Update(Command):
                         continue
 
                     # Rename files if necessary
-                    m = re.match(r'^([0-9a-f]+)-(.*)\.json$', os.path.basename(path), re.I)
+                    m = re.match(
+                        r'^([0-9a-f]+)-(.*)\.json$', os.path.basename(path), re.IGNORECASE
+                    )
                     if m:
                         new_path = get_filename(root, m.group(1), m.group(2))
                         if new_path != path:

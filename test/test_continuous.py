@@ -43,7 +43,9 @@ def test_continuous(capfd, basic_conf_2):
     assert "params_examples.ClassOne" in text
 
     # Check rounds were interleaved (timing benchmark was run twice)
-    assert re.search(r"For.*commit [a-f0-9]+ (<[a-z0-9~^]+> )?\(round 1/2\)", text, re.M), text
+    assert re.search(
+        r"For.*commit [a-f0-9]+ (<[a-z0-9~^]+> )?\(round 1/2\)", text, re.MULTILINE
+    ), text
 
     result_found = False
     for results in iter_results_for_machine(conf.results_dir, "orangutan"):

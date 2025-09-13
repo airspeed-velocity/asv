@@ -234,11 +234,11 @@ def test_web_regressions(browser, basic_html):
 
         # There's a second button for showing the links, clicking
         # which makes the elements reappear
-        show_button = [
+        show_button = next(
             button
             for button in browser.find_elements(By.XPATH, '//button')
             if button.text == 'Show ignored regressions...'
-        ][0]
+        )
         show_button.click()
 
         regression_1 = browser.find_element(By.LINK_TEXT, 'params_examples.track_find_test(1)')
@@ -252,11 +252,11 @@ def test_web_regressions(browser, basic_html):
         assert "params_examples\\\\.track_find_test\\\\(1\\\\)" in pre_div.text
 
         # There's an unignore button that moves the element back to the main table
-        unignore_button = [
+        unignore_button = next(
             button
             for button in browser.find_elements(By.XPATH, '//button')
             if button.text == 'Unignore'
-        ][0]
+        )
         unignore_button.click()
 
         # wait until the table has two rows
