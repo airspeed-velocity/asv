@@ -328,3 +328,14 @@ The first few steps can look like:
        git commit -m "REL: Finalize v0.6.4 log [wheel build]"
        git tag -a v0.6.4 -m "Version 0.6.4 release"
        git push --atomic
+
+To add the wheels, it is easiest to grab and test them locally:
+
+.. code-block::
+
+       mkdir -p rel_artifacts && cd $_
+       gh run download $RUN_ID
+       uvx twine upload artifact/*
+       for dir in cibw-wheels-*; do
+         uvx twine upload "$dir"/*
+       done
