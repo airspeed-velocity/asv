@@ -115,6 +115,7 @@ extend-exclude = [
 extend-select = [
     "B",
     "C4",
+    "FURB",
     "I",
     "PGH",
     "UP",
