@@ -396,21 +396,21 @@ How ASV runs benchmarks is as follows (pseudocode for main idea)::
 where the actual ``rounds``, ``repeat``, and ``number`` are :doc:`attributes
 of the benchmark <benchmarks>`.
 
-The default timing function is `timeit.default_timer`, which uses the
+The default timing function is ``timeit.default_timer``, which uses the
 highest resolution clock available on a given platform to measure the
 elapsed wall time. This has the consequence of being more susceptible
 to noise from other processes, but the increase in resolution is more
 significant for shorter duration tests (particularly on Windows).
 
-Process timing is provided by the function `time.process_time` (POSIX
+Process timing is provided by the function ``time.process_time`` (POSIX
 ``CLOCK_PROCESS_CPUTIME``), which measures the CPU time used only by
 the current process.  You can change the timer by setting the
-benchmark's ``timer`` attribute, for example to `time.process_time`
+benchmark's ``timer`` attribute, for example to ``time.process_time``
 to measure process time.
 
 .. note::
 
-   One consequence of using `time.process_time` is that the time
+   One consequence of using ``time.process_time`` is that the time
    spent in child processes of the benchmark is not included.
    Multithreaded benchmarks also return the total CPU time
    counting all CPUs. In these cases you may want to measure the

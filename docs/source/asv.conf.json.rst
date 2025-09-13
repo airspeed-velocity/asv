@@ -24,7 +24,7 @@ this file and their expected values.
 
 ``version``
 -----------
-Version of the `asv.conf.json` spec. Currently only `1`.
+Version of the ``asv.conf.json`` spec. Currently only ``1``.
 
 ``project``
 -----------
