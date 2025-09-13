@@ -1,3 +1,22 @@
+asv 0.6.5 (2025-09-12)
+----------------------
+
+Bug Fixes
+^^^^^^^^^
+
+- JSONC fixes (#1426)
+- Multiple python versions are now handled correctly (#1444)
+- Environment types can be specified for pytest (#1446)
+- ASV_PYTHONPATH is now applied for the discovery phase. (#1463)
+
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Indicate when benchmarks start passing with *
+- New documentation design
+
+
 0.6.5 (2025-05-06)
 ------------------
 

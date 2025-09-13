@@ -1,1 +1,0 @@
-ASV_PYTHONPATH is now applied for the discovery phase.
