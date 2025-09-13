@@ -18,7 +18,7 @@ repos:
     rev: v0.13.0
     hooks:
       - id: ruff-check
-        args: ["--fix"]
+        args: ["--fix", "--show-fixes"]
       - id: ruff-format
   - repo: https://github.com/codespell-project/codespell
     # Configuration for codespell is in pyproject.toml
