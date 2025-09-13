@@ -118,6 +118,7 @@ extend-select = [
     "FURB",
     "I",
     "PGH",
+    "PIE",
     "UP",
 ]
 ignore = [
