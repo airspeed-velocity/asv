@@ -104,6 +104,7 @@ license-files = [
 
 [tool.pytest.ini_options]
 minversion = "6"
+testpaths = ["test"]
 addopts = "-p no:logging"
 
 [tool.ruff]
