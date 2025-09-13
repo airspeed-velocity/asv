@@ -135,7 +135,7 @@ class Show(Command):
 
     @classmethod
     def _print_commits(cls, conf, result_iter, benchmarks):
-        commits = defaultdict(lambda: {})
+        commits = defaultdict(dict)
 
         for machine, result in result_iter:
             if result.get_result_keys(benchmarks):
@@ -240,7 +240,7 @@ class Show(Command):
 
     @classmethod
     def _get_durations(cls, result_iter, benchmarks, commits=False):
-        durations = defaultdict(lambda: {})
+        durations = defaultdict(dict)
         for machine, result in result_iter:
             total_duration = None
 
