@@ -106,7 +106,7 @@ license-files = [
 minversion = "6"
 testpaths = ["test"]
 log_cli_level = "INFO"
-addopts = "-p no:logging"
+addopts = ["-p no:logging", "-ra", "--strict-config", "--strict-markers"]
 
 [tool.ruff]
 line-length = 99
