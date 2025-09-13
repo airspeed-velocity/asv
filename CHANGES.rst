@@ -23,6 +23,8 @@ Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Indicate when benchmarks start passing with *
+- Internally consistent with ScientificPython guidelines (#1528, #1527, #1526)
+- Ruff used for styles (#1513)
 - New documentation design
 - The ``mamba`` backend has been removed, with ``rattler`` as the suggested replacement
 - ``rattler`` is also expected to be the default in the next release
