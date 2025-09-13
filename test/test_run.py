@@ -122,8 +122,7 @@ def test_run_spec(basic_conf_2):
     # test the HASHFILE version of range_spec'ing
     expected_commits = (initial_commit, branch_commit)
     with open(os.path.join(tmpdir, 'hashes_to_benchmark'), 'w') as f:
-        for commit in expected_commits:
-            f.write(commit + "\n")
+        f.writelines(f"{commit}\n" for commit in expected_commits)
         f.write(f"{util.git_default_branch()}~1\n")
         f.write("some-bad-hash-that-will-be-ignored\n")
         expected_commits += (dvcs.get_hash(f"{util.git_default_branch()}~1"),)
