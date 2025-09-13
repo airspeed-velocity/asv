@@ -3,7 +3,7 @@ import datetime
 import os
 import shutil
 import subprocess
-import xml.etree.ElementTree as etree
+import xml.etree.ElementTree as ET
 from os.path import abspath, dirname, isdir, isfile, join
 
 import json5
@@ -453,7 +453,7 @@ def test_regression_atom_feed(generate_result_dir):
 
     commits = list(reversed(repo.get_branch_commits(None)))
 
-    tree = etree.parse(join(conf.html_dir, "regressions.xml"))
+    tree = ET.parse(join(conf.html_dir, "regressions.xml"))
     root = tree.getroot()
 
     assert root.tag == '{http://www.w3.org/2005/Atom}feed'
@@ -505,7 +505,7 @@ def test_regression_atom_feed_update(dvcs_type, tmpdir):
 
     tools.run_asv_with_conf(conf, "publish")
 
-    old_tree = etree.parse(join(conf.html_dir, "regressions.xml"))
+    old_tree = ET.parse(join(conf.html_dir, "regressions.xml"))
 
     # New results (values change, regressing revisions stay same)
     for commit, value in zip(commits, values):
@@ -522,7 +522,7 @@ def test_regression_atom_feed_update(dvcs_type, tmpdir):
 
     tools.run_asv_with_conf(conf, "publish")
 
-    new_tree = etree.parse(join(conf.html_dir, "regressions.xml"))
+    new_tree = ET.parse(join(conf.html_dir, "regressions.xml"))
 
     # Check ids didn't change
     old_root = old_tree.getroot()
