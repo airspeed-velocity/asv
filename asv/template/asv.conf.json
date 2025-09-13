@@ -69,7 +69,7 @@
 
     // The list of conda channel names to be searched for benchmark
     // dependency packages in the specified order
-    // "conda_channels": ["conda-forge"],
+    // "conda_channels": ["conda-forge", "defaults"],
 
     // A conda environment file that is used for environment creation.
     // "conda_environment_file": "environment.yml",

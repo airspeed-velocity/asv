@@ -234,7 +234,7 @@ environment file.
 A list of ``conda`` channel names (strings) to use in the provided
 order as the source channels for the dependencies. For example::
 
-    "conda_channels": ["conda-forge"]
+    "conda_channels": ["conda-forge", "defaults"]
 
 The channels will be parsed by ``asv`` to populate the ``channels``
 section of a temporary environment.yml file used to build the
