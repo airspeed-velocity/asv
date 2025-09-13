@@ -191,12 +191,12 @@ class Profile(Command):
 
             if env is None:
                 # Fallback, first valid python environment
-                env = [
+                env = next(
                     env
                     for env in environments
                     if util.env_py_is_sys_version(env.python)
                     or isinstance(env, ExistingEnvironment)
-                ][0]
+                )
 
             benchmarks = Benchmarks.discover(
                 conf, repo, environments, [commit_hash], regex=f'^{benchmark}$'

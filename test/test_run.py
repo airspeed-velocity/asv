@@ -30,7 +30,7 @@ def test_set_commit_hash(capsys, existing_env_conf):
         _machine_file=join(tmpdir, 'asv-machine.json'),
     )
 
-    env_name = list(environment.get_environments(conf, None))[0].name
+    env_name = next(iter(environment.get_environments(conf, None))).name
     result_filename = commit_hash[: conf.hash_length] + '-' + env_name + '.json'
     assert result_filename in os.listdir(join('results_workflow', 'orangutan'))
 

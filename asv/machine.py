@@ -53,7 +53,7 @@ class MachineCollection:
             if machine_name in d:
                 return d[machine_name]
             elif len(d) == 1 and machine_name == _get_unique_machine_name():
-                return d[list(d.keys())[0]]
+                return d[next(iter(d.keys()))]
 
         raise util.UserError(
             f"No information stored about machine '{machine_name}'. "

@@ -134,7 +134,7 @@ def get_result_hash_from_prefix(results, machine_name, commit_prefix):
             f'Git hash prefix could represent one of multiple commits: {commit_list_str}'
         )
     elif len(commits) == 1:
-        return list(commits)[0]
+        return next(iter(commits))
     else:
         return None
 
