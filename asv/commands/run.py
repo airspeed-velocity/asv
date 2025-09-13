@@ -269,7 +269,7 @@ class Run(Command):
         interleave_rounds=False,
         launch_method=None,
         durations=0,
-        _returns={},
+        _returns={},  # noqa: B006
     ):
         machine_params = Machine.load(machine_name=machine, _path=_machine_file, interactive=True)
         machine_params.save(conf.results_dir)
@@ -454,7 +454,7 @@ class Run(Command):
                         if interleave_rounds:
                             log.step()
                         else:
-                            for j in range(max_rounds):
+                            for _ in range(max_rounds):
                                 log.step()
                 continue
 
@@ -465,7 +465,7 @@ class Run(Command):
                         if interleave_rounds:
                             log.step()
                         else:
-                            for j in range(max_rounds):
+                            for _ in range(max_rounds):
                                 log.step()
 
             active_environments = [

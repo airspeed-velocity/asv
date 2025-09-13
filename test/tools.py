@@ -349,7 +349,14 @@ def copy_template(src, dst, dvcs, values):
             dvcs.add(dst_path)
 
 
-def generate_test_repo(tmpdir, values=[0], dvcs_type='git', extra_branches=(), tags=(), subdir=''):
+def generate_test_repo(
+    tmpdir,
+    values=[0],  # noqa: B006
+    dvcs_type='git',
+    extra_branches=(),
+    tags=(),
+    subdir='',
+):
     """
     Generate a test repository
 
@@ -588,7 +595,7 @@ def preview(base_path):
 
 
 def get_with_retry(browser, url):
-    for j in range(2):
+    for _ in range(2):
         try:
             return browser.get(url)
         except TimeoutException:

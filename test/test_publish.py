@@ -55,8 +55,7 @@ def test_publish(tmpdir, example_results):
     main_commits = dvcs.get_branch_hashes(f'{util.git_default_branch()}')
     only_branch = [x for x in dvcs.get_branch_hashes('some-branch') if x not in main_commits]
     commits = main_commits + only_branch
-    for k, item in enumerate(zip(result_files, commits)):
-        fn, commit = item
+    for fn, commit in zip(result_files, commits):
         src = join(example_results, 'cheetah', fn)
         dst = join(result_dir, 'cheetah', commit[:8] + fn[8:])
         try:
@@ -534,7 +533,7 @@ def test_regression_atom_feed_update(dvcs_type, tmpdir):
 
     assert len(new_entries) == len(old_entries) == 2
 
-    for j, (a, b) in enumerate(zip(new_entries, old_entries)):
+    for a, b in zip(new_entries, old_entries):
         a_id = a.find('{http://www.w3.org/2005/Atom}id')
         b_id = b.find('{http://www.w3.org/2005/Atom}id')
         assert a_id.text == b_id.text
