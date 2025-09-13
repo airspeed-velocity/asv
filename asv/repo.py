@@ -10,8 +10,6 @@ class NoSuchNameError(RuntimeError):
     Exception raised if requested branch or commit does not exist.
     """
 
-    pass
-
 
 class Repo:
     """
