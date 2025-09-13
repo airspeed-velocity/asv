@@ -494,7 +494,7 @@ def test_run_python_same(capsys, basic_conf):
     )
     text, err = capsys.readouterr()
 
-    assert re.search("time_exception.*failed", text, re.S)
+    assert re.search("time_exception.*failed", text, re.DOTALL)
     assert re.search(r"time_secondary.track_value\s+42.0", text)
 
     # Check that it did not clone or install

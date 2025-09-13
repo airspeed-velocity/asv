@@ -17,7 +17,7 @@ def test_profile_python_same(capsys, basic_conf):
     text, err = capsys.readouterr()
 
     # time_with_warnings failure case
-    assert re.search(r"^\s+1\s+.*time_secondary.*\(track_value\)", text, re.M)
+    assert re.search(r"^\s+1\s+.*time_secondary.*\(track_value\)", text, re.MULTILINE)
 
     # Check that it did not clone or install
     assert "Cloning" not in text
