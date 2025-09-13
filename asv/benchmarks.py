@@ -338,5 +338,5 @@ class Benchmarks(dict):
                 # Don't give conflicting instructions
                 raise
             raise util.UserError(
-                f"{str(err)}\nUse `asv run --bench just-discover` to regenerate benchmarks.json"
+                f"{err}\nUse `asv run --bench just-discover` to regenerate benchmarks.json"
             )
