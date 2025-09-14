@@ -64,6 +64,11 @@ channel_priority: disabled
 auto_activate_base: false
 """
 
+ALT_CONDARC_CONTENT = """
+channels:
+  - foobarabcdef
+"""
+
 
 @pytest.fixture(scope="session")
 def asv_project_factory(tmp_path_factory):
@@ -71,7 +76,7 @@ def asv_project_factory(tmp_path_factory):
     Factory to set up an ASV project with customizable configurations.
     """
 
-    def _create_asv_project(custom_config=None, create_condarc=False):
+    def _create_asv_project(custom_config=None, create_condarc=False, alt_condarc=False):
         tmp_path = tmp_path_factory.mktemp("asv_project")
         original_dir = os.getcwd()
         os.chdir(tmp_path)
@@ -88,7 +93,8 @@ def asv_project_factory(tmp_path_factory):
         (tmp_path / "setup.py").write_text(SETUP_CODE)
 
         if create_condarc:
-            (tmp_path / ".condarc").write_text(CONDARC_CONTENT)
+            content = ALT_CONDARC_CONTENT if alt_condarc else CONDARC_CONTENT
+            (tmp_path / ".condarc").write_text(content)
 
         subprocess.run(["git", "init"], cwd=tmp_path, check=True)
         subprocess.run(
@@ -176,3 +182,20 @@ def test_asv_rattler(
             pytest.fail(
                 f"Expected error '{expected_error}' not found in stderr: {exc.stderr}"
             )
+
+@pytest.mark.parametrize("env", ENVIRONMENTS)
+def test_condarc_channel_rattler(
+    env, asv_project_factory,
+):
+    os.environ["ASV_USE_CONDARC"] = "1"
+    os.environ["CONDARC"] = ".condarc"
+    project_dir = asv_project_factory(custom_config={"conda_channels": []}, create_condarc=True, alt_condarc=True)
+    with pytest.raises(subprocess.CalledProcessError):
+        # should fail due to nonsense channel from alt_condarc
+        subprocess.run(
+            ["asv", "run", "--quick", "--dry-run", "--environment", env],
+            cwd=project_dir,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
