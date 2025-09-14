@@ -66,7 +66,7 @@ auto_activate_base: false
 
 ALT_CONDARC_CONTENT = """
 channels:
-  - foobarabcdef
+  - https://repo.prefix.dev/bioconda
 """
 
 
@@ -183,19 +183,15 @@ def test_asv_rattler(
                 f"Expected error '{expected_error}' not found in stderr: {exc.stderr}"
             )
 
-@pytest.mark.parametrize("env", ENVIRONMENTS)
-def test_condarc_channel_rattler(
-    env, asv_project_factory,
-):
+def test_condarc_channel_rattler(asv_project_factory):
     os.environ["ASV_USE_CONDARC"] = "1"
     os.environ["CONDARC"] = ".condarc"
-    project_dir = asv_project_factory(custom_config={"conda_channels": []}, create_condarc=True, alt_condarc=True)
-    with pytest.raises(subprocess.CalledProcessError):
-        # should fail due to nonsense channel from alt_condarc
-        subprocess.run(
-            ["asv", "run", "--quick", "--dry-run", "--environment", env],
-            cwd=project_dir,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+    project_dir = asv_project_factory(custom_config={"conda_channels": ["conda-forge"], "matrix": {"snakemake-minimal": []}}, create_condarc=True, alt_condarc=True)
+    # snakemake-minimal ensures we pick up bioconda from .condarc
+    subprocess.run(
+        ["asv", "run", "--quick", "--dry-run", "--environment", "rattler"],
+        cwd=project_dir,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
