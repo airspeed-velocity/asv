@@ -100,7 +100,7 @@ def test_large_environment_matrix(
 
 @pytest.mark.skipif((not CAN_BUILD_PYTHON), reason="Requires a plugin to build python")
 def test_presence_checks(
-    tmpdir, monkeypatch, request: pytest.FixtureRequest
+    tmpdir, monkeypatch, skip_virtualenv: pytest.FixtureRequest, request: pytest.FixtureRequest
 ):
     conf = config.Config()
     conf.environment_type = request.config.getoption('environment_type')
