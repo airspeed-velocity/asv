@@ -103,7 +103,7 @@ class Run(Command):
             type=common_args.time_period,
             default=None,
             help="""Pick only one commit in each given time period.
-            For example: 1d (daily), 1w (weekly), 1y (yearly).""",
+            For example: 1d (daily), 1w (weekly), 1M (monthly), 1q (quarterly), 1y (yearly).""",
         )
         parser.add_argument(
             "--steps",
