@@ -92,9 +92,6 @@ plugs = [
 envs = [
     "py-rattler",
 ]
-testR = [
-    "rpy2; platform_system != 'Windows' and platform_python_implementation != 'PyPy'",
-]
 all = ["asv[doc,dev,hg,envs]"]
 
 [tool.setuptools]
