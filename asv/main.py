@@ -22,6 +22,7 @@ def main():
     # the run.
     # If using the default path, stay in the same dir.
     if args.config:
+        args.config = os.path.abspath(args.config)
         os.chdir(os.path.dirname(os.path.abspath(args.config)))
 
     try:
