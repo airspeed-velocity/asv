@@ -82,7 +82,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: mamba-org/setup-micromamba@v2.0.4
+      - uses: mamba-org/setup-micromamba@v2.0.6
         with:
           init-shell: >-
             bash
