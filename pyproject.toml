@@ -87,10 +87,10 @@ hg = [
     "python-hglib",
 ]
 plugs = [
-    "asv-bench-memray",
+    'asv-bench-memray; python_version >= "3.8"',
 ]
 envs = [
-    "py-rattler",
+    'py-rattler; python_version >= "3.8"',
 ]
 testR = [
     "rpy2; platform_system != 'Windows' and platform_python_implementation != 'PyPy'",
