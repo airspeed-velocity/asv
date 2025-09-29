@@ -1,7 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import os
 import re
-import sys
 
 from .. import environment, util
 from ..console import log
@@ -11,7 +10,7 @@ WIN = os.name == "nt"
 
 class Uv(environment.Environment):
     """
-    Manage an environment using virtualenv.
+    Manage an environment using 'uv venv'.
     """
 
     tool_name = "uv"
@@ -74,7 +73,7 @@ class Uv(environment.Environment):
 
     def _setup(self):
         """
-        Setup the environment on disk using virtualenv.
+        Setup the environment on disk using 'uv venv'.
         Then, all of the requirements are installed into
         it using `pip install`.
         """
