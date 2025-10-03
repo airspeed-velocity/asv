@@ -6,7 +6,6 @@ This file contains utilities to generate test repositories.
 
 import datetime
 import http.server
-import importlib
 import os
 import platform
 import shutil
