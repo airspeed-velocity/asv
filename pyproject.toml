@@ -89,6 +89,7 @@ plugs = [
 ]
 envs = [
     "py-rattler",
+    "uv",
 ]
 testR = [
     "rpy2; platform_system != 'Windows' and platform_python_implementation != 'PyPy'",

@@ -86,6 +86,11 @@ try:
 except ImportError:
     HAS_RATTLER = False
 
+try:
+    util.which('uv')
+    HAS_UV = True
+except (RuntimeError, OSError):
+    HAS_UV = False
 
 try:
     util.which(f'python{PYTHON_VER2}')
