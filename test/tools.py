@@ -35,7 +35,7 @@ from asv.repo import get_repo
 from asv.results import Results
 
 # Two Python versions for testing
-PYTHON_VER1, PYTHON_VER2 = '3.8', ".".join(platform.python_version_tuple()[:2])
+PYTHON_VER1, PYTHON_VER2 = '3.9', ".".join(platform.python_version_tuple()[:2])
 
 # Installable library versions to use in tests
 DUMMY1_VERSION = "0.14"
