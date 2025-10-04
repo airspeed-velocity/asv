@@ -639,7 +639,7 @@ def test_replace_cpython_version(arg, new_version, expected):
     "path, expected_version",
     [
         ("/home/jdoe/micromamba/envs/asv_exp/bin/python3.11", "3.11"),
-        ("/usr/local/bin/python3.12", "3.12"),
+        ("/usr/local/bin/python3.13", "3.13"),
         ("/opt/anaconda3/bin/python3.9", "3.9"),
         ("/usr/bin/python", None),
         ("/home/user/custom_python/python_alpha", None),
