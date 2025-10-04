@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.9", "3.13", "pypy-3.10"]
+        python-version: ["3.9", "3.13", "pypy-3.11"]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -39,7 +39,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
           cache-dependency-path: pyproject.toml
-          
       - name: Setup a browser for more tests
         uses: browser-actions/setup-chrome@latest
 
