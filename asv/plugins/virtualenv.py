@@ -125,21 +125,12 @@ class Virtualenv(environment.Environment):
         env = dict(os.environ)
         env.update(self.build_env_vars)
 
-        # NOTE: Omit `--wheel=bundle` for virtualenv v20.31 and later.
-        # See https://github.com/airspeed-velocity/asv/issues/1484 and https://github.com/pypa/virtualenv/pull/2868
-        # TODO: Remove this check and the `--wheel=bundle` option altogether
-        # once asv supports at minimum Python >= 3.8 and virtualenv >= 20.31.
-        import virtualenv
-
-        use_wheel = Version(virtualenv.__version__) < Version('20.31')
-
         log.info(f"Creating virtualenv for {self.name}")
         util.check_call(
             [
                 sys.executable,
                 "-m",
                 "virtualenv",
-                *(["--wheel=bundle"] if use_wheel else []),
                 "--setuptools=bundle",
                 "-p",
                 self._executable,

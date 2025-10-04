@@ -604,9 +604,7 @@ def test_matrix_existing(skip_no_conda: pytest.FixtureRequest):
         (["conda-forge", "defaults"], "conda-forge"),
     ],
 )
-def test_conda_channel_addition(
-    tmpdir, channel_list, expected_channel, env_type
-):
+def test_conda_channel_addition(tmpdir, channel_list, expected_channel, env_type):
     # test that we can add conda channels to environments
     # and that we respect the specified priority order
     # of channels
