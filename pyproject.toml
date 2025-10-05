@@ -78,6 +78,7 @@ doc = [
     "setuptools", # dependency from bibtex
     "sphinxcontrib.katex",
     "furo",
+    "astroid<4",
 ]
 dev = [
     "ruff",
