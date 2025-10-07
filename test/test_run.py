@@ -3,6 +3,7 @@
 import datetime
 import glob
 import os
+import platform
 import re
 import shutil
 import textwrap
@@ -352,6 +353,7 @@ def test_cpu_affinity(basic_conf):
     assert data['results']['time_examples.TimeSuite.time_example_benchmark_1']
 
 
+@pytest.mark.skipif(tools.HAS_PYPY, reason="Times out randomly on pypy")
 def test_env_matrix_value(basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
