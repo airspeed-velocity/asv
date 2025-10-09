@@ -322,6 +322,7 @@ def test_run_append_samples(basic_conf_2):
     assert len(value['samples'][0]) == 2
 
 
+@pytest.mark.xfail(tools.HAS_PYPY, reason="Times out randomly on pypy")
 def test_cpu_affinity(basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
@@ -352,7 +353,7 @@ def test_cpu_affinity(basic_conf):
     assert data['results']['time_examples.TimeSuite.time_example_benchmark_1']
 
 
-@pytest.mark.skipif(tools.HAS_PYPY, reason="Times out randomly on pypy")
+@pytest.mark.xfail(tools.HAS_PYPY, reason="Times out randomly on pypy")
 def test_env_matrix_value(basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
@@ -387,7 +388,7 @@ def test_env_matrix_value(basic_conf):
     check_env_matrix({'SOME_TEST_VAR': ['1', '2']}, {})
 
 
-@pytest.mark.skipif(
+@pytest.mark.xfail(
     tools.HAS_PYPY or tools.WIN, reason="Times out randomly on pypy, buggy on windows"
 )
 def test_parallel(basic_conf_2, dummy_packages):
@@ -466,7 +467,7 @@ def test_format_durations():
     assert msg == expected
 
 
-@pytest.mark.skipif(tools.HAS_PYPY, reason="Times out randomly on pypy")
+@pytest.mark.xfail(tools.HAS_PYPY, reason="Times out randomly on pypy")
 def test_return_code(tmpdir, basic_conf_2):
     tmpdir, local, conf, machine_file = basic_conf_2
 
