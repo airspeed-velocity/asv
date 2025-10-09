@@ -3,7 +3,6 @@
 import datetime
 import glob
 import os
-import platform
 import re
 import shutil
 import textwrap
@@ -467,6 +466,7 @@ def test_format_durations():
     assert msg == expected
 
 
+@pytest.mark.skipif(tools.HAS_PYPY, reason="Times out randomly on pypy")
 def test_return_code(tmpdir, basic_conf_2):
     tmpdir, local, conf, machine_file = basic_conf_2
 
