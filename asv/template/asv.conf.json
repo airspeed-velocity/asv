@@ -49,7 +49,7 @@
     // "dvcs": "git",
 
     // The tool to use to create environments.  May be "conda",
-    // "virtualenv", or "rattler" or other value depending on the
+    // "virtualenv", "rattler", or "uv" or other value depending on the
     // plugins in use.
     // If missing or the empty string, the tool will be automatically
     // determined by looking for tools on the PATH environment
