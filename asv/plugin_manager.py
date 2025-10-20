@@ -12,6 +12,7 @@ ENV_PLUGIN_REGEXES = [
     r"\.virtualenv$",
     r"\.conda$",
     r"\.rattler$",
+    r"\.uv$",
 ]
 
 

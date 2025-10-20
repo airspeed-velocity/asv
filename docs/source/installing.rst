@@ -38,6 +38,9 @@ For managing the environments, one of the following packages is required:
   `miniconda <https://www.anaconda.com/docs/getting-started/miniconda/>`__
   installation, with the ``conda`` command available on your path.
 
+- `uv <https://docs.astral.sh/uv/>`__, which is used
+  for the ``uv`` backend.
+
 .. note::
 
    ``rattler`` is the fastest for situations where non-pythonic

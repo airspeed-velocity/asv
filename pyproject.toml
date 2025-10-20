@@ -91,6 +91,7 @@ plugs = [
 ]
 envs = [
     "py-rattler",
+    "uv",
 ]
 all = ["asv[doc,dev,hg,envs]"]
 
