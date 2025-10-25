@@ -2,7 +2,7 @@
 requires = [
     # pin setuptools:
     # https://github.com/airspeed-velocity/asv/pull/1426#issuecomment-2290658198
-    "setuptools>=64,<72.2.0",
+    "setuptools>=77,<=80.9.0",
     "setuptools_scm",
 ]
 build-backend = "setuptools.build_meta"
@@ -10,8 +10,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "asv"
 description = "Airspeed Velocity: A simple Python history benchmarking tool"
-readme = { file = "README.rst", content-type = "text/x-rst" }
-license = { text = "BSD-3-Clause" }
+readme = "README.rst"
+license = "BSD-3-Clause"
+license-files = ["LICENSE.rst"]
 requires-python = ">=3.9"
 authors = [
     { name = "Michael Droettboom", email = "mdroe@stsci.edu" },
@@ -20,7 +21,6 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Environment :: Web Environment",
-    "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
@@ -94,11 +94,6 @@ envs = [
     "uv",
 ]
 all = ["asv[doc,dev,hg,envs]"]
-
-[tool.setuptools]
-license-files = [
-    "LICENSE.rst",
-]
 
 [tool.pytest.ini_options]
 minversion = "6"
