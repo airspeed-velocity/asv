@@ -608,7 +608,7 @@ def _build_dummy_wheels(tmpdir, wheel_dir, to_build, build_conda=False):
             f.write(f"__version__ = '{version}'")
 
         subprocess.check_call(
-            [sys.executable, '-mpip', 'wheel', '--build-option=--universal', '-w', wheel_dir, '.'],
+            [sys.executable, '-mpip', 'wheel', '-w', wheel_dir, '.'],
             cwd=build_dir,
         )
 

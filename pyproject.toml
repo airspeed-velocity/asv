@@ -69,6 +69,7 @@ test = [
     "flaky",
     "pytest-rerunfailures",
     "python-hglib; platform_system != 'Windows'",
+    "pip",
 ]
 doc = [
     "sphinx",
