@@ -185,7 +185,7 @@ will to default to the version of Python that the ``asv`` command
 If provided, it should be a list of strings.  It may be one of the
 following:
 
-- a Python version string, e.g. ``"3.7"``, in which case:
+- a Python version string, e.g. ``"3.9"``, in which case:
 
   - if ``conda`` is found, ``conda`` will be used to create an
     environment for that version of Python via a temporary
@@ -455,7 +455,7 @@ defaults to ``"benchmarks"``.
 ``environment_type``
 --------------------
 Specifies the tool to use to create environments.  May be ``conda``,
-``virtualenv``, ``rattler`` or another value depending on the plugins in use.
+``virtualenv``, ``rattler``, ``uv`` or another value depending on the plugins in use.
 If missing or the empty string, the tool will be automatically determined by
 looking for tools on the ``PATH`` environment variable.
 

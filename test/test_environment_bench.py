@@ -15,6 +15,8 @@ if tools.HAS_CONDA:
     ENVIRONMENTS.append("conda")
 if tools.HAS_RATTLER:
     ENVIRONMENTS.append("rattler")
+if tools.HAS_UV:
+    ENVIRONMENTS.append("uv")
 if len(ENVIRONMENTS) == 0:
     pytest.skip("No environments can be constructed", allow_module_level=True)
 
@@ -102,13 +104,9 @@ def asv_project_factory(tmp_path_factory):
             cwd=tmp_path,
             check=True,
         )
-        subprocess.run(
-            ["git", "config", "user.name", "Test User"], cwd=tmp_path, check=True
-        )
+        subprocess.run(["git", "config", "user.name", "Test User"], cwd=tmp_path, check=True)
         subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
-        subprocess.run(
-            ["git", "commit", "-m", "Initial ASV setup"], cwd=tmp_path, check=True
-        )
+        subprocess.run(["git", "commit", "-m", "Initial ASV setup"], cwd=tmp_path, check=True)
         subprocess.run(["git", "branch", "-M", "main"], cwd=tmp_path, check=True)
 
         os.chdir(original_dir)
@@ -132,9 +130,7 @@ def test_asv_benchmark(asv_project_factory, env):
         check=True,
     )
 
-    assert result.returncode == 0, (
-        f"ASV benchmark failed in {env} environment: {result.stderr}"
-    )
+    assert result.returncode == 0, f"ASV benchmark failed in {env} environment: {result.stderr}"
 
 
 @pytest.mark.parametrize(
@@ -179,9 +175,7 @@ def test_asv_rattler(
         if expected_success:
             pytest.fail(f"ASV benchmark unexpectedly failed: {exc.stderr}")
         elif expected_error and all(err not in exc.stderr for err in expected_error):
-            pytest.fail(
-                f"Expected error '{expected_error}' not found in stderr: {exc.stderr}"
-            )
+            pytest.fail(f"Expected error '{expected_error}' not found in stderr: {exc.stderr}")
 
 
 pytest.mark.skipif(not tools.HAS_RATTLER)

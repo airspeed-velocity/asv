@@ -1,9 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import os
 import re
-import sys
-
-from packaging.version import Version
 
 from .. import environment, util
 from ..console import log
@@ -11,12 +8,12 @@ from ..console import log
 WIN = os.name == "nt"
 
 
-class Virtualenv(environment.Environment):
+class Uv(environment.Environment):
     """
-    Manage an environment using virtualenv.
+    Manage an environment using 'uv venv'.
     """
 
-    tool_name = "virtualenv"
+    tool_name = "uv"
 
     def __init__(self, conf, python, requirements, tagged_env_vars):
         """
@@ -34,53 +31,18 @@ class Virtualenv(environment.Environment):
             Dictionary mapping a PyPI package name to a version
             identifier string.
         """
-        executable = Virtualenv._find_python(python)
-        if executable is None:
-            raise environment.EnvironmentUnavailable(f"No executable found for python {python}")
 
-        self._executable = executable
         self._python = python
         self._requirements = requirements
         super().__init__(conf, python, requirements, tagged_env_vars)
 
         try:
-            import virtualenv  # noqa: F401 unused, but required to test whether virtualenv is installed or not
-        except ImportError:
-            raise environment.EnvironmentUnavailable("virtualenv package not installed")
-
-    @staticmethod
-    def _find_python(python):
-        """Find Python executable for the given Python version"""
-        is_pypy = python.startswith("pypy")
-
-        # Parse python specifier
-        if is_pypy:
-            executable = python
-            if python == 'pypy':
-                python_version = '2'
-            else:
-                python_version = python[4:]
-        else:
-            python_version = python
-            executable = f"python{python_version}"
-
-        # Find Python executable on path
-        try:
-            return util.which(executable)
+            self._uv_path = util.which("uv")
         except OSError:
-            pass
+            self._uv_path = None
 
-        # Maybe the current one is correct?
-        current_is_pypy = hasattr(sys, 'pypy_version_info')
-        current_versions = [
-            f'{sys.version_info[0]}',
-            f'{sys.version_info[0]}.{sys.version_info[1]}',
-        ]
-
-        if is_pypy == current_is_pypy and python_version in current_versions:
-            return sys.executable
-
-        return None
+        if not self._uv_path:
+            raise environment.EnvironmentUnavailable("uv command not found")
 
     @property
     def name(self):
@@ -101,39 +63,40 @@ class Virtualenv(environment.Environment):
             # The python name should be a version number, or pypy+number
             return False
 
-        try:
-            import virtualenv
-        except ImportError:
+        if not self._uv_path:
+            log.warning(
+                "asv requires the 'uv' command to be available when using the 'uv' environment_type."
+            )
             return False
-        else:
-            if Version(virtualenv.__version__) == Version('1.11.0'):
-                log.warning(
-                    "asv is not compatible with virtualenv 1.11 due to a bug in setuptools."
-                )
-            if Version(virtualenv.__version__) < Version('1.10'):
-                log.warning("If using virtualenv, it much be at least version 1.10")
 
-        executable = Virtualenv._find_python(python)
-        return executable is not None
+        return True
 
     def _setup(self):
         """
-        Setup the environment on disk using virtualenv.
+        Setup the environment on disk using 'uv venv'.
         Then, all of the requirements are installed into
         it using `pip install`.
         """
         env = dict(os.environ)
         env.update(self.build_env_vars)
 
+        # Adjust the environment variables to use the virtualenv
+        self._venv_env_vars = {"VIRTUAL_ENV": self._path}
+        if "PATH" in env:
+            self._venv_env_vars["PATH"] = f"{self._path}/bin:{env['PATH']}"
+        else:
+            self._venv_env_vars["PATH"] = f"{self._path}/bin"
+        env.update(self._venv_env_vars)
+
         log.info(f"Creating virtualenv for {self.name}")
+
         util.check_call(
             [
-                sys.executable,
-                "-m",
-                "virtualenv",
-                "--setuptools=bundle",
-                "-p",
-                self._executable,
+                'uv',
+                'venv',
+                f'--python={self._python}',
+                '--no-project',
+                '--seed',
                 self._path,
             ],
             env=env,

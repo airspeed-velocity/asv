@@ -17,6 +17,7 @@ from .tools import (
     HAS_PYPY,
     HAS_PYTHON_VER2,
     HAS_RATTLER,
+    HAS_UV,
     HAS_VIRTUALENV,
     PYTHON_VER1,
     PYTHON_VER2,
@@ -24,7 +25,7 @@ from .tools import (
     generate_test_repo,
 )
 
-CAN_BUILD_PYTHON = HAS_CONDA or HAS_RATTLER
+CAN_BUILD_PYTHON = HAS_CONDA or HAS_RATTLER or HAS_UV
 
 
 @pytest.mark.skipif(
@@ -604,9 +605,7 @@ def test_matrix_existing(skip_no_conda: pytest.FixtureRequest):
         (["conda-forge", "defaults"], "conda-forge"),
     ],
 )
-def test_conda_channel_addition(
-    tmpdir, channel_list, expected_channel, env_type
-):
+def test_conda_channel_addition(tmpdir, channel_list, expected_channel, env_type):
     # test that we can add conda channels to environments
     # and that we respect the specified priority order
     # of channels

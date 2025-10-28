@@ -12,10 +12,10 @@ from os.path import join
 
 import pytest
 
-from . import tools
 from asv import benchmarks, config, environment, runner, util
 from asv.results import Results
 
+from . import tools
 from .test_benchmarks import ASV_CONF_JSON, BENCHMARK_DIR
 
 ON_PYPY = hasattr(sys, 'pypy_version_info')

@@ -319,8 +319,7 @@ class DebugLogBuffer:
             return
 
         text = text.decode('utf-8', 'replace')
-        if text.endswith('\n'):
-            text = text[:-1]
+        text = text.removesuffix('\n')
 
         if text:
             if self.first:

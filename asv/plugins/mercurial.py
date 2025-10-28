@@ -45,8 +45,7 @@ class Hg(Repo):
 
             # Clone is missing
             log.info("Cloning project")
-            if url.startswith("hg+"):
-                url = url[3:]
+            url = url.removeprefix("hg+")
 
             # Mercurial branches are global, so there is no need for
             # an analog of git --mirror

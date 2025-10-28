@@ -2,7 +2,7 @@ Installing airspeed velocity
 ============================
 
 **airspeed velocity** is known to work on Linux, MacOS, and Windows, for Python
-3.7 and higher. PyPy 3.8 is also supported.
+3.9 and higher. PyPy 3.10 is also supported.
 
 **airspeed velocity** is a standard Python package, and the latest released
 version may be `installed from PyPI
@@ -37,6 +37,9 @@ For managing the environments, one of the following packages is required:
 - An `anaconda <https://www.anaconda.com/download>`__ or
   `miniconda <https://www.anaconda.com/docs/getting-started/miniconda/>`__
   installation, with the ``conda`` command available on your path.
+
+- `uv <https://docs.astral.sh/uv/>`__, which is used
+  for the ``uv`` backend.
 
 .. note::
 

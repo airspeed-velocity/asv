@@ -80,9 +80,9 @@ suite are:
   ``https://github.com/$OWNER/$REPO/commit/``.
 
 - ``environment_type``: The tool used to create environments.  May be
-  ``conda`` or ``virtualenv`` or ``rattler``.  If Conda supports the
-  dependencies you need, that is the recommended method. Rattler is faster
-  but needs a newer Python version (3.8 or greater).
+  ``conda``, ``virtualenv``, ``rattler``, or ``uv``.  If Conda supports the
+  dependencies you need, that is the recommended method, but Rattler is
+  faster.
   See :ref:`environments` for more information.
 
 - ``matrix``: Dependencies you want to preinstall into the environment

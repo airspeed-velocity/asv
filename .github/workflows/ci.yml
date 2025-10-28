@@ -13,25 +13,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # macos-latest doesn't have 3.8 anymore
-        os: ["ubuntu-latest", "macos-13"]
-        python-version: ["3.8", "3.12", "pypy-3.11"]
-        # TODO - Set 'r-version' to "release" to use latest R version once the compatibility between R and rpy2 is fixed.
-        # See: https://github.com/airspeed-velocity/asv/actions/runs/14904829763/job/41864696603?pr=1485
-        # Also see https://github.com/rpy2/rpy2/issues/1164 and https://github.com/r-lib/actions
-        r-version: ["4.4.3"]
+        os: ["ubuntu-latest", "macos-latest"]
+        python-version: ["3.9", "3.13", "pypy-3.11"]
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      # We need Python 3.8 to always be installed, so tests with
+      # We need Python 3.9 to always be installed, so tests with
       # multiple environments can run.
-      - name: Set up Python 3.8
+      - name: Set up Python 3.9
         uses: actions/setup-python@v5
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - name: Install mercurial and conda
         if: runner.os == 'macOS'
@@ -50,18 +45,8 @@ jobs:
       - name: Setup a browser for more tests
         uses: browser-actions/setup-chrome@latest
 
-      - name: Set up R version ${{ matrix.r-version }}
-        uses: r-lib/actions/setup-r@v2.11.3
-        with:
-          r-version: ${{ matrix.r-version }}
-
-      - name: Install dependencies (standard)
-        if: matrix.python-version != '3.12.0-rc.2'
-        run: python -m pip install ".[test,hg,testR,envs]"
-
       - name: Install dependencies (with --pre)
-        if: matrix.python-version == '3.12.0-rc.2'
-        run: python -m pip install ".[test,hg,testR,envs]" --pre
+        run: python -m pip install ".[test,hg,envs]" --pre
 
       - name: Install asv
         run: pip install .
@@ -78,7 +63,7 @@ jobs:
       fail-fast: false
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -109,7 +94,7 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-python@v5
         with:

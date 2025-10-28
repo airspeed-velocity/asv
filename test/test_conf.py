@@ -2,6 +2,7 @@
 
 import os
 from os.path import dirname, join
+import sys
 
 from asv import commands, config, environment, util
 from asv.commands import Command
@@ -64,3 +65,10 @@ def test_load_plugin():
             break
     else:
         assert False, "Custom plugin not loaded"
+
+def test_cmd_line_config():
+    # issue 1538
+    util.check_call(
+        [sys.executable, "-m", "asv", "machine", "--yes", "--config", "test/asv.conf.json"],
+        cwd=os.path.join(os.path.dirname(__file__), ".."),
+    )

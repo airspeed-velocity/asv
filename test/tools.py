@@ -6,7 +6,6 @@ This file contains utilities to generate test repositories.
 
 import datetime
 import http.server
-import importlib
 import os
 import platform
 import shutil
@@ -35,7 +34,7 @@ from asv.repo import get_repo
 from asv.results import Results
 
 # Two Python versions for testing
-PYTHON_VER1, PYTHON_VER2 = '3.8', ".".join(platform.python_version_tuple()[:2])
+PYTHON_VER1, PYTHON_VER2 = '3.9', ".".join(platform.python_version_tuple()[:2])
 
 # Installable library versions to use in tests
 DUMMY1_VERSION = "0.14"
@@ -87,6 +86,11 @@ try:
 except ImportError:
     HAS_RATTLER = False
 
+try:
+    util.which('uv')
+    HAS_UV = True
+except (RuntimeError, OSError):
+    HAS_UV = False
 
 try:
     util.which(f'python{PYTHON_VER2}')
