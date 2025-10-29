@@ -178,7 +178,7 @@ def test_asv_rattler(
             pytest.fail(f"Expected error '{expected_error}' not found in stderr: {exc.stderr}")
 
 
-pytest.mark.skipif(not tools.HAS_RATTLER)
+pytest.mark.skipif(not tools.HAS_RATTLER or util.ON_PYPY)
 def test_condarc_channel_rattler(asv_project_factory):
     os.environ["ASV_USE_CONDARC"] = "1"
     os.environ["CONDARC"] = ".condarc"
