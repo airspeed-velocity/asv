@@ -134,6 +134,7 @@ class Rattler(environment.Environment):
             else:
                 expanded_channels.append(channel)
         final_channels = list(dict.fromkeys(expanded_channels).keys())
+        final_channels = ["conda-forge"] if final_channels == [] else final_channels
 
         solved_records = await solve(
             # Channels to use for solving
