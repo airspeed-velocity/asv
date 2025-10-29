@@ -182,7 +182,7 @@ pytest.mark.skipif(not tools.HAS_RATTLER or util.ON_PYPY)
 def test_condarc_channel_rattler(asv_project_factory):
     os.environ["ASV_USE_CONDARC"] = "1"
     os.environ["CONDARC"] = ".condarc"
-    project_dir = asv_project_factory(custom_config={"conda_channels": ["conda-forge"], "matrix": {"snakemake-minimal": [], "python": ["3.12"]}}, create_condarc=True, alt_condarc=True)
+    project_dir = asv_project_factory(custom_config={"conda_channels": ["conda-forge"], "matrix": {"snakemake-minimal": [], "packaging": ["25.0"]}}, create_condarc=True, alt_condarc=True)
     # snakemake-minimal ensures we pick up bioconda from .condarc
     subprocess.run(
         ["asv", "run", "--quick", "--dry-run", "--environment", "rattler"],
