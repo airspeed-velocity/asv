@@ -898,7 +898,11 @@ def get_memsize():
                 key = key.strip()
                 val = val.strip()
                 if key == b'MemTotal':
-                    return int(val.split()[0])
+                    if val.endswith(b' kB'):
+                        units = 1024
+                    else:
+                        units = 1
+                    return int(val.split()[0]) * units
     elif sys.platform.startswith('darwin'):
         sysctl = which('sysctl')
         return int(check_output([sysctl, '-n', 'hw.memsize']).strip())
