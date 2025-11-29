@@ -436,6 +436,12 @@ class Run(Command):
         else:
             run_round_set = [None]
 
+        if launch_method is None:
+            # Allow the users to set the launch_method by the command line argument
+            # if they didn't set it, use the one in the config
+            # and then ultimately default to 'auto' if not set in the config
+            launch_method = conf.launch_method or 'auto'
+
         def iter_rounds_commits():
             for run_rounds in run_round_set:
                 if interleave_rounds and run_rounds[0] % 2 == 0:

@@ -144,10 +144,14 @@ class Conda(environment.Environment):
         try:
             env_file.write(f'name: {self.name}\nchannels:\n')
             env_file.writelines(f'   - {ch}\n' for ch in self._conda_channels)
-            if conda_args:
+            if conda_args or pip_args:
                 env_file.write('dependencies:\n')
+            if conda_args:
                 # categorize & write dependencies based on pip vs. conda
                 env_file.writelines(f'   - {s}\n' for s in conda_args)
+            if pip_args:
+                env_file.write('   - pip:\n')
+                env_file.writelines(f'      - {s}\n' for s in pip_args)
             env_file.close()
             try:
                 env_file_name = self._conda_environment_file or env_file.name

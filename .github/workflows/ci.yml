@@ -14,14 +14,10 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest"]
-        python-version: ["3.9", "3.14", "pypy-3.11"]
-        # TODO - Set 'r-version' to "release" to use latest R version once the compatibility between R and rpy2 is fixed.
-        # See: https://github.com/airspeed-velocity/asv/actions/runs/14904829763/job/41864696603?pr=1485
-        # Also see https://github.com/rpy2/rpy2/issues/1164 and https://github.com/r-lib/actions
-        r-version: ["4.4.3"]
-    timeout-minutes: 60
+        python-version: ["3.9", "3.13", "3.14"]
+    timeout-minutes: 80
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -49,16 +45,8 @@ jobs:
       - name: Setup a browser for more tests
         uses: browser-actions/setup-chrome@latest
 
-      - name: Set up R version ${{ matrix.r-version }}
-        uses: r-lib/actions/setup-r@v2.11.3
-        with:
-          r-version: ${{ matrix.r-version }}
-
-      - name: Install dependencies (standard)
-        run: python -m pip install ".[test,hg,testR,envs]"
-
       - name: Install dependencies (with --pre)
-        run: python -m pip install ".[test,hg,testR,envs]" --pre
+        run: python -m pip install ".[test,hg,envs]" --pre
 
       - name: Install asv
         run: pip install .
@@ -73,9 +61,9 @@ jobs:
       matrix:
         os: ["ubuntu-latest", "macos-latest"]
       fail-fast: false
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -106,7 +94,7 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-python@v5
         with:

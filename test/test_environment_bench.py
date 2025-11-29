@@ -15,6 +15,8 @@ if tools.HAS_CONDA:
     ENVIRONMENTS.append("conda")
 if tools.HAS_RATTLER:
     ENVIRONMENTS.append("rattler")
+if tools.HAS_UV:
+    ENVIRONMENTS.append("uv")
 if len(ENVIRONMENTS) == 0:
     pytest.skip("No environments can be constructed", allow_module_level=True)
 

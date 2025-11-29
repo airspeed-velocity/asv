@@ -72,6 +72,7 @@ class Config:
         self.build_command = None
         self.install_command = None
         self.uninstall_command = None
+        self.launch_method = None
 
     @classmethod
     def load(cls, path=None):
