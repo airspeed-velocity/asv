@@ -8,7 +8,7 @@ if __name__ == "__main__":
         ext_modules=[
             Extension(
                 "asv._rangemedian",
-                sources=["_asv/_rangemedian.cpp"],
+                sources=["asv/_rangemedian.cpp"],
                 define_macros=[("Py_LIMITED_API", "0x03060000")],
                 py_limited_api=True,
             )
