@@ -398,10 +398,11 @@ static PyType_Slot RangeMedian_Type_slots[] = {
 };
 
 static PyType_Spec RangeMedian_Type_spec = {
-    .name = "_rangemedian.RangeMedian",
-    .basicsize = sizeof(RangeMedianObject),
-    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
-    .slots = RangeMedian_Type_slots,
+    "_rangemedian.RangeMedian",  // name
+    sizeof(RangeMedianObject),   // basicsize
+    0,                           // itemsize
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC, // flags
+    RangeMedian_Type_slots     // slots
 };
 
 
@@ -474,14 +475,15 @@ rangemedian_free(void *module)
 extern "C" {
 
 static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    .m_name = "_rangemedian",
-    .m_doc = module_doc,
-    .m_size = sizeof(rangemedian_state),
-    .m_slots = rangemedian_slots,
-    .m_traverse = rangemedian_traverse,
-    .m_clear = rangemedian_clear,
-    .m_free = rangemedian_free,
+   PyModuleDef_HEAD_INIT,
+   "_rangemedian",      // m_name
+   module_doc,          // m_doc
+   sizeof(rangemedian_state), // m_size
+   NULL,                 // m_methods
+   rangemedian_slots,    // m_slots
+   rangemedian_traverse, // m_traverse
+   rangemedian_clear,    // m_clear
+   rangemedian_free      // m_free
 };
 
 PyMODINIT_FUNC
