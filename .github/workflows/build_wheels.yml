@@ -54,8 +54,11 @@ jobs:
           - [windows-2022, win_amd64]
 
     steps:
+      - uses: actions/checkout@v5
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.3.0
+
       - uses: actions/upload-artifact@v5
         with:
           name: cibw-wheels-cp-${{ matrix.buildplat[1] }}
