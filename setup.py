@@ -27,4 +27,3 @@ if __name__ == "__main__":
             ],
             options={"bdist_wheel": {"py_limited_api": "cp36"}},
         )
-    else:
