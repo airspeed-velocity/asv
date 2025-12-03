@@ -93,6 +93,7 @@ private:
     std::map<std::pair<size_t, size_t>, Item> items_;
 
 public:
+    Cache(size_t size): items_(size) {};
     bool get(size_t left, size_t right, double *mu, double *dist) const {
         auto it = items_.find(std::make_pair(left, right));
         if (it != items_.end()) {
