@@ -29,12 +29,12 @@ jobs:
       # We need Python 3.9 to always be installed, so tests with
       # multiple environments can run.
       - name: Set up Python 3.9
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.9
 
       - name: Set up Python version ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
