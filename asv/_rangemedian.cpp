@@ -93,7 +93,7 @@ private:
     std::map<std::pair<size_t, size_t>, Item> items_;
 
 public:
-    Cache(size_t size): items_(size) {};
+    Cache() {};
     bool get(size_t left, size_t right, double *mu, double *dist) const {
         auto it = items_.find(std::make_pair(left, right));
         if (it != items_.end()) {
@@ -165,7 +165,7 @@ int RangeMedian_init(PyObject *op, PyObject *args, PyObject *kwds)
         // Multiplier based on hardcoded constant sizes in step_detect.py, about
         // this many accesses expected --- but prefer primes due to a modulo
         // calculation in the cache.
-        self->cache = new Cache(37*size + 401);
+        self->cache = new Cache();
     }
     catch (const std::bad_alloc&) {
         PyErr_SetString(PyExc_MemoryError, "Allocating memory failed");
