@@ -289,8 +289,13 @@ def add_launch_method(parser):
         dest="launch_method",
         action="store",
         choices=("auto", "spawn", "forkserver"),
-        default="auto",
-        help="How to launch benchmarks. Choices: auto, spawn, forkserver",
+        default=None,
+        help=(
+            "How to launch benchmarks. Choices: auto, spawn, forkserver. "
+            "By default asv will look in the asv.conf.json file, if not, auto "
+            "will be used."
+        ),
+
     )
 
 
