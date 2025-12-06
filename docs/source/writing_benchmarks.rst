@@ -82,8 +82,9 @@ is well-formatted, without actually running any benchmarks::
 
 .. note::
 
-    When running benchmarks reliant on CUDA, the --launch-method flag should be set to 'spawn'.
-    This prevents the child process from inheriting the CUDA context of the parent process.
+    When running benchmarks reliant on CUDA, the ``--launch-method`` flag should be set 
+    to ``spawn``. This prevents the child process from inheriting the CUDA context of 
+    the parent process.
 
 .. _setup-and-teardown:
 
