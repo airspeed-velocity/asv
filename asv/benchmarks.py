@@ -177,6 +177,7 @@ class Benchmarks(dict):
 
                 if last_err is not None:
                     log.warning("Failed: trying different commit/environment")
+                    log.debug("Failure due to: " + str(last_err))
 
                 result_dir = tempfile.mkdtemp()
                 try:

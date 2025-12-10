@@ -816,6 +816,10 @@ class Environment:
                 wheels = [fn for fn in files if fn.lower().endswith('.whl')]
                 if len(wheels) == 1:
                     kwargs['wheel_file'] = os.path.join(cache_dir, wheels[0])
+                if len(wheels) > 1:
+                    raise util.UserError(
+                        f"Found multiple wheels in f{cache_dir}. Cannot decide correct one"
+                    )
 
         # Interpolate, and raise useful error message if it fails
         return [util.interpolate_command(c, kwargs) for c in commands]
