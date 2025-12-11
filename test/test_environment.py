@@ -1128,3 +1128,24 @@ def test_no_env_file_python_version(tmpdir, env_type):
         assert installed_version == env.python, (
             f"Expected Python version {env.python}, but got {installed_version}"
         )
+
+
+def test_interpolate_multiple_wheels_raises(basic_conf, request):
+    """If multiple wheels exist in the build cache, interpolation errors."""
+    tmpdir, local, conf, machine_file = basic_conf
+    conf.environment_type = request.config.getoption('environment_type')
+
+    env = next(iter(environment.get_environments(conf, None)))
+    env.create()
+
+    # Create cache dir with two wheel files
+    cache_dir = os.path.join(env._path, 'wheel-cache')
+    os.makedirs(cache_dir, exist_ok=True)
+    open(os.path.join(cache_dir, 'one.whl'), 'wb').close()
+    open(os.path.join(cache_dir, 'two.whl'), 'wb').close()
+
+    # Set build dirs so ASV_BUILD_CACHE_DIR is populated
+    env._set_build_dirs(build_dir=None, cache_dir=cache_dir)
+
+    with pytest.raises(util.UserError, match="Found multiple wheels"):
+        env._interpolate_commands(["python -c 'print({wheel_file})'"])
