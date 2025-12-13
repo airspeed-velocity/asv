@@ -13,6 +13,7 @@ import pytest
 from asv import environment, repo, results, util
 from asv.commands import make_argparser
 from asv.commands.run import Run
+from asv.repo import get_repo
 
 from . import tools
 
@@ -519,3 +520,26 @@ def test_run_steps_arg():
     argv = ['run', '--steps=20', 'ALL']
     args = parser.parse_args(argv)
     assert args.steps == 20
+
+
+def test_run_accepts_HEAD_range(basic_conf):
+    """`asv run HEAD` should resolve HEAD to a hash and produce results."""
+    tmpdir, local, conf, machine_file = basic_conf
+
+    tools.run_asv_with_conf(
+        conf,
+        'run',
+        'HEAD',
+        '--quick',
+        '--bench=time_secondary.track_value',
+        _machine_file=machine_file,
+    )
+
+    repo = get_repo(conf)
+    commit_hash = repo.get_hash_from_name('HEAD')
+
+    env_name = next(iter(environment.get_environments(conf, None))).name
+    result_filename = f"{commit_hash[: conf.hash_length]}-{env_name}.json"
+
+    results_dir = join('results_workflow', 'orangutan')
+    assert result_filename in os.listdir(results_dir)

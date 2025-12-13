@@ -193,10 +193,10 @@ class Git:
             self._fake_date += datetime.timedelta(seconds=1)
             date = self._fake_date
 
-        self.run_git(['commit', '--date', date.isoformat(), '-m', message])
+        self.run_git(['commit', '--date', date.isoformat(), '-m', message, "--no-gpg-sign"])
 
     def tag(self, number):
-        self.run_git(['tag', '-a', '-m', f'Tag {number}', f'tag{number}'])
+        self.run_git(['tag', '-a', '-m', f'Tag {number}', f'tag{number}', "--no-sign"])
 
     def add(self, filename):
         self.run_git(['add', relpath(filename, self.path)])

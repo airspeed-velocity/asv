@@ -17,7 +17,7 @@ Development setup
 -----------------
 
 The required packages to the full ``asv`` test suite, are listed in
-``requirements-dev.txt``. The minimal set of packages required for
+``pyproject.toml``. The minimal set of packages required for
 testing are: ``pytest virtualenv filelock six pip setuptools wheel``.
 
 

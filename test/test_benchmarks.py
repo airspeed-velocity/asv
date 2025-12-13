@@ -10,6 +10,7 @@ from os.path import dirname, join
 import pytest
 
 from asv import benchmarks, config, environment, util
+from asv.console import log
 from asv.repo import get_repo
 
 from . import tools
@@ -337,3 +338,47 @@ def test_asv_benchmark_timings():
         [sys.executable, '-masv.benchmark', 'timing', '--setup=import time', 'time.sleep(0)'],
         cwd=os.path.join(os.path.dirname(__file__), '..'),
     )
+
+
+def test_verbose_logs_UserError(capsys, basic_conf):
+    """When a discovery attempt fails once with UserError, the next
+    attempt logs the 'Failure due to: <err>' message (benchmarks.py).
+    """
+    tmpdir, local, conf, machine_file = basic_conf
+
+    # Use the repo created by the fixture
+    repo = get_repo(conf)
+    # Need at least two hashes to try multiple attempts; use first two
+    hashes = [repo.get_branch_name("HEAD"), repo.get_branch_name("HEAD~")]
+
+    # Create a fake environment that fails on the first commit and succeeds on the second
+    class FakeEnv:
+        def __init__(self):
+            self.env_vars = {}
+            self.name = 'fake'
+
+        def create(self):
+            return
+
+        def install_project(self, conf_in, repo_in, commit_hash):
+            # Simulate failure on the first hash, success on others
+            if commit_hash == hashes[0]:
+                raise util.UserError("simulated-install-failure")
+            return
+
+        def run(self, args, cwd, env, dots=False, **kwargs):
+            # Write a minimal valid discovery result file
+            result_file = os.path.join(cwd, 'result.json')
+            with open(result_file, 'w') as fp:
+                fp.write('[]')
+
+    fake_env = FakeEnv()
+
+    commit_hashes = [hashes[0], hashes[1]]
+
+    with log.set_level('DEBUG'):
+        benchmarks.Benchmarks.discover(conf, repo, [fake_env], commit_hashes)
+
+    captured = capsys.readouterr()
+    assert "Failure due to:" in captured.out
+    assert "simulated-install-failure" in captured.out
