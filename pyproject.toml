@@ -101,6 +101,7 @@ minversion = "6"
 testpaths = ["test"]
 log_level = "INFO"
 addopts = ["-p no:logging", "-ra", "--strict-config", "--strict-markers"]
+filterwarnings = ["error"]
 
 [tool.ruff]
 line-length = 99
