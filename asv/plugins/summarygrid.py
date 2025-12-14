@@ -1,4 +1,4 @@
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
+# SPDX-License-Identifier: BSD-3-Clause
 
 from ..console import log
 from ..publishing import OutputPublisher
