@@ -1,32 +1,11 @@
-include README.rst
-include CHANGES.rst
-include LICENSE.rst
-
-recursive-include asv *.html *.js *.css *.ico *.png
-
-include asv.conf.json
-recursive-include benchmarks *.py
-
-include requirements-dev.txt
-include pyproject.toml
-include pytest.ini
-
-include docs/make.bat
-include docs/Makefile
-recursive-include docs *.rst *.txt *.py *.ico *.html *.png *.css
-
-recursive-include test *.json *.py README
-
-prune docs/build
+prune .github
 prune build
-
-global-exclude *.pyc *.o __pycache__
+prune changelog.d
+prune scripts
 
 exclude .codecov.yml
 exclude .coveragerc
-exclude .github
 exclude .gitignore
 exclude .pre-commit-config.yaml
 exclude .readthedocs.yaml
-exclude scripts
 exclude towncrier.toml
