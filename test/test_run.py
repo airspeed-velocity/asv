@@ -400,8 +400,8 @@ def test_parallel(basic_conf_2, dummy_packages):
 
     conf.matrix = {
         "req": dict(conf.matrix),
-        "env": {"SOME_TEST_VAR": ["1", "2"], PIP_FIND_LINKS=os.environ['PIP_FIND_LINKS']},
-        "env_nobuild": {"SOME_OTHER_TEST_VAR": ["1", "2"], PIP_FIND_LINKS=os.environ['PIP_FIND_LINKS']},
+        "env": {"SOME_TEST_VAR": ["1", "2"], "PIP_FIND_LINKS": os.environ['PIP_FIND_LINKS']},
+        "env_nobuild": {"SOME_OTHER_TEST_VAR": ["1", "2"], "PIP_FIND_LINKS": os.environ['PIP_FIND_LINKS']},
     }
 
     tools.run_asv_with_conf(
