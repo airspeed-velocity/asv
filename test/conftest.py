@@ -336,7 +336,6 @@ def dummy_packages(request, monkeypatch):
 
         if os.path.isdir(wheel_dir):
             assert len(os.listdir(wheel_dir)) > 0
-            print(f"dummy_packages: {wheel_dir=} contains {os.listdir(wheel_dir)}")
             return
 
         tmpdir = join(str(cache_dir), "tmp")
