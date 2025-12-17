@@ -165,7 +165,7 @@ class Virtualenv(environment.Environment):
     def _run_pip(self, args, **kwargs):
         # Run pip via python -m pip, so that it works on Windows when
         # upgrading pip itself, and avoids shebang length limit on Linux
-        print(f"_run_pip: PIP_FIND_LINKS={os.environ['PIP_FIND_LINKS']}")
+        print(f"_run_pip: PIP_FIND_LINKS={os.environ.get('PIP_FIND_LINKS')}")
         return self.run_executable('python', ['-m', 'pip'] + list(args), **kwargs)
 
     def run(self, args, **kwargs):
