@@ -79,7 +79,7 @@ class Setup(Command):
                         pool.close()
                         pool.join()
                     finally:
-                        poo.close()
+                        pool.close()
                         pool.terminate()
                 except util.ParallelFailure as exc:
                     exc.reraise()
