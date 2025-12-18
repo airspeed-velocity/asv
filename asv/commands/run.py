@@ -393,6 +393,9 @@ class Run(Command):
             f"environments * {len(benchmarks)} benchmarks)"
         )
 
+        if parallel > 1:
+            print(f"test_parallel, in Run.run: PIP_FIND_LINKS={os.environ.get('PIP_FIND_LINKS')}")
+
         parallel, multiprocessing = util.get_multiprocessing(parallel)
 
         _returns['benchmarks'] = benchmarks

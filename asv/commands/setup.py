@@ -15,6 +15,7 @@ def _create(env):
 
 
 def _create_parallel(envs):
+    print(f"_create_parallel: PIP_FIND_LINKS={os.environ.get('PIP_FIND_LINKS')}")
     try:
         for env in envs:
             _create(env)
@@ -71,11 +72,13 @@ class Setup(Command):
                         environment_groups[env.dir_name].append(env)
 
                     pool = util.get_multiprocessing_pool(parallel)
+                    print(f"perform_setup: PIP_FIND_LINKS={os.environ.get('PIP_FIND_LINKS')}")
                     try:
                         pool.map(_create_parallel, environment_groups.values())
                         pool.close()
                         pool.join()
                     finally:
+                        poo.close()
                         pool.terminate()
                 except util.ParallelFailure as exc:
                     exc.reraise()
