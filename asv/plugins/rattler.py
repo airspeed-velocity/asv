@@ -112,10 +112,10 @@ class Rattler(environment.Environment):
         _pkgs += _args
         _pkgs = [util.replace_cpython_version(pkg, self._python) for pkg in _pkgs]
         specs = [MatchSpec(p) for p in _pkgs]
-        if hasattr(VirtualPackage, "current"):
-            virtual_packages = VirtualPackage.current()
-        else:
+        if hasattr(VirtualPackage, "detect"):
             virtual_packages = VirtualPackage.detect()
+        else:
+            virtual_packages = VirtualPackage.current()
 
         # Expand the 'defaults' meta-channel as rattler requires concrete
         # channel URLs.

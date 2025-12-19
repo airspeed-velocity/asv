@@ -100,8 +100,9 @@ all = ["asv[doc,dev,hg,envs]"]
 [tool.pytest.ini_options]
 minversion = "6"
 testpaths = ["test"]
-log_cli_level = "INFO"
+log_level = "INFO"
 addopts = ["-p no:logging", "-ra", "--strict-config", "--strict-markers"]
+filterwarnings = ["error"]
 
 [tool.ruff]
 line-length = 99
