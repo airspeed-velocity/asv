@@ -1,5 +1,3 @@
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 from .. import environment
 from ..benchmarks import Benchmarks
 from ..repo import get_repo
