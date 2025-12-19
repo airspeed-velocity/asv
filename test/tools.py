@@ -133,6 +133,7 @@ def locked_cache_dir(config, cache_key, timeout=900, tag=None):
                 if util.load_json(tag_fn) != tag_content:
                     raise ValueError()
             except (OSError, ValueError, util.UserError):
+                print(f"locked_cache_dir: removing {cache_dir=}")
                 shutil.rmtree(cache_dir)
 
         if not os.path.isdir(cache_dir):

@@ -520,16 +520,11 @@ class Run(Command):
                             args_sets = args_sets.values()
 
                             try:
-                                pool = util.get_multiprocessing_pool(parallel)
-                                try:
+                                with util.get_multiprocessing_pool(parallel) as pool:
                                     res = []
                                     for r in pool.map(_do_build_multiprocess, args_sets):
                                         res.extend(r)
                                     successes.update(dict(res))
-                                    pool.close()
-                                    pool.join()
-                                finally:
-                                    pool.terminate()
                             except util.ParallelFailure as exc:
                                 exc.reraise()
                         else:

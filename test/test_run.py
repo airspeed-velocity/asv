@@ -130,6 +130,7 @@ def test_run_spec(basic_conf_2):
     _test_run('HASHFILE:hashes_to_benchmark', [None], expected_commits)
 
 
+@pytest.mark.skipif(tools.HAS_PYPY, reason="Times out on pypy")
 def test_run_build_failure(basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 

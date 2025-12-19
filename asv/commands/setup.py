@@ -1,6 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import logging
+import os
 import traceback
 from collections import defaultdict
 
@@ -70,13 +71,8 @@ class Setup(Command):
                     for env in environments:
                         environment_groups[env.dir_name].append(env)
 
-                    pool = util.get_multiprocessing_pool(parallel)
-                    try:
+                    with util.get_multiprocessing_pool(parallel) as pool:
                         pool.map(_create_parallel, environment_groups.values())
-                        pool.close()
-                        pool.join()
-                    finally:
-                        pool.terminate()
                 except util.ParallelFailure as exc:
                     exc.reraise()
             else:

@@ -1266,9 +1266,11 @@ def truncate_float_list(item, digits=5):
 _global_locks = {}
 
 
-def _init_global_locks(lock_dict):
-    """Initialize global locks in a new multiprocessing process"""
+def _init_global_locks(lock_dict, env):
+    """Initialize global locks in a new multiprocessing process
+    Also inherit the base environment even if using a forkserver"""
     _global_locks.update(lock_dict)
+    os.environ.update(env)
 
 
 def new_multiprocessing_lock(name):
@@ -1283,7 +1285,8 @@ def get_multiprocessing_lock(name):
 
 def get_multiprocessing_pool(parallel=None):
     """Create a multiprocessing.Pool, managing global locks properly"""
-    return multiprocessing.Pool(initializer=_init_global_locks, initargs=(_global_locks,))
+    env = os.environ.copy()
+    return multiprocessing.Pool(parallel, initializer=_init_global_locks, initargs=(_global_locks, env))
 
 
 try:

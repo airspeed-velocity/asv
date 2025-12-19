@@ -335,6 +335,7 @@ def dummy_packages(request, monkeypatch):
         monkeypatch.setenv('CONDARC', str(condarc))
 
         if os.path.isdir(wheel_dir):
+            assert len(os.listdir(wheel_dir)) > 0
             return
 
         tmpdir = join(str(cache_dir), "tmp")
