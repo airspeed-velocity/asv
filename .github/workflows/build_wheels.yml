@@ -59,7 +59,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.3.0
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: cibw-wheels-cp-${{ matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
@@ -80,6 +80,6 @@ jobs:
         shell: bash -l {0}
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           path: dist/*.tar.gz
