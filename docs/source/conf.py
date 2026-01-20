@@ -18,12 +18,13 @@ extensions = [
     "sphinxcontrib.bibtex",
     "sphinx_collapse",
     "autoapi.extension",
+    "sphinxcontrib.autodoc_pydantic",
 ]
 
 autoapi_dirs = ["../../asv"]
 autoapi_add_toc_entry = True
 autoapi_keep_files = True
-autoapi_ignore = ["*_version*", "*migrations*"]
+autoapi_ignore = ["*_version*", "*migrations*", "*schema*"]
 autoapi_options = [
     "members",
     "undoc-members",

@@ -1,5 +1,9 @@
 .. _conf-reference:
 
+
+.. autopydantic_model:: asv.schema.ASVConfig
+
+
 ``asv.conf.json`` reference
 ===========================
 
