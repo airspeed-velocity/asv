@@ -127,6 +127,8 @@ class Compare(Command):
             factor=args.factor,
             split=args.split,
             only_changed=args.only_changed,
+            only_improved=args.only_improved,
+            only_regressed=args.only_regressed,
             sort=args.sort,
             machine=args.machine,
             env_spec=args.env_spec,
@@ -142,6 +144,8 @@ class Compare(Command):
         factor=None,
         split=False,
         only_changed=False,
+        only_improved=False,
+        only_regressed=False,
         sort='default',
         machine=None,
         env_spec=None,
@@ -196,6 +200,8 @@ class Compare(Command):
             split=split,
             use_stats=use_stats,
             only_changed=only_changed,
+            only_improved=only_improved,
+            only_regressed=only_regressed,
             sort=sort,
             machine=machine,
             env_names=env_names,
@@ -214,6 +220,8 @@ class Compare(Command):
         resultset_2=None,
         machine=None,
         only_changed=False,
+        only_improved=False,
+        only_regressed=False,
         sort='default',
         use_stats=True,
         env_names=None,
@@ -397,6 +405,11 @@ class Compare(Command):
             if only_changed and mark in (' ', 'x', '*'):
                 continue
 
+            if only_improved and color != 'green':
+                continue
+            if only_regressed and color != 'red':
+                continue
+
             unit = units[benchmark]
 
             details = f"{mark:1s} {human_value(time_1, unit, err=err_1):>15s}  {human_value(time_2, unit, err=err_2):>15s} {ratio:>8s}  "
@@ -432,7 +445,7 @@ class Compare(Command):
             if len(bench[key]) == 0:
                 continue
 
-            if not only_changed:
+            if not (only_changed or only_improved or only_regressed):
                 color_print("")
                 color_print(titles[key])
                 color_print("")

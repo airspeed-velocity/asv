@@ -77,6 +77,22 @@ def add_compare(parser, only_changed_default=False, sort_default='name'):
 
     parser.add_argument('--no-only-changed', dest='only_changed', action='store_false')
 
+    filter_group = parser.add_mutually_exclusive_group()
+
+    filter_group.add_argument(
+        '--only-improved',
+        action='store_true',
+        default=False,
+        help="""Show only benchmarks that have improved.""",
+    )
+
+    filter_group.add_argument(
+        '--only-regressed',
+        action='store_true',
+        default=False,
+        help="""Show only benchmarks that have regressed.""",
+    )
+
     parser.add_argument(
         '--sort',
         action='store',
