@@ -405,3 +405,36 @@ def test_compare_fixed_failures(capsys, tmpdir, example_results):
     )
     text, err = capsys.readouterr()
     assert text.strip() == REFERENCE_FIXED_FAIL.strip()
+
+    # Test: only_improved + only_changed (should show fixed failures)
+    tools.run_asv_with_conf(
+        conf,
+        'compare',
+        before_short_hash,
+        after_short_hash,
+        '--machine=cheetah',
+        '--factor=2',
+        '--environment=py2.7-numpy1.8',
+        '--only-changed',
+        '--only-improved',
+    )
+    text, err = capsys.readouterr()
+    assert "time_AAA_failure" in text
+    assert "time_ci_small" not in text
+
+    # Test: only_regressed + only_changed
+    tools.run_asv_with_conf(
+        conf,
+        'compare',
+        before_short_hash,
+        after_short_hash,
+        '--machine=cheetah',
+        '--factor=2',
+        '--environment=py2.7-numpy1.8',
+        '--only-changed',
+        '--only-regressed',
+    )
+    text, err = capsys.readouterr()
+    assert "time_AAA_failure" not in text
+    assert "params_examples.ParamSuite.track_value" in text
+    assert "time_ci_small" in text

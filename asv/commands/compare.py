@@ -402,12 +402,13 @@ class Compare(Command):
                 ):
                     ratio = "~" + ratio.strip()
 
-            if only_changed and mark in (' ', 'x'):
-                continue
-
-            if only_improved and color != 'green':
-                continue
-            if only_regressed and color != 'red':
+            if only_improved:
+                if color != 'green':
+                    continue
+            elif only_regressed:
+                if color != 'red':
+                    continue
+            elif only_changed and mark in (' ', 'x'):
                 continue
 
             unit = units[benchmark]
