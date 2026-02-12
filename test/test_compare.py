@@ -272,6 +272,28 @@ def test_compare(capsys, tmpdir, example_results):
     assert text.strip() == REFERENCE_ONLY_CHANGED_NOSTATS.strip()
     assert "time_ci_big" in text.strip()
 
+    # Check --only-improved
+    tools.run_asv_with_conf(
+        conf, 'compare', '22b920c6', 'fcf8c079',
+        '--machine=cheetah', '--factor=2', '--environment=py2.7-numpy1.8',
+        '--only-changed', '--only-improved'
+    )
+    text, err = capsys.readouterr()
+    assert "time_units.time_unit_to" in text
+    assert "time_ci_small" not in text
+    assert "params_examples.ParamSuite.track_value" not in text
+
+    # Check --only-regressed
+    tools.run_asv_with_conf(
+        conf, 'compare', '22b920c6', 'fcf8c079',
+        '--machine=cheetah', '--factor=2', '--environment=py2.7-numpy1.8',
+        '--only-changed', '--only-regressed'
+    )
+    text, err = capsys.readouterr()
+    assert "time_units.time_unit_to" not in text
+    assert "time_ci_small" in text
+    assert "params_examples.ParamSuite.track_value" in text
+
 
 @pytest.mark.parametrize(
     "dvcs_type",

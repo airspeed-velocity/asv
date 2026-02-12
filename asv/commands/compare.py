@@ -402,7 +402,7 @@ class Compare(Command):
                 ):
                     ratio = "~" + ratio.strip()
 
-            if only_changed and mark in (' ', 'x', '*'):
+            if only_changed and mark in (' ', 'x'):
                 continue
 
             if only_improved and color != 'green':
