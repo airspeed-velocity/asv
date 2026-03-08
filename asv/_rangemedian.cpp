@@ -14,6 +14,7 @@
 #include <queue>
 #include <limits>
 #include <map>
+#include <mutex>
 #include <algorithm>
 #include <utility>
 
@@ -91,10 +92,12 @@ private:
     };
 
     std::map<std::pair<size_t, size_t>, Item> items_;
+    mutable std::mutex mtx_;
 
 public:
     Cache() {};
     bool get(size_t left, size_t right, double *mu, double *dist) const {
+        std::lock_guard<std::mutex> lock(mtx_);
         auto it = items_.find(std::make_pair(left, right));
         if (it != items_.end()) {
             *mu = it->second.mu;
@@ -105,6 +108,7 @@ public:
     }
 
     void set(size_t left, size_t right, double mu, double dist) {
+        std::lock_guard<std::mutex> lock(mtx_);
         items_[std::make_pair(left, right)] = { mu, dist };
     }
 };
@@ -159,12 +163,14 @@ int RangeMedian_init(PyObject *op, PyObject *args, PyObject *kwds)
         return -1;
     }
 
+    // Free any previous data from a prior __init__ call
+    delete self->y;
+    delete self->cache;
+    self->y = NULL;
+    self->cache = NULL;
+
     try {
         self->y = new std::vector<std::pair<double,double> >(size);
-
-        // Multiplier based on hardcoded constant sizes in step_detect.py, about
-        // this many accesses expected --- but prefer primes due to a modulo
-        // calculation in the cache.
         self->cache = new Cache();
     }
     catch (const std::bad_alloc&) {
@@ -418,6 +424,10 @@ static PyModuleDef_Slot rangemedian_slots[] = {
      * after the object was added to sys.modules)
      */
     {Py_mod_exec, (void *)rangemedian_modexec},
+
+#ifdef Py_mod_gil
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
 
     {0, NULL}
 };
