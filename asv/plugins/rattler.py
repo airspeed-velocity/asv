@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import os
 import sys
 from pathlib import Path
@@ -135,12 +136,13 @@ class Rattler(environment.Environment):
                 expanded_channels.append(channel)
         final_channels = list(dict.fromkeys(expanded_channels).keys())
 
+        # py-rattler 0.22.0 renamed the 'channels' parameter to 'sources'
+        _channels_kwarg = (
+            "sources" if "sources" in inspect.signature(solve).parameters else "channels"
+        )
         solved_records = await solve(
-            # Channels to use for solving
-            channels=final_channels,
-            # The specs to solve for
+            **{_channels_kwarg: final_channels},
             specs=specs,
-            # Virtual packages define the specifications of the environment
             virtual_packages=virtual_packages,
             channel_priority=self._channel_priority,
         )
