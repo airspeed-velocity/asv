@@ -136,14 +136,14 @@
       ]
     },
     "exclude": {
-      "description": "Combinations to be excluded from the set to test.",
+      "description": "Combinations to be excluded from the set to test.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#exclude",
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
           "python": { "type": "string" },
-          "environment_type": { "type": "string" },
           "sys_platform": { "type": "string" },
+          "environment_type": { "type": "string" },
           "req": {
             "type": "object",
             "additionalProperties": { "type": ["string", "null"] }
@@ -161,7 +161,7 @@
       }
     },
     "include": {
-      "description": "Additional environment combinations to be included.",
+      "description": "Additional environment combinations to be included.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#include",
       "type": "array",
       "items": {
         "type": "object",
@@ -192,9 +192,13 @@
       "default": "benchmarks"
     },
     "environment_type": {
-      "description": "The tool to use to create environments.",
-      "type": "string",
-      "enum": ["conda", "virtualenv", "rattler", "uv"]
+      "description": "The tool to use to create environments.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#environment-type",
+      "anyOf": [
+        {
+          "enum": ["conda", "virtualenv", "rattler", "uv"]
+        },
+        { "type": "string" }
+      ]
     },
     "env_dir": {
       "description": "The directory to cache the Python environments in.",
@@ -212,17 +216,15 @@
       "default": "html"
     },
     "install_timeout": {
-      "description": "Timeout in seconds for installing any dependencies in environment.",
-      "type": "number",
-      "default": 600.0
+      "description": "Timeout in seconds for installing any dependencies in environment.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#install-timeout-default-benchmark-timeout",
+      "type": "number"
     },
     "default_benchmark_timeout": {
-      "description": "Timeout in seconds for all benchmarks.",
-      "type": "number",
-      "default": 60.0
+      "description": "Timeout in seconds for each benchmark.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#install-timeout-default-benchmark-timeout",
+      "type": "number"
     },
     "hash_length": {
-      "description": "The number of characters to retain in the commit hashes.",
+      "description": "The number of characters to retain in the commit hashes when displayed in the web interface.",
       "type": "integer",
       "default": 8
     },
@@ -237,12 +239,12 @@
       "default": 2
     },
     "regressions_first_commits": {
-      "description": "The commits after which the regression search should start looking for regressions.",
+      "description": "The commits after which the regression search should start looking for regressions.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#regressions-first-commits",
       "type": "object",
       "additionalProperties": { "type": ["string", "null"] }
     },
     "regressions_thresholds": {
-      "description": "The thresholds for relative change in results, after which asv publish starts reporting regressions.",
+      "description": "The thresholds for relative change in results, after which asv publish starts reporting regressions.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#regressions-thresholds",
       "type": "object",
       "additionalProperties": { "type": "number" }
     }
