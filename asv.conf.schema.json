@@ -1,0 +1,261 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/airspeed-velocity/asv/main/asv.conf.schema.json",
+  "type": "object",
+  "properties": {
+    "version": {
+      "description": "The version of the config file format",
+      "type": "integer",
+      "enum": [1]
+    },
+    "project": {
+      "description": "The name of the project being benchmarked.",
+      "type": "string"
+    },
+    "project_url": {
+      "description": "The URL to the homepage of the project.",
+      "type": "string"
+    },
+    "repo": {
+      "description": "The URL or local path of the source code repository for the project being benchmarked.",
+      "type": "string"
+    },
+    "repo_subdir": {
+      "description": "The relative path to your Python project inside the repository. This is where its setup.py file is located.",
+      "type": "string"
+    },
+    "branches": {
+      "description": "List of branches to benchmark.\nIf not provided, defaults to 'main' (for git) or 'default' (for mercurial).",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "dvcs": {
+      "description": "The DVCS being used. If not set, it will be automatically determined from 'repo'.",
+      "type": "string",
+      "enum": ["git", "hg"]
+    },
+    "environment_type": {
+      "description": "The tool to use to create environments.",
+      "type": "string",
+      "enum": ["conda", "virtualenv", "rattler", "uv"]
+    },
+    "pythons": {
+      "description": "The versions of Python to run the benchmarks in.\nhttps://asv.readthedocs.io/en/stable/asv.conf.json.html#pythons",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "matrix": {
+      "description": "The matrix of dependencies and environment variables to run the benchmarks with.\nhttps://asv.readthedocs.io/en/stable/asv.conf.json.html#matrix",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "req": {
+              "description": "Matrix of third-party dependencies.",
+              "type": "object",
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": "array",
+                    "items": { "type": ["string", "null"] }
+                  },
+                  { "type": ["string", "null"] }
+                ]
+              }
+            },
+            "env": {
+              "description": "Matrix of environment variables to pass to build and benchmark commands.",
+              "type": "object",
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": "array",
+                    "items": { "type": ["string", "null"] }
+                  },
+                  { "type": ["string", "null"] }
+                ]
+              }
+            },
+            "env_nobuild": {
+              "description": "Matrix of environment variables to pass to benchmark commands, but not trigger new builds.",
+              "type": "object",
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": "array",
+                    "items": { "type": ["string", "null"] }
+                  },
+                  { "type": ["string", "null"] }
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "array",
+                "items": { "type": ["string", "null"] }
+              },
+              { "type": ["string", "null"] }
+            ]
+          }
+        }
+      ]
+    },
+    "exclude": {
+      "description": "Combinations to be excluded from the set to test.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "python": { "type": "string" },
+          "environment_type": { "type": "string" },
+          "sys_platform": { "type": "string" },
+          "req": {
+            "type": "object",
+            "additionalProperties": { "type": ["string", "null"] }
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": { "type": ["string", "null"] }
+          },
+          "env_nobuild": {
+            "type": "object",
+            "additionalProperties": { "type": ["string", "null"] }
+          }
+        },
+        "additionalProperties": { "type": ["string", "null"] }
+      }
+    },
+    "include": {
+      "description": "Additional environment combinations to be included.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "python": { "type": "string" },
+          "environment_type": { "type": "string" },
+          "sys_platform": { "type": "string" },
+          "req": {
+            "type": "object",
+            "additionalProperties": { "type": ["string", "null"] }
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": { "type": ["string", "null"] }
+          },
+          "env_nobuild": {
+            "type": "object",
+            "additionalProperties": { "type": ["string", "null"] }
+          }
+        },
+        "additionalProperties": { "type": ["string", "null"] },
+        "required": ["python"]
+      }
+    },
+    "benchmark_dir": {
+      "description": "The directory that benchmarks are stored in.",
+      "type": "string",
+      "default": "benchmarks"
+    },
+    "env_dir": {
+      "description": "The directory to cache the Python environments in.",
+      "type": "string",
+      "default": "env"
+    },
+    "results_dir": {
+      "description": "The directory that raw benchmark results are stored in.",
+      "type": "string",
+      "default": "results"
+    },
+    "html_dir": {
+      "description": "The directory that the html tree should be written to.",
+      "type": "string",
+      "default": "html"
+    },
+    "show_commit_url": {
+      "description": "The base URL to show a commit for the project.",
+      "type": "string"
+    },
+    "hash_length": {
+      "description": "The number of characters to retain in the commit hashes.",
+      "type": "integer",
+      "default": 8
+    },
+    "install_timeout": {
+      "description": "Timeout in seconds for installing any dependencies in environment.",
+      "type": "number",
+      "default": 600.0
+    },
+    "default_benchmark_timeout": {
+      "description": "Timeout in seconds for all benchmarks.",
+      "type": "number",
+      "default": 60.0
+    },
+    "build_cache_size": {
+      "description": "The number of builds to keep, per environment.",
+      "type": "integer",
+      "default": 2
+    },
+    "wheel_cache_size": {
+      "$comment": "DEPRECATED. renamed to build_cache_size",
+      "description": "The number of builds to keep, per environment.",
+      "type": "integer"
+    },
+    "plugins": {
+      "description": "A list of modules to import containing asv plugins.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "conda_channels": {
+      "description": "The list of conda channel names to be searched for benchmark dependency packages.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "conda_environment_file": {
+      "description": "A conda environment file that is used for environment creation.\nhttps://asv.readthedocs.io/en/stable/asv.conf.json.html#conda-environment-file",
+      "type": "string"
+    },
+    "build_command": {
+      "description": "Customizable commands for building the project.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "install_command": {
+      "description": "Customizable commands for installing the project.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "uninstall_command": {
+      "description": "Customizable commands for uninstalling the project.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "launch_method": {
+      "description": "How to launch benchmarks.",
+      "type": "string",
+      "enum": ["auto", "spawn", "forkserver"],
+      "default": "auto"
+    },
+    "regressions_first_commits": {
+      "description": "The commits after which the regression search should start looking for regressions.",
+      "type": "object",
+      "additionalProperties": { "type": ["string", "null"] }
+    },
+    "regressions_thresholds": {
+      "description": "The thresholds for relative change in results, after which asv publish starts reporting regressions.",
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    }
+  },
+  "required": ["version", "project", "repo"]
+}
