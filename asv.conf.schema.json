@@ -24,6 +24,27 @@
       "description": "The relative path to your Python project inside the repository. This is where its setup.py file is located.",
       "type": "string"
     },
+    "build_command": {
+      "description": "Customizable commands for building the project.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#build-command-install-command-uninstall-command",
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [
+        "python setup.py build",
+        "python -m pip wheel -w {build_cache_dir} {build_dir}"
+      ]
+    },
+    "install_command": {
+      "description": "Customizable commands for installing the project.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#build-command-install-command-uninstall-command",
+      "type": "array",
+      "items": { "type": "string" },
+      "default": ["in-dir={env_dir} python -m pip install {wheel_file}"]
+    },
+    "uninstall_command": {
+      "description": "Customizable commands for uninstalling the project.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#build-command-install-command-uninstall-command",
+      "type": "array",
+      "items": { "type": "string" },
+      "default": ["return-code=any python -m pip uninstall -y {project}"]
+    },
     "branches": {
       "description": "List of branches to benchmark.\nIf not provided, defaults to 'main' (for git) or 'default' (for mercurial).",
       "type": "array",
@@ -224,21 +245,6 @@
     "conda_environment_file": {
       "description": "A conda environment file that is used for environment creation.\nhttps://asv.readthedocs.io/en/stable/asv.conf.json.html#conda-environment-file",
       "type": "string"
-    },
-    "build_command": {
-      "description": "Customizable commands for building the project.",
-      "type": "array",
-      "items": { "type": "string" }
-    },
-    "install_command": {
-      "description": "Customizable commands for installing the project.",
-      "type": "array",
-      "items": { "type": "string" }
-    },
-    "uninstall_command": {
-      "description": "Customizable commands for uninstalling the project.",
-      "type": "array",
-      "items": { "type": "string" }
     },
     "launch_method": {
       "description": "How to launch benchmarks.",
