@@ -53,15 +53,9 @@
       },
       "minItems": 1
     },
-    "dvcs": {
-      "description": "The DVCS being used. If not set, it will be automatically determined from 'repo'.",
-      "type": "string",
-      "enum": ["git", "hg"]
-    },
-    "environment_type": {
-      "description": "The tool to use to create environments.",
-      "type": "string",
-      "enum": ["conda", "virtualenv", "rattler", "uv"]
+    "show_commit_url": {
+      "description": "The base URL to show a commit for the project.",
+      "type": "string"
     },
     "pythons": {
       "description": "The versions of Python to run the benchmarks in.\nhttps://asv.readthedocs.io/en/stable/asv.conf.json.html#pythons",
@@ -69,6 +63,15 @@
       "items": {
         "type": "string"
       }
+    },
+    "conda_environment_file": {
+      "description": "A conda environment file that is used for environment creation.\nhttps://asv.readthedocs.io/en/stable/asv.conf.json.html#conda-environment-file",
+      "type": "string"
+    },
+    "conda_channels": {
+      "description": "The list of conda channel names to be searched for benchmark dependency packages.",
+      "type": "array",
+      "items": { "type": "string" }
     },
     "matrix": {
       "description": "The matrix of dependencies and environment variables to run the benchmarks with.\nhttps://asv.readthedocs.io/en/stable/asv.conf.json.html#matrix",
@@ -188,6 +191,11 @@
       "type": "string",
       "default": "benchmarks"
     },
+    "environment_type": {
+      "description": "The tool to use to create environments.",
+      "type": "string",
+      "enum": ["conda", "virtualenv", "rattler", "uv"]
+    },
     "env_dir": {
       "description": "The directory to cache the Python environments in.",
       "type": "string",
@@ -203,15 +211,6 @@
       "type": "string",
       "default": "html"
     },
-    "show_commit_url": {
-      "description": "The base URL to show a commit for the project.",
-      "type": "string"
-    },
-    "hash_length": {
-      "description": "The number of characters to retain in the commit hashes.",
-      "type": "integer",
-      "default": 8
-    },
     "install_timeout": {
       "description": "Timeout in seconds for installing any dependencies in environment.",
       "type": "number",
@@ -222,35 +221,20 @@
       "type": "number",
       "default": 60.0
     },
-    "build_cache_size": {
-      "description": "The number of builds to keep, per environment.",
+    "hash_length": {
+      "description": "The number of characters to retain in the commit hashes.",
       "type": "integer",
-      "default": 2
-    },
-    "wheel_cache_size": {
-      "$comment": "DEPRECATED. renamed to build_cache_size",
-      "description": "The number of builds to keep, per environment.",
-      "type": "integer"
+      "default": 8
     },
     "plugins": {
       "description": "A list of modules to import containing asv plugins.",
       "type": "array",
       "items": { "type": "string" }
     },
-    "conda_channels": {
-      "description": "The list of conda channel names to be searched for benchmark dependency packages.",
-      "type": "array",
-      "items": { "type": "string" }
-    },
-    "conda_environment_file": {
-      "description": "A conda environment file that is used for environment creation.\nhttps://asv.readthedocs.io/en/stable/asv.conf.json.html#conda-environment-file",
-      "type": "string"
-    },
-    "launch_method": {
-      "description": "How to launch benchmarks.",
-      "type": "string",
-      "enum": ["auto", "spawn", "forkserver"],
-      "default": "auto"
+    "build_cache_size": {
+      "description": "The number of builds to keep, per environment.",
+      "type": "integer",
+      "default": 2
     },
     "regressions_first_commits": {
       "description": "The commits after which the regression search should start looking for regressions.",
