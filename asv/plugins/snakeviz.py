@@ -1,9 +1,9 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from .. import profiling, util
+from .. import asv_profiling, util
 
 
-class SnakevizGui(profiling.ProfilerGui):
+class SnakevizGui(asv_profiling.ProfilerGui):
     name = 'snakeviz'
     description = "snakeviz https://jiffyclub.github.io/snakeviz/"
 

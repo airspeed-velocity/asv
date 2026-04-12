@@ -1,9 +1,9 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from .. import profiling, util
+from .. import asv_profiling, util
 
 
-class KCachegrindGui(profiling.ProfilerGui):
+class KCachegrindGui(asv_profiling.ProfilerGui):
     name = 'kcachegrind'
     description = "kcachegrind through pyprof2calltree"
 
