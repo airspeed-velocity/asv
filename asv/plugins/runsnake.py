@@ -1,9 +1,9 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-from .. import profiling, util
+from .. import asv_profiling, util
 
 
-class RunSnakeRunGui(profiling.ProfilerGui):
+class RunSnakeRunGui(asv_profiling.ProfilerGui):
     name = 'runsnake'
     description = "RunSnakeRun http://www.vrplumber.com/programming/runsnakerun/"
 
