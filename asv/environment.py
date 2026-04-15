@@ -25,6 +25,151 @@ else:
 WIN = os.name == "nt"
 
 
+CONF_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "asv.conf.json",
+    "description": "airspeed velocity benchmark suite configuration",
+    "type": "object",
+    "properties": {
+        "version": {
+            "type": "integer",
+            "description": "The version of the asv config file format",
+            "enum": [1]
+        },
+        "project": {
+            "type": "string",
+            "description": "The name of the project being benchmarked"
+        },
+        "project_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL to the project's homepage"
+        },
+        "repo": {
+            "type": "string",
+            "description": "The URL or path to the repository to clone"
+        },
+        "branches": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "The branches to benchmark"
+        },
+        "tags": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "The tags to benchmark"
+        },
+        "dvcs": {
+            "type": "string",
+            "description": "The DVCS being used",
+            "enum": ["git", "hg"]
+        },
+        "environment_type": {
+            "type": "string",
+            "description": "The tool to use to create environments",
+            "enum": ["conda", "virtualenv", "mamba", "micromamba", "existing"]
+        },
+        "install_timeout": {
+            "type": "number",
+            "description": "Maximum time (in seconds) to wait for the install step"
+        },
+        "show_commit_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL prefix to use to link to commits"
+        },
+        "pythons": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "The versions of Python to test against"
+        },
+        "matrix": {
+            "type": "object",
+            "description": "The matrix of dependencies to test against"
+        },
+        "exclude": {
+            "type": "array",
+            "items": {"type": "object"},
+            "description": "Combinations to exclude from the matrix"
+        },
+        "include": {
+            "type": "array",
+            "items": {"type": "object"},
+            "description": "Combinations to add to the matrix"
+        },
+        "benchmark_dir": {
+            "type": "string",
+            "description": "The directory where the benchmarks are stored"
+        },
+        "html_dir": {
+            "type": "string",
+            "description": "The directory to save the website to"
+        },
+        "results_dir": {
+            "type": "string",
+            "description": "The directory to store the results in"
+        },
+        "build_dir": {
+            "type": "string",
+            "description": "The directory to cache the builds in"
+        },
+        "build_cache_size": {
+            "type": "integer",
+            "description": "The number of builds to cache",
+            "minimum": 0
+        },
+        "env_dir": {
+            "type": "string",
+            "description": "The directory to cache the environments in"
+        },
+        "repo_subdir": {
+            "type": "string",
+            "description": "The path within the repository where the project to be benchmarked is located"
+        },
+        "plugins": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "List of modules to import for additional plugins"
+        },
+        "conda_channels": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Conda channels to use when creating environments"
+        },
+        "conda_environment_file": {
+            "type": "string",
+            "description": "Path to a conda environment file to use as a base"
+        },
+        "default_benchmark_timeout": {
+            "type": "number",
+            "description": "Default timeout (in seconds) for benchmarks"
+        },
+        "append_samples": {
+            "type": "boolean",
+            "description": "Whether to append new samples to existing results"
+        },
+        "rng_seed": {
+            "type": ["integer", "null"],
+            "description": "Seed for the random number generator used in benchmarks"
+        },
+        "benchmark_selection": {
+            "type": "object",
+            "description": "Default benchmark selection"
+        },
+        "launcher": {
+            "type": "string",
+            "description": "Command to use to launch processes"
+        },
+        "launcher_options": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Options to pass to the launcher"
+        }
+    },
+    "required": ["version", "project", "repo"],
+    "additionalProperties": False
+}
+
 def iter_matrix(environment_type, pythons, conf, explicit_selection=False):
     """
     Iterate through all combinations of the given requirement
