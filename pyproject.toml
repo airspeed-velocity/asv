@@ -146,6 +146,7 @@ write_to = "asv/_version.py"
 
 [tool.cibuildwheel]
 free-threaded-support = true
+skip = ["cp313t-*"]
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux2014"
