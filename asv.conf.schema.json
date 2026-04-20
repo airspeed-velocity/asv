@@ -1,0 +1,252 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/airspeed-velocity/asv/main/asv.conf.schema.json",
+  "type": "object",
+  "properties": {
+    "version": {
+      "description": "The version of the config file format",
+      "type": "integer",
+      "enum": [1]
+    },
+    "project": {
+      "description": "The name of the project being benchmarked.",
+      "type": "string"
+    },
+    "project_url": {
+      "description": "The URL to the homepage of the project.",
+      "type": "string"
+    },
+    "repo": {
+      "description": "The URL or local path of the source code repository for the project being benchmarked.",
+      "type": "string"
+    },
+    "repo_subdir": {
+      "description": "The relative path to your Python project inside the repository. This is where its setup.py file is located.",
+      "type": "string"
+    },
+    "build_command": {
+      "description": "Customizable commands for building the project.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#build-command-install-command-uninstall-command",
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [
+        "python setup.py build",
+        "python -m pip wheel -w {build_cache_dir} {build_dir}"
+      ]
+    },
+    "install_command": {
+      "description": "Customizable commands for installing the project.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#build-command-install-command-uninstall-command",
+      "type": "array",
+      "items": { "type": "string" },
+      "default": ["in-dir={env_dir} python -m pip install {wheel_file}"]
+    },
+    "uninstall_command": {
+      "description": "Customizable commands for uninstalling the project.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#build-command-install-command-uninstall-command",
+      "type": "array",
+      "items": { "type": "string" },
+      "default": ["return-code=any python -m pip uninstall -y {project}"]
+    },
+    "branches": {
+      "description": "List of branches to benchmark.\nIf not provided, defaults to 'main' (for git) or 'default' (for mercurial).",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "show_commit_url": {
+      "description": "The base URL to show a commit for the project.",
+      "type": "string"
+    },
+    "pythons": {
+      "description": "The versions of Python to run the benchmarks in.\nhttps://asv.readthedocs.io/en/stable/asv.conf.json.html#pythons",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "conda_environment_file": {
+      "description": "A conda environment file that is used for environment creation.\nhttps://asv.readthedocs.io/en/stable/asv.conf.json.html#conda-environment-file",
+      "type": "string"
+    },
+    "conda_channels": {
+      "description": "The list of conda channel names to be searched for benchmark dependency packages.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "matrix": {
+      "description": "The matrix of dependencies and environment variables to run the benchmarks with.\nhttps://asv.readthedocs.io/en/stable/asv.conf.json.html#matrix",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "req": {
+              "description": "Matrix of third-party dependencies.",
+              "type": "object",
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": "array",
+                    "items": { "type": ["string", "null"] }
+                  },
+                  { "type": ["string", "null"] }
+                ]
+              }
+            },
+            "env": {
+              "description": "Matrix of environment variables to pass to build and benchmark commands.",
+              "type": "object",
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": "array",
+                    "items": { "type": ["string", "null"] }
+                  },
+                  { "type": ["string", "null"] }
+                ]
+              }
+            },
+            "env_nobuild": {
+              "description": "Matrix of environment variables to pass to benchmark commands, but not trigger new builds.",
+              "type": "object",
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": "array",
+                    "items": { "type": ["string", "null"] }
+                  },
+                  { "type": ["string", "null"] }
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "array",
+                "items": { "type": ["string", "null"] }
+              },
+              { "type": ["string", "null"] }
+            ]
+          }
+        }
+      ]
+    },
+    "exclude": {
+      "description": "Combinations to be excluded from the set to test.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#exclude",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "python": { "type": "string" },
+          "sys_platform": { "type": "string" },
+          "environment_type": { "type": "string" },
+          "req": {
+            "type": "object",
+            "additionalProperties": { "type": ["string", "null"] }
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": { "type": ["string", "null"] }
+          },
+          "env_nobuild": {
+            "type": "object",
+            "additionalProperties": { "type": ["string", "null"] }
+          }
+        },
+        "additionalProperties": { "type": ["string", "null"] }
+      }
+    },
+    "include": {
+      "description": "Additional environment combinations to be included.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#include",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "python": { "type": "string" },
+          "environment_type": { "type": "string" },
+          "sys_platform": { "type": "string" },
+          "req": {
+            "type": "object",
+            "additionalProperties": { "type": ["string", "null"] }
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": { "type": ["string", "null"] }
+          },
+          "env_nobuild": {
+            "type": "object",
+            "additionalProperties": { "type": ["string", "null"] }
+          }
+        },
+        "additionalProperties": { "type": ["string", "null"] },
+        "required": ["python"]
+      }
+    },
+    "benchmark_dir": {
+      "description": "The directory that benchmarks are stored in.",
+      "type": "string",
+      "default": "benchmarks"
+    },
+    "environment_type": {
+      "description": "The tool to use to create environments.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#environment-type",
+      "anyOf": [
+        {
+          "enum": ["conda", "virtualenv", "rattler", "uv"]
+        },
+        { "type": "string" }
+      ]
+    },
+    "env_dir": {
+      "description": "The directory to cache the Python environments in.",
+      "type": "string",
+      "default": "env"
+    },
+    "results_dir": {
+      "description": "The directory that raw benchmark results are stored in.",
+      "type": "string",
+      "default": "results"
+    },
+    "html_dir": {
+      "description": "The directory that the html tree should be written to.",
+      "type": "string",
+      "default": "html"
+    },
+    "install_timeout": {
+      "description": "Timeout in seconds for installing any dependencies in environment.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#install-timeout-default-benchmark-timeout",
+      "type": "number"
+    },
+    "default_benchmark_timeout": {
+      "description": "Timeout in seconds for each benchmark.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#install-timeout-default-benchmark-timeout",
+      "type": "number"
+    },
+    "hash_length": {
+      "description": "The number of characters to retain in the commit hashes when displayed in the web interface.",
+      "type": "integer",
+      "default": 8
+    },
+    "plugins": {
+      "description": "A list of modules to import containing asv plugins.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "build_cache_size": {
+      "description": "The number of builds to keep, per environment.",
+      "type": "integer"
+    },
+    "regressions_first_commits": {
+      "description": "The commits after which the regression search should start looking for regressions.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#regressions-first-commits",
+      "type": "object",
+      "additionalProperties": { "type": ["string", "null"] }
+    },
+    "regressions_thresholds": {
+      "description": "The thresholds for relative change in results, after which asv publish starts reporting regressions.\nhttps://asv.readthedocs.io/en/latest/asv.conf.json.html#regressions-thresholds",
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    }
+  },
+  "required": ["version", "project", "repo"]
+}
