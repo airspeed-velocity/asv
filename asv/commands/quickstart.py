@@ -73,6 +73,8 @@ class Quickstart(Command):
 
         template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'template')
         for entry in os.listdir(template_path):
+            if entry not in ("asv.conf.json", "benchmarks"):
+                continue
             path = os.path.join(template_path, entry)
             dest_path = os.path.join(dest, entry)
             if os.path.exists(dest_path):
@@ -83,10 +85,18 @@ class Quickstart(Command):
         for entry in os.listdir(template_path):
             path = os.path.join(template_path, entry)
             dest_path = os.path.join(dest, entry)
+            if entry == ".gitignore" and os.path.exists(dest_path):
+                with open(path, "r") as f:
+                    template_content = f.read()
+                with open(dest_path, "a") as f:
+                    f.write("\n")
+                    f.write(template_content)
+                continue
+
             if os.path.isdir(path):
-                shutil.copytree(path, os.path.join(dest, entry))
+                shutil.copytree(path, dest_path)
             elif os.path.isfile(path):
-                shutil.copyfile(path, os.path.join(dest, entry))
+                shutil.copyfile(path, dest_path)
 
         if top_level:
             conf_file = os.path.join(dest, 'asv.conf.json')
