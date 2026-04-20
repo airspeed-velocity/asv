@@ -21,7 +21,7 @@ class BuildCache:
     The cache cleanup retains the latest ``build_cache_size`` items
     that have a valid timestamp file.
 
-    The timestamp files are created by ``self.finalize_cache_dir(commmit_hash)``,
+    The timestamp files are created by ``self.finalize_cache_dir(commit_hash)``,
     which also triggers a cache cleanup.
 
     The finalization should be called only after package is installed successfully,
