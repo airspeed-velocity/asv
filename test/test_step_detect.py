@@ -1,5 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 import random
+import sysconfig
+import threading
 
 import pytest
 
@@ -249,6 +251,33 @@ def test_l1dist(use_rangemedian):
 
                 assert m == m2, (i, j)
                 assert abs(d - d2) < 1e-10, (i, j)
+
+
+@pytest.mark.skipif(
+    sysconfig.get_config_var("Py_GIL_DISABLED") != 1,
+    reason="test requires a free-threaded Python build",
+)
+def test_rangemedian_concurrent_use_fails_fast(use_rangemedian):
+    y = [float(j % 7) for j in range(2000)]
+    dist = step_detect.get_mu_dist(y, [1] * len(y))
+    barrier = threading.Barrier(4)
+    errors = []
+
+    def worker():
+        barrier.wait()
+        try:
+            dist.find_best_partition(0.1, 1, 200, 0, len(y))
+        except RuntimeError as exc:
+            errors.append(str(exc))
+
+    threads = [threading.Thread(target=worker) for _ in range(4)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert errors
+    assert all("cannot be used concurrently" in err for err in errors)
 
 
 def test_regression_threshold():

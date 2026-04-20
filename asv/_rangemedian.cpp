@@ -14,6 +14,7 @@
 #include <queue>
 #include <limits>
 #include <map>
+#include <mutex>
 #include <algorithm>
 #include <utility>
 
@@ -123,6 +124,9 @@ typedef struct {
     PyObject_HEAD
     std::vector<std::pair<double,double> > *y;
     Cache *cache;
+#ifdef Py_GIL_DISABLED
+    std::mutex *use_mtx;
+#endif
 } RangeMedianObject;
 
 #define RangeMedianObject_CAST(op)  ((RangeMedianObject *)(op))
@@ -132,10 +136,54 @@ PyObject *RangeMedian_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     RangeMedianObject *self;
     allocfunc rmalloc = (allocfunc)PyType_GetSlot(type, Py_tp_alloc);
     self = (RangeMedianObject*)rmalloc(type, 0);
+    if (self == NULL) {
+        return NULL;
+    }
     self->y = NULL;
     self->cache = NULL;
+#ifdef Py_GIL_DISABLED
+    self->use_mtx = NULL;
+    try {
+        self->use_mtx = new std::mutex();
+    }
+    catch (const std::bad_alloc&) {
+        PyErr_SetString(PyExc_MemoryError, "Allocating memory failed");
+        freefunc free = (freefunc)PyType_GetSlot(type, Py_tp_free);
+        free((PyObject*)self);
+        return NULL;
+    }
+#endif
     return (PyObject*)self;
 }
+
+
+#ifdef Py_GIL_DISABLED
+class RangeMedianUseGuard
+{
+private:
+    std::unique_lock<std::mutex> lock_;
+
+public:
+    explicit RangeMedianUseGuard(std::mutex *mtx) : lock_(*mtx, std::try_to_lock) {}
+
+    bool acquired() const {
+        return lock_.owns_lock();
+    }
+};
+
+static bool
+RangeMedian_try_acquire_use_lock(RangeMedianObject *self, RangeMedianUseGuard *guard)
+{
+    if (!guard->acquired()) {
+        PyErr_SetString(
+            PyExc_RuntimeError,
+            "RangeMedian objects cannot be used concurrently across threads"
+        );
+        return false;
+    }
+    return true;
+}
+#endif
 
 
 int RangeMedian_init(PyObject *op, PyObject *args, PyObject *kwds)
@@ -151,6 +199,13 @@ int RangeMedian_init(PyObject *op, PyObject *args, PyObject *kwds)
         return -1;
     }
 
+#ifdef Py_GIL_DISABLED
+    RangeMedianUseGuard guard(self->use_mtx);
+    if (!RangeMedian_try_acquire_use_lock(self, &guard)) {
+        return -1;
+    }
+#endif
+
     size = PyList_Size(y_obj);
     wsize = PyList_Size(w_obj);
 
@@ -159,12 +214,14 @@ int RangeMedian_init(PyObject *op, PyObject *args, PyObject *kwds)
         return -1;
     }
 
+    // Free any previous data from a prior __init__ call
+    delete self->y;
+    delete self->cache;
+    self->y = NULL;
+    self->cache = NULL;
+
     try {
         self->y = new std::vector<std::pair<double,double> >(size);
-
-        // Multiplier based on hardcoded constant sizes in step_detect.py, about
-        // this many accesses expected --- but prefer primes due to a modulo
-        // calculation in the cache.
         self->cache = new Cache();
     }
     catch (const std::bad_alloc&) {
@@ -224,6 +281,9 @@ static void RangeMedian_finalize(void *op)
     RangeMedianObject *self = RangeMedianObject_CAST(op);
     delete self->y;
     delete self->cache;
+#ifdef Py_GIL_DISABLED
+    delete self->use_mtx;
+#endif
 }
 
 
@@ -267,6 +327,14 @@ static PyObject *RangeMedian_mu(PyObject *op, PyObject *args)
         return NULL;
     }
 
+#ifdef Py_GIL_DISABLED
+    RangeMedianObject *self = RangeMedianObject_CAST(op);
+    RangeMedianUseGuard guard(self->use_mtx);
+    if (!RangeMedian_try_acquire_use_lock(self, &guard)) {
+        return NULL;
+    }
+#endif
+
     if (RangeMedian_mu_dist(op, left, right, &mu, &dist) == -1) {
         return NULL;
     }
@@ -283,6 +351,14 @@ static PyObject *RangeMedian_dist(PyObject *op, PyObject *args)
     if (!PyArg_ParseTuple(args, "nn", &left, &right)) {
         return NULL;
     }
+
+#ifdef Py_GIL_DISABLED
+    RangeMedianObject *self = RangeMedianObject_CAST(op);
+    RangeMedianUseGuard guard(self->use_mtx);
+    if (!RangeMedian_try_acquire_use_lock(self, &guard)) {
+        return NULL;
+    }
+#endif
 
     if (RangeMedian_mu_dist(op, left, right, &mu, &dist) == -1) {
         return NULL;
@@ -302,6 +378,13 @@ static PyObject *RangeMedian_find_best_partition(PyObject *op, PyObject *args)
     if (!PyArg_ParseTuple(args, "dnnnn", &gamma, &min_size, &max_size, &min_pos, &max_pos)) {
         return NULL;
     }
+
+#ifdef Py_GIL_DISABLED
+    RangeMedianUseGuard guard(self->use_mtx);
+    if (!RangeMedian_try_acquire_use_lock(self, &guard)) {
+        return NULL;
+    }
+#endif
 
     size = self->y->size();
 
@@ -418,6 +501,10 @@ static PyModuleDef_Slot rangemedian_slots[] = {
      * after the object was added to sys.modules)
      */
     {Py_mod_exec, (void *)rangemedian_modexec},
+
+#ifdef Py_mod_gil
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
 
     {0, NULL}
 };
