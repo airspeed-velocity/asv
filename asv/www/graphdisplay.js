@@ -1352,6 +1352,7 @@ $(document).ready(function() {
 
         function update_range() {
             if (x_coordinate_axis != 0) {
+                /* Only applies when x-axis is the time axis */
                 return;
             }
             var bounds = visible_revision_bounds();
