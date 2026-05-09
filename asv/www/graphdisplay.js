@@ -42,6 +42,11 @@ $(document).ready(function() {
     var highlighted_revisions = null;
     /* Whether benchmark graph display was set up */
     var benchmark_graph_display_ready = false;
+    /* Commit-range filter, set via start_hash/end_hash URL params. */
+    var start_hash = null;
+    var end_hash = null;
+    var start_revision = null;
+    var end_revision = null;
 
 
     /* UTILITY FUNCTIONS */
@@ -114,8 +119,14 @@ $(document).ready(function() {
         current_benchmark = bm_name;
         highlighted_revisions = highlight_revisions;
         $("#title").text(bm_name);
+        resolve_hash_filter();
         setup_benchmark_params(state_selection);
         replace_graphs();
+    }
+
+    function resolve_hash_filter() {
+        start_revision = start_hash ? $.asv.get_revision(start_hash) : null;
+        end_revision = end_hash ? $.asv.get_revision(end_hash) : null;
     }
 
     function setup_benchmark_graph_display() {
@@ -842,6 +853,18 @@ $(document).ready(function() {
             $.asv.load_graph_data(
                 item[0]
             ).done(function (data) {
+                if (start_revision !== null || end_revision !== null) {
+                    data = $.grep(data, function(point) {
+                        var rev = point[0];
+                        if (start_revision !== null && rev < start_revision) {
+                            return false;
+                        }
+                        if (end_revision !== null && rev > end_revision) {
+                            return false;
+                        }
+                        return true;
+                    });
+                }
                 $.each(data, function(i, point) {
                     if (current_revisions.indexOf(point[0]) === -1) {
                         current_revisions.push(point[0]);
@@ -1267,6 +1290,7 @@ $(document).ready(function() {
             // Update things that depend on the range
             update_tags();
             update_range();
+            push_range_to_url();
 
             // don't fire event on the overview to prevent eternal loop
             if (overview) {
@@ -1280,15 +1304,16 @@ $(document).ready(function() {
             // Update things that depend on the range
             update_tags();
             update_range();
+            push_range_to_url();
         });
 
-        function update_range() {
+        function visible_revision_bounds() {
             if (x_coordinate_axis != 0) {
                 /* Only applies when x-axis is the time axis */
-                return;
+                return null;
             }
 
-            /* Find the minimum and maximum values */
+            /* Find the minimum and maximum visible revisions */
             var min = Infinity;
             var left = plot.getAxes().xaxis.min;
             $.each(graphs, function(i, graph) {
@@ -1319,17 +1344,46 @@ $(document).ready(function() {
                 }
             });
 
+            if (min === Infinity || max === -Infinity || min > max) {
+                return null;
+            }
+            return { min: min, max: max };
+        }
+
+        function update_range() {
+            if (x_coordinate_axis != 0) {
+                return;
+            }
+            var bounds = visible_revision_bounds();
             var result;
-            if (min === null || max === null || min > max) {
+            if (!bounds) {
                 result = '';
-            } else if (min == max) {
-                result = get_commit_hash(min) + '^!';
+            } else if (bounds.min == bounds.max) {
+                result = get_commit_hash(bounds.min) + '^!';
             } else {
-                var first_commit = get_commit_hash(min);
-                var last_commit = get_commit_hash(max);
-                result = first_commit + ".." + last_commit;
+                result = get_commit_hash(bounds.min) + ".." + get_commit_hash(bounds.max);
             }
             $("#range")[0].value = result;
+        }
+
+        function push_range_to_url() {
+            var bounds = visible_revision_bounds();
+            if (bounds) {
+                start_hash = get_commit_hash(bounds.min);
+                end_hash = get_commit_hash(bounds.max);
+                start_revision = bounds.min;
+                end_revision = bounds.max;
+                update_state_url({
+                    'start_hash': [start_hash],
+                    'end_hash': [end_hash]
+                });
+            } else {
+                start_hash = null;
+                end_hash = null;
+                start_revision = null;
+                end_revision = null;
+                update_state_url({'start_hash': [], 'end_hash': []});
+            }
         }
 
         function update_tags() {
@@ -1400,6 +1454,20 @@ $(document).ready(function() {
                 date_scale = true;
             }
             delete params['x-axis-scale'];
+        }
+
+        if (params['start_hash']) {
+            start_hash = params['start_hash'][0] || null;
+            delete params['start_hash'];
+        } else {
+            start_hash = null;
+        }
+
+        if (params['end_hash']) {
+            end_hash = params['end_hash'][0] || null;
+            delete params['end_hash'];
+        } else {
+            end_hash = null;
         }
 
         var show_legend_button = $('#show-legend')
