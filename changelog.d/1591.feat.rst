@@ -1,0 +1,1 @@
+The graph view supports ``start_hash`` and ``end_hash`` URL parameters, allowing a commit range to be linked to and reflecting zoom selections in the URL.
