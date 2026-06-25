@@ -1,0 +1,1 @@
+Collapse whitespace in parameterized benchmark names in ``asv compare`` output so multiline parameter reprs do not break GitHub-flavored markdown tables.

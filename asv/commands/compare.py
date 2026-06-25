@@ -26,6 +26,17 @@ def mean(values):
         return None
 
 
+def _format_param_for_display(param):
+    """
+    Format a benchmark parameter for single-line display (e.g. compare tables).
+
+    Parameter ``repr`` values can contain newlines (common for rich objects),
+    which break markdown/github tables produced by ``tabulate`` (#1393).
+    """
+    text = param if isinstance(param, str) else repr(param)
+    return ' '.join(text.split())
+
+
 def unroll_result(benchmark_name, params, *values):
     """
     Iterate through parameterized result values
@@ -53,7 +64,8 @@ def unroll_result(benchmark_name, params, *values):
         if params == ():
             name = benchmark_name
         else:
-            name = f"{benchmark_name}({', '.join(params)})"
+            formatted = [_format_param_for_display(p) for p in params]
+            name = f"{benchmark_name}({', '.join(formatted)})"
         yield (name,) + value
 
 
