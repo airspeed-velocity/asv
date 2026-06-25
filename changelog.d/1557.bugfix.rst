@@ -1,0 +1,1 @@
+Fix ``asv rm python=...`` raising ``AttributeError`` on ``Results`` (no ``env`` attribute).

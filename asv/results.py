@@ -775,6 +775,11 @@ class Results:
     def env_name(self):
         return self._env_name
 
+    @property
+    def python(self):
+        """Python version string for this result set (e.g. used by ``asv rm python=...``)."""
+        return self._python
+
     #
     # Old data format support
     #
