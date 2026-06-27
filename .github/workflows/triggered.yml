@@ -4,56 +4,73 @@ on:
   workflow_dispatch:
     inputs:
       pr_number:
-        description: 'PR Number'
+        description: 'asv_runner PR number (refs/pull/<n>/head)'
         required: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  PDM_BUILD_SCM_VERSION: "0.0.0"
+
 jobs:
   ASVRunner:
-    name: test with specific asv_runner
-    runs-on: ${{ matrix.os }}
+    name: asv × ${{ matrix.runner_source }} (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest"]
-        python-version: ["3.9", "3.14", "pypy-3.11"]
-    timeout-minutes: 30
+        # Keep in sync with primary CI Python set where practical; 3.9 needed for multi-env tests
+        python-version: ["3.9", "3.12", "3.14", "pypy-3.11"]
+        # pr = asv_runner PR head in benchmark envs; pypi = declared pin only (upstream guard)
+        runner_source: [pr, pypi]
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      # We need Python 3.9 to always be installed, so tests with
-      # multiple environments can run.
+      # We need Python 3.9 always installed so multi-environment tests can run.
       - name: Set up Python 3.9
         uses: actions/setup-python@v6
         with:
-          python-version: 3.9
+          python-version: "3.9"
 
-      - name: Set up Python version ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
           cache-dependency-path: pyproject.toml
+
       - name: Setup a browser for more tests
         uses: browser-actions/setup-chrome@latest
 
-      - name: Install dependencies
-        run: python -m pip install ".[test,hg,envs]"
+      - name: Install asv[test,hg,envs]
+        run: python -m pip install -U pip && python -m pip install ".[test,hg,envs]"
 
-      - name: Get asv_runner to be tested
+      - name: Get asv_runner PR head to be tested
+        if: matrix.runner_source == 'pr'
         uses: actions/checkout@v6
         with:
           repository: airspeed-velocity/asv_runner
-          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+          ref: refs/pull/${{ inputs.pr_number }}/head
           path: latest_asv_runner
+          fetch-depth: 0
 
-      - name: Install asv
-        run: pip install .
+      - name: Install PR asv_runner (host editable)
+        if: matrix.runner_source == 'pr'
+        run: python -m pip install -e ./latest_asv_runner
 
-      - name: Run tests with the current asv_runner
-        run: ASV_RUNNER="$(pwd)/latest_asv_runner" python -m pytest -v --timeout=300 --webdriver=ChromeHeadless --durations=100 test
+      # Relative path: asv ParsedPipDeclaration truncates multi-segment absolutes (asv-8650).
+      # Use ASV_RUNNER_PATH (not ASV_RUNNER) — asv environment.py only reads the former.
+      - name: Run tests with PR asv_runner in envs
+        if: matrix.runner_source == 'pr'
+        env:
+          ASV_RUNNER_PATH: ./latest_asv_runner
+        run: python -m pytest -v --timeout=300 --webdriver=ChromeHeadless --durations=100 test
+
+      - name: Run tests with PyPI asv_runner only (upstream guard)
+        if: matrix.runner_source == 'pypi'
+        run: python -m pytest -v --timeout=300 --webdriver=ChromeHeadless --durations=100 test
