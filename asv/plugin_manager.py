@@ -72,9 +72,13 @@ class PluginManager:
                     mod = importlib.import_module(name)
                 except ModuleNotFoundError:
                     mod = self._load_plugin_by_name(name)
-            if mod:
-                self.init_plugin(mod)
-                self._plugins.append(mod)
+            if mod is None:
+                raise ModuleNotFoundError(
+                    f"ASV plugin module {name!r} could not be imported "
+                    f"(install the package or fix the name in conf plugins)"
+                )
+            self.init_plugin(mod)
+            self._plugins.append(mod)
         finally:
             if extended:
                 del sys.path[0]
@@ -87,3 +91,8 @@ class PluginManager:
         for plugin in self._plugins:
             if hasattr(plugin, hook_name):
                 getattr(plugin, hook_name)(*args, **kwargs)
+
+
+plugin_manager = PluginManager()
+plugin_manager.load_plugins(commands)
+plugin_manager.load_plugins(plugins)
