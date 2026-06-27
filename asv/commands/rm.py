@@ -69,11 +69,13 @@ class Rm(Command):
                         found = False
                         break
                 elif key == 'python':
-                    if not fnmatchcase(result.env.python, val):
+                    py = result.python
+                    if py is None or not fnmatchcase(str(py), val):
                         found = False
                         break
                 else:
-                    if not fnmatchcase(result.params.get(key), val):
+                    param_val = result.params.get(key)
+                    if param_val is None or not fnmatchcase(str(param_val), val):
                         found = False
                         break
 
