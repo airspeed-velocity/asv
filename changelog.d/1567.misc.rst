@@ -1,2 +1,0 @@
-Install failures due to missing/extra wheels now logged in verbose mode
-Read 'HEAD' as branchname to run

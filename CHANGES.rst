@@ -1,3 +1,18 @@
+asv 0.6.6 (2026-06-27)
+----------------------
+
+Other Changes and Additions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Install failures due to missing/extra wheels now logged in verbose mode
+  Read 'HEAD' as branchname to run (#1567)
+- Require ``asv-runner>=0.2.5`` so environments get timeraw stderr capture,
+  SHA-256-compatible default benchmark versions with optional token
+  ``version_alts`` backfill, and ``setup_cache``/skip/``env`` fixes.
+  Avoids 0.2.2–0.2.4 regressions (swallowed timeraw stderr; token-only
+  ``version`` breaking discovery tests / result identity). (#1595)
+
+
 asv 0.6.5 (2025-09-12)
 ----------------------
 
