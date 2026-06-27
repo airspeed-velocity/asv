@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "asv_mamba"
+version = "0.1.0"
+description = "ASV environment backend using mamba (wraps asv_conda)"
+requires-python = ">=3.9"
+dependencies = ["asv>=0.6.5", "asv_conda>=0.1.0"]
+
+[tool.setuptools.packages.find]
+include = ["asv_mamba*"]

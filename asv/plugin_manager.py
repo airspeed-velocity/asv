@@ -52,16 +52,26 @@ class PluginManager:
         return None
 
     def import_plugin(self, name):
+        """Load a plugin by module name.
+
+        - ``.local_mod`` — import ``local_mod`` from the current working directory
+        - ``asv_conda`` / other absolute names — ``importlib.import_module``
+        - short names still resolved under ``asv.plugins`` for compatibility
+        """
         extended = False
         if name.startswith("."):
             extended = True
             sys.path.insert(0, ".")
             name = name[1:]
         try:
+            mod = None
             if extended:
                 mod = importlib.import_module(name)
             else:
-                mod = self._load_plugin_by_name(name)
+                try:
+                    mod = importlib.import_module(name)
+                except ModuleNotFoundError:
+                    mod = self._load_plugin_by_name(name)
             if mod:
                 self.init_plugin(mod)
                 self._plugins.append(mod)

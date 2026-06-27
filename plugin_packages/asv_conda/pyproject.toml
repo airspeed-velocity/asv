@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "asv_conda"
+version = "0.1.0"
+description = "ASV environment backend using conda"
+requires-python = ">=3.9"
+dependencies = ["asv>=0.6.5"]
+
+[project.optional-dependencies]
+# tool-specific; installers add what they need
+dev = []
+
+[tool.setuptools.packages.find]
+include = ["asv_conda*"]
