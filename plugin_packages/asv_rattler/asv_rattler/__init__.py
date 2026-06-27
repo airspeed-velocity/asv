@@ -1,20 +1,27 @@
+# Licensed under a 3-clause BSD style license - see LICENSE.rst
+"""ASV rattler environment plugin (optional py-rattler dependency)."""
+
 import asyncio
 import inspect
 import os
 import sys
 from pathlib import Path
 
-from yaml import load
-
-try:
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Loader
-
-from rattler import ChannelPriority, MatchSpec, VirtualPackage, install, solve
-
 from asv import environment, util
 from asv.console import log
+
+try:
+    from yaml import load
+    try:
+        from yaml import CLoader as Loader
+    except ImportError:
+        from yaml import Loader
+    from rattler import ChannelPriority, MatchSpec, VirtualPackage, install, solve
+    _HAS_RATTLER = True
+except ImportError:
+    _HAS_RATTLER = False
+    load = Loader = ChannelPriority = MatchSpec = VirtualPackage = install = solve = None
+
 
 
 class Rattler(environment.Environment):
@@ -28,6 +35,9 @@ class Rattler(environment.Environment):
     tool_name = "rattler"
 
     def __init__(self, conf, python, requirements, tagged_env_vars):
+        if not _HAS_RATTLER:
+            raise environment.EnvironmentUnavailable(
+                'asv_rattler requires the py-rattler package')
         """
         Parameters
         ----------
