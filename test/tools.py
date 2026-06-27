@@ -29,7 +29,6 @@ except ImportError:
 import asv
 from asv import commands, config, environment, runner, util
 from asv.commands.preview import create_httpd
-from asv.plugins.conda import _find_conda
 from asv.repo import get_repo
 from asv.results import Results
 
@@ -50,25 +49,10 @@ except (RuntimeError, OSError):
     HAS_PYPY = hasattr(sys, 'pypy_version_info')
 
 
-def _check_conda():
-    from asv.plugins.conda import _conda_lock
-
-    conda = _find_conda()
-    with _conda_lock():
-        try:
-            subprocess.check_call(
-                [conda, 'build', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-        except subprocess.CalledProcessError:
-            raise RuntimeError("conda-build is missing")
-
-
-try:
-    # Conda can install required Python versions on demand
-    _check_conda()
-    HAS_CONDA = True
-except (RuntimeError, OSError):
-    HAS_CONDA = False
+# Core ASV ships virtualenv only (conda / rattler / uv plugins removed from tree).
+HAS_CONDA = False
+HAS_RATTLER = False
+HAS_UV = False
 
 
 try:
@@ -77,20 +61,6 @@ try:
     HAS_VIRTUALENV = True
 except ImportError:
     HAS_VIRTUALENV = False
-
-
-try:
-    import rattler  # noqa: F401 checking if installed
-
-    HAS_RATTLER = True
-except ImportError:
-    HAS_RATTLER = False
-
-try:
-    util.which('uv')
-    HAS_UV = True
-except (RuntimeError, OSError):
-    HAS_UV = False
 
 try:
     util.which(f'python{PYTHON_VER2}')
@@ -617,47 +587,9 @@ def _build_dummy_wheels(tmpdir, wheel_dir, to_build, build_conda=False):
             _build_dummy_conda_pkg(name, version, build_dir, wheel_dir)
 
 
+
 def _build_dummy_conda_pkg(name, version, build_dir, dst):
-    # Build fake conda packages for testing
-    from asv.plugins.conda import _conda_lock
-
-    build_dir = os.path.abspath(build_dir)
-
-    with open(join(build_dir, 'meta.yaml'), 'w') as f:
-        f.write(
-            textwrap.dedent(f"""\
-        package:
-          name: "{name}"
-          version: "{version}"
-        source:
-          path: {util.shlex_quote(build_dir)}
-        build:
-          number: 0
-          script: "python -m pip install . --no-deps --ignore-installed "
-        requirements:
-          host:
-            - pip
-            - python
-          run:
-            - python
-        about:
-          license: BSD
-          summary: Dummy test package
-        """)
-        )
-
-    conda = _find_conda()
-
-    for pyver in [PYTHON_VER1, PYTHON_VER2]:
-        with _conda_lock():
-            subprocess.check_call(
-                [
-                    conda,
-                    'build',
-                    '--output-folder=' + dst,
-                    '--no-anaconda-upload',
-                    '--python=' + pyver,
-                    '.',
-                ],
-                cwd=build_dir,
-            )
+    raise RuntimeError(
+        'conda packages are not supported in core ASV tests; '
+        'the conda environment plugin was removed from the tree'
+    )

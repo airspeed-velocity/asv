@@ -60,7 +60,8 @@ class Config:
         self.html_dir = "html"
         self.show_commit_url = "#"
         self.hash_length = 8
-        self.environment_type = None
+        # Core ships virtualenv only; other tools need external plugins.
+        self.environment_type = "virtualenv"
         self.install_timeout = 600.0
         self.default_benchmark_timeout = 60.0
         self.dvcs = None
