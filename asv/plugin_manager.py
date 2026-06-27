@@ -93,6 +93,28 @@ class PluginManager:
                 getattr(plugin, hook_name)(*args, **kwargs)
 
 
+def load_asv_env_entry_points(pm=None):
+    """Load setuptools entry points group ``asv.plugins`` (asv_env_* packages)."""
+    pm = pm or plugin_manager
+    try:
+        from importlib.metadata import entry_points
+    except ImportError:  # pragma: no cover
+        return
+    eps = entry_points()
+    # Python 3.10+ vs 3.9
+    try:
+        selected = eps.select(group="asv.plugins")
+    except AttributeError:
+        selected = eps.get("asv.plugins", [])
+    for ep in selected:
+        try:
+            ep.load()  # importing registers Environment subclasses
+            pm._plugins.append(ep)
+        except Exception as err:
+            log.error(f"Failed loading entry point {ep.name}: {err}")
+
+
 plugin_manager = PluginManager()
 plugin_manager.load_plugins(commands)
 plugin_manager.load_plugins(plugins)
+load_asv_env_entry_points(plugin_manager)
