@@ -55,6 +55,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Full history + tags so setuptools_scm resolves the release version
+          fetch-depth: 0
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.3.0
@@ -75,6 +78,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Build sdist
         shell: bash -l {0}
