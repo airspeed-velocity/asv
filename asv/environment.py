@@ -321,7 +321,7 @@ def get_environments(conf, env_specifiers, verbose=True):
 
     if not env_specifiers:
         all_environments = ()
-        env_specifiers = [conf.environment_type]
+        env_specifiers = [conf.environment_type or "virtualenv"]
         if not conf.environment_type and verbose:
             log.warning(
                 "No `environment_type` specified in asv.conf.json. "
@@ -411,8 +411,8 @@ def get_environment_class(conf, python):
         Python version specifier.  Acceptable values depend on the
         Environment plugins installed but generally are:
 
-        - 'X.Y': A Python version, in which case conda or virtualenv
-          will be used to create a new environment.
+        - 'X.Y': A Python version; the virtualenv backend creates a new
+          environment (unless a different plugin is configured).
 
         - 'python' or '/usr/bin/python': Search for the given
           executable on the search PATH, and use that.  It is assumed
@@ -424,12 +424,12 @@ def get_environment_class(conf, python):
 
     classes = list(util.iter_subclasses(Environment))
 
-    if conf.environment_type:
-        cls = get_environment_class_by_name(conf.environment_type)
+    # Core default is virtualenv; other backends must be supplied as plugins.
+    env_type = conf.environment_type or "virtualenv"
+    cls = get_environment_class_by_name(env_type)
+    if cls in classes:
         classes.remove(cls)
-        classes.insert(0, cls)
-    else:
-        raise RuntimeError("Environment type must be specified")
+    classes.insert(0, cls)
 
     for cls in classes:
         if cls.matches_python_fallback or cls.matches(python):

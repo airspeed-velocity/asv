@@ -8,11 +8,11 @@ import sys
 from . import commands, plugins
 from .console import log
 
+# First-party environment backends shipped in asv.plugins.
+# Conda / rattler / uv / pixi / micromamba are not in-tree; optional third-party
+# plugins may still register Environment subclasses via conf ``plugins``.
 ENV_PLUGIN_REGEXES = [
     r"\.virtualenv$",
-    r"\.conda$",
-    r"\.rattler$",
-    r"\.uv$",
 ]
 
 
@@ -77,10 +77,3 @@ class PluginManager:
         for plugin in self._plugins:
             if hasattr(plugin, hook_name):
                 getattr(plugin, hook_name)(*args, **kwargs)
-
-
-plugin_manager = PluginManager()
-plugin_manager.load_plugins(commands)
-plugin_manager.load_plugins(plugins)
-
-commands.__doc__ = commands._make_docstring()
