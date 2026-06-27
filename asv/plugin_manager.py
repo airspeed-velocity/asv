@@ -55,7 +55,7 @@ class PluginManager:
         """Load a plugin by module name.
 
         - ``.local_mod`` — import ``local_mod`` from the current working directory
-        - ``asv_conda`` / other absolute names — ``importlib.import_module``
+        - ``asv_env_*`` / other absolute names — ``importlib.import_module``
         - short names still resolved under ``asv.plugins`` for compatibility
         """
         extended = False
