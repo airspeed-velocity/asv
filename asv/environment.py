@@ -365,7 +365,7 @@ def get_environments(conf, env_specifiers, verbose=True):
 
             try:
                 if env_type:
-                    cls = get_environment_class_by_name(env_type)
+                    cls = get_environment_class_by_name(env_type, conf=conf)
                 else:
                     cls = get_environment_class(conf, python)
 
@@ -422,11 +422,16 @@ def get_environment_class(conf, python):
     if python == 'same':
         return ExistingEnvironment
 
+    # Ensure conf plugins + configured type are imported (library-safe).
+    from asv.envmgmt.discover import ensure_conf_backends
+
+    ensure_conf_backends(conf)
+
     classes = list(util.iter_subclasses(Environment))
 
     # Core default is virtualenv; other backends must be supplied as plugins.
     env_type = conf.environment_type or "virtualenv"
-    cls = get_environment_class_by_name(env_type)
+    cls = get_environment_class_by_name(env_type, conf=conf)
     if cls in classes:
         classes.remove(cls)
     classes.insert(0, cls)
@@ -437,17 +442,20 @@ def get_environment_class(conf, python):
     raise EnvironmentUnavailable(f"No way to create environment for python='{python}'")
 
 
-def get_environment_class_by_name(environment_type):
+def get_environment_class_by_name(environment_type, conf=None, plugins=None):
     """
     Find the environment class with the given name.
+
+    Uses the single discovery path in :mod:`asv.envmgmt.discover` so that an
+    installed optional backend (entry point ``asv.plugins`` and/or conventional
+    module ``asv_env_<type>`` and/or conf ``plugins``) is imported when
+    *environment_type* is requested — including from library code without
+    going through ``Command``.
     """
-    for cls in util.iter_subclasses(Environment):
-        if cls.tool_name == environment_type:
-            return cls
-    tool_names = [cls.tool_name for cls in util.iter_subclasses(Environment)]
-    raise EnvironmentUnavailable(
-        f"Unknown environment type '{environment_type}'. "
-        f"Allowed values based on existing plugins are {tool_names}. "
+    from asv.envmgmt.discover import ensure_environment_backend
+
+    return ensure_environment_backend(
+        environment_type, conf=conf, plugins=plugins
     )
 
 

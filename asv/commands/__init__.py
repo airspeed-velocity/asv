@@ -41,11 +41,11 @@ class Command(abc.ABC):
 
     @classmethod
     def run_from_args(cls, args):
-        from ..plugin_manager import plugin_manager
+        from asv.envmgmt.discover import ensure_conf_backends
 
         conf = config.Config.load(args.config)
-        for plugin in conf.plugins:
-            plugin_manager.import_plugin(plugin)
+        # Same discovery path as library callers (not Command-only plugins loop).
+        ensure_conf_backends(conf)
         return cls.run_from_conf_args(conf, args)
 
     @classmethod
