@@ -91,12 +91,26 @@ def test_factory_still_resolves_virtualenv_and_existing():
     assert cls_e is envmod.ExistingEnvironment
 
 
-def test_matrix_pure_does_not_import_plugins(monkeypatch):
+def test_matrix_pure_does_not_import_plugins():
+    import ast
     import asv.envmgmt.matrix_pure as mp
-    import sys
 
-    banned = [k for k in sys.modules if k.startswith("asv.plugins.")]
-    # Module under test must not pull plugins at import time; already imported.
     src = open(mp.__file__, encoding="utf-8").read()
+    # No concrete plugin package references in the module body.
     assert "asv.plugins" not in src
-    assert "get_environment_class" not in src
+    # No imports of legacy environment registry helpers (AST, not docstring text).
+    tree = ast.parse(src)
+    imported_names = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported_names.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            mod = node.module or ""
+            imported_names.append(mod)
+            imported_names.extend(
+                (mod + "." + alias.name) if alias.name != "*" else mod
+                for alias in node.names
+            )
+    assert not any("plugins" in name for name in imported_names)
+    assert not any(name.endswith("get_environment_class") for name in imported_names)
+    assert mp.parse_matrix is not None

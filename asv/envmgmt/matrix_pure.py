@@ -1,9 +1,9 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """Matrix parsing helpers with no imports of concrete plugin classes.
 
-``iter_matrix`` in ``asv.environment`` still performs include/exclude and
-python iteration because it needs ``get_environment_class`` for default
-tool selection. Pure parsing lives here so unit tests do not load conda.
+Full include/exclude iteration stays in ``asv.environment`` so default tool
+selection can stay wired to the legacy environment class registry. Pure
+parsing lives here so unit tests do not load conda or other plugins.
 """
 
 from __future__ import annotations
