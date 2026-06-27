@@ -93,9 +93,11 @@ def test_factory_still_resolves_virtualenv_and_existing():
 
 def test_matrix_pure_does_not_import_plugins():
     import ast
+    from pathlib import Path
+
     import asv.envmgmt.matrix_pure as mp
 
-    src = open(mp.__file__, encoding="utf-8").read()
+    src = Path(mp.__file__).read_text(encoding="utf-8")
     # No concrete plugin package references in the module body.
     assert "asv.plugins" not in src
     # No imports of legacy environment registry helpers (AST, not docstring text).
