@@ -383,3 +383,77 @@ def test_web_summarylist(browser, basic_html):
             return ok
 
         WebDriverWait(browser, WAIT_TIME, ignored_exceptions=ignore_exc).until(check)
+
+
+@pytest.mark.flaky(reruns=1, reruns_delay=5)
+def test_web_graph_hash_range_from_url(browser, basic_html):
+    html_dir, dvcs = basic_html
+
+    short_start = dvcs.get_hash(f'{util.git_default_branch()}~12')[:8]
+    short_end = dvcs.get_hash(f'{util.git_default_branch()}~3')[:8]
+
+    with tools.preview(html_dir) as base_url:
+        get_with_retry(
+            browser,
+            f'{base_url}#params_examples.track_find_test'
+            f'?start_hash={short_start}&end_hash={short_end}',
+        )
+
+        # Wait for the plot to render before reading the range input
+        browser.find_element(By.CSS_SELECTOR, 'canvas.flot-base')
+
+        def range_matches(*args):
+            return browser.find_element(By.ID, 'range').get_attribute('value') == (
+                f'{short_start}..{short_end}'
+            )
+
+        WebDriverWait(browser, WAIT_TIME).until(range_matches)
+
+
+@pytest.mark.flaky(reruns=1, reruns_delay=5)
+def test_web_graph_hash_range_to_url(browser, basic_html):
+    html_dir, dvcs = basic_html
+
+    short_start = dvcs.get_hash(f'{util.git_default_branch()}~12')[:8]
+    short_end = dvcs.get_hash(f'{util.git_default_branch()}~3')[:8]
+
+    with tools.preview(html_dir) as base_url:
+        get_with_retry(browser, f'{base_url}#params_examples.track_find_test')
+        browser.find_element(By.CSS_SELECTOR, 'canvas.flot-base')
+
+        bounds = browser.execute_script(
+            "var revs = Object.keys($.asv.main_json.revision_to_hash).map(Number);"
+            "var start = $.asv.get_revision(arguments[0]);"
+            "var end = $.asv.get_revision(arguments[1]);"
+            "return [start, end, Math.min.apply(null, revs), Math.max.apply(null, revs)];",
+            short_start,
+            short_end,
+        )
+        start_rev, end_rev, min_rev, max_rev = bounds
+        # Sanity check: the chosen range is a strict subset of the available revisions
+        assert min_rev < start_rev < end_rev < max_rev
+
+        # Trigger a plot zoom programmatically by firing flot's plotselected event
+        # with a revision range that excludes the extremes.
+        browser.execute_script(
+            "var from = arguments[0], to = arguments[1];"
+            "$('#main-graph').trigger('plotselected',"
+            "    [{xaxis: {from: from, to: to}}]);",
+            start_rev,
+            end_rev,
+        )
+
+        def url_has_hash_params(*args):
+            current = browser.execute_script("return window.location.hash;")
+            return 'start_hash=' in current and 'end_hash=' in current
+
+        WebDriverWait(browser, WAIT_TIME).until(url_has_hash_params)
+
+        hash_str = browser.execute_script("return window.location.hash;")
+        qs = urllib.parse.parse_qs(hash_str.split('?', 1)[1])
+        assert qs['start_hash'] == [short_start]
+        assert qs['end_hash'] == [short_end]
+        assert (
+            browser.find_element(By.ID, 'range').get_attribute('value')
+            == f'{short_start}..{short_end}'
+        )
