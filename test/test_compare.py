@@ -7,7 +7,7 @@ from os.path import abspath, dirname, join
 import pytest
 
 from asv import config, util
-from asv.commands.compare import Compare
+from asv.commands.compare import Compare, _format_param_for_display, unroll_result
 
 from . import tools
 
@@ -19,6 +19,26 @@ except ImportError:
 from .tools import WIN
 
 MACHINE_FILE = abspath(join(dirname(__file__), 'asv-machine.json'))
+
+
+def test_format_param_for_display_collapses_whitespace():
+    """Regression for #1393: multiline parameter repr must not break markdown tables."""
+    multiline = "AnnData(\n    obs: 'a'\n    var: 'b'\n)"
+    assert '\n' not in _format_param_for_display(multiline)
+    assert _format_param_for_display(multiline) == "AnnData( obs: 'a' var: 'b' )"
+
+    names = list(
+        n
+        for n, _ in unroll_result(
+            'suite.bench',
+            [[multiline]],
+            [1.0],
+        )
+    )
+    assert len(names) == 1
+    assert '\n' not in names[0]
+    assert names[0].startswith('suite.bench(')
+
 
 REFERENCE = """
 All benchmarks:
