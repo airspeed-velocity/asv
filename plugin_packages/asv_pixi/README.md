@@ -1,8 +1,8 @@
 # asv_pixi
 
-Skeleton plugin for an **API-oriented** pixi backend (`environment_type = "pixi"`).
-Not implemented yet — registers the type only after install + `"plugins": ["asv_pixi"]`,
-and construction raises until bindings exist.
+`environment_type = "pixi"` using **py-rattler APIs** (the solver/install stack pixi is built on).
+Not the unrelated PyPI project named `pixi`, and not the `pixi` CLI.
 
-Do not treat this as shelling out to the `pixi` CLI; the intended path is library APIs
-(similar to py-rattler / libmamba), with conda-style CLI reserved for `asv_conda`.
+```json
+{ "environment_type": "pixi", "plugins": ["asv_rattler", "asv_pixi"] }
+```

@@ -1,7 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-"""External env plugins (asv_conda / asv_rattler / asv_uv / asv_mamba) loadable via conf plugins."""
+"""External env plugins load via conf plugins (API-oriented where possible)."""
 
-import importlib
 import sys
 from pathlib import Path
 
@@ -15,8 +14,7 @@ PLUGIN_ROOT = ROOT / "plugin_packages"
 
 
 def _ensure_plugin_path():
-    # Allow importing packages from plugin_packages/*/ without install
-    for sub in ("asv_conda", "asv_rattler", "asv_uv", "asv_mamba"):
+    for sub in ("asv_conda", "asv_rattler", "asv_uv", "asv_mamba", "asv_pixi"):
         p = str(PLUGIN_ROOT / sub)
         if p not in sys.path:
             sys.path.insert(0, p)
@@ -37,45 +35,43 @@ def test_core_only_virtualenv_and_existing(plugin_path):
         envmod.get_environment_class_by_name("conda")
 
 
-def test_load_asv_conda_plugin(plugin_path):
+@pytest.mark.parametrize(
+    "mod,tool",
+    [
+        ("asv_conda", "conda"),
+        ("asv_rattler", "rattler"),
+        ("asv_uv", "uv"),
+        ("asv_mamba", "mamba"),
+    ],
+)
+def test_load_plugin_registers_tool(plugin_path, mod, tool):
     pm = PluginManager()
-    pm.import_plugin("asv_conda")
-    cls = envmod.get_environment_class_by_name("conda")
-    assert cls.tool_name == "conda"
+    if mod == "asv_pixi":
+        pm.import_plugin("asv_rattler")
+    pm.import_plugin(mod)
+    cls = envmod.get_environment_class_by_name(tool)
+    assert cls.tool_name == tool
     assert issubclass(cls, envmod.Environment)
 
 
-def test_load_asv_rattler_plugin(plugin_path):
+def test_load_asv_pixi_plugin(plugin_path):
     pm = PluginManager()
     pm.import_plugin("asv_rattler")
-    cls = envmod.get_environment_class_by_name("rattler")
-    assert cls.tool_name == "rattler"
+    pm.import_plugin("asv_pixi")
+    cls = envmod.get_environment_class_by_name("pixi")
+    assert cls.tool_name == "pixi"
 
 
-def test_load_asv_uv_plugin(plugin_path):
-    pm = PluginManager()
-    pm.import_plugin("asv_uv")
-    cls = envmod.get_environment_class_by_name("uv")
-    assert cls.tool_name == "uv"
-
-
-def test_load_asv_mamba_plugin(plugin_path):
-    pm = PluginManager()
-    pm.import_plugin("asv_conda")
-    pm.import_plugin("asv_mamba")
-    cls = envmod.get_environment_class_by_name("mamba")
-    assert cls.tool_name == "mamba"
-
-
-def test_all_plugins_together(plugin_path):
-    pm = PluginManager()
-    for name in ("asv_conda", "asv_rattler", "asv_uv", "asv_mamba"):
-        pm.import_plugin(name)
-    tools = {
-        envmod.get_environment_class_by_name(t).tool_name
-        for t in ("virtualenv", "conda", "rattler", "uv", "mamba", "existing")
-    }
-    # virtualenv from core import
+def test_all_api_plugins_register(plugin_path):
     import asv.plugins.virtualenv  # noqa: F401
 
-    assert tools == {"virtualenv", "conda", "rattler", "uv", "mamba", "existing"}
+    pm = PluginManager()
+    for name in ("asv_conda", "asv_rattler", "asv_uv", "asv_mamba", "asv_pixi"):
+        pm.import_plugin(name)
+    for t in ("virtualenv", "conda", "rattler", "uv", "mamba", "pixi", "existing"):
+        assert envmod.get_environment_class_by_name(t).tool_name == (
+            "existing" if t == "existing" else t
+        ) or (
+            t == "existing"
+            and envmod.get_environment_class_by_name(t) is envmod.ExistingEnvironment
+        )
