@@ -145,7 +145,7 @@ quote-style = "preserve"
 write_to = "asv/_version.py"
 
 [tool.cibuildwheel]
-free-threaded-support = true
+enable = ["cpython-freethreading"]
 skip = ["cp313t-*"]
 
 [tool.cibuildwheel.linux]
