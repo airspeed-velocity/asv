@@ -135,6 +135,7 @@ class Rattler(environment.Environment):
             else:
                 expanded_channels.append(channel)
         final_channels = list(dict.fromkeys(expanded_channels).keys())
+        final_channels = ["conda-forge"] if final_channels == [] else final_channels
 
         # py-rattler 0.22.0 renamed the 'channels' parameter to 'sources'
         _channels_kwarg = (
