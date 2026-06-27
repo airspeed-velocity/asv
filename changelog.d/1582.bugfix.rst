@@ -1,0 +1,1 @@
+Fixed a bug where ``asv quickstart`` would silently fail if a ``.gitignore`` file already existed in the target directory.
