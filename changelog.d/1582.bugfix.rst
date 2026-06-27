@@ -1,0 +1,1 @@
+Quickstart merges ASV patterns into an existing `.gitignore` instead of aborting (#1582).
