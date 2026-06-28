@@ -19,29 +19,41 @@ The requirements should be automatically installed.  If they aren't
 installed automatically, for example due to networking restrictions,
 the ``python`` requirements are as noted in the ``pyproject.toml``.
 
-For managing the environments, one of the following packages is required:
+Environment backends
+--------------------
 
-- `libmambapy <https://mamba.readthedocs.io/en/latest/python_api.html>`__,
-  which is typically part of ``mamba``. In this case ``conda`` and ``conda-build``
-  must be present too.
+ASV creates isolated environments to build and run benchmarks.  At least
+one backend must be usable on your machine; which ones you need depends
+on ``environment_type`` in :doc:`asv.conf.json` (see :ref:`environments`).
 
-- `virtualenv <http://virtualenv.org/>`__, which is required since
-  venv is not compatible with other versions of Python.
+Shipped with ASV (under ``asv.plugins``):
 
-- An `anaconda <https://store.continuum.io/cshop/anaconda/>`__ or
-  `miniconda <http://conda.pydata.org/miniconda.html>`__
-  installation, with the ``conda`` command available on your path.
+- **virtualenv** — requires the `virtualenv
+  <https://virtualenv.pypa.io/>`__ package (declared as a dependency of
+  ASV).  Interpreters listed in ``pythons`` must already exist on
+  ``PATH`` (for example ``python3.12``); ASV does not download Python
+  versions for you.
+
+- **conda** — requires a `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`__,
+  `Miniforge <https://conda-forge.org/download/>`__, or similar install
+  with the ``conda`` command on ``PATH``.  Optional related settings:
+  ``conda_channels``, ``conda_environment_file``.
+
+- **mamba** — uses **libmambapy** (the libmamba Python API), not only the
+  ``mamba`` CLI.  Typical install is from conda-forge together with a
+  working conda-compatible stack (``conda`` / ``conda-build`` as required
+  by your platform).  See the `libmambapy documentation
+  <https://mamba.readthedocs.io/en/latest/python_api.html>`__.
+
+Additional backends can be provided by third-party modules listed in the
+``plugins`` configuration key (see :ref:`conf-plugins`).
 
 .. note::
 
-   ``libmambapy`` is the fastest for situations where non-pythonic
-   dependencies are required. Anaconda or miniconda is slower but
-   still preferred if the project involves a lot of compiled C/C++
-   extensions and are available in the ``conda`` repository, since
-   ``conda`` will be able to fetch precompiled binaries for these
-   dependencies in many cases. Using ``virtualenv``, dependencies
-   without precompiled wheels usually have to be compiled every
-   time the environments are set up.
+   For non-Python (native) dependencies, **conda** or **mamba** are often
+   preferable because binaries can be installed from channels such as
+   conda-forge.  With **virtualenv**, packages without wheels must be
+   compiled when environments are created, which is slower.
 
 Optional optimization
 ---------------------
@@ -57,6 +69,7 @@ time considerably.
 
 Running the self-tests
 ----------------------
+
 
 The self tests are based on `pytest <https://docs.pytest.org/>`__.  If you
 don't have it installed, and you have a connection to the Internet, it

@@ -183,19 +183,20 @@ will to default to the version of Python that the ``asv`` command
 If provided, it should be a list of strings.  It may be one of the
 following:
 
-- a Python version string, e.g. ``"3.7"``, in which case:
+- a Python version string, e.g. ``"3.12"``, in which case ASV uses the
+  configured ``environment_type`` (or auto-detection; see
+  ``environment_type`` below) to create an environment for that version:
 
-  - if ``conda`` is found, ``conda`` will be used to create an
-    environment for that version of Python via a temporary
-    environment.yml file
+  - With **conda** / **mamba**, packages are installed from conda channels
+    (and optional ``conda_environment_file``); the Python version is
+    requested as a conda package (for example ``python=3.12``).
 
-  - if ``virtualenv`` is installed, ``asv`` will search for that
-    version of Python on the ``PATH`` and create a new virtual
-    environment based on it.  ``asv`` does not handle downloading and
-    installing different versions of Python for you.  They must
-    already be installed and on the path.  Depending on your platform,
-    you can install multiple versions of Python using your package
-    manager or using `pyenv <https://github.com/yyuu/pyenv>`_.
+  - With **virtualenv**, ASV searches for an interpreter for that version
+    on the ``PATH`` (for example ``python3.12``) and creates a new
+    virtual environment based on it.  ASV does not download or install
+    Python interpreters for you.  Depending on your platform, you can
+    install multiple versions using your package manager or
+    `pyenv <https://github.com/pyenv/pyenv>`_.
 
 - an executable name on the ``PATH`` or an absolute path to an
   executable.  In this case, the environment is assumed to be already
@@ -447,10 +448,14 @@ defaults to ``"benchmarks"``.
 
 ``environment_type``
 --------------------
-Specifies the tool to use to create environments.  May be "conda",
-"virtualenv", "mamba" or another value depending on the plugins in use.  If
-missing or the empty string, the tool will be automatically determined
-by looking for tools on the ``PATH`` environment variable.
+Specifies the tool to use to create environments.  Built-in values are
+``"conda"``, ``"virtualenv"``, and ``"mamba"``; other names are valid when
+a plugin registers a matching ``tool_name``.  If missing or the empty
+string, ASV does **not** only scan ``PATH`` for a binary name: it tries
+registered environment backends (including plugins loaded from the
+``plugins`` list) in plugin order until one reports that it ``matches``
+the requested Python version.  Set this explicitly when you need a
+specific backend (for example always ``"virtualenv"`` in CI).
 
 ``env_dir``
 -----------
@@ -475,9 +480,23 @@ enough for most projects, but projects with extremely large history
 may need to increase this value.  This does not affect the storage of
 results, where the full commit hash is always retained.
 
+.. _conf-plugins:
+
 ``plugins``
 -----------
-A list of modules to import containing asv plugins.
+A list of importable module names containing ASV plugins.  Each entry is
+imported when ASV runs (for example ``"mypackage.asv_plugin"``).  Plugins
+may register extra commands, output publishers, or **environment
+backends** (subclasses of ``asv.environment.Environment`` with a unique
+``tool_name``).  Environment backends shipped with ASV (``virtualenv``,
+``conda``, ``mamba``) do not need to be listed here.
+
+Example::
+
+    "plugins": ["mycompany.asv_envs"]
+
+After the module is importable and listed, set ``environment_type`` to the
+plugin's ``tool_name`` (unless you rely on auto-detection).
 
 ``build_cache_size``
 --------------------

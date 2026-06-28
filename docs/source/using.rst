@@ -77,11 +77,14 @@ suite are:
   github project, the URL is of the form
   ``http://github.com/$OWNER/$REPO/commit/``.
 
-- ``environment_type``: The tool used to create environments.  May be
-  ``conda`` or ``virtualenv`` or ``mamba``.  If Conda supports the
-  dependencies you need, that is the recommended method. Mamba is faster
-  but needs a newer Python version (3.8 or greater).
-  See :ref:`environments` for more information.
+- ``environment_type``: The tool used to create environments.  Built-in
+  values include ``virtualenv``, ``conda``, and ``mamba``.  Leave unset
+  (or empty) to let ASV pick the first backend that can provide the
+  requested Python version (see :ref:`environments`).  Prefer ``conda``
+  or ``mamba`` when you need non-Python packages from conda channels;
+  prefer ``virtualenv`` for pure-Python stacks when interpreters are
+  already on ``PATH``.  Third-party backends may add other names when
+  their modules are listed under ``plugins``.
 
 - ``matrix``: Dependencies you want to preinstall into the environment
   where benchmarks are run.
@@ -181,14 +184,15 @@ over and dependencies are installed into the environment.  The
 environments are stored in the ``env`` directory so that the next time
 the benchmarks are run, things will start much faster.
 
-Environments can be created using different tools.  By default,
-``asv`` ships with support for `anaconda
-<https://store.continuum.io/cshop/anaconda/>`__,
-`mamba <https://mamba.readthedocs.io/en/latest/index.html/>`__, and
-`virtualenv <https://pypi.python.org/pypi/virtualenv>`__, though plugins may be
-installed to support other environment tools.  The
-``environment_type`` key in ``asv.conf.json`` is used to select the
-tool used to create environments.
+Environments can be created using different tools.  ASV ships backends
+for `virtualenv <https://virtualenv.pypa.io/>`__, `conda
+<https://docs.conda.io/>`__ (CLI), and `mamba
+<https://mamba.readthedocs.io/>`__ (via **libmambapy**).  Other tools can
+be added by installing a plugin module and listing it in the ``plugins``
+key of ``asv.conf.json``.  The ``environment_type`` key selects which
+backend creates environments (for example ``"virtualenv"``, ``"conda"``,
+or ``"mamba"``).  If it is omitted or empty, ASV tries registered
+backends until one matches the requested Python version.
 
 When using ``virtualenv``, ``asv`` does not build Python interpreters
 for you, but it expects to find the Python versions specified
@@ -209,6 +213,16 @@ The ``virtualenv`` environment also supports PyPy_. You can specify
 available on your ``PATH``.
 
 .. _PyPy: http://pypy.org/
+
+Third-party environment plugins
+```````````````````````````````
+
+To use an environment backend that is not shipped with ASV, install the
+plugin package into the same Python environment as ASV and add its importable
+module name to the ``plugins`` list in ``asv.conf.json``.  ASV imports each
+entry when commands run; the plugin registers an ``Environment`` subclass
+with a ``tool_name`` that you can pass as ``environment_type``.
+
 
 Benchmarking
 ````````````
