@@ -3,6 +3,14 @@
 ``asv.conf.json`` reference
 ===========================
 
+The commented starter file shipped with ASV is
+``asv/template/asv.conf.json`` (copied by ``asv quickstart``).
+Prefer keeping that template and this reference page aligned when
+adding options; machine-readable schema validation (for example
+JSON Schema or pydantic models rendered into the docs) is desirable
+future work so the template cannot drift from documented keys.
+
+
 The ``asv.conf.json`` file contains information about a particular
 benchmarking project.  The following describes each of the keys in
 this file and their expected values.
@@ -125,6 +133,24 @@ number of cached builds retained at any time is determined by the
 The ``install_command`` and ``build_command`` are by default launched
 in ``{build_dir}``. The ``uninstall_command`` is launched in the
 environment root directory.
+
+Environment variables for build and install commands
+````````````````````````````````````````````````````
+
+Commands run with a copy of the **process environment** ASV was started
+with, plus ASV-defined variables (see :doc:`env_vars`) such as ``ASV``,
+``ASV_ENV_DIR``, ``ASV_BUILD_DIR``, and ``ASV_COMMIT``.  Matrix ``env`` /
+``env_nobuild`` entries are applied for the active environment combination.
+
+Therefore you can pass secrets and tokens **from the caller environment**
+without storing them in ``asv.conf.json``.  For example, export
+``POETRY_HTTP_BASIC_…`` or ``USER`` / ``PASSWORD`` in CI or your shell, and
+reference them from a build script or from a command that expands
+environment variables in the subprocess.  Prefer tool-specific env vars
+(Poetry, pip, conda) over embedding credentials in the JSON file.
+
+Do not rely on interactive prompts inside ``build_command``; non-interactive
+CI will hang or fail.
 
 The commands are specified in typical POSIX shell syntax (Python
 shlex), but are not run in a shell, so that e.g. ``cd`` has no effect

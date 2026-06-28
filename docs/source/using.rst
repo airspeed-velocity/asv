@@ -253,12 +253,20 @@ captured by a single run.  How to deal with this is discussed in :doc:`tuning`.
 
 The killer feature of **airspeed velocity** is that it can track the
 benchmark performance of your project over time.  The ``range``
-argument to ``asv run`` specifies a range of commits that should be
-benchmarked.  The value of this argument is passed directly to either ``git
-log`` or to the Mercurial log command to get the set of commits, so it actually
-has a very powerful syntax defined in the `gitrevisions manpage
-<https://www.kernel.org/pub/software/scm/git/docs/gitrevisions.html>`__, or the
-`revsets help section <http://www.selenic.com/hg/help/revsets>`_ for Mercurial.
+argument to ``asv run`` selects which commits are benchmarked.
+
+For **Git** repositories, the range is passed to ``git rev-list`` (not
+plain ``git log``), and ASV always adds ``--first-parent``.  That means
+only the first-parent history is walked: commits that are only on
+merged-in side branches are omitted, so ``asv run A..B`` often lists
+**fewer** commits than ``git log A..B``.  The range expression itself
+still follows the `gitrevisions
+<https://git-scm.com/docs/gitrevisions>`__ syntax (for example
+``main..mybranch``, ``v0.1..main``, ``HEAD^!`` for a single commit).
+
+For **Mercurial**, the range is interpreted with Mercurial revsets
+(`hg help revisions` / revsets); see Mercurial documentation for the
+full language.
 
 For example, in a Git repository, one can test a range of commits on a
 particular branch since branching off main::
@@ -577,13 +585,75 @@ Where different benchmarks may be used. A specific ``json`` may also be loaded
 directly with ``asv.results.Results.load(<json_path>)``, after which
 ``get_profile_stats`` can be used.
 
+
+.. _analyzing-results:
+
+Analyzing results (single commit, compare, profiles)
+----------------------------------------------------
+
+ASV is often introduced as a **history** tool (``asv run`` over many commits
+plus ``asv publish`` graphs), but the same result store supports **single
+revision** and **pair-wise** analysis without opening the web UI.
+
+Single commit
+`````````````
+
+- Run one revision only (Git)::
+
+      asv run HEAD^!
+      asv run v1.2.3^!
+
+- Print stored numbers for a revision (or branch tip) on the command line::
+
+      asv show HEAD
+      asv show main
+
+  See :ref:`viewing-results` and :ref:`cmd-asv-show`.
+
+- Continuous integration style check of **this commit vs another** (runs
+  benchmarks and compares) is ``asv continuous``; pair-wise display of
+  **already stored** results is ``asv compare`` (below).
+
+Comparing two result sets
+`````````````````````````
+
+- Tags or commits that already have results::
+
+      asv compare v0.1 v0.2
+      asv compare HASH1 HASH2
+
+- To compare **raw result files** or dig into machine/env dimensions, use
+  ``asv show`` per revision, or load JSON with ``asv.results.Results`` as in
+  the profiling section.  Full website tables come from ``asv publish`` then
+  ``asv preview``.
+
+Profiles
+````````
+
+Use ``asv profile`` for one benchmark at one commit, or ``asv run --profile``
+to attach cProfile data while measuring.  Details and GUI backends are in
+:ref:`Running a benchmark in the profiler` (below in this guide) and
+:ref:`cmd-asv-profile`.
+
+Result format migration
+```````````````````````
+
+On-disk result layout and column names are described in :doc:`dev` (directory
+structure and ``result_columns``).  When upgrading ASV, prefer regenerating
+HTML with ``asv publish``; if a results schema field is missing, ASV treats
+some fields as optional for backward compatibility (for example an absent
+benchmark ``version`` skips version filtering).  There is no separate
+end-user "v1 to v2" conversion command — keep the ``results/`` tree and
+upgrade the ASV install, then re-publish.
+
 .. _comparing:
 
 Comparing the benchmarking results for two revisions
 ----------------------------------------------------
 
 In some cases, you may want to directly compare the results for two specific
-revisions of the project. You can do so with the ``compare`` command::
+**project revisions** (Git commits or tags — not Python package versions).
+You can do so with the ``compare`` command::
 
     $ asv compare v0.1 v0.2
     All benchmarks:
@@ -612,6 +682,32 @@ are color coded). The threshold can be set with the
 into ones that have improved, stayed the same, and worsened, using the
 same threshold using the ``--split`` option.
 See :ref:`cmd-asv-compare` for more.
+
+.. note::
+
+   **Three different meanings of "version"** often appear in ASV output and
+   result files; they are easy to confuse:
+
+   1. **Project revision** — a Git commit, tag, or branch name passed to
+      ``asv run``, ``asv compare``, or shown as ``commit_hash`` / tag labels
+      (for example ``v0.1`` vs ``v0.2`` in ``asv compare v0.1 v0.2``).  This
+      is the generational axis ASV optimizes for.
+
+   2. **Benchmark suite version** — a per-benchmark identifier stored with
+      each measurement (default: hash of the benchmark source, including
+      ``setup`` / ``setup_cache``).  If you change the benchmark code, this
+      changes and ASV **ignores** older results for that benchmark so you
+      do not compare unlike measurements.  It is **not** your package's
+      PEP 440 version.  See :ref:`benchmark-versioning` and the ``version``
+      attribute in :doc:`benchmarks`.
+
+   3. **Results JSON API version** — a format version field in result files
+      under ``results/`` (see :doc:`dev`).  That versions the on-disk schema,
+      not the project or the benchmark code.
+
+   If ``asv compare`` marks benchmarks as not comparable, check (2) first:
+   the benchmark source (or explicit ``.version``) may have diverged between
+   the two revisions' recorded results.
 
 ASV also has a compare column which can be used to get a quick (and colorless)
 visual summary of benchmark results. This consists of a single ``mark`` where
@@ -658,3 +754,81 @@ each of its symbolic states can be understood as:
      - Better
 
 Additionally, statistically insignificant results have ``~`` in the ratio column as well.
+
+
+.. _non-python-and-cpp:
+
+Benchmarking C++ and other non-Python projects
+----------------------------------------------
+
+ASV's runner and result formats are Python-centric, but you can track **any**
+command-line benchmark whose primary metric you can turn into a number (or a
+dict of numbers) from Python.
+
+Recommended pattern:
+
+1. Keep building and installing the C++ (or other) project in
+   ``build_command`` / ``install_command`` (or install a wheel that embeds
+   binaries).  Use ``matrix`` / ``env`` entries for toolchains or flags when
+   needed.
+
+2. Write **Python benchmarks** that **invoke the binary** (subprocess) or call
+   a thin Python binding, and return timings via ``time_*`` or custom values
+   via ``track_*`` (see :doc:`writing_benchmarks` and :doc:`benchmarks`).
+
+3. For **multiple hardware targets**, use different ``asv machine`` names (or
+   separate result trees / machines in CI) and the same benchmark suite; the
+   web UI and ``asv compare`` are keyed by machine and environment labels.
+
+4. Prefer **stable command lines and inputs** inside ``setup`` /
+   ``setup_cache`` so process startup is not mixed into ``time_*`` unless that
+   is what you intend to measure.  For wall-clock of an external process,
+   set ``timer = timeit.default_timer`` on the benchmark when appropriate.
+
+ASV does not replace a hardware-in-the-loop harness; it stores and visualizes
+metrics you collect from the target (local subprocess, SSH, or simulator CLI
+wrapped in Python).
+
+.. _uv-and-lockfiles:
+
+Using ``uv`` and lockfiles
+-------------------------
+
+ASV does not replace your package manager's lockfile solver.  Environments are
+created by the configured ``environment_type`` (virtualenv, conda, mamba, …),
+then **build** / **install** commands run with substitutions such as
+``{build_dir}``, ``{env_dir}``, and ``{wheel_file}`` (see :doc:`asv.conf.json`).
+
+Common approaches:
+
+- **Build a wheel, install into the ASV env** (keeps ASV's env intact)::
+
+      "build_command": [
+          "python -m pip install uv",
+          "uv build . -o {build_cache_dir}"
+      ],
+      "install_command": [
+          "in-dir={env_dir} python -mpip install {wheel_file}"
+      ]
+
+  Or install with ``uv pip install`` **into** ``{env_dir}`` using that env's
+  interpreter.  This does **not** by itself apply ``uv.lock`` to the whole
+  environment.
+
+- **``uv sync`` against the project lockfile** can recreate the project env,
+  but it may **remove** packages ASV already installed into the managed
+  environment (including runner dependencies).  If you sync, use an approach
+  that preserves ASV's needs (for example an optional dependency group that
+  includes what the runner requires, or install the project with
+  ``uv pip install`` / ``uv sync`` in a way that does not wipe the env).
+  Treat lockfile fidelity and ASV's managed env as two constraints you must
+  reconcile explicitly.
+
+- Prefer documenting secrets and tokens via the **process environment** (see
+  build command environment variables in :doc:`asv.conf.json`), not in
+  ``asv.conf.json``.
+
+There is no single built-in ``environment_type`` that means "exactly this
+``uv.lock``" on all ASV versions; use custom commands as above, or a plugin
+backend if you maintain one.
+

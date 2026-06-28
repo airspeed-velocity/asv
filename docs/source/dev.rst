@@ -208,9 +208,11 @@ A benchmark suite directory has the following layout.  The
 
           For non-parametrized benchmarks, ``[]``.
 
-        - ``version``: string, a benchmark version identifier.  Results whose version
-          is not equal to the current version of the benchmark are ignored.
-          If the value is missing, no version comparisons are done
+        - ``version``: string, **benchmark suite version** for that benchmark
+          (hash of benchmark source by default; see :ref:`benchmark-versioning`).
+          Not the project release version and not a global results-API field.
+          Results whose version is not equal to the current benchmark version
+          are ignored.  If the value is missing, no version comparisons are done
           (backward compatibility).
 
         - ``started_at``: Javascript timestamp indicating start time of latest

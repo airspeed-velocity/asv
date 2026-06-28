@@ -67,14 +67,17 @@ benchmark types:
 
 - ``pretty_source``: If given, used to display a custom version of the benchmark source.
 
-- ``version``: Used to determine when to invalidate old benchmark
-  results.  Benchmark results produced with a different value of the
-  version than the current value will be ignored.  The value can be
-  any Python string (or other object, ``str()`` will be taken).
+- ``version``: **Benchmark suite version** for this benchmark only (not
+  the project's release version and not the results-file API version).
+  Used to invalidate old measurements when the benchmark definition
+  changes.  Results recorded with a different ``version`` than the
+  current suite are ignored in compare/publish.  The value can be any
+  Python string (or other object; ``str()`` is taken).
 
   Default (if ``version=None`` or not given): hash of the source code
   of the benchmark function and setup and setup_cache methods. If the
   source code of any of these changes, old results become invalidated.
+  See also the note under :ref:`comparing` in :doc:`using`.
 
 - ``setup``: function to be called as a setup function for the benchmark
   See :ref:`setup-and-teardown` for discussion.
@@ -124,41 +127,52 @@ benchmark types:
 Timing benchmarks
 `````````````````
 
-- ``warmup_time``: ``asv`` will spend this time (in seconds) in calling
-  the benchmarked function repeatedly, before starting to run the actual
-  benchmark. If not specified, ``warmup_time`` defaults to 0.1 seconds
-  (on PyPy, the default is 1.0 sec).
+- ``warmup_time``: After the benchmark process starts (and after ``number``
+  is calibrated when applicable), ``asv`` spends this many **seconds**
+  calling the benchmarked function repeatedly **before** recorded samples.
+  Default is 0.1 seconds (1.0 on PyPy).  Warmup is per benchmark process,
+  not a separate outer loop over the whole suite.
 
-- ``rounds``: How many rounds to run the benchmark in (default: 2).
-  The rounds run different timing benchmarks in an interleaved order,
-  allowing to sample over longer periods of background performance
-  variations (e.g. CPU power levels).
+- ``rounds``: How many **interleaved rounds** to run this timing benchmark
+  in (default: 2).  In each round, ASV runs through the selected benchmarks
+  (with other timing benchmarks interleaved) so measurements span longer
+  periods of background variation (for example CPU power levels).  With a
+  single benchmark selected (``asv run -b …``), you still get ``rounds``
+  passes over that benchmark; you will not necessarily see ``rounds`` as a
+  separate user-visible "loop counter" in the UI.
 
-- ``repeat``: The number measurement samples to collect per round.
-  Each sample consists of running the benchmark ``number`` times.
-  The median time from all samples collected in all roudns is used
-  as the final measurement result.
+- ``repeat``: How many **measurement samples** to collect **per round**.
+  Each sample runs the benchmark function ``number`` times (see below);
+  ``setup`` / ``teardown`` run around each sample, not around each inner
+  iteration.  The median over samples (across rounds) is the reported time.
 
   ``repeat`` can be a tuple ``(min_repeat, max_repeat, max_time)``.
-  In this case, the measurement first collects at least ``min_repeat``
-  samples, and continues until either ``max_repeat`` samples are collected
-  or the collection time exceeds ``max_time``.
+  ASV collects at least ``min_repeat`` samples, then continues until
+  ``max_repeat`` samples or about ``max_time`` seconds of sampling, whichever
+  comes first.
 
-  When not provided (``repeat`` set to 0), the default value is
+  When not provided (``repeat`` set to 0), the default is
   ``(1, 10, 20.0)`` if ``rounds==1`` and ``(1, 5, 10.0)`` otherwise.
 
-- ``number``: Manually choose the number of iterations in each sample.
-  If ``number`` is specified, ``sample_time`` is ignored.
-  Note that ``setup`` and ``teardown`` are not run between iterations:
-  ``setup`` runs first, then the timed benchmark routine is called
-  ``number`` times, and after that ``teardown`` runs.
+- ``number``: Inner iterations **per sample** (timed together, then divided
+  by ``number``).  If set manually, ``sample_time`` is ignored.
+  ``setup`` runs once per sample, then the function is called ``number``
+  times, then ``teardown``.
 
-- ``sample_time``: ``asv`` will automatically select ``number`` so that
-  each sample takes approximately ``sample_time`` seconds.  If not
-  specified, ``sample_time`` defaults to 10 milliseconds.
+- ``sample_time``: Target duration **in seconds** for one sample (default
+  0.01, i.e. 10 ms).  When ``number`` is not set, ASV **calibrates**
+  ``number`` once in the benchmark process so that running the function
+  ``number`` times takes about ``sample_time`` seconds, then collects
+  samples with that ``number``.  Calibration runs are not the reported
+  result; they only choose ``number``.
 
-- ``min_run_count``: the function is run at least this many times during
-  benchmark. Default: 2
+- ``min_run_count``: Ensure the benchmark function body runs at least this
+  many times in total during the timing protocol (default: 2).  This is a
+  **floor on total invocations**, distinct from ``repeat``'s
+  ``min_repeat`` (minimum **samples** per round).  Use ``min_run_count``
+  when you need a minimum amount of work even if ``number`` calibration
+  would otherwise stay very small; use ``repeat`` / ``min_repeat`` to
+  control how many timed samples feed the median.
 
 - ``timer``: The timing function to use, which can be any source of
   monotonically increasing numbers, such as ``time.clock``, ``time.time``

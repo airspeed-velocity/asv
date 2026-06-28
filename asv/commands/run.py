@@ -75,10 +75,11 @@ class Run(Command):
         parser.add_argument(
             'range', nargs='?', default=None,
             help="""Range of commits to benchmark.  For a git
-            repository, this is passed as the first argument to ``git
-            rev-list``; or Mercurial log command. See 'specifying ranges'
-            section of the `gitrevisions` manpage, or 'hg help revisions',
-            for more info. Also accepts the
+            repository, this is passed to ``git rev-list --first-parent``
+            (so merge side history is omitted; not the same as plain
+            ``git log``).  For Mercurial, a revset is used. See
+            'specifying ranges' in the `gitrevisions` manpage, or
+            'hg help revisions', for more info. Also accepts the
             special values 'NEW', 'ALL', 'EXISTING', and 'HASHFILE:xxx'.
             'NEW' will benchmark all commits since the latest
             benchmarked on this machine.  'ALL' will benchmark all

@@ -382,19 +382,21 @@ Timing
 
 Timing benchmarks have the prefix ``time``.
 
-How ASV runs benchmarks is as follows (pseudocode for main idea)::
+How ASV runs benchmarks is as follows (pseudocode for the main idea)::
 
-     for round in range(`rounds`):
+     for round in range(rounds):           # interleaved with other benchmarks
         for benchmark in benchmarks:
             with new process:
-                <calibrate `number` if not manually set>
-                for j in range(`repeat`):
-                    <setup `benchmark`>
-                    sample = timing_function(<run benchmark `number` times>) / `number`
-                    <teardown `benchmark`>
+                calibrate number from sample_time if number is unset
+                spend about warmup_time calling the function (unrecorded)
+                for j in range(repeat):    # or adaptive (min_repeat, max_repeat, max_time)
+                    setup(benchmark)
+                    sample = timing_function(run function number times) / number
+                    teardown(benchmark)
+                # enforce min_run_count on total function invocations if needed
 
-where the actual ``rounds``, ``repeat``, and ``number`` are :doc:`attributes
-of the benchmark <benchmarks>`.
+where ``rounds``, ``repeat``, ``number``, ``sample_time``, ``warmup_time``,
+and ``min_run_count`` are :doc:`attributes of the benchmark <benchmarks>`.
 
 The default timing function is `timeit.default_timer`, which uses the
 highest resolution clock available on a given platform to measure the
@@ -568,6 +570,8 @@ garbage collector at a given state::
 For details, see :doc:`benchmarks`.
 
 
+.. _benchmark-versioning:
+
 Benchmark versioning
 --------------------
 
@@ -575,13 +579,14 @@ When you edit benchmark's code in the benchmark suite, this often
 changes what is measured, and previously measured results should be
 discarded.
 
-Airspeed Velocity records with each benchmark measurement a "version
-number" for the benchmark. By default, it is computed by hashing the
-benchmark source code text, including any ``setup`` and
-``setup_cache`` routines.  If there are changes in the source code of
-the benchmark in the benchmark suite, the version number changes, and
-``asv`` will ignore results whose version number is different from the
-current one.
+Airspeed Velocity records with each benchmark measurement a **benchmark
+suite version** string (attribute ``version`` on the benchmark).  This is
+**not** your project's package version and **not** the results JSON format
+version.  By default it is computed by hashing the benchmark source code
+text, including any ``setup`` and ``setup_cache`` routines.  If that source
+changes, the version string changes, and ``asv`` ignores older results for
+that benchmark (so ``asv compare`` does not mix incompatible definitions).
+Project revisions remain identified by commit hashes / tags.
 
 It is also possible to control the versioning of benchmark results
 manually, by setting the ``.version`` attribute for the benchmark. The
