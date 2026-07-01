@@ -17,6 +17,11 @@ from asv.publishing import OutputPublisher
 from asv.repo import get_repo
 from asv.results import iter_results
 
+# URL / graphdisplay query keys (asv/www); matrix packages must not reuse these
+GRAPH_UI_RESERVED_PARAMS = frozenset({
+    'benchmark', 'commits', 'y-axis-scale', 'x-axis-scale', 'show-legend',
+})
+
 
 def check_benchmark_params(name, benchmark):
     """
@@ -216,6 +221,17 @@ class Publish(Command):
 
                     for branch in branches_for_commit:
                         cur_params = dict(results.params)
+                        # Matrix requirement names become graph params; rename
+                        # reserved UI keys (e.g. package "benchmark") so the
+                        # HTML viewer does not treat them as the benchmark id
+                        # (issue #819).
+                        for reserved in GRAPH_UI_RESERVED_PARAMS:
+                            if reserved in cur_params:
+                                cur_params[f'req-{reserved}'] = cur_params.pop(reserved)
+                                log.warning(
+                                    f"Matrix/result parameter {reserved!r} is reserved "
+                                    f"in the web UI; published as 'req-{reserved}'"
+                                )
                         cur_env = {f'env-{name}': val for name, val in results.env_vars.items()}
                         cur_params.update(cur_env)
                         cur_params['branch'] = repo.get_branch_name(branch)

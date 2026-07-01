@@ -44,6 +44,11 @@ class Config:
 
     api_version = 1
 
+    # Matrix package names that collide with web UI URL params (see publish.py)
+    GRAPH_UI_RESERVED_MATRIX_KEYS = frozenset({
+        'benchmark', 'commits', 'y-axis-scale', 'x-axis-scale', 'show-legend',
+    })
+
     def __init__(self):
         self.project = "project"
         self.project_url = "#"
@@ -111,5 +116,15 @@ class Config:
             # If 'branches' attribute is present, at least some must
             # be listed.
             raise util.UserError("No branches specified in config file.")
+
+        matrix = getattr(conf, "matrix", None) or {}
+        reserved = set(matrix) & cls.GRAPH_UI_RESERVED_MATRIX_KEYS
+        if reserved:
+            log.warning(
+                "Matrix keys %s are reserved by the results web UI (for example "
+                "the benchmark page id). Prefer a different requirement name, "
+                "or expect publish to rename them to 'req-<name>' (issue #819)."
+                % (sorted(reserved),)
+            )
 
         return conf
