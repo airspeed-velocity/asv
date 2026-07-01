@@ -276,13 +276,16 @@ class Run(Command):
 
         environments = list(environment.get_environments(conf, env_spec))
 
-        if environment.is_existing_only(environments) and set_commit_hash is None:
-            # No repository required, so skip using it
-            conf.dvcs = "none"
-
         has_existing_env = any(
             isinstance(env, environment.ExistingEnvironment) for env in environments
         )
+        existing_only = environment.is_existing_only(environments)
+
+        # Existing environments do not install from the repo. Use NoRepository
+        # only when the user also does not pass a commit range / set-commit-hash
+        # for labeling results. If they do, keep the real DVCS so hashes resolve.
+        if existing_only and set_commit_hash is None and range_spec is None:
+            conf.dvcs = "none"
 
         if interleave_rounds:
             if dry_run:
@@ -368,12 +371,13 @@ class Run(Command):
             log.error("No environments selected")
             return 1
 
-        if range_spec is not None:
-            for env in environments:
-                if not env.can_install_project():
-                    raise util.UserError(
-                        "No range spec may be specified if benchmarking in an existing environment"
-                    )
+        # Range / commit IDs with existing environments only label results
+        # (no checkout/install). Previously this raised (issue #1464).
+        if range_spec is not None and existing_only:
+            log.info(
+                "Using existing environment(s): commit range labels results "
+                "only (project is not built or installed)"
+            )
 
         benchmarks = Benchmarks.discover(conf, repo, environments, commit_hashes, regex=bench)
         benchmarks.save()
@@ -497,11 +501,23 @@ class Run(Command):
             with log.indent():
                 for subenv in util.iter_chunks(active_environments, parallel):
                     successes = {
-                        env.name: (env.installed_commit_hash == commit_hash, 0) for env in subenv
+                        env.name: (True, 0)
+                        for env in subenv
+                        if not env.can_install_project()
                     }
+                    successes.update(
+                        {
+                            env.name: (env.installed_commit_hash == commit_hash, 0)
+                            for env in subenv
+                            if env.can_install_project()
+                        }
+                    )
 
                     env_to_install = [
-                        env for env in subenv if env.installed_commit_hash != commit_hash
+                        env
+                        for env in subenv
+                        if env.can_install_project()
+                        and env.installed_commit_hash != commit_hash
                     ]
 
                     subenv_name = ', '.join([x.name for x in env_to_install])
@@ -544,6 +560,7 @@ class Run(Command):
                         skip_save = dry_run or (
                             isinstance(env, environment.ExistingEnvironment)
                             and set_commit_hash is None
+                            and commit_hash is None
                         )
 
                         skip_list = skipped_benchmarks[(commit_hash, env.name)]
