@@ -385,13 +385,6 @@ class Run(Command):
                 return 1
 
         benchmark_count = len(benchmarks)
-        steps = len(commit_hashes) * benchmark_count * len(environments)
-
-        log.info(
-            f"Running {steps} total benchmarks "
-            f"({len(commit_hashes)} commits * {len(environments)} "
-            f"environments * {len(benchmarks)} benchmarks)"
-        )
 
         parallel, multiprocessing = util.get_multiprocessing(parallel)
 
@@ -403,8 +396,6 @@ class Run(Command):
             max_rounds = int(attribute['rounds'])
         else:
             max_rounds = max(b.get('rounds', 1) for b in benchmarks.values())
-
-        log.set_nitems(steps * max_rounds)
 
         skipped_benchmarks = defaultdict(lambda: set())
 
@@ -433,6 +424,31 @@ class Run(Command):
                 except OSError:
                     pass
 
+        # Count work that will actually run (respects -k / skip-existing*).
+        steps = 0
+        for commit_hash in commit_hashes:
+            if commit_hash in skipped_benchmarks and skipped_benchmarks[commit_hash] is True:
+                continue
+            for env in environments:
+                skip_list = skipped_benchmarks[(commit_hash, env.name)]
+                for bench in benchmarks:
+                    if bench not in skip_list:
+                        steps += 1
+
+        log.info(
+            f"Running {steps} total benchmarks "
+            f"({len(commit_hashes)} commits * {len(environments)} "
+            f"environments * {len(benchmarks)} benchmarks"
+            + (
+                "; after skip-existing filters"
+                if (skip_successful or skip_failed or skip_existing_commits)
+                else ""
+            )
+            + ")"
+        )
+
+        log.set_nitems(steps * max_rounds)
+
         if interleave_rounds:
             run_round_set = [[j] for j in range(max_rounds, 0, -1)]
         else:
@@ -456,25 +472,8 @@ class Run(Command):
         build_durations = defaultdict(lambda: 0)
 
         for run_rounds, commit_hash in iter_rounds_commits():
-            if commit_hash in skipped_benchmarks:
-                for env in environments:
-                    for bench in benchmarks:
-                        if interleave_rounds:
-                            log.step()
-                        else:
-                            for _ in range(max_rounds):
-                                log.step()
+            if commit_hash in skipped_benchmarks and skipped_benchmarks[commit_hash] is True:
                 continue
-
-            for env in environments:
-                skip_list = skipped_benchmarks[(commit_hash, env.name)]
-                for bench in benchmarks:
-                    if bench in skip_list:
-                        if interleave_rounds:
-                            log.step()
-                        else:
-                            for _ in range(max_rounds):
-                                log.step()
 
             active_environments = [
                 env
