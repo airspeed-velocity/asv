@@ -94,9 +94,9 @@ class Regressions(OutputPublisher):
 
         filename = os.path.join(conf.html_dir, 'regressions.xml')
 
-        # Determine publication date as the date when the benchmark
-        # was run --- if it is missing, use the date of the commit
-        run_timestamps = {}
+        # Map revisions to commit dates (results.date is the DVCS commit time).
+        # Feed entry updated timestamps use commit dates so re-running old
+        # history does not look like new regressions in feed readers (#938).
         revision_timestamps = {}
         for results in iter_results(conf.results_dir):
             if results.commit_hash not in revisions:
@@ -105,18 +105,6 @@ class Regressions(OutputPublisher):
                 continue
             revision = revisions[results.commit_hash]
             revision_timestamps[revision] = results.date
-
-            # Time when the benchmark was run
-            for benchmark_name, timestamp in results.started_at.items():
-                if timestamp is None:
-                    continue
-                key = (benchmark_name, revision)
-                run_timestamps[key] = timestamp
-
-            # Fallback to commit date
-            for benchmark_name in results.get_result_keys(benchmarks):
-                key = (benchmark_name, revision)
-                run_timestamps.setdefault(key, results.date)
 
         # Generate feed entries
         entries = []
@@ -140,10 +128,9 @@ class Regressions(OutputPublisher):
                     graph_params['p-' + k] = v
 
             for rev1, rev2, value1, value2 in jumps:
-                timestamps = (
-                    run_timestamps[benchmark_name, t] for t in (rev1, rev2) if t is not None
-                )
-                last_timestamp = max(timestamps)
+                # Feed entry "updated" must be the regression *commit* date
+                # (rev2), not the time the benchmarks were last run (#938).
+                last_timestamp = revision_timestamps[rev2]
 
                 updated = datetime.datetime.fromtimestamp(last_timestamp / 1000)
 

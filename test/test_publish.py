@@ -459,18 +459,18 @@ def test_regression_atom_feed(generate_result_dir):
     assert root.tag == '{http://www.w3.org/2005/Atom}feed'
     entries = root.findall('{http://www.w3.org/2005/Atom}entry')
 
-    # Check entry titles
+    # Check entry titles (sorted by regression commit date, newest first)
     assert len(entries) == 2
     title = entries[0].find('{http://www.w3.org/2005/Atom}title')
-    assert title.text == '900.00% time_func'
-    title = entries[1].find('{http://www.w3.org/2005/Atom}title')
     assert title.text == '50.00% time_func'
+    title = entries[1].find('{http://www.w3.org/2005/Atom}title')
+    assert title.text == '900.00% time_func'
 
     # Check there's a link of some sort to the website in the content
     content = entries[0].find('{http://www.w3.org/2005/Atom}content')
-    assert ('<a href="index.html#time_func?commits=' + commits[5]) in content.text
-    content = entries[1].find('{http://www.w3.org/2005/Atom}content')
     assert ('<a href="index.html#time_func?commits=' + commits[10]) in content.text
+    content = entries[1].find('{http://www.w3.org/2005/Atom}content')
+    assert ('<a href="index.html#time_func?commits=' + commits[5]) in content.text
 
     # Smoke check ids
     id_1 = entries[0].find('{http://www.w3.org/2005/Atom}id')
