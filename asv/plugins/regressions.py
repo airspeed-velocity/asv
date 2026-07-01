@@ -128,10 +128,9 @@ class Regressions(OutputPublisher):
                     graph_params['p-' + k] = v
 
             for rev1, rev2, value1, value2 in jumps:
-                timestamps = (
-                    run_timestamps[benchmark_name, t] for t in (rev1, rev2) if t is not None
-                )
-                last_timestamp = max(timestamps)
+                # Feed entry "updated" must be the regression *commit* date
+                # (rev2), not the time the benchmarks were last run (#938).
+                last_timestamp = revision_timestamps[rev2]
 
                 updated = datetime.datetime.fromtimestamp(last_timestamp / 1000)
 
