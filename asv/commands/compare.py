@@ -444,7 +444,10 @@ class Compare(Command):
             if len(bench[key]) == 0:
                 continue
 
-            if not only_changed:
+            # In --split mode always show section titles (including with
+            # --only-changed); non-split --only-changed keeps a flat table
+            # without the "All benchmarks:" banner (issue #885).
+            if split or not only_changed:
                 color_print("")
                 color_print(titles[key])
                 color_print("")
