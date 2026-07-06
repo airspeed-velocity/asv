@@ -447,8 +447,8 @@ def get_environment_class_by_name(environment_type, conf=None, plugins=None):
     Find the environment class with the given name.
 
     Uses the single discovery path in :mod:`asv.envmgmt.discover` so that an
-    installed optional backend (entry point ``asv.plugins`` and/or conventional
-    module ``asv_env_<type>`` and/or conf ``plugins``) is imported when
+    installed optional backend (entry point group ``asv.environment_backends``
+    and/or conf ``plugins``; optional legacy ``asv_env_<type>`` if enabled) is imported when
     *environment_type* is requested — including from library code without
     going through ``Command``.
     """

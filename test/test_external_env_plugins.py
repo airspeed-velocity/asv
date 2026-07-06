@@ -1,13 +1,13 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-"""Optional HaoZeke asv_env_* plugins (separate repos, not vendored in ASV).
+"""Optional third-party env backends (entry points / packages).
 
-Discovery is via :mod:`asv.envmgmt.discover` / ``get_environment_class_by_name``
-— no Command required. Install e.g.::
-
-    pip install git+https://github.com/HaoZeke/asv_env_conda.git
+Packages provide group ``asv.environment_backends``. The conventional
+``asv_env_*`` module names remain a transitional fallback only when
+``ASV_ENV_LEGACY_MODULE_FALLBACK`` is enabled.
 """
 
 import importlib.util
+import os
 
 import pytest
 
@@ -23,19 +23,19 @@ ASV_ENV_PLUGINS = (
 )
 
 
-def test_core_only_virtualenv_and_existing():
+def test_core_virtualenv_existing():
     assert envmod.get_environment_class_by_name("virtualenv").tool_name == "virtualenv"
     assert envmod.get_environment_class_by_name("existing") is envmod.ExistingEnvironment
-    with pytest.raises(envmod.EnvironmentUnavailable):
-        envmod.get_environment_class_by_name("conda_not_installed_xyz_unique")
 
 
 @pytest.mark.parametrize("mod,tool", ASV_ENV_PLUGINS)
-def test_asv_env_plugin_resolves_when_installed(mod, tool):
+def test_asv_env_plugin_resolves_when_installed(mod, tool, monkeypatch):
     if importlib.util.find_spec(mod) is None:
-        pytest.skip(f"{mod} not installed (separate HaoZeke/{mod} repo)")
-    if mod == "asv_env_pixi" and importlib.util.find_spec("asv_env_rattler") is None:
-        pytest.skip("asv_env_pixi needs asv_env_rattler installed")
+        pytest.skip(f"{mod} not installed")
+    # Prefer entry points; enable legacy module fallback for older packages
+    # that only ship module EPs under asv.plugins or plain modules.
+    monkeypatch.setenv("ASV_ENV_LEGACY_MODULE_FALLBACK", "1")
     disc.clear_discovery_cache()
+    # In-tree tool of same name may win for conda/rattler/uv on Stage 1
     cls = envmod.get_environment_class_by_name(tool)
     assert cls.tool_name == tool

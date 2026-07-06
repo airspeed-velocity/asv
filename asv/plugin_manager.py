@@ -8,28 +8,24 @@ import sys
 from . import commands, plugins
 from .console import log
 
-# First-party environment backends shipped in asv.plugins.
-# Conda / rattler / uv / pixi / micromamba are not in-tree; optional third-party
-# plugins register Environment subclasses via conf ``plugins``, entry points
-# group ``asv.plugins``, or conventional ``asv_env_<type>`` modules — all
-# coordinated by :mod:`asv.envmgmt.discover` when an ``environment_type`` is
-# resolved (not only at import time).
+# First-party environment backends under asv.plugins. Missing optional
+# tools (if a distro strips them) must not hard-fail bootstrap.
 ENV_PLUGIN_REGEXES = [
     r"\.virtualenv$",
+    r"\.conda$",
+    r"\.rattler$",
+    r"\.uv$",
 ]
 
 
 class PluginManager:
     """
-    A class to load and manage plugins.
+    Load first-party plugins from ``asv.plugins`` / ``asv.commands``, and
+    optional conf module names via :meth:`import_plugin`.
 
-    By default in asv, plugins are searched for in the :py:mod:`asv.plugins`
-    namespace package and in the :py:mod:`asv.commands` package.
-
-    Then, any modules specified in the ``plugins`` entry in the
-    ``asv.conf.json`` file are loaded — preferably through
-    :func:`asv.envmgmt.discover.ensure_conf_backends` so library and CLI share
-    one path; ``Command.run_from_args`` delegates there.
+    Environment *type* resolution for optional third-party backends is owned
+    by :mod:`asv.envmgmt.discover` (entry point group
+    ``asv.environment_backends``), not by this class alone.
     """
 
     def __init__(self):
@@ -46,7 +42,7 @@ class PluginManager:
                 self._imported_names.add(name)
             except ModuleNotFoundError as err:
                 if any(re.search(regex, name) for regex in ENV_PLUGIN_REGEXES):
-                    continue  # Fine to not have these
+                    continue
                 else:
                     log.error(f"Couldn't load {name} because\n{err}")
 
@@ -59,11 +55,7 @@ class PluginManager:
         return None
 
     def import_plugin(self, name):
-        """Load a plugin by module name.
-
-        - ``.local_mod`` — import ``local_mod`` from the current working directory
-        - ``asv_env_*`` / other absolute names — ``importlib.import_module``
-        - short names still resolved under ``asv.plugins`` for compatibility
+        """Load a plugin by module name (conf ``plugins`` / local ``.mod``).
 
         Idempotent for the same absolute module name.
         """
@@ -107,9 +99,6 @@ class PluginManager:
                 getattr(plugin, hook_name)(*args, **kwargs)
 
 
-# Import-time: in-tree commands + asv.plugins only (virtualenv, dvcs, …).
-# Optional env backends are **not** loaded here with swallowed errors; they are
-# discovered on demand via asv.envmgmt.discover when environment_type is set.
 plugin_manager = PluginManager()
 plugin_manager.load_plugins(commands)
 plugin_manager.load_plugins(plugins)

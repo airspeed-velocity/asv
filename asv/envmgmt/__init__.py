@@ -1,10 +1,9 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-"""Environment management extraction (design spike).
+"""Environment management: discovery (production) and lifecycle spike.
 
-Public symbols for the backend boundary. Legacy code still lives in
-``asv.environment``; this package owns **backend discovery** via
-:mod:`asv.envmgmt.discover` so ``environment_type`` resolves without
-going through ``Command``.
+Discovery (:mod:`asv.envmgmt.discover`) is the host-side resolver for
+``environment_type``. Protocol/facade modules are a longer-term lifecycle
+spike and are not required for discovery.
 """
 
 from .discover import (

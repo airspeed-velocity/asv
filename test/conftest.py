@@ -141,14 +141,9 @@ def pytest_sessionstart(session):
 
 
 def _monkeypatch_conda_lock(config):
-    # Conda backend: HaoZeke/asv_env_conda (optional; not shipped in core ASV).
-    try:
-        import asv_env_conda
-    except ImportError:
-        return
-
     import filelock
 
+    import asv.plugins.conda
     import asv.util
 
     @contextlib.contextmanager
@@ -158,7 +153,7 @@ def _monkeypatch_conda_lock(config):
             yield
 
     path = config.cache.makedir('conda-lock') / 'lock'
-    asv_env_conda._conda_lock = _conda_lock
+    asv.plugins.conda._conda_lock = _conda_lock
 
 
 @pytest.fixture(
