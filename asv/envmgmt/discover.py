@@ -20,13 +20,13 @@ EP **value** = class, zero-arg factory returning a class, or (legacy) module.
 Built-ins
 ---------
 ``virtualenv`` and ``existing`` ship in core (loaded via ``asv.plugins``
-bootstrap). Optional in-tree tools (conda/rattler/uv) also register via
-bootstrap when present — Stage 1 is *additive*; third-party packages use
-entry points.
+bootstrap). Optional backends (conda, rattler, uv, mamba, pixi, …) are
+**out-of-tree** packages that register via entry points — not in-tree
+``asv.plugins`` modules.
 
 Precedence (deterministic)
 --------------------------
-1. Built-in / already-registered subclass with matching ``tool_name``.
+1. Already-registered subclass with matching ``tool_name`` (core: virtualenv/existing).
 2. Conf ``plugins`` module imports (explicit user request; fail closed).
 3. Entry points in ``asv.environment_backends`` for this type (duplicate
    providers → fail closed; load error / tool_name mismatch → fail closed).

@@ -8,13 +8,11 @@ import sys
 from . import commands, plugins
 from .console import log
 
-# First-party environment backends under asv.plugins. Missing optional
-# tools (if a distro strips them) must not hard-fail bootstrap.
+# First-party env backends under asv.plugins. Only virtualenv ships in core;
+# conda / rattler / uv / mamba / pixi come from entry-point packages
+# (group asv.environment_backends), e.g. asv_env_*.
 ENV_PLUGIN_REGEXES = [
     r"\.virtualenv$",
-    r"\.conda$",
-    r"\.rattler$",
-    r"\.uv$",
 ]
 
 
@@ -23,9 +21,9 @@ class PluginManager:
     Load first-party plugins from ``asv.plugins`` / ``asv.commands``, and
     optional conf module names via :meth:`import_plugin`.
 
-    Environment *type* resolution for optional third-party backends is owned
-    by :mod:`asv.envmgmt.discover` (entry point group
-    ``asv.environment_backends``), not by this class alone.
+    Optional environment backends are **not** in-tree. Resolution of
+    ``environment_type`` is owned by :mod:`asv.envmgmt.discover` (entry
+    point group ``asv.environment_backends``).
     """
 
     def __init__(self):

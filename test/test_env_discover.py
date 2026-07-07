@@ -1,10 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """Host-side environment backend discovery (asv.envmgmt.discover)."""
 
-import sys
 import textwrap
 import warnings
-from pathlib import Path
 
 import pytest
 
@@ -16,7 +14,6 @@ from asv.envmgmt import discover as disc
 @pytest.fixture(autouse=True)
 def _clear_discover_cache(monkeypatch):
     disc.clear_discovery_cache()
-    # Stage-1 tests: no legacy module fallback unless a test opts in
     monkeypatch.delenv("ASV_ENV_LEGACY_MODULE_FALLBACK", raising=False)
     yield
     disc.clear_discovery_cache()
@@ -46,15 +43,34 @@ def test_missing_type_fails_closed_without_haozeeke_url():
     assert "git+https" not in msg
 
 
-def test_in_tree_conda_still_resolves_when_present():
-    """Stage 1: optional in-tree backends remain available."""
-    try:
-        import asv.plugins.conda  # noqa: F401
-    except Exception:
-        pytest.skip("conda plugin not importable in this environment")
-    disc.clear_discovery_cache()
-    cls = envmod.get_environment_class_by_name("conda")
-    assert cls.tool_name == "conda"
+def test_core_does_not_ship_optional_env_plugins():
+    """Optional backends live out-of-tree — no asv.plugins.conda/rattler/uv."""
+    import importlib.util
+
+    for mod in ("asv.plugins.conda", "asv.plugins.rattler", "asv.plugins.uv"):
+        assert importlib.util.find_spec(mod) is None, mod
+
+
+def test_optional_backend_resolves_via_entry_point_when_installed():
+    """When an asv_env_* (or any EP provider) is installed, type resolves."""
+    import importlib.util
+
+    # Prefer conda package if present; else any of the known optional tools
+    candidates = (
+        ("asv_env_conda", "conda"),
+        ("asv_env_rattler", "rattler"),
+        ("asv_env_uv", "uv"),
+        ("asv_env_mamba", "mamba"),
+        ("asv_env_pixi", "pixi"),
+    )
+    for mod, tool in candidates:
+        if importlib.util.find_spec(mod) is not None:
+            disc.clear_discovery_cache()
+            cls = envmod.get_environment_class_by_name(tool)
+            assert cls.tool_name == tool
+            assert not cls.__module__.startswith("asv.plugins.")
+            return
+    pytest.skip("no optional asv_env_* package installed in this environment")
 
 
 def test_conf_plugins_via_ensure_conf_backends(tmp_path, monkeypatch):
@@ -113,9 +129,13 @@ def test_legacy_module_fallback_opt_in(tmp_path, monkeypatch):
         warnings.simplefilter("always")
         cls = envmod.get_environment_class_by_name(tool)
     assert cls.tool_name == tool
-    assert any("transitional" in str(x.message).lower() or "legacy" in str(x.message).lower()
-               or "ASV_ENV" in str(x.message) or "entry point" in str(x.message).lower()
-               for x in w)
+    assert any(
+        "transitional" in str(x.message).lower()
+        or "legacy" in str(x.message).lower()
+        or "ASV_ENV" in str(x.message)
+        or "entry point" in str(x.message).lower()
+        for x in w
+    )
 
 
 def test_legacy_module_fallback_off_by_default(tmp_path, monkeypatch):
@@ -161,8 +181,6 @@ def test_broken_legacy_module_fails_closed_when_enabled(tmp_path, monkeypatch):
 
 
 def test_duplicate_entry_points_fail_closed(monkeypatch):
-    """Two providers for the same environment_type must not pick arbitrarily."""
-
     class _FakeDist:
         def __str__(self):
             return "fake-dist"
