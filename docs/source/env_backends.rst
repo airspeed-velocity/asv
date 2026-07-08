@@ -105,9 +105,12 @@ Recommended patterns (see also issues `#1542`_, `#1543`_, `#1436`_):
 **pixi**:
 
 - Matrix conda deps go into the workspace manifest (one create/solve).
-- Joint conda+PyPI is a backend capability; ASV does not yet pass the
-  project wheel into that solve automatically — still prefer
-  ``--no-deps`` for the project layer until a joint install path exists.
+- Matrix ``pip+`` keys are written to ``[pypi-dependencies]`` (simple
+  pins) and installed via ``python -m pip`` after ``pixi install`` so
+  they are not silently dropped.
+- Joint conda+PyPI for the *project wheel* is not automatic yet — still
+  prefer ``--no-deps`` for the project layer until a joint install path
+  exists.
 
 Helpers live in :mod:`asv.envmgmt.matrix_layers`
 (``backend_capabilities``, ``recommend_install_command``,

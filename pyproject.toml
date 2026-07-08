@@ -96,11 +96,11 @@ plugs = [
 # provider is on the index used by pip; until then install the matching
 # asv_env_* package from its repository. Entry point group:
 # asv.environment_backends (name == environment_type).
-conda = ["asv_env_conda>=0.2.2"]
+conda = ["asv_env_conda>=0.2.3"]
 mamba = ["asv_env_mamba>=0.2.2"]
 rattler = ["asv_env_rattler>=0.4.1"]
 uv = ["asv_env_uv>=0.4.2"]
-pixi = ["asv_env_pixi>=0.4.1"]
+pixi = ["asv_env_pixi>=0.4.2"]
 envs = ["asv[conda,mamba,rattler,uv,pixi]"]
 all = ["asv[doc,dev,hg,envs]"]
 
