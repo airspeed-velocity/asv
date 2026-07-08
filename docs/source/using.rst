@@ -79,11 +79,12 @@ suite are:
   github project, the URL is of the form
   ``https://github.com/$OWNER/$REPO/commit/``.
 
-- ``environment_type``: The tool used to create environments.  May be
-  ``conda``, ``virtualenv``, ``rattler``, or ``uv``.  If Conda supports the
-  dependencies you need, that is the recommended method, but Rattler is
-  faster.
-  See :ref:`environments` for more information.
+- ``environment_type``: The tool used to create environments. Core
+  always provides ``virtualenv`` (default) and ``existing``. Optional
+  types such as ``conda``, ``rattler``, ``uv``, ``mamba``, or ``pixi``
+  require installing the matching backend package (for example
+  ``pip install "asv[uv]"``). See :ref:`environments` and
+  :ref:`env-backends`.
 
 - ``matrix``: Dependencies you want to preinstall into the environment
   where benchmarks are run.
@@ -185,13 +186,11 @@ over and dependencies are installed into the environment.  The
 environments are stored in the ``env`` directory so that the next time
 the benchmarks are run, things will start much faster.
 
-Environments can be created using different tools.  By default,
-``asv`` ships with support for `anaconda
-<https://store.continuum.io/cshop/anaconda/>`__,
-`rattler <https://conda.github.io/rattler/py-rattler/>`__, and
-`virtualenv <https://pypi.python.org/pypi/virtualenv>`__.  The
-``environment_type`` key in ``asv.conf.json`` is used to select the
-tool used to create environments.
+Environments can be created using different tools. Core ASV ships
+``virtualenv`` (and ``existing`` / ``python: "same"``). Optional tools
+(``conda``, ``rattler``, ``uv``, ``mamba``, ``pixi``, …) install as
+drop-in packages — see :ref:`env-backends`. The ``environment_type``
+key in ``asv.conf.json`` selects the tool.
 
 When using ``virtualenv``, ``asv`` does not build Python interpreters
 for you, but it expects to find the Python versions specified

@@ -480,6 +480,14 @@ class Environment:
     tool_name = None
     matches_python_fallback = True
 
+    # Matrix / project layer capabilities (see asv.envmgmt.matrix_layers).
+    # Optional backends should override these to match real solver behaviour.
+    matrix_install_mode = "create"  # create | post | joint
+    supports_joint_pypi_conda_solve = False
+    supports_joint_pypi_solve = False
+    project_install_prefers_no_deps = False
+    requires_host_tool = None
+
     def __init__(self, conf, python, requirements, tagged_env_vars):
         """
         Get an environment for a given requirement matrix and
@@ -1045,6 +1053,9 @@ class Environment:
 
 class ExistingEnvironment(Environment):
     tool_name = "existing"
+    matrix_install_mode = "create"
+    supports_joint_pypi_solve = False
+    project_install_prefers_no_deps = False
 
     def __init__(self, conf, executable, requirements, tagged_env_vars):
         if executable == 'same':
