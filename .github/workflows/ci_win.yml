@@ -31,7 +31,7 @@ jobs:
       - name: Install and test
         shell: pwsh
         run: |
-          python.exe -m pip install .[test,envs]
+          python.exe -m pip install -e . --group test --group envs
           python.exe -m pip install packaging
           python.exe -m pytest -v -l -x --timeout=300 --durations=100 test --environment-type=rattler
 
@@ -58,12 +58,8 @@ jobs:
             py_rattler
             conda-build
 
-      - name: Install dependencies
-        run: python -m pip install ".[test,hg,envs]" --pre
-        shell: pwsh
-
-      - name: Install asv
-        run: pip install .
+      - name: Install asv with test, hg, and envs groups (with --pre)
+        run: python -m pip install -e . --group test --group hg --group envs --pre
         shell: pwsh
 
       - name: Run tests

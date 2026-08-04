@@ -56,7 +56,7 @@ Documentation = "https://asv.readthedocs.io/en/stable/"
 [project.scripts]
 asv = "asv.__main__:main"
 
-[project.optional-dependencies]
+[dependency-groups]
 test = [
     "pytest",
     "pytest-xdist",
