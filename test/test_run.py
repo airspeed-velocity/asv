@@ -5,6 +5,7 @@ import glob
 import os
 import re
 import shutil
+import sys
 import textwrap
 from os.path import join
 
@@ -505,6 +506,50 @@ def test_run_python_same(capsys, basic_conf):
     # Check that it did not clone or install
     assert "Cloning" not in text
     assert "Installing" not in text
+
+
+def test_run_failure_summary(capsys, existing_env_conf):
+    tmpdir, local, conf, machine_file = existing_env_conf
+
+    tools.run_asv_with_conf(
+        conf,
+        'run',
+        '--bench=time_secondary.TimeSecondary.time_exception',
+        '--bench=time_secondary.track_value',
+        _machine_file=join(tmpdir, 'asv-machine.json'),
+    )
+    text, err = capsys.readouterr()
+
+    # the console indents continuation lines, so compare without it
+    summary = [line.strip() for line in text[text.index("Failures ("):].strip().splitlines()]
+    assert summary == [
+        "Failures (1):",
+        "FAILED time_secondary.TimeSecondary.time_exception -- exit status 1",
+    ]
+
+
+def test_run_failure_summary_multiple_environments(capsys, existing_env_conf):
+    tmpdir, local, conf, machine_file = existing_env_conf
+
+    tools.run_asv_with_conf(
+        conf,
+        'run',
+        '-E', 'existing:same',
+        '-E', f'existing:{sys.executable}',
+        '--bench=time_secondary.TimeSecondary.time_exception',
+        _machine_file=join(tmpdir, 'asv-machine.json'),
+    )
+    text, err = capsys.readouterr()
+
+    # more than one environment, so each failure is tagged with the one it came from
+    summary = [line.strip() for line in text[text.index("Failures ("):].strip().splitlines()]
+    assert summary[0] == "Failures (2):"
+    assert all(
+        re.fullmatch(
+            r"FAILED time_secondary\.TimeSecondary\.time_exception \[\S+\] -- exit status 1", line
+        )
+        for line in summary[1:]
+    ), summary
 
 
 def test_run_python_arg():

@@ -14,7 +14,7 @@ from ..console import log
 from ..machine import Machine
 from ..repo import NoSuchNameError, get_repo
 from ..results import Results, get_existing_hashes, iter_results_for_machine_and_hash
-from ..runner import run_benchmarks, skip_benchmarks
+from ..runner import JSON_ERROR_RETCODE, run_benchmarks, skip_benchmarks
 from . import Command, common_args
 from .setup import Setup
 from .show import Show
@@ -310,6 +310,8 @@ class Run(Command):
 
         # Track failures across the run command
         failures = False
+        failed_benchmarks = []
+        failed_builds = []
 
         # Comparison period for date_period filtering
         old_commit_hashes = None
@@ -611,7 +613,19 @@ class Run(Command):
                         if not skip_save:
                             result.save(conf.results_dir)
 
-                        failures = failures or any(code != 0 for code in result.errcode.values())
+                        failed = {
+                            name: code for name, code in result.errcode.items() if code != 0
+                        }
+                        if failed:
+                            failures = True
+                            if success:
+                                failed_benchmarks.extend(
+                                    (commit_hash, env.name, name, code)
+                                    for name, code in sorted(failed.items())
+                                )
+                            else:
+                                # a failed build fails every benchmark; report it once
+                                failed_builds.append((commit_hash, env.name))
 
                         if durations > 0:
                             duration_set = Show._get_durations([(machine, result)], benchmark_set)
@@ -620,7 +634,38 @@ class Run(Command):
                             )
 
         if failures:
+            log.info(
+                cls.format_failures(
+                    failed_benchmarks,
+                    failed_builds,
+                    show_context=len(commit_hashes) > 1 or len(environments) > 1,
+                ),
+                color='red',
+            )
             return 2
+
+    @classmethod
+    def format_failures(cls, failed_benchmarks, failed_builds, show_context=False):
+        """Summarize failures, so they are greppable without the whole run log."""
+
+        def context(commit_hash, env_name):
+            if not show_context:
+                return ""
+            commit = f"{commit_hash[:8]} " if commit_hash else ""
+            return f" [{commit}{env_name}]"
+
+        lines = [f"Failures ({len(failed_builds) + len(failed_benchmarks)}):"]
+        for commit_hash, env_name in failed_builds:
+            lines.append(f"  FAILED build{context(commit_hash, env_name)}")
+        for commit_hash, env_name, name, code in failed_benchmarks:
+            if code == util.TIMEOUT_RETCODE:
+                reason = "timed out"
+            elif code == JSON_ERROR_RETCODE:
+                reason = "invalid benchmark result"
+            else:
+                reason = f"exit status {code}"
+            lines.append(f"  FAILED {name}{context(commit_hash, env_name)} -- {reason}")
+        return "\n".join(lines)
 
     @classmethod
     def format_durations(cls, durations, num_durations):
