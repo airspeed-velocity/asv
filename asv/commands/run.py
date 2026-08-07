@@ -451,12 +451,14 @@ class Run(Command):
             + ")"
         )
 
-        log.set_nitems(steps * max_rounds)
-
+        progress_rounds = max_rounds
         if interleave_rounds:
             run_round_set = [[j] for j in range(max_rounds, 0, -1)]
         else:
             run_round_set = [None]
+            if quick:
+                progress_rounds = 1
+        log.set_nitems(steps * progress_rounds)
 
         if launch_method is None:
             # Allow the users to set the launch_method by the command line argument
