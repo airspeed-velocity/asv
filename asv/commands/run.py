@@ -308,10 +308,12 @@ class Run(Command):
         if set_commit_hash is not None:
             set_commit_hash = repo.get_hash_from_name(set_commit_hash)
 
-        # Track failures across the run command
+        # Track failures across the run command. Interleaved rounds revisit each
+        # (commit, env) once per round and errcode is not reloaded from disk, so
+        # key these to report a persistently failing benchmark only once.
         failures = False
-        failed_benchmarks = []
-        failed_builds = []
+        failed_benchmarks = {}
+        failed_builds = {}
 
         # Comparison period for date_period filtering
         old_commit_hashes = None
@@ -613,19 +615,15 @@ class Run(Command):
                         if not skip_save:
                             result.save(conf.results_dir)
 
-                        failed = {
-                            name: code for name, code in result.errcode.items() if code != 0
-                        }
+                        failed = {name: code for name, code in result.errcode.items() if code != 0}
                         if failed:
                             failures = True
                             if success:
-                                failed_benchmarks.extend(
-                                    (commit_hash, env.name, name, code)
-                                    for name, code in sorted(failed.items())
-                                )
+                                for name, code in failed.items():
+                                    failed_benchmarks[commit_hash, env.name, name] = code
                             else:
                                 # a failed build fails every benchmark; report it once
-                                failed_builds.append((commit_hash, env.name))
+                                failed_builds[commit_hash, env.name] = None
 
                         if durations > 0:
                             duration_set = Show._get_durations([(machine, result)], benchmark_set)
@@ -655,9 +653,9 @@ class Run(Command):
             return f" [{commit}{env_name}]"
 
         lines = [f"Failures ({len(failed_builds) + len(failed_benchmarks)}):"]
-        for commit_hash, env_name in failed_builds:
+        for commit_hash, env_name in sorted(failed_builds):
             lines.append(f"  FAILED build{context(commit_hash, env_name)}")
-        for commit_hash, env_name, name, code in failed_benchmarks:
+        for (commit_hash, env_name, name), code in sorted(failed_benchmarks.items()):
             if code == util.TIMEOUT_RETCODE:
                 reason = "timed out"
             elif code == JSON_ERROR_RETCODE:
