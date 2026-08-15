@@ -549,11 +549,22 @@ class Results:
 
         Returns
         -------
-        profile_data : pstats.Stats
-            Profile data
+        profile_data : bytes
+            Raw profile data. Use `get_profile_stats` for a `pstats.Stats`
+            object.
+
+        Raises
+        ------
+        UserError
+            If no profile was stored for the benchmark.
 
         """
-        profile_data = self._profiles[benchmark_name]
+        profile_data = self._profiles.get(benchmark_name)
+        if not profile_data:
+            raise util.UserError(
+                f"No profile data available for benchmark '{benchmark_name}'. "
+                f"Re-run the benchmark with --profile to collect it."
+            )
         profile_data = profile_data.encode('ascii')
         profile_bytes = zlib.decompress(base64.b64decode(profile_data))
         return profile_bytes
