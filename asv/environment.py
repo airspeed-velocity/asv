@@ -1100,4 +1100,19 @@ class ExistingEnvironment(Environment):
 
     def run(self, args, **kwargs):
         log.debug(f"Running '{' '.join(args)}' in {self.name}")
+        # An existing environment is deliberately not isolated: the interpreter,
+        # and everything it can import, is the one the user asked for. Managed
+        # environments drop PYTHONPATH before spawning the interpreter, so
+        # ``asv.benchmark`` treats a PYTHONPATH that survives as a leak and
+        # removes those entries from ``sys.path`` unless the same entries are
+        # advertised through ASV_PYTHONPATH. Promote them here, so that
+        # interpreters which are made importable through PYTHONPATH alone
+        # (pixi, module systems, ``pip install --target``) keep working.
+        env = kwargs.get("env")
+        if env is None:
+            env = os.environ
+        if "PYTHONPATH" in env and "ASV_PYTHONPATH" not in env:
+            env = dict(env)
+            env["ASV_PYTHONPATH"] = env["PYTHONPATH"]
+            kwargs["env"] = env
         return util.check_output([self._executable] + args, **kwargs)
