@@ -5,7 +5,7 @@ import sys
 
 import pytest
 
-from asv import config, environment, util
+from asv import config, environment, runner, util
 from asv.repo import get_repo
 from asv.util import shlex_quote as quote
 
@@ -588,6 +588,63 @@ def test_matrix_existing(skip_no_conda: pytest.FixtureRequest):
     environments = list(environment.get_environments(conf, None))
     items = [(env.tool_name, tuple(env.requirements.keys())) for env in environments]
     assert items == [('existing', ())]
+
+
+def test_existing_environment_keeps_pythonpath(tmpdir, monkeypatch):
+    # An existing environment is not isolated, so a module that is importable
+    # only because of PYTHONPATH has to stay importable in the benchmark
+    # process. asv.benchmark drops PYTHONPATH entries from sys.path unless the
+    # same entries also arrive as ASV_PYTHONPATH.
+    tmpdir = str(tmpdir)
+
+    lib_dir = os.path.join(tmpdir, 'lib')
+    os.makedirs(lib_dir)
+    with open(os.path.join(lib_dir, 'asv_pythonpath_module.py'), 'w') as fd:
+        fd.write('VALUE = 42\n')
+
+    benchmark_dir = os.path.join(tmpdir, 'benchmarks')
+    os.makedirs(benchmark_dir)
+    with open(os.path.join(benchmark_dir, '__init__.py'), 'w') as fd:
+        fd.write('')
+    with open(os.path.join(benchmark_dir, 'bench_pythonpath.py'), 'w') as fd:
+        fd.write(
+            'import asv_pythonpath_module\n'
+            '\n'
+            '\n'
+            'def track_value():\n'
+            '    return asv_pythonpath_module.VALUE\n'
+        )
+
+    conf = config.Config()
+    conf.env_dir = os.path.join(tmpdir, 'env')
+    conf.environment_type = 'existing'
+    conf.pythons = ['same']
+    conf.matrix = {}
+
+    (env,) = environment.get_environments(conf, [])
+
+    monkeypatch.setenv('PYTHONPATH', lib_dir)
+
+    # Discovery imports the benchmark module, and so the PYTHONPATH module
+    result_file = os.path.join(tmpdir, 'result.json')
+    env.run(
+        [runner.BENCHMARK_RUN_SCRIPT, 'discover', benchmark_dir, result_file],
+        cwd=tmpdir,
+        env=dict(os.environ),
+        dots=False,
+    )
+    with open(result_file, 'r') as fd:
+        names = [benchmark['name'] for benchmark in json.load(fd)]
+    assert names == ['bench_pythonpath.track_value']
+
+    output = env.run(['-c', 'import os; print(os.environ["ASV_PYTHONPATH"])'])
+    assert output.strip() == lib_dir
+
+    # An ASV_PYTHONPATH the caller set themselves is left alone
+    other_dir = os.path.join(tmpdir, 'other')
+    monkeypatch.setenv('ASV_PYTHONPATH', other_dir)
+    output = env.run(['-c', 'import os; print(os.environ["ASV_PYTHONPATH"])'])
+    assert output.strip() == other_dir
 
 
 # environment.yml should respect the specified order
