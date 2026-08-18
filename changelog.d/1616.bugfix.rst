@@ -1,0 +1,1 @@
+Existing environments (``--python=same``) keep ``PYTHONPATH`` entries importable in the benchmark process, so interpreters set up through ``PYTHONPATH`` alone (pixi, environment modules, ``pip install --target``) no longer fail discovery with ``ModuleNotFoundError`` (#1537).
