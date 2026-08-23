@@ -49,6 +49,25 @@ commands = {
 }
 
 
+def _apply_path_env():
+    """Apply ``ASV_PYTHONPATH`` to ``sys.path`` for this process.
+
+    Managed environments already drop bare ``PYTHONPATH`` in
+    ``Environment.run_executable`` (isolation). ``ExistingEnvironment`` /
+    ``--python=same`` inherits the host environment, including
+    ``PYTHONPATH``, which in-tree builds rely on for a build directory.
+    Do not strip host ``PYTHONPATH`` here; that broke discovery under
+    ``--python=same`` (gh-1537) and also undid ``ASV_PYTHONPATH`` after
+    ``run_executable`` rewrote it to ``PYTHONPATH``.
+    """
+    asv_pythonpath = os.environ.get('ASV_PYTHONPATH')
+    if not asv_pythonpath:
+        return
+    for path in reversed(asv_pythonpath.split(os.pathsep)):
+        if path and path not in sys.path:
+            sys.path.insert(0, path)
+
+
 def main():
     # Remove asv package directory from `sys.path`. This script file resides
     # there although it's not part of the package, so Python prepends it to
@@ -68,24 +87,7 @@ def main():
     mode = sys.argv[1]
     args = sys.argv[2:]
 
-    env = os.environ.copy()
-    # --- Modify sys.path for the current interpreter ---
-    if 'ASV_PYTHONPATH' in env:
-        new_paths = env['ASV_PYTHONPATH'].split(os.pathsep)
-        for path in reversed(new_paths):  # Add to the front to prioritize
-            if path not in sys.path:
-                sys.path.insert(0, path)
-        # Remove ASV_PYTHONPATH from env, as it's no longer needed after sys.path update
-        env.pop('ASV_PYTHONPATH')
-    else:
-        # Clean up sys.path if PYTHONPATH was set but ASV_PYTHONPATH is not
-        if 'PYTHONPATH' in env:
-            old_paths = env['PYTHONPATH'].split(os.pathsep)
-            for path in old_paths:
-                if path in sys.path:
-                    sys.path.remove(path)
-
-            env.pop('PYTHONPATH')
+    _apply_path_env()
 
     if mode in commands:
         commands[mode](args)
