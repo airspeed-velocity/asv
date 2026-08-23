@@ -454,10 +454,14 @@ defaults to ``"benchmarks"``.
 
 ``environment_type``
 --------------------
-Specifies the tool to use to create environments.  May be ``conda``,
-``virtualenv``, ``rattler``, ``uv`` or another value depending on the plugins in use.
-If missing or the empty string, the tool will be automatically determined by
-looking for tools on the ``PATH`` environment variable.
+Specifies the tool to use to create environments. Core values are
+``virtualenv`` and (via ``python: "same"``) ``existing``. Optional values
+such as ``conda``, ``rattler``, ``uv``, ``mamba``, or ``pixi`` require an
+installed backend package that registers the type under the
+``asv.environment_backends`` entry-point group (see :ref:`env-backends`).
+
+If missing or the empty string, ``virtualenv`` is used.
+
 
 ``env_dir``
 -----------

@@ -17,6 +17,9 @@ class Virtualenv(environment.Environment):
     """
 
     tool_name = "virtualenv"
+    matrix_install_mode = "create"
+    supports_joint_pypi_solve = True
+    project_install_prefers_no_deps = True
 
     def __init__(self, conf, python, requirements, tagged_env_vars):
         """

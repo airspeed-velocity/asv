@@ -26,31 +26,30 @@ The basic requirements should be automatically installed.  If they aren't
 installed automatically, for example due to networking restrictions, the
 ``python`` requirements are as noted in the ``pyproject.toml``.
 
-For managing the environments, one of the following packages is required:
+Environment backends
+--------------------
 
-- `py-rattler <https://conda.github.io/rattler/py-rattler/>`__, which is used
-  for the new ``rattler`` backend.
+**Built-in** (always available with ``pip install asv``):
 
-- `virtualenv <https://virtualenv.pypa.io/>`__, which is required since
-  venv is not compatible with other versions of Python.
+- `virtualenv <https://virtualenv.pypa.io/>`__ — default when
+  ``environment_type`` is empty. Uses interpreters already on ``PATH``.
 
-- An `anaconda <https://www.anaconda.com/download>`__ or
-  `miniconda <https://www.anaconda.com/docs/getting-started/miniconda/>`__
-  installation, with the ``conda`` command available on your path.
+**Optional** backends are separate packages. Install the matching extra
+(or the package itself) into the *host* environment that runs ``asv``::
 
-- `uv <https://docs.astral.sh/uv/>`__, which is used
-  for the ``uv`` backend.
+    pip install "asv[uv]"       # or asv[conda], asv[rattler], asv[mamba], asv[pixi]
+    # then set "environment_type": "uv" in asv.conf.json
+
+See :ref:`env-backends` for discovery rules, matrix layers, and how to
+author a backend package.
 
 .. note::
 
-   ``rattler`` is the fastest for situations where non-pythonic
-   dependencies are required. Anaconda or miniconda is slower but
-   still preferred if the project involves a lot of compiled C/C++
-   extensions and are available in the ``conda`` repository, since
-   ``conda`` will be able to fetch precompiled binaries for these
-   dependencies in many cases. Using ``virtualenv``, dependencies
-   without precompiled wheels usually have to be compiled every
-   time the environments are set up.
+   Prefer a solver-backed backend (``rattler``, ``pixi``, or ``uv``) when
+   non-trivial dependency matrices matter. Classic ``conda`` remains
+   useful for environment.yml workflows but applies pip after conda
+   without a joint solve. Plain ``virtualenv`` is enough for pure-Python
+   projects with interpreters already installed.
 
 Optional optimizations
 ----------------------

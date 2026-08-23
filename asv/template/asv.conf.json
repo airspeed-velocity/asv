@@ -48,12 +48,9 @@
     // ".git" (if local).
     // "dvcs": "git",
 
-    // The tool to use to create environments.  May be "conda",
-    // "virtualenv", "rattler", or "uv" or other value depending on the
-    // plugins in use.
-    // If missing or the empty string, the tool will be automatically
-    // determined by looking for tools on the PATH environment
-    // variable.
+    // The tool to use to create environments.  Core ASV ships
+    // "virtualenv" only.  Other tools (conda, rattler, uv, pixi, …)
+    // require a separate plugin registered via the "plugins" key.
     "environment_type": "virtualenv",
 
     // timeout in seconds for installing any dependencies in environment
