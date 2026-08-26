@@ -507,6 +507,81 @@ def test_run_python_same(capsys, basic_conf):
     assert "Installing" not in text
 
 
+def test_run_failure_summary(capsys, existing_env_conf):
+    tmpdir, local, conf, machine_file = existing_env_conf
+
+    tools.run_asv_with_conf(
+        conf,
+        'run',
+        '--bench=time_secondary.TimeSecondary.time_exception',
+        '--bench=time_secondary.track_value',
+        _machine_file=join(tmpdir, 'asv-machine.json'),
+    )
+    text, err = capsys.readouterr()
+
+    # the console indents continuation lines, so compare without it
+    summary = [line.strip() for line in text[text.index("Failures (") :].strip().splitlines()]
+    assert summary == [
+        "Failures (1):",
+        "FAILED time_secondary.TimeSecondary.time_exception -- exit status 1",
+    ]
+
+
+def test_run_failure_summary_multiple_environments(capsys, basic_conf_no_packages):
+    tmpdir, local, conf, machine_file = basic_conf_no_packages
+
+    # an env matrix gives two genuinely distinct environments cheaply; passing the
+    # same interpreter twice would collapse, as both specs yield one env name
+    conf.matrix = {"env": {"SOME_TEST_VAR": ["1", "2"]}}
+
+    tools.run_asv_with_conf(
+        conf,
+        'run',
+        f"{util.git_default_branch()}^!",
+        '--quick',
+        '--bench=time_secondary.TimeSecondary.time_exception',
+        _machine_file=machine_file,
+    )
+    text, err = capsys.readouterr()
+
+    # more than one environment, so each failure is tagged with the one it came from
+    summary = [line.strip() for line in text[text.index("Failures (") :].strip().splitlines()]
+    assert summary[0] == "Failures (2):", summary
+    tags = set()
+    for line in summary[1:]:
+        match = re.fullmatch(
+            r"FAILED time_secondary\.TimeSecondary\.time_exception \[([^\]]+)\] "
+            r"-- exit status 1",
+            line,
+        )
+        assert match, line
+        tags.add(match.group(1))
+    assert len(tags) == 2, tags
+
+
+def test_run_failure_summary_interleaved_rounds(capsys, basic_conf_no_packages):
+    tmpdir, local, conf, machine_file = basic_conf_no_packages
+
+    # interleaved rounds revisit each (commit, env) once per round, so a
+    # persistently failing benchmark must still be reported only once
+    tools.run_asv_with_conf(
+        conf,
+        'run',
+        f'{util.git_default_branch()}^!',
+        '--interleave-rounds',
+        '-a',
+        'rounds=2',
+        '--bench=time_secondary.TimeSecondary.time_exception',
+        _machine_file=machine_file,
+    )
+    text, err = capsys.readouterr()
+
+    summary = [line.strip() for line in text[text.index("Failures (") :].strip().splitlines()]
+    assert summary[0] == "Failures (1):", summary
+    assert len(summary) == 2, summary
+    assert summary[1].startswith("FAILED time_secondary.TimeSecondary.time_exception"), summary
+
+
 def test_run_python_arg():
     parser, subparsers = make_argparser()
 
