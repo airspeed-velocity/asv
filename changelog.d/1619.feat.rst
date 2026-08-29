@@ -1,0 +1,8 @@
+A new ``average_over`` configuration key names parameters that
+:ref:`cmd-asv-publish` should average over rather than plot as separate series.
+Results differing only in a listed parameter land in one graph, and where two
+of them fall on the same commit their values are averaged. The common use is
+``["python"]``, for a project that leaves ``pythons`` unset and does not want
+an upgrade of the interpreter running ``asv`` to split every graph in two.
+Nothing in ``results_dir`` is rewritten, so removing the key and republishing
+restores the separate series.
