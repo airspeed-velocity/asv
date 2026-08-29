@@ -543,3 +543,44 @@ Example::
 
 In this case, the reporting threshold is 1% for all benchmarks, except
 ``benchmark_1`` which uses a threshold of 20%.
+``average_over``
+----------------
+
+Parameters the published site should average over rather than plot separately.
+
+Every parameter recorded with a result -- the machine details, the Python
+version, and each ``matrix`` requirement -- is part of a graph's identity, so
+two results differing in any of them are drawn as two lines and the parameter
+gets a row in the web UI's parameter selector.  That is what you want for a
+matrix you deliberately benchmark across.  It is not what you want for a
+parameter that merely drifts.
+
+Listing one here forgets it: results that differ only in that parameter land in
+the same graph, and where two of them fall on the same commit their values are
+averaged -- the reduction asv already applies to repeated runs within a single
+graph.
+
+The case this was written for is ``pythons`` being left unset.  It then
+defaults to the version of Python running ``asv``, so upgrading that
+interpreter on the benchmark machine starts a second, disconnected timeline on
+every graph, for a dimension the project never asked to vary.  A project that
+uses a ``conda_environment_file`` already lets the rest of the environment move
+underneath one continuous history; this lets the interpreter move the same
+way::
+
+    "average_over": ["python"]
+
+The value is a list of parameter names; a bare string is accepted for a single
+one.  Environment variables are matched under their published names, i.e.
+``"env-FOO"`` for ``FOO``.  Unknown names are ignored, so a project can list a
+parameter it only sometimes records.
+
+This is a view of the published site, not a migration.  Nothing in
+``results_dir`` is rewritten, so each result still records the parameter it was
+measured with, and removing the key and re-running :ref:`cmd-asv-publish`
+brings the separate series back.
+
+It is applied when the site is built rather than in the browser because step
+detection and the Regressions page are computed by :ref:`cmd-asv-publish` from
+the same graphs.  Averaging only at display time would leave those views
+disagreeing with the graphs about how many series there are.

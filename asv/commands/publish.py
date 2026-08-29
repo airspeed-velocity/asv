@@ -89,6 +89,15 @@ class Publish(Command):
             hashes = None
         for result in iter_results(conf.results_dir):
             if hashes is None or result.commit_hash in hashes:
+                for name in conf.average_over:
+                    # Forgetting a parameter here is what merges results that
+                    # differ only in it: they land in one graph, and the values
+                    # they contribute to a revision are averaged by
+                    # Graph.get_data. Both properties return the live dicts,
+                    # and publish never writes a result back to disk.
+                    result.params.pop(name, None)
+                    if name.startswith('env-'):
+                        result.env_vars.pop(name[len('env-'):], None)
                 yield result
 
     @classmethod

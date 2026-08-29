@@ -78,6 +78,7 @@ class Config:
         self.install_command = None
         self.uninstall_command = None
         self.launch_method = None
+        self.average_over = []
 
     @classmethod
     def load(cls, path=None):
@@ -126,5 +127,12 @@ class Config:
                 "or expect publish to rename them to 'req-<name>' (issue #819)."
                 % (sorted(reserved),)
             )
+
+        average_over = getattr(conf, "average_over", None) or []
+        if isinstance(average_over, str):
+            average_over = [average_over]
+        if not all(isinstance(name, str) for name in average_over):
+            raise util.UserError("'average_over' must be a list of parameter names.")
+        conf.average_over = list(average_over)
 
         return conf
