@@ -1,6 +1,3 @@
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
-
-
 class TimerawSuite:
     def timeraw_fresh(self):
         # The test interpreter should not be polluted with anything.

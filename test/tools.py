@@ -1,5 +1,3 @@
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 """
 This file contains utilities to generate test repositories.
 """
@@ -641,7 +639,7 @@ def _build_dummy_conda_pkg(name, version, build_dir, dst):
           run:
             - python
         about:
-          license: BSD
+          license: BSD-3-Clause
           summary: Dummy test package
         """)
         )
