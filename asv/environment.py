@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
-
 """
 Manages an environment -- a combination of a version of Python and set
 of dependencies.

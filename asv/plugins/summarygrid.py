@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
-
 from ..console import log
 from ..publishing import OutputPublisher
 

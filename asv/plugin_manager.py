@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
-
 import importlib
 import pkgutil
 import re

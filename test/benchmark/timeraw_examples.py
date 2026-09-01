@@ -1,6 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
-
-
 class TimerawSuite:
     def timeraw_fresh(self):
         # The test interpreter should not be polluted with anything.

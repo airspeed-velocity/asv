@@ -1,4 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
 from os.path import join
 
 from asv import machine

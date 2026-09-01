@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
-
 import glob
 import json
 import os

@@ -1,6 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
-
-
 class ProfilerGui:
     """
     A base class to define a Profiler GUI that is available through

@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
-
 """
 This file contains utilities to generate test repositories.
 """

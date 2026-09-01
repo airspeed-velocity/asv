@@ -1,4 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
 import textwrap
 from os.path import abspath, dirname, join
 

@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
-
 from .. import environment
 from ..benchmarks import Benchmarks
 from ..repo import get_repo

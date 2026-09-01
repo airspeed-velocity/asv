@@ -1,6 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
-
-
 class Suite:
     def named_method(self):
         return 0

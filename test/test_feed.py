@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
-
 import datetime
 import io
 import xml.dom.minidom

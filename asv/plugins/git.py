@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
-
 """
 Supports git repositories for the benchmarked project.
 """

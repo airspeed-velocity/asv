@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
-
 from io import StringIO
 from pathlib import Path
 

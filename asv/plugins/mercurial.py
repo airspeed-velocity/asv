@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
-
 """
 Supports mercurial repositories for the benchmarked project.
 """

@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: BSD-3-Clause
-
 # Author: Pauli Virtanen, 2016
 
 import math
