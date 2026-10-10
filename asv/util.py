@@ -434,7 +434,13 @@ def check_output(
             # timeouts. Note that subprocess.Popen will wait until exec()
             # before returning in parent process, so there is no race
             # condition in setting the process group vs. calls to os.killpg
-            kwargs['preexec_fn'] = lambda: os.setpgid(0, 0)
+            if sys.version_info >= (3, 11):
+                # process_group calls setpgid without running Python code
+                # in the forked child; preexec_fn is not safe when other
+                # threads are running and can hang on PyPy
+                kwargs['process_group'] = 0
+            else:
+                kwargs['preexec_fn'] = lambda: os.setpgid(0, 0)
 
     proc = subprocess.Popen(args, **kwargs)
 
