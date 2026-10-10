@@ -23,7 +23,9 @@ behavior are also set:
 - ``PATH``: environment-specific binary directories prepended
 - ``PIP_USER``: ``false``
 - ``PYTHONNOUSERSITE``: ``True`` (for conda environments only)
-- ``PYTHONPATH``: unset (if really needed, can be overridden by setting ``ASV_PYTHONPATH``)
+- ``PYTHONPATH``: unset for asv-managed environments (if really needed,
+  set ``ASV_PYTHONPATH`` instead). With ``--python=same`` / an existing
+  environment, the host ``PYTHONPATH`` is retained.
 
 .. note::
 

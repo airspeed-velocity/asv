@@ -1,0 +1,3 @@
+Preserve host ``PYTHONPATH`` under ``--python=same`` / discovery
+(do not strip it when ``ASV_PYTHONPATH`` is unset). Managed environments
+still drop bare ``PYTHONPATH`` for isolation.
