@@ -102,7 +102,11 @@ minversion = "6"
 testpaths = ["test"]
 log_level = "INFO"
 addopts = ["-p no:logging", "-ra", "--strict-config", "--strict-markers"]
-filterwarnings = ["error"]
+filterwarnings = [
+    "error",
+    # numpy built from source with Cython >= 3.3 warns on import under PyPy
+    "ignore:cython.collection_type only works on PyPy:RuntimeWarning",
+]
 
 [tool.ruff]
 line-length = 99
