@@ -1,8 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import os
-from os.path import dirname, join
 import sys
+from os.path import dirname, join
 
 from asv import commands, config, environment, util
 from asv.commands import Command

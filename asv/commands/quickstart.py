@@ -5,8 +5,8 @@ import shutil
 
 from asv_runner.console import color_print
 
-from . import Command
 from ..console import log
+from . import Command
 
 # Pre-existing paths that quickstart can safely reconcile instead of aborting.
 # An existing .gitignore is common in real project checkouts (upstream #1582).
