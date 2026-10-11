@@ -1,6 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-from asv.config import Config
 from asv.commands.publish import GRAPH_UI_RESERVED_PARAMS
+from asv.config import Config
 
 
 def test_reserved_matrix_keys_constant():
