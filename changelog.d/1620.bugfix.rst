@@ -1,0 +1,1 @@
+Fix building the ``_rangemedian`` C extension on Python 3.15, where ``Py_mod_gil`` is always defined.
