@@ -392,6 +392,15 @@ def test_check_output_exit_code(capsys):
     assert '(exit status 1)' in out
 
 
+@pytest.mark.skipif(WIN, reason="POSIX process groups only")
+def test_check_output_own_process_group():
+    # Timeouts kill the whole process group, so the child must lead its own
+    out = util.check_output(
+        [sys.executable, '-c', 'import os; print(os.getpgid(0) == os.getpid())']
+    )
+    assert out.strip() == 'True'
+
+
 def test_geom_mean_na():
     for x in [[1, 2, -3], [1, 2, 3], [3, 1, 3, None, None]]:
         expected = abs(x[0] * x[1] * x[2]) ** (1 / 3)
