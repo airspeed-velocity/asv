@@ -410,13 +410,24 @@ def test_compare_split_only_changed_has_titles(capsys, tmpdir, example_results):
     tmpdir = str(tmpdir)
     os.chdir(tmpdir)
     conf = config.Config.from_json(
-        {'results_dir': example_results,
-         'repo': tools.generate_test_repo(tmpdir).path,
-         'project': 'asv',
-         'environment_type': "shouldn't matter what"})
-    Compare.print_table(conf, '22b920c6', 'fcf8c079', factor=2, machine='cheetah',
-                        split=True, only_changed=True, sort='ratio',
-                        env_names=["py2.7-numpy1.8"])
+        {
+            'results_dir': example_results,
+            'repo': tools.generate_test_repo(tmpdir).path,
+            'project': 'asv',
+            'environment_type': "shouldn't matter what",
+        }
+    )
+    Compare.print_table(
+        conf,
+        '22b920c6',
+        'fcf8c079',
+        factor=2,
+        machine='cheetah',
+        split=True,
+        only_changed=True,
+        sort='ratio',
+        env_names=["py2.7-numpy1.8"],
+    )
     text, err = capsys.readouterr()
     assert "Benchmarks that have improved:" in text
     assert "Benchmarks that have got worse:" in text

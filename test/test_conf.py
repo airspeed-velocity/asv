@@ -66,6 +66,7 @@ def test_load_plugin():
     else:
         assert False, "Custom plugin not loaded"
 
+
 def test_cmd_line_config():
     # issue 1538
     util.check_call(
