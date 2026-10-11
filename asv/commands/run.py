@@ -388,8 +388,6 @@ class Run(Command):
                 log.error("No benchmarks selected")
                 return 1
 
-        benchmark_count = len(benchmarks)
-
         parallel, multiprocessing = util.get_multiprocessing(parallel)
 
         _returns['benchmarks'] = benchmarks
