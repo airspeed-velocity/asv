@@ -9,9 +9,11 @@ def test_reserved_matrix_keys_constant():
 
 
 def test_config_loads_with_benchmark_matrix_key():
-    conf = Config.from_json({
-        'repo': '.',
-        'project': 'x',
-        'matrix': {'benchmark': ['1.4.1'], 'numpy': []},
-    })
+    conf = Config.from_json(
+        {
+            'repo': '.',
+            'project': 'x',
+            'matrix': {'benchmark': ['1.4.1'], 'numpy': []},
+        }
+    )
     assert 'benchmark' in conf.matrix

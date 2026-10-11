@@ -45,9 +45,15 @@ class Config:
     api_version = 1
 
     # Matrix package names that collide with web UI URL params (see publish.py)
-    GRAPH_UI_RESERVED_MATRIX_KEYS = frozenset({
-        'benchmark', 'commits', 'y-axis-scale', 'x-axis-scale', 'show-legend',
-    })
+    GRAPH_UI_RESERVED_MATRIX_KEYS = frozenset(
+        {
+            'benchmark',
+            'commits',
+            'y-axis-scale',
+            'x-axis-scale',
+            'show-legend',
+        }
+    )
 
     def __init__(self):
         self.project = "project"

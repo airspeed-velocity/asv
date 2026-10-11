@@ -50,23 +50,34 @@ class Quickstart(Command):
     @classmethod
     def setup_arguments(cls, subparsers):
         parser = subparsers.add_parser(
-            "quickstart", help="Create a new benchmarking suite",
-            description="Creates a new benchmarking suite")
+            "quickstart",
+            help="Create a new benchmarking suite",
+            description="Creates a new benchmarking suite",
+        )
 
         parser.add_argument(
-            "--dest", "-d", default=".",
-            help="The destination directory for the new benchmarking "
-            "suite")
+            "--dest",
+            "-d",
+            default=".",
+            help="The destination directory for the new benchmarking suite",
+        )
 
         grp = parser.add_mutually_exclusive_group()
         grp.add_argument(
-            "--top-level", action="store_true", dest="top_level", default=None,
+            "--top-level",
+            action="store_true",
+            dest="top_level",
+            default=None,
             help="Use layout suitable for putting the benchmark suite on "
-            "the top level of the project's repository")
+            "the top level of the project's repository",
+        )
         grp.add_argument(
-            "--no-top-level", action="store_false", dest="top_level", default=None,
-            help="Use layout suitable for putting the benchmark suite in "
-            "a separate repository")
+            "--no-top-level",
+            action="store_false",
+            dest="top_level",
+            default=None,
+            help="Use layout suitable for putting the benchmark suite in a separate repository",
+        )
 
         parser.set_defaults(func=cls.run_from_args)
 
@@ -97,8 +108,7 @@ class Quickstart(Command):
                     break
             color_print("")
 
-        template_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), '..', 'template')
+        template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'template')
 
         conflicts = []
         for entry in sorted(os.listdir(template_path)):
@@ -109,11 +119,8 @@ class Quickstart(Command):
         if conflicts:
             listed = ', '.join(conflicts)
             log.info(f"Template content already exists: {listed}")
-            log.info(
-                "Remove or rename the conflicting path(s), then re-run quickstart.")
-            log.info(
-                "Edit asv.conf.json to continue if the suite is already "
-                "partially set up.")
+            log.info("Remove or rename the conflicting path(s), then re-run quickstart.")
+            log.info("Edit asv.conf.json to continue if the suite is already partially set up.")
             return 1
 
         for entry in sorted(os.listdir(template_path)):
@@ -124,9 +131,7 @@ class Quickstart(Command):
                     if _merge_gitignore(path, dest_path):
                         log.info("Merged ASV patterns into existing .gitignore")
                     else:
-                        log.info(
-                            "Existing .gitignore already contains ASV "
-                            "template patterns")
+                        log.info("Existing .gitignore already contains ASV template patterns")
                 continue
             if os.path.exists(dest_path):
                 continue
@@ -140,10 +145,12 @@ class Quickstart(Command):
             with open(conf_file, 'r') as f:
                 conf = f.read()
 
-            reps = [('"repo": "",', '"repo": ".",'),
-                    ('// "env_dir": "env",', '"env_dir": ".asv/env",'),
-                    ('// "results_dir": "results",', '"results_dir": ".asv/results",'),
-                    ('// "html_dir": "html",', '"html_dir": ".asv/html",')]
+            reps = [
+                ('"repo": "",', '"repo": ".",'),
+                ('// "env_dir": "env",', '"env_dir": ".asv/env",'),
+                ('// "results_dir": "results",', '"results_dir": ".asv/results",'),
+                ('// "html_dir": "html",', '"html_dir": ".asv/html",'),
+            ]
             for src, dst in reps:
                 conf = conf.replace(src, dst)
 

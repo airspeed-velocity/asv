@@ -18,9 +18,15 @@ from asv.repo import get_repo
 from asv.results import iter_results
 
 # URL / graphdisplay query keys (asv/www); matrix packages must not reuse these
-GRAPH_UI_RESERVED_PARAMS = frozenset({
-    'benchmark', 'commits', 'y-axis-scale', 'x-axis-scale', 'show-legend',
-})
+GRAPH_UI_RESERVED_PARAMS = frozenset(
+    {
+        'benchmark',
+        'commits',
+        'y-axis-scale',
+        'x-axis-scale',
+        'show-legend',
+    }
+)
 
 
 def check_benchmark_params(name, benchmark):
