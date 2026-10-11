@@ -27,14 +27,14 @@ def test_format_param_for_display_collapses_whitespace():
     assert '\n' not in _format_param_for_display(multiline)
     assert _format_param_for_display(multiline) == "AnnData( obs: 'a' var: 'b' )"
 
-    names = list(
+    names = [
         n
         for n, _ in unroll_result(
             'suite.bench',
             [[multiline]],
             [1.0],
         )
-    )
+    ]
     assert len(names) == 1
     assert '\n' not in names[0]
     assert names[0].startswith('suite.bench(')
