@@ -127,10 +127,10 @@ class Config:
         reserved = set(matrix) & cls.GRAPH_UI_RESERVED_MATRIX_KEYS
         if reserved:
             log.warning(
-                "Matrix keys %s are reserved by the results web UI (for example "
-                "the benchmark page id). Prefer a different requirement name, "
-                "or expect publish to rename them to 'req-<name>' (issue #819)."
-                % (sorted(reserved),)
+                f"Matrix keys {sorted(reserved)} are reserved by the results "
+                "web UI (for example the benchmark page id). Prefer a "
+                "different requirement name, or expect publish to rename them "
+                "to 'req-<name>' (issue #819)."
             )
 
         return conf
