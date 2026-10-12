@@ -4,7 +4,6 @@ asv next (unreleased)
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Require ``asv-runner>=0.3.2`` to collect user-defined attribute (e.g. higher_is_better)
 - Require ``asv-runner>=0.3.1`` so class ``setup(self)`` does not run
   before ``setup_cache`` (asv_runner#52). The ``>=0.2.5`` floor still
   resolves to the broken 0.2.2--0.3.0 wheels.

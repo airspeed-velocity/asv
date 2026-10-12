@@ -1,1 +1,1 @@
-Add higher_is_better boolean to track_*() method
+Add support for ``higher_is_better`` boolean to ``track_*()`` method. Require ``asv-runner>=0.3.2`` to collect user-defined attribute.
