@@ -224,6 +224,12 @@ def basic_conf(tmpdir, dummy_packages):
 
 
 @pytest.fixture
+def basic_conf_no_packages(tmpdir):
+    """A real (non-existing) environment, without the dummy-package matrix."""
+    return generate_basic_conf(tmpdir, dummy_packages=False)
+
+
+@pytest.fixture
 def basic_conf_2(tmpdir, dummy_packages):
     return generate_basic_conf(tmpdir, conf_version=2)
 
