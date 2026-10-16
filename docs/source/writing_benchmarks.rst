@@ -580,6 +580,16 @@ garbage collector at a given state::
         return len(gc.get_objects())
     track_num_objects.unit = "objects"
 
+
+Generic metric can be configured to be tracked as higher-is-better,
+instead of the default lower-is-better strategy::
+
+    def track_memory_bandwidth():
+        return run_memory_bandwidth(...)
+    track_memory_bandwidth.unit = "MB/s"
+    track_memory_bandwidth.higher_is_better = True
+
+
 For details, see :doc:`benchmarks`.
 
 

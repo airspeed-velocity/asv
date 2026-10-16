@@ -28,11 +28,11 @@
     color: #82abda;
 }
 
-#summarylist-body table tbody td.positive-change {
+#summarylist-body table tbody td.worse-change {
     background-color: #fdd;
 }
 
-#summarylist-body table tbody td.negative-change {
+#summarylist-body table tbody td.better-change {
     background-color: #dfd;
 }
 

@@ -7,7 +7,12 @@ from os.path import abspath, dirname, join
 import pytest
 
 from asv import config, util
-from asv.commands.compare import Compare, _format_param_for_display, unroll_result
+from asv.commands.compare import (
+    Compare,
+    _format_param_for_display,
+    unroll_result,
+    _is_result_better,
+)
 
 from . import tools
 
@@ -421,3 +426,8 @@ def test_compare_split_only_changed_has_titles(capsys, tmpdir, example_results):
     assert "Benchmarks that have improved:" in text
     assert "Benchmarks that have got worse:" in text
     assert "time_units.time_unit_to" in text or "time_ci_small" in text
+
+
+def test_is_result_better_higher_is_better():
+    assert _is_result_better(12, 10, None, None, 1.1, higher_is_better=True)
+    assert not _is_result_better(10, 12, None, None, 1.1, higher_is_better=True)

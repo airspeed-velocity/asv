@@ -86,13 +86,22 @@ def detect_steps(y, w=None):
     return steps
 
 
-def detect_regressions(steps, threshold=0, min_size=2):
+def detect_regressions(steps, threshold=0, min_size=2, higher_is_better=False):
     """Detect regressions in a (noisy) signal.
 
-    A regression means an upward step in the signal.  The value
+    By default (``higher_is_better=False``), a regression means an
+    upward step in the signal -- appropriate for benchmarks where a
+    lower value is better (e.g. timing benchmarks). The value
     'before' a regression is the value immediately preceding the
     upward step.  The value 'after' a regression is the minimum of
     values after the upward step.
+
+    If ``higher_is_better`` is True, the direction is inverted: a
+    regression means a *downward* step in the signal -- appropriate
+    for benchmarks where a higher value is better (e.g. throughput
+    or MFLOPS benchmarks, via ``track_*.higher_is_better = True``).
+    In that case, 'best' means the maximum value, and 'worse' means
+    a decrease.
 
     Parameters
     ----------
@@ -105,15 +114,22 @@ def detect_regressions(steps, threshold=0, min_size=2):
         values.
     min_size : int
         Minimum number of commits in a regression to consider it.
+    higher_is_better : bool
+        If True, treat larger values as better (e.g. MFLOPS/throughput
+        benchmarks) instead of the default assumption that smaller
+        values are better (e.g. time/memory benchmarks). Inverts the
+        direction used to decide what counts as a regression and what
+        counts as the 'best' value. Default: False.
 
     Returns
     -------
     latest_value
         Latest value
     best_value
-        Best value
+        Best value (minimum if higher_is_better is False, maximum if True)
     regression_pos : list of (before, after, value_before, best_value_after)
-        List of positions between which the value increased. The first item
+        List of positions between which the value became worse (increased,
+        or decreased if higher_is_better is True). The first item
         corresponds to the last position at which the best value was obtained.
         The last item indicates the best value found after the regression
         (which is not always the value immediately following the regression).
@@ -132,11 +148,17 @@ def detect_regressions(steps, threshold=0, min_size=2):
     prev_l = None
     short_prev = None
 
-    # Find upward steps that resulted to worsened value afterward
+    # Find steps that resulted to a worsened value afterward. "Worse"
+    # means an increase by default, or a decrease if higher_is_better.
     for l, r, cur_v, cur_min, cur_err in reversed(steps):
         threshold_step = max(cur_err, thresholded_best_err, threshold * cur_v)
 
-        if thresholded_best_v > cur_v + threshold_step:
+        if higher_is_better:
+            is_worse = thresholded_best_v < cur_v - threshold_step
+        else:
+            is_worse = thresholded_best_v > cur_v + threshold_step
+
+        if is_worse:
             if r - l < min_size:
                 # Accept short intervals conditionally
                 short_prev = (thresholded_best_v, thresholded_best_err)
@@ -148,15 +170,23 @@ def detect_regressions(steps, threshold=0, min_size=2):
         elif short_prev is not None:
             # Ignore the previous short interval, if the level
             # is now back to where it was
-            if short_prev[0] <= cur_v + threshold_step:
+            if higher_is_better:
+                back_to_normal = short_prev[0] >= cur_v - threshold_step
+            else:
+                back_to_normal = short_prev[0] <= cur_v + threshold_step
+            if back_to_normal:
                 regression_pos.pop()
                 thresholded_best_v, thresholded_best_err = short_prev
             short_prev = None
 
         prev_l = l
 
-        if cur_v < best_v:
-            best_v = cur_v
+        if higher_is_better:
+            if cur_v > best_v:
+                best_v = cur_v
+        else:
+            if cur_v < best_v:
+                best_v = cur_v
 
     regression_pos.reverse()
 
