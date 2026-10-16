@@ -507,6 +507,24 @@ def test_run_python_same(capsys, basic_conf):
     assert "Installing" not in text
 
 
+def test_run_quick_progress_completes(capsys, existing_env_conf):
+    tmpdir, local, conf, machine_file = existing_env_conf
+
+    tools.run_asv_with_conf(
+        conf,
+        'run',
+        '--quick',
+        '--bench=time_secondary.TimeSecondary.time_factorial',
+        '--bench=time_secondary.track_value',
+        _machine_file=join(tmpdir, 'asv-machine.json'),
+    )
+    text, err = capsys.readouterr()
+
+    # --quick forces rounds=1, so the progress total must not be scaled by the
+    # benchmarks' declared rounds
+    assert "[100.00%]" in text
+
+
 def test_run_python_arg():
     parser, subparsers = make_argparser()
 
