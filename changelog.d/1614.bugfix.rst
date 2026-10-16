@@ -1,0 +1,1 @@
+Raise a clear error from ``Results.get_profile`` when no profile data was stored, instead of ``KeyError`` or ``AttributeError`` (#1459).
