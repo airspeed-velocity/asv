@@ -210,7 +210,7 @@ class Machine:
             d = MachineCollection.load(machine_name, _path=_path)
         except util.UserError as e:
             console.log.error(str(e) + '\n')
-            d = {}
+            d = cls.get_defaults() if kwargs else {}
         d.update(kwargs)
         if (not len(d) and interactive) or force_interactive:
             d.update(self.generate_machine_file(use_defaults=use_defaults))
