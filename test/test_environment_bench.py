@@ -167,7 +167,7 @@ def test_asv_benchmark(asv_project_factory, env):
             ],
         )
         for env in ["rattler"]
-    ]
+    ],
 )
 def test_asv_rattler(
     environment, asv_project_factory, config_modifier, expected_success, expected_error
@@ -202,7 +202,14 @@ def test_asv_rattler(
 def test_condarc_channel_rattler(asv_project_factory, monkeypatch):
     monkeypatch.setenv("ASV_USE_CONDARC", "1")
     monkeypatch.setenv("CONDARC", ".condarc")
-    project_dir = asv_project_factory(custom_config={"conda_channels": ["conda-forge"], "matrix": {"snakemake-minimal": [], "packaging": ["25.0"]}}, create_condarc=True, alt_condarc=True)
+    project_dir = asv_project_factory(
+        custom_config={
+            "conda_channels": [],
+            "matrix": {"snakemake-minimal": [], "packaging": ["25.0"]},
+        },
+        create_condarc=True,
+        alt_condarc=True,
+    )
     subprocess.run(["asv", "machine", "--yes"], cwd=project_dir, check=True)
     # snakemake-minimal ensures we pick up bioconda from .condarc
     subprocess.run(
