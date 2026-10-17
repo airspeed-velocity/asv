@@ -8,7 +8,6 @@ import os
 import pstats
 import socket
 import struct
-import sys
 import tempfile
 import threading
 import time

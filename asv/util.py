@@ -1292,7 +1292,9 @@ def get_multiprocessing_lock(name):
 def get_multiprocessing_pool(parallel=None):
     """Create a multiprocessing.Pool, managing global locks properly"""
     env = os.environ.copy()
-    return multiprocessing.Pool(parallel, initializer=_init_global_locks, initargs=(_global_locks, env))
+    return multiprocessing.Pool(
+        parallel, initializer=_init_global_locks, initargs=(_global_locks, env)
+    )
 
 
 try:

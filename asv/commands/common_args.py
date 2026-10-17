@@ -295,7 +295,6 @@ def add_launch_method(parser):
             "By default asv will look in the asv.conf.json file, if not, auto "
             "will be used."
         ),
-
     )
 
 

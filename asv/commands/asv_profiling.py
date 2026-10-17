@@ -8,11 +8,11 @@ import tempfile
 from asv_runner.console import color_print
 
 from .. import util
+from ..asv_profiling import ProfilerGui
 from ..benchmarks import Benchmarks
 from ..console import log
 from ..environment import ExistingEnvironment, get_environments, is_existing_only
 from ..machine import Machine
-from ..asv_profiling import ProfilerGui
 from ..repo import NoSuchNameError, get_repo
 from ..results import iter_results_for_machine
 from ..runner import run_benchmarks

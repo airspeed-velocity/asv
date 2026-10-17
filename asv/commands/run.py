@@ -388,8 +388,6 @@ class Run(Command):
                 log.error("No benchmarks selected")
                 return 1
 
-        benchmark_count = len(benchmarks)
-
         parallel, multiprocessing = util.get_multiprocessing(parallel)
 
         _returns['benchmarks'] = benchmarks
@@ -502,9 +500,7 @@ class Run(Command):
             with log.indent():
                 for subenv in util.iter_chunks(active_environments, parallel):
                     successes = {
-                        env.name: (True, 0)
-                        for env in subenv
-                        if not env.can_install_project()
+                        env.name: (True, 0) for env in subenv if not env.can_install_project()
                     }
                     successes.update(
                         {
@@ -517,8 +513,7 @@ class Run(Command):
                     env_to_install = [
                         env
                         for env in subenv
-                        if env.can_install_project()
-                        and env.installed_commit_hash != commit_hash
+                        if env.can_install_project() and env.installed_commit_hash != commit_hash
                     ]
 
                     subenv_name = ', '.join([x.name for x in env_to_install])
