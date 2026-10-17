@@ -153,6 +153,21 @@ def test_asv_benchmark(asv_project_factory, env):
         )
         for env in ["rattler"]
     ]
+    + [
+        pytest.param(
+            env,
+            {"conda_channels": []},
+            True,
+            None,
+            id=f"empty_conda_channels_{env}",
+            marks=[
+                pytest.mark.skipif(
+                    env == "rattler" and not tools.HAS_RATTLER, reason="needs rattler"
+                ),
+            ],
+        )
+        for env in ["rattler"]
+    ]
 )
 def test_asv_rattler(
     environment, asv_project_factory, config_modifier, expected_success, expected_error
