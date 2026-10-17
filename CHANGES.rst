@@ -1,6 +1,17 @@
 asv next (unreleased)
 ---------------------
 
+Bug Fixes
+^^^^^^^^^
+
+- ``run_executable`` now prepends the environment's ``lib/pkgconfig``
+  (and ``lib64/pkgconfig``, or ``Library/lib/pkgconfig`` on Windows) to
+  ``PKG_CONFIG_PATH``. Conda and rattler prefixes that install a compiler
+  put that ``cc`` on ``PATH``; Meson's Cython sanity check then looks up
+  ``python3`` with pkg-config and was finding the system ``.pc`` file.
+  virtualenv and uv are unchanged unless the prefix actually contains
+  pkg-config files.
+
 Other Changes and Additions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

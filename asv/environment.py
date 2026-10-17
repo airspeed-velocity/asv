@@ -959,6 +959,36 @@ class Environment:
         """
         return True
 
+    def _pkg_config_dirs(self):
+        """pkg-config directories inside this prefix, if they exist."""
+        if WIN:
+            relatives = (
+                os.path.join('Library', 'lib', 'pkgconfig'),
+                os.path.join('lib', 'pkgconfig'),
+            )
+        else:
+            relatives = (
+                os.path.join('lib', 'pkgconfig'),
+                os.path.join('lib64', 'pkgconfig'),
+            )
+        found = []
+        for relative in relatives:
+            path = os.path.join(self._path, relative)
+            if os.path.isdir(path):
+                found.append(path)
+        return found
+
+    def _prepend_pkg_config_path(self, env):
+        dirs = self._pkg_config_dirs()
+        if not dirs:
+            return
+        existing = env.get('PKG_CONFIG_PATH', '')
+        parts = [part for part in existing.split(os.pathsep) if part] if existing else []
+        for path in reversed(dirs):
+            if path not in parts:
+                parts.insert(0, path)
+        env['PKG_CONFIG_PATH'] = os.pathsep.join(parts)
+
     def find_executable(self, executable):
         """
         Find an executable (eg. python, pip) in the environment.
@@ -1006,6 +1036,16 @@ class Environment:
             env.pop('ASV_PYTHONPATH', None)
         else:
             env.pop('PYTHONPATH', None)
+
+        # Same isolation for pkg-config as for PATH. A conda/rattler prefix
+        # can install a sysrooted ``cc`` (conda-forge pythran pulls in gxx,
+        # which puts gcc's ``cc`` on PATH) while Meson's Cython sanity check
+        # resolves the ``python3`` dependency via pkg-config. Without the
+        # prefix on PKG_CONFIG_PATH that lookup hits the system python3.pc,
+        # and the conda compiler cannot see the distro multiarch headers.
+        # virtualenv and uv share this path; a prefix with no pkgconfig
+        # directory is left unchanged.
+        self._prepend_pkg_config_path(env)
 
         # When running pip, we need to set PIP_USER to false, as --user (which
         # may have been set from a pip config file) is incompatible with
