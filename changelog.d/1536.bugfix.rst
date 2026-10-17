@@ -1,0 +1,3 @@
+The `rattler` plugin now automatically uses `conda-forge`
+instead of erroring out when no `conda_channels` are specified
+in the configuration.

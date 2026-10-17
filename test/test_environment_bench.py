@@ -66,6 +66,14 @@ channel_priority: disabled
 auto_activate_base: false
 """
 
+# conda-forge must come first: with strict priority, bioconda's stale copies of
+# e.g. requests/urllib3 would otherwise shadow conda-forge's on linux-64
+ALT_CONDARC_CONTENT = """
+channels:
+  - conda-forge
+  - https://repo.prefix.dev/bioconda
+"""
+
 
 @pytest.fixture(scope="session")
 def asv_project_factory(tmp_path_factory):
@@ -73,7 +81,7 @@ def asv_project_factory(tmp_path_factory):
     Factory to set up an ASV project with customizable configurations.
     """
 
-    def _create_asv_project(custom_config=None, create_condarc=False):
+    def _create_asv_project(custom_config=None, create_condarc=False, alt_condarc=False):
         tmp_path = tmp_path_factory.mktemp("asv_project")
         original_dir = os.getcwd()
         os.chdir(tmp_path)
@@ -90,7 +98,8 @@ def asv_project_factory(tmp_path_factory):
         (tmp_path / "setup.py").write_text(SETUP_CODE)
 
         if create_condarc:
-            (tmp_path / ".condarc").write_text(CONDARC_CONTENT)
+            content = ALT_CONDARC_CONTENT if alt_condarc else CONDARC_CONTENT
+            (tmp_path / ".condarc").write_text(content)
 
         subprocess.run(["git", "init"], cwd=tmp_path, check=True)
         subprocess.run(
@@ -148,8 +157,8 @@ def test_asv_benchmark(asv_project_factory, env):
         pytest.param(
             env,
             {"conda_channels": []},
-            False,
-            ["Solver could not find solution", "Cannot solve the request"],
+            True,
+            None,
             id=f"empty_conda_channels_{env}",
             marks=[
                 pytest.mark.skipif(
@@ -185,3 +194,28 @@ def test_asv_rattler(
             pytest.fail(f"ASV benchmark unexpectedly failed: {exc.stderr}")
         elif expected_error and all(err not in exc.stderr for err in expected_error):
             pytest.fail(f"Expected error '{expected_error}' not found in stderr: {exc.stderr}")
+
+
+@pytest.mark.skipif(
+    not tools.HAS_RATTLER or util.ON_PYPY, reason="needs rattler, which only works for CPython"
+)
+def test_condarc_channel_rattler(asv_project_factory, monkeypatch):
+    monkeypatch.setenv("ASV_USE_CONDARC", "1")
+    monkeypatch.setenv("CONDARC", ".condarc")
+    project_dir = asv_project_factory(
+        custom_config={
+            "conda_channels": [],
+            "matrix": {"snakemake-minimal": [], "packaging": ["25.0"]},
+        },
+        create_condarc=True,
+        alt_condarc=True,
+    )
+    subprocess.run(["asv", "machine", "--yes"], cwd=project_dir, check=True)
+    # snakemake-minimal ensures we pick up bioconda from .condarc
+    subprocess.run(
+        ["asv", "run", "--quick", "--dry-run", "--environment", "rattler"],
+        cwd=project_dir,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
