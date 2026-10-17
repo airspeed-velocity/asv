@@ -11,12 +11,24 @@ path and must keep a prefix with no pkgconfig directory unchanged.
 import os
 import stat
 
-from asv.environment import Environment
+from asv.environment import WIN, Environment
 
 
-def _probe(prefix):
-    bindir = prefix / 'bin'
-    bindir.mkdir(parents=True, exist_ok=True)
+def _write_probe(bindir):
+    # Windows cannot exec a shebang script (WinError 193), so the probe is a
+    # batch file there; util.which finds it through the .bat suffix.
+    if WIN:
+        exe = bindir / 'asv-pc-probe.bat'
+        exe.write_bytes(
+            b'@echo off\r\n'
+            b'setlocal EnableDelayedExpansion\r\n'
+            b'if defined PKG_CONFIG_PATH (\r\n'
+            b'  echo(!PKG_CONFIG_PATH!\r\n'
+            b') else (\r\n'
+            b'  echo UNSET\r\n'
+            b')\r\n'
+        )
+        return
     exe = bindir / 'asv-pc-probe'
     exe.write_text(
         '#!/bin/sh\n'
@@ -28,6 +40,12 @@ def _probe(prefix):
         encoding='utf-8',
     )
     exe.chmod(exe.stat().st_mode | stat.S_IEXEC)
+
+
+def _probe(prefix):
+    bindir = prefix / 'bin'
+    bindir.mkdir(parents=True, exist_ok=True)
+    _write_probe(bindir)
     env = Environment.__new__(Environment)
     env._path = str(prefix)
     env._global_env_vars = {}
@@ -36,23 +54,29 @@ def _probe(prefix):
 
 
 def test_pkg_config_path_prefers_prefix(tmp_path, monkeypatch):
-    pc = tmp_path / 'lib' / 'pkgconfig'
-    pc.mkdir(parents=True)
-    lib64 = tmp_path / 'lib64' / 'pkgconfig'
-    lib64.mkdir(parents=True)
-    (pc / 'python3.pc').write_text('Name: Python\n', encoding='utf-8')
-    monkeypatch.setenv('PKG_CONFIG_PATH', '/usr/lib/pkgconfig')
+    if WIN:
+        first = tmp_path / 'Library' / 'lib' / 'pkgconfig'
+        second = tmp_path / 'lib' / 'pkgconfig'
+    else:
+        first = tmp_path / 'lib' / 'pkgconfig'
+        second = tmp_path / 'lib64' / 'pkgconfig'
+    first.mkdir(parents=True)
+    second.mkdir(parents=True)
+    (first / 'python3.pc').write_text('Name: Python\n', encoding='utf-8')
+    system = str(tmp_path / 'system' / 'pkgconfig')
+    monkeypatch.setenv('PKG_CONFIG_PATH', system)
 
     out = _probe(tmp_path).run_executable('asv-pc-probe', []).strip()
     parts = out.split(os.pathsep)
-    assert parts[:2] == [str(pc), str(lib64)]
-    assert parts[-1] == '/usr/lib/pkgconfig'
+    assert parts[:2] == [str(first), str(second)]
+    assert parts[-1] == system
 
 
 def test_pkg_config_path_unchanged_without_prefix_files(tmp_path, monkeypatch):
-    monkeypatch.setenv('PKG_CONFIG_PATH', '/usr/lib/x86_64-linux-gnu/pkgconfig')
+    system = str(tmp_path / 'system' / 'pkgconfig')
+    monkeypatch.setenv('PKG_CONFIG_PATH', system)
     out = _probe(tmp_path).run_executable('asv-pc-probe', []).strip()
-    assert out == '/usr/lib/x86_64-linux-gnu/pkgconfig'
+    assert out == system
 
 
 def test_pkg_config_path_stays_unset_without_prefix_files(tmp_path, monkeypatch):
