@@ -141,9 +141,14 @@ def pytest_sessionstart(session):
 
 
 def _monkeypatch_conda_lock(config):
+    # Conda backend is out-of-tree (asv_env_conda); skip if not installed.
+    try:
+        import asv_env_conda
+    except ImportError:
+        return
+
     import filelock
 
-    import asv.plugins.conda
     import asv.util
 
     @contextlib.contextmanager
@@ -153,7 +158,7 @@ def _monkeypatch_conda_lock(config):
             yield
 
     path = config.cache.makedir('conda-lock') / 'lock'
-    asv.plugins.conda._conda_lock = _conda_lock
+    asv_env_conda._conda_lock = _conda_lock
 
 
 @pytest.fixture(

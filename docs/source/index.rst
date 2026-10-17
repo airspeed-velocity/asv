@@ -30,6 +30,7 @@ Development: https://github.com/airspeed-velocity/asv
 
    installing.rst
    using.rst
+   env_backends.rst
    writing_benchmarks.rst
    tuning.rst
    user_reference.rst

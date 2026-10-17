@@ -8,27 +8,27 @@ import sys
 from . import commands, plugins
 from .console import log
 
+# First-party env backends under asv.plugins. Only virtualenv ships in core;
+# conda / rattler / uv / mamba / pixi come from entry-point packages
+# (group asv.environment_backends), e.g. asv_env_*.
 ENV_PLUGIN_REGEXES = [
     r"\.virtualenv$",
-    r"\.conda$",
-    r"\.rattler$",
-    r"\.uv$",
 ]
 
 
 class PluginManager:
     """
-    A class to load and manage plugins.
+    Load first-party plugins from ``asv.plugins`` / ``asv.commands``, and
+    optional conf module names via :meth:`import_plugin`.
 
-    By default in asv, plugins are searched for in the :py:mod:`asv.plugins`
-    namespace package and in the :py:mod:`asv.commands` package.
-
-    Then, any modules specified in the ``plugins`` entry in the
-    ``asv.conf.json`` file are loaded.
+    Optional environment backends are **not** in-tree. Resolution of
+    ``environment_type`` is owned by :mod:`asv.envmgmt.discover` (entry
+    point group ``asv.environment_backends``).
     """
 
     def __init__(self):
         self._plugins = []
+        self._imported_names = set()
 
     def load_plugins(self, package):
         prefix = package.__name__ + "."
@@ -37,9 +37,10 @@ class PluginManager:
                 mod = importlib.import_module(name)
                 self.init_plugin(mod)
                 self._plugins.append(mod)
+                self._imported_names.add(name)
             except ModuleNotFoundError as err:
                 if any(re.search(regex, name) for regex in ENV_PLUGIN_REGEXES):
-                    continue  # Fine to not have these
+                    continue
                 else:
                     log.error(f"Couldn't load {name} because\n{err}")
 
@@ -52,19 +53,36 @@ class PluginManager:
         return None
 
     def import_plugin(self, name):
+        """Load a plugin by module name (conf ``plugins`` / local ``.mod``).
+
+        Idempotent for the same absolute module name.
+        """
+        if name in self._imported_names and not name.startswith("."):
+            return
         extended = False
         if name.startswith("."):
             extended = True
             sys.path.insert(0, ".")
             name = name[1:]
         try:
+            mod = None
             if extended:
                 mod = importlib.import_module(name)
             else:
-                mod = self._load_plugin_by_name(name)
-            if mod:
-                self.init_plugin(mod)
-                self._plugins.append(mod)
+                try:
+                    mod = importlib.import_module(name)
+                except ModuleNotFoundError:
+                    mod = self._load_plugin_by_name(name)
+            if mod is None:
+                raise ModuleNotFoundError(
+                    f"ASV plugin module {name!r} could not be imported "
+                    f"(install the package or fix the name in conf plugins)"
+                )
+            self.init_plugin(mod)
+            self._plugins.append(mod)
+            self._imported_names.add(getattr(mod, "__name__", name))
+            if not name.startswith("."):
+                self._imported_names.add(name)
         finally:
             if extended:
                 del sys.path[0]
@@ -82,5 +100,3 @@ class PluginManager:
 plugin_manager = PluginManager()
 plugin_manager.load_plugins(commands)
 plugin_manager.load_plugins(plugins)
-
-commands.__doc__ = commands._make_docstring()
