@@ -161,7 +161,8 @@ musllinux-x86_64-image = "musllinux_1_2"
 archs = "x86_64 arm64"
 
 [tool.cibuildwheel.windows]
-archs = ['AMD64']
+# AMD64 on x64 runners, ARM64 on windows-11-arm runners
+archs = ['native']
 
 [tool.setuptools.packages.find]
 where = ["."]
