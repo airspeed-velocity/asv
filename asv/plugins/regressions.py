@@ -43,7 +43,7 @@ class Regressions(OutputPublisher):
 
             for graph_data in data_filter.get_graph_data(graph, benchmark):
                 cls._process_regression(
-                    regressions, revision_to_hash, repo, all_params, graph_data, graph
+                    regressions, revision_to_hash, repo, all_params, graph_data, graph, benchmark
                 )
 
         cls._save(conf, {'regressions': regressions})
@@ -51,11 +51,14 @@ class Regressions(OutputPublisher):
 
     @classmethod
     def _process_regression(
-        cls, regressions, revision_to_hash, repo, all_params, graph_data, graph
+        cls, regressions, revision_to_hash, repo, all_params, graph_data, graph, benchmark
     ):
         j, entry_name, steps, threshold = graph_data
 
-        last_v, best_v, jumps = detect_regressions(steps, threshold)
+        higher_is_better = benchmark.get('higher_is_better', False)
+        last_v, best_v, jumps = detect_regressions(
+            steps, threshold, higher_is_better=higher_is_better
+        )
 
         if last_v is None:
             return
@@ -143,15 +146,19 @@ class Regressions(OutputPublisher):
 
                 link = f'index.html#{benchmark_name}?{urllib.parse.urlencode(params)}'
 
+                # abs(): 'worse than best'/'regression' already state the
+                # direction in words; for higher_is_better benchmarks the
+                # raw difference is negative (value went down), which
+                # would otherwise render as a confusing negative percentage.
                 try:
-                    best_percentage = f"{100 * (last_value - best_value) / best_value:.2f}%"
+                    best_percentage = f"{abs(100 * (last_value - best_value) / best_value):.2f}%"
                 except ZeroDivisionError:
-                    best_percentage = f"{last_value - best_value:.2g} units"
+                    best_percentage = f"{abs(last_value - best_value):.2g} units"
 
                 try:
-                    percentage = f"{100 * (value2 - value1) / value1:.2f}%"
+                    percentage = f"{abs(100 * (value2 - value1) / value1):.2f}%"
                 except ZeroDivisionError:
-                    percentage = f"{value2 - value1:.2g} units"
+                    percentage = f"{abs(value2 - value1):.2g} units"
 
                 jump_date = datetime.datetime.fromtimestamp(revision_timestamps[rev2] / 1000)
                 jump_date_str = jump_date.strftime('%Y-%m-%d %H:%M:%S')
