@@ -972,16 +972,20 @@ def test_install_env_matrix_values(
     env.run(
         [
             '-c',
-            'import asv_test_repo.build_time_env as t, sys; '
-            'sys.exit(0 if t.env["SOME_ASV_TEST_BUILD_VALUE"] == "1" else 1)',
+            (
+                'import asv_test_repo.build_time_env as t, sys; '
+                'sys.exit(0 if t.env["SOME_ASV_TEST_BUILD_VALUE"] == "1" else 1)'
+            ),
         ]
     )
 
     env.run(
         [
             '-c',
-            'import asv_test_repo.build_time_env as t, sys; '
-            'sys.exit(0 if "SOME_ASV_TEST_NON_BUILD_VALUE" not in t.env else 1)',
+            (
+                'import asv_test_repo.build_time_env as t, sys; '
+                'sys.exit(0 if "SOME_ASV_TEST_NON_BUILD_VALUE" not in t.env else 1)'
+            ),
         ]
     )
 
