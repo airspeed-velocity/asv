@@ -640,7 +640,7 @@ def test_conda_channel_addition(tmpdir, channel_list, expected_channel, env_type
         print(json_package_list)
         for installed_package in json_package_list:
             # check only explicitly installed packages
-            if installed_package['name'] not in ('python',):
+            if installed_package['name'] != 'python':
                 continue
             print(installed_package)
             assert installed_package['channel'] == expected_channel

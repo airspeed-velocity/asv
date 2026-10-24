@@ -123,7 +123,7 @@ def test_asv_benchmark(asv_project_factory, env):
     """
     Test running ASV benchmarks in the specified environment.
     """
-    if util.ON_PYPY and env in ["rattler"]:
+    if util.ON_PYPY and env == "rattler":
         pytest.skip("py-rattler only works for CPython")
     project_dir = asv_project_factory(custom_config={})
     subprocess.run(["asv", "machine", "--yes"], cwd=project_dir, check=True)
