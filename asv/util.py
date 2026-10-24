@@ -957,10 +957,10 @@ def format_text_table(rows, num_headers=0, top_header_span_start=0, top_header_t
         right_span = "-".join("-" * w for w in col_widths[top_header_span_start:])
         if left_span and right_span:
             result += ["--" + " " * (len(left_span) - 1) + top_header_text.center(len(right_span))]
-            result += [" ".join([left_span, right_span])]
+            result += [f'{left_span} {right_span}']
         else:
             result += [top_header_text.center(len(separator))]
-            result += ["-".join([left_span, right_span])]
+            result += [f'{left_span}-{right_span}']
         result += headers
         result += [separator.replace("-", "=")]
     elif headers:

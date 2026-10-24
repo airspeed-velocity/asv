@@ -276,14 +276,14 @@ def get_env_name(tool_name, python, requirements, tagged_env_vars, build=False):
     reqs.sort()
     for key, val in reqs:
         if val:
-            name.append(''.join([key, val]))
+            name.append(f"{key}{val}")
         else:
             name.append(key)
 
     env_vars = _untag_env_vars(tagged_env_vars, build=build)
 
     for env_var, value in sorted(env_vars.items()):
-        name.append(''.join([env_var, value]))
+        name.append(f"{env_var}{value}")
 
     return util.sanitize_filename('-'.join(name))
 
