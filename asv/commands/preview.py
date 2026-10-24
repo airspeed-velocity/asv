@@ -1,5 +1,3 @@
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 import errno
 import http.server
 import os
