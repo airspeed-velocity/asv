@@ -138,6 +138,7 @@ ignore = [
     "SIM115",  # Use a context manager for opening files
     "SIM118",  # Use `key in dict` instead of `key in dict.keys()`
     "E741",  # Do not use variables named 'I', 'O', or 'l'
+    "PLR0124",  # Name compared with itself, consider replacing
     "RUF005", # Consider unpacking instead of concatenation
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
     "RUF059", # Unpacked variable is never used
