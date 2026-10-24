@@ -1,6 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import datetime
+import datetime as dt
 import glob
 import os
 import re
@@ -151,7 +151,7 @@ def test_run_build_failure(basic_conf):
     dvcs.commit("Fix setup.py")
 
     # Test running it
-    timestamp = util.datetime_to_js_timestamp(datetime.datetime.now(datetime.timezone.utc))
+    timestamp = util.datetime_to_js_timestamp(dt.datetime.now(dt.timezone.utc))
 
     bench_name = 'time_secondary.track_value'
     for commit in [f'{util.git_default_branch()}^!', f'{util.git_default_branch()}~1^!']:
@@ -417,9 +417,9 @@ def test_filter_date_period(tmpdir, basic_conf):
     tmpdir, local, conf, machine_file = basic_conf
 
     dates = [
-        datetime.datetime(2001, 1, 1, tzinfo=datetime.timezone.utc),
-        datetime.datetime(2001, 1, 2, tzinfo=datetime.timezone.utc),
-        datetime.datetime(2001, 1, 8, tzinfo=datetime.timezone.utc),
+        dt.datetime(2001, 1, 1, tzinfo=dt.timezone.utc),
+        dt.datetime(2001, 1, 2, tzinfo=dt.timezone.utc),
+        dt.datetime(2001, 1, 8, tzinfo=dt.timezone.utc),
     ]
 
     dvcs = tools.generate_repo_from_ops(

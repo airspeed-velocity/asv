@@ -5,7 +5,7 @@ Various low-level utilities.
 """
 
 import collections
-import datetime
+import datetime  # noqa: ICN001
 import errno
 import functools
 import json

@@ -1,5 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import datetime
+import datetime as dt
 import os
 import shutil
 import subprocess
@@ -387,13 +387,13 @@ def test_regression_multiple_branches(dvcs_type, tmpdir):
 )
 def test_regression_non_monotonic(dvcs_type, tmpdir):
     tmpdir = str(tmpdir)
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = dt.datetime.now(dt.timezone.utc)
 
-    dates = [now + datetime.timedelta(days=i) for i in range(5)] + [
-        now - datetime.timedelta(days=i) for i in range(5)
+    dates = [now + dt.timedelta(days=i) for i in range(5)] + [
+        now - dt.timedelta(days=i) for i in range(5)
     ]
     # last commit in the past
-    dates[-1] = now - datetime.timedelta(days=1)
+    dates[-1] = now - dt.timedelta(days=1)
 
     dvcs = tools.generate_repo_from_ops(
         tmpdir, dvcs_type, [("commit", i, d) for i, d in enumerate(dates)]
@@ -500,7 +500,7 @@ def test_regression_atom_feed_update(dvcs_type, tmpdir):
         tmpdir,
         dvcs,
         commit_values,
-        updated=datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc),
+        updated=dt.datetime(1970, 1, 1, tzinfo=dt.timezone.utc),
     )
 
     tools.run_asv_with_conf(conf, "publish")
@@ -517,7 +517,7 @@ def test_regression_atom_feed_update(dvcs_type, tmpdir):
         tmpdir,
         dvcs,
         commit_values,
-        updated=datetime.datetime(1990, 1, 1, tzinfo=datetime.timezone.utc),
+        updated=dt.datetime(1990, 1, 1, tzinfo=dt.timezone.utc),
     )
 
     tools.run_asv_with_conf(conf, "publish")

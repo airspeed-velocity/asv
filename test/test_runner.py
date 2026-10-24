@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import collections
-import datetime
+import datetime as dt
 import json
 import os
 import pstats
@@ -67,7 +67,7 @@ class ResultsWrapper:
 def test_run_benchmarks(benchmarks_fixture, tmpdir):
     conf, repo, envs, commit_hash = benchmarks_fixture
 
-    start_timestamp = datetime.datetime.now(datetime.timezone.utc)
+    start_timestamp = dt.datetime.now(dt.timezone.utc)
 
     b = benchmarks.Benchmarks.discover(conf, repo, envs, [commit_hash])
 

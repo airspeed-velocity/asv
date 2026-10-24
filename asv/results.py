@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import base64
-import datetime
+import datetime as dt
 import hashlib
 import itertools
 import os
@@ -458,7 +458,7 @@ class Results:
         benchmark_version = benchmark['version']
 
         if started_at is None:
-            started_at = datetime.datetime.now(datetime.timezone.utc)
+            started_at = dt.datetime.now(dt.timezone.utc)
 
         new_stats = [None] * len(new_result)
 

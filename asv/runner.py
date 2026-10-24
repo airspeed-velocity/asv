@@ -1,6 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import datetime
+import datetime as dt
 import itertools
 import json
 import math
@@ -88,7 +88,7 @@ def skip_benchmarks(benchmarks, env, results=None):
             log.step()
             log.warning(f'{name} skipped')
 
-            started_at = datetime.datetime.now(datetime.timezone.utc)
+            started_at = dt.datetime.now(dt.timezone.utc)
             r = fail_benchmark(benchmark)
             results.add_result(
                 benchmark,
@@ -268,7 +268,7 @@ def run_benchmarks(
                     continue
 
                 selected_idx = benchmarks.benchmark_selection.get(name)
-                started_at = datetime.datetime.now(datetime.timezone.utc)
+                started_at = dt.datetime.now(dt.timezone.utc)
                 res = fail_benchmark(benchmark, stderr=stderr)
                 results.add_result(
                     benchmark,
@@ -284,7 +284,7 @@ def run_benchmarks(
         for name, benchmark, setup_cache_key, is_final in iter_run_items():
             selected_idx = benchmarks.benchmark_selection.get(name)
 
-            started_at = datetime.datetime.now(datetime.timezone.utc)
+            started_at = dt.datetime.now(dt.timezone.utc)
 
             # Don't try to rerun failed benchmarks
             if name in failed_benchmarks:
@@ -316,11 +316,9 @@ def run_benchmarks(
                             log.error(stderr)
                     failed_setup_cache[setup_cache_key] = stderr
 
-                duration = (
-                    datetime.datetime.now(datetime.timezone.utc) - started_at
-                ).total_seconds()
+                duration = (dt.datetime.now(dt.timezone.utc) - started_at).total_seconds()
                 results.set_setup_cache_duration(setup_cache_key, duration)
-                started_at = datetime.datetime.now(datetime.timezone.utc)
+                started_at = dt.datetime.now(dt.timezone.utc)
 
             if setup_cache_key in failed_setup_cache:
                 # Mark benchmark as failed
@@ -370,7 +368,7 @@ def run_benchmarks(
             )
 
             # Retain runtime durations
-            ended_at = datetime.datetime.now(datetime.timezone.utc)
+            ended_at = dt.datetime.now(dt.timezone.utc)
             if name in benchmark_durations:
                 benchmark_durations[name] += (ended_at - started_at).total_seconds()
             else:

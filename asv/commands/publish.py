@@ -1,5 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import datetime
+import datetime as dt
 import multiprocessing
 import os
 import shutil
@@ -325,8 +325,6 @@ class Publish(Command):
             os.path.join(conf.html_dir, "info.json"),
             {
                 'asv-version': get_version("asv"),
-                'timestamp': util.datetime_to_js_timestamp(
-                    datetime.datetime.now(datetime.timezone.utc)
-                ),
+                'timestamp': util.datetime_to_js_timestamp(dt.datetime.now(dt.timezone.utc)),
             },
         )

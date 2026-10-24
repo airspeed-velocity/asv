@@ -1,6 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import datetime
+import datetime as dt
 
 from . import util
 
@@ -256,7 +256,7 @@ class NoRepository(Repo):
 
     def get_date(self, hash):
         if hash is None:
-            return datetime.datetime.now(datetime.timezone.utc)
+            return dt.datetime.now(dt.timezone.utc)
         self._raise_error()
 
     def get_hashes_from_range(self, range):
