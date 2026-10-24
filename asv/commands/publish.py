@@ -207,7 +207,7 @@ class Publish(Command):
                         log.warning(
                             msg.format(
                                 results.commit_hash[: conf.hash_length],
-                                ", ".join(str(branch) for branch in branches.keys()),
+                                ", ".join(str(branch) for branch in branches),
                             )
                         )
 
@@ -248,7 +248,7 @@ class Publish(Command):
                                 cur_params[param_key] = ''
 
                         # Fill in missing params
-                        for param_key in params.keys():
+                        for param_key in params:
                             if param_key not in cur_params:
                                 cur_params[param_key] = None
                                 params[param_key].add(None)
@@ -293,7 +293,7 @@ class Publish(Command):
         log.step()
         log.info("Writing index")
         benchmark_map = dict(benchmarks)
-        for key in benchmark_map.keys():
+        for key in benchmark_map:
             check_benchmark_params(key, benchmark_map[key])
         for key, val in params.items():
             val = list(val)

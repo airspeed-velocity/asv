@@ -115,7 +115,7 @@ def iter_matrix(environment_type, pythons, conf, explicit_selection=False):
 
         rule = {}
 
-        for key in platform_keys.keys():
+        for key in platform_keys:
             if key in include:
                 rule[key] = include.pop(key)
 
