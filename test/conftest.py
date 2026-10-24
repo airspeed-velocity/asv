@@ -90,7 +90,6 @@ def generate_basic_conf(
 
     # values not in test_dev.py copy
     repo_path = tools.generate_test_repo(tmpdir, values, subdir=repo_subdir).path
-    global env_type
 
     conf_dict = {
         'env_dir': 'env',
