@@ -140,6 +140,7 @@ ignore = [
     "E741",  # Do not use variables named 'I', 'O', or 'l'
     "PLR0124",  # Name compared with itself, consider replacing
     "PLR1704",  # Redefining argument with a local name
+    "PLW1510",  # `subprocess.run` without explicit `check` argument
     "RUF005", # Consider unpacking instead of concatenation
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
     "RUF059", # Unpacked variable is never used
