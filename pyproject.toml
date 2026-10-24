@@ -128,6 +128,7 @@ extend-select = [
     "UP",
 ]
 ignore = [
+    "ASYNC230",  # Async functions should not open files with blocking methods like `open`
     "B007",  # Loop control variable not used within loop body
     "B020",  # Loop control variable overrides iterable it iterates
     "B904",  # Within an `except` clause, raise exceptions with `raise ... from err`
