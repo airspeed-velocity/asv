@@ -2,6 +2,7 @@
 import json
 import os
 import sys
+from os.path import commonpath
 
 import pytest
 
@@ -709,7 +710,7 @@ def test_environment_environ_path(
     env.create()
     output = env.run(['-c', 'import os; print(os.environ["PATH"])'])
     paths = output.strip().split(os.pathsep)
-    assert os.path.commonprefix([paths[0], conf.env_dir]) == conf.env_dir
+    assert commonpath([paths[0], conf.env_dir]) == conf.env_dir
 
     # Check user-site directory is not in sys.path
     output = env.run(['-c', 'import site; print(site.ENABLE_USER_SITE)'])
