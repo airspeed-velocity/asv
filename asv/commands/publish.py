@@ -248,10 +248,10 @@ class Publish(Command):
                                 cur_params[param_key] = ''
 
                         # Fill in missing params
-                        for param_key in params:
+                        for param_key, param in params.items():
                             if param_key not in cur_params:
                                 cur_params[param_key] = None
-                                params[param_key].add(None)
+                                param.add(None)
 
                         # Create graph
                         graph = graphs.get_graph(key, cur_params)
@@ -293,8 +293,8 @@ class Publish(Command):
         log.step()
         log.info("Writing index")
         benchmark_map = dict(benchmarks)
-        for key in benchmark_map:
-            check_benchmark_params(key, benchmark_map[key])
+        for key, benchmark in benchmark_map.items():
+            check_benchmark_params(key, benchmark)
         for key, val in params.items():
             val = list(val)
             val.sort(key=lambda x: '[none]' if x is None else str(x))
