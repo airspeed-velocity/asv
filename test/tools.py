@@ -410,9 +410,8 @@ def generate_test_repo(
                 mapping = {'version': f"{i}", 'dummy_value': value}
                 copy_template(template_path, project_path, dvcs, mapping)
                 dvcs.commit(f"Revision {branch_name}.{i}")
-                if tags:
-                    if value in tags:
-                        dvcs.tag(value)
+                if tags and value in tags:
+                    dvcs.tag(value)
     return dvcs
 
 

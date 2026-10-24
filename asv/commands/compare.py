@@ -88,14 +88,14 @@ def _is_result_better(a, b, a_ss, b_ss, factor, use_stats=True):
         and a_ss[0]
         and b_ss[0]
         and (a_ss[0].get('repeat', 0) != 1 and b_ss[0].get('repeat', 0) != 1)
-    ):
         # Return False if estimates don't differ.
         #
         # Special-case the situation with only one sample, in which
         # case we do the comparison only based on `factor` as there's
         # not enough data to do statistics.
-        if not _stats.is_different(a_ss[1], b_ss[1], a_ss[0], b_ss[0]):
-            return False
+        and not _stats.is_different(a_ss[1], b_ss[1], a_ss[0], b_ss[0])
+    ):
+        return False
 
     return a < b / factor
 

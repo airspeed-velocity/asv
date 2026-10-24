@@ -260,9 +260,8 @@ class Publish(Command):
             # Get the parameter sets for all graphs
             graph_param_list = []
             for path, graph in graphs:
-                if 'summary' not in graph.params:
-                    if graph.params not in graph_param_list:
-                        graph_param_list.append(graph.params)
+                if 'summary' not in graph.params and graph.params not in graph_param_list:
+                    graph_param_list.append(graph.params)
 
         log.step()
         log.info("Detecting steps")

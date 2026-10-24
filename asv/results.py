@@ -623,9 +623,8 @@ class Results:
                     else:
                         value = [x.get(key[6:]) if x is not None else None for x in z]
 
-                if key != 'params':
-                    if isinstance(value, list) and all(x is None for x in value):
-                        value = None
+                if key != 'params' and isinstance(value, list) and all(x is None for x in value):
+                    value = None
 
                 if key.startswith('stats_') or key == 'duration':
                     value = util.truncate_float_list(value)
@@ -880,9 +879,12 @@ class Results:
                     if key_name == 'params' and value is None:
                         value = []
 
-                    if key_name != 'params' and isinstance(value, list):
-                        if all(x is None for x in value):
-                            value = None
+                    if (
+                        key_name != 'params'
+                        and isinstance(value, list)
+                        and all(x is None for x in value)
+                    ):
+                        value = None
 
                     r.append(value)
 
