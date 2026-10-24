@@ -135,6 +135,7 @@ ignore = [
     "B007",  # Loop control variable not used within loop body
     "B020",  # Loop control variable overrides iterable it iterates
     "B904",  # Within an `except` clause, raise exceptions with `raise ... from err`
+    "SIM115",  # Use a context manager for opening files
     "E741",  # Do not use variables named 'I', 'O', or 'l'
     "RUF005", # Consider unpacking instead of concatenation
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
