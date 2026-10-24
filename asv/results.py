@@ -510,7 +510,7 @@ class Results:
         self._stats[benchmark_name] = new_stats
         self._samples[benchmark_name] = new_samples
 
-        self._benchmark_params[benchmark_name] = benchmark['params'] if benchmark['params'] else []
+        self._benchmark_params[benchmark_name] = benchmark['params'] or []
         self._started_at[benchmark_name] = util.datetime_to_js_timestamp(started_at)
         if duration is None:
             self._duration.pop(benchmark_name, None)

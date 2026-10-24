@@ -657,7 +657,7 @@ def _run_benchmark_single_param(benchmark, spawner, param_idx, profile, extra_pa
         if profile:
             with open(profile_path, 'rb') as profile_fd:
                 profile_data = profile_fd.read()
-            profile_data = profile_data if profile_data else None
+            profile_data = profile_data or None
         else:
             profile_data = None
 
