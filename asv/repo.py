@@ -204,10 +204,9 @@ class Repo:
 
         old_commits = set(old_commits)
 
-        items = []
-        for commit in set(commits).union(old_commits):
-            items.append((self.get_date(commit), commit))
-        items.sort()
+        items = sorted(
+            (self.get_date(commit), commit) for commit in set(commits).union(old_commits)
+        )
 
         # JS date
         period = period * 1000

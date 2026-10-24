@@ -40,10 +40,7 @@ def _do_build_multiprocess(args_sets):
     environment.
     """
     try:
-        res = []
-        for args in args_sets:
-            res.append(_do_build(args))
-        return res
+        return [_do_build(args) for args in args_sets]
     except BaseException as exc:
         raise util.ParallelFailure(str(exc), exc.__class__, traceback.format_exc())
 
