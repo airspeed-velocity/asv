@@ -1346,10 +1346,7 @@ def search_channels(cli_path, pkg, version):
     except subprocess.CalledProcessError as e:
         print(f"Error searching for {pkg} {version}, got:\n {e}", file=sys.stderr)
         return False
-    if f"No match found for: {pkg}=={version}." in result.stdout:
-        return False
-    # Worked!
-    return True
+    return f"No match found for: {pkg}=={version}." not in result.stdout
 
 
 class ParsedPipDeclaration:

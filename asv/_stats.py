@@ -63,10 +63,7 @@ def is_different(samples_a, samples_b, stats_a, stats_b, p_threshold=0.002):
     ci_a = (stats_a['ci_99_a'], stats_a['ci_99_b'])
     ci_b = (stats_b['ci_99_a'], stats_b['ci_99_b'])
 
-    if ci_a[1] >= ci_b[0] and ci_a[0] <= ci_b[1]:
-        return False
-
-    return True
+    return not (ci_a[1] >= ci_b[0] and ci_a[0] <= ci_b[1])
 
 
 _mann_whitney_u_memo = {}

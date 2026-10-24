@@ -51,10 +51,7 @@ class Git(Repo):
                 return True
 
         # Check for a local path
-        if cls.is_local_repo(url):
-            return True
-
-        return False
+        return bool(cls.is_local_repo(url))
 
     def _run_git(self, args, cwd=True, **kwargs):
         if cwd is True:
