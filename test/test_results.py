@@ -1,6 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import datetime
+import datetime as dt
 import os
 import shutil
 from os.path import join
@@ -25,7 +25,7 @@ def _truncate_floats(item, digits=5):
 def test_results(tmpdir):
     tmpdir = str(tmpdir)
 
-    timestamp1 = datetime.datetime.now(datetime.timezone.utc)
+    timestamp1 = dt.datetime.now(dt.timezone.utc)
     duration = 1.5
 
     resultsdir = join(tmpdir, "results")
@@ -188,8 +188,8 @@ def test_json_timestamp(tmpdir):
     # Check that per-benchmark timestamps are saved as JS timestamps in the result file
     tmpdir = str(tmpdir)
 
-    stamp0 = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
-    stamp1 = datetime.datetime(1971, 1, 1, tzinfo=datetime.timezone.utc)
+    stamp0 = dt.datetime(1970, 1, 1, tzinfo=dt.timezone.utc)
+    stamp1 = dt.datetime(1971, 1, 1, tzinfo=dt.timezone.utc)
     duration = 1.5
 
     r = results.Results(

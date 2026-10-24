@@ -1,6 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import datetime
+import datetime as dt
 import io
 import xml.dom.minidom
 
@@ -30,15 +30,15 @@ def prettify_xml(text):
 
 def dummy_feed_xml():
     entry_1 = feed.FeedEntry(
-        title='Some title', updated=datetime.datetime(1993, 1, 1, tzinfo=datetime.timezone.utc)
+        title='Some title', updated=dt.datetime(1993, 1, 1, tzinfo=dt.timezone.utc)
     )
     entry_2 = feed.FeedEntry(
         title='Another title',
-        updated=datetime.datetime(1990, 1, 1, tzinfo=datetime.timezone.utc),
+        updated=dt.datetime(1990, 1, 1, tzinfo=dt.timezone.utc),
         link='http://foo',
         content='More text',
         id_context=['something'],
-        id_date=datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc),
+        id_date=dt.datetime(2000, 1, 1, tzinfo=dt.timezone.utc),
     )
 
     stream = io.BytesIO()

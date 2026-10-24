@@ -364,7 +364,6 @@ def test_verbose_logs_UserError(capsys, basic_conf):
             # Simulate failure on the first hash, success on others
             if commit_hash == hashes[0]:
                 raise util.UserError("simulated-install-failure")
-            return
 
         def run(self, args, cwd, env, dots=False, **kwargs):
             # Write a minimal valid discovery result file

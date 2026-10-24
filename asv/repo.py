@@ -1,6 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import datetime
+import datetime as dt
 
 from . import util
 
@@ -204,10 +204,9 @@ class Repo:
 
         old_commits = set(old_commits)
 
-        items = []
-        for commit in set(commits).union(old_commits):
-            items.append((self.get_date(commit), commit))
-        items.sort()
+        items = sorted(
+            (self.get_date(commit), commit) for commit in set(commits).union(old_commits)
+        )
 
         # JS date
         period = period * 1000
@@ -256,7 +255,7 @@ class NoRepository(Repo):
 
     def get_date(self, hash):
         if hash is None:
-            return datetime.datetime.now(datetime.timezone.utc)
+            return dt.datetime.now(dt.timezone.utc)
         self._raise_error()
 
     def get_hashes_from_range(self, range):

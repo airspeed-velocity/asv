@@ -8,11 +8,11 @@ import tempfile
 from asv_runner.console import color_print
 
 from .. import util
+from ..asv_profiling import ProfilerGui
 from ..benchmarks import Benchmarks
 from ..console import log
 from ..environment import ExistingEnvironment, get_environments, is_existing_only
 from ..machine import Machine
-from ..asv_profiling import ProfilerGui
 from ..repo import NoSuchNameError, get_repo
 from ..results import iter_results_for_machine
 from ..runner import run_benchmarks
@@ -160,21 +160,20 @@ class Profile(Command):
         env = None
         if not force and commit_hash:
             for result in iter_results_for_machine(conf.results_dir, machine_name):
-                if hash_equal(commit_hash, result.commit_hash):
-                    if result.has_profile(benchmark):
-                        # Only take the first one
-                        env_matched = util.get_matching_environment(environments, result)
+                if hash_equal(commit_hash, result.commit_hash) and result.has_profile(benchmark):
+                    # Only take the first one
+                    env_matched = util.get_matching_environment(environments, result)
 
-                        if env_matched:
-                            if result.env_name not in checked_out:
-                                # We need to checkout the correct commit so that
-                                # the line numbers in the profile data match up with
-                                # what's in the source tree.
-                                env_matched.checkout_project(repo, commit_hash)
-                                checked_out.add(result.env_name)
-                            profile_data = result.get_profile(benchmark)
-                            env = env_matched
-                            break
+                    if env_matched:
+                        if result.env_name not in checked_out:
+                            # We need to checkout the correct commit so that
+                            # the line numbers in the profile data match up with
+                            # what's in the source tree.
+                            env_matched.checkout_project(repo, commit_hash)
+                            checked_out.add(result.env_name)
+                        profile_data = result.get_profile(benchmark)
+                        env = env_matched
+                        break
 
         if profile_data is None:
             if len(environments) == 0:

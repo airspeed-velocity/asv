@@ -3,7 +3,7 @@
 Minimal Atom feed writer.
 """
 
-import datetime
+import datetime as dt
 import hashlib
 import xml.etree.ElementTree as ET
 
@@ -122,7 +122,7 @@ def write_atom(dest, entries, author, title, address, updated=None, link=None, l
         if entries:
             updated = max(entry.updated for entry in entries)
         else:
-            updated = datetime.datetime.now(datetime.timezone.utc)
+            updated = dt.datetime.now(dt.timezone.utc)
 
     root = ET.Element(f'{ATOM_NS}feed')
 
@@ -186,5 +186,5 @@ def _get_id(owner, date, content):
         h.update(b",")
 
     if date is None:
-        date = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+        date = dt.datetime(1970, 1, 1, tzinfo=dt.timezone.utc)
     return f"tag:{owner},{date.strftime('%Y-%m-%d')}:/{h.hexdigest()}"

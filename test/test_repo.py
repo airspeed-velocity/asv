@@ -1,5 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import datetime
+import datetime as dt
 import os
 import shutil
 import tempfile
@@ -456,9 +456,9 @@ def test_filter_date_period(tmpdir, dvcs_type):
     tmpdir = str(tmpdir)
 
     dates = [
-        datetime.datetime(2001, 1, 1, tzinfo=datetime.timezone.utc),
-        datetime.datetime(2001, 1, 2, tzinfo=datetime.timezone.utc),
-        datetime.datetime(2001, 1, 8, tzinfo=datetime.timezone.utc),
+        dt.datetime(2001, 1, 1, tzinfo=dt.timezone.utc),
+        dt.datetime(2001, 1, 2, tzinfo=dt.timezone.utc),
+        dt.datetime(2001, 1, 8, tzinfo=dt.timezone.utc),
     ]
 
     dvcs = tools.generate_repo_from_ops(

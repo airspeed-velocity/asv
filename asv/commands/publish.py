@@ -1,5 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import datetime
+import datetime as dt
 import multiprocessing
 import os
 import shutil
@@ -18,9 +18,15 @@ from asv.repo import get_repo
 from asv.results import iter_results
 
 # URL / graphdisplay query keys (asv/www); matrix packages must not reuse these
-GRAPH_UI_RESERVED_PARAMS = frozenset({
-    'benchmark', 'commits', 'y-axis-scale', 'x-axis-scale', 'show-legend',
-})
+GRAPH_UI_RESERVED_PARAMS = frozenset(
+    {
+        'benchmark',
+        'commits',
+        'y-axis-scale',
+        'x-axis-scale',
+        'show-legend',
+    }
+)
 
 
 def check_benchmark_params(name, benchmark):
@@ -201,7 +207,7 @@ class Publish(Command):
                         log.warning(
                             msg.format(
                                 results.commit_hash[: conf.hash_length],
-                                ", ".join(str(branch) for branch in branches.keys()),
+                                ", ".join(str(branch) for branch in branches),
                             )
                         )
 
@@ -242,10 +248,10 @@ class Publish(Command):
                                 cur_params[param_key] = ''
 
                         # Fill in missing params
-                        for param_key in params.keys():
+                        for param_key, param in params.items():
                             if param_key not in cur_params:
                                 cur_params[param_key] = None
-                                params[param_key].add(None)
+                                param.add(None)
 
                         # Create graph
                         graph = graphs.get_graph(key, cur_params)
@@ -254,9 +260,8 @@ class Publish(Command):
             # Get the parameter sets for all graphs
             graph_param_list = []
             for path, graph in graphs:
-                if 'summary' not in graph.params:
-                    if graph.params not in graph_param_list:
-                        graph_param_list.append(graph.params)
+                if 'summary' not in graph.params and graph.params not in graph_param_list:
+                    graph_param_list.append(graph.params)
 
         log.step()
         log.info("Detecting steps")
@@ -288,8 +293,8 @@ class Publish(Command):
         log.step()
         log.info("Writing index")
         benchmark_map = dict(benchmarks)
-        for key in benchmark_map.keys():
-            check_benchmark_params(key, benchmark_map[key])
+        for key, benchmark in benchmark_map.items():
+            check_benchmark_params(key, benchmark)
         for key, val in params.items():
             val = list(val)
             val.sort(key=lambda x: '[none]' if x is None else str(x))
@@ -319,8 +324,6 @@ class Publish(Command):
             os.path.join(conf.html_dir, "info.json"),
             {
                 'asv-version': get_version("asv"),
-                'timestamp': util.datetime_to_js_timestamp(
-                    datetime.datetime.now(datetime.timezone.utc)
-                ),
+                'timestamp': util.datetime_to_js_timestamp(dt.datetime.now(dt.timezone.utc)),
             },
         )
