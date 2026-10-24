@@ -131,6 +131,7 @@ ignore = [
     "ASYNC230",  # Async functions should not open files with blocking methods like `open`
     "S102",  # Use of `exec` detected
     "S110",  # `try`-`except`-`pass` detected, consider logging the exception
+    "BLE001",  # Do not catch blind exception
     "B007",  # Loop control variable not used within loop body
     "B020",  # Loop control variable overrides iterable it iterates
     "B904",  # Within an `except` clause, raise exceptions with `raise ... from err`
