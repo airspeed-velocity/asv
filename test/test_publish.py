@@ -355,8 +355,7 @@ def test_regression_multiple_branches(dvcs_type, tmpdir):
         (main, 10 * [1]),
         ("stable", 5 * [1] + 5 * [2]),
     ):
-        for commit, value in zip(branches[branch], values):
-            commit_values[commit] = value
+        commit_values.update(zip(branches[branch], values))
     conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
     conf.branches = [main, "stable"]
     tools.run_asv_with_conf(conf, "publish")
@@ -399,9 +398,7 @@ def test_regression_non_monotonic(dvcs_type, tmpdir):
         tmpdir, dvcs_type, [("commit", i, d) for i, d in enumerate(dates)]
     )
     commits = list(reversed(dvcs.get_branch_hashes()))
-    commit_values = {}
-    for commit, value in zip(commits, 5 * [1] + 5 * [2]):
-        commit_values[commit] = value
+    commit_values = dict(zip(commits, 5 * [1] + 5 * [2]))
     conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
     tools.run_asv_with_conf(conf, "publish")
     regressions = util.load_json(join(conf.html_dir, "regressions.json"))
@@ -493,9 +490,7 @@ def test_regression_atom_feed_update(dvcs_type, tmpdir):
     commits = list(reversed(dvcs.get_branch_hashes()))
 
     # Old results (drop last 6)
-    commit_values = {}
-    for commit, value in zip(commits, values[:-5]):
-        commit_values[commit] = value
+    commit_values = dict(zip(commits, values[:-5]))
     conf = tools.generate_result_dir(
         tmpdir,
         dvcs,
@@ -508,8 +503,7 @@ def test_regression_atom_feed_update(dvcs_type, tmpdir):
     old_tree = ET.parse(join(conf.html_dir, "regressions.xml"))
 
     # New results (values change, regressing revisions stay same)
-    for commit, value in zip(commits, values):
-        commit_values[commit] = value
+    commit_values.update(zip(commits, values))
 
     shutil.rmtree(conf.results_dir)
     shutil.rmtree(conf.html_dir)

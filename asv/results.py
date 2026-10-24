@@ -163,9 +163,7 @@ def _compatible_results(result, result_params, params):
 
     # Pick results for those parameters that also appear in the
     # current benchmark
-    old_results = {}
-    for param, value in zip(itertools.product(*result_params), result):
-        old_results[param] = value
+    old_results = dict(zip(itertools.product(*result_params), result))
 
     new_results = [old_results.get(param) for param in itertools.product(*params)]
 
@@ -634,10 +632,9 @@ class Results:
 
             results[name] = row
 
-        other_durations = {}
-        for key, value in self._duration.items():
-            if key.startswith('<'):
-                other_durations[key] = value
+        other_durations = {
+            key: value for key, value in self._duration.items() if key.startswith('<')
+        }
 
         data = {
             'commit_hash': self._commit_hash,

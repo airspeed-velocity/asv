@@ -61,10 +61,9 @@ class Regressions(OutputPublisher):
             return
 
         # Select unique graph params
-        graph_params = {}
-        for name, value in graph.params.items():
-            if len(all_params[name]) > 1:
-                graph_params[name] = value
+        graph_params = {
+            name: value for name, value in graph.params.items() if len(all_params[name]) > 1
+        }
 
         graph_path = graph.path + '.json'
 

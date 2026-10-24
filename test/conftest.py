@@ -407,11 +407,12 @@ def generate_result_dir(request, tmpdir):
             tmpdir, dvcs_type, [("commit", i) for i in range(len(values))]
         )
         commits = list(reversed(dvcs.get_branch_hashes()))
-        commit_values = {}
         commits_without_result = [commits[i] for i in commits_without_result or []]
-        for commit, value in zip(commits, values):
-            if commit not in commits_without_result:
-                commit_values[commit] = value
+        commit_values = {
+            commit: value
+            for commit, value in zip(commits, values)
+            if commit not in commits_without_result
+        }
         conf = tools.generate_result_dir(tmpdir, dvcs, commit_values)
         repo = get_repo(conf)
         return conf, repo, commits
