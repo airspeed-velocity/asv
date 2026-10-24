@@ -146,6 +146,7 @@ ignore = [
     "RUF059", # Unpacked variable is never used
     "UP015", # Unnecessary mode argument
     "UP028", # Replace `yield` over `for` loop with `yield from`
+    "TRY004",  # Prefer `TypeError` exception for invalid type
 ]
 
 [tool.ruff.lint.per-file-ignores]
