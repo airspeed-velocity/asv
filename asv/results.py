@@ -562,8 +562,8 @@ class Results:
         profile_data = self._profiles.get(benchmark_name)
         if not profile_data:
             raise util.UserError(
-                f"No profile data available for benchmark '{benchmark_name}'. "
-                f"Re-run the benchmark with --profile to collect it."
+                f"No profile data available for benchmark '{benchmark_name}' "
+                f"(it failed, or was not run with --profile)."
             )
         profile_data = profile_data.encode('ascii')
         profile_bytes = zlib.decompress(base64.b64decode(profile_data))
