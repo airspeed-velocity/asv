@@ -1,0 +1,1 @@
+``run_executable`` now prepends the environment's ``lib/pkgconfig`` (and ``lib64/pkgconfig``, or ``Library/lib/pkgconfig`` on Windows) to ``PKG_CONFIG_PATH`` when those directories exist, so conda and rattler compilers do not resolve ``python3`` via the system ``.pc`` file.
