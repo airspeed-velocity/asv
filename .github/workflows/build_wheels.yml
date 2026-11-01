@@ -22,7 +22,7 @@ jobs:
       message: ${{ steps.commit_message.outputs.message }}
     steps:
       - name: Checkout asv
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         # Gets the correct commit message for pull request
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -54,7 +54,7 @@ jobs:
           - [windows-2022, win_amd64]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # Full history + tags so setuptools_scm resolves the release version
           fetch-depth: 0
@@ -77,7 +77,7 @@ jobs:
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && ( ! endsWith(github.ref, 'dev0')))
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
