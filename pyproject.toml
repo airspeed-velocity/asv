@@ -149,8 +149,7 @@ quote-style = "preserve"
 write_to = "asv/_version.py"
 
 [tool.cibuildwheel]
-enable = ["cpython-freethreading"]
-skip = ["cp313t-*"]
+skip = ["cp315-*", "cp315t-*"]
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux2014"
@@ -162,6 +161,7 @@ archs = "x86_64 arm64"
 
 [tool.cibuildwheel.windows]
 archs = ['AMD64']
+repair-wheel-command = ""
 
 [tool.setuptools.packages.find]
 where = ["."]
