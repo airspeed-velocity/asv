@@ -27,7 +27,7 @@ jobs:
         runner_source: [pr, pypi]
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -52,7 +52,7 @@ jobs:
 
       - name: Get asv_runner PR head to be tested
         if: matrix.runner_source == 'pr'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: airspeed-velocity/asv_runner
           ref: refs/pull/${{ inputs.pr_number }}/head
