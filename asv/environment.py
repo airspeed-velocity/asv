@@ -940,10 +940,7 @@ class Environment:
         cmd = self._build_command
 
         if cmd is None:
-            cmd = [
-                "PIP_NO_BUILD_ISOLATION=0 python -m build",
-                "python -m pip wheel -w {build_cache_dir} {build_dir}",
-            ]
+            cmd = ["python -m pip wheel -w {build_cache_dir} {build_dir}"]
 
         if cmd:
             commit_name = repo.get_decorated_hash(commit_hash, 8)

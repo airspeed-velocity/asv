@@ -22,8 +22,6 @@
     // See asv.conf.json documentation.
     // To build the package using pyproject.toml (PEP518), uncomment the following lines
     // "build_command": [
-    //     "python -m pip install build",
-    //     "python -m build",
     //     "python -m pip wheel -w {build_cache_dir} {build_dir}"
     // ],
     // To build the package using setuptools and a setup.py file, uncomment the following lines
