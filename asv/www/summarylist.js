@@ -345,11 +345,21 @@ $(document).ready(function() {
 
                 change_td.append(change_link);
 
-                if (change > 5) {
-                    change_td.addClass('positive-change');
+                /* For timing benchmarks (lower-is-better):
+                    'better-change' when change < -tolerance (time decreased)
+                    'worse-change'  when change > tolerance  (time increased)
+                   For higher-is-better metrics (e.g. MFLOPS, throughput):
+                    'better-change' when change > tolerance  (value increased)
+                    'worse-change'  when change < -tolerance (value decreased) */
+                var tolerance = 5
+                var higher_is_better = $.asv.main_json.benchmarks[row.name].higher_is_better;
+                var is_better = higher_is_better ? (change > tolerance) : (change < -tolerance);
+                var is_worse = higher_is_better ? (change < -tolerance) : (change > tolerance);
+                if (is_better) {
+                    change_td.addClass('better-change');
                 }
-                else if (change < -5) {
-                    change_td.addClass('negative-change');
+                else if (is_worse) {
+                    change_td.addClass('worse-change');
                 }
                 change_td.attr('data-sort-value', sort_value);
             }

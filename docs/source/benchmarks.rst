@@ -204,6 +204,8 @@ Tracking benchmarks
 
 - ``unit``: The unit of the values returned by the benchmark.  Used
   for display in the web interface.
+- ``higher_is_better``: If True (default = False), then the tracked
+  performance is considered higher-is-better (e.g. MFlops or bandwidth)
 
 
 Environment variables

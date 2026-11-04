@@ -189,6 +189,15 @@ def test_detect_regressions(use_rangemedian):
         assert np.allclose(new_value, 0.7 / 2 - 0.3 + 2, rtol=0.3, atol=0)
 
 
+def test_detect_regressions_higher_is_better():
+    drop = detect_steps([10.0] * 10 + [5.0] * 10)
+    assert detect_regressions(drop) == (None, None, None)
+    assert detect_regressions(drop, higher_is_better=True) == (5.0, 10.0, [(9, 10, 10.0, 5.0)])
+
+    rise = detect_steps([5.0] * 10 + [10.0] * 10)
+    assert detect_regressions(rise, higher_is_better=True) == (None, None, None)
+
+
 def test_golden_search():
     def f(x):
         return 1 + x**3 + x**4

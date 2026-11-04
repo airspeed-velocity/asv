@@ -74,10 +74,16 @@ def _isna(value):
     return value is None or value != value
 
 
-def _is_result_better(a, b, a_ss, b_ss, factor, use_stats=True):
+def _is_result_better(a, b, a_ss, b_ss, factor, use_stats=True, higher_is_better=False):
     """
     Check if result 'a' is better than 'b' by the given factor,
     possibly taking confidence intervals into account.
+
+    By default, smaller values are considered better (e.g. timing
+    benchmarks). If `higher_is_better` is True (set via
+    `track_*.higher_is_better = True` on the benchmark), larger
+    values are considered better instead (e.g. MFLOPS/throughput
+    benchmarks).
 
     """
 
@@ -97,7 +103,7 @@ def _is_result_better(a, b, a_ss, b_ss, factor, use_stats=True):
         if not _stats.is_different(a_ss[1], b_ss[1], a_ss[0], b_ss[0]):
             return False
 
-    return a < b / factor
+    return (a > b * factor) if higher_is_better else (a < b / factor)
 
 
 class Compare(Command):
@@ -238,6 +244,7 @@ class Compare(Command):
         versions_1 = {}
         versions_2 = {}
         units = {}
+        higher_is_better_map = {}
 
         benchmarks = Benchmarks.load(conf)
 
@@ -280,6 +287,9 @@ class Compare(Command):
             machine_env_names.add(machine_env_name)
             for name, value, stats, samples in unroll_result(key, params, value, stats, samples):
                 units[(name, machine_env_name)] = benchmarks.get(key, {}).get('unit')
+                higher_is_better_map[(name, machine_env_name)] = benchmarks.get(
+                    key, {}
+                ).get('higher_is_better', False)
                 results_1[(name, machine_env_name)] = value
                 ss_1[(name, machine_env_name)] = (stats, samples)
                 versions_1[(name, machine_env_name)] = version
@@ -289,6 +299,9 @@ class Compare(Command):
             machine_env_names.add(machine_env_name)
             for name, value, stats, samples in unroll_result(key, params, value, stats, samples):
                 units[(name, machine_env_name)] = benchmarks.get(key, {}).get('unit')
+                higher_is_better_map[(name, machine_env_name)] = benchmarks.get(
+                    key, {}
+                ).get('higher_is_better', False)
                 results_2[(name, machine_env_name)] = value
                 ss_2[(name, machine_env_name)] = (stats, samples)
                 versions_2[(name, machine_env_name)] = version
@@ -340,6 +353,7 @@ class Compare(Command):
 
             version_1 = versions_1.get(benchmark)
             version_2 = versions_2.get(benchmark)
+            higher_is_better = higher_is_better_map.get(benchmark, False)
 
             if _isna(time_1) or _isna(time_2):
                 ratio = 'n/a'
@@ -381,6 +395,7 @@ class Compare(Command):
                 ss_1.get(benchmark),
                 factor,
                 use_stats=use_stats,
+                higher_is_better=higher_is_better,
             ):
                 color = 'green'
                 mark = '-'
@@ -392,6 +407,7 @@ class Compare(Command):
                 ss_2.get(benchmark),
                 factor,
                 use_stats=use_stats,
+                higher_is_better=higher_is_better,
             ):
                 color = 'red'
                 mark = '+'
@@ -401,8 +417,10 @@ class Compare(Command):
                 mark = ' '
 
                 # Mark statistically insignificant results
-                if _is_result_better(time_1, time_2, None, None, factor) or _is_result_better(
-                    time_2, time_1, None, None, factor
+                if _is_result_better(
+                    time_1, time_2, None, None, factor, higher_is_better=higher_is_better
+                ) or _is_result_better(
+                    time_2, time_1, None, None, factor, higher_is_better=higher_is_better
                 ):
                     ratio = "~" + ratio.strip()
 
