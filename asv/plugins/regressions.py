@@ -1,5 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import datetime
+import datetime as dt
 import itertools
 import os
 import re
@@ -61,10 +61,9 @@ class Regressions(OutputPublisher):
             return
 
         # Select unique graph params
-        graph_params = {}
-        for name, value in graph.params.items():
-            if len(all_params[name]) > 1:
-                graph_params[name] = value
+        graph_params = {
+            name: value for name, value in graph.params.items() if len(all_params[name]) > 1
+        }
 
         graph_path = graph.path + '.json'
 
@@ -132,7 +131,7 @@ class Regressions(OutputPublisher):
                 # (rev2), not the time the benchmarks were last run (#938).
                 last_timestamp = revision_timestamps[rev2]
 
-                updated = datetime.datetime.fromtimestamp(last_timestamp / 1000)
+                updated = dt.datetime.fromtimestamp(last_timestamp / 1000)
 
                 params = dict(graph_params)
 
@@ -153,7 +152,7 @@ class Regressions(OutputPublisher):
                 except ZeroDivisionError:
                     percentage = f"{value2 - value1:.2g} units"
 
-                jump_date = datetime.datetime.fromtimestamp(revision_timestamps[rev2] / 1000)
+                jump_date = dt.datetime.fromtimestamp(revision_timestamps[rev2] / 1000)
                 jump_date_str = jump_date.strftime('%Y-%m-%d %H:%M:%S')
 
                 if rev1 is not None:

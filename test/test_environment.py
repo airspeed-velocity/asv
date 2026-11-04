@@ -2,6 +2,7 @@
 import json
 import os
 import sys
+from os.path import commonpath
 
 import pytest
 
@@ -640,7 +641,7 @@ def test_conda_channel_addition(tmpdir, channel_list, expected_channel, env_type
         print(json_package_list)
         for installed_package in json_package_list:
             # check only explicitly installed packages
-            if installed_package['name'] not in ('python',):
+            if installed_package['name'] != 'python':
                 continue
             print(installed_package)
             assert installed_package['channel'] == expected_channel
@@ -709,7 +710,7 @@ def test_environment_environ_path(
     env.create()
     output = env.run(['-c', 'import os; print(os.environ["PATH"])'])
     paths = output.strip().split(os.pathsep)
-    assert os.path.commonprefix([paths[0], conf.env_dir]) == conf.env_dir
+    assert commonpath([paths[0], conf.env_dir]) == conf.env_dir
 
     # Check user-site directory is not in sys.path
     output = env.run(['-c', 'import site; print(site.ENABLE_USER_SITE)'])
@@ -972,16 +973,20 @@ def test_install_env_matrix_values(
     env.run(
         [
             '-c',
-            'import asv_test_repo.build_time_env as t, sys; '
-            'sys.exit(0 if t.env["SOME_ASV_TEST_BUILD_VALUE"] == "1" else 1)',
+            (
+                'import asv_test_repo.build_time_env as t, sys; '
+                'sys.exit(0 if t.env["SOME_ASV_TEST_BUILD_VALUE"] == "1" else 1)'
+            ),
         ]
     )
 
     env.run(
         [
             '-c',
-            'import asv_test_repo.build_time_env as t, sys; '
-            'sys.exit(0 if "SOME_ASV_TEST_NON_BUILD_VALUE" not in t.env else 1)',
+            (
+                'import asv_test_repo.build_time_env as t, sys; '
+                'sys.exit(0 if "SOME_ASV_TEST_NON_BUILD_VALUE" not in t.env else 1)'
+            ),
         ]
     )
 

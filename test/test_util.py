@@ -1,5 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-import datetime
+import datetime as dt
 import multiprocessing
 import os
 import pickle
@@ -355,33 +355,33 @@ def test_interpolate_command():
 def test_datetime_to_js_timestamp():
     tss = [0, 0.5, -0.5, 12345.6789, -12345.6789, 1535910708.7767508]
     for ts in tss:
-        t = datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc)
+        t = dt.datetime.fromtimestamp(ts, tz=dt.timezone.utc)
         ts2 = util.datetime_to_js_timestamp(t)
         assert abs(ts * 1000 - ts2) <= 0.5
 
     # Check sub-second precision
     ms = 50
-    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 1000 * ms, tzinfo=datetime.timezone.utc)
+    ts = dt.datetime(1970, 1, 1, 0, 0, 0, 1000 * ms, tzinfo=dt.timezone.utc)
     assert util.datetime_to_js_timestamp(ts) == ms
 
     # Check rounding
-    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 500, tzinfo=datetime.timezone.utc)
+    ts = dt.datetime(1970, 1, 1, 0, 0, 0, 500, tzinfo=dt.timezone.utc)
     assert util.datetime_to_js_timestamp(ts) == 1
-    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 499, tzinfo=datetime.timezone.utc)
+    ts = dt.datetime(1970, 1, 1, 0, 0, 0, 499, tzinfo=dt.timezone.utc)
     assert util.datetime_to_js_timestamp(ts) == 0
 
 
 def test_datetime_to_timestamp():
     tss = [0, 0.5, -0.5, 12345.6789, -12345.6789, 1535910708.7767508]
     for ts in tss:
-        t = datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc)
+        t = dt.datetime.fromtimestamp(ts, tz=dt.timezone.utc)
         ts2 = util.datetime_to_timestamp(t)
         assert abs(ts - ts2) <= 0.5
 
     # Check rounding
-    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 500000, tzinfo=datetime.timezone.utc)
+    ts = dt.datetime(1970, 1, 1, 0, 0, 0, 500000, tzinfo=dt.timezone.utc)
     assert util.datetime_to_timestamp(ts) == 1
-    ts = datetime.datetime(1970, 1, 1, 0, 0, 0, 500000 - 1, tzinfo=datetime.timezone.utc)
+    ts = dt.datetime(1970, 1, 1, 0, 0, 0, 500000 - 1, tzinfo=dt.timezone.utc)
     assert util.datetime_to_timestamp(ts) == 0
 
 

@@ -82,10 +82,7 @@ class Hg(Repo):
                 return True
 
         # Check for a local path
-        if cls.is_local_repo(url):
-            return True
-
-        return False
+        return bool(cls.is_local_repo(url))
 
     def get_range_spec(self, commit_a, commit_b):
         return f'{commit_a}::{commit_b} and not {commit_a}'

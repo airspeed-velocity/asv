@@ -4,7 +4,7 @@
 This file contains utilities to generate test repositories.
 """
 
-import datetime
+import datetime as dt
 import http.server
 import os
 import platform
@@ -173,7 +173,7 @@ class Git:
     def __init__(self, path):
         self.path = abspath(path)
         self._git = util.which('git')
-        self._fake_date = datetime.datetime.now(datetime.timezone.utc)
+        self._fake_date = dt.datetime.now(dt.timezone.utc)
 
     def run_git(self, args, chdir=True, **kwargs):
         if chdir:
@@ -191,7 +191,7 @@ class Git:
 
     def commit(self, message, date=None):
         if date is None:
-            self._fake_date += datetime.timedelta(seconds=1)
+            self._fake_date += dt.timedelta(seconds=1)
             date = self._fake_date
 
         self.run_git(['commit', '--date', date.isoformat(), '-m', message, "--no-gpg-sign"])
@@ -238,7 +238,7 @@ class Hg:
     encoding = 'utf-8'
 
     def __init__(self, path):
-        self._fake_date = datetime.datetime.now(datetime.timezone.utc)
+        self._fake_date = dt.datetime.now(dt.timezone.utc)
         if isinstance(path, bytes):
             path = path.decode('utf-8')
         self.path = abspath(path)
@@ -259,14 +259,14 @@ class Hg:
 
     def commit(self, message, date=None):
         if date is None:
-            self._fake_date += datetime.timedelta(seconds=1)
+            self._fake_date += dt.timedelta(seconds=1)
             date = self._fake_date
         date = f"{util.datetime_to_timestamp(date)} 0"
 
         self._repo.commit(message.encode(self.encoding), date=date.encode(self.encoding))
 
     def tag(self, number):
-        self._fake_date += datetime.timedelta(seconds=1)
+        self._fake_date += dt.timedelta(seconds=1)
         date = f"{util.datetime_to_timestamp(self._fake_date)} 0"
 
         self._repo.tag(
@@ -410,9 +410,8 @@ def generate_test_repo(
                 mapping = {'version': f"{i}", 'dummy_value': value}
                 copy_template(template_path, project_path, dvcs, mapping)
                 dvcs.commit(f"Revision {branch_name}.{i}")
-                if tags:
-                    if value in tags:
-                        dvcs.tag(value)
+                if tags and value in tags:
+                    dvcs.tag(value)
     return dvcs
 
 
@@ -486,7 +485,7 @@ def generate_result_dir(tmpdir, dvcs, values, branches=None, updated=None):
     )
 
     if updated is None:
-        updated = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+        updated = dt.datetime(1970, 1, 1, tzinfo=dt.timezone.utc)
 
     benchmark_version = sha256(os.urandom(16)).hexdigest()
 

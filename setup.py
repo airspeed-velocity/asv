@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from setuptools import Extension, setup
 import sysconfig
 
+from setuptools import Extension, setup
 
 if __name__ == "__main__":
     if sysconfig.get_config_var("Py_GIL_DISABLED") == 1:

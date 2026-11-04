@@ -45,9 +45,15 @@ class Config:
     api_version = 1
 
     # Matrix package names that collide with web UI URL params (see publish.py)
-    GRAPH_UI_RESERVED_MATRIX_KEYS = frozenset({
-        'benchmark', 'commits', 'y-axis-scale', 'x-axis-scale', 'show-legend',
-    })
+    GRAPH_UI_RESERVED_MATRIX_KEYS = frozenset(
+        {
+            'benchmark',
+            'commits',
+            'y-axis-scale',
+            'x-axis-scale',
+            'show-legend',
+        }
+    )
 
     def __init__(self):
         self.project = "project"
@@ -121,10 +127,10 @@ class Config:
         reserved = set(matrix) & cls.GRAPH_UI_RESERVED_MATRIX_KEYS
         if reserved:
             log.warning(
-                "Matrix keys %s are reserved by the results web UI (for example "
-                "the benchmark page id). Prefer a different requirement name, "
-                "or expect publish to rename them to 'req-<name>' (issue #819)."
-                % (sorted(reserved),)
+                f"Matrix keys {sorted(reserved)} are reserved by the results "
+                "web UI (for example the benchmark page id). Prefer a "
+                "different requirement name, or expect publish to rename them "
+                "to 'req-<name>' (issue #819)."
             )
 
         return conf

@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import base64
-import datetime
+import datetime as dt
 import hashlib
 import itertools
 import os
@@ -163,13 +163,9 @@ def _compatible_results(result, result_params, params):
 
     # Pick results for those parameters that also appear in the
     # current benchmark
-    old_results = {}
-    for param, value in zip(itertools.product(*result_params), result):
-        old_results[param] = value
+    old_results = dict(zip(itertools.product(*result_params), result))
 
-    new_results = []
-    for param in itertools.product(*params):
-        new_results.append(old_results.get(param))
+    new_results = [old_results.get(param) for param in itertools.product(*params)]
 
     return new_results
 
@@ -458,7 +454,7 @@ class Results:
         benchmark_version = benchmark['version']
 
         if started_at is None:
-            started_at = datetime.datetime.now(datetime.timezone.utc)
+            started_at = dt.datetime.now(dt.timezone.utc)
 
         new_stats = [None] * len(new_result)
 
@@ -514,7 +510,7 @@ class Results:
         self._stats[benchmark_name] = new_stats
         self._samples[benchmark_name] = new_samples
 
-        self._benchmark_params[benchmark_name] = benchmark['params'] if benchmark['params'] else []
+        self._benchmark_params[benchmark_name] = benchmark['params'] or []
         self._started_at[benchmark_name] = util.datetime_to_js_timestamp(started_at)
         if duration is None:
             self._duration.pop(benchmark_name, None)
@@ -623,9 +619,8 @@ class Results:
                     else:
                         value = [x.get(key[6:]) if x is not None else None for x in z]
 
-                if key != 'params':
-                    if isinstance(value, list) and all(x is None for x in value):
-                        value = None
+                if key != 'params' and isinstance(value, list) and all(x is None for x in value):
+                    value = None
 
                 if key.startswith('stats_') or key == 'duration':
                     value = util.truncate_float_list(value)
@@ -637,10 +632,9 @@ class Results:
 
             results[name] = row
 
-        other_durations = {}
-        for key, value in self._duration.items():
-            if key.startswith('<'):
-                other_durations[key] = value
+        other_durations = {
+            key: value for key, value in self._duration.items() if key.startswith('<')
+        }
 
         data = {
             'commit_hash': self._commit_hash,
@@ -880,9 +874,12 @@ class Results:
                     if key_name == 'params' and value is None:
                         value = []
 
-                    if key_name != 'params' and isinstance(value, list):
-                        if all(x is None for x in value):
-                            value = None
+                    if (
+                        key_name != 'params'
+                        and isinstance(value, list)
+                        and all(x is None for x in value)
+                    ):
+                        value = None
 
                     r.append(value)
 

@@ -1,7 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import logging
-import os
 import traceback
 from collections import defaultdict
 

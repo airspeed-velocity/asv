@@ -88,14 +88,14 @@ def _is_result_better(a, b, a_ss, b_ss, factor, use_stats=True):
         and a_ss[0]
         and b_ss[0]
         and (a_ss[0].get('repeat', 0) != 1 and b_ss[0].get('repeat', 0) != 1)
-    ):
         # Return False if estimates don't differ.
         #
         # Special-case the situation with only one sample, in which
         # case we do the comparison only based on `factor` as there's
         # not enough data to do statistics.
-        if not _stats.is_different(a_ss[1], b_ss[1], a_ss[0], b_ss[0]):
-            return False
+        and not _stats.is_different(a_ss[1], b_ss[1], a_ss[0], b_ss[0])
+    ):
+        return False
 
     return a < b / factor
 
@@ -318,15 +318,9 @@ class Compare(Command):
         improved = False
 
         for benchmark in joint_benchmarks:
-            if benchmark in results_1:
-                time_1 = results_1[benchmark]
-            else:
-                time_1 = math.nan
+            time_1 = results_1.get(benchmark, math.nan)
 
-            if benchmark in results_2:
-                time_2 = results_2[benchmark]
-            else:
-                time_2 = math.nan
+            time_2 = results_2.get(benchmark, math.nan)
 
             if benchmark in ss_1 and ss_1[benchmark][0]:
                 err_1 = get_err(time_1, ss_1[benchmark][0])

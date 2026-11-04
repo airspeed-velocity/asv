@@ -51,10 +51,7 @@ class Git(Repo):
                 return True
 
         # Check for a local path
-        if cls.is_local_repo(url):
-            return True
-
-        return False
+        return bool(cls.is_local_repo(url))
 
     def _run_git(self, args, cwd=True, **kwargs):
         if cwd is True:
@@ -195,17 +192,17 @@ class Git(Repo):
         return self.get_hashes_from_range(self.get_branch_name(branch))
 
     def get_revisions(self, commits):
-        revisions = {}
-        for i, commit in enumerate(
-            self._run_git(
-                [
-                    "rev-list",
-                    "--all",
-                    "--date-order",
-                    "--reverse",
-                ]
-            ).splitlines()
-        ):
-            if commit in commits:
-                revisions[commit] = i
-        return revisions
+        return {
+            commit: i
+            for i, commit in enumerate(
+                self._run_git(
+                    [
+                        "rev-list",
+                        "--all",
+                        "--date-order",
+                        "--reverse",
+                    ]
+                ).splitlines()
+            )
+            if commit in commits
+        }

@@ -155,8 +155,7 @@ def detect_regressions(steps, threshold=0, min_size=2):
 
         prev_l = l
 
-        if cur_v < best_v:
-            best_v = cur_v
+        best_v = min(best_v, cur_v)
 
     regression_pos.reverse()
 

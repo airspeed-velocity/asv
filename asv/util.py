@@ -5,7 +5,7 @@ Various low-level utilities.
 """
 
 import collections
-import datetime
+import datetime  # noqa: ICN001
 import errno
 import functools
 import json
@@ -957,10 +957,10 @@ def format_text_table(rows, num_headers=0, top_header_span_start=0, top_header_t
         right_span = "-".join("-" * w for w in col_widths[top_header_span_start:])
         if left_span and right_span:
             result += ["--" + " " * (len(left_span) - 1) + top_header_text.center(len(right_span))]
-            result += [" ".join([left_span, right_span])]
+            result += [f'{left_span} {right_span}']
         else:
             result += [top_header_text.center(len(separator))]
-            result += ["-".join([left_span, right_span])]
+            result += [f'{left_span}-{right_span}']
         result += headers
         result += [separator.replace("-", "=")]
     elif headers:
@@ -1292,7 +1292,9 @@ def get_multiprocessing_lock(name):
 def get_multiprocessing_pool(parallel=None):
     """Create a multiprocessing.Pool, managing global locks properly"""
     env = os.environ.copy()
-    return multiprocessing.Pool(parallel, initializer=_init_global_locks, initargs=(_global_locks, env))
+    return multiprocessing.Pool(
+        parallel, initializer=_init_global_locks, initargs=(_global_locks, env)
+    )
 
 
 try:
@@ -1344,10 +1346,7 @@ def search_channels(cli_path, pkg, version):
     except subprocess.CalledProcessError as e:
         print(f"Error searching for {pkg} {version}, got:\n {e}", file=sys.stderr)
         return False
-    if f"No match found for: {pkg}=={version}." in result.stdout:
-        return False
-    # Worked!
-    return True
+    return f"No match found for: {pkg}=={version}." not in result.stdout
 
 
 class ParsedPipDeclaration:
