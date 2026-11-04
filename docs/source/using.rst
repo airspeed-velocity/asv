@@ -374,6 +374,29 @@ stop serving.
 .. |screenshot2| image:: screenshot-bench.png
    :width: 45%
 
+The grid in the first screenshot is the landing page.
+It has one panel per benchmark.
+Each line is the geometric mean across every series of that benchmark.
+A series is one machine, environment, branch, and benchmark parameter value.
+``asv publish`` writes the line to ``graphs/summary/<benchmark>.json``.
+
+Each series fills its own missing commits before the mean is taken.
+A short interior gap, with a sample on both sides, is linearly interpolated.
+Short means at most one tenth of the series' samples, rounded up.
+Any other gap after the first sample repeats the last measured value.
+That includes every commit after the series stops.
+A series with no sample yet stays empty and is left out of the mean.
+A 0 is not repeated, since one 0 sets a geometric mean to 0.
+The fill stays on the branch that measured the series.
+A commit that only another branch has does not receive the value.
+A commit where every series is missing stays empty on the line.
+
+The fill cannot tell a missed build from a series that ended for good.
+A retired machine or environment keeps its last value in the summary.
+So does a parameter value that is still declared but no longer measured.
+That held value can dilute a later real step, so the line moves less.
+Only real samples reach the per-machine graphs and regression detection.
+
 To share the website on the open internet, simply put the files in the
 ``html`` directory on any webserver that can serve static content.  Github Pages
 works quite well, for example.  For using Github Pages, ``asv``
