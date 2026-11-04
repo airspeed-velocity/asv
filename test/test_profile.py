@@ -75,3 +75,20 @@ def test_profile_python_commit(capsys, basic_conf):
     text, err = capsys.readouterr()
 
     assert "Profile data does not already exist" not in text
+
+
+def test_get_profile_missing_data():
+    # A benchmark with no stored profile should report that clearly instead of
+    # raising KeyError or AttributeError from inside get_profile.
+    from asv.results import Results
+
+    results = Results.unnamed()
+
+    with pytest.raises(util.UserError, match="No profile data available"):
+        results.get_profile("time_absent")
+
+    # add_result only stores a profile when it is truthy, so a falsy entry is
+    # reachable too.
+    results._profiles["time_nulled"] = None
+    with pytest.raises(util.UserError, match="No profile data available"):
+        results.get_profile("time_nulled")
