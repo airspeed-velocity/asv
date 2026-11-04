@@ -341,12 +341,22 @@ def _compute_summary_data_series(*ys):
                  ...]
 
     Missing data in each y-series is filled for each series
-    separately, before averaging. Data points that are missing from
-    all series are however marked missing.
+    separately, before averaging. Short interior gaps are linearly
+    interpolated. Every other missing sample that already has an
+    earlier measurement, including a run of missed builds at the end
+    of a series, is replaced with that last measurement, unless that
+    measurement is 0. Samples from before a series' first measurement
+    stay missing. Data points that are missing from all series are
+    marked missing.
+
+    The geometric mean has to stay over the same series from one
+    commit to the next. Dropping a machine that missed a build changes
+    the mean whenever the machines have different absolute timings, and
+    the landing-page summary then looks like a speedup.
 
     """
-    # Fill missing data
-    filled = [_fill_missing_data(y) for y in ys]
+    # Fill short gaps, then hold the last real measurement across the rest
+    filled = [_carry_forward_missing(_fill_missing_data(y)) for y in ys]
 
     # Compute geom mean of filled series
     res = []
@@ -389,6 +399,25 @@ def _fill_missing_data(y, max_gap_fraction=0.1):
             prev = v
             prev_idx = i
 
+    return filled
+
+
+def _carry_forward_missing(y):
+    """
+    Repeat the last observed value across later missing samples.
+
+    Leading missing samples are left alone: there is no earlier
+    measurement to repeat. ``None`` and NaN are both missing. A 0 is
+    not repeated, because a single 0 holds a geometric mean at 0.
+    """
+    filled = []
+    last = None
+    for v in y:
+        if is_na(v):
+            filled.append(v if last is None else last)
+        else:
+            filled.append(v)
+            last = None if v == 0 else v
     return filled
 
 
