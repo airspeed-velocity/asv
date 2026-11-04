@@ -1,5 +1,3 @@
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 """
 Manages an environment -- a combination of a version of Python and set
 of dependencies.

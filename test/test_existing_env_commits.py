@@ -1,4 +1,3 @@
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
 """Existing environment + commit range labeling (issue #1464)."""
 
 import sys

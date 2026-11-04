@@ -1,4 +1,3 @@
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
 """Progress accounting for asv run -k (issue #918)."""
 
 from collections import defaultdict
