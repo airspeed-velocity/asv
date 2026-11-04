@@ -42,6 +42,7 @@ dependencies = [
     "tabulate",
     "virtualenv",
     "packaging",
+    "pydantic",
     "importlib-metadata",
     "tomli; python_version < '3.11'",
     "colorama; platform_system == 'Windows'",
@@ -79,6 +80,7 @@ doc = [
     "sphinxcontrib.bibtex",
     "setuptools", # dependency from bibtex
     "sphinxcontrib.katex",
+    "autodoc-pydantic",
     "furo",
     "astroid",
 ]
