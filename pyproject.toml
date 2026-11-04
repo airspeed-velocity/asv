@@ -174,4 +174,4 @@ include = ["asv", "asv.*"]
 skip = '.git,*.css'
 check-hidden = true
 ignore-regex = '- Boris Feld\b'
-# ignore-words-list = ''
+ignore-words-list = "astroid"

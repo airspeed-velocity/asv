@@ -240,8 +240,8 @@ The channels will be parsed by ``asv`` to populate the ``channels``
 section of a temporary environment.yml file used to build the
 benchmarking environment.
 
-The `conda` plugin always appends `conda-forge` to the specified
-`conda_channels`. The `rattler` plugin automatically uses `conda-forge`
+The ``conda`` plugin always appends ``conda-forge`` to the specified
+``conda_channels``. The ``rattler`` plugin automatically uses ``conda-forge``
 in the case that no channels are specified.
 
 ``matrix``
