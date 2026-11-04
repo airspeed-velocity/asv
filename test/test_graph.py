@@ -331,6 +331,73 @@ def test_summary_parameter_gap_carries_that_series_only():
     _assert_summary([late], [(0, 4.0), (1, 4.0), (2, held)])
 
 
+def test_summary_branches_do_not_share_carried_values():
+    # Date order interleaves main (0, 1, 3) and topic (0, 2, 4). blue stops
+    # on main after revision 1. topic keeps its own line and must not inherit
+    # main's last sample, including through the one-commit hole at revision 2.
+    blue_main = _machine('blue', [(0, 4.0), (1, 4.0)], branch='main')
+    purple_main = _machine('purple', [(0, 2.0), (1, 2.0), (3, 8.0)], branch='main')
+    purple_topic = _machine('purple', [(0, 2.0), (2, 2.0), (4, 2.0)], branch='topic')
+    early = util.geom_mean_na([4.0, 2.0])
+    shared = util.geom_mean_na([4.0, 2.0, 2.0])
+    main_jump = util.geom_mean_na([4.0, 8.0])
+    _assert_summary(
+        [blue_main, purple_main, purple_topic],
+        [
+            (0, shared),
+            (1, early),
+            (2, 2.0),
+            (3, main_jump),
+            (4, 2.0),
+        ],
+    )
+
+
+def test_summary_side_branch_does_not_change_later_main():
+    # Revision 2 exists only on feature. Later main commits must stay at
+    # the main mean: the feature sample must not be repeated there.
+    # The slow main machine still keeps its last sample on main.
+    slow = Graph('time_func', {'machine': 'slow', 'branch': 'main'})
+    fast = Graph('time_func', {'machine': 'fast', 'branch': 'main'})
+    side = Graph('time_func', {'machine': 'fast', 'branch': 'feature'})
+    slow.add_data_point(0, 4.0)
+    slow.add_data_point(1, 4.0)
+    for rev in (0, 1, 3, 4, 5):
+        fast.add_data_point(rev, 1.0)
+    side.add_data_point(2, 100.0)
+
+    summary = _summary_values([slow, fast, side])
+    assert [rev for rev, _val in summary] == [0, 1, 2, 3, 4, 5]
+    held = util.geom_mean_na([4.0, 1.0])
+    for rev in (0, 1, 3, 4, 5):
+        assert abs(summary[rev][1] - held) < 1e-12
+    assert abs(summary[2][1] - 100.0) < 1e-12
+
+
+def test_summary_failed_commit_still_counts_in_gap():
+    # Commit 6 failed on both machines, and A also missed commit 5. The
+    # failed commit belongs to the branch, so A's hole is two commits long
+    # and the interpolator gives 6.0 at commit 5, the same as before the
+    # carry-forward. A second branch must not change that.
+    for side in (False, True):
+        main_revs = [rev for rev in range(14) if not (side and rev == 3)]
+        a_main = _machine(
+            'A',
+            [(rev, 4.0 if rev <= 4 else 10.0) for rev in main_revs if rev not in (5, 6)],
+            branch='main',
+        )
+        b_main = _machine('B', [(rev, 1.0) for rev in main_revs if rev != 6], branch='main')
+        a_main.add_data_point(6, None)
+        b_main.add_data_point(6, None)
+        graphs = [a_main, b_main]
+        if side:
+            graphs.append(_machine('B', [(3, 1.0)], branch='feature'))
+        summary = dict(_summary_values(graphs))
+        assert summary[6] is None
+        assert abs(summary[5] - util.geom_mean_na([6.0, 1.0])) < 1e-12
+        assert abs(summary[7] - util.geom_mean_na([10.0, 1.0])) < 1e-12
+
+
 def test_summary_failed_and_nan_samples_keep_last_finite_value():
     # Scalar failures and skips are not stored. The other machine holds the
     # revisions on the axis, and a long hole repeats the last finite time.
