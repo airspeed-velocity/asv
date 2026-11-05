@@ -310,8 +310,13 @@ def _compute_graph_steps(data, reraise=True):
 
 
 def make_summary_graph(graphs):
-    x, ys = _combine_graph_data(graphs)
-    y = _compute_summary_data_series(*ys)
+    # get_data() recomputes every point on each call, so call it once.
+    datasets = [graph.get_data() for graph in graphs]
+    x, ys = _combine_graph_data(graphs, datasets)
+    # Revision numbers are one date order across every branch. Fill a
+    # missing sample only on revisions of the same branch.
+    masks = _series_scope_masks(graphs, datasets, x)
+    y = _compute_summary_data_series(*ys, scope_masks=masks)
     val = list(zip(x, y))
 
     # Resample
@@ -324,7 +329,7 @@ def make_summary_graph(graphs):
     return graph
 
 
-def _compute_summary_data_series(*ys):
+def _compute_summary_data_series(*ys, scope_masks=None):
     """
     Given a multiple input series:
 
@@ -341,12 +346,28 @@ def _compute_summary_data_series(*ys):
                  ...]
 
     Missing data in each y-series is filled for each series
-    separately, before averaging. Data points that are missing from
-    all series are however marked missing.
+    separately, before averaging. Short interior gaps are linearly
+    interpolated. Every other missing sample that already has an
+    earlier measurement, including a run of missed builds at the end
+    of a series, is replaced with that last measurement, unless that
+    measurement is 0. Samples from before a series' first measurement
+    stay missing. When ``scope_masks`` is given, both steps run only on
+    revisions that belong to that series' branch. A commit present only
+    on another branch is left missing, because the shared revision
+    numbers are a single date order. Data points that are missing from
+    all series are marked missing.
+
+    The geometric mean has to stay over the same series from one
+    commit to the next. Dropping a machine that missed a build changes
+    the mean whenever the machines have different absolute timings, and
+    the landing-page summary then looks like a speedup.
 
     """
-    # Fill missing data
-    filled = [_fill_missing_data(y) for y in ys]
+    # Fill short gaps, then hold the last real measurement across the rest
+    filled = []
+    for index, series in enumerate(ys):
+        mask = None if scope_masks is None else scope_masks[index]
+        filled.append(_fill_summary_series(series, mask))
 
     # Compute geom mean of filled series
     res = []
@@ -392,7 +413,80 @@ def _fill_missing_data(y, max_gap_fraction=0.1):
     return filled
 
 
-def _combine_graph_data(graphs):
+def _carry_forward_missing(y):
+    """
+    Repeat the last observed value across later missing samples.
+
+    Leading missing samples are left alone: there is no earlier
+    measurement to repeat. ``None`` and NaN are both missing. A 0 is
+    not repeated, because a single 0 holds a geometric mean at 0.
+    """
+    filled = []
+    last = None
+    for v in y:
+        if is_na(v):
+            filled.append(v if last is None else last)
+        else:
+            filled.append(v)
+            last = None if v == 0 else v
+    return filled
+
+
+def _fill_summary_series(y, in_scope):
+    """
+    Interpolate short gaps and carry the last sample.
+
+    ``in_scope`` selects the revisions that belong to this series'
+    branch. Revisions outside that set stay missing, so a value is not
+    repeated onto a commit from another branch. ``None`` fills the
+    whole series, which is the single-branch case.
+    """
+    if in_scope is None:
+        return _carry_forward_missing(_fill_missing_data(y))
+
+    positions = [i for i, flag in enumerate(in_scope) if flag]
+    if len(positions) == len(y):
+        return _carry_forward_missing(_fill_missing_data(y))
+
+    filled = list(y)
+    if not positions:
+        return filled
+
+    subset = [y[i] for i in positions]
+    subset = _carry_forward_missing(_fill_missing_data(subset))
+    for position, value in zip(positions, subset):
+        filled[position] = value
+    return filled
+
+
+def _series_scope_masks(graphs, datasets, x):
+    """
+    For each data series, mark the revisions that belong to its branch.
+
+    A branch's revisions are every revision stored on graphs that carry
+    the same ``branch`` parameter, including a commit where all of
+    those graphs failed, so the short-gap interpolator still counts it.
+    Graphs with no branch parameter share one set. ``datasets`` holds
+    ``graph.get_data()`` for each graph.
+    """
+    revisions = {}
+    owners = []
+    for graph, dataset in zip(graphs, datasets):
+        branch = graph.params.get('branch')
+        revisions.setdefault(branch, set()).update(row[0] for row in dataset)
+        owners.extend([branch] * graph.n_series)
+
+    index = {revision: i for i, revision in enumerate(x)}
+    masks = []
+    for branch in owners:
+        mask = [False] * len(x)
+        for revision in revisions[branch]:
+            mask[index[revision]] = True
+        masks.append(mask)
+    return masks
+
+
+def _combine_graph_data(graphs, datasets=None):
     """
     Combine data series from multiple graphs to compatible form
 
@@ -400,6 +494,8 @@ def _combine_graph_data(graphs):
     ----------
     graphs : list of Graph
         Input data.
+    datasets : list, optional
+        ``graph.get_data()`` for each graph, if the caller already has it.
 
     Returns
     -------
@@ -413,7 +509,8 @@ def _combine_graph_data(graphs):
         the missing data is indicated by None values.
 
     """
-    datasets = [graph.get_data() for graph in graphs]
+    if datasets is None:
+        datasets = [graph.get_data() for graph in graphs]
     n_series = sum(graph.n_series for graph in graphs)
 
     # Find distinct x-values
