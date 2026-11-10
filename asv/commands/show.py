@@ -94,7 +94,11 @@ class Show(Command):
             else:
                 cls._print_commits(conf, result_iter, benchmarks)
         else:
-            result_iter = cls._iter_results(conf, machines, env_names, commit)
+            result_iter = list(cls._iter_results(conf, machines, env_names, commit))
+            if not result_iter:
+                # Mirror `compare`, which errors out instead of printing an
+                # empty table for an unknown revision.
+                raise util.UserError(f"Did not find results for commit {commit}")
             if durations:
                 cls._print_result_durations(conf, commit, result_iter, benchmarks)
             else:
