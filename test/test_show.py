@@ -2,6 +2,10 @@
 import textwrap
 from os.path import abspath, dirname, join
 
+import pytest
+
+from asv import util
+
 from . import tools
 
 BENCHMARK_DIR = abspath(join(dirname(__file__), 'example_results'))
@@ -38,6 +42,13 @@ def test_show(capsys, show_fixture):
       ci_99: (3.10s, 3.90s)
     """)
     assert text.strip() == expected.strip()
+
+
+def test_show_unknown_commit(show_fixture):
+    conf = show_fixture
+
+    with pytest.raises(util.UserError, match="Did not find results for commit"):
+        tools.run_asv_with_conf(conf, 'show', 'deadbeef')
 
 
 def test_show_durations(capsys, show_fixture):
